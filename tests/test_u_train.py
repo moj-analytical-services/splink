@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from tests.decorator import mark_with_dialects_excluding
+from splink.estimate_u import _proportion_sample_size_link_only
 
 
 @mark_with_dialects_excluding()
@@ -24,6 +25,8 @@ def test_u_train(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
     df_linker = helper.convert_frame(df)
+
+    args = helper.extra_linker_args()
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
@@ -102,7 +105,9 @@ def test_u_train_link_only(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-@mark_with_dialects_excluding()
+# Spark is too slow in conjunction with debug mode.  If we begin to capture sql,
+# then we could refactor this test to introspect the sql
+@mark_with_dialects_excluding("spark")
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
@@ -115,25 +120,28 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
-    # levenshtein should be on string types
-    df_l["name"] = df_l["name"].astype("str")
-    df_r["name"] = df_r["name"].astype("str")
 
     # max_pairs is a good deal less than total possible pairs = 9_000_000
     max_pairs = 1_800_000
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.exact_match("name")],
         "blocking_rules_to_generate_predictions": [],
     }
 
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.Linker(
+        [df_l, df_r],
+        settings,
+        input_table_aliases=["_a", "_b"],
+        **helper.extra_linker_args(),
+    )
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
+
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs, seed=42)
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
@@ -153,6 +161,27 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     # equality only holds probabilistically for some backends, due to sampling strategy
     # chance of failure is approximately 1e-06 with this choice of relative error
     assert pytest.approx(proportion_of_max_pairs_sampled, rel=0.15) == 1.0
+
+
+def test_u_train_link_only_sample_proportion():
+    # These calculations can be verified by producing a grid of the cartesian product
+    # and crossing out self-joins.  The resultant grid is symmetrical along
+    # the diagonal, with each edge being repeated twice (a-b and b-a), and
+    # so the total links needs to be divided by 2
+    row_counts = [2, 3, 1]
+    max_pairs = 10
+    proportion, sample_size = _proportion_sample_size_link_only(
+        row_counts_individual_dfs=row_counts, max_pairs=max_pairs
+    )
+
+    total_nodes = sum(row_counts)
+
+    total_links = (total_nodes**2 - sum([x**2 for x in row_counts])) / 2
+
+    expected_proportion = (max_pairs / total_links) ** 0.5
+    expected_sample_size = expected_proportion * total_nodes
+    assert pytest.approx(expected_proportion, rel=0.01) == proportion
+    assert pytest.approx(expected_sample_size, rel=0.01) == sample_size
 
 
 @mark_with_dialects_excluding()
