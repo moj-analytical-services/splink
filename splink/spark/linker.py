@@ -95,6 +95,7 @@ class SparkLinker(Linker):
         database=None,
         repartition_after_blocking=False,
         num_partitions_on_repartition=None,
+        register_udfs_automatically=True
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -130,6 +131,10 @@ class SparkLinker(Linker):
             num_partitions_on_repartition (int, optional): When saving out intermediate
                 results, how many partitions to use?  This should be set so that
                 partitions are roughly 100Mb. Defaults to 100.
+            register_udfs_automatically (bool, optional): When True, distance metric 
+                UDFs will be downloaded. In environments without internet access, or
+                where UDF registration is not whitelisted, this should be set to False.
+                Defaults to True.
 
         """
 
@@ -188,7 +193,8 @@ class SparkLinker(Linker):
 
         self._set_default_break_lineage_method()
 
-        self._register_udfs_from_jar()
+        if register_udfs_automatically:
+            self._register_udfs_from_jar()
 
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
