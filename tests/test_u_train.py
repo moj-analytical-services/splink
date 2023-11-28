@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_with_dialects_excluding
 from splink.estimate_u import _proportion_sample_size_link_only
+from tests.decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
@@ -26,7 +26,7 @@ def test_u_train(test_helpers, dialect):
     }
     df_linker = helper.convert_frame(df)
 
-    args = helper.extra_linker_args()
+    helper.extra_linker_args()
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
