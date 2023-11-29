@@ -22,20 +22,20 @@ def _size_density_sql(self, df_predict, df_clustered, threshold_match_probabilit
 
     # Get unique id columns from linker
     uid_cols = self._settings_obj._unique_id_input_columns
-    # Create unique id for left-hand edges from unique (eg person) id and source dataset
-    uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+    # Create unique id for left-hand edges from unique id and source dataset
+    composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     # Create unique id for clusters table
-    uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
+    composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
     sqls = []
     # Count edges per node at or above a given match probability
     sql = f"""
         SELECT
-            {uid_edges_l} AS unique_id_l,
+            {composite_uid_edges_l} AS edge_group_id,
             COUNT(*) AS count_edges
         FROM {df_predict.physical_name}
         WHERE match_probability >= {threshold_match_probability}
-        GROUP BY {uid_edges_l}
+        GROUP BY {composite_uid_edges_l}
     """
     sql = {"sql": sql, "output_table_name": "__splink__edges_per_node"}
     sqls.append(sql)
@@ -47,7 +47,7 @@ def _size_density_sql(self, df_predict, df_clustered, threshold_match_probabilit
             count(*) AS n_nodes,
             sum(e.count_edges) AS n_edges
         FROM {df_clustered.physical_name} AS c
-        LEFT JOIN __splink__edges_per_node e ON c.{uid_clusters} = e.unique_id_l
+        LEFT JOIN __splink__edges_per_node e ON c.{composite_uid_clusters} = e.edge_group_id
         GROUP BY c.cluster_id
     """
     sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
