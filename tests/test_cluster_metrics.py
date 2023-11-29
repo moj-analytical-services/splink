@@ -45,7 +45,7 @@ def test_size_density_dedupe():
     ]
     df_expected = pd.DataFrame(data_expected)
 
-    assert_frame_equal(df_result, df_expected)
+    assert_frame_equal(df_result, df_expected, check_index_type=False)
 
 
 def test_size_density_link():
@@ -71,6 +71,7 @@ def test_size_density_link():
         )
         .as_pandas_dataframe()
         .sort_values(by="cluster_id")
+        .reset_index(drop=True)
     )
 
     data_expected = [
@@ -81,18 +82,20 @@ def test_size_density_link():
             "density": None,
         },
         {
-            "cluster_id": "df_right-__-1",
-            "n_nodes": 1,
-            "n_edges": 0.0,
-            "density": None,
-        },
-        {
             "cluster_id": "df_left-__-2",
             "n_nodes": 3,
             "n_edges": 2.0,
             "density": 0.666667,
         },
+        {
+            "cluster_id": "df_right-__-1",
+            "n_nodes": 1,
+            "n_edges": 0.0,
+            "density": None,
+        },
     ]
-    df_expected = pd.DataFrame(data_expected).sort_values(by="cluster_id")
+    df_expected = (
+        pd.DataFrame(data_expected).sort_values(by="cluster_id").reset_index(drop=True)
+    )
 
-    assert_frame_equal(df_result, df_expected)
+    assert_frame_equal(df_result, df_expected, check_index_type=False)
