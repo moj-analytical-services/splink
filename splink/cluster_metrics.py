@@ -58,7 +58,7 @@ def _size_density_sql(self, df_predict, df_clustered, threshold_match_probabilit
         SELECT
             cluster_id,
             n_nodes,
-            n_edges,
+            COALESCE(n_edges, 0) AS n_edges,
             (n_edges * 2)/(n_nodes * (n_nodes-1)) AS density
         FROM __splink__counts_per_cluster
     """
