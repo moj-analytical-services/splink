@@ -1,5 +1,6 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
+
 from splink.duckdb.duckdb_comparison_library import (
     exact_match,
 )

@@ -47,7 +47,8 @@ def _size_density_sql(self, df_predict, df_clustered, threshold_match_probabilit
             count(*) AS n_nodes,
             sum(e.count_edges) AS n_edges
         FROM {df_clustered.physical_name} AS c
-        LEFT JOIN __splink__edges_per_node e ON c.{composite_uid_clusters} = e.edge_group_id
+        LEFT JOIN __splink__edges_per_node e ON
+        c.{composite_uid_clusters} = e.edge_group_id
         GROUP BY c.cluster_id
     """
     sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
