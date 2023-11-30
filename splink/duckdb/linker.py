@@ -319,3 +319,21 @@ class DuckDBLinker(Linker):
             new_con = duckdb.connect(database=output_path)
             new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()
+
+    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        # base case
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"unnest({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+            other_columns_to_retain.append(column_to_explode)
+            return f"""select {','.join(cols_to_select)}
+                from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501

@@ -35,6 +35,7 @@ from .blocking import (
     BlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
+    materialise_exploded_id_tables,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
@@ -1743,6 +1744,10 @@ class Linker:
         input_dataframes = []
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
+
+        # If exploded blocking rules exist, we need to materialise
+        # the tables of ID pairs
+        materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
