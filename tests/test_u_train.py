@@ -29,8 +29,6 @@ def test_u_train(test_helpers, dialect):
     }
     df_linker = helper.convert_frame(df)
 
-    helper.extra_linker_args()
-
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
