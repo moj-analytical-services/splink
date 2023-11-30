@@ -197,11 +197,11 @@ def test_u_train_link_only_sample_proportion():
         con.register("combined_df", combined_df)
 
         query = """
-            SELECT count(*)
-            FROM combined_df a
-            JOIN combined_df b
-            ON a.source_dataset_name != b.source_dataset_name
-            AND a.source_dataset_name || a.unique_id < b.source_dataset_name || b.unique_id
+        SELECT count(*)
+        FROM combined_df a
+        JOIN combined_df b
+        ON a.source_dataset_name != b.source_dataset_name
+        AND a.source_dataset_name || a.unique_id < b.source_dataset_name || b.unique_id
         """
 
         result = con.execute(query).fetchdf()
