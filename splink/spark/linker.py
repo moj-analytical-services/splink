@@ -95,6 +95,7 @@ class SparkLinker(Linker):
         database=None,
         repartition_after_blocking=False,
         num_partitions_on_repartition=None,
+        register_udfs_automatically=True,
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -130,6 +131,10 @@ class SparkLinker(Linker):
             num_partitions_on_repartition (int, optional): When saving out intermediate
                 results, how many partitions to use?  This should be set so that
                 partitions are roughly 100Mb. Defaults to 100.
+            register_udfs_automatically (bool, optional): When True, distance metric
+                UDFs will be downloaded. In environments without internet access, or
+                where UDF registration is not whitelisted, this should be set to False.
+                Defaults to True.
 
         """
 
@@ -188,7 +193,8 @@ class SparkLinker(Linker):
 
         self._set_default_break_lineage_method()
 
-        self._register_udfs_from_jar()
+        if register_udfs_automatically:
+            self._register_udfs_from_jar()
 
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
@@ -534,19 +540,3 @@ class SparkLinker(Linker):
                         classed as comparison level = "ELSE". Ensure date strings
                         are cleaned to remove bad dates \n"""
                     )
-
-    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
-        """Generated sql that explodes one or more columns in a table"""
-        columns_to_explode = columns_to_explode.copy()
-        other_columns_to_retain = other_columns_to_retain.copy()
-        if len(columns_to_explode) == 0:
-            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
-        else:
-            column_to_explode = columns_to_explode.pop()
-            cols_to_select = (
-                [f"explode({column_to_explode}) as {column_to_explode}"]
-                + other_columns_to_retain
-                + columns_to_explode
-            )
-        return f"""select {','.join(cols_to_select)}
-                from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501

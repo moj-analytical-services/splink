@@ -4,6 +4,7 @@ import logging
 import re
 from functools import reduce
 from operator import and_
+from typing import List
 
 import sqlglot
 
@@ -49,7 +50,7 @@ class SettingsValidator:
         return self.clean_list_of_column_names(uid_as_tree)
 
     @property
-    def blocking_rules(self):
+    def blocking_rules(self) -> List[str]:
         brs = self.settings_obj._blocking_rules_to_generate_predictions
         return [br.blocking_rule_sql for br in brs]
 

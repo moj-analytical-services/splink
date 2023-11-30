@@ -210,14 +210,14 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         output_cols.append(self._case_statement)
 
         for cl in self.comparison_levels:
             if cl._has_tf_adjustments:
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         return dedupe_preserving_order(output_cols)
 
@@ -230,7 +230,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         output_cols.append(self._gamma_column_name)
 
@@ -240,7 +240,7 @@ class Comparison:
                 and self._settings_obj._retain_intermediate_calculation_columns
             ):
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         # Bayes factor case when statement
         sqls = [cl._bayes_factor_sql for cl in self.comparison_levels]
@@ -268,7 +268,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         if (
             self._settings_obj._training_mode
@@ -282,7 +282,7 @@ class Comparison:
                 and self._settings_obj._retain_intermediate_calculation_columns
             ):
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         for _col in input_cols:
             if self._settings_obj._retain_intermediate_calculation_columns:
@@ -445,7 +445,7 @@ class Comparison:
     @property
     def _human_readable_description_succinct(self):
         input_cols = join_list_with_commas_final_and(
-            [c.name() for c in self._input_columns_used_by_case_statement]
+            [c.name for c in self._input_columns_used_by_case_statement]
         )
 
         comp_levels = self._comparison_level_description_list
@@ -463,7 +463,7 @@ class Comparison:
     @property
     def human_readable_description(self):
         input_cols = join_list_with_commas_final_and(
-            [c.name() for c in self._input_columns_used_by_case_statement]
+            [c.name for c in self._input_columns_used_by_case_statement]
         )
 
         comp_levels = self._comparison_level_description_list

@@ -32,7 +32,7 @@ def block_from_labels(
 
     unique_id_col = linker._settings_obj._unique_id_column_name
 
-    source_dataset_col = linker._settings_obj._source_dataset_input_column
+    source_dataset_col = linker._settings_obj._source_dataset_column_name
 
     sql = lower_id_to_left_hand_side(df, source_dataset_col, unique_id_col)
 

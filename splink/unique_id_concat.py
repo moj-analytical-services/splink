@@ -11,7 +11,7 @@ def _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix=None):
     else:
         table_prefix = ""
 
-    cols = [f"{table_prefix}{c.name()}" for c in unique_id_cols]
+    cols = [f"{table_prefix}{c.name}" for c in unique_id_cols]
 
     return f" || '{CONCAT_SEPARATOR}' || ".join(cols)
 
@@ -28,10 +28,10 @@ def _composite_unique_id_from_edges_sql(unique_id_cols, l_or_r, table_prefix=Non
         table_prefix = ""
 
     if l_or_r == "l":
-        cols = [f"{table_prefix}{c.name_l()}" for c in unique_id_cols]
+        cols = [f"{table_prefix}{c.name_l}" for c in unique_id_cols]
     if l_or_r == "r":
-        cols = [f"{table_prefix}{c.name_r()}" for c in unique_id_cols]
+        cols = [f"{table_prefix}{c.name_r}" for c in unique_id_cols]
     if l_or_r is None:
-        cols = [f"{table_prefix}{c.name()}" for c in unique_id_cols]
+        cols = [f"{table_prefix}{c.name}" for c in unique_id_cols]
 
     return f" || '{CONCAT_SEPARATOR}' || ".join(cols)

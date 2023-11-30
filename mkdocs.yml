@@ -52,7 +52,6 @@ plugins:
         python:
           rendering:
             show_source: false
-      custom_templates: templates
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
@@ -131,8 +130,8 @@ nav:
         - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
-          - Backends overview: "topic_guides/backends/backends.md"
-          - PostgreSQL: "topic_guides/backends/postgres.md"
+          - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
+          - PostgreSQL: "topic_guides/splink_fundamentals/backends/postgres.md"
         - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
         - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
         - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
@@ -140,7 +139,7 @@ nav:
         - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
       - Blocking:
         - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
-        - Prediction Blocking Rules: "topic_guides/blocking/predictions.md"        
+        - Prediction Blocking Rules: "topic_guides/blocking/predictions.md"
         - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
         - Computational Performance: "topic_guides/blocking/performance.md"
       - Comparing Records:
@@ -182,13 +181,13 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
-      - Charts Gallery: 
+      - Charts Gallery:
         - "charts/index.md"
         - Exploratory Analysis:
           - completeness chart: "charts/completeness_chart.ipynb" 
           - missingness chart: "charts/missingness_chart.ipynb"
           - profile columns: "charts/profile_columns.ipynb"
-        - Blocking: 
+        - Blocking:
           - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
         - Comparison Helpers:
           - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
@@ -231,12 +230,15 @@ nav:
         - Comparison and comparison level libraries:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
-        - Charts: 
+        - Charts:
           - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
           - Building new charts: "dev_guides/charts/building_charts.ipynb"
         - User-Defined Functions: "dev_guides/udfs.md"
+        - Settings Validation:
+          - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
+          - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
   - Blog:
-    - blog/index.md 
+    - blog/index.md
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
