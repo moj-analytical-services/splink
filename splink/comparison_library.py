@@ -331,7 +331,7 @@ class ArrayIntersectAtSizes(ComparisonCreator):
 
         Args:
             col_name (str): The name of the column to compare.
-            size_threshold_or_thresholds (Union[int, list], optional): The
+            size_threshold_or_thresholds (Union[int, list[int]], optional): The
                 size threshold(s) for the intersection levels.
                 Defaults to [1].
         """
