@@ -1,5 +1,6 @@
 import awswrangler as wr
 
+from splink.exceptions import InvalidAWSBucketOrDatabase
 from splink.misc import ensure_is_list
 from splink.splink_dataframe import SplinkDataFrame
 
@@ -30,7 +31,9 @@ def _verify_athena_inputs(database, bucket, boto3_session):
     if errors:
         database_bucket_txt = " and ".join(errors)
         do_does_grammar = ["does", "it"] if len(errors) == 1 else ["do", "them"]
-        raise Exception(athena_warning_text(database_bucket_txt, do_does_grammar))
+        raise InvalidAWSBucketOrDatabase(
+            athena_warning_text(database_bucket_txt, do_does_grammar)
+        )
 
 
 def _garbage_collection(

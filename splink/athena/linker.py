@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Union
 
 import awswrangler as wr
 import boto3
 import numpy as np
 import pandas as pd
-from typing import Union
 
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -459,7 +459,7 @@ class AthenaLinker(Linker):
     def drop_all_tables_created_by_splink(
         self,
         delete_s3_folders=True,
-        tables_to_exclude: list[SplinkDataFrame] = [],
+        tables_to_exclude: list[Union[SplinkDataFrame, str]] = [],
     ):
         """Run a cleanup process for the tables created by splink and
         currently contained in your output database.
@@ -471,10 +471,15 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list[SplinkDataFrame], optional): A list
+            tables_to_exclude (list[SplinkDataFrame | str], optional): A list
                 of input tables you wish to add to an ignore list. These
                 will not be removed during garbage collection.
         """
+        # Run cleanup on the cache before checking the db
+        self.drop_tables_in_current_splink_run(
+            delete_s3_folders,
+            tables_to_exclude,
+        )
         _garbage_collection(
             self.output_schema,
             self.boto3_session,
@@ -486,7 +491,7 @@ class AthenaLinker(Linker):
         self,
         database_name: str,
         delete_s3_folders: bool = True,
-        tables_to_exclude: list[SplinkDataFrame] = [],
+        tables_to_exclude: list[Union[SplinkDataFrame, str]] = [],
     ):
         """Run a cleanup process for the tables created by splink
         in a specified database.
@@ -499,7 +504,7 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list[SplinkDataFrame], optional): A list
+            tables_to_exclude (list[SplinkDataFrame | str], optional): A list
                 of input tables you wish to add to an ignore list. These
                 will not be removed during garbage collection.
         """
@@ -549,8 +554,8 @@ class AthenaLinker(Linker):
                 splink_df.drop_table_from_database_and_remove_from_cache(
                     force_non_splink_table=False, delete_s3_data=delete_s3_folders
                 )
-        # As our cache contains duplicate term frequency tables and AWSwrangler
-        # run deletions asynchronously, add any previously seen tables to the
-        # list of tables to exclude from deletion.
-        # This prevents attempts to delete a table that has already been purged.
-        tables_to_exclude.add(splink_df.physical_name)
+            # As our cache contains duplicate term frequency tables and AWSwrangler
+            # run deletions asynchronously, add any previously seen tables to the
+            # list of tables to exclude from deletion.
+            # This prevents attempts to delete a table that has already been purged.
+            tables_to_exclude.add(splink_df.physical_name)
