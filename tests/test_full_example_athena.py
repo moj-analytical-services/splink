@@ -1,23 +1,26 @@
 import os
 
+# Skip if no valid boto3 connection exists
+# try:
+import boto3
 import pandas as pd
 import pytest
 
 import splink.athena.comparison_library as cl
+from splink.exceptions import InvalidAWSBucketOrDatabase
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
 
-# Skip if no valid boto3 connection exists
+# Check if a valid s3 connection is available
 try:
-    import boto3
-
-    # Check if a valid s3 connection is available
     sts_client = boto3.client("sts")
     response = sts_client.get_caller_identity()
     import awswrangler as wr
 
-    from splink.athena.athena_utils import athena_warning_text
+    from splink.athena.athena_helpers.athena_utils import (
+        _garbage_collection,
+    )
     from splink.athena.linker import AthenaLinker
 except ImportError:
     # Skip if no AWS Connection exists
@@ -56,45 +59,42 @@ settings_dict["comparisons"][0] = first_name_cc
 settings_dict["comparisons"][2] = dob_cc
 
 # Setup database names for tests
-db_name_read = "splink_awswrangler_test"
-db_name_write = "data_linking_temp"
-output_bucket = "alpha-data-linking"
-table_name = "__splink__fake_1000_from_splink_demos"
+DB_NAME_READ = "splink_awswrangler_test"
+DB_NAME_WRITE = "data_linking_temp"
+OUTPUT_BUCKET = "alpha-data-linking"
+TABLE_NAME = "__splink__fake_1000_from_splink_demos"
+PANDAS_DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
 
 
-def upload_data(db_name):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    bucket = output_bucket
+def upload_data(database_to_upload_to):
     # ensure data is in a unique loc to __splink tables
-    path = f"s3://{bucket}/data/"
-
-    path = f"s3://{bucket}/data/{table_name}"
+    path = f"s3://{OUTPUT_BUCKET}/data/{TABLE_NAME}"
     wr.s3.to_parquet(
-        df=df,
+        df=PANDAS_DF,
         path=path,
         dataset=True,
         mode="overwrite",
-        database=db_name,
-        table=table_name,
+        database=database_to_upload_to,
+        table=TABLE_NAME,
         compression="snappy",
     )
 
 
 def test_full_example_athena(tmp_path):
-    # This test assumes the databases in use have already been created
-
-    # creates a session at least on the platform...
-    my_session = boto3.Session(region_name="eu-west-1")
 
     # Upload our raw data
-    upload_data(db_name_read)
+    upload_data(DB_NAME_READ)
+
+    # Drop any existing tables that may disrupt the test
+    _garbage_collection(DB_NAME_WRITE, BOTO3_SESSION)
 
     linker = AthenaLinker(
         settings_dict=settings_dict,
-        input_table_or_tables=f"{db_name_read}.{table_name}",
-        boto3_session=my_session,
-        output_bucket=output_bucket,
-        output_database=db_name_write,
+        input_table_or_tables=f"{DB_NAME_READ}.{TABLE_NAME}",
+        boto3_session=BOTO3_SESSION,
+        output_bucket=OUTPUT_BUCKET,
+        output_database=DB_NAME_WRITE,
         output_filepath="athena_test_full_example",
     )
 
@@ -135,17 +135,17 @@ def test_full_example_athena(tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
 
-    _test_table_registration(linker, skip_dtypes=True)
+    _test_table_registration(linker)
 
     # Clean up our database and s3 bucket and remove test files
     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)
-    linker.drop_splink_tables_from_database(database_name=db_name_read)
+    linker.drop_splink_tables_from_database(database_name=DB_NAME_READ)
 
 
 def test_athena_garbage_collection():
     # creates a session at least on the platform...
-    my_session = boto3.Session(region_name="eu-west-1")
-    upload_data(db_name_read)
+    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
+    upload_data(DB_NAME_READ)
 
     out_fp = "athena_test_garbage_collection"
 
@@ -153,14 +153,14 @@ def test_athena_garbage_collection():
         # Test that our gc works as expected w/ tables_to_exclude
         linker = AthenaLinker(
             settings_dict=settings_dict,
-            input_table_or_tables=f"{db_name_read}.{table_name}",
-            boto3_session=my_session,
-            output_bucket=output_bucket,
-            output_database=db_name_write,
+            input_table_or_tables=f"{DB_NAME_READ}.{TABLE_NAME}",
+            boto3_session=BOTO3_SESSION,
+            output_bucket=OUTPUT_BUCKET,
+            output_database=DB_NAME_WRITE,
             output_filepath=out_fp,
         )
 
-        path = f"s3://{output_bucket}/{out_fp}/{linker._cache_uid}"
+        path = f"s3://{OUTPUT_BUCKET}/{out_fp}/{linker._cache_uid}"
 
         linker.profile_columns(
             [
@@ -181,16 +181,16 @@ def test_athena_garbage_collection():
 
     # Check everything gets cleaned up excl. predict
     tables = wr.catalog.get_tables(
-        database=db_name_write,
+        database=DB_NAME_WRITE,
         name_prefix="__splink__df_predict",  # check if the predict table exists...
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
     )
     assert sum(1 for _ in tables) == 1
 
     # Check all files are also deleted (as delete_s3_folders = True)
     files = wr.s3.list_objects(
         path=path,
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
         ignore_empty=True,
     )
     assert len(files) > 0  # snappy, so n >= 1 parquet files created
@@ -205,16 +205,16 @@ def test_athena_garbage_collection():
 
     # Does predict exist?
     tables = wr.catalog.get_tables(
-        database=db_name_write,
+        database=DB_NAME_WRITE,
         name_prefix="__splink",
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
     )
     assert sum(1 for _ in tables) == 0
 
     # Check all files are also deleted (as gc = True)
     files = wr.s3.list_objects(
         path=path,
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
         ignore_empty=True,
     )
     assert len(files) == 0
@@ -225,118 +225,73 @@ def test_athena_garbage_collection():
     linker.drop_tables_in_current_splink_run(tables_to_exclude=predict.physical_name)
     # assert len(linker._names_of_tables_created_by_splink) == 1
     tables = wr.catalog.get_tables(
-        database=db_name_write,
+        database=DB_NAME_WRITE,
         name_prefix="__splink",
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
     )
     assert sum(1 for _ in tables) == 1
 
     linker.drop_tables_in_current_splink_run()
     # assert len(linker._names_of_tables_created_by_splink) == 0
     tables = wr.catalog.get_tables(
-        database=db_name_write,
+        database=DB_NAME_WRITE,
         name_prefix="__splink",
-        boto3_session=my_session,
+        boto3_session=BOTO3_SESSION,
     )
     assert sum(1 for _ in tables) == 0
 
 
-def test_pandas_as_input():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    my_session = boto3.Session(region_name="eu-west-1")
+@pytest.mark.parametrize(
+    "input_tables, table_aliases, link_type",
+    [
+        (PANDAS_DF, "__splink__testing", "dedupe_only"),
+        (
+            [PANDAS_DF, PANDAS_DF],
+            ["__splink__testing_1", "__splink__testing_2"],
+            "link_and_dedupe",
+        ),
+    ],
+)
+def test_athena_linker_with_pandas(input_tables, table_aliases, link_type):
+    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
+    settings = get_settings_dict()
+    settings["link_type"] = link_type  # If this setting is common to both tests
 
     linker = AthenaLinker(
-        input_table_or_tables=df,
-        settings_dict=settings_dict,
-        boto3_session=my_session,
-        output_bucket=output_bucket,
-        output_database=db_name_write,
-        output_filepath="test_pandas_input",
-        input_table_aliases="__splink__testing",
-    )
-
-    linker.predict()
-    linker.drop_splink_tables_from_database(database_name=db_name_read)
-
-
-def test_athena_link_only():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # creates a session at least on the platform...
-    my_session = boto3.Session(region_name="eu-west-1")
-    settings_dict["link_type"] = "link_and_dedupe"
-
-    linker = AthenaLinker(
-        input_table_or_tables=[df, df],
-        settings_dict=settings_dict,
-        boto3_session=my_session,
-        output_bucket=output_bucket,
-        output_database=db_name_write,
-        output_filepath="test_link_only",
-        input_table_aliases=["__splink__testing_1", "__splink__testing_2"],
+        input_table_or_tables=input_tables,
+        settings_dict=settings,
+        boto3_session=BOTO3_SESSION,
+        output_bucket=OUTPUT_BUCKET,
+        output_database=DB_NAME_WRITE,
+        output_filepath="test_pandas_as_inputs",
+        input_table_aliases=table_aliases,
     )
 
     df_predict = linker.predict()
     df_predict.as_pandas_dataframe()
 
-    # Clean up
     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)
 
 
-def test_athena_errors():
-    # creates a session at least on the platform...
-    my_session = boto3.Session(region_name="eu-west-1")
+@pytest.mark.parametrize(
+    "input_table, output_database, output_bucket, exception",
+    [
+        ("bad_df", DB_NAME_WRITE, OUTPUT_BUCKET, wr.exceptions.InvalidTable),
+        (PANDAS_DF, "random_database", OUTPUT_BUCKET, InvalidAWSBucketOrDatabase),
+        (PANDAS_DF, DB_NAME_WRITE, "random_bucket", InvalidAWSBucketOrDatabase),
+        (PANDAS_DF, "random_database", "random_bucket", InvalidAWSBucketOrDatabase),
+    ],
+)
+def test_athena_errors(input_table, output_database, output_bucket, exception):
+    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
+    test_file_path = "test_failure"
 
-    # Check that if the input df doesn't exist we get a fail
-    with pytest.raises(Exception):
+    with pytest.raises(exception):
         AthenaLinker(
-            input_table_or_tables="testing_for_failure",
+            input_table_or_tables=input_table,
             settings_dict=settings_dict,
-            boto3_session=my_session,
+            boto3_session=BOTO3_SESSION,
             output_bucket=output_bucket,
-            output_database=db_name_write,
-            output_filepath="test_failure",
+            output_database=output_database,
+            output_filepath=test_file_path,
         )
-
-    # Check that if the database doesn't exist it fails
-    rand_database = "random_database"
-    db_txt = f"database '{rand_database}'"
-
-    with pytest.raises(Exception) as excinfo:
-        AthenaLinker(
-            input_table_or_tables="testing_for_failure",
-            settings_dict=settings_dict,
-            boto3_session=my_session,
-            output_bucket=output_bucket,
-            output_database=rand_database,
-            output_filepath="test_failure",
-        )
-    assert str(excinfo.value) == athena_warning_text(db_txt, ["does", "it"])
-
-    # check we get a failure w/ an invalid s3 bucket
-    rand_bucket = "random_bucket"
-    bucket_txt = f"bucket '{rand_bucket}'"
-
-    with pytest.raises(Exception) as excinfo:
-        AthenaLinker(
-            input_table_or_tables="testing_for_failure",
-            settings_dict=settings_dict,
-            boto3_session=my_session,
-            output_bucket=rand_bucket,
-            output_database=db_name_write,
-            output_filepath="test_failure",
-        )
-    assert str(excinfo.value) == athena_warning_text(bucket_txt, ["does", "it"])
-
-    # and finally, check our error message w/ both an invalid db and bucket
-    txt = " and ".join([db_txt, bucket_txt])
-    with pytest.raises(Exception) as excinfo:
-        AthenaLinker(
-            input_table_or_tables="testing_for_failure",
-            settings_dict=settings_dict,
-            boto3_session=my_session,
-            output_bucket=rand_bucket,
-            output_database=rand_database,
-            output_filepath="test_failure",
-        )
-    assert str(excinfo.value) == athena_warning_text(txt, ["do", "them"])
