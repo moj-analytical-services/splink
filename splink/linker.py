@@ -1747,7 +1747,7 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        materialise_exploded_id_tables(self)
+        exploded_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
@@ -1774,6 +1774,9 @@ class Linker:
 
         predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
+
+        [t.drop_table_from_database_and_remove_from_cache() for t in exploded_tables]
+
         return predictions
 
     def find_matches_to_new_records(
@@ -3929,3 +3932,8 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
+
+    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
+        )

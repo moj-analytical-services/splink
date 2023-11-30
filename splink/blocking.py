@@ -351,7 +351,7 @@ def materialise_exploded_id_tables(linker: Linker):
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
-
+    exploded_tables = []
     for br in exploding_blocking_rules:
         input_dataframe = linker._initialise_df_concat_with_tf()
 
@@ -381,6 +381,8 @@ def materialise_exploded_id_tables(linker: Linker):
 
         marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
         br.exploded_id_pair_table = marginal_ids_table
+        exploded_tables.append(marginal_ids_table)
+    return exploded_tables
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
