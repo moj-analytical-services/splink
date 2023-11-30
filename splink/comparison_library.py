@@ -309,3 +309,56 @@ class JaroWinklerAtThresholds(ComparisonCreator):
 
     def create_output_column_name(self) -> str:
         return self.col_name
+
+
+class ArrayIntersectAtSizes(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        size_threshold_or_thresholds: Union[Iterable[int], int] = [1],
+    ):
+        """
+        Represents a comparison of the data in `col_name` with multiple levels based on
+        the intersection sizes of array elements:
+            - Intersection at specified size thresholds
+            - ...
+            - Anything else
+
+        For example, with size_threshold_or_thresholds = [3, 1], the levels are:
+            - Intersection of arrays in `col_name` has at least 3 elements
+            - Intersection of arrays in `col_name` has at least 1 element
+            - Anything else (e.g., empty intersection)
+
+        Args:
+            col_name (str): The name of the column to compare.
+            size_threshold_or_thresholds (Union[int, list[int]], optional): The
+                size threshold(s) for the intersection levels.
+                Defaults to [1].
+        """
+
+        thresholds_as_iterable = ensure_is_iterable(size_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        super().__init__(col_name)
+
+    def create_comparison_levels(
+        self, sql_dialect: SplinkDialect
+    ) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_name),
+            *[
+                cll.ArrayIntersectLevel(self.col_name, min_intersection=threshold)
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
+        plural = "s" if len(self.thresholds) > 1 else ""
+        return (
+            f"Array intersection at minimum size{plural} "
+            f"{comma_separated_thresholds_string} vs. anything else"
+        )
+
+    def create_output_column_name(self) -> str:
+        return self.col_name
