@@ -3,7 +3,7 @@ on:
   pull_request:
     branches:
       - master
-      - "**dev"
+      - '**dev'
     paths:
       - splink/**
       - tests/**
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.8.16", "3.9.10"]
+        python-version: [ "3.8.16", "3.9.10" ]
     services:
       pg_splink_ci:
         image: postgres
@@ -30,8 +30,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          # map port so we can access
-          - 5432:5432
+            # map port so we can access
+            - 5432:5432
     name: Run tests with python verion ${{ matrix.python-version }}
     steps:
       #----------------------------------------------
@@ -50,8 +50,8 @@ jobs:
       - name: Load cached Poetry installation
         uses: actions/cache@v2
         with:
-          path: ~/.local # the path depends on the OS
-          key: poetry-0 # increment to reset cache
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
