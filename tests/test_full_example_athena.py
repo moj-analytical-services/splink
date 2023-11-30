@@ -1,5 +1,8 @@
 import os
 
+# Skip if no valid boto3 connection exists
+# try:
+import boto3
 import pandas as pd
 import pytest
 
