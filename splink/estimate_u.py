@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .blocking import block_using_rules_sqls
 from .comparison_vector_values import compute_comparison_vector_values_sql
@@ -29,6 +29,26 @@ def _rows_needed_for_n_pairs(n_pairs):
     # https://www.wolframalpha.com/input?i=Solve%5Bp%3Dr+*+%28r+-+1%29+%2F+2%2C+r%5D
     sample_rows = 0.5 * ((8 * n_pairs + 1) ** 0.5 + 1)
     return sample_rows
+
+
+def _proportion_sample_size_link_only(
+    row_counts_individual_dfs: List[int], max_pairs: int
+):
+    # total valid links is sum of pairwise product of individual row counts
+    # i.e. if frame_counts are [a, b, c, d, ...],
+    # total_links = a*b + a*c + a*d + ... + b*c + b*d + ... + c*d + ...
+    total_links = (
+        sum(row_counts_individual_dfs) ** 2
+        - sum([count**2 for count in row_counts_individual_dfs])
+    ) / 2
+    total_nodes = sum(row_counts_individual_dfs)
+
+    # if we scale each frame by a proportion total_links scales with the square
+    # i.e. (our target) max_pairs == proportion^2 * total_links
+    proportion = (max_pairs / total_links) ** 0.5
+    # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
+    sample_size = proportion * total_nodes
+    return proportion, sample_size
 
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
@@ -76,19 +96,12 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
-        # total valid links is sum of pairwise product of individual row counts
-        # i.e. if frame_counts are [a, b, c, d, ...],
-        # total_links = a*b + a*c + a*d + ... + b*c + b*d + ... + c*d + ...
-        total_links = (
-            sum(frame_counts) ** 2 - sum([count**2 for count in frame_counts])
-        ) / 2
-        total_nodes = sum(frame_counts)
 
-        # if we scale each frame by a proportion total_links scales with the square
-        # i.e. (our target) max_pairs == proportion^2 * total_links
-        proportion = (max_pairs / total_links) ** 0.5
-        # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
-        sample_size = proportion * total_nodes
+        proportion, sample_size = _proportion_sample_size_link_only(
+            frame_counts, max_pairs
+        )
+
+        total_nodes = sum(frame_counts)
 
     if proportion >= 1.0:
         proportion = 1.0

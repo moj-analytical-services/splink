@@ -89,5 +89,5 @@ jobs:
       - name: Run only postgres-marked tests
         run: |
           source .venv/bin/activate
-          pytest -v -m postgres_only tests/
+          pytest -v --durations=0 -m postgres_only tests/
 
