@@ -8,7 +8,6 @@ import awswrangler as wr
 import boto3
 import numpy as np
 import pandas as pd
-from typing import Union
 
 from ..input_column import InputColumn
 from ..linker import Linker
