@@ -1,3 +1,4 @@
+import duckdb
 import numpy as np
 import pandas as pd
 import pytest
@@ -164,24 +165,62 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
 
 def test_u_train_link_only_sample_proportion():
-    # These calculations can be verified by producing a grid of the cartesian product
-    # and crossing out self-joins.  The resultant grid is symmetrical along
-    # the diagonal, with each edge being repeated twice (a-b and b-a), and
-    # so the total links needs to be divided by 2
-    row_counts = [2, 3, 1]
-    max_pairs = 10
+    """
+    Test that the _proportion_sample_size_link_only function returns
+    proportions and sample size that result in max_pairs records being selected
+    constraint.
+
+    Test strategy is to perform the join with all the data
+
+    The use the _proportion_sample_size_link_only with max_pairs to get a
+    proportion that should result in max_pairs records being selected
+
+    We can then apply the proportion to the original data, and check
+    that max_pairs records are selected
+    """
+
+    def count_self_join(row_counts):
+        dfs = []
+
+        for count in row_counts:
+            df = pd.DataFrame(
+                {
+                    "source_dataset_name": [f"dataset_{count}"] * count,
+                    "unique_id": range(count),
+                }
+            )
+            dfs.append(df)
+
+        combined_df = pd.concat(dfs)
+
+        con = duckdb.connect(database=":memory:", read_only=False)
+        con.register("combined_df", combined_df)
+
+        query = """
+            SELECT count(*)
+            FROM combined_df a
+            JOIN combined_df b
+            ON a.source_dataset_name != b.source_dataset_name
+            AND a.source_dataset_name || a.unique_id < b.source_dataset_name || b.unique_id
+        """
+
+        result = con.execute(query).fetchdf()
+        return result.iloc[0, 0]
+
+    row_counts = [10, 20, 30]
+    count = count_self_join(row_counts)
+    # Note need to be careful that max_pairs here results in a 'nice' proportion
+    # that means the proporitoned row counts are integers
+    max_pairs = count / 4
     proportion, sample_size = _proportion_sample_size_link_only(
         row_counts_individual_dfs=row_counts, max_pairs=max_pairs
     )
 
-    total_nodes = sum(row_counts)
+    proportioned_row_counts = [int(c * proportion) for c in row_counts]
 
-    total_links = (total_nodes**2 - sum([x**2 for x in row_counts])) / 2
+    count_proportioned = count_self_join(proportioned_row_counts)
 
-    expected_proportion = (max_pairs / total_links) ** 0.5
-    expected_sample_size = expected_proportion * total_nodes
-    assert pytest.approx(expected_proportion, rel=0.01) == proportion
-    assert pytest.approx(expected_sample_size, rel=0.01) == sample_size
+    assert count_proportioned == max_pairs
 
 
 @mark_with_dialects_excluding()
