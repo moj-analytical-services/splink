@@ -1778,7 +1778,7 @@ class Linker:
         match_weight_threshold=-4,
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
-        and return in order of the splink prediction score.
+        and return in order of the Splink prediction score.
 
         This effectively provides a way of searching the input datasets
         for given record(s)
