@@ -1,7 +1,14 @@
+from typing import TYPE_CHECKING
+
+from splink.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 def _size_density_sql(
