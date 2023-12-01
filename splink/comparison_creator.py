@@ -97,6 +97,25 @@ class ComparisonCreator(ABC):
         m_probabilities: list[float] = None,
         u_probabilities: list[float] = None,
     ) -> "ComparisonCreator":
+        """
+        Configure the comparison creator with m and u probabilities. The first
+        element in the list corresponds to the first comparison level, usually
+        an exact match level. Subsequent elements correspond comparison to
+        levels in sequential order, through to the last element which is usually
+        the 'ELSE' level.
+
+        Example:
+            cc = LevenshteinAtThresholds("name", 2)
+            cc.configure(
+                m_probabilities=[0.9, 0.08, 0.02],
+                u_probabilities=[0.01, 0.05, 0.94]
+                # probabilities for exact match level, levenshtein <= 2, and else
+                # in that order
+            )
+        Args:
+            m_probabilities (list, optional): List of m probabilities
+            u_probabilities (list, optional): List of u probabilities
+        """
         self.m_probabilities = m_probabilities
         self.u_probabilities = u_probabilities
         return self
