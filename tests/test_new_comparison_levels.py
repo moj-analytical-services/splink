@@ -111,6 +111,7 @@ comparison_city = cl.ExactMatch("city").configure(u_probabilities=[0.6, 0.4])
 comparison_email = cl.LevenshteinAtThresholds("email", 3).configure(
     m_probabilities=[0.8, 0.1, 0.1]
 )
+comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
 
 cl_settings = {
     "link_type": "dedupe_only",
