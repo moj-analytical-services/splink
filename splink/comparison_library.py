@@ -4,7 +4,6 @@ from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_library import CustomLevel
-from .dialects import SplinkDialect
 from .misc import ensure_is_iterable
 
 
@@ -43,9 +42,7 @@ class CustomComparison(ComparisonCreator):
             f"but found type {type(cl)} for entry {cl}"
         )
 
-    def create_comparison_levels(
-        self, sql_dialect: SplinkDialect
-    ) -> List[ComparisonLevelCreator]:
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         comparison_level_creators = [
             self._convert_to_creator(cl) for cl in self._comparison_levels
         ]
