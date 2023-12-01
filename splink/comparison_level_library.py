@@ -103,20 +103,23 @@ class CustomLevel(ComparisonLevelCreator):
         sql_condition = self.sql_condition
         if self.base_dialect_str is not None:
             base_dialect = SplinkDialect.from_string(self.base_dialect_str)
-            base_dialect_sqlglot_name = base_dialect.sqlglot_name
-        else:
-            base_dialect_sqlglot_name = None
+            # if we are told it is one dialect, but try to create comparison level
+            # of another, try to translate with sqlglot
+            if sql_dialect != base_dialect:
+                base_dialect_sqlglot_name = base_dialect.sqlglot_name
 
-        # as default, translate condition into our dialect
-        try:
-            sql_condition = _translate_sql_string(
-                sql_condition, sql_dialect.sqlglot_name, base_dialect_sqlglot_name
-            )
-        # if we hit a sqlglot error, assume users knows what they are doing,
-        # e.g. it is something custom / unknown to sqlglot
-        # error will just appear when they try to use it
-        except TokenError:
-            pass
+                # as default, translate condition into our dialect
+                try:
+                    sql_condition = _translate_sql_string(
+                        sql_condition,
+                        sql_dialect.sqlglot_name,
+                        base_dialect_sqlglot_name,
+                    )
+                # if we hit a sqlglot error, assume users knows what they are doing,
+                # e.g. it is something custom / unknown to sqlglot
+                # error will just appear when they try to use it
+                except TokenError:
+                    pass
         return sql_condition
 
     def create_label_for_charts(self) -> str:
