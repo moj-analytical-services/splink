@@ -4,7 +4,12 @@ from splink.unique_id_concat import (
 )
 
 
-def _size_density_sql(self, df_predict, df_clustered, threshold_match_probability):
+def _size_density_sql(
+    linker: Linker,
+    df_predict: SplinkDataFrame,
+    df_clustered: SplinkDataFrame,
+    threshold_match_probability: float,
+):
     """Generates sql for computing cluster size and density at a given threshold.
 
     Args:
@@ -21,7 +26,7 @@ def _size_density_sql(self, df_predict, df_clustered, threshold_match_probabilit
     """
 
     # Get unique id columns from linker
-    uid_cols = self._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj._unique_id_input_columns
     # Create unique id for left-hand edges from unique id and source dataset
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     # Create unique id for clusters table
