@@ -14,9 +14,7 @@ class And(ComparisonLevelCreator):
         if num_levels == 0:
             raise ValueError("Must provide at least one level to And()")
         self.comparison_levels = comparison_levels
-        self.is_null_level = all(
-            getattr(cl, "is_null_level", False) for cl in comparison_levels
-        )
+        self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return " AND ".join(
@@ -35,9 +33,7 @@ class Or(ComparisonLevelCreator):
         if num_levels == 0:
             raise ValueError("Must provide at least one level to Or()")
         self.comparison_levels = comparison_levels
-        self.is_null_level = all(
-            getattr(cl, "is_null_level", False) for cl in comparison_levels
-        )
+        self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return " OR ".join(
