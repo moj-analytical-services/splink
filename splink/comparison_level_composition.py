@@ -18,12 +18,12 @@ class And(ComparisonLevelCreator):
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return " AND ".join(
-            map(lambda cl: cl.create_sql(sql_dialect), self.comparison_levels)
+            map(lambda cl: f"({cl.create_sql(sql_dialect)})", self.comparison_levels)
         )
 
     def create_label_for_charts(self) -> str:
         return " AND ".join(
-            map(lambda cl: cl.create_label_for_charts(), self.comparison_levels)
+            map(lambda cl: f"({cl.create_label_for_charts()})", self.comparison_levels)
         )
 
 
@@ -37,12 +37,12 @@ class Or(ComparisonLevelCreator):
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return " OR ".join(
-            map(lambda cl: cl.create_sql(sql_dialect), self.comparison_levels)
+            map(lambda cl: f"({cl.create_sql(sql_dialect)})", self.comparison_levels)
         )
 
     def create_label_for_charts(self) -> str:
         return " OR ".join(
-            map(lambda cl: cl.create_label_for_charts(), self.comparison_levels)
+            map(lambda cl: f"({cl.create_label_for_charts()})", self.comparison_levels)
         )
 
 
