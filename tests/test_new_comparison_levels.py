@@ -1,3 +1,5 @@
+import pytest
+
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 
@@ -105,10 +107,10 @@ comparison_name = cl.CustomComparison(
         cll.ElseLevel(),
     ],
 )
-comparison_city = cl.ExactMatch("city")
-comparison_email = cl.LevenshteinAtThresholds("email", 3)
-comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
-
+comparison_city = cl.ExactMatch("city").configure(u_probabilities=[0.6, 0.4])
+comparison_email = cl.LevenshteinAtThresholds("email", 3).configure(
+    m_probabilities=[0.8, 0.1, 0.1]
+)
 
 cl_settings = {
     "link_type": "dedupe_only",
@@ -133,3 +135,18 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
     linker.predict()
+
+
+def test_cl_configure():
+    # this is fine:
+    cl.LevenshteinAtThresholds("col", [1, 2, 3]).configure(
+        m_probabilities=[0.4, 0.1, 0.1, 0.3, 0.1]
+    )
+
+    with pytest.raises(ValueError):
+        # too many probabilities
+        cl.ExactMatch("col").configure(m_probabilities=[0.5, 0.3, 0.2])
+
+    with pytest.raises(ValueError):
+        # too few probabilities
+        cl.LevenshteinAtThresholds("col", [1, 2]).configure(u_probabilities=[0.5, 0.5])

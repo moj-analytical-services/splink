@@ -73,9 +73,7 @@ class ExactMatch(ComparisonCreator):
         col_name (str): The name of the column to compare
     """
 
-    def create_comparison_levels(
-        self, sql_dialect: SplinkDialect
-    ) -> List[ComparisonLevelCreator]:
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
             cll.NullLevel(self.col_name),
             cll.ExactMatchLevel(self.col_name),
@@ -120,9 +118,7 @@ class LevenshteinAtThresholds(ComparisonCreator):
         self.thresholds = [*thresholds_as_iterable]
         super().__init__(col_name)
 
-    def create_comparison_levels(
-        self, sql_dialect: SplinkDialect
-    ) -> List[ComparisonLevelCreator]:
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
             cll.NullLevel(self.col_name),
             cll.ExactMatchLevel(self.col_name),
