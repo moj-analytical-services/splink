@@ -28,8 +28,7 @@ except ImportError:
 
 # Conditional skipping of tests if AWS dependencies are not satisfied
 pytestmark = pytest.mark.skipif(
-    not aws_connection_valid,
-    reason="AWS Connection and Dependencies Required"
+    not aws_connection_valid, reason="AWS Connection and Dependencies Required"
 )
 
 # Continue with the rest of the imports
