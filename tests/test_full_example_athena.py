@@ -1,13 +1,21 @@
 import os
+
 import pandas as pd
 import pytest
+
+import splink.athena.comparison_library as cl
+from splink.exceptions import InvalidAWSBucketOrDatabase
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration
 
 # Skip tests if awswrangler or boto3 cannot be imported or
 # if no valid AWS connection exists
 try:
-    import boto3
     import awswrangler as wr
+    import boto3
     from awswrangler.exceptions import InvalidTable
+
     from splink.athena.athena_helpers.athena_utils import _garbage_collection
     from splink.athena.linker import AthenaLinker
 
@@ -31,14 +39,7 @@ pytestmark = pytest.mark.skipif(
     not aws_connection_valid, reason="AWS Connection and Dependencies Required"
 )
 
-# Continue with the rest of the imports
-import splink.athena.comparison_library as cl
-from splink.exceptions import InvalidAWSBucketOrDatabase
-
-from .basic_settings import get_settings_dict
-from .linker_utils import _test_table_registration
-
-# Load in and update our settings
+# Continue with th# Load in and update our settings
 settings_dict = get_settings_dict()
 
 first_name_cc = cl.levenshtein_at_thresholds(
