@@ -1,31 +1,45 @@
 import os
-
-# Skip if no valid boto3 connection exists
-# try:
-import boto3
 import pandas as pd
 import pytest
 
+# Skip tests if awswrangler or boto3 cannot be imported or
+# if no valid AWS connection exists
+try:
+    import boto3
+    import awswrangler as wr
+    from awswrangler.exceptions import InvalidTable
+    from splink.athena.athena_helpers.athena_utils import _garbage_collection
+    from splink.athena.linker import AthenaLinker
+
+    sts_client = boto3.client("sts")
+    response = sts_client.get_caller_identity()
+    aws_connection_valid = response
+    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
+    aws_dependencies_available = True
+except ImportError:
+    # If InvalidTable cannot be imported, we need to create a temp value
+    # to prevent an ImportError
+    class InvalidTable(Exception):
+        ...
+
+    # An import error is equivalent to a missing AWS connection
+    aws_connection_valid = False
+
+
+# Conditional skipping of tests if AWS dependencies are not satisfied
+pytestmark = pytest.mark.skipif(
+    not aws_connection_valid,
+    reason="AWS Connection and Dependencies Required"
+)
+
+# Continue with the rest of the imports
 import splink.athena.comparison_library as cl
 from splink.exceptions import InvalidAWSBucketOrDatabase
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
 
-# Check if a valid s3 connection is available
-try:
-    sts_client = boto3.client("sts")
-    response = sts_client.get_caller_identity()
-    import awswrangler as wr
-
-    from splink.athena.athena_helpers.athena_utils import (
-        _garbage_collection,
-    )
-    from splink.athena.linker import AthenaLinker
-except ImportError:
-    # Skip if no AWS Connection exists
-    pytestmark = pytest.mark.skip(reason="AWS Connection Required")
-
+# Load in and update our settings
 settings_dict = get_settings_dict()
 
 first_name_cc = cl.levenshtein_at_thresholds(
@@ -64,7 +78,6 @@ DB_NAME_WRITE = "data_linking_temp"
 OUTPUT_BUCKET = "alpha-data-linking"
 TABLE_NAME = "__splink__fake_1000_from_splink_demos"
 PANDAS_DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
 
 
 def upload_data(database_to_upload_to):
@@ -82,7 +95,6 @@ def upload_data(database_to_upload_to):
 
 
 def test_full_example_athena(tmp_path):
-
     # Upload our raw data
     upload_data(DB_NAME_READ)
 
@@ -144,7 +156,6 @@ def test_full_example_athena(tmp_path):
 
 def test_athena_garbage_collection():
     # creates a session at least on the platform...
-    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
     upload_data(DB_NAME_READ)
 
     out_fp = "athena_test_garbage_collection"
@@ -253,7 +264,6 @@ def test_athena_garbage_collection():
     ],
 )
 def test_athena_linker_with_pandas(input_tables, table_aliases, link_type):
-    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
     settings = get_settings_dict()
     settings["link_type"] = link_type  # If this setting is common to both tests
 
@@ -276,14 +286,13 @@ def test_athena_linker_with_pandas(input_tables, table_aliases, link_type):
 @pytest.mark.parametrize(
     "input_table, output_database, output_bucket, exception",
     [
-        ("bad_df", DB_NAME_WRITE, OUTPUT_BUCKET, wr.exceptions.InvalidTable),
+        ("bad_df", DB_NAME_WRITE, OUTPUT_BUCKET, InvalidTable),
         (PANDAS_DF, "random_database", OUTPUT_BUCKET, InvalidAWSBucketOrDatabase),
         (PANDAS_DF, DB_NAME_WRITE, "random_bucket", InvalidAWSBucketOrDatabase),
         (PANDAS_DF, "random_database", "random_bucket", InvalidAWSBucketOrDatabase),
     ],
 )
 def test_athena_errors(input_table, output_database, output_bucket, exception):
-    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
     test_file_path = "test_failure"
 
     with pytest.raises(exception):
