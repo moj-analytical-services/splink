@@ -214,7 +214,6 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
-        self._names_of_tables_created_by_splink: set = set()
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         if not isinstance(settings_dict, (dict, type(None))):
@@ -240,8 +239,6 @@ class Linker:
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
         self._em_training_sessions = []
-
-        self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
