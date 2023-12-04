@@ -2007,7 +2007,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         self._settings_obj._blocking_rules_to_generate_predictions = [
-            BlockingRule(f"{uid_l} = {uid_r}")
+            BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
         ]
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
