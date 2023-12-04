@@ -20,8 +20,8 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     uid_cols = linker._settings_obj._unique_id_input_columns
     uid_cols_l = [uid_col.name_l for uid_col in uid_cols]
     uid_cols_r = [uid_col.name_r for uid_col in uid_cols]
-    uid_cols = uid_cols_l + uid_cols_r
-    uid_expr = " || '-' ||".join(uid_cols)
+    uid_col_lr_names = uid_cols_l + uid_cols_r
+    uid_expr = " || '-' ||".join(uid_col_lr_names)
 
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
 

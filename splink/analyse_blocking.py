@@ -172,11 +172,11 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         r_cols_gb.append(r_key)
         using.append(f"key_{i}")
 
-    l_cols_sel = ", ".join(l_cols_sel)
-    r_cols_sel = ", ".join(r_cols_sel)
-    l_cols_gb = ", ".join(l_cols_gb)
-    r_cols_gb = ", ".join(r_cols_gb)
-    using = ", ".join(using)
+    l_cols_sel_str = ", ".join(l_cols_sel)
+    r_cols_sel_str = ", ".join(r_cols_sel)
+    l_cols_gb_str = ", ".join(l_cols_gb)
+    r_cols_gb_str = ", ".join(r_cols_gb)
+    using_str = ", ".join(using)
 
     sqls = []
 
@@ -211,9 +211,9 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         return sqls
 
     sql = f"""
-    select {l_cols_sel}, count(*) as count_l
+    select {l_cols_sel_str}, count(*) as count_l
     from {input_tablename_l}
-    group by {l_cols_gb}
+    group by {l_cols_gb_str}
     """
 
     sqls.append(
@@ -221,9 +221,9 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     )
 
     sql = f"""
-    select {r_cols_sel}, count(*) as count_r
+    select {r_cols_sel_str}, count(*) as count_r
     from {input_tablename_r}
-    group by {r_cols_gb}
+    group by {r_cols_gb_str}
     """
 
     sqls.append(
@@ -234,7 +234,7 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     select *, count_l, count_r, count_l * count_r as block_count
     from __splink__count_comparisons_from_blocking_l
     inner join __splink__count_comparisons_from_blocking_r
-    using ({using})
+    using ({using_str})
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__block_counts"})
