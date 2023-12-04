@@ -1,43 +1,29 @@
-from typing import TYPE_CHECKING
-
 from splink.splink_dataframe import SplinkDataFrame
-from splink.unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
-    _composite_unique_id_from_nodes_sql,
-)
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .linker import Linker
 
 
 def _size_density_sql(
-    linker: Linker,
     df_predict: SplinkDataFrame,
     df_clustered: SplinkDataFrame,
     threshold_match_probability: float,
+    composite_uid_edges_l: str,
+    composite_uid_clusters: str,
 ):
     """Generates sql for computing cluster size and density at a given threshold.
 
     Args:
-        df_predict (SplinkDataFrame): The results of `linker.predict()`
+        df_predict (SplinkDataFrame): The results of `linker.predict()`.
         df_clustered (SplinkDataFrame): The outputs of
-                `linker.cluster_pairwise_predictions_at_threshold()`
+                `linker.cluster_pairwise_predictions_at_threshold()`.
         threshold_match_probability (float): Filter the pairwise match
             predictions to include only pairwise comparisons with a
             match_probability above this threshold.
-        _unique_id_col (string): name of unique id column in settings dict
+        composite_uid_edges_l (str): unique id for left-hand edges.
+        composite_uid_clusters (str): unique id for clusters.
+
 
     Returns:
         sql string for computing cluster size and density
     """
-
-    # Get unique id columns from linker
-    uid_cols = linker._settings_obj._unique_id_input_columns
-    # Create unique id for left-hand edges from unique id and source dataset
-    composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-    # Create unique id for clusters table
-    composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
     sqls = []
     # Count edges per node at or above a given match probability

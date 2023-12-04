@@ -110,6 +110,7 @@ from .term_frequencies import (
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
@@ -2118,11 +2119,19 @@ class Linker:
 
         """
 
+        # Get unique id columns
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # Create unique id for left-hand edges
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        # Create unique id for clusters
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
+
         sqls = _size_density_sql(
-            self,
             df_predict,
             df_clustered,
             threshold_match_probability,
+            composite_uid_edges_l,
+            composite_uid_clusters,
         )
 
         for sql in sqls:
