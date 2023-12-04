@@ -79,14 +79,14 @@ class SqlglotColumnTreeBuilder:
             args["column_name"] = sqlglot_tree.find(exp.Identifier).args["this"]
             return args
 
-        def add_quotes_to_column_name(input_str):
+        def add_quotes_to_column_name(input_str, q_start, q_end):
             if input_str.rfind("[") != -1 and input_str.endswith("]"):
                 index = input_str.rfind("[")
                 name = input_str[:index]
                 key_or_index = input_str[index:]
-                return f'"{name}"{key_or_index}'
+                return f"{q_start}{name}{q_end}{key_or_index}"
             else:
-                return f'"{input_str}"'
+                return f"{q_start}{input_str}{q_end}"
 
         valid_signatures = {
             sqlglot_tree_signature(sqlglot.parse_one("col_name")),
@@ -109,7 +109,8 @@ class SqlglotColumnTreeBuilder:
         # properly escaped using identifier quotes so e.g. if there is a space in the
         # input_str, it will be incorrectly parsed.
         # Possible cases are: first name, lat long[1] or lat long['lat']
-        input_str = add_quotes_to_column_name(input_str)
+        q_start, q_end = _get_dialect_quotes(sqlglot_dialect)
+        input_str = add_quotes_to_column_name(input_str, q_start, q_end)
         try:
             tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
         except sqlglot.ParseError:
