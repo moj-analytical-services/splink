@@ -163,11 +163,10 @@ class InputColumn:
             raw_column_name_or_column_reference
         )
 
-        self.sqlglot_dialect = sql_dialect
         self.col_builder: SqlglotColumnTreeBuilder = (
             SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
                 raw_column_name_or_column_reference,
-                sqlglot_dialect=self.sqlglot_dialect,
+                sqlglot_dialect=self.sql_dialect,
             )
         )
 
