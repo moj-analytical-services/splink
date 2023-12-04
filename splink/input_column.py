@@ -175,7 +175,7 @@ class InputColumn:
         if not sql_dialect and self._settings_obj:
             sql_dialect = self._settings_obj._sql_dialect
 
-        self.sqlglot_name = sql_dialect
+        self.sql_dialect = sql_dialect
 
     def from_settings_obj_else_default(self, key, schema_key=None):
         # Covers the case where no settings obj is set on the comparison level
@@ -213,7 +213,7 @@ class InputColumn:
     @property
     def as_base_dialect(self) -> InputColumn:
         input_column_copy = deepcopy(self)
-        input_column_copy.sqlglot_name = None
+        input_column_copy.sql_dialect = None
         return input_column_copy
 
     @property
@@ -291,7 +291,7 @@ class InputColumn:
     def _quote_if_sql_keyword(self, name: str) -> str:
         if name not in {"group", "index"}:
             return name
-        start, end = _get_dialect_quotes(self.sqlglot_name)
+        start, end = _get_dialect_quotes(self.sql_dialect)
         return start + name + end
 
     def __repr__(self):
