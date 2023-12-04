@@ -21,8 +21,8 @@ class SqlglotColumnTreeBuilder:
 
     For instance, to add a `_l` to column_name, you can do:
 
-        new_column_name = self.col_builder.column_name + "_l"
-        replace(self.col_builder, column_name=new_column_name).sql
+        new_column_name = col_builder.column_name + "_l"
+        replace(col_builder, column_name=new_column_name).sql
 
 
     The `sql` property returns the sql string corresopnding to the tree
@@ -119,6 +119,7 @@ class SqlglotColumnTreeBuilder:
         # properly escaped using identifier quotes so e.g. if there is a space in the
         # input_str, it will be incorrectly parsed.
         # Possible cases are: first name, lat long[1] or lat long['lat']
+        # The space could also be any arbitrary character e.g. first[name
         q_s, q_e = _get_dialect_quotes(sqlglot_dialect)
         input_str = add_quotes_to_column_name(input_str, q_s, q_e)
         try:
