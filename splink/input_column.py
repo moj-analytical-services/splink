@@ -273,13 +273,13 @@ class InputColumn:
 
     @property
     def l_tf_name_as_l(self) -> str:
-        alias = self._tf_prefix + self.col_builder.column_name + "_l"
+        alias = self._tf_prefix + self.unquote().name_l
         name = self._tf_prefix + self.col_builder.column_name
         return replace(self.col_builder, table="l", column_name=name, alias=alias).sql
 
     @property
     def r_tf_name_as_r(self) -> str:
-        alias = self._tf_prefix + self.col_builder.column_name + "_r"
+        alias = self._tf_prefix + self.unquote().name_r
         name = self._tf_prefix + self.col_builder.column_name
         return replace(self.col_builder, table="l", column_name=name, alias=alias).sql
 
