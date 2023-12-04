@@ -110,6 +110,7 @@ from .term_frequencies import (
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
@@ -214,7 +215,6 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
-        self._names_of_tables_created_by_splink: set = set()
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         if not isinstance(settings_dict, (dict, type(None))):
@@ -240,8 +240,6 @@ class Linker:
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
         self._em_training_sessions = []
-
-        self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -2101,7 +2099,7 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: float,
     ):
         """Generates a table containing cluster metrics and returns a Splink dataframe
 
@@ -2119,14 +2117,19 @@ class Linker:
 
         """
 
-        # Get unique row id column name from settings
-        unique_id_col = self._settings_obj._unique_id_column_name
+        # Get unique id columns
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # Create unique id for left-hand edges
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        # Create unique id for clusters
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_sql(
             df_predict,
             df_clustered,
             threshold_match_probability,
-            _unique_id_col=unique_id_col,
+            composite_uid_edges_l,
+            composite_uid_clusters,
         )
 
         for sql in sqls:
