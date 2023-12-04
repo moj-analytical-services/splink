@@ -189,11 +189,11 @@ def test_illegal_names_error():
     # Check some illegal names we want to raise ParserErrors
     illegal_names = ('sur "name"', '"sur" name', '"sur" name[0]', "sur \"name\"['lat']")
     for name in illegal_names:
-        with pytest.raises((ValueError, ParseError)):
+        with pytest.raises((ValueError)):
             InputColumn(name)
 
     # TokenError
     token_errors = ('"sur" name"', 'sur"name')
     for name in token_errors:
-        with pytest.raises(TokenError):
+        with pytest.raises(ValueError):
             InputColumn(name)
