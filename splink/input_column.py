@@ -29,7 +29,7 @@ class SqlglotColumnTreeBuilder:
     """
 
     column_name: str
-    table: str = field(default=None, repr=False)
+    table: str = None
     quoted: bool = True
     bracket_index: int = None
     bracket_key: str = None
