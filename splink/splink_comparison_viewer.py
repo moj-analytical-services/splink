@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Template
 
@@ -121,7 +121,7 @@ def render_splink_comparison_viewer_html(
     template_path = "files/splink_comparison_viewer/template.j2"
     template = Template(read_resource(template_path))
 
-    template_data = {
+    template_data: dict[str, Any] = {
         "comparison_vector_data": json.dumps(
             comparison_vector_data, cls=EverythingEncoder
         ),
