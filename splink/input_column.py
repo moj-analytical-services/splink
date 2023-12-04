@@ -79,14 +79,14 @@ class SqlglotColumnTreeBuilder:
             args["column_name"] = sqlglot_tree.find(exp.Identifier).args["this"]
             return args
 
-        def add_quotes_to_column_name(input_str, q_start, q_end):
+        def add_quotes_to_column_name(input_str, q_s, q_e):
             if input_str.rfind("[") != -1 and input_str.endswith("]"):
                 index = input_str.rfind("[")
                 name = input_str[:index]
                 key_or_index = input_str[index:]
-                return f"{q_start}{name}{q_end}{key_or_index}"
+                return f"{q_s}{name}{q_e}{key_or_index}"
             else:
-                return f"{q_start}{input_str}{q_end}"
+                return f"{q_s}{input_str}{q_e}"
 
         valid_signatures = {
             sqlglot_tree_signature(sqlglot.parse_one("col_name")),
@@ -97,7 +97,7 @@ class SqlglotColumnTreeBuilder:
         # If the raw string parses to a valid signature, use it
         try:
             tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
-        except sqlglot.ParseError:
+        except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:
             sig = sqlglot_tree_signature(tree)
@@ -109,11 +109,11 @@ class SqlglotColumnTreeBuilder:
         # properly escaped using identifier quotes so e.g. if there is a space in the
         # input_str, it will be incorrectly parsed.
         # Possible cases are: first name, lat long[1] or lat long['lat']
-        q_start, q_end = _get_dialect_quotes(sqlglot_dialect)
-        input_str = add_quotes_to_column_name(input_str, q_start, q_end)
+        q_s, q_e = _get_dialect_quotes(sqlglot_dialect)
+        input_str = add_quotes_to_column_name(input_str, q_s, q_e)
         try:
             tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
-        except sqlglot.ParseError:
+        except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:
             sig = sqlglot_tree_signature(tree)
@@ -236,12 +236,12 @@ class InputColumn:
 
     @property
     def l_name_as_l(self) -> str:
-        alias = self.col_builder.column_name + "_l"
+        alias = self.unquote().name_l
         return replace(self.col_builder, table="l", alias=alias).sql
 
     @property
     def r_name_as_r(self) -> str:
-        alias = self.col_builder.column_name + "_r"
+        alias = self.unquote().name_r
         return replace(self.col_builder, table="r", alias=alias).sql
 
     @property
@@ -282,7 +282,7 @@ class InputColumn:
     def r_tf_name_as_r(self) -> str:
         alias = self._tf_prefix + self.unquote().name_r
         name = self._tf_prefix + self.col_builder.column_name
-        return replace(self.col_builder, table="l", column_name=name, alias=alias).sql
+        return replace(self.col_builder, table="r", column_name=name, alias=alias).sql
 
     @property
     def l_r_tf_names_as_l_r(self) -> list[str]:
