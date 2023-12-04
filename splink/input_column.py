@@ -13,8 +13,9 @@ from .sql_transform import sqlglot_tree_signature
 @dataclass(frozen=True)
 class SqlglotColumnTreeBuilder:
     """
-    Builds a sqlglot expression tree represeting
-    a column or column reference from its arguments.
+    Builds a sqlglot expression tree representing a column or column reference
+    from its arguments.
+
     Call `sql` with a sqlglot dialect to get the SQL string.
     """
 
@@ -127,6 +128,13 @@ class SqlglotColumnTreeBuilder:
 class InputColumn:
     """
     Represents a column or column reference in the input data to Splink.
+
+    Handles identifier quotes for the user, so the user can e.g. provide column names
+    like "first name" instead of having to use '"first name"'.  The rationale is
+    that:
+    -  many users won't understand the difference between ` ' and " in SQL and are
+    unlikely to provide correct identifier quotes
+    - it's inconvenient and fiddly in Python to provide identifier quotes in a string
 
     Handles the various transformations needed by Splink such as adding `_l` and `_r`,
     table names etc.
