@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from functools import partial
 
 import pytest
-from sqlglot.errors import ParseError, TokenError
 
 from splink.input_column import InputColumn, _get_dialect_quotes
 

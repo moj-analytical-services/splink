@@ -200,13 +200,13 @@ class InputColumn:
 
     def unquote(self) -> InputColumn:
         self_copy = deepcopy(self)
-        b = replace(self.col_builder, quoted=False)
+        b = replace(self_copy.col_builder, quoted=False)
         self_copy.col_builder = b
         return self_copy
 
     def quote(self) -> InputColumn:
         self_copy = deepcopy(self)
-        b = replace(self.col_builder, quoted=True)
+        b = replace(self_copy.col_builder, quoted=True)
         self_copy.col_builder = b
         return self_copy
 
