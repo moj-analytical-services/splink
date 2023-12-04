@@ -131,6 +131,7 @@ exclude = [
     # modules getting substantial rewrites:
     '.*comparison_imports\.py$',
     '.*comparison.*library\.py',
+    'comparison_level_composition',
     # modules with large number of errors
     '.*linker\.py',
 ]
