@@ -101,9 +101,7 @@ class SettingsValidator:
 
         col_list = ensure_is_list(col_list)
         if as_tree:
-            col_list = [
-                c.base_column_tree.as_sqlglot_expression_tree() for c in col_list
-            ]
+            col_list = [c.col_builder.as_sqlglot_tree for c in col_list]
         return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
 
     def remove_prefix_and_suffix_from_column(
