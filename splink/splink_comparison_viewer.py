@@ -46,11 +46,11 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     from __splink__df_predict
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict_with_row_id",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = """
     select *,
@@ -60,11 +60,11 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     from __splink__df_predict_with_row_id
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict_with_row_num",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = f"""
     select *
@@ -72,12 +72,12 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     where row_example_index <= {example_rows_per_category}
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_example_rows",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
@@ -98,12 +98,12 @@ def comparison_viewer_table_sqls(
     on ser.gam_concat = cvd.gam_concat
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_comparison_viewer_table",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
     return sqls
 
 
