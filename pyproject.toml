@@ -59,6 +59,11 @@ optional = true
 pytest-benchmark = "^4"
 lzstring = "1.0.4"
 
+[tool.poetry.group.typechecking]
+optional = true
+[tool.poetry.group.typechecking.dependencies]
+mypy = "1.7.0"
+
 [tool.poetry.group.demos]
 [tool.poetry.group.demos.dependencies]
 importlib-resources = "5.4.0"
@@ -118,3 +123,17 @@ markers = [
     "sqlite",
     "sqlite_only",
 ]
+
+[tool.mypy]
+packages = "splink"
+# temporary exclusions
+exclude = [
+    # modules getting substantial rewrites:
+    '.*comparison_imports\.py$',
+    '.*comparison.*library\.py',
+    # modules with large number of errors
+    '.*linker\.py',
+]
+# for now at least allow implicit optionals
+# to cut down on noise. Easy to fix.
+implicit_optional = true
