@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 def _is_exact_match(sql_syntax_tree):
     signature = sqlglot_tree_signature(sql_syntax_tree)
-    if signature != "eq column column identifier identifier":
+
+    if signature != sqlglot_tree_signature(sqlglot.parse_one("col_l = col_r")):
         return False
 
     identifiers = []

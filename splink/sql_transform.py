@@ -69,16 +69,30 @@ def add_quotes_and_table_prefix(syntax_tree, table_name):
     return tree
 
 
-def sqlglot_tree_signature(tree):
-    """
-    A short string representation of a SQLglot tree.
+def sqlglot_tree_signature(sqlglot_tree):
+    """A short string representation of a SQLglot tree.
 
-    Allows you to easily check that a tree contains certain nodes
+    Allows you to check the type and placement
+    of nodes in the AST are as expected.
 
-    For instance, the string "robin['hi']" becomes:
-    'bracket column literal identifier'
-    """
-    return " ".join(n[0].key for n in tree.walk())
+    e.g. lower(hello) -> Lower(Column(Identifier))"""
+
+    def _signature(sub_tree):
+        if not isinstance(sub_tree, dict) or "class" not in sub_tree:
+            return ""
+
+        child_signatures = [
+            _signature(child)
+            for child in sub_tree.get("args", {}).values()
+            if _signature(child)
+        ]
+
+        if child_signatures:
+            return f"{sub_tree['class']}({', '.join(child_signatures)})"
+        else:
+            return sub_tree["class"]
+
+    return _signature(sqlglot_tree.dump())
 
 
 def remove_quotes_from_identifiers(tree) -> exp.Expression:
