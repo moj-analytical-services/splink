@@ -16,7 +16,16 @@ class SqlglotColumnTreeBuilder:
     Builds a sqlglot expression tree representing a column or column reference
     from its arguments.
 
-    Call `sql` with a sqlglot dialect to get the SQL string.
+    Since this is a frozen dataclass, it's easy to modify the column or column
+    reference using the `replace` method.
+
+    For instance, to add a `_l` to column_name, you can do:
+
+        new_column_name = self.col_builder.column_name + "_l"
+        replace(self.col_builder, column_name=new_column_name).sql
+
+
+    The `sql` property returns the sql string corresopnding to the tree
     """
 
     column_name: str
@@ -141,7 +150,6 @@ class InputColumn:
 
     Uses `SqlglotColumnTreeBuilder` to manipulate the sqlglot expression tree
     representing the column or column reference
-
 
     The input can be either the raw identifier, or an identifier with
     SQL-specific identifier quotes.
