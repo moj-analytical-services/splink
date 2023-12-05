@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from sqlglot import parse_one
+from sqlglot import TokenError, parse_one
 
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
 from .comparison_level_creator import ComparisonLevelCreator
@@ -26,6 +26,16 @@ def unsupported_splink_dialects(unsupported_dialects: List[str]):
         return wrapper
 
     return decorator
+
+
+def _translate_sql_string(
+    sqlglot_base_dialect_sql: str,
+    to_sqlglot_dialect: str,
+    from_sqlglot_dialect: str = None,
+) -> str:
+    tree = parse_one(sqlglot_base_dialect_sql, read=from_sqlglot_dialect)
+
+    return tree.sql(dialect=to_sqlglot_dialect)
 
 
 def validate_distance_threshold(
@@ -63,6 +73,62 @@ class ElseLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return "All other comparisons"
+
+
+class CustomLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        sql_condition: str,
+        label_for_charts: str = None,
+        base_dialect_str: str = None,
+    ):
+        """Represents a comparison level with a custom sql expression
+
+        Must be in a form suitable for use in a SQL CASE WHEN expression
+        e.g. "substr(name_l, 1, 1) = substr(name_r, 1, 1)"
+
+        Args:
+            sql_condition (str): SQL condition to assess similarity
+            label_for_charts (str, optional): A label for this level to be used in
+                charts. Default None, so that `sql_condition` is used
+            base_dialect_str (str, optional): If specified, the SQL dialect that
+                this expression will parsed as when attempting to translate to
+                other backends
+
+        """
+        self.sql_condition = sql_condition
+        self.label_for_charts = label_for_charts
+        self.base_dialect_str = base_dialect_str
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        sql_condition = self.sql_condition
+        if self.base_dialect_str is not None:
+            base_dialect = SplinkDialect.from_string(self.base_dialect_str)
+            # if we are told it is one dialect, but try to create comparison level
+            # of another, try to translate with sqlglot
+            if sql_dialect != base_dialect:
+                base_dialect_sqlglot_name = base_dialect.sqlglot_name
+
+                # as default, translate condition into our dialect
+                try:
+                    sql_condition = _translate_sql_string(
+                        sql_condition,
+                        sql_dialect.sqlglot_name,
+                        base_dialect_sqlglot_name,
+                    )
+                # if we hit a sqlglot error, assume users knows what they are doing,
+                # e.g. it is something custom / unknown to sqlglot
+                # error will just appear when they try to use it
+                except TokenError:
+                    pass
+        return sql_condition
+
+    def create_label_for_charts(self) -> str:
+        return (
+            self.label_for_charts
+            if self.label_for_charts is not None
+            else self.sql_condition
+        )
 
 
 class ExactMatchLevel(ComparisonLevelCreator):
@@ -310,9 +376,7 @@ class DatediffLevel(ComparisonLevelCreator):
             f"<= {self.date_threshold}"
         )
 
-        tree = parse_one(sqlglot_base_dialect_sql)
-
-        return tree.sql(dialect=sqlglot_dialect_name)
+        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
 
     def create_label_for_charts(self) -> str:
         return (
@@ -403,9 +467,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
             ARRAY_SIZE(ARRAY_INTERSECT({col.name_l}, {col.name_r}))
                 >= {self.min_intersection}
                 """
-        tree = parse_one(sqlglot_base_dialect_sql)
-
-        return tree.sql(dialect=sqlglot_dialect_name)
+        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
 
     def create_label_for_charts(self) -> str:
         return f"Array intersection size >= {self.min_intersection}"

@@ -7,6 +7,10 @@ class SplinkException(Exception):
     pass
 
 
+class InvalidAWSBucketOrDatabase(Exception):
+    pass
+
+
 class EMTrainingException(SplinkException):
     pass
 
