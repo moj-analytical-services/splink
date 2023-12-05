@@ -5,7 +5,6 @@ from typing import Iterable, Union, final
 from .blocking import BlockingRule
 from .comparison_creator import ComparisonLevelCreator
 from .comparison_level import ComparisonLevel
-from .comparison_level_library import CustomLevel
 from .dialects import SplinkDialect
 
 
@@ -13,8 +12,10 @@ def _ensure_is_comparison_level_creator(
     cl: Union[ComparisonLevelCreator, dict]
 ) -> ComparisonLevelCreator:
     if isinstance(cl, dict):
+        from .comparison_level_library import CustomLevel
+
         # TODO: proper dict => level method
-        return CustomLevel(**dict)
+        return CustomLevel(**cl)
     if isinstance(cl, ComparisonLevelCreator):
         return cl
     raise TypeError(
@@ -30,8 +31,7 @@ class _Merge(ComparisonLevelCreator):
         if num_levels == 0:
             raise ValueError(f"Must provide at least one level to {type(self)}()")
         self.comparison_levels = [
-            _ensure_is_comparison_level_creator(cl)
-            for cl in comparison_levels
+            _ensure_is_comparison_level_creator(cl) for cl in comparison_levels
         ]
         self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
 
