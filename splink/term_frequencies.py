@@ -10,7 +10,7 @@ from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
 
 from .charts import altair_or_json, load_chart_definition
-from .input_column import InputColumn, remove_quotes_from_identifiers
+from .input_column import InputColumn
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -20,11 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(input_column: InputColumn):
-    input_col_no_quotes = remove_quotes_from_identifiers(
-        input_column.input_name_as_tree
-    )
-
-    input_column = input_col_no_quotes.sql().replace(" ", "_")
+    input_column = input_column.unquote().name.replace(" ", "_")
     return f"__splink__df_tf_{input_column}"
 
 
