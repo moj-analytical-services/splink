@@ -60,7 +60,7 @@ class Not(ComparisonLevelCreator):
     def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict]):
         self.comparison_level = _ensure_is_comparison_level_creator(comparison_level)
         # turn null levels into non-null levels, otherwise do nothing
-        if comparison_level.is_null_level:
+        if self.comparison_level.is_null_level:
             self.is_null_level = False
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
