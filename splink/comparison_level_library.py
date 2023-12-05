@@ -71,14 +71,15 @@ class NullLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
-        return f"{self.col_name} is NULL"
+
+        return f"{self.col_expression.name} is NULL"
 
 
 class ElseLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return "ELSE"
 
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
         return "All other comparisons"
 
 
@@ -172,31 +173,33 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
 class ColumnsReversedLevel(ComparisonLevelCreator):
     def __init__(self, col_name_1: str, col_name_2: str):
-        """Represents a comparison level where the columns are reversed.  For example,
+        """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
 
         Args:
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
         """
-        self.col_name_1 = col_name_1
-        self.col_name_2 = col_name_2
+        self.col_expression_1 = input_expression_factory(col_name_1)
+        self.col_expression_2 = input_expression_factory(col_name_2)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        input_col_1 = input_expression_factory(
-            self.col_name_1, splink_dialect=sql_dialect
-        )
-        input_col_2 = input_expression_factory(
-            self.col_name_2, splink_dialect=sql_dialect
-        )
+        self.col_expression_1.sql_dialect = sql_dialect
+        self.col_expression_2.sql_dialect = sql_dialect
+        col_1 = self.col_expression_1
+        col_2 = self.col_expression_2
 
         return (
-            f"{input_col_1.name_l} = {input_col_2.name_r} "
-            f"AND {input_col_1.name_r} = {input_col_2.name_l}"
+            f"{col_1.name_l} = {col_2.name_r} " f"AND {col_1.name_r} = {col_2.name_l}"
         )
 
-    def create_label_for_charts(self) -> str:
-        return f"Match on reversed cols: {self.col_name_1} and {self.col_name_2}"
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression_1.sql_dialect = sql_dialect
+        self.col_expression_2.sql_dialect = sql_dialect
+        col_1 = self.col_expression_1
+        col_2 = self.col_expression_2
+
+        return f"Match on reversed cols: {col_1.name} and {col_2.name}"
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
@@ -210,16 +213,19 @@ class LevenshteinLevel(ComparisonLevelCreator):
             distance_threshold (int): The threshold to use to assess
                 similarity
         """
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         lev_fn = sql_dialect.levenshtein_function_name
         return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
-    def create_label_for_charts(self) -> str:
-        return f"Levenshtein distance of {self.col_name} <= {self.distance_threshold}"
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"Levenshtein distance of {col.name} <= {self.distance_threshold}"
 
 
 class DamerauLevenshteinLevel(ComparisonLevelCreator):
@@ -233,19 +239,18 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
             distance_threshold (int): The threshold to use to assess
                 similarity
         """
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
         return f"{dm_lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
-    def create_label_for_charts(self) -> str:
-        return (
-            f"Damerau-Levenshtein distance of {self.col_name} "
-            f"<= {self.distance_threshold}"
-        )
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        return f"Damerau-Levenshtein distance of {self.col_expression.name} <= {self.distance_threshold}"
 
 
 class JaroWinklerLevel(ComparisonLevelCreator):
@@ -260,7 +265,7 @@ class JaroWinklerLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -269,14 +274,15 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         jw_fn = sql_dialect.jaro_winkler_function_name
         return f"{jw_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
-    def create_label_for_charts(self) -> str:
-        return (
-            f"Jaro-Winkler distance of '{self.col_name} >= {self.distance_threshold}'"
-        )
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"Jaro-Winkler distance of {col.name} >= {self.distance_threshold}"
 
 
 class JaroLevel(ComparisonLevelCreator):
@@ -295,7 +301,7 @@ class JaroLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -304,12 +310,15 @@ class JaroLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         j_fn = sql_dialect.jaro_function_name
         return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
-    def create_label_for_charts(self) -> str:
-        return f"Jaro distance of '{self.col_name} >= {self.distance_threshold}'"
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"Jaro distance of '{col.name} >= {self.distance_threshold}'"
 
 
 class JaccardLevel(ComparisonLevelCreator):
@@ -362,7 +371,7 @@ class DatediffLevel(ComparisonLevelCreator):
             cast_strings_to_date (bool): Whether to cast string columns to date format
             date_format (str): The format of the date string
         """
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.date_threshold = date_threshold
         self.date_metric = date_metric
         self.cast_strings_to_date = cast_strings_to_date
@@ -379,23 +388,28 @@ class DatediffLevel(ComparisonLevelCreator):
             raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
 
         sqlglot_dialect_name = sql_dialect.sqlglot_name
-        date_col = InputColumn(self.col_name)
-        date_col_l, date_col_r = date_col.names_l_r
 
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
 
         if self.cast_strings_to_date:
-            date_col_l = f"STR_TO_TIME({date_col_l}, '{self.date_format}')"
-            date_col_r = f"STR_TO_TIME({date_col_r}, '{self.date_format}')"
+            pass
 
+        # Use col as placeholder here because there's no guarantee the complex
+        # transformed InputExpression will autotranspile
         sqlglot_base_dialect_sql = (
-            f"ABS(DATE_DIFF({date_col_l}, "
-            f"{date_col_r}, '{self.date_metric}'))"
+            f"ABS(DATE_DIFF(___col____l, "
+            f"___col____r, '{self.date_metric}'))"
             f"<= {self.date_threshold}"
         )
 
-        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
 
     def create_label_for_charts(self) -> str:
         return (

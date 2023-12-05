@@ -12,7 +12,7 @@ class ComparisonLevelCreator(ABC):
         pass
 
     @abstractmethod
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
         pass
 
     @final
@@ -30,7 +30,7 @@ class ComparisonLevelCreator(ABC):
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         level_dict = {
             "sql_condition": self.create_sql(sql_dialect),
-            "label_for_charts": self.create_label_for_charts(),
+            "label_for_charts": self.create_label_for_charts(sql_dialect),
         }
 
         # additional config options get passed only if created via .configure()
