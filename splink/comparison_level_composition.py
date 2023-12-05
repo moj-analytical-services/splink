@@ -49,14 +49,44 @@ class _Merge(ComparisonLevelCreator):
 
 
 class And(_Merge):
+    """
+    Represents a comparison level that is an 'AND' of other comparison levels
+
+    Merge multiple ComparisonLevelCreators into a single ComparisonLevelCreator by
+    merging their SQL conditions using a logical "AND".
+
+    Args:
+        *comparison_levels (ComparisonLevelCreator | dict): These represent the
+            comparison levels you wish to combine via 'AND'
+    """
     _clause = "AND"
 
 
 class Or(_Merge):
+    """
+    Represents a comparison level that is an 'OR' of other comparison levels
+
+    Merge multiple ComparisonLevelCreators into a single ComparisonLevelCreator by
+    merging their SQL conditions using a logical "OR".
+
+    Args:
+        *comparison_levels (ComparisonLevelCreator | dict): These represent the
+            comparison levels you wish to combine via 'OR'
+    """
     _clause = "OR"
 
 
 class Not(ComparisonLevelCreator):
+    """
+    Represents a comparison level that is the negation of another comparison level
+
+    Resulting ComparisonLevelCreator is equivalent to the passed ComparisonLevelCreator
+    but with SQL conditions negated with logical "NOY".
+
+    Args:
+        *comparison_level (ComparisonLevelCreator | dict): This represents the
+            comparison level you wish to negate with 'NOT'
+    """
     def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict]):
         self.comparison_level = _ensure_is_comparison_level_creator(comparison_level)
         # turn null levels into non-null levels, otherwise do nothing
