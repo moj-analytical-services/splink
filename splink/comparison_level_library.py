@@ -5,7 +5,6 @@ from sqlglot import TokenError, parse_one
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
-from .input_column import InputColumn
 from .input_expression import InputExpression
 
 
@@ -60,7 +59,10 @@ def validate_distance_threshold(
 
 
 class NullLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str):
+    def __init__(
+        self,
+        col_name: Union[str, InputExpression],
+    ):
         self.col_expression = input_expression_factory(col_name)
         self.is_null_level = True
 
@@ -140,7 +142,11 @@ class CustomLevel(ComparisonLevelCreator):
 
 
 class ExactMatchLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, term_frequency_adjustments: bool = False):
+    def __init__(
+        self,
+        col_name: Union[str, InputExpression],
+        term_frequency_adjustments: bool = False,
+    ):
         """Represents a comparison level where there is an exact match
 
         e.g. val_l = val_r
@@ -172,7 +178,11 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
 
 class ColumnsReversedLevel(ComparisonLevelCreator):
-    def __init__(self, col_name_1: str, col_name_2: str):
+    def __init__(
+        self,
+        col_name_1: Union[str, InputExpression],
+        col_name_2: Union[str, InputExpression],
+    ):
         """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
 
@@ -203,7 +213,7 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: int):
+    def __init__(self, col_name: Union[str, InputExpression], distance_threshold: int):
         """A comparison level using a sqlglot_dialect_name distance function
 
         e.g. levenshtein(val_l, val_r) <= distance_threshold
@@ -229,7 +239,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
 
 
 class DamerauLevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: int):
+    def __init__(self, col_name: Union[str, InputExpression], distance_threshold: int):
         """A comparison level using a Damerau-Levenshtein distance function
 
         e.g. damerau_levenshtein(val_l, val_r) <= distance_threshold
@@ -254,7 +264,11 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
 
 
 class JaroWinklerLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+    def __init__(
+        self,
+        col_name: Union[str, InputExpression],
+        distance_threshold: Union[int, float],
+    ):
         """A comparison level using a Jaro-Winkler distance function
 
         e.g. `jaro_winkler(val_l, val_r) >= distance_threshold`
@@ -322,7 +336,11 @@ class JaroLevel(ComparisonLevelCreator):
 
 
 class JaccardLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+    def __init__(
+        self,
+        col_name: Union[str, InputExpression],
+        distance_threshold: Union[int, float],
+    ):
         """A comparison level using a Jaccard distance function
 
         e.g. `jaccard(val_l, val_r) >= distance_threshold`
@@ -333,7 +351,7 @@ class JaccardLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -342,18 +360,21 @@ class JaccardLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         j_fn = sql_dialect.jaccard_function_name
         return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
-    def create_label_for_charts(self) -> str:
-        return f"Jaccard distance of '{self.col_name} >= {self.distance_threshold}'"
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"Jaccard distance of '{col.name} >= {self.distance_threshold}'"
 
 
 class DatediffLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: str,
+        col_name: Union[str, InputExpression],
         date_threshold: int,
         date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
         cast_strings_to_date: bool = False,
@@ -387,7 +408,8 @@ class DatediffLevel(ComparisonLevelCreator):
         if self.date_metric not in ("day", "month", "year"):
             raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
 
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
@@ -402,7 +424,7 @@ class DatediffLevel(ComparisonLevelCreator):
             f"___col____r, '{self.date_metric}'))"
             f"<= {self.date_threshold}"
         )
-
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
         translated = _translate_sql_string(
             sqlglot_base_dialect_sql, sqlglot_dialect_name
         )
@@ -411,9 +433,11 @@ class DatediffLevel(ComparisonLevelCreator):
         translated = translated.replace("___col____r", col.name_r)
         return translated
 
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         return (
-            f"Date difference of '{self.col_name} <= "
+            f"Date difference of '{col.name} <= "
             f"{self.date_threshold} {self.date_metric}'"
         )
 
@@ -443,18 +467,24 @@ class DistanceInKMLevel(ComparisonLevelCreator):
                 capturing nulls elsewhere in your comparison level.
 
         """
-        self.lat_col = lat_col
-        self.long_col = long_col
+        self.lat_col_expression = input_expression_factory(lat_col)
+        self.long_col_expression = input_expression_factory(long_col)
+
         self.km_threshold = km_threshold
         self.not_null = not_null
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        lat_col_ic = input_expression_factory(self.lat_col, splink_dialect=sql_dialect)
-        long_col_ic = input_expression_factory(
-            self.long_col, splink_dialect=sql_dialect
-        )
-        lat_l, lat_r = lat_col_ic.names_l_r
-        long_l, long_r = long_col_ic.names_l_r
+        input_expression_factory(self.lat_col, splink_dialect=sql_dialect)
+        input_expression_factory(self.long_col, splink_dialect=sql_dialect)
+
+        self.lat_col_expression.sql_dialect = sql_dialect
+        lat_col = self.lat_col_expression
+
+        self.long_col_expression.sql_dialect = sql_dialect
+        long_col = self.long_col_expression
+
+        lat_l, lat_r = lat_col.name_l, lat_col.name_r
+        long_l, long_r = long_col.name_l, long_col.name_r
 
         distance_km_sql = (
             f"{great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} "
@@ -469,7 +499,7 @@ class DistanceInKMLevel(ComparisonLevelCreator):
 
         return distance_km_sql
 
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
         return f"Distance less than {self.km_threshold}km"
 
 
@@ -484,7 +514,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
                 intersection of arrays for this comparison level. Defaults to 1
         """
 
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.min_intersection = min_intersection
 
     @unsupported_splink_dialects(["sqlite"])
@@ -494,17 +524,22 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
 
         sqlglot_dialect_name = sql_dialect.sqlglot_name
 
-        # Use undialected InputColumn here since it's being interpolated into
-        # base dialected sql
-        col = InputColumn(self.col_name)
-
         sqlglot_base_dialect_sql = f"""
-            ARRAY_SIZE(ARRAY_INTERSECT({col.name_l}, {col.name_r}))
+            ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r))
                 >= {self.min_intersection}
                 """
-        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
 
-    def create_label_for_charts(self) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
+
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
         return f"Array intersection size >= {self.min_intersection}"
 
 
@@ -525,11 +560,12 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
         if not 0 <= percentage_threshold <= 1:
             raise ValueError("percentage_threshold must be between 0 and 1")
 
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.percentage_threshold = percentage_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         return (
             f"(ABS({col.name_l} - {col.name_r}) / "
             f"(CASE "
@@ -538,8 +574,10 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
             f"END)) < {self.percentage_threshold}"
         )
 
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         return (
-            f"Percentage difference of '{self.col_name}' "
+            f"Percentage difference of '{col.name}' "
             f"within {self.percentage_threshold:,.2%}"
         )

@@ -1,8 +1,6 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
 
-from .input_column import InputColumn
-
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
 
@@ -144,7 +142,8 @@ class PostgresDialect(SplinkDialect):
         if clc.date_format is None:
             clc.date_format = "yyyy-MM-dd"
 
-        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
 
         if clc.cast_strings_to_date:
             datediff_args = f"""
@@ -177,7 +176,8 @@ class PostgresDialect(SplinkDialect):
         """
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
-        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
         threshold = clc.min_intersection
         return f"""
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
