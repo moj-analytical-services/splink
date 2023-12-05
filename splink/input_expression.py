@@ -30,11 +30,13 @@ class InputExpression:
     level creator into a linker.
     """
 
-    def __init__(self, sql_expression: str):
+    def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
         self.raw_sql_expression = sql_expression
         self.operations = []
+        if sql_dialect is not None:
+            self.sql_dialect: SplinkDialect = sql_dialect
 
-    def parse_input_string(self, sqlglot_dialect: str):
+    def parse_input_string(self, dialect: SplinkDialect):
         """
         The input into an InputExpression can be
             - a column name or column reference e.g. first_name, first name
@@ -59,7 +61,7 @@ class InputExpression:
 
         # Otherwise, assume it's a column name or reference which may need quoting
         return SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
-            self.raw_sql_expression, sqlglot_dialect
+            self.raw_sql_expression, dialect.sqlglot_name
         ).sql
 
     def apply_operations(self, name, dialect):
@@ -168,18 +170,24 @@ class InputExpression:
 
         return self
 
-    def _name_l(self, sql_dialect_str: str):
-        sql_expression = self.parse_input_string(sql_dialect_str)
-        dialect = SplinkDialect.from_string(sql_dialect_str)
-        base_name = add_suffix_to_all_column_identifiers(
-            sql_expression, "_l", dialect.sqlglot_name
-        )
-        return self.apply_operations(base_name, dialect)
+    @property
+    def name(self) -> str:
+        sql_expression = self.parse_input_string(self.sql_dialect)
+        return self.apply_operations(sql_expression, self.sql_dialect)
 
-    def _name_r(self, sql_dialect_str: str):
-        self.parse_input_string(sql_dialect_str)
-        dialect = SplinkDialect.from_string(sql_dialect_str)
+    @property
+    def name_l(self) -> str:
+        sql_expression = self.parse_input_string(self.sql_dialect)
+
         base_name = add_suffix_to_all_column_identifiers(
-            self.sql_expression, "_r", dialect.sqlglot_name
+            sql_expression, "_l", self.sql_dialect.sqlglot_name
         )
-        return self.apply_operations(base_name, dialect)
+        return self.apply_operations(base_name, self.sql_dialect)
+
+    @property
+    def name_r(self) -> str:
+        sql_expression = self.parse_input_string(self.sql_dialect)
+        base_name = add_suffix_to_all_column_identifiers(
+            sql_expression, "_r", self.sql_dialect.sqlglot_name
+        )
+        return self.apply_operations(base_name, self.sql_dialect)

@@ -6,10 +6,16 @@ from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
 from .input_column import InputColumn
+from .input_expression import InputExpression
 
 
-def input_column_factory(name, splink_dialect: SplinkDialect) -> InputColumn:
-    return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
+def input_expression_factory(
+    str_or_input_expression: Union[str, InputExpression]
+) -> InputExpression:
+    if isinstance(str_or_input_expression, InputExpression):
+        return str_or_input_expression
+    elif isinstance(str_or_input_expression, str):
+        return InputExpression(str_or_input_expression)
 
 
 def unsupported_splink_dialects(unsupported_dialects: List[str]):
@@ -55,14 +61,16 @@ def validate_distance_threshold(
 
 class NullLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str):
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
         self.is_null_level = True
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         return f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
 
-    def create_label_for_charts(self) -> str:
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
         return f"{self.col_name} is NULL"
 
 
@@ -147,15 +155,19 @@ class ExactMatchLevel(ComparisonLevelCreator):
             config["tf_adjustment_column"] = col_name
             config["tf_adjustment_weight"] = 1.0
             # leave tf_minimum_u_value as None
-        self.col_name = col_name
+
+        self.col_expression = input_expression_factory(col_name)
+
         self.configure(**config)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
         return f"{col.name_l} = {col.name_r}"
 
-    def create_label_for_charts(self) -> str:
-        return f"Exact match on {self.col_name}"
+    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        return f"Exact match on {self.col_expression.name}"
 
 
 class ColumnsReversedLevel(ComparisonLevelCreator):
@@ -171,8 +183,12 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self.col_name_2 = col_name_2
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        input_col_1 = input_column_factory(self.col_name_1, splink_dialect=sql_dialect)
-        input_col_2 = input_column_factory(self.col_name_2, splink_dialect=sql_dialect)
+        input_col_1 = input_expression_factory(
+            self.col_name_1, splink_dialect=sql_dialect
+        )
+        input_col_2 = input_expression_factory(
+            self.col_name_2, splink_dialect=sql_dialect
+        )
 
         return (
             f"{input_col_1.name_l} = {input_col_2.name_r} "
@@ -198,7 +214,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         lev_fn = sql_dialect.levenshtein_function_name
         return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
@@ -221,7 +237,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
         return f"{dm_lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
@@ -253,7 +269,7 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         jw_fn = sql_dialect.jaro_winkler_function_name
         return f"{jw_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
@@ -264,7 +280,11 @@ class JaroWinklerLevel(ComparisonLevelCreator):
 
 
 class JaroLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+    def __init__(
+        self,
+        col_name: Union[str, InputExpression],
+        distance_threshold: Union[int, float],
+    ):
         """A comparison level using a Jaro distance function
 
         e.g. `jaro(val_l, val_r) >= distance_threshold`
@@ -284,7 +304,7 @@ class JaroLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         j_fn = sql_dialect.jaro_function_name
         return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
@@ -313,7 +333,7 @@ class JaccardLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         j_fn = sql_dialect.jaccard_function_name
         return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
@@ -415,8 +435,10 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         self.not_null = not_null
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        lat_col_ic = input_column_factory(self.lat_col, splink_dialect=sql_dialect)
-        long_col_ic = input_column_factory(self.long_col, splink_dialect=sql_dialect)
+        lat_col_ic = input_expression_factory(self.lat_col, splink_dialect=sql_dialect)
+        long_col_ic = input_expression_factory(
+            self.long_col, splink_dialect=sql_dialect
+        )
         lat_l, lat_r = lat_col_ic.names_l_r
         long_l, long_r = long_col_ic.names_l_r
 
@@ -493,7 +515,7 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
         self.percentage_threshold = percentage_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        col = input_expression_factory(self.col_name, splink_dialect=sql_dialect)
         return (
             f"(ABS({col.name_l} - {col.name_r}) / "
             f"(CASE "
