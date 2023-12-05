@@ -59,6 +59,7 @@ class And(_Merge):
         *comparison_levels (ComparisonLevelCreator | dict): These represent the
             comparison levels you wish to combine via 'AND'
     """
+
     _clause = "AND"
 
 
@@ -73,6 +74,7 @@ class Or(_Merge):
         *comparison_levels (ComparisonLevelCreator | dict): These represent the
             comparison levels you wish to combine via 'OR'
     """
+
     _clause = "OR"
 
 
@@ -87,6 +89,7 @@ class Not(ComparisonLevelCreator):
         *comparison_level (ComparisonLevelCreator | dict): This represents the
             comparison level you wish to negate with 'NOT'
     """
+
     def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict]):
         self.comparison_level = _ensure_is_comparison_level_creator(comparison_level)
         # turn null levels into non-null levels, otherwise do nothing
