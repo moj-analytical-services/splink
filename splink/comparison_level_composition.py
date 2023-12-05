@@ -33,7 +33,7 @@ class _Merge(ComparisonLevelCreator):
         self.comparison_levels = [
             _ensure_is_comparison_level_creator(cl) for cl in comparison_levels
         ]
-        self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
+        self.is_null_level = all(cl.is_null_level for cl in self.comparison_levels)
 
     @final
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
