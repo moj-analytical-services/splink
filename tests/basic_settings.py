@@ -164,16 +164,14 @@ def name_comparison(cll, sn: str) -> dict:
             cll.Or(
                 cll.ExactMatchLevel("first_name"),
                 cll.ExactMatchLevel(sn),
-                m_probability=0.8,
-                label_for_charts="Exact match on first name or surname",
-            ),
+                # label_for_charts="Exact match on first name or surname",
+            ).configure(m_probability=0.8),
             # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
             cll.And(
                 cll.Or(
                     cll.LevenshteinLevel("first_name", 2),
                     cll.JaroWinklerLevel("first_name", 0.8),
-                    m_probability=0.8,
-                ),
+                ).configure(m_probability=0.8),
                 cll.LevenshteinLevel(sn, 3),
             ),
             cll.ElseLevel(0.1),
