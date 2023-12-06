@@ -93,6 +93,7 @@ record_pairs_gamma_name = {
     1: [(5, 6)],
 }
 
+
 @mark_with_dialects_excluding()
 @pytest.mark.parametrize(
     ("level_set", "record_pairs_gamma"),
@@ -107,7 +108,7 @@ record_pairs_gamma_name = {
             record_pairs_gamma_name,
             id="name regex levels test",
         ),
-    ]
+    ],
 )
 def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
     helper = test_helpers[dialect]
