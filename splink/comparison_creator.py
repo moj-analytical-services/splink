@@ -1,17 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import List, final
+from typing import List, Union, final
 
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_library import input_expression_factory
-from .dialects import SplinkDialect
-from .input_column import InputColumn
+from .input_expression import InputExpression
 
 
 class ComparisonCreator(ABC):
     # TODO: need to think about what this is used for - do we need multiple columns
     # if we are sticking with storing a col_name ?
-    def __init__(self, col_name: str = None):
+    def __init__(self, col_name: Union[str, InputExpression] = None):
         """
         Class to author Comparisons
         Args:
@@ -85,10 +84,6 @@ class ComparisonCreator(ABC):
         }
 
         return level_dict
-
-    @final
-    def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
-        return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
 
     @final
     def configure(
