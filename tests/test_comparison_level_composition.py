@@ -54,9 +54,7 @@ def binary_composition_internals(clause, c_fun, dialect, q):
     )
     # Default label
     assert level.label_for_charts == (
-        "(Exact match on first_name) "
-        f"{clause} "
-        "(first_name is NULL)"
+        "(Exact match on first_name) " f"{clause} " "(first_name is NULL)"
     )
     # should default to False
     assert level.is_null_level is False
@@ -106,11 +104,9 @@ def test_not():
 def test_null_level_composition(dialect):
 
     c = (
-        cll.And(
-            cll.NullLevel("first_name"),
-            cll.NullLevel("surname")
+        cll.And(cll.NullLevel("first_name"), cll.NullLevel("surname")).configure(
+            is_null_level=True
         )
-        .configure(is_null_level=True)
     ).get_comparison_level(dialect)
     assert c.is_null_level
 

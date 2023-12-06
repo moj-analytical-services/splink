@@ -30,8 +30,7 @@ class _Merge(ComparisonLevelCreator):
         if num_levels == 0:
             raise ValueError(f"Must provide at least one level to {type(self)}()")
         self.comparison_levels = [
-            _ensure_is_comparison_level_creator(cl)
-            for cl in comparison_levels
+            _ensure_is_comparison_level_creator(cl) for cl in comparison_levels
         ]
         self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
 
