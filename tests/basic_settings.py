@@ -174,6 +174,6 @@ def name_comparison(cll, sn: str) -> dict:
                 ).configure(m_probability=0.8),
                 cll.LevenshteinLevel(sn, 3),
             ),
-            cll.ElseLevel.configure(m_probability=0.1),
+            cll.ElseLevel().configure(m_probability=0.1),
         ],
     }
