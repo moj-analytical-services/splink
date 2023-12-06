@@ -78,9 +78,7 @@ class ExactMatch(ComparisonCreator):
         ]
 
     def create_description(self) -> str:
-        return (
-            f"Exact match '{self.col_expression.output_column_name}' vs. anything else"
-        )
+        return f"Exact match '{self.col_expression.label}' vs. anything else"
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
@@ -131,7 +129,7 @@ class LevenshteinAtThresholds(ComparisonCreator):
     def create_description(self) -> str:
         comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
         return (
-            f"Exact match '{self.col_expression.output_column_name}' vs. "
+            f"Exact match '{self.col_expression.label}' vs. "
             f"Levenshtein distance at thresholds "
             f"{comma_separated_thresholds_string} vs. "
             "anything else"
@@ -201,7 +199,13 @@ class DateDiffAtThresholds(ComparisonCreator):
         ]
 
     def create_description(self) -> str:
-        return "blah"
+        return (
+            f"Exact match '{self.col_expression.label}' vs. "
+            f"date difference at thresholds "
+            f"{self.date_thresholds} "
+            f"with metrics {self.date_metrics} vs. "
+            "anything else"
+        )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
