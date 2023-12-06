@@ -5,18 +5,19 @@ on:
     branches:
       - master
     paths:
-      - splink/**
-      - docs/demos/examples/**
-      - pyproject.toml
+      - "splink/**"
+      - "docs/demos/examples/**"
+      - "pyproject.toml"
 
   workflow_dispatch:
 
 jobs:
-  build:
+  test-notebooks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9"]
+        test-group: ["duckdb", "spark", "sqlite"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -32,8 +33,8 @@ jobs:
       - name: Load cached Poetry installation
         uses: actions/cache@v2
         with:
-          path: ~/.local  # the path depends on the OS
-          key: poetry-0  # increment to reset cache
+          path: ~/.local # the path depends on the OS
+          key: poetry-0 # increment to reset cache
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -43,7 +44,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-
       #----------------------------------------------
       #       load cached venv if cache exists
       #----------------------------------------------
@@ -60,20 +60,16 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
       #----------------------------------------------
-      # Make sure that the demo notebooks run without error
+      # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
-      - name: Test DuckDB example notebooks with pytest
+      - name: Modify Notebooks to reduce data size
+        run: |
+          python scripts/reduce_notebook_runtime.py
+      #----------------------------------------------
+      # Test each notebook group in parallel
+      #----------------------------------------------
+      - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/duckdb/*ipynb
-      - name: Test Spark example notebooks with pytest
-        run: |
-          source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/spark/*ipynb
-      #- name: Test Athena example notebooks with pytest
-      #  run: |
-      #    python -m pytest --nbmake --nbmake-kernel=python3 examples/athena/*ipynb
-      - name: Test SQLite example notebooks with pytest
-        run: |
-          source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/sqlite/*ipynb
+          pip install pytest-xdist
+          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb

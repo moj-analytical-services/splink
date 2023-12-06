@@ -1,6 +1,8 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
 
+from .input_column import InputColumn
+
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
 
@@ -66,9 +68,27 @@ class SplinkDialect(ABC):
         )
 
     @property
+    def damerau_levenshtein_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Damerau-Levenshtein' function"
+        )
+
+    @property
     def jaro_winkler_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'Jaro-Winkler' function"
+        )
+
+    @property
+    def jaro_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaro' function"
+        )
+
+    @property
+    def jaccard_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
 
@@ -84,8 +104,20 @@ class DuckDBDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_similarity"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler_similarity"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
 
 
 class SparkDialect(SplinkDialect):
@@ -100,8 +132,20 @@ class SparkDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
 
 
 class SqliteDialect(SplinkDialect):
@@ -116,6 +160,14 @@ class SqliteDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
 
     @property
     def jaro_winkler_function_name(self):
@@ -141,16 +193,15 @@ class PostgresDialect(SplinkDialect):
         if clc.date_format is None:
             clc.date_format = "yyyy-MM-dd"
 
-        col_name_l = clc.input_column(self).name_l()
-        col_name_r = clc.input_column(self).name_r()
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
 
         if clc.cast_strings_to_date:
             datediff_args = f"""
-                to_date({col_name_l}, '{clc.date_format}'),
-                to_date({col_name_r}, '{clc.date_format}')
+                to_date({col.name_l}, '{clc.date_format}'),
+                to_date({col.name_r}, '{clc.date_format}')
             """
         else:
-            datediff_args = f"{col_name_l}, {col_name_r}"
+            datediff_args = f"{col.name_l}, {col.name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
@@ -173,6 +224,13 @@ class PostgresDialect(SplinkDialect):
         return f"""
             {date_f} <= {clc.date_threshold}
         """
+
+    def array_intersect(self, clc: "ComparisonLevelCreator"):
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        threshold = clc.min_intersection
+        return f"""
+        CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
+        """.strip()
 
 
 class AthenaDialect(SplinkDialect):

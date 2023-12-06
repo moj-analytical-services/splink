@@ -246,6 +246,9 @@ class SQLiteLinker(Linker):
         # name in SQL : python function
         funcs_to_register = {
             "levenshtein": levenshtein,
+            # alias for levenshtein. This is sqlglot recognised, but is in an extension,
+            # so not available natively
+            "editdist3": levenshtein,
             "damerau_levenshtein": dam_lev,
             "jaro_winkler": jaro_winkler,
             "jaro": jaro,

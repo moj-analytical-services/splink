@@ -40,7 +40,7 @@ def missingness_sqls(columns, input_tablename):
 
 
 def missingness_data(linker, input_tablename):
-    columns = linker._input_columns
+    columns = linker._input_columns()
     if input_tablename is None:
         splink_dataframe = linker._initialise_df_concat(materialise=True)
     else:
@@ -69,7 +69,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
         cols = linker._settings_obj._columns_used_by_comparisons
 
     if linker._settings_obj._source_dataset_column_name_is_required:
-        source_name = linker._source_dataset_column_name
+        source_name = linker._settings_obj._source_dataset_column_name
     else:
         # Set source dataset to a literal string if dedupe_only
         source_name = "'_a'"

@@ -1,7 +1,9 @@
+import duckdb
 import numpy as np
 import pandas as pd
 import pytest
 
+from splink.estimate_u import _proportion_sample_size_link_only
 from tests.decorator import mark_with_dialects_excluding
 
 
@@ -102,7 +104,9 @@ def test_u_train_link_only(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-@mark_with_dialects_excluding()
+# Spark is too slow in conjunction with debug mode.  If we begin to capture sql,
+# then we could refactor this test to introspect the sql
+@mark_with_dialects_excluding("spark")
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
@@ -115,24 +119,27 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
-    # levenshtein should be on string types
-    df_l["name"] = df_l["name"].astype("str")
-    df_r["name"] = df_r["name"].astype("str")
 
     # max_pairs is a good deal less than total possible pairs = 9_000_000
     max_pairs = 1_800_000
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.exact_match("name")],
         "blocking_rules_to_generate_predictions": [],
     }
 
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.Linker(
+        [df_l, df_r],
+        settings,
+        input_table_aliases=["_a", "_b"],
+        **helper.extra_linker_args(),
+    )
     linker.debug_mode = True
+
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     # count how many pairs we _actually_ generated in random sampling
@@ -153,6 +160,65 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     # equality only holds probabilistically for some backends, due to sampling strategy
     # chance of failure is approximately 1e-06 with this choice of relative error
     assert pytest.approx(proportion_of_max_pairs_sampled, rel=0.15) == 1.0
+
+
+def test_u_train_link_only_sample_proportion():
+    """
+    Test that the _proportion_sample_size_link_only function returns
+    proportions and sample size that result in max_pairs records being selected
+    constraint.
+
+    Test strategy is to perform the join with all the data
+
+    The use the _proportion_sample_size_link_only with max_pairs to get a
+    proportion that should result in max_pairs records being selected
+
+    We can then apply the proportion to the original data, and check
+    that max_pairs records are selected
+    """
+
+    def count_self_join(row_counts):
+        dfs = []
+
+        for count in row_counts:
+            df = pd.DataFrame(
+                {
+                    "source_dataset_name": [f"dataset_{count}"] * count,
+                    "unique_id": range(count),
+                }
+            )
+            dfs.append(df)
+
+        combined_df = pd.concat(dfs)
+
+        con = duckdb.connect(database=":memory:", read_only=False)
+        con.register("combined_df", combined_df)
+
+        query = """
+        SELECT count(*)
+        FROM combined_df a
+        JOIN combined_df b
+        ON a.source_dataset_name != b.source_dataset_name
+        AND a.source_dataset_name || a.unique_id < b.source_dataset_name || b.unique_id
+        """
+
+        result = con.execute(query).fetchdf()
+        return result.iloc[0, 0]
+
+    row_counts = [10, 20, 30]
+    count = count_self_join(row_counts)
+    # Note need to be careful that max_pairs here results in a 'nice' proportion
+    # that means the proporitoned row counts are integers
+    max_pairs = count / 4
+    proportion, sample_size = _proportion_sample_size_link_only(
+        row_counts_individual_dfs=row_counts, max_pairs=max_pairs
+    )
+
+    proportioned_row_counts = [int(c * proportion) for c in row_counts]
+
+    count_proportioned = count_self_join(proportioned_row_counts)
+
+    assert count_proportioned == max_pairs
 
 
 @mark_with_dialects_excluding()

@@ -4,18 +4,9 @@ from typing import final
 
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect
-from .input_column import InputColumn
 
 
 class ComparisonLevelCreator(ABC):
-    def __init__(self, col_name: str = None):
-        """
-        Class to author ComparisonLevels
-        Args:
-            col_name (str): Input column name
-        """
-        self.col_name = col_name
-
     @abstractmethod
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         pass
@@ -28,7 +19,11 @@ class ComparisonLevelCreator(ABC):
     def get_comparison_level(self, sql_dialect_str: str) -> ComparisonLevel:
         """sql_dialect_str is a string to make this method easier to use
         for the end user - otherwise they'd need to import a SplinkDialect"""
-        return ComparisonLevel(self.create_level_dict(sql_dialect_str))
+        sql_dialect = SplinkDialect.from_string(sql_dialect_str)
+        return ComparisonLevel(
+            self.create_level_dict(sql_dialect_str),
+            sql_dialect=sql_dialect.sqlglot_name,
+        )
 
     @final
     def create_level_dict(self, sql_dialect_str: str) -> dict:
@@ -46,10 +41,6 @@ class ComparisonLevelCreator(ABC):
                 level_dict[attr] = value
 
         return level_dict
-
-    @final
-    def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
-        return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
 
     @final
     def configure(
@@ -99,6 +90,16 @@ class ComparisonLevelCreator(ABC):
                 setattr(self, k, v)
 
         return self
+
+    @final
+    @property
+    def is_null_level(self) -> bool:
+        return getattr(self, "_is_null_level", False)
+
+    @final
+    @is_null_level.setter
+    def is_null_level(self, is_null_level: bool):
+        self._is_null_level = is_null_level
 
     def __repr__(self) -> str:
         return (
