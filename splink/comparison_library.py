@@ -70,10 +70,21 @@ class ExactMatch(ComparisonCreator):
         col_name (str): The name of the column to compare
     """
 
+    def __init__(
+        self,
+        col_name: str,
+        term_frequency_adjustments=False,
+    ):
+        self.term_frequency_adjustments = term_frequency_adjustments
+        super().__init__(col_name)
+
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
             cll.NullLevel(self.col_expression),
-            cll.ExactMatchLevel(self.col_expression),
+            cll.ExactMatchLevel(
+                self.col_expression,
+                term_frequency_adjustments=self.term_frequency_adjustments,
+            ),
             cll.ElseLevel(),
         ]
 
