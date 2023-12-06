@@ -167,12 +167,12 @@ class InputExpression:
         return dialect.try_parse_date(name, date_format=date_format)
 
     def try_parse_date(self, date_format: str = None):
-        self._clone()
+        clone = self._clone()
         op = partial(
-            self._try_parse_date_dialected,
+            clone._try_parse_date_dialected,
             date_format=date_format,
         )
-        self.operations.append(op)
+        clone.operations.append(op)
 
         return self
 
