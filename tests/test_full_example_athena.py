@@ -39,6 +39,43 @@ pytestmark = pytest.mark.skipif(
     not aws_connection_valid, reason="AWS Connection and Dependencies Required"
 )
 
+# Continue with the rest of the imports
+import splink.athena.comparison_library as cl
+from splink.exceptions import InvalidAWSBucketOrDatabase
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration
+
+# Skip tests if awswrangler or boto3 cannot be imported or
+# if no valid AWS connection exists
+try:
+    import awswrangler as wr
+    import boto3
+    from awswrangler.exceptions import InvalidTable
+
+    from splink.athena.athena_helpers.athena_utils import _garbage_collection
+    from splink.athena.linker import AthenaLinker
+
+    sts_client = boto3.client("sts")
+    response = sts_client.get_caller_identity()
+    aws_connection_valid = response
+    BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
+    aws_dependencies_available = True
+except ImportError:
+    # If InvalidTable cannot be imported, we need to create a temp value
+    # to prevent an ImportError
+    class InvalidTable(Exception):
+        ...
+
+    # An import error is equivalent to a missing AWS connection
+    aws_connection_valid = False
+
+
+# Conditional skipping of tests if AWS dependencies are not satisfied
+pytestmark = pytest.mark.skipif(
+    not aws_connection_valid, reason="AWS Connection and Dependencies Required"
+)
+
 # Continue with th# Load in and update our settings
 settings_dict = get_settings_dict()
 
