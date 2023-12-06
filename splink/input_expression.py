@@ -72,17 +72,20 @@ class InputExpression:
         ).sql
 
     @property
-    def is_pure_column_or_column_reference(self):
-        if len(self.operations) > 0:
-            return False
-
+    def raw_sql_is_pure_column_or_column_reference(self):
         if re.search(r"\([^)]*\)", self.raw_sql_expression):
             return False
 
         if "||" in self.raw_sql_expression:
             return False
-
         return True
+
+    @property
+    def is_pure_column_or_column_reference(self):
+        if len(self.operations) > 0:
+            return False
+
+        return self.raw_sql_is_pure_column_or_column_reference
 
     def apply_operations(self, name: str, dialect: SplinkDialect):
         for op in self.operations:
@@ -174,7 +177,7 @@ class InputExpression:
         )
         clone.operations.append(op)
 
-        return self
+        return clone
 
     @property
     def name(self) -> str:
@@ -202,6 +205,13 @@ class InputExpression:
     def output_column_name(self) -> str:
         allowed_chars = string.ascii_letters + string.digits + "_"
         sanitised_name = "".join(
-            c for c in self.raw_sql_expression if c in allowed_chars
+            c if c in allowed_chars else "_" for c in self.raw_sql_expression
         )
         return sanitised_name
+
+    @property
+    def label(self) -> str:
+        if len(self.operations) > 0:
+            return "transformed " + self.raw_sql_expression
+        else:
+            return self.raw_sql_expression
