@@ -158,12 +158,21 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
         """
         config = {}
+
+        self.col_expression = input_expression_factory(col_name)
+
         if term_frequency_adjustments:
+            if not self.col_expression.is_pure_column_or_column_reference:
+                raise ValueError(
+                    "The boolean term_frequency_adjustments argument"
+                    " can only be used if the column name has no "
+                    "transforms applied to it such as lower(), "
+                    "substr() etc."
+                )
+
             config["tf_adjustment_column"] = col_name
             config["tf_adjustment_weight"] = 1.0
             # leave tf_minimum_u_value as None
-
-        self.col_expression = input_expression_factory(col_name)
 
         self.configure(**config)
 
@@ -378,7 +387,7 @@ class DatediffLevel(ComparisonLevelCreator):
         date_threshold: int,
         date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
         cast_strings_to_date: bool = False,
-        date_format: str = "%Y-%m-%d",
+        date_format: str = None,
     ):
         """A comparison level using a date difference function
 
@@ -414,8 +423,13 @@ class DatediffLevel(ComparisonLevelCreator):
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
 
+        # TODO: Anything that simply transforms the input column should be handled
+        # by the input expression, not the comparison level
+
+        # TODO: if self.date_format is None, get the default from the dialect
+
         if self.cast_strings_to_date:
-            pass
+            self.col_expression = self.col_expression.to_date(self.date_format)
 
         # Use col as placeholder here because there's no guarantee the complex
         # transformed InputExpression will autotranspile

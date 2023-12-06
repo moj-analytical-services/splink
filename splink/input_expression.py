@@ -1,4 +1,5 @@
 import re
+import string
 from functools import partial
 
 import sqlglot
@@ -63,6 +64,19 @@ class InputExpression:
         return SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
             self.raw_sql_expression, dialect.sqlglot_name
         ).sql
+
+    @property
+    def is_pure_column_or_column_reference(self):
+        if len(self.operations) > 0:
+            return False
+
+        if re.search(r"\([^)]*\)", self.raw_sql_expression):
+            return False
+
+        if "||" in self.raw_sql_expression:
+            return False
+
+        return True
 
     def apply_operations(self, name, dialect):
         for op in self.operations:
@@ -191,3 +205,11 @@ class InputExpression:
             sql_expression, "_r", self.sql_dialect.sqlglot_name
         )
         return self.apply_operations(base_name, self.sql_dialect)
+
+    @property
+    def output_column_name(self) -> str:
+        allowed_chars = string.ascii_letters + string.digits + "_"
+        sanitised_name = "".join(
+            c for c in self.raw_sql_expression if c in allowed_chars
+        )
+        return sanitised_name

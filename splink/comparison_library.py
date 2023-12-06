@@ -1,4 +1,4 @@
-from typing import Iterable, List, Union
+from typing import Iterable, List, Tuple, Union
 
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
@@ -72,16 +72,18 @@ class ExactMatch(ComparisonCreator):
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
-            cll.NullLevel(self.col_name),
-            cll.ExactMatchLevel(self.col_name),
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(self.col_expression),
             cll.ElseLevel(),
         ]
 
     def create_description(self) -> str:
-        return f"Exact match '{self.col_name}' vs. anything else"
+        return (
+            f"Exact match '{self.col_expression.output_column_name}' vs. anything else"
+        )
 
     def create_output_column_name(self) -> str:
-        return self.col_name
+        return self.col_expression.output_column_name
 
 
 class LevenshteinAtThresholds(ComparisonCreator):
@@ -117,10 +119,10 @@ class LevenshteinAtThresholds(ComparisonCreator):
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
-            cll.NullLevel(self.col_name),
-            cll.ExactMatchLevel(self.col_name),
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(self.col_expression),
             *[
-                cll.LevenshteinLevel(self.col_name, threshold)
+                cll.LevenshteinLevel(self.col_expression, threshold)
                 for threshold in self.thresholds
             ],
             cll.ElseLevel(),
@@ -129,11 +131,48 @@ class LevenshteinAtThresholds(ComparisonCreator):
     def create_description(self) -> str:
         comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
         return (
-            f"Exact match '{self.col_name}' vs. "
+            f"Exact match '{self.col_expression.output_column_name}' vs. "
             f"Levenshtein distance at thresholds "
             f"{comma_separated_thresholds_string} vs. "
             "anything else"
         )
 
     def create_output_column_name(self) -> str:
-        return self.col_name
+        return self.col_expression.output_column_name
+
+
+class DateDiffAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold_or_thresholds: Union[
+            Iterable[Tuple[Union[float, int], str]], Tuple[Union[float, int], str]
+        ],
+    ):
+        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        # unpack it to a list so we can repeat iteration if needed
+        self.thresholds: Iterable[Tuple[Union[float, int], str]] = [
+            *thresholds_as_iterable
+        ]
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(self.col_expression),
+            *[
+                cll.DatediffLevel(
+                    self.col_expression,
+                    date_threshold=date_threshold,
+                    date_metric=date_metric,
+                )
+                for (date_threshold, date_metric) in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        return "blah"
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name

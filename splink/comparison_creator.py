@@ -3,6 +3,7 @@ from typing import List, final
 
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
+from .comparison_level_library import input_expression_factory
 from .dialects import SplinkDialect
 from .input_column import InputColumn
 
@@ -16,7 +17,7 @@ class ComparisonCreator(ABC):
         Args:
             col_name (str): Input column name
         """
-        self.col_name = col_name
+        self.col_expression = input_expression_factory(col_name)
 
     # TODO: property?
     @abstractmethod
@@ -74,7 +75,6 @@ class ComparisonCreator(ABC):
 
     @final
     def create_comparison_dict(self, sql_dialect_str: str) -> dict:
-
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
