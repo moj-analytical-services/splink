@@ -14,7 +14,7 @@ from ..input_column import InputColumn
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ..linker import Linker
+    from ..settings import Settings
 
 
 def remove_suffix(c):
@@ -105,11 +105,11 @@ class SettingsColumnCleaner:
     cleaned up settings columns and SQL strings.
     """
 
-    def __init__(self, linker: Linker):
-        self._sql_dialect = linker._sql_dialect
-        self._settings_obj = linker._settings_obj
+    def __init__(self, settings_object: Settings, input_columns: dict):
+        self.sql_dialect = settings_object._sql_dialect
+        self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(
-            linker._input_tables_dict.items(), return_as_single_column=True
+            input_columns.items(), return_as_single_column=True
         )
 
     @property
