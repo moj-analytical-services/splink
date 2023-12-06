@@ -5,7 +5,6 @@ from typing import Iterable, Union, final
 from .blocking import BlockingRule
 from .comparison_creator import ComparisonLevelCreator
 from .comparison_level import ComparisonLevel
-from .comparison_level_library import CustomLevel
 from .dialects import SplinkDialect
 
 
@@ -13,8 +12,10 @@ def _ensure_is_comparison_level_creator(
     cl: Union[ComparisonLevelCreator, dict]
 ) -> ComparisonLevelCreator:
     if isinstance(cl, dict):
+        from .comparison_level_library import CustomLevel
+
         # TODO: proper dict => level method
-        return CustomLevel(**dict)
+        return CustomLevel(**cl)
     if isinstance(cl, ComparisonLevelCreator):
         return cl
     raise TypeError(
@@ -32,7 +33,7 @@ class _Merge(ComparisonLevelCreator):
         self.comparison_levels = [
             _ensure_is_comparison_level_creator(cl) for cl in comparison_levels
         ]
-        self.is_null_level = all(cl.is_null_level for cl in comparison_levels)
+        self.is_null_level = all(cl.is_null_level for cl in self.comparison_levels)
 
     @final
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -48,18 +49,51 @@ class _Merge(ComparisonLevelCreator):
 
 
 class And(_Merge):
+    """
+    Represents a comparison level that is an 'AND' of other comparison levels
+
+    Merge multiple ComparisonLevelCreators into a single ComparisonLevelCreator by
+    merging their SQL conditions using a logical "AND".
+
+    Args:
+        *comparison_levels (ComparisonLevelCreator | dict): These represent the
+            comparison levels you wish to combine via 'AND'
+    """
+
     _clause = "AND"
 
 
 class Or(_Merge):
+    """
+    Represents a comparison level that is an 'OR' of other comparison levels
+
+    Merge multiple ComparisonLevelCreators into a single ComparisonLevelCreator by
+    merging their SQL conditions using a logical "OR".
+
+    Args:
+        *comparison_levels (ComparisonLevelCreator | dict): These represent the
+            comparison levels you wish to combine via 'OR'
+    """
+
     _clause = "OR"
 
 
 class Not(ComparisonLevelCreator):
+    """
+    Represents a comparison level that is the negation of another comparison level
+
+    Resulting ComparisonLevelCreator is equivalent to the passed ComparisonLevelCreator
+    but with SQL conditions negated with logical "NOY".
+
+    Args:
+        *comparison_level (ComparisonLevelCreator | dict): This represents the
+            comparison level you wish to negate with 'NOT'
+    """
+
     def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict]):
         self.comparison_level = _ensure_is_comparison_level_creator(comparison_level)
         # turn null levels into non-null levels, otherwise do nothing
-        if comparison_level.is_null_level:
+        if self.comparison_level.is_null_level:
             self.is_null_level = False
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
