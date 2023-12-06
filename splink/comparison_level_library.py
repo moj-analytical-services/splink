@@ -2,22 +2,13 @@ from typing import List, Union
 
 from sqlglot import TokenError, parse_one
 
-from .column_expression import ColumnExpression
+from .column_expression import ColumnExpression, column_expression_factory
 
 # import composition functions for export
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
-
-
-def column_expression_factory(
-    str_or_column_expression: Union[str, ColumnExpression]
-) -> ColumnExpression:
-    if isinstance(str_or_column_expression, ColumnExpression):
-        return str_or_column_expression
-    elif isinstance(str_or_column_expression, str):
-        return ColumnExpression(str_or_column_expression)
 
 
 def unsupported_splink_dialects(unsupported_dialects: List[str]):

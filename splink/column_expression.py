@@ -2,6 +2,7 @@ import re
 import string
 from copy import copy
 from functools import partial
+from typing import Union
 
 import sqlglot
 
@@ -215,3 +216,12 @@ class ColumnExpression:
             return "transformed " + self.raw_sql_expression
         else:
             return self.raw_sql_expression
+
+
+def column_expression_factory(
+    str_or_column_expression: Union[str, ColumnExpression]
+) -> ColumnExpression:
+    if isinstance(str_or_column_expression, ColumnExpression):
+        return str_or_column_expression
+    elif isinstance(str_or_column_expression, str):
+        return ColumnExpression(str_or_column_expression)

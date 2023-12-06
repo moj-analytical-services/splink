@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, final
 
-from .column_expression import ColumnExpression
+from .column_expression import ColumnExpression, column_expression_factory
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_library import column_expression_factory
 
 
 class ComparisonCreator(ABC):
