@@ -84,14 +84,6 @@ def test_compound_comparison_level():
         "comparisons": [
             cl.ExactMatch("city"),
             {
-                "output_column_name": "city",
-                "comparison_levels": [
-                    cll.NullLevel("city"),
-                    cll.ExactMatchLevel("city"),
-                    cll.ElseLevel(),
-                ],
-            },
-            {
                 "output_column_name": "company_comparison",
                 "comparison_levels": [
                     {
