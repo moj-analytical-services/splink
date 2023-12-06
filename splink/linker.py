@@ -538,6 +538,8 @@ class Linker:
         instances are instead replaced with ComparisonLevels
         """
         dialect = self._sql_dialect
+        if settings_dict is None:
+            return
         if "comparisons" not in settings_dict:
             return
         comparisons = settings_dict["comparisons"]
