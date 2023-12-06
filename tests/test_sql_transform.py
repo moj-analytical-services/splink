@@ -51,60 +51,60 @@ def test_move_l_r_table_prefix_to_column_suffix():
 
 def test_cast_concat_as_varchar():
     output = """
-        select cast(l.source_dataset as varchar) || '-__-' ||
-        cast(l.unique_id as varchar) as concat_id
+        select cast(l.source_dataset AS varchar) || '-__-' ||
+        cast(l.unique_id AS varchar) AS concat_id
     """
     output = sqlglot.parse_one(output).sql()
 
-    sql = "select l.source_dataset || '-__-' || l.unique_id as concat_id"
+    sql = "select l.source_dataset || '-__-' || l.unique_id AS concat_id"
     transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
     assert transformed_sql == output
 
     sql = """
-        select cast(l.source_dataset as varchar) || '-__-' ||
-        l.unique_id as concat_id
+        select cast(l.source_dataset AS varchar) || '-__-' ||
+        l.unique_id AS concat_id
     """
     transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
     assert transformed_sql == output
 
     sql = """
-        select cast(l.source_dataset as varchar) || '-__-' ||
-        cast(l.unique_id as varchar) as concat_id
+        select cast(l.source_dataset AS varchar) || '-__-' ||
+        cast(l.unique_id AS varchar) AS concat_id
     """
     transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
     assert transformed_sql == output
 
-    sql = "select source_dataset || '-__-' || unique_id as concat_id"
+    sql = "select source_dataset || '-__-' || unique_id AS concat_id"
     transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
     assert transformed_sql == output.replace("l.", "")
 
 
 def test_set_numeric_as_double():
-    sql = "select cast('a' as float8), cast(0.12345 as float8)"
+    sql = "select cast('a' AS float8), cast(0.12345 AS float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT aD, 0.12345D"
 
-    sql = "select cast('a' as string), cast(0.12345 as float8)"
+    sql = "select cast('a' AS string), cast(0.12345 AS float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT CAST('a' AS STRING), 0.12345D"
 
 
 def test_add_pref_and_suffix():
     dull = InputColumn("dull")
-    dull_l_r = ['"l"."dull" as "dull_l"', '"r"."dull" as "dull_r"']
+    dull_l_r = ['"l"."dull" AS "dull_l"', '"r"."dull" AS "dull_r"']
     assert dull.l_r_names_as_l_r == dull_l_r
 
     assert dull.bf_name == '"bf_dull"'
     assert dull.tf_name_l == '"tf_dull_l"'
-    tf_dull_l_r = ['"l"."tf_dull" as "tf_dull_l"', '"r"."tf_dull" as "tf_dull_r"']
+    tf_dull_l_r = ['"l"."tf_dull" AS "tf_dull_l"', '"r"."tf_dull" AS "tf_dull_r"']
     assert dull.l_r_tf_names_as_l_r == tf_dull_l_r
 
     ll = InputColumn("lat['long']")
     assert ll.name_l == "\"lat_l\"['long']"
 
     ll_tf_l_r = [
-        '"l"."tf_lat"[\'long\'] as "tf_lat_l"[\'long\']',
-        '"r"."tf_lat"[\'long\'] as "tf_lat_r"[\'long\']',
+        '"l"."tf_lat"[\'long\'] AS "tf_lat_l[\'long\']"',
+        '"r"."tf_lat"[\'long\'] AS "tf_lat_r[\'long\']"',
     ]
 
     assert ll.l_r_tf_names_as_l_r == ll_tf_l_r
@@ -112,12 +112,12 @@ def test_add_pref_and_suffix():
     group = InputColumn("cluster")
     assert group.name_l == '"cluster_l"'
     assert group.bf_name == '"bf_cluster"'
-    group_l_r_names = ['"l"."cluster" as "cluster_l"', '"r"."cluster" as "cluster_r"']
+    group_l_r_names = ['"l"."cluster" AS "cluster_l"', '"r"."cluster" AS "cluster_r"']
     assert group.l_r_names_as_l_r == group_l_r_names
 
     group_tf_l_r = [
-        '"l"."tf_cluster" as "tf_cluster_l"',
-        '"r"."tf_cluster" as "tf_cluster_r"',
+        '"l"."tf_cluster" AS "tf_cluster_l"',
+        '"r"."tf_cluster" AS "tf_cluster_r"',
     ]
     assert group.l_r_tf_names_as_l_r == group_tf_l_r
 

@@ -8,8 +8,9 @@ from typing import List
 
 import sqlglot
 
-from ..input_column import InputColumn, remove_quotes_from_identifiers
+from ..input_column import InputColumn
 from ..misc import ensure_is_list
+from ..sql_transform import remove_quotes_from_identifiers
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class SettingsValidator:
 
         col_list = ensure_is_list(col_list)
         if as_tree:
-            col_list = [c.input_name_as_tree for c in col_list]
+            col_list = [c.col_builder.as_sqlglot_tree for c in col_list]
         return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
 
     def remove_prefix_and_suffix_from_column(

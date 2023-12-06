@@ -72,5 +72,5 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          pytest tests/
+          pytest --durations=0 tests/
 
