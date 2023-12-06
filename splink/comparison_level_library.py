@@ -2,19 +2,19 @@ from typing import List, Union
 
 from sqlglot import TokenError, parse_one
 
+from .column_expression import ColumnExpression
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
-from .input_expression import InputExpression
 
 
-def input_expression_factory(
-    str_or_input_expression: Union[str, InputExpression]
-) -> InputExpression:
-    if isinstance(str_or_input_expression, InputExpression):
-        return str_or_input_expression
-    elif isinstance(str_or_input_expression, str):
-        return InputExpression(str_or_input_expression)
+def column_expression_factory(
+    str_or_column_expression: Union[str, ColumnExpression]
+) -> ColumnExpression:
+    if isinstance(str_or_column_expression, ColumnExpression):
+        return str_or_column_expression
+    elif isinstance(str_or_column_expression, str):
+        return ColumnExpression(str_or_column_expression)
 
 
 def unsupported_splink_dialects(unsupported_dialects: List[str]):
@@ -61,9 +61,9 @@ def validate_distance_threshold(
 class NullLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
     ):
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.is_null_level = True
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -142,7 +142,7 @@ class CustomLevel(ComparisonLevelCreator):
 class ExactMatchLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
         term_frequency_adjustments: bool = False,
     ):
         """Represents a comparison level where there is an exact match
@@ -157,7 +157,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
         """
         config = {}
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
 
         if term_frequency_adjustments:
             if not self.col_expression.is_pure_column_or_column_reference:
@@ -186,8 +186,8 @@ class ExactMatchLevel(ComparisonLevelCreator):
 class ColumnsReversedLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name_1: Union[str, InputExpression],
-        col_name_2: Union[str, InputExpression],
+        col_name_1: Union[str, ColumnExpression],
+        col_name_2: Union[str, ColumnExpression],
     ):
         """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
@@ -196,8 +196,8 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
         """
-        self.col_expression_1 = input_expression_factory(col_name_1)
-        self.col_expression_2 = input_expression_factory(col_name_2)
+        self.col_expression_1 = column_expression_factory(col_name_1)
+        self.col_expression_2 = column_expression_factory(col_name_2)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression_1.sql_dialect = sql_dialect
@@ -216,7 +216,7 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: Union[str, InputExpression], distance_threshold: int):
+    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
         """A comparison level using a sqlglot_dialect_name distance function
 
         e.g. levenshtein(val_l, val_r) <= distance_threshold
@@ -226,7 +226,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
             distance_threshold (int): The threshold to use to assess
                 similarity
         """
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -241,7 +241,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
 
 
 class DamerauLevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: Union[str, InputExpression], distance_threshold: int):
+    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
         """A comparison level using a Damerau-Levenshtein distance function
 
         e.g. damerau_levenshtein(val_l, val_r) <= distance_threshold
@@ -251,7 +251,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
             distance_threshold (int): The threshold to use to assess
                 similarity
         """
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -270,7 +270,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
 class JaroWinklerLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
         distance_threshold: Union[int, float],
     ):
         """A comparison level using a Jaro-Winkler distance function
@@ -283,7 +283,7 @@ class JaroWinklerLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -305,7 +305,7 @@ class JaroWinklerLevel(ComparisonLevelCreator):
 class JaroLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
         distance_threshold: Union[int, float],
     ):
         """A comparison level using a Jaro distance function
@@ -318,7 +318,7 @@ class JaroLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -340,7 +340,7 @@ class JaroLevel(ComparisonLevelCreator):
 class JaccardLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
         distance_threshold: Union[int, float],
     ):
         """A comparison level using a Jaccard distance function
@@ -353,7 +353,7 @@ class JaccardLevel(ComparisonLevelCreator):
                 similarity
         """
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
@@ -375,7 +375,7 @@ class JaccardLevel(ComparisonLevelCreator):
 class DatediffLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: Union[str, InputExpression],
+        col_name: Union[str, ColumnExpression],
         date_threshold: int,
         date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
     ):
@@ -391,7 +391,7 @@ class DatediffLevel(ComparisonLevelCreator):
             cast_strings_to_date (bool): Whether to cast string columns to date format
             date_format (str): The format of the date string
         """
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.date_threshold = date_threshold
         self.date_metric = date_metric
 
@@ -412,7 +412,7 @@ class DatediffLevel(ComparisonLevelCreator):
             return sql_dialect.date_diff(self)
 
         # Use col as placeholder here because there's no guarantee the complex
-        # transformed InputExpression will autotranspile
+        # transformed ColumnExpression will autotranspile
         sqlglot_base_dialect_sql = (
             f"ABS(DATE_DIFF(___col____l, "
             f"___col____r, '{self.date_metric}'))"
@@ -460,15 +460,15 @@ class DistanceInKMLevel(ComparisonLevelCreator):
                 capturing nulls elsewhere in your comparison level.
 
         """
-        self.lat_col_expression = input_expression_factory(lat_col)
-        self.long_col_expression = input_expression_factory(long_col)
+        self.lat_col_expression = column_expression_factory(lat_col)
+        self.long_col_expression = column_expression_factory(long_col)
 
         self.km_threshold = km_threshold
         self.not_null = not_null
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        input_expression_factory(self.lat_col, splink_dialect=sql_dialect)
-        input_expression_factory(self.long_col, splink_dialect=sql_dialect)
+        column_expression_factory(self.lat_col, splink_dialect=sql_dialect)
+        column_expression_factory(self.long_col, splink_dialect=sql_dialect)
 
         self.lat_col_expression.sql_dialect = sql_dialect
         lat_col = self.lat_col_expression
@@ -507,7 +507,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
                 intersection of arrays for this comparison level. Defaults to 1
         """
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.min_intersection = min_intersection
 
     @unsupported_splink_dialects(["sqlite"])
@@ -553,7 +553,7 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
         if not 0 <= percentage_threshold <= 1:
             raise ValueError("percentage_threshold must be between 0 and 1")
 
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
         self.percentage_threshold = percentage_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:

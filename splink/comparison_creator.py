@@ -1,22 +1,22 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, final
 
+from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_library import input_expression_factory
-from .input_expression import InputExpression
+from .comparison_level_library import column_expression_factory
 
 
 class ComparisonCreator(ABC):
     # TODO: need to think about what this is used for - do we need multiple columns
     # if we are sticking with storing a col_name ?
-    def __init__(self, col_name: Union[str, InputExpression] = None):
+    def __init__(self, col_name: Union[str, ColumnExpression] = None):
         """
         Class to author Comparisons
         Args:
             col_name (str): Input column name
         """
-        self.col_expression = input_expression_factory(col_name)
+        self.col_expression = column_expression_factory(col_name)
 
     # TODO: property?
     @abstractmethod

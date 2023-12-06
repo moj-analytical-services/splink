@@ -10,7 +10,7 @@ from .input_column import SqlglotColumnTreeBuilder
 from .sql_transform import add_suffix_to_all_column_identifiers
 
 
-class InputExpression:
+class ColumnExpression:
     """
     Enables transforms to be applied to a column before it's passed into a
     comparison level.
@@ -18,9 +18,9 @@ class InputExpression:
     Dialect agnostic.  Execution is delayed until the dialect is known.
 
     For example:
-        from splink.input_expression import InputExpression
+        from splink.column_expression import ColumnExpression
         col = (
-            InputExpression("first_name")
+            ColumnExpression("first_name")
             .lower()
             .regex_extract("^[A-Z]{1,4}")
         )
@@ -28,7 +28,7 @@ class InputExpression:
         ExactMatchLevel(col)
 
     Note that this will typically be created without a dialect, and the dialect
-    will later be populated when the InputExpression is passed via a comparison
+    will later be populated when the ColumnExpression is passed via a comparison
     level creator into a linker.
     """
 
@@ -45,7 +45,7 @@ class InputExpression:
 
     def parse_input_string(self, dialect: SplinkDialect):
         """
-        The input into an InputExpression can be
+        The input into an ColumnExpression can be
             - a column name or column reference e.g. first_name, first name
             - a sql expression e.g. UPPER(first_name), first_name || surname
 
