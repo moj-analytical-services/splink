@@ -52,15 +52,16 @@ def postcode_levels():
         "output_column_name": "postcode",
         "comparison_levels": [
             cll.ExactMatchLevel(
-                "postcode", #regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
+                "postcode",  # regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
             ),
             cll.LevenshteinLevel(
                 "postcode",
                 distance_threshold=1,
-                #regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
+                # regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
             ),
             cll.JaroLevel(
-                "postcode", distance_threshold=1, #regex_extract="^[A-Z]{1,2}"
+                "postcode",
+                distance_threshold=1,  # regex_extract="^[A-Z]{1,2}"
             ),
             cll.ElseLevel(),
         ],
@@ -72,10 +73,12 @@ def name_levels():
         "output_column_name": "name",
         "comparison_levels": [
             cll.JaroWinklerLevel(
-                "first_name", distance_threshold=1, #regex_extract="^[A-Z]{1,4}"
+                "first_name",
+                distance_threshold=1,  # regex_extract="^[A-Z]{1,4}"
             ),
             cll.ColumnsReversedLevel(
-                "first_name", "last_name", #regex_extract="[A-Z]{1,3}"
+                "first_name",
+                "last_name",  # regex_extract="[A-Z]{1,3}"
             ),
             cll.ElseLevel(),
         ],
