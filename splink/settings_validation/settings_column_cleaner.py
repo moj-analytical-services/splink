@@ -78,7 +78,6 @@ def clean_list_of_column_names(col_list: List[InputColumn]):
     if col_list is None:
         return ()  # needs to be a blank iterable
 
-    # col_list = [c.input_name_as_tree for c in col_list]
     return set((c.unquote().name for c in col_list))
 
 
