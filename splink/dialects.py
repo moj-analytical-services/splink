@@ -48,6 +48,11 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    def try_parse_date(self, name: str, date_format: str = None):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'try_parse_date' function"
+        )
+
 
 class DuckDBDialect(SplinkDialect):
     @property
@@ -74,6 +79,15 @@ class DuckDBDialect(SplinkDialect):
     def jaccard_function_name(self):
         return "jaccard"
 
+    @property
+    def default_date_foramt(self):
+        return "%Y-%m-%d"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_foramt
+        return f"""try_strptime({name}, '{date_format}')"""
+
 
 class SparkDialect(SplinkDialect):
     @property
@@ -99,6 +113,15 @@ class SparkDialect(SplinkDialect):
     @property
     def jaccard_function_name(self):
         return "jaccard"
+
+    @property
+    def default_date_foramt(self):
+        return "yyyy-MM-dd"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_foramt
+        return f"""to_date({name}, '{date_format}')"""
 
 
 class SqliteDialect(SplinkDialect):
@@ -196,6 +219,15 @@ class AthenaDialect(SplinkDialect):
     @property
     def _levenshtein_name(self):
         return "levenshtein_distance"
+
+    @property
+    def default_date_foramt(self):
+        return "%Y-%m-%d"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_foramt
+        return f"""try(date_parse({name}, '{date_format}'))"""
 
 
 _dialect_lookup = {

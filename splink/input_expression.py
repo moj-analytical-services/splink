@@ -84,7 +84,7 @@ class InputExpression:
 
         return True
 
-    def apply_operations(self, name, dialect):
+    def apply_operations(self, name: str, dialect: SplinkDialect):
         for op in self.operations:
             name = op(name=name, dialect=dialect)
         return name
@@ -104,7 +104,9 @@ class InputExpression:
         clone.operations.append(clone._lower_dialected)
         return clone
 
-    def _substr_dialected(self, name, start, end, dialect):
+    def _substr_dialected(
+        self, name: str, start: int, end: int, dialect: SplinkDialect
+    ):
         substr_sql = sqlglot.parse_one(f"substring(___col___, {start}, {end})").sql(
             dialect=dialect.sqlglot_name
         )
@@ -121,44 +123,6 @@ class InputExpression:
         """
         clone = self._clone()
         op = partial(clone._substr_dialected, start=start, end=length)
-        clone.operations.append(op)
-
-        return clone
-
-    def _regex_replace_dialected(
-        self,
-        name: str,
-        pattern: str,
-        replacement: str,
-        capture_group: int,
-        dialect: SplinkDialect,
-    ) -> str:
-        if capture_group is not None:
-            cg = capture_group
-            sql = f"regexp_replace(___col___, '{pattern}', '{replacement}', {cg})"
-        else:
-            sql = f"regexp_replace(___col___, '{pattern}', '{replacement}')"
-
-        regex_replace_sql = sqlglot.parse_one(sql).sql(dialect=dialect.sqlglot_name)
-
-        return regex_replace_sql.replace("___col___", name)
-
-    def regex_replace(self, pattern: str, replacement: str, capture_group: int = 1):
-        """Applies a regex replace transform to the input expression.
-
-        Args:
-            pattern (str): The regex pattern to match.
-            replacement (str): The string to replace the matched pattern with.
-            capture_group (int): The capture group to extract from the matched pattern.
-
-        """
-        clone = self._clone()
-        op = partial(
-            clone._regex_extract_dialected,
-            pattern=pattern,
-            replacement=replacement,
-            capture_group=capture_group,
-        )
         clone.operations.append(op)
 
         return clone
@@ -185,9 +149,28 @@ class InputExpression:
             capture_group (int): The capture group to extract from the matched pattern.
 
         """
+        clone = self._clone()
         op = partial(
-            self._regex_extract_dialected,
+            clone._regex_extract_dialected,
             pattern=pattern,
+        )
+        clone.operations.append(op)
+
+        return clone
+
+    def _try_parse_date_dialected(
+        self,
+        name: str,
+        dialect: SplinkDialect,
+        date_format: str = None,
+    ):
+        return dialect.try_parse_date(name, date_format=date_format)
+
+    def try_parse_date(self, date_format: str = None):
+        self._clone()
+        op = partial(
+            self._try_parse_date_dialected,
+            date_format=date_format,
         )
         self.operations.append(op)
 

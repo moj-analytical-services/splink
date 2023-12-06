@@ -386,8 +386,6 @@ class DatediffLevel(ComparisonLevelCreator):
         col_name: Union[str, InputExpression],
         date_threshold: int,
         date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
-        cast_strings_to_date: bool = False,
-        date_format: str = None,
     ):
         """A comparison level using a date difference function
 
@@ -404,8 +402,6 @@ class DatediffLevel(ComparisonLevelCreator):
         self.col_expression = input_expression_factory(col_name)
         self.date_threshold = date_threshold
         self.date_metric = date_metric
-        self.cast_strings_to_date = cast_strings_to_date
-        self.date_format = date_format
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -422,14 +418,6 @@ class DatediffLevel(ComparisonLevelCreator):
 
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
-
-        # TODO: Anything that simply transforms the input column should be handled
-        # by the input expression, not the comparison level
-
-        # TODO: if self.date_format is None, get the default from the dialect
-
-        if self.cast_strings_to_date:
-            self.col_expression = self.col_expression.to_date(self.date_format)
 
         # Use col as placeholder here because there's no guarantee the complex
         # transformed InputExpression will autotranspile

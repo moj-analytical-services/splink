@@ -1,4 +1,4 @@
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, List, Union
 
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
@@ -145,28 +145,57 @@ class DateDiffAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
-        distance_threshold_or_thresholds: Union[
-            Iterable[Tuple[Union[float, int], str]], Tuple[Union[float, int], str]
-        ],
+        *,
+        date_metrics: Union[str, list[str]],
+        date_thresholds: Union[int, list[int]],
+        cast_strings_to_dates: bool = False,
+        date_format: str = None,
+        term_frequency_adjustments=False,
+        invalid_dates_as_null=True,
     ):
-        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        date_metrics_as_iterable = ensure_is_iterable(date_metrics)
         # unpack it to a list so we can repeat iteration if needed
-        self.thresholds: Iterable[Tuple[Union[float, int], str]] = [
-            *thresholds_as_iterable
-        ]
+        self.date_metrics = [*date_metrics_as_iterable]
+
+        date_thresholds_as_iterable = ensure_is_iterable(date_thresholds)
+        self.date_thresholds = [*date_thresholds_as_iterable]
+
+        self.cast_strings_to_dates = cast_strings_to_dates
+        self.date_format = date_format
+
+        self.term_frequency_adjustments = term_frequency_adjustments
+
+        self.invalid_dates_as_null = invalid_dates_as_null
+
         super().__init__(col_name)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        col = self.col_expression
+        if self.invalid_dates_as_null:
+            null_col = col.try_parse_date(self.date_format)
+        else:
+            null_col = col
+
+        if self.cast_strings_to_dates:
+            date_diff_col = col.try_parse_date(self.date_format)
+        else:
+            date_diff_col = col
+
         return [
-            cll.NullLevel(self.col_expression),
-            cll.ExactMatchLevel(self.col_expression),
+            cll.NullLevel(null_col),
+            cll.ExactMatchLevel(
+                self.col_expression,
+                term_frequency_adjustments=self.term_frequency_adjustments,
+            ),
             *[
                 cll.DatediffLevel(
-                    self.col_expression,
+                    date_diff_col,
                     date_threshold=date_threshold,
                     date_metric=date_metric,
                 )
-                for (date_threshold, date_metric) in self.thresholds
+                for (date_threshold, date_metric) in zip(
+                    self.date_thresholds, self.date_metrics
+                )
             ],
             cll.ElseLevel(),
         ]
