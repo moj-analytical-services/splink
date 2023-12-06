@@ -1,36 +1,31 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
-from typing import Callable, List
+from typing import TYPE_CHECKING, Callable, List
 
 import sqlglot
 
 from ..comparison import Comparison
 from ..parse_sql import parse_columns_in_sql
-from .cleaned_settings_columns_lookup import (
+from .settings_column_cleaner import (
     SettingsColumnCleaner,
     clean_and_find_columns_not_in_input_dfs,
     find_columns_not_in_input_dfs,
 )
 from .settings_validation_log_strings import (
-    InvalidColumnsLogGenerator,
+    InvalidColumnSuffixesLogGenerator,
+    InvalidTableNamesLogGenerator,
+    MissingColumnsLogGenerator,
     construct_missing_column_in_blocking_rule_log,
     construct_missing_column_in_comparison_level_log,
     construct_missing_settings_column_log,
 )
 
+if TYPE_CHECKING:
+    from .settings_validation_log_strings import InvalidColumnsLogGenerator
+
+
 logger = logging.getLogger(__name__)
-
-
-# Create a series of partial implementations to make the trackers more explicit
-MissingColumnsLogGenerator = partial(InvalidColumnsLogGenerator, "missing_columns")
-InvalidTableNamesLogGenerator = partial(
-    InvalidColumnsLogGenerator, "invalid_table_name"
-)
-InvalidColumnSuffixesLogGenerator = partial(
-    InvalidColumnsLogGenerator, "invalid_column_suffix"
-)
 
 
 def validate_table_names(
@@ -179,8 +174,8 @@ class InvalidColumnsLogger:
     are missing from the user's input dataframe(s).
     """
 
-    def __init__(self, linker):
-        self.cleaned_settings_values = SettingsColumnCleaner(linker)
+    def __init__(self, cleaned_settings: SettingsColumnCleaner):
+        self.cleaned_settings_values = cleaned_settings
 
     def validate_uid(self):
         return check_for_missing_settings_column(
@@ -198,7 +193,7 @@ class InvalidColumnsLogger:
 
     def validate_blocking_rules(self):
         return check_for_missing_or_invalid_columns_in_sql_strings(
-            sql_dialect=self.cleaned_settings_values._sql_dialect,
+            sql_dialect=self.cleaned_settings_values.sql_dialect,
             sql_strings=self.cleaned_settings_values.blocking_rules,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
             additional_validation_checks=[validate_table_names],
@@ -206,7 +201,7 @@ class InvalidColumnsLogger:
 
     def validate_comparison_levels(self):
         return check_comparison_for_missing_or_invalid_sql_strings(
-            sql_dialect=self.cleaned_settings_values._sql_dialect,
+            sql_dialect=self.cleaned_settings_values.sql_dialect,
             comparisons_to_check=self.cleaned_settings_values.comparisons,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )

@@ -1,3 +1,4 @@
+from functools import partial
 from typing import NamedTuple
 
 
@@ -44,6 +45,16 @@ class InvalidColumnsLogGenerator(NamedTuple):
         # calls invalid_cols, invalid_table_pref, etc
         invalid_string = getattr(self, self.invalid_type)
         return self.log_string_prefix + invalid_string + self.columns_as_text
+
+
+# Create a series of partial implementations to make the trackers more explicit
+MissingColumnsLogGenerator = partial(InvalidColumnsLogGenerator, "missing_columns")
+InvalidTableNamesLogGenerator = partial(
+    InvalidColumnsLogGenerator, "invalid_table_name"
+)
+InvalidColumnSuffixesLogGenerator = partial(
+    InvalidColumnsLogGenerator, "invalid_column_suffix"
+)
 
 
 def construct_missing_settings_column_log(constructor_dict) -> str:
