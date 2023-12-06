@@ -94,8 +94,8 @@ class ComparisonCreator(ABC):
     def configure(
         self,
         *,
-        m_probabilities: list[float] = None,
-        u_probabilities: list[float] = None,
+        m_probabilities: List[float] = None,
+        u_probabilities: List[float] = None,
     ) -> "ComparisonCreator":
         """
         Configure the comparison creator with m and u probabilities. The first
@@ -127,7 +127,7 @@ class ComparisonCreator(ABC):
 
     @final
     @m_probabilities.setter
-    def m_probabilities(self, m_probabilities: list[float]):
+    def m_probabilities(self, m_probabilities: List[float]):
         if m_probabilities:
             num_probs_supplied = len(m_probabilities)
             num_non_null_levels = self.num_non_null_levels
@@ -146,7 +146,7 @@ class ComparisonCreator(ABC):
 
     @final
     @u_probabilities.setter
-    def u_probabilities(self, u_probabilities: list[float]):
+    def u_probabilities(self, u_probabilities: List[float]):
         if u_probabilities:
             num_probs_supplied = len(u_probabilities)
             num_non_null_levels = self.num_non_null_levels

@@ -11,7 +11,7 @@ class CustomComparison(ComparisonCreator):
     def __init__(
         self,
         output_column_name: str,
-        comparison_levels: list[Union[ComparisonLevelCreator, dict]],
+        comparison_levels: List[Union[ComparisonLevelCreator, dict]],
         description: str = None,
     ):
         """
