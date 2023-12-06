@@ -3,10 +3,9 @@ import pytest
 
 import splink.comparison_level_library as cll
 
-# from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+from .decorator import mark_with_dialects_excluding
 
-df = pd.DataFrame(
+df_pandas = pd.DataFrame(
     [
         {
             "unique_id": 1,
@@ -94,42 +93,25 @@ record_pairs_gamma_name = {
     1: [(5, 6)],
 }
 
+@mark_with_dialects_excluding()
+@pytest.mark.parametrize(
+    ("level_set", "record_pairs_gamma"),
+    [
+        pytest.param(
+            postcode_levels(),
+            record_pairs_gamma_postcode,
+            id="name regex levels test",
+        ),
+        pytest.param(
+            name_levels(),
+            record_pairs_gamma_name,
+            id="name regex levels test",
+        ),
+    ]
+)
+def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
+    helper = test_helpers[dialect]
 
-# TODO: restore once code makes sense
-# @pytest.mark.parametrize(
-#     ("Linker", "df", "level_set", "record_pairs_gamma"),
-#     [
-#         pytest.param(
-#             DuckDBLinker,
-#             df,
-#             postcode_levels(clld),
-#             record_pairs_gamma_postcode,
-#             id="DuckDB postcode regex levels test",
-#         ),
-#         pytest.param(
-#             DuckDBLinker,
-#             df,
-#             name_levels(clld),
-#             record_pairs_gamma_name,
-#             id="DuckDB name regex levels test",
-#         ),
-#         pytest.param(
-#             SparkLinker,
-#             df,
-#             postcode_levels(clls),
-#             record_pairs_gamma_postcode,
-#             id="Spark postcode regex levels test",
-#         ),
-#         pytest.param(
-#             SparkLinker,
-#             df,
-#             name_levels(clls),
-#             record_pairs_gamma_name,
-#             id="Spark name regex levels test",
-#         ),
-#     ],
-# )
-def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
     # Generate settings
     settings = {
         "link_type": "dedupe_only",
@@ -138,10 +120,8 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
     comparison_name = level_set["output_column_name"]
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df_pandas)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
     linker_output = linker.predict().as_pandas_dataframe()
 
