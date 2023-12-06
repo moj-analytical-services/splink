@@ -1,5 +1,6 @@
 import re
 import string
+from copy import copy
 from functools import partial
 
 import sqlglot
@@ -36,6 +37,11 @@ class InputExpression:
         self.operations = []
         if sql_dialect is not None:
             self.sql_dialect: SplinkDialect = sql_dialect
+
+    def _clone(self):
+        clone = copy(self)
+        clone.operations = [op for op in self.operations]
+        return clone
 
     def parse_input_string(self, dialect: SplinkDialect):
         """
@@ -94,8 +100,9 @@ class InputExpression:
         """
         Applies a lowercase transofrom to the input expression.
         """
-        self.operations.append(self._lower_dialected)
-        return self
+        clone = self._clone()
+        clone.operations.append(clone._lower_dialected)
+        return clone
 
     def _substr_dialected(self, name, start, end, dialect):
         substr_sql = sqlglot.parse_one(f"substring(___col___, {start}, {end})").sql(
@@ -112,10 +119,11 @@ class InputExpression:
             start (int): The starting index of the substring.
             length (int): The length of the substring.
         """
-        op = partial(self._substr_dialected, start=start, end=length)
-        self.operations.append(op)
+        clone = self._clone()
+        op = partial(clone._substr_dialected, start=start, end=length)
+        clone.operations.append(op)
 
-        return self
+        return clone
 
     def _regex_replace_dialected(
         self,
@@ -144,15 +152,16 @@ class InputExpression:
             capture_group (int): The capture group to extract from the matched pattern.
 
         """
+        clone = self._clone()
         op = partial(
-            self._regex_extract_dialected,
+            clone._regex_extract_dialected,
             pattern=pattern,
             replacement=replacement,
             capture_group=capture_group,
         )
-        self.operations.append(op)
+        clone.operations.append(op)
 
-        return self
+        return clone
 
     def _regex_extract_dialected(
         self,
