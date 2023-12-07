@@ -5,8 +5,6 @@ import pytest
 
 from splink.estimate_u import _proportion_sample_size_link_only
 from tests.decorator import mark_with_dialects_excluding
-from splink.estimate_u import _proportion_sample_size_link_only
-from tests.decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
