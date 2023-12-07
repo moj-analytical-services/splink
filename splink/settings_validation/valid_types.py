@@ -5,7 +5,6 @@ import logging
 from ..comparison import Comparison
 from ..comparison_level import ComparisonLevel
 from ..exceptions import ComparisonSettingsException, ErrorLogger, InvalidDialect
-from .settings_validator import SettingsValidator
 
 logger = logging.getLogger(__name__)
 
@@ -17,27 +16,16 @@ def extract_sql_dialect_from_cll(cll):
         return getattr(cll, "_sql_dialect", None)
 
 
-class InvalidTypesAndValuesLogger(SettingsValidator):
-
-    """Most types are checked within the settings schema validation step -
-    https://github.com/moj-analytical-services/splink/blob/master/splink/validate_jsonschema.py.
-
-    For any types that can't be checked in this step, run some quick validation checks.
-    """
-
-    def __init__(self, linker):
-        self.linker = linker
-
-    def _validate_dialect(self):
-        settings_dialect = self.linker._settings_obj._sql_dialect
-        linker_dialect = self.linker._sql_dialect
-        if settings_dialect != linker_dialect:
-            linker_type = self.linker.__class__.__name__
-            raise ValueError(
-                f"Incompatible SQL dialect! `settings` dictionary uses "
-                f"dialect {settings_dialect}, but expecting "
-                f"'{linker_dialect}' for Linker of type `{linker_type}`"
-            )
+def _validate_dialect(settings_dialect: str, linker_dialect: str, linker_type: str):
+    # settings_dialect = self.linker._settings_obj._sql_dialect
+    # linker_dialect = self.linker._sql_dialect
+    # linker_type = self.linker.__class__.__name__
+    if settings_dialect != linker_dialect:
+        raise ValueError(
+            f"Incompatible SQL dialect! `settings` dictionary uses "
+            f"dialect {settings_dialect}, but expecting "
+            f"'{linker_dialect}' for Linker of type `{linker_type}`"
+        )
 
 
 def validate_comparison_levels(

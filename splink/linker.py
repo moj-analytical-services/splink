@@ -13,10 +13,13 @@ from statistics import median
 
 import sqlglot
 
-from splink.input_column import InputColumn, remove_quotes_from_identifiers
-from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.input_column import InputColumn
+from splink.settings_validation.log_invalid_columns import (
+    InvalidColumnsLogger,
+    SettingsColumnCleaner,
+)
 from splink.settings_validation.valid_types import (
-    InvalidTypesAndValuesLogger,
+    _validate_dialect,
     log_comparison_errors,
 )
 
@@ -110,6 +113,7 @@ from .term_frequencies import (
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
@@ -518,12 +522,18 @@ class Linker:
             return
 
         # Run miscellaneous checks on our settings dictionary.
-        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
-        settings_invalid_types_values._validate_dialect()
+        _validate_dialect(
+            settings_dialect=self._settings_obj._sql_dialect,
+            linker_dialect=self._sql_dialect,
+            linker_type=self.__class__.__name__,
+        )
 
         # Constructs output logs for our various settings inputs
-        if validate_settings:
-            InvalidColumnsLogger(self).construct_output_logs()
+        cleaned_settings = SettingsColumnCleaner(
+            settings_object=self._settings_obj,
+            input_columns=self._input_tables_dict,
+        )
+        InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1300,7 +1310,7 @@ class Linker:
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
-            remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+            tf_col.unquote().name
             for tf_col in self._settings_obj._term_frequency_columns
         ]
 
@@ -2004,7 +2014,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         self._settings_obj._blocking_rules_to_generate_predictions = [
-            BlockingRule(f"{uid_l} = {uid_r}")
+            BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
         ]
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
@@ -2098,7 +2108,7 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: float,
     ):
         """Generates a table containing cluster metrics and returns a Splink dataframe
 
@@ -2116,14 +2126,19 @@ class Linker:
 
         """
 
-        # Get unique row id column name from settings
-        unique_id_col = self._settings_obj._unique_id_column_name
+        # Get unique id columns
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # Create unique id for left-hand edges
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        # Create unique id for clusters
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_sql(
             df_predict,
             df_clustered,
             threshold_match_probability,
-            _unique_id_col=unique_id_col,
+            composite_uid_edges_l,
+            composite_uid_clusters,
         )
 
         for sql in sqls:
