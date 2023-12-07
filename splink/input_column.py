@@ -71,6 +71,10 @@ class SqlglotColumnTreeBuilder:
             return exp.alias_(tree, self.alias, quoted=self.quoted)
         return tree
 
+    @property
+    def sql(self):
+        return self.as_sqlglot_tree.sql(dialect=self.sqlglot_dialect)
+
     @classmethod
     def from_raw_column_name_or_column_reference(cls, input_str, sqlglot_dialect):
         def tree_to_sqlglot_column_tree_builder_args(sqlglot_tree, sqlglot_dialect):
