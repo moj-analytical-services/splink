@@ -84,11 +84,7 @@ def test_cll_creators_instantiate_levels(dialect):
 
 @mark_with_dialects_excluding()
 def test_cll_creators_instantiate_levels_with_config(dialect):
-    lev_dict = (
-        cll.NullLevel("city")
-        .get_comparison_level(dialect)
-        .as_dict()
-    )
+    lev_dict = cll.NullLevel("city").get_comparison_level(dialect).as_dict()
     assert lev_dict["is_null_level"]
 
     lev_dict = (
