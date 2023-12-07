@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -46,7 +46,7 @@ def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
 
 def parse_columns_in_sql(
     sql: str, sql_dialect: str, remove_quotes=True
-) -> Optional[list[sqlglot.Expression]]:
+) -> Optional[List[sqlglot.Expression]]:
     """Extract all columns found within a SQL expression.
 
     Args:
