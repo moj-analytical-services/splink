@@ -19,7 +19,9 @@ comparison_surname = {
     "comparison_levels": [
         cll.NullLevel("surname"),
         cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
-        cll.LevenshteinLevel("surname", 2),
+        cll.LevenshteinLevel("surname", 2).configure(
+            label_for_charts="surname Levenshtein under 2"
+        ),
         cll.ElseLevel().configure(m_probability=0.2, u_probability=0.85),
     ],
 }
@@ -78,6 +80,38 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.ElseLevel().get_comparison_level(dialect)
     cll.ExactMatchLevel("city").get_comparison_level(dialect)
     cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
+
+
+@mark_with_dialects_excluding()
+def test_cll_creators_instantiate_levels_with_config(dialect):
+    lev_dict = cll.NullLevel("city").get_comparison_level(dialect).as_dict()
+    assert lev_dict["is_null_level"]
+
+    lev_dict = (
+        cll.ElseLevel()
+        .configure(m_probability=0.2, u_probability=0.7)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["m_probability"] == 0.2
+    assert lev_dict["u_probability"] == 0.7
+
+    lev_dict = (
+        cll.ExactMatchLevel("city")
+        .configure(tf_adjustment_column="city", tf_adjustment_weight=0.9)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["tf_adjustment_column"] == "city"
+    assert lev_dict["tf_adjustment_weight"] == 0.9
+
+    lev_dict = (
+        cll.LevenshteinLevel("city", 5)
+        .configure(label_for_charts="city loose fuzzy match")
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["label_for_charts"] == "city loose fuzzy match"
 
 
 comparison_name = cl.CustomComparison(
