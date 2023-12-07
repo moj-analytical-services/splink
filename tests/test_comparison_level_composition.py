@@ -23,7 +23,8 @@ def binary_composition_internals(clause, c_fun, dialect, q):
     level = c_fun(
         cll.NullLevel("first_name"),
         cll.NullLevel("surname"),
-        # label_for_charts="This is a test",
+    ).configure(
+        label_for_charts="This is a test",
     ).get_comparison_level(dialect)
 
     null_sql = (
@@ -32,7 +33,7 @@ def binary_composition_internals(clause, c_fun, dialect, q):
     )
     assert level.sql_condition == null_sql
     # Default label
-    # assert level.label_for_charts == "This is a test"
+    assert level.label_for_charts == "This is a test"
     # As both inputs are null, we're expecting this to return True
     assert level.is_null_level is True
 
