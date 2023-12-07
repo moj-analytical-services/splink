@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 
 from splink.comparison import Comparison
+from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.blocking_rule_library import block_on
-from splink.duckdb.comparison_library import levenshtein_at_thresholds
 from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import ErrorLogger
 from splink.settings_validation.log_invalid_columns import (
@@ -219,7 +219,7 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
             comparisons_to_check=[
                 Comparison(email_comparison_to_check),
                 Comparison(city_comparison_to_check),
-                levenshtein_at_thresholds("first_name"),
+                LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
             valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         )
@@ -241,7 +241,7 @@ def test_settings_validation_logs(caplog):
     settings["unique_id_column_name"] = "abcde"
     settings["additional_columns_to_retain"] = ["abcde"]
     settings["blocking_rules_to_generate_predictions"] = ["l.abcde = z.abcde"]
-    settings["comparisons"][3] = levenshtein_at_thresholds("abcde")
+    settings["comparisons"][3] = LevenshteinAtThresholds("abcde")
 
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
