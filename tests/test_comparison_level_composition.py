@@ -20,12 +20,16 @@ def binary_composition_internals(clause, c_fun, dialect, q):
     assert level.label_for_charts == "(Exact match on tom)"
 
     # Two null levels composed
-    level = c_fun(
-        cll.NullLevel("first_name"),
-        cll.NullLevel("surname"),
-    ).configure(
-        label_for_charts="This is a test",
-    ).get_comparison_level(dialect)
+    level = (
+        c_fun(
+            cll.NullLevel("first_name"),
+            cll.NullLevel("surname"),
+        )
+        .configure(
+            label_for_charts="This is a test",
+        )
+        .get_comparison_level(dialect)
+    )
 
     null_sql = (
         f"({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL) {clause} "
