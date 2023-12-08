@@ -6,4 +6,4 @@ class DatabaseAPI:
 
 
 class DuckDBAPI(DatabaseAPI):
-    sql_dialect = DuckDBDialect
+    sql_dialect = DuckDBDialect()

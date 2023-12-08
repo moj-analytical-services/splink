@@ -427,12 +427,7 @@ class Linker:
 
     @property
     def _sql_dialect(self):
-        if self._sql_dialect_ is None:
-            raise NotImplementedError(
-                f"No SQL dialect set on object of type {type(self)}. "
-                "Did you make sure to create a dialect-specific Linker?"
-            )
-        return self._sql_dialect_
+        return self.db_api.sql_dialect.name
 
     @property
     def _infinity_expression(self):
