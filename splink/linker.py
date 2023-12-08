@@ -66,6 +66,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -137,6 +138,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict | Path,
+        database_api: DatabaseAPI,
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
@@ -218,6 +220,7 @@ class Linker:
             splink_logger.setLevel(logging.INFO)
 
         self._pipeline = SQLPipeline()
+        self.db_api = database_api
 
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
@@ -626,9 +629,7 @@ class Linker:
             templated_name (str): The purpose of the table to Splink
             physical_name (str): The name of the table in the underlying databse
         """
-        raise NotImplementedError(
-            "_table_to_splink_dataframe not implemented on this linker"
-        )
+        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
 
     def _enqueue_sql(self, sql, output_table_name):
         """Add sql to the current pipeline, but do not execute the pipeline."""
@@ -703,8 +704,8 @@ class Linker:
         their implementation, maybe doing some SQL translation or other prep/cleanup
         work before/after.
         """
-        raise NotImplementedError(
-            f"_execute_sql_against_backend not implemented for {type(self)}"
+        return self.db_api.execute_sql_against_backedn(
+            sql, templated_name, physical_name
         )
 
     def _run_sql_execution(
@@ -718,9 +719,7 @@ class Linker:
 
         This could return something, or not. It's up to the Linker subclass to decide.
         """
-        raise NotImplementedError(
-            f"_run_sql_execution not implemented for {type(self)}"
-        )
+        return self.db_api.run_sql_execution(final_sql, templated_name, physical_name)
 
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
@@ -774,7 +773,7 @@ class Linker:
                 pipeline
         """
 
-        raise NotImplementedError(f"register_table not implemented for {type(self)}")
+        return self.db_api.register_table(input, table_name, overwrite)
 
     def _table_registration(self, input, table_name):
         """
@@ -796,9 +795,7 @@ class Linker:
             None
         """
 
-        raise NotImplementedError(
-            f"_table_registration not implemented for {type(self)}"
-        )
+        return self.db_api._table_registration(input, table_name)
 
     def query_sql(self, sql, output_type="pandas"):
         """
@@ -997,9 +994,7 @@ class Linker:
             logger.warning(warn_message)
 
     def _table_exists_in_database(self, table_name):
-        raise NotImplementedError(
-            f"table_exists_in_database not implemented for {type(self)}"
-        )
+        return self.db_api.table_exists_in_database(table_name)
 
     def _validate_input_dfs(self):
         if not hasattr(self, "_input_tables_dict"):
