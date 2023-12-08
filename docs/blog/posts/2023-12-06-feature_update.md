@@ -101,7 +101,7 @@ See the [Getting Started page](../../getting_started.md#backend-specific-install
 
 ## :no_entry_sign: Drop support for python 3.7
 
-From Splink 3.9.7, support has been dropped for python 3.7. This decision has been made to managing dependency clashes in the back end of Splink.
+From Splink 3.9.7, support has been dropped for python 3.7. This decision has been made to manage dependency clashes in the back end of Splink.
 
 If you are working with python 3.7, please revert to Splink 3.9.6.
 
