@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import hashlib
 import json
@@ -66,7 +66,9 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
-from .database_api import DatabaseAPI
+# NOQA:I001
+# TODO: circular - restore
+# from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -138,7 +140,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict | Path,
-        database_api: DatabaseAPI,
+        database_api, # TODO: can't annotate atm due to circular imports
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
