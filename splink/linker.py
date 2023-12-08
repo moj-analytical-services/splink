@@ -239,9 +239,23 @@ class Linker:
             self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
+        # logic from DuckDBLinker.__init__ - TODO: genericise
+        # If user has provided pandas dataframes, need to register
+        # them with the database, using user-provided aliases
+        # if provided or a created alias if not
+        input_tables = ensure_is_list(input_table_or_tables)
+        # TODO: restore this kind of special handling:
+        # input_tables = [
+        #     duckdb_load_from_file(t) if isinstance(t, str) else t for t in input_tables
+        # ]
+
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
         homogenised_tables, homogenised_aliases = self._register_input_tables(
-            input_table_or_tables,
-            input_table_aliases,
+            input_tables,
+            input_aliases,
             accepted_df_dtypes,
         )
 
@@ -699,7 +713,7 @@ class Linker:
         their implementation, maybe doing some SQL translation or other prep/cleanup
         work before/after.
         """
-        return self.db_api.execute_sql_against_backedn(
+        return self.db_api.execute_sql_against_backend(
             sql, templated_name, physical_name
         )
 
