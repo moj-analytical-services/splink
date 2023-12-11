@@ -65,6 +65,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+
 # NOQA:I001
 # TODO: circular - restore
 # from .database_api import DatabaseAPI
@@ -139,7 +140,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict | Path,
-        database_api, # TODO: can't annotate atm due to circular imports
+        database_api,  # TODO: can't annotate atm due to circular imports
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,

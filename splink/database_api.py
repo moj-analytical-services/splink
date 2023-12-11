@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseAPI:
-
     def __init__(self):
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
@@ -48,7 +47,6 @@ class DatabaseAPI:
                 f"\n\nError was: {e}"
             ) from e
 
-
     # should probably also be responsible for cache
     # TODO: stick this in a cache-api that lives on this
 
@@ -61,8 +59,10 @@ class DatabaseAPI:
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
 
+
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
+
     def __init__(self, connection: str = ":memory:"):
         super().__init__()
         validate_duckdb_connection(connection, logger)
@@ -115,7 +115,9 @@ class DuckDBAPI(DatabaseAPI):
             return False
         return True
 
-    def execute_sql_against_backend(self, sql: str, templated_name: str, physical_name: str):
+    def execute_sql_against_backend(
+        self, sql: str, templated_name: str, physical_name: str
+    ):
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -136,4 +138,3 @@ class DuckDBAPI(DatabaseAPI):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self._con.execute(drop_sql)
-
