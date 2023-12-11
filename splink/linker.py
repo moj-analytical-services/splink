@@ -1431,12 +1431,12 @@ class Linker:
         concat_with_tf = self._initialise_df_concat_with_tf()
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
-        sqls = block_using_rules_sqls(self, allow_exploding=True)
+        sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
-        [br.exploding_br_with_id_tables() for br in exploding_br_with_id_tables]
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
         return deterministic_link_df
 
     def estimate_u_using_random_sampling(
@@ -1770,7 +1770,7 @@ class Linker:
         # the tables of ID pairs
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
-        sqls = block_using_rules_sqls(self, allow_exploding=True)
+        sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1796,10 +1796,7 @@ class Linker:
         predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
 
-        [
-            br.drop_materialised_id_pairs_dataframe()
-            for br in exploding_br_with_id_tables
-        ]
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
 
         return predictions
 

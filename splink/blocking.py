@@ -307,6 +307,7 @@ class ExplodingBlockingRule(BlockingRule):
 
     def drop_materialised_id_pairs_dataframe(self):
         self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
+        self.exploded_id_pair_table = None
 
     def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
         """A SQL string specifying how to exclude the results
@@ -330,6 +331,12 @@ class ExplodingBlockingRule(BlockingRule):
     def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
+
+        if self.exploded_id_pair_table is None:
+            raise ValueError(
+                "Exploding blocking rules are not supported for the function you have"
+                " called."
+            )
         exploded_id_pair_table = self.exploded_id_pair_table
         unique_id_col = linker._settings_obj._unique_id_column_name
         sql = f"""
@@ -410,7 +417,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sqls(linker: Linker, allow_exploding=False):
+def block_using_rules_sqls(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -498,12 +505,6 @@ def block_using_rules_sqls(linker: Linker, allow_exploding=False):
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
-
-    has_exploding = any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules)
-    if has_exploding and not allow_exploding:
-        raise ValueError(
-            "Exploding blocking rules are not currently supported for this function"
-        )
 
     # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.
