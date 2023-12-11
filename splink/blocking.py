@@ -248,7 +248,7 @@ class SaltedBlockingRule(BlockingRule):
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
             """
 
             sqls.append(sql)
