@@ -65,3 +65,29 @@ def test_run_predict(test_helpers):
         accepted_df_dtypes=[pd.DataFrame]
     )
     linker.predict()
+
+def test_full_run(test_helpers):
+    # use dialect + helper to ease transition once we have all dialects back
+    dialect = "duckdb"
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    db_api = DuckDBAPI()
+    linker = Linker(
+        df, cl_settings, db_api,
+        # temporarily set this until we have dealt with it:
+        accepted_df_dtypes=[pd.DataFrame]
+    )
+    linker.estimate_probability_two_random_records_match(
+        ["l.first_name = r.first_name AND l.surname = r.surname"],
+        0.6,
+    )
+    linker.estimate_u_using_random_sampling(500)
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.first_name = r.first_name"
+    )
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname"
+    )
+    df_e = linker.predict()
+    df_c = linker.cluster_pairwise_predictions_at_threshold(df_e, 0.99)
