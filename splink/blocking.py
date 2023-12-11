@@ -271,6 +271,7 @@ class ExplodingBlockingRule(BlockingRule):
         i.e. pairs are only created that match this blocking rule and NOT any of
         the preceding blocking rules
         """
+
         settings_obj = linker._settings_obj
         unique_id_col = settings_obj._unique_id_column_name
 
@@ -388,7 +389,7 @@ def materialise_exploded_id_tables(linker: Linker):
         marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
         br.exploded_id_pair_table = marginal_ids_table
         exploded_tables.append(marginal_ids_table)
-    return exploded_tables
+    return exploding_blocking_rules
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):

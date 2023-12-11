@@ -1429,14 +1429,14 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
-        exploded_tables = materialise_exploded_id_tables(self)
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self, allow_exploding=True)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
-        [t.drop_table_from_database_and_remove_from_cache() for t in exploded_tables]
+        [br.exploding_br_with_id_tables() for br in exploding_br_with_id_tables]
         return deterministic_link_df
 
     def estimate_u_using_random_sampling(
@@ -1658,7 +1658,16 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
+        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
+        # and raise error if not specfically a BlockingRule
+        br = blocking_rule_to_obj(blocking_rule)
+        if type(br) is not BlockingRule:
+            raise TypeError(
+                "EM blocking rules must be plain blocking rules, not "
+                "salted or exploding blocking rules"
+            )
+
+        blocking_rule_sql = br.blocking_rule_sql
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1682,7 +1691,7 @@ class Linker:
 
         em_training_session = EMTrainingSession(
             self,
-            blocking_rule,
+            blocking_rule_sql,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
@@ -1759,7 +1768,7 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploded_tables = materialise_exploded_id_tables(self)
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self, allow_exploding=True)
         for sql in sqls:
@@ -1787,7 +1796,10 @@ class Linker:
         predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
 
-        [t.drop_table_from_database_and_remove_from_cache() for t in exploded_tables]
+        [
+            br.drop_materialised_id_pairs_dataframe()
+            for br in exploding_br_with_id_tables
+        ]
 
         return predictions
 
