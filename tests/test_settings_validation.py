@@ -1,15 +1,22 @@
 import logging
-from copy import deepcopy
 
 import pandas as pd
 import pytest
 
+from splink.comparison import Comparison
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
+from splink.duckdb.blocking_rule_library import block_on
+from splink.duckdb.comparison_library import levenshtein_at_thresholds
 from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import ErrorLogger
-from splink.settings_validation.column_lookups import (
-    InvalidCols,
-    InvalidColumnsLogger,
+from splink.settings_validation.log_invalid_columns import (
+    InvalidColumnSuffixesLogGenerator,
+    InvalidTableNamesLogGenerator,
+    MissingColumnsLogGenerator,
+    check_comparison_for_missing_or_invalid_sql_strings,
+    check_for_missing_or_invalid_columns_in_sql_strings,
+    check_for_missing_settings_column,
+    validate_table_names,
 )
 from splink.settings_validation.valid_types import (
     log_comparison_errors,
@@ -17,421 +24,257 @@ from splink.settings_validation.valid_types import (
 )
 
 from .basic_settings import get_settings_dict
-from .decorator import mark_with_dialects_excluding
+
+DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+VALID_INPUT_COLUMNS = DF.columns
+
+# TEST PARAMETERS
+# Simple Column checks -> evaluate whether a series of columns are missing
+test_settings_id_name = "test_id"
+missing_settings_column_test_cases = [
+    ("unique_id", None),
+    ("cluster", None),
+    ("", {""}),
+    ("invalid column name", {"invalid column name"}),
+    ("invalid_column_name", {"invalid_column_name"}),
+    (
+        ["cluster", "invalid column name", "also_invalid", "cluster"],
+        {"also_invalid", "invalid column name"},
+    ),
+    (["first_name", "full_name", "full_name"], {"full_name"}),
+    # Additional test cases
+    (
+        ["nonexistent_col1", "nonexistent_col2"],
+        {"nonexistent_col1", "nonexistent_col2"},
+    ),
+    ("nonexistent_col", {"nonexistent_col"}),
+    (["unique_id", "nonexistent_col"], {"nonexistent_col"}),
+    ([""], {""}),  # Edge case: list containing an empty string
+    ([], None),  # Edge case: empty list
+]
+
+# Blocking rules checks -> Evaluate whether any columns in a blocking rule break our
+# validation rules.
+blocking_rule_test_cases = {
+    "l.surname = r.surname": [],
+    "": [],  # handles it gracefully
+    "l.first_name = r.first_name and l.dob = r.dob": [],
+    "levenshtein(l.email, r.email) <= 2": [],
+    "l.invalid_col = r.invalid_col": [MissingColumnsLogGenerator({"invalid_col"})],
+    "surhelp = r.ok": [
+        MissingColumnsLogGenerator({"surhelp", "ok"}),
+        InvalidTableNamesLogGenerator({"surhelp"}),
+    ],
+    "levenshtein(z.first_name, r.first_name)": [
+        InvalidTableNamesLogGenerator({"z.first_name"}),
+    ],
+    'levenshtein("sur_name", r."sur Name") < 3': [
+        MissingColumnsLogGenerator({"sur Name", "sur_name"}),
+        InvalidTableNamesLogGenerator({"sur_name"}),
+    ],
+    "coalesce(l.first_name, NULL) = coalesce(r.first_name, NULL)": [],
+    "datediff('day', l.\"dob_test\", r.cluster)": [
+        MissingColumnsLogGenerator({"dob_test"}),
+    ],
+    '"l"."surname" = "r".invalid_name': [MissingColumnsLogGenerator({"invalid_name"})],
+    'lower(l."sur_name") = lower(r."surname")': [
+        MissingColumnsLogGenerator({"sur_name"})
+    ],
+    'dmetaphone(c."surname", r."surname")': [
+        InvalidTableNamesLogGenerator({"c.surname"})
+    ],
+    block_on(["left", "right"]).blocking_rule_sql: [
+        MissingColumnsLogGenerator({"left", "right"})
+    ],
+}
 
 
-def alter_settings(linker, new_settings):
-    linker = deepcopy(linker)
-    linker.load_settings(new_settings)
-    return InvalidColumnsLogger(linker)
-
-
-def verify_single_setting_validation(
-    invalid_cols_tuple,
-    settings_reference,
-    invalid_type,
-    invalid_columns,
-):
-    """A quick checker for any settings objects not
-    containing extensive SQL statements that require
-    validation.
-
-    Args:
-        invalid_cols_tuple (tuple): The output from
-            `InvalidColumnsLogger(linker).validate_{}`.
-        settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidColumnsLogger`
-            class for more.
-        invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
-            or `invalid_col_suffix`.
-        invalid_columns (list): A list of the expected invalid columns
-    """
-    assert invalid_cols_tuple[0] == settings_reference
-    inv_cols = invalid_cols_tuple[1]
-    i_type, cols = inv_cols.invalid_type, inv_cols.invalid_columns
-    assert i_type == invalid_type
-    assert len(invalid_columns) == len(cols)
-    assert all(item in invalid_columns for item in cols)
-
-
-def verify_complicated_settings_objects(invalid, expected):
-    """This is used for validating BRs and CLs. As they take advantage
-    of sets to remove duplicates, `expected_cols` the order is not consistent
-    and cannot be determined ahead of time.
-
-    Args:
-        invalid_cols_tuple (tuple): The output from
-            `InvalidColumnsLogger(linker).validate_{}`.
-        settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidColumnsLogger`
-            class for more.
-        invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
-            or `invalid_col_suffix`.
-        invalid_columns (list): A list of the expected invalid columns
-    """
-    for brs, out in zip(invalid.items(), expected.items()):
-        # dictionary key, this should be a br
-        assert brs[0] == out[0]
-
-        # This grabs all of our `InvalidCols` classes
-        for br_invalid, exp_invalid in zip(brs[1], out[1]):
-            assert br_invalid.invalid_type == exp_invalid.invalid_type
-            assert (
-                br_invalid.invalid_columns.sort() == exp_invalid.invalid_columns.sort()
-            )
-
-
-@mark_with_dialects_excluding("sqlite", "postgres")
-def test_invalid_cols_detected(test_helpers, dialect):
-    helper = test_helpers[dialect]
-    Linker = helper.Linker
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Create random settings to check outputs with
-    settings = get_settings_dict()
-    linker = Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
-    settings_logger = InvalidColumnsLogger(linker)
-
-    # Check that `invalid_cols_detected` is triggered correctly
-    assert settings_logger.invalid_cols_detected is False
-    settings_logger.valid_uid = ()
-    assert settings_logger.invalid_cols_detected is False
-    settings_logger.valid_uid = ["testing"]
-    assert settings_logger.invalid_cols_detected is True
-
-
-@mark_with_dialects_excluding("sqlite", "postgres", "spark")
-def test_unique_id_settings_validation(test_helpers, dialect, caplog):
-    helper = test_helpers[dialect]
-    Linker = helper.Linker
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Create random settings to check outputs with
-    settings = get_settings_dict()
-    linker = Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
-    settings_logger = InvalidColumnsLogger(linker)
-
-    #############
-    # UNIQUE ID #
-    #############
-    # Nothing supplied, we expect a value of None to be returned
-    assert settings_logger.validate_uid is None
-
-    # Valid column
-    settings["unique_id_column_name"] = "unique_id"
-    uid_check = alter_settings(linker, settings).validate_uid
-    assert uid_check is None
-
-    # Add additional faulty columns to retain
-    invalid_id = "invalid column name"
-    settings["unique_id_column_name"] = invalid_id
-    uid_check = alter_settings(linker, settings)
-    verify_single_setting_validation(
-        uid_check.validate_uid,
-        "unique_id_column_name",
-        "invalid_cols",
-        [invalid_id],
-    )
-
-    # Check logger formatting is approximately what we expect...
-    with caplog.at_level(logging.WARNING):
-        uid_check.construct_output_logs()
-        str_header = (
-            "Setting: `unique_id_column_name`\n"
-            "======================================\n"
-        )
-        str_error = (
-            "       - Missing column(s) from input dataframe(s): " f"`{invalid_id}`\n"
-        )
-        for string in [str_header, str_error]:
-            assert string in caplog.text
-
-
-@mark_with_dialects_excluding("sqlite", "postgres", "spark")
-def test_retained_cols_settings_validation(test_helpers, dialect, caplog):
-    helper = test_helpers[dialect]
-    Linker = helper.Linker
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Create random settings to check outputs with
-    settings = get_settings_dict()
-    linker = Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
-    settings_logger = InvalidColumnsLogger(linker)
-
-    ##################
-    # COLS TO RETAIN #
-    ##################
-    # Only "cluster" supplied. As such, we expect a value of None to be returned
-    settings_logger = InvalidColumnsLogger(linker)
-    assert settings_logger.validate_cols_to_retain is None
-
-    # Add additional faulty columns to retain
-    exp_cols_to_retain = ["also_invalid", "invalid column name"]
-    settings["additional_columns_to_retain"] = [
-        "cluster",
-        "invalid column name",
-        "also_invalid",
-        "cluster",  # duplicate - check it is ignored
-    ]
-    c_to_retain = alter_settings(linker, settings)
-    verify_single_setting_validation(
-        c_to_retain.validate_cols_to_retain,
-        "additional_columns_to_retain",
-        "invalid_cols",
-        exp_cols_to_retain,
-    )
-    # Check logger formatting is approximately what we expect...
-    with caplog.at_level(logging.WARNING):
-        c_to_retain.construct_output_logs()
-        str_header = (
-            "Setting: `additional_columns_to_retain`\n"
-            "======================================\n"
-        )
-        # column names are stored in a hashset, so we can't check for exact equality
-        # including the column names
-        str_error = "       - Missing column(s) from input dataframe(s): `"
-        for string in [str_header, str_error]:
-            assert string in caplog.text
-
-
-@mark_with_dialects_excluding("sqlite", "postgres", "spark")
-def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
-    helper = test_helpers[dialect]
-    Linker = helper.Linker
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Create random settings to check outputs with
-    settings = get_settings_dict()
-    linker = Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
-    settings_logger = InvalidColumnsLogger(linker)
-
-    ##################
-    # BLOCKING RULES #
-    ##################
-    # perfectly valid rules
-    assert len(settings_logger.validate_blocking_rules) == 0
-
-    initial_blocking_rules = [
-        "l.surname = r.surname",
-        "l.invalid_col = r.invalid_col",
-        "surhelp = r.ok",
-    ]
-    settings["blocking_rules_to_generate_predictions"] = initial_blocking_rules
-    invalid_brs = alter_settings(linker, settings).validate_blocking_rules
-
-    invalid_col_br = [
-        InvalidCols(invalid_type="invalid_cols", invalid_columns=["invalid_col"]),
-    ]
-    surhelp_br = [
-        InvalidCols(invalid_type="invalid_cols", invalid_columns=["surhelp", "ok"]),
-        InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["surhelp"]),
-    ]
-
-    invalid_rules = (invalid_col_br, surhelp_br)
-    # pop the first br from initial_blocking_rules as it is valid
-    expected_out = {
-        br: inv_cols for br, inv_cols in zip(initial_blocking_rules[1:], invalid_rules)
-    }
-    # Check both dictionaries are identical
-    verify_complicated_settings_objects(invalid_brs, expected_out)
-
-    # DuckDB quote syntax added in
-    blocking_rules_to_check = [
-        'levenshtein("sur_name", r."sur Name") < 3',
-        "coalesce(l.first_name, NULL) = coalesce(first_name, NULL)",
-        "datediff('day', l.\"dob_test\", r.cluster)",
-        # Identical rule - should be ignored
-        "datediff('day', l.\"dob_test\", r.cluster)",
-    ]
-    settings["blocking_rules_to_generate_predictions"] = blocking_rules_to_check
-    invalid_brs = alter_settings(linker, settings)
-
-    lev_br = [
-        InvalidCols(
-            invalid_type="invalid_cols", invalid_columns=["sur_name", "sur Name"]
-        ),
-        InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["sur_name"]),
-    ]
-    coal_br = InvalidCols(
-        invalid_type="invalid_table_pref", invalid_columns=["first_name"]
-    )
-    datediff_br = InvalidCols(invalid_type="invalid_cols", invalid_columns=["dob_test"])
-    invalid_rules = (lev_br, [coal_br], [datediff_br])
-    expected_out = {
-        br: inv_cols for br, inv_cols in zip(blocking_rules_to_check, invalid_rules)
-    }
-    # Check both dictionaries are identical
-    verify_complicated_settings_objects(
-        invalid_brs.validate_blocking_rules, expected_out
-    )
-
-    # Check logger formatting is approximately what we expect...
-    with caplog.at_level(logging.WARNING):
-        invalid_brs.construct_output_logs()
-
-        str_header = (
-            "Invalid Columns(s) in Blocking Rule(s)\n"
-            "======================================\n"
-        )
-        # column names are stored in a hashset, so we can't check for exact equality
-        # where we have multiple column names
-        missing_cols = "       - Missing column(s) from input dataframe(s): `dob_test`"
-        invalid_prefix = (
-            "       - Invalid table prefixes (only `l.` and `r.` are valid): "
-            "`first_name`"
-        )
-        for string in [str_header, missing_cols, invalid_prefix]:
-            # for string in [str_header, missing_cols]:
-            assert string in caplog.text
-
-
-@mark_with_dialects_excluding("sqlite", "postgres", "spark")
-def test_comparison_settings_validation(test_helpers, dialect, caplog):
-    helper = test_helpers[dialect]
-    Linker = helper.Linker
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Create random settings to check outputs with
-    settings = get_settings_dict()
-    linker = Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
-    settings_logger = InvalidColumnsLogger(linker)
-
-    #####################
-    # COMPARISON LEVELS #
-    #####################
-    # perfectly valid comparison levels from our test settings
-    assert len(settings_logger.validate_comparison_levels) == 0
-
-    # Create some wonky comparison levels
-    email_cc = {
-        "output_column_name": "email",
-        "comparison_levels": [
-            {
-                "sql_condition": "email_l IS NULL OR email_r IS NULL",
-                "label_for_charts": "Comparison includes null",
-                "is_null_level": True,
-            },
-            {
-                "sql_condition": "levenshtein(emails_l, test.email_r) < 3",
-                "label_for_charts": "Levenshtein < 3",
-            },
-            {
-                "sql_condition": "date_diff('day', email_date_l, email_r)",
-                "label_for_charts": "Random date diff",
-            },
-            {
-                "sql_condition": "ELSE",
-                "label_for_charts": "All other comparisons",
-            },
-        ],
-    }
-
-    city_cc = {
-        "output_column_name": "city",
-        "comparison_levels": [
-            {
-                "sql_condition": "city_l IS NULL OR city_r IS NULL",
-                "label_for_charts": "Comparison includes null",
-                "is_null_level": True,
-            },
-            {
-                "sql_condition": "not_city_l = not_a_city_r",
-                "label_for_charts": "Invalid exact SQL",
-            },
-            {
-                "sql_condition": "city_test_l = city_r",
-                "label_for_charts": "Exact match",
-            },
-            # Identical condition - should be ignored by the logger
-            {
-                "sql_condition": "city_test_l = city_r",
-                "label_for_charts": "Exact match",
-            },
-            {
-                # missing _l suffix
-                "sql_condition": "sin(radians(\"city\"['lat']))",
-                "label_for_charts": "Exact match",
-            },
-            {
-                "sql_condition": "ELSE",
-                "label_for_charts": "All other comparisons",
-            },
-        ],
-    }
-
-    settings["comparisons"][3:] = [email_cc, city_cc]
-    invalid_cls = alter_settings(linker, settings)
-
-    expected_email_invalid_output = {
+# Comparison test cases
+email_comparison_to_check = {
+    "output_column_name": "email",
+    "comparison_levels": [
+        {"sql_condition": "email_l IS NULL OR email_r IS NULL"},
+        {"sql_condition": "levenshtein(emails_l, test.email_r) < 3"},
+        {"sql_condition": "date_diff('day', email_date, email_lz)"},
+        {"sql_condition": "ELSE"},
+    ],
+}
+expected_email_comparison_errors = (
+    "email",
+    {
         "levenshtein(emails_l, test.email_r) < 3": [
-            InvalidCols(invalid_type="invalid_cols", invalid_columns=["emails"])
+            MissingColumnsLogGenerator({"emails"}),
         ],
-        "date_diff('day', email_date_l, email_r)": [
-            InvalidCols(invalid_type="invalid_cols", invalid_columns=["email_date"])
+        "date_diff('day', email_date, email_lz)": [
+            MissingColumnsLogGenerator({"email_date", "email_lz"}),
+            InvalidColumnSuffixesLogGenerator({"email_date", "email_lz"}),
         ],
-    }
+    },
+)
 
-    expected_city_invalid_output = {
+city_comparison_to_check = {
+    "output_column_name": "city",
+    "comparison_levels": [
+        {"sql_condition": "city_l IS NULL OR city_r IS NULL"},
+        {"sql_condition": "not_city_l = not_a_city_r"},
+        {"sql_condition": "city_test_l = city_z"},
+        # Identical condition - should be ignored by the logger
+        {"sql_condition": "city_test_l = city_z"},
+        {"sql_condition": "sin(radians(\"city\"['lat']))"},
+        {"sql_condition": "ELSE"},
+    ],
+}
+expected_city_comparison_errors = (
+    "city",
+    {
         "not_city_l = not_a_city_r": [
-            InvalidCols(
-                invalid_type="invalid_cols", invalid_columns=["not_a_city", "not_city"]
-            )
+            MissingColumnsLogGenerator({"not_a_city", "not_city"}),
         ],
-        "city_test_l = city_r": [
-            InvalidCols(invalid_type="invalid_cols", invalid_columns=["city_test"])
+        "city_test_l = city_z": [
+            MissingColumnsLogGenerator({"city_test", "city_z"}),
+            InvalidColumnSuffixesLogGenerator({"city_z"}),
         ],
         "sin(radians(\"city\"['lat']))": [
-            InvalidCols(invalid_type="invalid_col_suffix", invalid_columns=["city"])
+            InvalidColumnSuffixesLogGenerator({"city"}),
         ],
-    }
+    },
+)
 
-    # invalid_cls indexing is:
-    # [0] - output column name
-    # [1] - list of SQL statements and invalid column tuples
-    # Dicts can't be used as output column name is not a required variable
-    verify_complicated_settings_objects(
-        invalid_cls.validate_comparison_levels[0][1], expected_email_invalid_output
+
+@pytest.mark.parametrize(
+    "input_name, expected_output", missing_settings_column_test_cases
+)
+def test_check_for_missing_settings_column(input_name, expected_output):
+    missing_columns = check_for_missing_settings_column(
+        settings_id=test_settings_id_name,
+        settings_column_to_check=input_name,
+        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
     )
-    verify_complicated_settings_objects(
-        invalid_cls.validate_comparison_levels[1][1], expected_city_invalid_output
+    if expected_output is None:
+        assert missing_columns is None
+    else:
+        assert missing_columns[1] == MissingColumnsLogGenerator(expected_output)
+
+
+@pytest.mark.parametrize(
+    "blocking_rule_sql_string, expected", blocking_rule_test_cases.items()
+)
+def test_blocking_rule_sql_string_validation(blocking_rule_sql_string, expected):
+    result = check_for_missing_or_invalid_columns_in_sql_strings(
+        sql_dialect="duckdb",
+        sql_strings=[blocking_rule_sql_string],
+        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        additional_validation_checks=[validate_table_names],
     )
-    # Check logger formatting is approximately what we expect...
+
+    if expected:
+        assert result[blocking_rule_sql_string] == expected
+    else:
+        assert blocking_rule_sql_string not in result
+
+
+def test_collective_blocking_rules():
+    collective_rules = list(blocking_rule_test_cases.keys())
+    expected_output_len = sum(bool(exp) for exp in blocking_rule_test_cases.values())
+
+    result = check_for_missing_or_invalid_columns_in_sql_strings(
+        sql_dialect="duckdb",
+        sql_strings=collective_rules,
+        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        additional_validation_checks=[validate_table_names],
+    )
+
+    assert len(result) == expected_output_len
+
+
+def test_identical_blocking_rules_ignored():
+    """
+    Test to ensure the expected number of errors are raised for collective rules.
+
+    This test checks that the total number of errors identified by the function
+    matches the number of expected errors defined in the test cases. It ensures
+    that each rule in the collective set raises the expected number of errors.
+    """
+    test_identical_rules = [
+        "datediff('day', l.\"dob_test\", r.cluster)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
+    ]
+
+    result = check_for_missing_or_invalid_columns_in_sql_strings(
+        sql_dialect="duckdb",
+        sql_strings=test_identical_rules,
+        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        additional_validation_checks=[validate_table_names],
+    )
+
+    # Duplicates should be deleted
+    assert len(result) == 1
+
+
+def test_check_for_missing_or_invalid_columns_in_sql_strings():
+    invalid_comparisons_identified = (
+        check_comparison_for_missing_or_invalid_sql_strings(
+            sql_dialect="duckdb",
+            comparisons_to_check=[
+                Comparison(email_comparison_to_check),
+                Comparison(city_comparison_to_check),
+                levenshtein_at_thresholds("first_name"),
+            ],
+            valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        )
+    )
+
+    expected_outputs = (
+        expected_email_comparison_errors,
+        expected_city_comparison_errors,
+    )
+
+    for check, expected in zip(invalid_comparisons_identified, expected_outputs):
+        assert check == expected, f"Failed comparison check: {check}"
+
+
+# Integration test to assess if the logs are working as expected
+def test_settings_validation_logs(caplog):
+    settings = get_settings_dict()
+    # Inject some basic errors
+    settings["unique_id_column_name"] = "abcde"
+    settings["additional_columns_to_retain"] = ["abcde"]
+    settings["blocking_rules_to_generate_predictions"] = ["l.abcde = z.abcde"]
+    settings["comparisons"][3] = levenshtein_at_thresholds("abcde")
+
+    # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
-        invalid_cls.construct_output_logs()
+        DuckDBLinker(DF, settings, validate_settings=True)
 
-        str_header = (
-            "Invalid Columns(s) in Comparison(s)\n"
-            "======================================\n"
-        )
-        missing_cols = (
-            "\n       - Missing column(s) from input dataframe(s): " "`city_test`\n"
-        )
-        invalid_prefix = (
-            "\n       - Invalid table suffixes (only `_l` and `_r` are valid): "
-            "`city`\n"
-        )
-        for string in [str_header, missing_cols, invalid_prefix]:
-            assert string in caplog.text
+        # Define expected log segments
+        expected_log_segments = [
+            (
+                "Setting: `unique_id_column_name`",
+                "Missing column(s) from input dataframe(s): `abcde`",
+            ),
+            (
+                "Setting: `additional_columns_to_retain`",
+                "Missing column(s) from input dataframe(s): `abcde`",
+            ),
+            (
+                "Invalid Columns(s) in Blocking Rule(s)",
+                "Missing column(s) from input dataframe(s): `abcde`",
+            ),
+            (
+                "Invalid Columns(s) in Blocking Rule(s)",
+                "Invalid table names provided (only `l.` and `r.` are valid): `z.abcde`",  # noqa: E501
+            ),
+            (
+                "Invalid Columns(s) in Comparison(s)",
+                "Missing column(s) from input dataframe(s): `abcde`",
+            ),
+            # Add more log segments if needed
+        ]
+
+        # Check each expected log segment in the captured logs
+        for header, error in expected_log_segments:
+            assert header in caplog.text and error in caplog.text
 
 
 def test_settings_validation_on_2_to_3_converter():
@@ -462,39 +305,10 @@ def test_settings_validation_on_2_to_3_converter():
     }
 
     converted = convert_settings_from_v2_to_v3(settings)
-    linker = DuckDBLinker(
+    DuckDBLinker(
         df,
         converted,
     )
-    i_logger = InvalidColumnsLogger(linker)
-    # Longer form output without an output column name
-    assert i_logger.validate_comparison_levels == [
-        (
-            None,
-            {
-                (
-                    "(col_1 IS NULL OR col_1_r IS NULL)"
-                    " AND "
-                    "(surname_l IS NULL OR surname_r IS NULL)"
-                ): [
-                    InvalidCols(invalid_type="invalid_cols", invalid_columns=["col_1"]),
-                    InvalidCols(
-                        invalid_type="invalid_col_suffix", invalid_columns=["col_1"]
-                    ),
-                ],
-                "forename_l = forename_r AND surname_l = surname_r": [
-                    InvalidCols(
-                        invalid_type="invalid_cols", invalid_columns=["forename"]
-                    )
-                ],
-                "forename_l = forename_r": [
-                    InvalidCols(
-                        invalid_type="invalid_cols", invalid_columns=["forename"]
-                    )
-                ],
-            },
-        )
-    ]
 
 
 def test_validate_sql_dialect():
