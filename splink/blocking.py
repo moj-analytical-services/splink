@@ -248,8 +248,7 @@ class SaltedBlockingRule(BlockingRule):
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
-            {self.exclude_pars_generated_by_all_preceding_rules_sql}
-
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
             """
 
             sqls.append(sql)
@@ -345,6 +344,11 @@ class ExplodingBlockingRule(BlockingRule):
         """
         return sql
 
+    def as_dict(self):
+        output = super().as_dict()
+        output["arrays_to_explode"] = self.array_columns_to_explode
+        return output
+
 
 def materialise_exploded_id_tables(linker: Linker):
     settings_obj = linker._settings_obj
@@ -405,7 +409,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sqls(linker: Linker):
+def block_using_rules_sqls(linker: Linker, allow_exploding=False):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -493,6 +497,12 @@ def block_using_rules_sqls(linker: Linker):
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
+
+    has_exploding = any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules)
+    if has_exploding and not allow_exploding:
+        raise ValueError(
+            "Exploding blocking rules are not currently supported for this function"
+        )
 
     # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.

@@ -1429,10 +1429,15 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sqls = block_using_rules_sqls(self)
+        exploded_tables = materialise_exploded_id_tables(self)
+
+        sqls = block_using_rules_sqls(self, allow_exploding=True)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
-        return self._execute_sql_pipeline([concat_with_tf])
+
+        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        [t.drop_table_from_database_and_remove_from_cache() for t in exploded_tables]
+        return deterministic_link_df
 
     def estimate_u_using_random_sampling(
         self, max_pairs: int = None, seed: int = None, *, target_rows=None
@@ -1756,7 +1761,7 @@ class Linker:
         # the tables of ID pairs
         exploded_tables = materialise_exploded_id_tables(self)
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(self, allow_exploding=True)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
