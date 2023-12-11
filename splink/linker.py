@@ -39,7 +39,6 @@ from .blocking import (
     block_using_rules_sqls,
     blocking_rule_to_obj,
 )
-from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
     completeness_chart,
@@ -224,7 +223,8 @@ class Linker:
         self._pipeline = SQLPipeline()
         self.db_api = database_api
 
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
+        # TODO: temp hack for compat
+        self._intermediate_table_cache: dict = self.db_api._intermediate_table_cache
 
         if not isinstance(settings_dict, (dict, type(None))):
             # Run if you've entered a filepath
@@ -3787,15 +3787,6 @@ class Linker:
             view_in_jupyter=view_in_jupyter,
             overwrite=overwrite,
         )
-
-    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
-        keys_to_delete = set()
-        for key, df in self._intermediate_table_cache.items():
-            if df.physical_name == splink_dataframe.physical_name:
-                keys_to_delete.add(key)
-
-        for k in keys_to_delete:
-            del self._intermediate_table_cache[k]
 
     def _find_blocking_rules_below_threshold(
         self, max_comparisons_per_rule, blocking_expressions=None

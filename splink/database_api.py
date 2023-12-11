@@ -4,6 +4,7 @@ import duckdb
 import pandas as pd
 import sqlglot
 
+from .cache_dict_with_logging import CacheDictWithLogging
 from .dialects import DuckDBDialect
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
@@ -18,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseAPI:
+
+    def __init__(self):
+        self._intermediate_table_cache: dict = CacheDictWithLogging()
+
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
@@ -44,9 +49,22 @@ class DatabaseAPI:
             ) from e
 
 
+    # should probably also be responsible for cache
+    # TODO: stick this in a cache-api that lives on this
+
+    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
+        keys_to_delete = set()
+        for key, df in self._intermediate_table_cache.items():
+            if df.physical_name == splink_dataframe.physical_name:
+                keys_to_delete.add(key)
+
+        for k in keys_to_delete:
+            del self._intermediate_table_cache[k]
+
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
     def __init__(self, connection: str = ":memory:"):
+        super().__init__()
         validate_duckdb_connection(connection, logger)
 
         if isinstance(connection, str):
