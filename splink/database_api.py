@@ -63,7 +63,7 @@ class DatabaseAPI:
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
 
-    def __init__(self, connection: str = ":memory:"):
+    def __init__(self, connection: str = ":memory:", output_schema: str = None,):
         super().__init__()
         validate_duckdb_connection(connection, logger)
 
@@ -79,6 +79,14 @@ class DuckDBAPI(DatabaseAPI):
             con = duckdb.connect(database=connection)
 
         self._con = con
+
+        if output_schema:
+            self._con.execute(
+                f"""
+                    CREATE SCHEMA IF NOT EXISTS {output_schema};
+                    SET schema '{output_schema}';
+                """
+            )
 
     def _table_registration(self, input, table_name) -> None:
         if isinstance(input, dict):
