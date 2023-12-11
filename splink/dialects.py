@@ -136,6 +136,17 @@ class DuckDBDialect(SplinkDialect):
     def infinity_expression(self):
         return "cast('infinity' as float8)"
 
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        else:
+            return f"USING SAMPLE {percent}% (bernoulli)"
+
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"

@@ -441,18 +441,25 @@ class Linker:
         else:
             return False
 
+    # TODO: rename these!
     @property
     def _sql_dialect(self):
         return self.db_api.sql_dialect.name
 
     @property
+    def _sql_dialect_object(self):
+        return self.db_api.sql_dialect
+
+    @property
     def _infinity_expression(self):
-        return self.db_api.sql_dialect.infinity_expression
+        return self._sql_dialect_object.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
+        return self._sql_dialect_object.random_sample_sql(
+            proportion, sample_size, seed=seed, table=table, unique_id=unique_id
+        )
 
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
         # 'homogenised' means all entries are strings representing tables
