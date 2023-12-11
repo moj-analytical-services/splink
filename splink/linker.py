@@ -141,7 +141,6 @@ class Linker:
         input_table_or_tables: str | list,
         settings_dict: dict | Path,
         database_api,  # TODO: can't annotate atm due to circular imports
-        accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
@@ -259,7 +258,7 @@ class Linker:
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_tables,
             input_aliases,
-            accepted_df_dtypes,
+            self.db_api.accepted_df_dtypes,
         )
 
         self._input_tables_dict = self._get_input_tables_dict(

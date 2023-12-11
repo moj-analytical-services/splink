@@ -138,3 +138,15 @@ class DuckDBAPI(DatabaseAPI):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self._con.execute(drop_sql)
+
+    @property
+    def accepted_df_dtypes(self):
+        accepted_df_dtypes = [pd.DataFrame]
+        try:
+            # If pyarrow is installed, add to the accepted list
+            import pyarrow as pa
+
+            accepted_df_dtypes.append(pa.lib.Table)
+        except ImportError:
+            pass
+        return accepted_df_dtypes
