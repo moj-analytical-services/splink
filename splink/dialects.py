@@ -131,6 +131,11 @@ class DuckDBDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
+    # TODO: roll out to other dialects, at least for now
+    @property
+    def infinity_expression(self):
+        return "cast('infinity' as float8)"
+
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"

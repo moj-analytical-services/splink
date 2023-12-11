@@ -111,6 +111,9 @@ class DuckDBAPI(DatabaseAPI):
 
         return DuckDBDataFrame(templated_name, physical_name, self)
 
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+        self._con.execute(final_sql)
+
     def _delete_table_from_database(self, name):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""

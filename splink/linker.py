@@ -447,9 +447,7 @@ class Linker:
 
     @property
     def _infinity_expression(self):
-        raise NotImplementedError(
-            f"infinity sql expression not available for {type(self)}"
-        )
+        return self.db_api.sql_dialect.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
