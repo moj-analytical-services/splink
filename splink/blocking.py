@@ -122,7 +122,6 @@ class BlockingRule:
             on
             ({self.blocking_rule_sql})
             {where_condition}
-
             {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
             """
         return sql
@@ -249,8 +248,7 @@ class SaltedBlockingRule(BlockingRule):
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
-
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
+            {self.exclude_pars_generated_by_all_preceding_rules_sql}
 
             """
 
@@ -302,8 +300,8 @@ class ExplodingBlockingRule(BlockingRule):
             inner join __splink__df_concat_with_tf_unnested as r
             on ({br.blocking_rule_sql})
             {where_condition}
-
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}"""
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            """
 
         return sql
 
