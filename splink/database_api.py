@@ -88,6 +88,25 @@ class DuckDBAPI(DatabaseAPI):
                 """
             )
 
+    def register_table(self, input, table_name, overwrite=False):
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
+
+        # Check if table name is already in use
+        exists = self._table_exists_in_database(table_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
+            else:
+                self._con.unregister(table_name)
+
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
     def _table_registration(self, input, table_name) -> None:
         if isinstance(input, dict):
             input = pd.DataFrame(input)
