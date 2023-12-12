@@ -366,7 +366,11 @@ def block_using_rules_sqls(linker: Linker):
 
     # see https://github.com/duckdb/duckdb/discussions/9710
     # this generates a huge speedup because it triggers parallelisation
-    if linker._sql_dialect == "duckdb" and linker.__apply_sort:
+    if (
+        linker._sql_dialect == "duckdb"
+        and linker.__apply_sort
+        and not linker._train_u_using_random_sample_mode
+    ):
         unioned_sql = f"""
         {unioned_sql}
         order by 1
