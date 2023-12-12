@@ -179,3 +179,77 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
 
     ## check that all 1000 true matches are returned
     assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_link_only_unique_id_ambiguity(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    data_1 = [
+        {
+            "unique_id": 1,
+            "first_name": "John",
+            "surname": "Doe",
+            "postcode": ["A", "B"],
+        },
+        {"unique_id": 3, "first_name": "John", "surname": "Doe", "postcode": ["B"]},
+    ]
+
+    data_2 = [
+        {"unique_id": 3, "first_name": "John", "surname": "Smith", "postcode": ["A"]},
+    ]
+
+    data_3 = [
+        {"unique_id": 3, "first_name": "John", "surname": "Smith", "postcode": ["A"]},
+        {"unique_id": 4, "first_name": "John", "surname": "Doe", "postcode": ["C"]},
+    ]
+
+    df_1 = pd.DataFrame(data_1)
+    df_2 = pd.DataFrame(data_2)
+    df_3 = pd.DataFrame(data_3)
+
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.postcode = r.postcode and l.first_name = r.first_name",
+                "arrays_to_explode": ["postcode"],
+            },
+            "l.surname = r.surname",
+        ],
+        "comparisons": [
+            helper.cl.exact_match("first_name"),
+            helper.cl.exact_match("surname"),
+            helper.cl.exact_match("postcode"),
+        ],
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    linker = helper.Linker(
+        [df_1, df_2, df_3], settings, input_table_aliases=["a_", "b_", "c_"]
+    )
+    returned_triples = linker.predict().as_pandas_dataframe()[
+        [
+            "source_dataset_l",
+            "unique_id_l",
+            "source_dataset_r",
+            "unique_id_r",
+            "match_key",
+        ]
+    ]
+
+    triples = returned_triples.to_dict(orient="split")["data"]
+
+    actual_triples = {
+        tuple(t) for t in returned_triples.to_dict(orient="split")["data"]
+    }
+    assert len(returned_triples) == 5
+
+    rule1_tuples = {
+        ("a_", 1, "b_", 3, "0"),
+        ("a_", 1, "c_", 3, "0"),
+        ("b_", 3, "c_", 3, "0"),
+    }
+    rule2_tuples = {("a_", 1, "c_", 4, "1"), ("a_", 3, "c_", 4, "1")}
+
+    all_tuples = rule1_tuples.union(rule2_tuples)
+    assert actual_triples == all_tuples

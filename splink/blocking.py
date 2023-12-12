@@ -287,6 +287,13 @@ class ExplodingBlockingRule(BlockingRule):
             link_type, settings_obj._unique_id_input_columns
         )
 
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
         if link_type == "two_dataset_link_only":
             where_condition = (
                 where_condition + " and l.source_dataset < r.source_dataset"
@@ -294,8 +301,8 @@ class ExplodingBlockingRule(BlockingRule):
 
         sql = f"""
             select distinct
-                l.{unique_id_col} as {unique_id_col}_l,
-                r.{unique_id_col} as {unique_id_col}_r
+                {id_expr_l} as {unique_id_col}_l,
+                {id_expr_r} as {unique_id_col}_r
             from __splink__df_concat_with_tf_unnested as l
             inner join __splink__df_concat_with_tf_unnested as r
             on ({br.blocking_rule_sql})
@@ -319,11 +326,19 @@ class ExplodingBlockingRule(BlockingRule):
         splink_df = self.exploded_id_pair_table
         ids_to_compare_sql = f"select * from {splink_df.physical_name}"
 
+        settings_obj = linker._settings_obj
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
         return f"""EXISTS (
             select 1 from ({ids_to_compare_sql}) as ids_to_compare
             where (
-                l.{unique_id_column} = ids_to_compare.{unique_id_column}_l and
-                r.{unique_id_column} = ids_to_compare.{unique_id_column}_r
+                {id_expr_l} = ids_to_compare.{unique_id_column}_l and
+                {id_expr_r} = ids_to_compare.{unique_id_column}_r
             )
         )
         """
@@ -337,6 +352,14 @@ class ExplodingBlockingRule(BlockingRule):
                 "Exploding blocking rules are not supported for the function you have"
                 " called."
             )
+        settings_obj = linker._settings_obj
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
         exploded_id_pair_table = self.exploded_id_pair_table
         unique_id_col = linker._settings_obj._unique_id_column_name
         sql = f"""
@@ -346,9 +369,9 @@ class ExplodingBlockingRule(BlockingRule):
                 {probability}
             from {exploded_id_pair_table.physical_name} as pairs
             left join {linker._input_tablename_l} as l
-                on pairs.{unique_id_col}_l=l.{unique_id_col}
+                on pairs.{unique_id_col}_l={id_expr_l}
             left join {linker._input_tablename_r} as r
-                on pairs.{unique_id_col}_r=r.{unique_id_col}
+                on pairs.{unique_id_col}_r={id_expr_r}
         """
         return sql
 
