@@ -238,7 +238,17 @@ class SaltedBlockingRule(BlockingRule):
             """
 
             sqls.append(sql)
-        return " UNION ALL ".join(sqls)
+
+        unioned_sql = " UNION ALL ".join(sqls)
+
+        # see https://github.com/duckdb/duckdb/discussions/9710
+        # this generates a huge speedup because it triggers parallelisation
+        if linker._sql_dialect == "duckdb":
+            unioned_sql = f"""
+            {unioned_sql}
+            order by 1
+            """
+        return unioned_sql
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
