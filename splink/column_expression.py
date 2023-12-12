@@ -66,23 +66,20 @@ class ColumnExpression:
         that the user will specify in their linker.
         """
 
-        # It's difficult (possibly impossible) to find a completely general
-        # algorithm that can distinguish between the two cases (col name, or sql
-        # expression), since lower(first_name) could technically be a column name
-        # Here I use a heuristic:
-        # If there's a () or || then assume it's a sql expression
-        if re.search(r"\([^)]*\)", self.raw_sql_expression):
-            return self.raw_sql_expression
-        elif "||" in self.raw_sql_expression:
+        if not self.raw_sql_is_pure_column_or_column_reference:
             return self.raw_sql_expression
 
-        # Otherwise, assume it's a column name or reference which may need quoting
         return SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
             self.raw_sql_expression, dialect.sqlglot_name
         ).sql
 
     @property
     def raw_sql_is_pure_column_or_column_reference(self):
+        # It's difficult (possibly impossible) to find a completely general
+        # algorithm that can distinguish between the two cases (col name, or sql
+        # expression), since lower(first_name) could technically be a column name
+        # Here I use a heuristic:
+        # If there's a () or || then assume it's a sql expression
         if re.search(r"\([^)]*\)", self.raw_sql_expression):
             return False
 
