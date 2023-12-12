@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, final
 
-from .column_expression import ColumnExpression, column_expression_factory
+from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
 
@@ -15,7 +15,7 @@ class ComparisonCreator(ABC):
         Args:
             col_name (str): Input column name
         """
-        self.col_expression = column_expression_factory(col_name)
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
 
     # TODO: property?
     @abstractmethod

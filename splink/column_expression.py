@@ -44,6 +44,15 @@ class ColumnExpression:
         clone.operations = [op for op in self.operations]
         return clone
 
+    @staticmethod
+    def instantiate_if_str(
+        str_or_column_expression: Union[str, "ColumnExpression"]
+    ) -> "ColumnExpression":
+        if isinstance(str_or_column_expression, ColumnExpression):
+            return str_or_column_expression
+        elif isinstance(str_or_column_expression, str):
+            return ColumnExpression(str_or_column_expression)
+
     def parse_input_string(self, dialect: SplinkDialect):
         """
         The input into an ColumnExpression can be
@@ -216,12 +225,3 @@ class ColumnExpression:
             return "transformed " + self.raw_sql_expression
         else:
             return self.raw_sql_expression
-
-
-def column_expression_factory(
-    str_or_column_expression: Union[str, ColumnExpression]
-) -> ColumnExpression:
-    if isinstance(str_or_column_expression, ColumnExpression):
-        return str_or_column_expression
-    elif isinstance(str_or_column_expression, str):
-        return ColumnExpression(str_or_column_expression)
