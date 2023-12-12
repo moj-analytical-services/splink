@@ -239,16 +239,7 @@ class SaltedBlockingRule(BlockingRule):
 
             sqls.append(sql)
 
-        unioned_sql = " UNION ALL ".join(sqls)
-
-        # see https://github.com/duckdb/duckdb/discussions/9710
-        # this generates a huge speedup because it triggers parallelisation
-        if linker._sql_dialect == "duckdb":
-            unioned_sql = f"""
-            {unioned_sql}
-            order by 1
-            """
-        return unioned_sql
+        return " UNION ALL ".join(sqls)
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
@@ -371,8 +362,16 @@ def block_using_rules_sqls(linker: Linker):
         sql = br.create_blocked_pairs_sql(linker, where_condition, probability)
         br_sqls.append(sql)
 
-    sql = " UNION ALL ".join(br_sqls)
+    unioned_sql = " UNION ALL ".join(br_sqls)
 
-    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
+    # see https://github.com/duckdb/duckdb/discussions/9710
+    # this generates a huge speedup because it triggers parallelisation
+    if linker._sql_dialect == "duckdb":
+        unioned_sql = f"""
+        {unioned_sql}
+        order by 1
+        """
+
+    sqls.append({"sql": unioned_sql, "output_table_name": "__splink__df_blocked"})
 
     return sqls
