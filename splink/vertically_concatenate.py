@@ -44,6 +44,11 @@ def vertically_concatenate_sql(linker: Linker) -> str:
 
         salting_reqiured = linker._settings_obj.salting_required
 
+    # see https://github.com/duckdb/duckdb/discussions/9710
+    # in duckdb to parallelise we need salting
+    if linker._sql_dialect == "duckdb":
+        salting_reqiured = True
+
     if salting_reqiured:
         salt_sql = ", random() as __splink_salt"
     else:
