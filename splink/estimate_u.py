@@ -117,8 +117,20 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
-    if linker._sql_dialect == "duckdb":
-        br = blocking_rule_to_obj({"blocking_rule": "1=1", "salting_partitions": 4})
+    if linker._sql_dialect == "duckdb" and max_pairs > 1e5:
+        if max_pairs < 1e6:
+            salting_partitions = 2
+        elif max_pairs < 1e7:
+            salting_partitions = 4
+        elif max_pairs < 1e8:
+            salting_partitions = 10
+        elif max_pairs < 1e9:
+            salting_partitions = 20
+        else:
+            salting_partitions = 50
+        br = blocking_rule_to_obj(
+            {"blocking_rule": "1=1", "salting_partitions": salting_partitions}
+        )
         settings_obj._blocking_rules_to_generate_predictions = [br]
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
