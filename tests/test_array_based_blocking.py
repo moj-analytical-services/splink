@@ -237,8 +237,6 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         ]
     ]
 
-    triples = returned_triples.to_dict(orient="split")["data"]
-
     actual_triples = {
         tuple(t) for t in returned_triples.to_dict(orient="split")["data"]
     }
