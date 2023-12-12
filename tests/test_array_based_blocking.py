@@ -211,7 +211,8 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         "link_type": "link_only",
         "blocking_rules_to_generate_predictions": [
             {
-                "blocking_rule": "l.postcode = r.postcode and l.first_name = r.first_name",
+                "blocking_rule": """l.postcode = r.postcode
+                                    and l.first_name = r.first_name""",
                 "arrays_to_explode": ["postcode"],
             },
             "l.surname = r.surname",
