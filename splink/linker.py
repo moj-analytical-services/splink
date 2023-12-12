@@ -3959,7 +3959,9 @@ class Linker:
                 ].iloc[0]
                 return suggestion
 
-    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+    def _explode_arrays_sql(
+        self, tbl_name, columns_to_explode, other_columns_to_retain
+    ):
         raise NotImplementedError(
             f"Unnesting blocking rules are not supported for {type(self)}"
         )

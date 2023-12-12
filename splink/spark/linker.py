@@ -541,7 +541,9 @@ class SparkLinker(Linker):
                         are cleaned to remove bad dates \n"""
                     )
 
-    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+    def _explode_arrays_sql(
+        self, tbl_name, columns_to_explode, other_columns_to_retain
+    ):
         """Generated sql that explodes one or more columns in a table"""
         columns_to_explode = columns_to_explode.copy()
         other_columns_to_retain = other_columns_to_retain.copy()
@@ -555,4 +557,4 @@ class SparkLinker(Linker):
                 + columns_to_explode
             )
         return f"""select {','.join(cols_to_select)}
-                from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
+                from ({self._explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501

@@ -398,7 +398,7 @@ def materialise_exploded_id_tables(linker: Linker):
             InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
             for colname in br.array_columns_to_explode
         ]
-        expl_sql = linker._gen_explode_sql(
+        expl_sql = linker._explode_arrays_sql(
             "__splink__df_concat_with_tf",
             br.array_columns_to_explode,
             list(input_colnames.difference(arrays_to_explode_quoted)),
