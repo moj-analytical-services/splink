@@ -3465,8 +3465,8 @@ class Linker:
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
-            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
-                `random`.
+            sampling_method (str, optional): `random`, `by_cluster_size` or
+                `by_cluster_density`. Defaults to `random`.
             sample_size (int, optional): Number of clusters to show in the dahboard.
                 Defaults to 10.
             cluster_ids (list): The IDs of the clusters that will be displayed in the
