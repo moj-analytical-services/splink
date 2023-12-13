@@ -8,6 +8,21 @@ if TYPE_CHECKING:
 
 
 class SplinkDialect(ABC):
+    # Stores instances of each subclass of SplinkDialect.
+    _dialect_instances = {}
+    # string defined by subclasses to be used in factory method from_string
+    # give a dummy default value so that subclasses that fail to do this
+    # don't ruin functionality for existing subclasses
+    _dialect_name_for_factory = None
+
+    # Register a subclass of SplinkDialect on its creation.
+    # Whenever that subclass is called again, use the previous instance.
+    def __new__(cls, *args, **kwargs):
+        if cls not in cls._dialect_instances:
+            instance = super(SplinkDialect, cls).__new__(cls)
+            cls._dialect_instances[cls] = instance
+        return cls._dialect_instances[cls]
+
     @abstractproperty
     def name(self):
         pass
@@ -16,9 +31,35 @@ class SplinkDialect(ABC):
     def sqlglot_name(self):
         return self.name
 
-    @staticmethod
-    def from_string(dialect_name: str):
-        return _dialect_lookup[dialect_name]
+    @classmethod
+    def from_string(cls, dialect_name: str):
+        # list of classes which match _dialect_name_for_factory
+        # should just get a single subclass, as this should be unique
+        classes_from_dialect_name = [
+            c
+            for c in cls.__subclasses__()
+            if c._dialect_name_for_factory == dialect_name
+        ]
+        # use sequence unpacking to catch if we duplicate
+        # _dialect_name_for_factory in subclasses
+        if len(classes_from_dialect_name) == 1:
+            subclass = classes_from_dialect_name[0]
+            return subclass()
+        # error - either too many subclasses found
+        if len(classes_from_dialect_name) > 1:
+            classes_string = ", ".join(map(str, classes_from_dialect_name))
+            error_message = (
+                "Found multiple subclasses of `SplinkDialect` with "
+                "lookup string `_dialect_name_for_factory` equal to "
+                f"supplied value {dialect_name}: {classes_string}!"
+            )
+        # or _no_ subclasses found
+        else:
+            error_message = (
+                "Could not find subclass of `SplinkDialect` with "
+                f"lookup string '{dialect_name}'."
+            )
+        raise ValueError(error_message)
 
     @property
     def levenshtein_function_name(self):
@@ -52,6 +93,8 @@ class SplinkDialect(ABC):
 
 
 class DuckDBDialect(SplinkDialect):
+    _dialect_name_for_factory = "duckdb"
+
     @property
     def name(self):
         return "duckdb"
@@ -78,6 +121,8 @@ class DuckDBDialect(SplinkDialect):
 
 
 class SparkDialect(SplinkDialect):
+    _dialect_name_for_factory = "spark"
+
     @property
     def name(self):
         return "spark"
@@ -104,6 +149,8 @@ class SparkDialect(SplinkDialect):
 
 
 class SqliteDialect(SplinkDialect):
+    _dialect_name_for_factory = "sqlite"
+
     @property
     def name(self):
         return "sqlite"
@@ -128,6 +175,8 @@ class SqliteDialect(SplinkDialect):
 
 
 class PostgresDialect(SplinkDialect):
+    _dialect_name_for_factory = "postgres"
+
     @property
     def name(self):
         return "postgres"
@@ -185,6 +234,8 @@ class PostgresDialect(SplinkDialect):
 
 
 class AthenaDialect(SplinkDialect):
+    _dialect_name_for_factory = "athena"
+
     @property
     def name(self):
         return "athena"
@@ -196,12 +247,3 @@ class AthenaDialect(SplinkDialect):
     @property
     def _levenshtein_name(self):
         return "levenshtein_distance"
-
-
-_dialect_lookup = {
-    "duckdb": DuckDBDialect(),
-    "spark": SparkDialect(),
-    "sqlite": SqliteDialect(),
-    "postgres": PostgresDialect(),
-    "athena": AthenaDialect(),
-}
