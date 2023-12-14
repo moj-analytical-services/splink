@@ -64,6 +64,10 @@ plugins:
   - git-committers:
       repository: moj-analytical-services/splink
       branch: master
+  - rss:
+      match_path: blog/posts/.* 
+      date_from_meta:
+        as_creation: date
 
 markdown_extensions:
   - abbr

@@ -21,3 +21,4 @@ mkdocs-charts-plugin
 neoteroi-mkdocs
 mkdocs-video
 mkdocs-git-committers-plugin-2
+mkdocs-rss-plugin
