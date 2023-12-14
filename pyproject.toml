@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.9.9"
+version = "3.9.10"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
@@ -58,6 +58,11 @@ optional = true
 [tool.poetry.group.benchmarking.dependencies]
 pytest-benchmark = "^4"
 lzstring = "1.0.4"
+
+[tool.poetry.group.typechecking]
+optional = true
+[tool.poetry.group.typechecking.dependencies]
+mypy = "1.7.0"
 
 [tool.poetry.group.demos]
 [tool.poetry.group.demos.dependencies]
@@ -118,3 +123,21 @@ markers = [
     "sqlite",
     "sqlite_only",
 ]
+
+[tool.mypy]
+packages = "splink"
+# temporary exclusions
+exclude = [
+    # modules getting substantial rewrites:
+    '.*comparison_imports\.py$',
+    '.*comparison.*library\.py',
+    'comparison_level_composition',
+    # modules with large number of errors
+    '.*linker\.py',
+]
+# for now at least allow implicit optionals
+# to cut down on noise. Easy to fix.
+implicit_optional = true
+# for now, ignore missing imports
+# can remove later and install stubs, where existent
+ignore_missing_imports = true

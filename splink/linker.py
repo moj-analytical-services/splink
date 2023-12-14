@@ -13,10 +13,13 @@ from statistics import median
 
 import sqlglot
 
-from splink.input_column import InputColumn, remove_quotes_from_identifiers
-from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.input_column import InputColumn
+from splink.settings_validation.log_invalid_columns import (
+    InvalidColumnsLogger,
+    SettingsColumnCleaner,
+)
 from splink.settings_validation.valid_types import (
-    InvalidTypesAndValuesLogger,
+    _validate_dialect,
     log_comparison_errors,
 )
 
@@ -65,6 +68,9 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
+from .find_brs_with_comparison_counts_below_threshold import (
+    find_blocking_rules_below_threshold_comparison_count,
+)
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -86,6 +92,7 @@ from .misc import (
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
+from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
@@ -106,6 +113,7 @@ from .term_frequencies import (
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
@@ -210,7 +218,6 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
-        self._names_of_tables_created_by_splink: set = set()
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         if not isinstance(settings_dict, (dict, type(None))):
@@ -237,8 +244,6 @@ class Linker:
         self._validate_settings(validate_settings)
         self._em_training_sessions = []
 
-        self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
-
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
         self._compare_two_records_mode = False
@@ -248,11 +253,26 @@ class Linker:
 
         self.debug_mode = False
 
-    @property
     def _input_columns(
         self,
+        include_unique_id_col_names=True,
+        include_additional_columns_to_retain=True,
     ) -> list[InputColumn]:
-        """Retrieve the column names from the input dataset(s)"""
+        """Retrieve the column names from the input dataset(s) as InputColumns
+
+        Args:
+            include_unique_id_col_names (bool, optional): Whether to include unique ID
+                column names. Defaults to True.
+            include_additional_columns_to_retain (bool, optional): Whether to include
+                additional columns to retain. Defaults to True.
+
+        Raises:
+            SplinkException: If the input frames have different sets of columns.
+
+        Returns:
+            list[InputColumn]
+        """
+
         input_dfs = self._input_tables_dict.values()
 
         # get a list of the column names for each input frame
@@ -280,13 +300,24 @@ class Linker:
                 + ", ".join(problem_names)
             )
 
-        return next(iter(input_dfs)).columns
+        columns = next(iter(input_dfs)).columns
+
+        remove_columns = []
+        if not include_unique_id_col_names:
+            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+        if not include_additional_columns_to_retain:
+            remove_columns.extend(self._settings_obj._additional_columns_to_retain)
+
+        remove_id_cols = [c.unquote().name for c in remove_columns]
+        columns = [col for col in columns if col.unquote().name not in remove_id_cols]
+
+        return columns
 
     @property
     def _source_dataset_column_already_exists(self):
         if self._settings_obj_ is None:
             return False
-        input_cols = [c.unquote().name for c in self._input_columns]
+        input_cols = [c.unquote().name for c in self._input_columns()]
         return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
@@ -491,12 +522,18 @@ class Linker:
             return
 
         # Run miscellaneous checks on our settings dictionary.
-        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
-        settings_invalid_types_values._validate_dialect()
+        _validate_dialect(
+            settings_dialect=self._settings_obj._sql_dialect,
+            linker_dialect=self._sql_dialect,
+            linker_type=self.__class__.__name__,
+        )
 
         # Constructs output logs for our various settings inputs
-        if validate_settings:
-            InvalidColumnsLogger(self).construct_output_logs()
+        cleaned_settings = SettingsColumnCleaner(
+            settings_object=self._settings_obj,
+            input_columns=self._input_tables_dict,
+        )
+        InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1273,7 +1310,7 @@ class Linker:
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
-            remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+            tf_col.unquote().name
             for tf_col in self._settings_obj._term_frequency_columns
         ]
 
@@ -1748,7 +1785,7 @@ class Linker:
         match_weight_threshold=-4,
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
-        and return in order of the splink prediction score.
+        and return in order of the Splink prediction score.
 
         This effectively provides a way of searching the input datasets
         for given record(s)
@@ -1977,7 +2014,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         self._settings_obj._blocking_rules_to_generate_predictions = [
-            BlockingRule(f"{uid_l} = {uid_r}")
+            BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
         ]
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
@@ -2071,7 +2108,7 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: float,
     ):
         """Generates a table containing cluster metrics and returns a Splink dataframe
 
@@ -2089,14 +2126,19 @@ class Linker:
 
         """
 
-        # Get unique row id column name from settings
-        unique_id_col = self._settings_obj._unique_id_column_name
+        # Get unique id columns
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # Create unique id for left-hand edges
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        # Create unique id for clusters
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_sql(
             df_predict,
             df_clustered,
             threshold_match_probability,
-            _unique_id_col=unique_id_col,
+            composite_uid_edges_l,
+            composite_uid_clusters,
         )
 
         for sql in sqls:
@@ -3610,12 +3652,12 @@ class Linker:
         # As a result, any previously cached tables will not be found
         self._cache_uid = ascii_uid(8)
 
-        # As a result, any previously cached tables will not be found
-        self._intermediate_table_cache.invalidate_cache()
-
         # Drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
         self.delete_tables_created_by_splink_from_db()
+
+        # As a result, any previously cached tables will not be found
+        self._intermediate_table_cache.invalidate_cache()
 
     def register_table_input_nodes_concat_with_tf(self, input_data, overwrite=False):
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
@@ -3725,3 +3767,172 @@ class Linker:
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
+
+    def _find_blocking_rules_below_threshold(
+        self, max_comparisons_per_rule, blocking_expressions=None
+    ):
+        return find_blocking_rules_below_threshold_comparison_count(
+            self, max_comparisons_per_rule, blocking_expressions
+        )
+
+    def _detect_blocking_rules_for_prediction(
+        self,
+        max_comparisons_per_rule,
+        blocking_expressions=None,
+        min_freedom=1,
+        num_runs=200,
+        num_equi_join_weight=0,
+        field_freedom_weight=1,
+        num_brs_weight=10,
+        num_comparison_weight=10,
+        return_as_df=False,
+    ):
+        """Find blocking rules for prediction below some given threshold of the
+        maximum number of comparisons that can be generated per blocking rule
+        (max_comparisons_per_rule).
+        Uses a heuristic cost algorithm to identify the 'best' set of blocking rules
+        Args:
+            max_comparisons_per_rule (int): The maximum number of comparisons that
+                each blocking rule is allowed to generate
+            blocking_expressions: By default, blocking rules will be equi-joins
+                on the columns used by the Splink model.  This allows you to manually
+                specify sql expressions from which combinations will be created. For
+                example, if you specify ["substr(dob, 1,4)", "surname", "dob"]
+                blocking rules will be chosen by blocking on combinations
+                of those expressions.
+            min_freedom (int, optional): The minimum amount of freedom any column should
+                be allowed.
+            num_runs (int, optional): Each run selects rows using a heuristic and costs
+                them. The more runs, the more likely you are to find the best rule.
+                Defaults to 5.
+            num_equi_join_weight (int, optional): Weight allocated to number of equi
+                joins in the blocking rules.
+                Defaults to 0 since this is cost better captured by other criteria.
+            field_freedom_weight (int, optional): Weight given to the cost of
+                having individual fields which don't havem much flexibility.  Assigning
+                a high weight here makes it more likely you'll generate combinations of
+                blocking rules for which most fields are allowed to vary more than
+                the minimum. Defaults to 1.
+            num_brs_weight (int, optional): Weight assigned to the cost of
+                additional blocking rules.  Higher weight here will result in a
+                 preference for fewer blocking rules. Defaults to 10.
+            num_comparison_weight (int, optional): Weight assigned to the cost of
+                larger numbers of comparisons, which happens when more of the blocking
+                rules are close to the max_comparisons_per_rule.  A higher
+                 weight here prefers sets of rules which generate lower total
+                comparisons. Defaults to 10.
+            return_as_df (bool, optional): If false, assign recommendation to settings.
+                If true, return a dataframe containing details of the weights.
+                Defaults to False.
+        """
+
+        df_br_below_thres = find_blocking_rules_below_threshold_comparison_count(
+            self, max_comparisons_per_rule, blocking_expressions
+        )
+
+        blocking_rule_suggestions = suggest_blocking_rules(
+            df_br_below_thres,
+            min_freedom=min_freedom,
+            num_runs=num_runs,
+            num_equi_join_weight=num_equi_join_weight,
+            field_freedom_weight=field_freedom_weight,
+            num_brs_weight=num_brs_weight,
+            num_comparison_weight=num_comparison_weight,
+        )
+
+        if return_as_df:
+            return blocking_rule_suggestions
+        else:
+            if blocking_rule_suggestions is None or len(blocking_rule_suggestions) == 0:
+                logger.warning("No set of blocking rules found within constraints")
+            else:
+                suggestion = blocking_rule_suggestions[
+                    "suggested_blocking_rules_as_splink_brs"
+                ].iloc[0]
+                self._settings_obj._blocking_rules_to_generate_predictions = suggestion
+
+                suggestion_str = blocking_rule_suggestions[
+                    "suggested_blocking_rules_for_prediction"
+                ].iloc[0]
+                msg = (
+                    "The following blocking_rules_to_generate_predictions were "
+                    "automatically detected and assigned to your settings:\n"
+                )
+                logger.info(f"{msg}{suggestion_str}")
+
+    def _detect_blocking_rules_for_em_training(
+        self,
+        max_comparisons_per_rule,
+        min_freedom=1,
+        num_runs=200,
+        num_equi_join_weight=0,
+        field_freedom_weight=1,
+        num_brs_weight=20,
+        num_comparison_weight=10,
+        return_as_df=False,
+    ):
+        """Find blocking rules for EM training below some given threshold of the
+        maximum number of comparisons that can be generated per blocking rule
+        (max_comparisons_per_rule).
+        Uses a heuristic cost algorithm to identify the 'best' set of blocking rules
+        Args:
+            max_comparisons_per_rule (int): The maximum number of comparisons that
+                each blocking rule is allowed to generate
+            min_freedom (int, optional): The minimum amount of freedom any column should
+                be allowed.
+            num_runs (int, optional): Each run selects rows using a heuristic and costs
+                them.  The more runs, the more likely you are to find the best rule.
+                Defaults to 5.
+            num_equi_join_weight (int, optional): Weight allocated to number of equi
+                joins in the blocking rules.
+                Defaults to 0 since this is cost better captured by other criteria.
+                Defaults to 0 since this is cost better captured by other criteria.
+            field_freedom_weight (int, optional): Weight given to the cost of
+                having individual fields which don't havem much flexibility.  Assigning
+                a high weight here makes it more likely you'll generate combinations of
+                blocking rules for which most fields are allowed to vary more than
+                the minimum. Defaults to 1.
+            num_brs_weight (int, optional): Weight assigned to the cost of
+                additional blocking rules.  Higher weight here will result in a
+                 preference for fewer blocking rules. Defaults to 10.
+            num_comparison_weight (int, optional): Weight assigned to the cost of
+                larger numbers of comparisons, which happens when more of the blocking
+                rules are close to the max_comparisons_per_rule.  A higher
+                 weight here prefers sets of rules which generate lower total
+                comparisons. Defaults to 10.
+            return_as_df (bool, optional): If false, return just the recommendation.
+                If true, return a dataframe containing details of the weights.
+                Defaults to False.
+        """
+
+        df_br_below_thres = find_blocking_rules_below_threshold_comparison_count(
+            self, max_comparisons_per_rule
+        )
+
+        blocking_rule_suggestions = suggest_blocking_rules(
+            df_br_below_thres,
+            min_freedom=min_freedom,
+            num_runs=num_runs,
+            num_equi_join_weight=num_equi_join_weight,
+            field_freedom_weight=field_freedom_weight,
+            num_brs_weight=num_brs_weight,
+            num_comparison_weight=num_comparison_weight,
+        )
+
+        if return_as_df:
+            return blocking_rule_suggestions
+        else:
+            if blocking_rule_suggestions is None or len(blocking_rule_suggestions) == 0:
+                logger.warning("No set of blocking rules found within constraints")
+                return None
+            else:
+                suggestion_str = blocking_rule_suggestions[
+                    "suggested_EM_training_statements"
+                ].iloc[0]
+                msg = "The following EM training strategy was detected:\n"
+                msg = f"{msg}{suggestion_str}"
+                logger.info(msg)
+                suggestion = blocking_rule_suggestions[
+                    "suggested_blocking_rules_as_splink_brs"
+                ].iloc[0]
+                return suggestion
