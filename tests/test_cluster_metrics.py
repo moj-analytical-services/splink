@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
@@ -230,10 +229,15 @@ def test_metrics(dialect, test_helpers):
     df_cm = cm["clusters"].as_pandas_dataframe()
 
     expected = [
-        {"cluster_id": 1, "n_nodes": 4, "n_edges": 4, "cluster_centralisation": 4/6},
-        {"cluster_id": 2, "n_nodes": 6, "n_edges": 5, "cluster_centralisation": 8/20},
+        {"cluster_id": 1, "n_nodes": 4, "n_edges": 4, "cluster_centralisation": 4 / 6},
+        {"cluster_id": 2, "n_nodes": 6, "n_edges": 5, "cluster_centralisation": 8 / 20},
         {"cluster_id": 3, "n_nodes": 2, "n_edges": 1, "cluster_centralisation": None},
-        {"cluster_id": 4, "n_nodes": 11, "n_edges": 19, "cluster_centralisation": 28/90},
+        {
+            "cluster_id": 4,
+            "n_nodes": 11,
+            "n_edges": 19,
+            "cluster_centralisation": 28 / 90,
+        },
     ]
     for expected_row_details in expected:
         relevant_row = df_cm[df_cm["cluster_id"] == expected_row_details["cluster_id"]]
