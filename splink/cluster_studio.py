@@ -191,8 +191,8 @@ def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_cluster: int
 ):
     sql = f"""
-    select 
-        cluster_id, 
+    select
+        cluster_id,
         count(*) as cluster_size,
         max({linker._settings_obj._unique_id_column_name}) as ordering
     from {connected_components.physical_name}
@@ -205,7 +205,7 @@ def _get_cluster_id_of_each_size(
     # Assign unique row number to each row in partition
     sql = """
     select
-        cluster_id, 
+        cluster_id,
         cluster_size,
         row_number() over (partition by cluster_size order by ordering) as row_num
     from __splink__cluster_count
@@ -214,8 +214,8 @@ def _get_cluster_id_of_each_size(
     linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
 
     sql = f"""
-    select 
-        cluster_id, 
+    select
+        cluster_id,
         cluster_size
     from __splink__cluster_count_row_numbered
     where row_num <= {rows_per_cluster}
