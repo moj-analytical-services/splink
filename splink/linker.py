@@ -53,7 +53,10 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_metrics import _size_density_sql
+from .cluster_metrics import (
+    _node_degree_sql,
+    _size_density_sql,
+)
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -2104,6 +2107,31 @@ class Linker:
 
         return cc
 
+    # TODO: merge with cluster metrics - this is just for testing
+    def _compute_node_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # need composite unique ids
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+
+        sqls = _node_degree_sql(
+            df_predict,
+            composite_uid_edges_l,
+            composite_uid_edges_r,
+            threshold_match_probability,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+
+        return df_cluster_metrics
+
     def _compute_cluster_metrics(
         self,
         df_predict: SplinkDataFrame,
@@ -2125,6 +2153,10 @@ class Linker:
             cluster metrics
 
         """
+
+        # TODO: compute node degrees
+        # then pass that table to _sql function
+        # so we can compute cluster centralisation
 
         # Get unique id columns
         uid_cols = self._settings_obj._unique_id_input_columns

@@ -193,31 +193,39 @@ def test_metrics():
             / (expected_row_details["n_nodes"] * (expected_row_details["n_nodes"] - 1))
         )
 
-    df_node_degrees = pd.DataFrame(
-        [
-            (1, 3),
-            (2, 2),
-            (3, 1),
-            (4, 2),
-            (5, 3),
-            (6, 1),
-            (7, 2),
-            (8, 1),
-            (9, 1),
-            (10, 1),
-            (11, 1),
-            (12, 1),
-            (13, 6),
-            (14, 3),
-            (15, 4),
-            (16, 5),
-            (17, 3),
-            (18, 5),
-            (19, 2),
-            (20, 3),
-            (21, 2),
-            (22, 3),
-            (23, 2),
-        ],
-        columns=["unique_id", "node_degree"],
-    )
+    expected_node_degrees = [
+        (1, 3),
+        (2, 2),
+        (3, 1),
+        (4, 2),
+        (5, 3),
+        (6, 1),
+        (7, 2),
+        (8, 1),
+        (9, 2),
+        (10, 1),
+        (11, 1),
+        (12, 1),
+        (13, 6),
+        (14, 3),
+        (15, 4),
+        (16, 5),
+        (17, 3),
+        (18, 5),
+        (19, 2),
+        (20, 3),
+        (21, 2),
+        (22, 3),
+        (23, 2),
+    ]
+    df_nm = linker._compute_node_metrics(
+        df_predict, 0.95
+    ).as_pandas_dataframe()
+
+
+    for unique_id, expected_node_degree in expected_node_degrees:
+        relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]
+        print(unique_id)
+        print(expected_node_degree)
+        print(relevant_row)
+        assert relevant_row["node_degree"].iloc[0] == expected_node_degree

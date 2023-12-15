@@ -1,6 +1,55 @@
 from splink.splink_dataframe import SplinkDataFrame
 
 
+def _node_degree_sql(
+    df_predict: SplinkDataFrame,
+    composite_uid_edges_l: str,
+    composite_uid_edges_r: str,
+    threshold_match_probability: float,
+):
+    sqls = []
+    edges_tn = df_predict.physical_name
+
+    sql = f"""
+        SELECT
+            *
+        FROM
+            {edges_tn}
+        WHERE
+            match_probability >= {threshold_match_probability}
+    """
+    output_tn = "__splink__truncated_edges"
+    sql_info = {"sql": sql, "output_table_name": output_tn}
+    sqls.append(sql_info)
+
+    sql = f"""
+        SELECT
+            {composite_uid_edges_l} AS node,
+            {composite_uid_edges_r} AS neighbour
+        FROM {output_tn}
+            UNION ALL
+        SELECT
+            {composite_uid_edges_r} AS node,
+            {composite_uid_edges_l} AS neighbour
+        FROM {output_tn}
+    """
+    output_tn = "__splink__all_nodes"
+    sql_info = {"sql": sql, "output_table_name": output_tn}
+    sqls.append(sql_info)
+
+    sql = f"""
+        SELECT
+            node AS composite_unique_id,
+            COUNT(*) AS node_degree
+        FROM
+            {output_tn}
+        GROUP BY node
+    """
+    sql_info = {"sql": sql, "output_table_name": "__splink__node_metrics"}
+    sqls.append(sql_info)
+    return sqls
+
+
 def _size_density_sql(
     df_predict: SplinkDataFrame,
     df_clustered: SplinkDataFrame,
