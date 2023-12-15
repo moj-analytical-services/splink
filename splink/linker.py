@@ -2192,7 +2192,10 @@ class Linker:
             df_predict, threshold_match_probability
         )
 
-        return df_cluster_metrics, df_node_metrics
+        return {
+            "clusters": df_cluster_metrics,
+            "nodes": df_node_metrics,
+        }
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10

@@ -38,7 +38,7 @@ def test_size_density_dedupe():
 
     df_result = linker._compute_cluster_metrics(
         df_predict, df_clustered, threshold_match_probability=0.9
-    )[0].as_pandas_dataframe()
+    )["clusters"].as_pandas_dataframe()
 
     data_expected = [
         {"cluster_id": 1, "n_nodes": 1, "n_edges": 0.0, "density": None},
@@ -69,7 +69,7 @@ def test_size_density_link():
     df_result = (
         linker._compute_cluster_metrics(
             df_predict, df_clustered, threshold_match_probability=0.99
-        )[0]
+        )["clusters"]
         .as_pandas_dataframe()
         .sort_values(by="cluster_id")
         .reset_index(drop=True)
@@ -173,10 +173,8 @@ def test_metrics():
     df_predict = DuckDBDataFrame("predict", "df_e", linker)
     df_clustered = DuckDBDataFrame("clusters", "df_c", linker)
 
-    df_cm, df_nm = linker._compute_cluster_metrics(
-        df_predict, df_clustered, 0.95
-    )
-    df_cm = df_cm.as_pandas_dataframe()
+    cm = linker._compute_cluster_metrics(df_predict, df_clustered, 0.95)
+    df_cm = cm["clusters"].as_pandas_dataframe()
 
     expected = [
         {"cluster_id": 1, "n_nodes": 4, "n_edges": 4},
@@ -219,11 +217,14 @@ def test_metrics():
         (22, 3),
         (23, 2),
     ]
-    df_nm = df_nm.as_pandas_dataframe()
+    df_nm = cm["nodes"].as_pandas_dataframe()
 
     for unique_id, expected_node_degree in expected_node_degrees:
         relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]
-        print(unique_id)
-        print(expected_node_degree)
-        print(relevant_row)
-        assert relevant_row["node_degree"].iloc[0] == expected_node_degree
+        calculated_node_degree = relevant_row["node_degree"].iloc[0]
+        assert (
+            calculated_node_degree == expected_node_degree
+        ), (
+            f"Expected node degree {expected_node_degree} for node {unique_id}, "
+            f"but found node degree {calculated_node_degree}"
+        )
