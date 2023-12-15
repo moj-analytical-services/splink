@@ -6,6 +6,8 @@ from splink.duckdb.duckdb_comparison_library import (
 )
 from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
 
+from .decorator import mark_with_dialects_excluding
+
 df_1 = [
     {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
     {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
@@ -111,7 +113,9 @@ def make_row(id_l: int, id_r: int, group_id: int, match_probability: float):
     }
 
 
-def test_metrics():
+@mark_with_dialects_excluding()
+def test_metrics(dialect, test_helpers):
+    helper = test_helpers[dialect]
     df_e = pd.DataFrame(
         [
             # group 1
@@ -167,11 +171,14 @@ def test_metrics():
         + [{"cluster_id": 2, "unique_id": i} for i in range(5, 10 + 1)]
         + [{"cluster_id": 3, "unique_id": i} for i in range(11, 12 + 1)]
         + [{"cluster_id": 4, "unique_id": i} for i in range(13, 23 + 1)]
+        + [{"cluster_id": 5, "unique_id": i} for i in range(24, 24 + 1)]
     )
+
+
     # pass in dummy frame to linker
-    linker = DuckDBLinker(df_1, {"link_type": "dedupe_only"})
-    df_predict = DuckDBDataFrame("predict", "df_e", linker)
-    df_clustered = DuckDBDataFrame("clusters", "df_c", linker)
+    linker = helper.Linker(helper.convert_frame(df_1), {"link_type": "dedupe_only"}, **helper.extra_linker_args())
+    df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
+    df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
 
     cm = linker._compute_cluster_metrics(df_predict, df_clustered, 0.95)
     df_cm = cm["clusters"].as_pandas_dataframe()
@@ -216,6 +223,7 @@ def test_metrics():
         (21, 2),
         (22, 3),
         (23, 2),
+        (24, 0),
     ]
     df_nm = cm["nodes"].as_pandas_dataframe()
 
