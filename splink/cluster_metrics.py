@@ -92,7 +92,7 @@ def _size_density_centralisation_sql(
             MAX(node_degree) AS max_degree,
             CASE
                 WHEN COUNT(*) > 2 THEN
-                    (COUNT(*) * MAX(node_degree) -  SUM(node_degree)) /
+                    1.0*(COUNT(*) * MAX(node_degree) -  SUM(node_degree)) /
                     ((COUNT(*) - 1) * (COUNT(*) - 2))
                 ELSE
                     NULL
