@@ -300,7 +300,7 @@ def render_splink_cluster_studio_html(
             ]
             cluster_ids = [c["cluster_id"] for c in cluster_ids]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
-        if sampling_method == "by_cluster_density":
+        if sampling_method == "lowest_density_clusters":
             if _df_cluster_metrics is None:
                 raise SplinkException(
                     """To sample by density, you must provide a cluster metrics table
@@ -308,8 +308,8 @@ def render_splink_cluster_studio_html(
                       _compute_cluster_metrics method on the linker."""
                 )
             else:
-                # Using sensible default for min_nodes. Might be option
-                # for user in future
+                # Using sensible default for min_nodes. Might become option
+                # for users in future
                 cluster_ids = _get_cluster_id_by_density(
                     linker, _df_cluster_metrics, sample_size, min_nodes=3
                 )
