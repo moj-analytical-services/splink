@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from splink.splink_dataframe import SplinkDataFrame
 
 
@@ -8,7 +10,27 @@ def _node_degree_sql(
     composite_uid_edges_r: str,
     composite_uid_clusters: str,
     threshold_match_probability: float,
-):
+) -> List[Dict[str, str]]:
+    """
+    Generates sql for computing node degree per node, at a given edge threshold.
+
+    This is includes nodes with no edges, as identified via the clusters table.
+
+    Args:
+        df_predict (SplinkDataFrame): The results of `linker.predict()`.
+        df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`.
+        composite_uid_edges_l (str): unique id for left-hand edges.
+        composite_uid_edges_r (str): unique id for right-hand edges.
+        composite_uid_clusters (str): unique id for clusters.
+        threshold_match_probability (float): Filter the pairwise match
+            predictions to include only pairwise comparisons with a
+            match_probability above this threshold.
+
+    Returns:
+        array of dicts, with sql string and output name
+        for computing cluster size and density
+    """
     sqls = []
     edges_tn = df_predict.physical_name
     clusters_tn = df_clustered.physical_name
@@ -62,24 +84,20 @@ def _node_degree_sql(
 
 def _size_density_centralisation_sql(
     df_node_metrics: SplinkDataFrame,
-    threshold_match_probability: float,
-    composite_uid_edges_l: str,
-    composite_uid_clusters: str,
-):
-    """Generates sql for computing cluster size and density at a given threshold.
+) -> List[Dict[str, str]]:
+    """
+    Generates sql for computing cluster size, density and cluster centralisation.
+
+    The frame df_node_metrics already encodes the relevant information about edges
+    and nodes for a given choice of threshold probability.
 
     Args:
-        df_predict (SplinkDataFrame): The results of `linker.predict()`.
-        df_clustered (SplinkDataFrame): The outputs of
-                `linker.cluster_pairwise_predictions_at_threshold()`.
-        threshold_match_probability (float): Filter the pairwise match
-            predictions to include only pairwise comparisons with a
-            match_probability above this threshold.
-        composite_uid_edges_l (str): unique id for left-hand edges.
-        composite_uid_clusters (str): unique id for clusters.
+        df_node_metrics (SplinkDataFrame): The results of
+            `linker._compute_metrics_nodes()`.
 
     Returns:
-        sql string for computing cluster size and density
+        array of dicts, with sql string and output name
+        for computing cluster size and density
     """
 
     sqls = []

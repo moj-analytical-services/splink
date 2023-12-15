@@ -2162,13 +2162,16 @@ class Linker:
         df_cluster_metrics = self._execute_sql_pipeline()
         return df_cluster_metrics
 
+    # a user-facing function, which is currently 'private' (Beta functionality)
+    # while functionality is developed, as breaking changes may occur
     def _compute_cluster_metrics(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
     ) -> Dict[str, SplinkDataFrame]:
-        """Generates a table containing cluster metrics and returns a Splink dataframe
+        """
+        Generates a table containing cluster metrics and returns a Splink dataframe
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
@@ -2179,14 +2182,13 @@ class Linker:
                 threshold.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
-            cluster metrics
+            dict[str, SplinkDataFrame]: A dictionary of SplinkDataFrames
+                containing cluster IDs and selected cluster, node, or edge metrics
+                key "nodes" for nodes metrics table
+                key "edges" for edge metrics table
+                key "clusters" for cluster metrics table
 
         """
-        # TODO: compute node degrees
-        # then pass that table to _sql function
-        # so we can compute cluster centralisation
-
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
