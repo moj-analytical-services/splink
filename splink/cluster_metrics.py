@@ -61,8 +61,7 @@ def _node_degree_sql(
 
 
 def _size_density_sql(
-    df_predict: SplinkDataFrame,
-    df_clustered: SplinkDataFrame,
+    df_node_metrics: SplinkDataFrame,
     threshold_match_probability: float,
     composite_uid_edges_l: str,
     composite_uid_clusters: str,
@@ -84,28 +83,15 @@ def _size_density_sql(
     """
 
     sqls = []
-    # Count edges per node at or above a given match probability
-    sql = f"""
-        SELECT
-            {composite_uid_edges_l} AS edge_group_id,
-            COUNT(*) AS count_edges
-        FROM {df_predict.physical_name}
-        WHERE match_probability >= {threshold_match_probability}
-        GROUP BY {composite_uid_edges_l}
-    """
-    sql = {"sql": sql, "output_table_name": "__splink__edges_per_node"}
-    sqls.append(sql)
-
     # Count nodes and edges per cluster
     sql = f"""
         SELECT
-            c.cluster_id,
-            count(*) AS n_nodes,
-            sum(e.count_edges) AS n_edges
-        FROM {df_clustered.physical_name} AS c
-        LEFT JOIN __splink__edges_per_node e ON
-        c.{composite_uid_clusters} = e.edge_group_id
-        GROUP BY c.cluster_id
+            cluster_id,
+            COUNT(*) AS n_nodes,
+            SUM(node_degree)/2.0 AS n_edges
+        FROM {df_node_metrics.physical_name}
+        GROUP BY
+            cluster_id
     """
     sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
     sqls.append(sql)
@@ -115,8 +101,14 @@ def _size_density_sql(
         SELECT
             cluster_id,
             n_nodes,
-            COALESCE(n_edges, 0) AS n_edges,
-            1.0*(n_edges * 2)/(n_nodes * (n_nodes-1)) AS density
+            n_edges,
+            CASE
+                WHEN n_nodes > 1 THEN
+                    1.0*(n_edges * 2)/(n_nodes * (n_nodes-1))
+                ELSE
+                    -- n_nodes is 1 (or 0) density undefined
+                    NULL
+            END AS density
         FROM __splink__counts_per_cluster
     """
     sql = {"sql": sql, "output_table_name": "__splink__cluster_metrics_clusters"}

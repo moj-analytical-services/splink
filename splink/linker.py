@@ -2108,7 +2108,6 @@ class Linker:
 
         return cc
 
-    # TODO: merge with cluster metrics - this is just for testing
     def _compute_metrics_nodes(
         self,
         df_predict: SplinkDataFrame,
@@ -2139,8 +2138,7 @@ class Linker:
 
     def _compute_metrics_clusters(
         self,
-        df_predict: SplinkDataFrame,
-        df_clustered: SplinkDataFrame,
+        df_node_metrics: SplinkDataFrame,
         threshold_match_probability: float,
     ) -> SplinkDataFrame:
 
@@ -2152,8 +2150,7 @@ class Linker:
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_sql(
-            df_predict,
-            df_clustered,
+            df_node_metrics,
             threshold_match_probability,
             composite_uid_edges_l,
             composite_uid_clusters,
@@ -2193,8 +2190,9 @@ class Linker:
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
+        # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(
-            df_predict, df_clustered, threshold_match_probability
+            df_node_metrics, threshold_match_probability
         )
 
         return {
