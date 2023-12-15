@@ -42,6 +42,8 @@ def test_size_density_dedupe():
     df_result = linker._compute_cluster_metrics(
         df_predict, df_clustered, threshold_match_probability=0.9
     )["clusters"].as_pandas_dataframe()
+    # not testing this here - it's not relevant for small clusters anyhow
+    del df_result["cluster_centralisation"]
 
     data_expected = [
         {"cluster_id": 1, "n_nodes": 1, "n_edges": 0.0, "density": None},
@@ -77,6 +79,7 @@ def test_size_density_link():
         .sort_values(by="cluster_id")
         .reset_index(drop=True)
     )
+    del df_result["cluster_centralisation"]
 
     data_expected = [
         {
@@ -174,7 +177,6 @@ def test_metrics(dialect, test_helpers):
         + [{"cluster_id": 4, "unique_id": i} for i in range(13, 23 + 1)]
         + [{"cluster_id": 5, "unique_id": i} for i in range(24, 24 + 1)]
     )
-
 
     # pass in dummy frame to linker
     linker = helper.Linker(

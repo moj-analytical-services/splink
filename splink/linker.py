@@ -56,7 +56,7 @@ from .charts import (
 )
 from .cluster_metrics import (
     _node_degree_sql,
-    _size_density_sql,
+    _size_density_centralisation_sql,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
@@ -2149,7 +2149,7 @@ class Linker:
         # Create unique id for clusters
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
-        sqls = _size_density_sql(
+        sqls = _size_density_centralisation_sql(
             df_node_metrics,
             threshold_match_probability,
             composite_uid_edges_l,

@@ -60,7 +60,7 @@ def _node_degree_sql(
     return sqls
 
 
-def _size_density_sql(
+def _size_density_centralisation_sql(
     df_node_metrics: SplinkDataFrame,
     threshold_match_probability: float,
     composite_uid_edges_l: str,
@@ -88,7 +88,15 @@ def _size_density_sql(
         SELECT
             cluster_id,
             COUNT(*) AS n_nodes,
-            SUM(node_degree)/2.0 AS n_edges
+            SUM(node_degree)/2.0 AS n_edges,
+            MAX(node_degree) AS max_degree,
+            CASE
+                WHEN COUNT(*) > 2 THEN
+                    (COUNT(*) * MAX(node_degree) -  SUM(node_degree)) /
+                    ((COUNT(*) - 1) * (COUNT(*) - 2))
+                ELSE
+                    NULL
+            END AS cluster_centralisation
         FROM {df_node_metrics.physical_name}
         GROUP BY
             cluster_id
@@ -108,7 +116,8 @@ def _size_density_sql(
                 ELSE
                     -- n_nodes is 1 (or 0) density undefined
                     NULL
-            END AS density
+            END AS density,
+            cluster_centralisation
         FROM __splink__counts_per_cluster
     """
     sql = {"sql": sql, "output_table_name": "__splink__cluster_metrics_clusters"}
