@@ -177,7 +177,11 @@ def test_metrics(dialect, test_helpers):
 
 
     # pass in dummy frame to linker
-    linker = helper.Linker(helper.convert_frame(df_1), {"link_type": "dedupe_only"}, **helper.extra_linker_args())
+    linker = helper.Linker(
+        helper.convert_frame(df_1),
+        {"link_type": "dedupe_only"},
+        **helper.extra_linker_args(),
+    )
     df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
     df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
 
@@ -232,9 +236,7 @@ def test_metrics(dialect, test_helpers):
     for unique_id, expected_node_degree in expected_node_degrees:
         relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]
         calculated_node_degree = relevant_row["node_degree"].iloc[0]
-        assert (
-            calculated_node_degree == expected_node_degree
-        ), (
+        assert calculated_node_degree == expected_node_degree, (
             f"Expected node degree {expected_node_degree} for node {unique_id}, "
             f"but found node degree {calculated_node_degree}"
         )
