@@ -1,10 +1,11 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from pytest import approx
 
 from splink.duckdb.duckdb_comparison_library import (
     exact_match,
 )
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 
 from .decorator import mark_with_dialects_excluding
 
@@ -193,7 +194,8 @@ def test_metrics(dialect, test_helpers):
         relevant_row = df_cm[df_cm["cluster_id"] == expected_row_details["cluster_id"]]
         assert relevant_row["n_nodes"].iloc[0] == expected_row_details["n_nodes"]
         assert relevant_row["n_edges"].iloc[0] == expected_row_details["n_edges"]
-        assert relevant_row["density"].iloc[0] == (
+        # float to convert from Decimal, and approx in case of rounding
+        assert float(relevant_row["density"].iloc[0]) == approx(
             2
             * expected_row_details["n_edges"]
             / (expected_row_details["n_nodes"] * (expected_row_details["n_nodes"] - 1))
