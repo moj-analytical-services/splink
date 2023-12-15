@@ -38,7 +38,7 @@ def test_size_density_dedupe():
 
     df_result = linker._compute_cluster_metrics(
         df_predict, df_clustered, threshold_match_probability=0.9
-    ).as_pandas_dataframe()
+    )[0].as_pandas_dataframe()
 
     data_expected = [
         {"cluster_id": 1, "n_nodes": 1, "n_edges": 0.0, "density": None},
@@ -69,7 +69,7 @@ def test_size_density_link():
     df_result = (
         linker._compute_cluster_metrics(
             df_predict, df_clustered, threshold_match_probability=0.99
-        )
+        )[0]
         .as_pandas_dataframe()
         .sort_values(by="cluster_id")
         .reset_index(drop=True)
@@ -173,9 +173,10 @@ def test_metrics():
     df_predict = DuckDBDataFrame("predict", "df_e", linker)
     df_clustered = DuckDBDataFrame("clusters", "df_c", linker)
 
-    df_cm = linker._compute_cluster_metrics(
+    df_cm, df_nm = linker._compute_cluster_metrics(
         df_predict, df_clustered, 0.95
-    ).as_pandas_dataframe()
+    )
+    df_cm = df_cm.as_pandas_dataframe()
 
     expected = [
         {"cluster_id": 1, "n_nodes": 4, "n_edges": 4},
@@ -218,10 +219,7 @@ def test_metrics():
         (22, 3),
         (23, 2),
     ]
-    df_nm = linker._compute_node_metrics(
-        df_predict, 0.95
-    ).as_pandas_dataframe()
-
+    df_nm = df_nm.as_pandas_dataframe()
 
     for unique_id, expected_node_degree in expected_node_degrees:
         relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]

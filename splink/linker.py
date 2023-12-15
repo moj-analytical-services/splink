@@ -2108,7 +2108,7 @@ class Linker:
         return cc
 
     # TODO: merge with cluster metrics - this is just for testing
-    def _compute_node_metrics(
+    def _compute_metrics_nodes(
         self,
         df_predict: SplinkDataFrame,
         threshold_match_probability: float,
@@ -2132,6 +2132,34 @@ class Linker:
 
         return df_cluster_metrics
 
+    def _compute_metrics_clusters(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+
+        # Get unique id columns
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # Create unique id for left-hand edges
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        # Create unique id for clusters
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
+
+        sqls = _size_density_sql(
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+            composite_uid_edges_l,
+            composite_uid_clusters,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+        return df_cluster_metrics
+
     def _compute_cluster_metrics(
         self,
         df_predict: SplinkDataFrame,
@@ -2153,32 +2181,18 @@ class Linker:
             cluster metrics
 
         """
-
         # TODO: compute node degrees
         # then pass that table to _sql function
         # so we can compute cluster centralisation
 
-        # Get unique id columns
-        uid_cols = self._settings_obj._unique_id_input_columns
-        # Create unique id for left-hand edges
-        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-        # Create unique id for clusters
-        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
-
-        sqls = _size_density_sql(
-            df_predict,
-            df_clustered,
-            threshold_match_probability,
-            composite_uid_edges_l,
-            composite_uid_clusters,
+        df_cluster_metrics = self._compute_metrics_clusters(
+            df_predict, df_clustered, threshold_match_probability
+        )
+        df_node_metrics = self._compute_metrics_nodes(
+            df_predict, threshold_match_probability
         )
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_cluster_metrics = self._execute_sql_pipeline()
-
-        return df_cluster_metrics
+        return df_cluster_metrics, df_node_metrics
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10

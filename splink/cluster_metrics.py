@@ -45,7 +45,7 @@ def _node_degree_sql(
             {output_tn}
         GROUP BY node
     """
-    sql_info = {"sql": sql, "output_table_name": "__splink__node_metrics"}
+    sql_info = {"sql": sql, "output_table_name": "__splink__cluster_metrics_nodes"}
     sqls.append(sql_info)
     return sqls
 
