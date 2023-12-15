@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
@@ -178,6 +179,44 @@ def test_metrics(dialect, test_helpers):
         + [{"cluster_id": 5, "unique_id": i} for i in range(24, 24 + 1)]
     )
 
+    expected_node_degrees = [
+        # cluster 1
+        # max degree 3
+        # centralisation = (1 + 2 + 1)/(3 * 2)
+        (1, 3),
+        (2, 2),
+        (3, 1),
+        (4, 2),
+        # cluster 2
+        # centralisation = (2 + 1 + 2 + 1 + 2)/(5 * 4)
+        (5, 3),
+        (6, 1),
+        (7, 2),
+        (8, 1),
+        (9, 2),
+        (10, 1),
+        # cluster 3
+        # centralisation = NULL
+        (11, 1),
+        (12, 1),
+        # cluster 4
+        # centralisation = (3 + 2 + 1 + 3 + 1 + 4 + 3 + 4 + 3 + 4)/(10*9)
+        (13, 6),
+        (14, 3),
+        (15, 4),
+        (16, 5),
+        (17, 3),
+        (18, 5),
+        (19, 2),
+        (20, 3),
+        (21, 2),
+        (22, 3),
+        (23, 2),
+        # cluster 5
+        # centralisation = NULL
+        (24, 0),
+    ]
+
     # pass in dummy frame to linker
     linker = helper.Linker(
         helper.convert_frame(df_1),
@@ -191,48 +230,33 @@ def test_metrics(dialect, test_helpers):
     df_cm = cm["clusters"].as_pandas_dataframe()
 
     expected = [
-        {"cluster_id": 1, "n_nodes": 4, "n_edges": 4},
-        {"cluster_id": 2, "n_nodes": 6, "n_edges": 5},
-        {"cluster_id": 3, "n_nodes": 2, "n_edges": 1},
-        {"cluster_id": 4, "n_nodes": 11, "n_edges": 19},
+        {"cluster_id": 1, "n_nodes": 4, "n_edges": 4, "cluster_centralisation": 4/6},
+        {"cluster_id": 2, "n_nodes": 6, "n_edges": 5, "cluster_centralisation": 8/20},
+        {"cluster_id": 3, "n_nodes": 2, "n_edges": 1, "cluster_centralisation": np.nan},
+        {"cluster_id": 4, "n_nodes": 11, "n_edges": 19, "cluster_centralisation": 28/90},
     ]
     for expected_row_details in expected:
         relevant_row = df_cm[df_cm["cluster_id"] == expected_row_details["cluster_id"]]
         assert relevant_row["n_nodes"].iloc[0] == expected_row_details["n_nodes"]
         assert relevant_row["n_edges"].iloc[0] == expected_row_details["n_edges"]
-        # float to convert from Decimal, and approx in case of rounding
-        assert float(relevant_row["density"].iloc[0]) == approx(
+        # float to convert from Decimal
+        density_computed = float(relevant_row["density"].iloc[0])
+        density_expected = (
             2
             * expected_row_details["n_edges"]
             / (expected_row_details["n_nodes"] * (expected_row_details["n_nodes"] - 1))
         )
+        assert density_computed == approx(density_expected)
 
-    expected_node_degrees = [
-        (1, 3),
-        (2, 2),
-        (3, 1),
-        (4, 2),
-        (5, 3),
-        (6, 1),
-        (7, 2),
-        (8, 1),
-        (9, 2),
-        (10, 1),
-        (11, 1),
-        (12, 1),
-        (13, 6),
-        (14, 3),
-        (15, 4),
-        (16, 5),
-        (17, 3),
-        (18, 5),
-        (19, 2),
-        (20, 3),
-        (21, 2),
-        (22, 3),
-        (23, 2),
-        (24, 0),
-    ]
+        cc_computed = relevant_row["cluster_centralisation"].iloc[0]
+        cc_expected = expected_row_details["cluster_centralisation"]
+        if np.isnan(cc_computed):
+            assert np.isnan(cc_expected)
+        else:
+            assert float(relevant_row["cluster_centralisation"].iloc[0]) == approx(
+                expected_row_details["cluster_centralisation"]
+            )
+
     df_nm = cm["nodes"].as_pandas_dataframe()
 
     for unique_id, expected_node_degree in expected_node_degrees:
