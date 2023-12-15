@@ -2139,21 +2139,10 @@ class Linker:
     def _compute_metrics_clusters(
         self,
         df_node_metrics: SplinkDataFrame,
-        threshold_match_probability: float,
     ) -> SplinkDataFrame:
-
-        # Get unique id columns
-        uid_cols = self._settings_obj._unique_id_input_columns
-        # Create unique id for left-hand edges
-        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-        # Create unique id for clusters
-        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_centralisation_sql(
             df_node_metrics,
-            threshold_match_probability,
-            composite_uid_edges_l,
-            composite_uid_clusters,
         )
 
         for sql in sqls:
@@ -2193,9 +2182,7 @@ class Linker:
             df_predict, df_clustered, threshold_match_probability
         )
         # don't need edges as information is baked into node metrics
-        df_cluster_metrics = self._compute_metrics_clusters(
-            df_node_metrics, threshold_match_probability
-        )
+        df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return {
             "clusters": df_cluster_metrics,
