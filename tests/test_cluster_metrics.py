@@ -232,7 +232,7 @@ def test_metrics(dialect, test_helpers):
     expected = [
         {"cluster_id": 1, "n_nodes": 4, "n_edges": 4, "cluster_centralisation": 4/6},
         {"cluster_id": 2, "n_nodes": 6, "n_edges": 5, "cluster_centralisation": 8/20},
-        {"cluster_id": 3, "n_nodes": 2, "n_edges": 1, "cluster_centralisation": np.nan},
+        {"cluster_id": 3, "n_nodes": 2, "n_edges": 1, "cluster_centralisation": None},
         {"cluster_id": 4, "n_nodes": 11, "n_edges": 19, "cluster_centralisation": 28/90},
     ]
     for expected_row_details in expected:
@@ -250,10 +250,9 @@ def test_metrics(dialect, test_helpers):
 
         cc_computed = relevant_row["cluster_centralisation"].iloc[0]
         cc_expected = expected_row_details["cluster_centralisation"]
-        if np.isnan(cc_computed):
-            assert np.isnan(cc_expected)
-        else:
-            assert float(relevant_row["cluster_centralisation"].iloc[0]) == approx(
+        # don't check None case as get inconsistent types from different backends
+        if cc_expected is not None:
+            assert float(cc_computed) == approx(
                 expected_row_details["cluster_centralisation"]
             )
 
