@@ -10,6 +10,7 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+from typing import Dict
 
 import sqlglot
 
@@ -2111,17 +2112,21 @@ class Linker:
     def _compute_metrics_nodes(
         self,
         df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
     ) -> SplinkDataFrame:
         uid_cols = self._settings_obj._unique_id_input_columns
         # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _node_degree_sql(
             df_predict,
+            df_clustered,
             composite_uid_edges_l,
             composite_uid_edges_r,
+            composite_uid_clusters,
             threshold_match_probability,
         )
 
@@ -2165,7 +2170,7 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
-    ):
+    ) -> Dict[str, SplinkDataFrame]:
         """Generates a table containing cluster metrics and returns a Splink dataframe
 
         Args:
@@ -2185,11 +2190,11 @@ class Linker:
         # then pass that table to _sql function
         # so we can compute cluster centralisation
 
-        df_cluster_metrics = self._compute_metrics_clusters(
+        df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
-        df_node_metrics = self._compute_metrics_nodes(
-            df_predict, threshold_match_probability
+        df_cluster_metrics = self._compute_metrics_clusters(
+            df_predict, df_clustered, threshold_match_probability
         )
 
         return {

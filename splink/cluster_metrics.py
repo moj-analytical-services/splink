@@ -3,12 +3,15 @@ from splink.splink_dataframe import SplinkDataFrame
 
 def _node_degree_sql(
     df_predict: SplinkDataFrame,
+    df_clustered: SplinkDataFrame,
     composite_uid_edges_l: str,
     composite_uid_edges_r: str,
+    composite_uid_clusters: str,
     threshold_match_probability: float,
 ):
     sqls = []
     edges_tn = df_predict.physical_name
+    clusters_tn = df_clustered.physical_name
 
     sql = f"""
         SELECT
@@ -37,13 +40,20 @@ def _node_degree_sql(
     sql_info = {"sql": sql, "output_table_name": output_tn}
     sqls.append(sql_info)
 
+    # join clusters table to capture edge-less nodes
+    # want all clusters included so left join
     sql = f"""
         SELECT
-            node AS composite_unique_id,
-            COUNT(*) AS node_degree
+            c.{composite_uid_clusters} AS composite_unique_id,
+            c.cluster_id AS cluster_id,
+            COUNT(*) FILTER (WHERE neighbour IS NOT NULL) AS node_degree
         FROM
-            {output_tn}
-        GROUP BY node
+            {clusters_tn} c
+        LEFT JOIN
+            {output_tn} n
+        ON
+            c.{composite_uid_clusters} = n.node
+        GROUP BY composite_unique_id, cluster_id
     """
     sql_info = {"sql": sql, "output_table_name": "__splink__cluster_metrics_nodes"}
     sqls.append(sql_info)
@@ -68,7 +78,6 @@ def _size_density_sql(
             match_probability above this threshold.
         composite_uid_edges_l (str): unique id for left-hand edges.
         composite_uid_clusters (str): unique id for clusters.
-
 
     Returns:
         sql string for computing cluster size and density
