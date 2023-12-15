@@ -116,7 +116,7 @@ def _size_density_sql(
             cluster_id,
             n_nodes,
             COALESCE(n_edges, 0) AS n_edges,
-            (n_edges * 2)/(n_nodes * (n_nodes-1)) AS density
+            1.0*(n_edges * 2)/(n_nodes * (n_nodes-1)) AS density
         FROM __splink__counts_per_cluster
     """
     sql = {"sql": sql, "output_table_name": "__splink__cluster_metrics_clusters"}
