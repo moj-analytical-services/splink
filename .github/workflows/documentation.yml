@@ -109,8 +109,10 @@ jobs:
         run: mkdocs build
       
       - run: |
-          pip install ghp-import
-          ghp-import -opfm "Update docs from commit ${{ env.GITHUB_SHA }}" site
+          pip install ghp-import==2.1.0
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          ghp-import -opfm "Update docs from commit ${{ github.sha }}" site
 
       - run: pip freeze
       - run: mkdocs --version
