@@ -99,10 +99,10 @@ def test_datediff_levels(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             exact_match_fn,
-            cl.datediff_at_thresholds(
+            cl.DateDiffAtThresholds(
                 ColumnExpression("dob").try_parse_date(),
-                [30, 12, 5, 100],
-                ["day", "month", "year", "year"],
+                date_thresholds=[30, 12, 5, 100],
+                date_metrics=["day", "month", "year", "year"],
             ),
         ],
     }
@@ -149,19 +149,19 @@ def test_datediff_levels(test_helpers, dialect):
 def test_datediff_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])
+        cl.DateDiffAtThresholds("dob", [1], ["day", "month", "year", "year"])
     # Negative threshold
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [-1], ["day"])
+        cl.DateDiffAtThresholds("dob", [-1], ["day"])
     # Invalid metric
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], ["dy"])
+        cl.DateDiffAtThresholds("dob", [1], ["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [], ["dy"])
+        cl.DateDiffAtThresholds("dob", [], ["dy"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], [])
+        cl.DateDiffAtThresholds("dob", [1], [])
 
 
 @mark_with_dialects_excluding("sqlite", "postgres")
@@ -179,10 +179,10 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
             "link_type": "dedupe_only",
             "comparisons": [
                 cl.ExactMatch("first_name"),
-                cl.datediff_at_thresholds(
+                cl.DateDiffAtThresholds(
                     ColumnExpression("dob").try_parse_date(),
-                    [30, 12, 5, 100],
-                    ["day", "month", "year", "year"],
+                    date_thresholds=[30, 12, 5, 100],
+                    date_metrics=["day", "month", "year", "year"],
                     date_format=date_format_param,
                     invalid_dates_as_null=invalid_dates_as_null,
                 ),
