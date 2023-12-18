@@ -69,12 +69,12 @@ linker = PostgresLinker(df, settings, engine=engine, other_schemas_to_search=["m
 Splink makes use of Postgres' user-defined functions in order to operate, which are defined in the [schema created by Splink](#schemas) when you create the linker. These functions are all defined using SQL, and are:
 
 * `log2` - required for core Splink functionality
-* `datediff` - for [the datediff comparison level](../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
-* `ave_months_between` - for [the datediff comparison level](../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
-* `array_intersect` - for [the array intersect comparison level](../../comparison_level_library.md#splink.comparison_level_library.ArrayIntersectLevelBase)
+* `datediff` - for [the datediff comparison level](../../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
+* `ave_months_between` - for [the datediff comparison level](../../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
+* `array_intersect` - for [the array intersect comparison level](../../../comparison_level_library.md#splink.comparison_level_library.ArrayIntersectLevelBase)
 
 !!! information Note
-    The information below is only relevant if you are planning on [making changes to Splink](../../dev_guides/dev_guides_index.md). If you are only intending to _use_ Splink with Postgres, you do not need to read any further.
+    The information below is only relevant if you are planning on [making changes to Splink](../../../dev_guides/dev_guides_index.md). If you are only intending to _use_ Splink with Postgres, you do not need to read any further.
 
 ## Testing Splink with Postgres
 
@@ -82,7 +82,7 @@ To run only the Splink tests that run against Postgres, you can run simply:
 ```bash
 pytest -m postgres_only tests/
 ```
-For more information see the [documentation page for testing in Splink](../../dev_guides/changing_splink/testing.md#running-tests-for-specific-backends-or-backend-groups).
+For more information see the [documentation page for testing in Splink](../../../dev_guides/changing_splink/testing.md#running-tests-for-specific-backends-or-backend-groups).
 
 The tests will are run using a temporary database and user that are created at the start of the test session, and destroyed at the end.
 
