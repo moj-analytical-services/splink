@@ -53,7 +53,9 @@ def postcode_levels():
         "output_column_name": "postcode",
         "comparison_levels": [
             cll.ExactMatchLevel(
-                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]")
+                ColumnExpression("postcode").regex_extract(
+                    "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
+                )
             ),
             cll.LevenshteinLevel(
                 ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}[0-9][A-Z0-9]?"),
@@ -78,7 +80,7 @@ def name_levels():
             ),
             cll.ColumnsReversedLevel(
                 ColumnExpression("first_name").regex_extract("[A-Z]{1,3}"),
-                ColumnExpression("last_name").regex_extract("[A-Z]{1,3}")
+                ColumnExpression("last_name").regex_extract("[A-Z]{1,3}"),
             ),
             cll.ElseLevel(),
         ],
