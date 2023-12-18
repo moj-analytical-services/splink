@@ -6,6 +6,7 @@ import pytest
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink import exceptions
+from splink.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -66,28 +67,24 @@ def test_datediff_levels(test_helpers, dialect):
             cll.NullLevel("dob"),
             cll.ExactMatchLevel("dob"),
             cll.DatediffLevel(
-                col_name="dob",
+                col_name=ColumnExpression("dob").try_parse_date(),
                 date_threshold=30,
                 date_metric="day",
-                cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                col_name="dob",
+                col_name=ColumnExpression("dob").try_parse_date(),
                 date_threshold=12,
                 date_metric="month",
-                cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                col_name="dob",
+                col_name=ColumnExpression("dob").try_parse_date(),
                 date_threshold=5,
                 date_metric="year",
-                cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                col_name="dob",
+                col_name=ColumnExpression("dob").try_parse_date(),
                 date_threshold=100,
                 date_metric="year",
-                cast_strings_to_date=True,
             ),
             cll.ElseLevel(),
         ],
@@ -103,10 +100,9 @@ def test_datediff_levels(test_helpers, dialect):
         "comparisons": [
             exact_match_fn,
             cl.datediff_at_thresholds(
-                "dob",
+                ColumnExpression("dob").try_parse_date(),
                 [30, 12, 5, 100],
                 ["day", "month", "year", "year"],
-                cast_strings_to_date=True,
             ),
         ],
     }
@@ -184,10 +180,9 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
             "comparisons": [
                 cl.ExactMatch("first_name"),
                 cl.datediff_at_thresholds(
-                    "dob",
+                    ColumnExpression("dob").try_parse_date(),
                     [30, 12, 5, 100],
                     ["day", "month", "year", "year"],
-                    cast_strings_to_date=True,
                     date_format=date_format_param,
                     invalid_dates_as_null=invalid_dates_as_null,
                 ),
@@ -209,31 +204,27 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
                 ),
                 cll.ExactMatchLevel("dob"),
                 cll.DatediffLevel(
-                    col_name="dob",
+                    col_name=ColumnExpression("dob").try_parse_date(),
                     date_threshold=30,
                     date_metric="day",
-                    cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    col_name="dob",
+                    col_name=ColumnExpression("dob").try_parse_date(),
                     date_threshold=12,
                     date_metric="month",
-                    cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    col_name="dob",
+                    col_name=ColumnExpression("dob").try_parse_date(),
                     date_threshold=5,
                     date_metric="year",
-                    cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    col_name="dob",
+                    col_name=ColumnExpression("dob").try_parse_date(),
                     date_threshold=100,
                     date_metric="year",
-                    cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.ElseLevel(),
