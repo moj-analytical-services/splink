@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 import splink.comparison_level_library as cll
+from splink.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -52,16 +53,15 @@ def postcode_levels():
         "output_column_name": "postcode",
         "comparison_levels": [
             cll.ExactMatchLevel(
-                "postcode",  # regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
+                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]")
             ),
             cll.LevenshteinLevel(
-                "postcode",
+                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}[0-9][A-Z0-9]?"),
                 distance_threshold=1,
-                # regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
             ),
             cll.JaroLevel(
-                "postcode",
-                distance_threshold=1,  # regex_extract="^[A-Z]{1,2}"
+                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}"),
+                distance_threshold=1,
             ),
             cll.ElseLevel(),
         ],
@@ -73,12 +73,12 @@ def name_levels():
         "output_column_name": "name",
         "comparison_levels": [
             cll.JaroWinklerLevel(
-                "first_name",
-                distance_threshold=1,  # regex_extract="^[A-Z]{1,4}"
+                ColumnExpression("first_name").regex_extract("^[A-Z]{1,4}"),
+                distance_threshold=1,
             ),
             cll.ColumnsReversedLevel(
-                "first_name",
-                "last_name",  # regex_extract="[A-Z]{1,3}"
+                ColumnExpression("first_name").regex_extract("[A-Z]{1,3}"),
+                ColumnExpression("last_name").regex_extract("[A-Z]{1,3}")
             ),
             cll.ElseLevel(),
         ],
@@ -141,7 +141,7 @@ def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
 
 
 def test_invalid_regex():
-    cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
-    cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]{1}")
+    cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]\\d"))
+    cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]{1}"))
     with pytest.raises(SyntaxError):
-        cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
+        cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]\\d"))
