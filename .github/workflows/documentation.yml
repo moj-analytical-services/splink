@@ -107,7 +107,13 @@ jobs:
 
       - name: build documentation
         run: mkdocs build
-      
+
+      - name: check links
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          fail: true
+          args: --offline site/ --verbose './**/*.html'
+
       - run: |
           pip install ghp-import==2.1.0
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
