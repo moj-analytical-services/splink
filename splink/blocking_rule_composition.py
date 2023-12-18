@@ -283,7 +283,7 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
             SQL condition
     """
     if len(brls) == 0:
-        raise ValueError("You must provide at least one BlockingRule")
+        raise TypeError("You must provide at least one BlockingRule")
     elif len(brls) > 1:
         warnings.warning(
             "More than one BlockingRule entered for `NOT` composition. "

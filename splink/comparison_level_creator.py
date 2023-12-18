@@ -52,6 +52,7 @@ class ComparisonLevelCreator(ABC):
         tf_adjustment_weight: float = None,
         tf_minimum_u_value: float = None,
         is_null_level: bool = None,
+        label_for_charts: str = None,
     ) -> "ComparisonLevelCreator":
         """
         Configure the comparison level with options which are common to all
@@ -78,6 +79,9 @@ class ComparisonLevelCreator(ABC):
             is_null_level (bool, optional): If true, m and u values will not be
                 estimated and instead the match weight will be zero for this column.
                 Defaults to None, equivalent to False.
+            label_for_charts (str, optional): If provided, a custom label that will
+                be used for this level in any charts. Defaults to None, in which case
+                a default label will be provided.
 
         Returns:
             ComparisonLevelCreator: The instance of the ComparisonLevelCreator class
@@ -90,6 +94,16 @@ class ComparisonLevelCreator(ABC):
                 setattr(self, k, v)
 
         return self
+
+    @final
+    @property
+    def is_null_level(self) -> bool:
+        return getattr(self, "_is_null_level", False)
+
+    @final
+    @is_null_level.setter
+    def is_null_level(self, is_null_level: bool):
+        self._is_null_level = is_null_level
 
     def __repr__(self) -> str:
         return (
