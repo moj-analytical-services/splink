@@ -150,7 +150,7 @@ class LevenshteinAtThresholds(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
-class DateDiffAtThresholds(ComparisonCreator):
+class DatediffAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
