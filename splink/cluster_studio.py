@@ -310,7 +310,7 @@ def render_splink_cluster_studio_html(
             else:
                 # Using sensible default for min_nodes. Might become option
                 # for users in future
-                cluster_ids =  _get_lowest_density_cluster_ids(
+                cluster_ids = _get_lowest_density_cluster_ids(
                     linker, _df_cluster_metrics, sample_size, min_nodes=3
                 )
 
