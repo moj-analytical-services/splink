@@ -70,18 +70,29 @@ class ExactMatch(ComparisonCreator):
         col_name (str): The name of the column to compare
     """
 
+    def __init__(
+        self,
+        col_name: str,
+        term_frequency_adjustments=False,
+    ):
+        self.term_frequency_adjustments = term_frequency_adjustments
+        super().__init__(col_name)
+
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
-            cll.NullLevel(self.col_name),
-            cll.ExactMatchLevel(self.col_name),
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(
+                self.col_expression,
+                term_frequency_adjustments=self.term_frequency_adjustments,
+            ),
             cll.ElseLevel(),
         ]
 
     def create_description(self) -> str:
-        return f"Exact match '{self.col_name}' vs. anything else"
+        return f"Exact match '{self.col_expression.label}' vs. anything else"
 
     def create_output_column_name(self) -> str:
-        return self.col_name
+        return self.col_expression.output_column_name
 
 
 class LevenshteinAtThresholds(ComparisonCreator):
@@ -117,10 +128,10 @@ class LevenshteinAtThresholds(ComparisonCreator):
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
-            cll.NullLevel(self.col_name),
-            cll.ExactMatchLevel(self.col_name),
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(self.col_expression),
             *[
-                cll.LevenshteinLevel(self.col_name, threshold)
+                cll.LevenshteinLevel(self.col_expression, threshold)
                 for threshold in self.thresholds
             ],
             cll.ElseLevel(),
@@ -129,11 +140,83 @@ class LevenshteinAtThresholds(ComparisonCreator):
     def create_description(self) -> str:
         comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
         return (
-            f"Exact match '{self.col_name}' vs. "
+            f"Exact match '{self.col_expression.label}' vs. "
             f"Levenshtein distance at thresholds "
             f"{comma_separated_thresholds_string} vs. "
             "anything else"
         )
 
     def create_output_column_name(self) -> str:
-        return self.col_name
+        return self.col_expression.output_column_name
+
+
+class DateDiffAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        *,
+        date_metrics: Union[str, list[str]],
+        date_thresholds: Union[int, list[int]],
+        cast_strings_to_dates: bool = False,
+        date_format: str = None,
+        term_frequency_adjustments=False,
+        invalid_dates_as_null=True,
+    ):
+        date_metrics_as_iterable = ensure_is_iterable(date_metrics)
+        # unpack it to a list so we can repeat iteration if needed
+        self.date_metrics = [*date_metrics_as_iterable]
+
+        date_thresholds_as_iterable = ensure_is_iterable(date_thresholds)
+        self.date_thresholds = [*date_thresholds_as_iterable]
+
+        self.cast_strings_to_dates = cast_strings_to_dates
+        self.date_format = date_format
+
+        self.term_frequency_adjustments = term_frequency_adjustments
+
+        self.invalid_dates_as_null = invalid_dates_as_null
+
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        col = self.col_expression
+        if self.invalid_dates_as_null:
+            null_col = col.try_parse_date(self.date_format)
+        else:
+            null_col = col
+
+        if self.cast_strings_to_dates:
+            date_diff_col = col.try_parse_date(self.date_format)
+        else:
+            date_diff_col = col
+
+        return [
+            cll.NullLevel(null_col),
+            cll.ExactMatchLevel(
+                self.col_expression,
+                term_frequency_adjustments=self.term_frequency_adjustments,
+            ),
+            *[
+                cll.DatediffLevel(
+                    date_diff_col,
+                    date_threshold=date_threshold,
+                    date_metric=date_metric,
+                )
+                for (date_threshold, date_metric) in zip(
+                    self.date_thresholds, self.date_metrics
+                )
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        return (
+            f"Exact match '{self.col_expression.label}' vs. "
+            f"date difference at thresholds "
+            f"{self.date_thresholds} "
+            f"with metrics {self.date_metrics} vs. "
+            "anything else"
+        )
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name

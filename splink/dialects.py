@@ -1,8 +1,6 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
 
-from .input_column import InputColumn
-
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
 
@@ -91,6 +89,11 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    def try_parse_date(self, name: str, date_format: str = None):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'try_parse_date' function"
+        )
+
 
 class DuckDBDialect(SplinkDialect):
     _dialect_name_for_factory = "duckdb"
@@ -119,6 +122,15 @@ class DuckDBDialect(SplinkDialect):
     def jaccard_function_name(self):
         return "jaccard"
 
+    @property
+    def default_date_format(self):
+        return "%Y-%m-%d"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""try_strptime({name}, '{date_format}')"""
+
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"
@@ -146,6 +158,15 @@ class SparkDialect(SplinkDialect):
     @property
     def jaccard_function_name(self):
         return "jaccard"
+
+    @property
+    def default_date_format(self):
+        return "yyyy-MM-dd"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""to_date({name}, '{date_format}')"""
 
 
 class SqliteDialect(SplinkDialect):
@@ -193,7 +214,8 @@ class PostgresDialect(SplinkDialect):
         if clc.date_format is None:
             clc.date_format = "yyyy-MM-dd"
 
-        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
 
         if clc.cast_strings_to_date:
             datediff_args = f"""
@@ -226,7 +248,8 @@ class PostgresDialect(SplinkDialect):
         """
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
-        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
         threshold = clc.min_intersection
         return f"""
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
@@ -247,3 +270,12 @@ class AthenaDialect(SplinkDialect):
     @property
     def _levenshtein_name(self):
         return "levenshtein_distance"
+
+
+_dialect_lookup = {
+    "duckdb": DuckDBDialect(),
+    "spark": SparkDialect(),
+    "sqlite": SqliteDialect(),
+    "postgres": PostgresDialect(),
+    "athena": AthenaDialect(),
+}
