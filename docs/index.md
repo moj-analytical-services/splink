@@ -19,11 +19,45 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
-🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
-📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
+<div class="grid cards" markdown>
+
+-   ⚡ **Speed**
+
+    ---
+
+    Capable of linking a million records on a laptop in approximately one minute. 
+
+-   🎯 **Accuracy**
+
+    ---
+
+    Full support for term frequency adjustments and user-defined fuzzy matching logic.
+
+-   🌐 **Scalability**
+
+    ---
+
+    Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
+
+-   🎓 **Unsupervised Learning**
+
+    ---
+
+    No training data is required, as models can be trained using an unsupervised approach.  
+
+-   📊 **Interactive Outputs**
+
+	---
+
+	Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
+
+-	:window: **Transparency**
+
+	---
+
+	Unlike other black box tools, Splink provides fully explainable and auditable results.
+
+</div>
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -64,6 +98,8 @@ To find the best place to ask a question, report a bug or get general advice, pl
 🥇 [Analysis in Government Awards 2022: People's Choice Award - Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
 
 🥈 [Analysis in Government Awards 2022: Innovative Methods Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+
+🥈 [Civil Service Awards 2023: Best Use of Data, Science, and Technology - Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
 ## Citation
 
