@@ -1,3 +1,5 @@
+import gc
+
 import pytest
 
 import splink.comparison_level_library as cll
@@ -19,7 +21,9 @@ comparison_surname = {
     "comparison_levels": [
         cll.NullLevel("surname"),
         cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
-        cll.LevenshteinLevel("surname", 2),
+        cll.LevenshteinLevel("surname", 2).configure(
+            label_for_charts="surname Levenshtein under 2"
+        ),
         cll.ElseLevel().configure(m_probability=0.2, u_probability=0.85),
     ],
 }
@@ -80,6 +84,38 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
 
 
+@mark_with_dialects_excluding()
+def test_cll_creators_instantiate_levels_with_config(dialect):
+    lev_dict = cll.NullLevel("city").get_comparison_level(dialect).as_dict()
+    assert lev_dict["is_null_level"]
+
+    lev_dict = (
+        cll.ElseLevel()
+        .configure(m_probability=0.2, u_probability=0.7)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["m_probability"] == 0.2
+    assert lev_dict["u_probability"] == 0.7
+
+    lev_dict = (
+        cll.ExactMatchLevel("city")
+        .configure(tf_adjustment_column="city", tf_adjustment_weight=0.9)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["tf_adjustment_column"] == "city"
+    assert lev_dict["tf_adjustment_weight"] == 0.9
+
+    lev_dict = (
+        cll.LevenshteinLevel("city", 5)
+        .configure(label_for_charts="city loose fuzzy match")
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["label_for_charts"] == "city loose fuzzy match"
+
+
 comparison_name = cl.CustomComparison(
     "name",
     [
@@ -136,6 +172,95 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
     linker.predict()
+
+
+def test_custom_dialect_no_string_lookup():
+    from splink.dialects import SplinkDialect
+
+    # force garbage collection so we forget about any other test dialects
+    # previously defined
+    gc.collect()
+
+    class TestDialectNoLookup(SplinkDialect):
+        # missing _dialect_name_for_factory!
+        @property
+        def name(self):
+            return "test_dialect"
+
+        @property
+        def sqlglot_name(self):
+            return "duckdb"
+
+    # the existence of TestDialectNoLookup should not impact our ability
+    # to use other dialects
+    cll.ExactMatchLevel("some_column").get_comparison_level("duckdb")
+
+
+def test_custom_dialect_duplicate_string_lookup():
+    from splink.dialects import SplinkDialect
+
+    # force garbage collection so we forget about any other test dialects
+    # previously defined
+    gc.collect()
+
+    class TestDialectDuplicateFactoryName(SplinkDialect):
+        # we already have a duckdb dialect!
+        _dialect_name_for_factory = "duckdb"
+
+        @property
+        def name(self):
+            return "test_dialect"
+
+        @property
+        def sqlglot_name(self):
+            return "duckdb"
+
+    # should get an error as level doesn't know which 'duckdb' we mean
+    with pytest.raises(ValueError) as exc_info:
+        cll.ExactMatchLevel("some_column").get_comparison_level("duckdb")
+    assert "Found multiple subclasses" in str(exc_info.value)
+
+    # should be able to use spark still
+    cll.ExactMatchLevel("some_column").get_comparison_level("spark")
+
+
+def test_valid_custom_dialect():
+    from splink.dialects import SplinkDialect
+
+    # force garbage collection so we forget about any other test dialects
+    # previously defined
+    gc.collect()
+
+    class TestDialect(SplinkDialect):
+        _dialect_name_for_factory = "valid_test_dialect"
+
+        @property
+        def name(self):
+            return "test_dialect"
+
+        @property
+        def sqlglot_name(self):
+            return "duckdb"
+
+        # helper for tests that allows SplinkDialect to forget about this dialect
+        # don't need to do this previously as they don't get instantiated
+        def _delete_instance(self):
+            del super()._dialect_instances[type(self)]
+
+    cll.ExactMatchLevel("some_column").get_comparison_level("valid_test_dialect")
+    TestDialect()._delete_instance()
+
+
+def test_invalid_dialect():
+
+    # force garbage collection so we forget about any other test dialects
+    # previously defined
+    gc.collect()
+
+    # no such dialect defined!
+    with pytest.raises(ValueError) as exc_info:
+        cll.ExactMatchLevel("some_column").get_comparison_level("bad_test_dialect")
+    assert "Could not find subclass" in str(exc_info.value)
 
 
 def test_cl_configure():

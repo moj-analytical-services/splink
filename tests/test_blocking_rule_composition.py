@@ -62,10 +62,10 @@ def test_binary_composition_internals_AND(test_helpers, dialect):
 
 
 def test_not():
-    import splink.duckdb.duckdb_comparison_level_library as brl
+    import splink.duckdb.blocking_rule_library as brl
 
-    # Integration test for a simple dictionary cl
-    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
+    # Integration test for a simple dictionary blocking rule
+    dob_jan_first = {"blocking_rule": "SUBSTR(dob_std_l, -5) = '01-01'"}
     brl.not_(dob_jan_first)
 
     with pytest.raises(TypeError):
