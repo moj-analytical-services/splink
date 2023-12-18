@@ -110,7 +110,7 @@ jobs:
       
       - run: |
           pip install ghp-import
-          ghp-import -p -m "Update docs from commit ${{ env.GITHUB_SHA }}" site
+          ghp-import -opfm "Update docs from commit ${{ env.GITHUB_SHA }}" site
 
       - run: pip freeze
       - run: mkdocs --version
