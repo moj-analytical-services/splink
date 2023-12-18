@@ -366,7 +366,7 @@ class JaroWinklerAtThresholds(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
-class DatediffAtThresholds(ComparisonCreator):
+class DateDiffAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
