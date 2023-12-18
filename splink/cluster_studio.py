@@ -228,7 +228,7 @@ def _get_cluster_id_of_each_size(
     return df_cluster_sample_with_size.as_record_dict()
 
 
-def _get_cluster_id_by_density(
+def _get_lowest_density_cluster_ids(
     linker: "Linker",
     df_cluster_metrics: SplinkDataFrame,
     sample_size: int,
