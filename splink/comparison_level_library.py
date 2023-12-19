@@ -152,6 +152,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
         config = {}
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.is_exact_match_level = True
 
         if term_frequency_adjustments:
             if not self.col_expression.is_pure_column_or_column_reference:
