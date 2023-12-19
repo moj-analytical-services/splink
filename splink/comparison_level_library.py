@@ -149,10 +149,16 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 adjustments to the exact match level. Defaults to False.
 
         """
-        config = {}
-
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.term_frequency_adjustments = term_frequency_adjustments
         self.is_exact_match_level = True
+
+    @property
+    def term_frequency_adjustments(self):
+        return self.tf_adjustment_column is not None
+
+    @term_frequency_adjustments.setter
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
 
         if term_frequency_adjustments:
             if not self.col_expression.is_pure_column_or_column_reference:
@@ -162,12 +168,13 @@ class ExactMatchLevel(ComparisonLevelCreator):
                     "transforms applied to it such as lower(), "
                     "substr() etc."
                 )
-
-            config["tf_adjustment_column"] = col_name
-            config["tf_adjustment_weight"] = 1.0
             # leave tf_minimum_u_value as None
+            self.configure(
+                tf_adjustment_column=self.col_expression,
+                tf_adjustment_weight=1.0,
+            )
 
-        self.configure(**config)
+        # TODO: how to 'turn off'?? configure doesn't currently allow
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
