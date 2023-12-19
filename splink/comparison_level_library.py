@@ -461,8 +461,6 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         self.not_null = not_null
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        ColumnExpression.instantiate_if_str(self.lat_col, splink_dialect=sql_dialect)
-        ColumnExpression.instantiate_if_str(self.long_col, splink_dialect=sql_dialect)
 
         self.lat_col_expression.sql_dialect = sql_dialect
         lat_col = self.lat_col_expression
