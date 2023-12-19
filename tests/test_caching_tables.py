@@ -83,7 +83,9 @@ def test_cache_used_when_registering_nodes_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            LevenshteinAtThresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
@@ -130,8 +132,8 @@ def test_cache_used_when_registering_tf_tables():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            ExactMatch("first_name", term_frequency_adjustments=True),
-            ExactMatch("surname", term_frequency_adjustments=True),
+            ExactMatch("first_name").configure(term_frequency_adjustments=True),
+            ExactMatch("surname").configure(term_frequency_adjustments=True),
         ],
         "blocking_rules_to_generate_predictions": ["l.surname = r.surname"],
     }
@@ -294,7 +296,9 @@ def test_table_deletions_with_preregistered():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            LevenshteinAtThresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }

@@ -297,11 +297,15 @@ def test_small_example_duckdb(tmp_path):
                     cll.ElseLevel(),
                 ],
             },
-            cl.DamerauLevenshteinAtThresholds(
-                "dob", 2, term_frequency_adjustments=True
+            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
+                term_frequency_adjustments=True
             ),
-            cl.JaroAtThresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.JaroWinklerAtThresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.JaroWinklerAtThresholds("city", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

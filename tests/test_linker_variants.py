@@ -13,11 +13,7 @@ settings_template = {
         "l.surname = r.surname",
     ],
     "comparisons": [
-        ExactMatch(
-            "first_name",
-            # TODO: restore once we have interface
-            # term_frequency_adjustments=True
-        ),
+        ExactMatch("first_name").configure(term_frequency_adjustments=True),
         ExactMatch("surname"),
         ExactMatch("dob"),
     ],
