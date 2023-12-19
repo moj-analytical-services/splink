@@ -1181,6 +1181,8 @@ class Linker:
         settings_dict["sql_dialect"] = settings_dict.get(
             "sql_dialect", self._sql_dialect
         )
+
+        self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
