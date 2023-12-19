@@ -1,6 +1,6 @@
 import pandas as pd
 
-from splink.cluster_studio import _get_cluster_id_by_density
+from splink.cluster_studio import _get_lowest_density_cluster_ids
 from splink.duckdb.linker import DuckDBLinker
 
 
