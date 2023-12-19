@@ -150,19 +150,21 @@ def test_datediff_levels(test_helpers, dialect):
 def test_datediff_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", [1], ["day", "month", "year", "year"])
+        cl.DateDiffAtThresholds(
+            "dob", date_thresholds=[1], date_metrics=["day", "month", "year", "year"]
+        )
     # Negative threshold
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", [-1], ["day"])
+        cl.DateDiffAtThresholds("dob", date_thresholds=[-1], date_metrics=["day"])
     # Invalid metric
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", [1], ["dy"])
+        cl.DateDiffAtThresholds("dob", date_thresholds=[1], date_metrics=["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", [], ["dy"])
+        cl.DateDiffAtThresholds("dob", date_thresholds=[], date_metrics=["dy"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", [1], [])
+        cl.DateDiffAtThresholds("dob", date_thresholds=[1], date_metrics=[])
 
 
 @mark_with_dialects_excluding("sqlite", "postgres")
