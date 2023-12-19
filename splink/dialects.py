@@ -145,6 +145,7 @@ class DuckDBDialect(SplinkDialect):
             f" >= {threshold}"
         ).strip()
 
+
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"
 
