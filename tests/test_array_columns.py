@@ -56,7 +56,7 @@ def test_array_comparisons(test_helpers, dialect):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            helper.cl.array_intersect_at_sizes("postcode", [4, 3, 2, 1]),
+            helper.cl.ArrayIntersectAtSizes("postcode", [4, 3, 2, 1]),
             helper.cl.ExactMatch("first_name"),
         ],
     }
@@ -91,7 +91,7 @@ def test_array_comparisons(test_helpers, dialect):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            helper.cl.array_intersect_at_sizes("postcode", [3, 1]),
+            helper.cl.ArrayIntersectAtSizes("postcode", [3, 1]),
             helper.cl.ExactMatch("first_name"),
         ],
     }
@@ -125,7 +125,7 @@ def test_array_comparisons(test_helpers, dialect):
         settings = {
             "link_type": "dedupe_only",
             "comparisons": [
-                helper.cl.array_intersect_at_sizes("postcode", [-1, 2]),
+                helper.cl.ArrayIntersectAtSizes("postcode", [-1, 2]),
                 helper.cl.ExactMatch("first_name"),
             ],
         }
