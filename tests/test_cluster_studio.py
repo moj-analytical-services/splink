@@ -36,7 +36,7 @@ def test_density_sample():
     df_cluster_metrics = linker.register_table(
         df_metrics, "df_cluster_metrics", overwrite=True
     )
-    df_result = _get_cluster_id_by_density(
+    df_result = _get_lowest_density_cluster_ids(
         linker, df_cluster_metrics, sample_size=3, min_nodes=3
     )
     df_expect = ["C", "E", "A"]
