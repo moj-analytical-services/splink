@@ -131,6 +131,19 @@ class DuckDBDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
+    # TODO: this is only needed for duckdb < 0.9.0.
+    # should we just ditch support for that? (only for cll - engine should still work)
+    def array_intersect(self, clc: "ComparisonLevelCreator"):
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+        threshold = clc.min_intersection
+
+        # sum of individual (unique) array sizes, minus the (unique) union
+        return (
+            f"list_unique({col.name_l}) + list_unique({col.name_r})"
+            f" - list_unique(list_concat({col.name_l}, {col.name_r}))"
+            f" >= {threshold}"
+        ).strip()
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"
