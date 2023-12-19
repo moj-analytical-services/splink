@@ -99,7 +99,7 @@ def test_datediff_levels(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             exact_match_fn,
-            cl.DateDiffAtThresholds(
+            cl.DatediffAtThresholds(
                 "dob",
                 date_thresholds=[30, 12, 5, 100],
                 date_metrics=["day", "month", "year", "year"],
@@ -150,21 +150,21 @@ def test_datediff_levels(test_helpers, dialect):
 def test_datediff_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds(
+        cl.DatediffAtThresholds(
             "dob", date_thresholds=[1], date_metrics=["day", "month", "year", "year"]
         )
     # Negative threshold
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", date_thresholds=[-1], date_metrics=["day"])
+        cl.DatediffAtThresholds("dob", date_thresholds=[-1], date_metrics=["day"])
     # Invalid metric
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", date_thresholds=[1], date_metrics=["dy"])
+        cl.DatediffAtThresholds("dob", date_thresholds=[1], date_metrics=["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", date_thresholds=[], date_metrics=["dy"])
+        cl.DatediffAtThresholds("dob", date_thresholds=[], date_metrics=["dy"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        cl.DateDiffAtThresholds("dob", date_thresholds=[1], date_metrics=[])
+        cl.DatediffAtThresholds("dob", date_thresholds=[1], date_metrics=[])
 
 
 @mark_with_dialects_excluding("sqlite", "postgres")
@@ -182,7 +182,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
             "link_type": "dedupe_only",
             "comparisons": [
                 cl.ExactMatch("first_name"),
-                cl.DateDiffAtThresholds(
+                cl.DatediffAtThresholds(
                     "dob",
                     date_thresholds=[30, 12, 5, 100],
                     date_metrics=["day", "month", "year", "year"],
