@@ -44,16 +44,16 @@ def test_full_example_spark(spark, df_spark, tmp_path):
             {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
         ],
         "comparisons": [
-            cl.jaro_winkler_at_thresholds("first_name", 0.9),
-            cl.jaro_at_thresholds("surname", 0.9),
-            cl.damerau_levenshtein_at_thresholds("dob", 2),
+            cl.JaroWinklerAtThresholds("first_name", 0.9),
+            cl.JaroAtThresholds("surname", 0.9),
+            cl.DamerauLevenshteinAtThresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.ArrayIntersectLevel("email"),
                     cll.ElseLevel(),
                 ]
             },
-            cl.jaccard_at_thresholds("city", [0.9]),
+            cl.JaccardAtThresholds("city", [0.9]),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

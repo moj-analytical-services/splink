@@ -27,7 +27,7 @@ def test_full_example_duckdb(tmp_path):
 
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
-    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][1] = cl.JaccardAtThresholds("SUR name")
 
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
@@ -297,11 +297,11 @@ def test_small_example_duckdb(tmp_path):
                     cll.ElseLevel(),
                 ],
             },
-            cl.damerau_levenshtein_at_thresholds(
+            cl.DamerauLevenshteinAtThresholds(
                 "dob", 2, term_frequency_adjustments=True
             ),
-            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9, term_frequency_adjustments=True),
+            cl.JaroWinklerAtThresholds("city", 0.9, term_frequency_adjustments=True),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

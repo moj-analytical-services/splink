@@ -42,7 +42,7 @@
 # # Continue with th# Load in and update our settings
 # settings_dict = get_settings_dict()
 
-# first_name_cc = cl.levenshtein_at_thresholds(
+# first_name_cc = cl.LevenshteinAtThresholds(
 #     col_name="first_name",
 #     distance_threshold_or_thresholds=2,
 #     include_exact_match_level=True,
