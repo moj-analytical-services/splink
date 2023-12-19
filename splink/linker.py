@@ -3455,6 +3455,7 @@ class Linker:
         cluster_names: list = None,
         overwrite: bool = False,
         return_html_as_string=False,
+        _df_cluster_metrics: SplinkDataFrame = None,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -3464,8 +3465,8 @@ class Linker:
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
-            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
-                `random`.
+            sampling_method (str, optional): `random`, `by_cluster_size` or
+                `lowest_density_clusters`. Defaults to `random`.
             sample_size (int, optional): Number of clusters to show in the dahboard.
                 Defaults to 10.
             cluster_ids (list): The IDs of the clusters that will be displayed in the
@@ -3505,6 +3506,7 @@ class Linker:
             cluster_ids=cluster_ids,
             overwrite=overwrite,
             cluster_names=cluster_names,
+            _df_cluster_metrics=_df_cluster_metrics,
         )
 
         if return_html_as_string:
