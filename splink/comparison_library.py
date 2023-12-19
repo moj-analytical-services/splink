@@ -487,3 +487,58 @@ class ArrayIntersectAtSizes(ComparisonCreator):
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
+
+
+class DistanceInKMAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        lat_col: str,
+        long_col: str,
+        km_thresholds=[0.1, 1],
+    ):
+        """
+        A comparison of the latitude, longitude coordinates defined in
+        'lat_col' and 'long col' giving the great circle distance between them in km.
+
+        An example of the output with default arguments and km_thresholds = [1, 10]
+        would be
+
+        * The two coordinates are within 1 km of one another
+        * The two coordinates are within 10 km of one another
+        * Anything else (i.e. the distance between coordinates lie outside this range)
+
+        Args:
+            lat_col(str): The name of the latitude column to compare.
+            long_col(str): The name of the longitude column to compare.
+            km_thresholds (list, optional): The km thresholds for the distance levels.
+                Defaults to [0.1, 1].
+        """
+
+        thresholds_as_iterable = ensure_is_iterable(km_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        super().__init__(col_name_or_names=[lat_col, long_col])
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        lat_col = self.col_expressions[0]
+        long_col = self.col_expressions[1]
+        return [
+            cll.Or(cll.NullLevel(lat_col), cll.NullLevel(long_col)),
+            *[
+                cll.DistanceInKMLevel(lat_col, long_col, km_threshold=threshold)
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
+        plural = "s" if len(self.thresholds) > 1 else ""
+        return (
+            f"Distance in km at distance{plural} "
+            f"{comma_separated_thresholds_string} vs. anything else"
+        )
+
+    def create_output_column_name(self) -> str:
+        lat_col = self.col_expressions[0]
+        long_col = self.col_expressions[1]
+        return f"{lat_col.output_column_name}_{long_col.output_column_name}"
