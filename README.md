@@ -109,7 +109,7 @@ Should you require a more bare-bones version of Splink **without DuckDB**, pleas
 
 The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
 
-For more detailed tutorial, please see [here](https://moj-analytical-services.github.io/splink/demos/00_Tutorial_Introduction.html).
+For more detailed tutorial, please see [here](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html).
 
 ```py
 from splink.duckdb.linker import DuckDBLinker

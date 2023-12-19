@@ -1,6 +1,6 @@
 # Charts in Splink
 
-Interactive charts are a key tool when linking data with Splink. To see all of the charts available, check out the [Splink Charts Gallery](../charts/index.md).
+Interactive charts are a key tool when linking data with Splink. To see all of the charts available, check out the [Splink Charts Gallery](../../charts/index.md).
 
 
 ## How do charts work in Splink?
@@ -23,7 +23,7 @@ For a given chart, there is usually:
 
 If you take any Altair chart in HTML format, you should be able to make changes pretty easily with the Vega-Lite Editor.
 
-For example, consider the [`comparator_score_chart`](../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores) from the [`comparison_helpers library`](../comparison_helpers.md#splink.comparison_helpers.comparator_score_chart):
+For example, consider the [`comparator_score_chart`](../../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores) from the [`comparison_helpers library`](../../comparison_helpers.md#splink.comparison_helpers.comparator_score_chart):
 
 | Before | After |
 | ------ | ----- |

@@ -1,6 +1,6 @@
 # Topic Guides
 
-This section contains in-depth guides on a variety of topics and concepts within Splink, as well as data linking more generally. These are intended to provide an extra layer of detail ontop of the Splink [tutorial](../demos/00_Tutorial_Introduction.ipynb) and [examples](../demos/examples/examples_index.md).
+This section contains in-depth guides on a variety of topics and concepts within Splink, as well as data linking more generally. These are intended to provide an extra layer of detail ontop of the Splink [tutorial](../demos/tutorials/00_Tutorial_Introduction.ipynb) and [examples](../demos/examples/examples_index.md).
 
 The topic guides are broken up into the following categories:
 
