@@ -25,7 +25,7 @@ class ComparisonCreator(ABC):
             cols = []
         else:
             cols = ensure_is_iterable(col_name_or_names)
-        # TODO: would this be nicer as a dict?
+        # TODO: would this be nicer as a dict?
         self.col_expressions = list(
             map(
                 ColumnExpression.instantiate_if_str,
