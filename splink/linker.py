@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import hashlib
 import json
@@ -39,7 +39,6 @@ from .blocking import (
     block_using_rules_sqls,
     blocking_rule_to_obj,
 )
-from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
     completeness_chart,
@@ -66,6 +65,10 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+
+# NOQA:I001
+# TODO: circular - restore
+# from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -137,7 +140,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict | Path,
-        accepted_df_dtypes,
+        database_api,  # TODO: can't annotate atm due to circular imports
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
@@ -218,8 +221,10 @@ class Linker:
             splink_logger.setLevel(logging.INFO)
 
         self._pipeline = SQLPipeline()
+        self.db_api = database_api
 
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
+        # TODO: temp hack for compat
+        self._intermediate_table_cache: dict = self.db_api._intermediate_table_cache
 
         if not isinstance(settings_dict, (dict, type(None))):
             # Run if you've entered a filepath
@@ -236,10 +241,24 @@ class Linker:
             self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
+        # logic from DuckDBLinker.__init__ - TODO: genericise
+        # If user has provided pandas dataframes, need to register
+        # them with the database, using user-provided aliases
+        # if provided or a created alias if not
+        input_tables = ensure_is_list(input_table_or_tables)
+        # TODO: restore this kind of special handling:
+        # input_tables = [
+        #     duckdb_load_from_file(t) if isinstance(t, str) else t for t in input_tables
+        # ]
+
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
         homogenised_tables, homogenised_aliases = self._register_input_tables(
-            input_table_or_tables,
-            input_table_aliases,
-            accepted_df_dtypes,
+            input_tables,
+            input_aliases,
+            self.db_api.accepted_df_dtypes,
         )
 
         self._input_tables_dict = self._get_input_tables_dict(
@@ -422,25 +441,25 @@ class Linker:
         else:
             return False
 
+    # TODO: rename these!
     @property
     def _sql_dialect(self):
-        if self._sql_dialect_ is None:
-            raise NotImplementedError(
-                f"No SQL dialect set on object of type {type(self)}. "
-                "Did you make sure to create a dialect-specific Linker?"
-            )
-        return self._sql_dialect_
+        return self.db_api.sql_dialect.name
+
+    @property
+    def _sql_dialect_object(self):
+        return self.db_api.sql_dialect
 
     @property
     def _infinity_expression(self):
-        raise NotImplementedError(
-            f"infinity sql expression not available for {type(self)}"
-        )
+        return self._sql_dialect_object.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
+        return self._sql_dialect_object.random_sample_sql(
+            proportion, sample_size, seed=seed, table=table, unique_id=unique_id
+        )
 
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
         # 'homogenised' means all entries are strings representing tables
@@ -628,9 +647,7 @@ class Linker:
             templated_name (str): The purpose of the table to Splink
             physical_name (str): The name of the table in the underlying databse
         """
-        raise NotImplementedError(
-            "_table_to_splink_dataframe not implemented on this linker"
-        )
+        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
 
     def _enqueue_sql(self, sql, output_table_name):
         """Add sql to the current pipeline, but do not execute the pipeline."""
@@ -705,8 +722,8 @@ class Linker:
         their implementation, maybe doing some SQL translation or other prep/cleanup
         work before/after.
         """
-        raise NotImplementedError(
-            f"_execute_sql_against_backend not implemented for {type(self)}"
+        return self.db_api.execute_sql_against_backend(
+            sql, templated_name, physical_name
         )
 
     def _run_sql_execution(
@@ -720,9 +737,7 @@ class Linker:
 
         This could return something, or not. It's up to the Linker subclass to decide.
         """
-        raise NotImplementedError(
-            f"_run_sql_execution not implemented for {type(self)}"
-        )
+        return self.db_api.run_sql_execution(final_sql, templated_name, physical_name)
 
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
@@ -776,7 +791,7 @@ class Linker:
                 pipeline
         """
 
-        raise NotImplementedError(f"register_table not implemented for {type(self)}")
+        return self.db_api.register_table(input, table_name, overwrite)
 
     def _table_registration(self, input, table_name):
         """
@@ -798,9 +813,7 @@ class Linker:
             None
         """
 
-        raise NotImplementedError(
-            f"_table_registration not implemented for {type(self)}"
-        )
+        return self.db_api._table_registration(input, table_name)
 
     def query_sql(self, sql, output_type="pandas"):
         """
@@ -999,9 +1012,7 @@ class Linker:
             logger.warning(warn_message)
 
     def _table_exists_in_database(self, table_name):
-        raise NotImplementedError(
-            f"table_exists_in_database not implemented for {type(self)}"
-        )
+        return self.db_api.table_exists_in_database(table_name)
 
     def _validate_input_dfs(self):
         if not hasattr(self, "_input_tables_dict"):
@@ -3787,15 +3798,6 @@ class Linker:
             view_in_jupyter=view_in_jupyter,
             overwrite=overwrite,
         )
-
-    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
-        keys_to_delete = set()
-        for key, df in self._intermediate_table_cache.items():
-            if df.physical_name == splink_dataframe.physical_name:
-                keys_to_delete.add(key)
-
-        for k in keys_to_delete:
-            del self._intermediate_table_cache[k]
 
     def _find_blocking_rules_below_threshold(
         self, max_comparisons_per_rule, blocking_expressions=None
