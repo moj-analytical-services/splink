@@ -217,9 +217,9 @@ def test_roc_chart_link_and_dedupe():
     df_labels = df_labels.drop(["cluster_l", "cluster_r", "merge"], axis=1)
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
-    db_api = DuckDBAPI(connection=":memory:", input_table_aliases="fake_data_1")
+    db_api = DuckDBAPI(connection=":memory:")
 
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api)
 
     linker.register_table(df_labels, "labels")
 

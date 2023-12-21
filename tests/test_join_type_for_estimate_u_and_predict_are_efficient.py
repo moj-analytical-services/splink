@@ -4,7 +4,8 @@ import re
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 # Create a log handler that allows us to captured logged messages to a python list
@@ -112,9 +113,11 @@ def test_dedupe_only():
             cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         df_one,
         settings,
+        database_api=db_api,
         set_up_basic_logging=False,
     )
     logging.getLogger("splink").setLevel(1)
@@ -162,9 +165,11 @@ def test_link_and_dedupe():
             cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
@@ -216,9 +221,11 @@ def test_link_only_two():
             cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
@@ -271,9 +278,11 @@ def test_link_only_three():
             cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two, df_three],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two", "df_three"],
         set_up_basic_logging=False,
     )
