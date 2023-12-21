@@ -20,7 +20,9 @@ def test_small_erdos_renyi_graph(execution_number):
     linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker, predict_df).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
 
@@ -32,7 +34,9 @@ def test_medium_erdos_renyi_graph(execution_number):
     linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker, predict_df).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
 
@@ -44,6 +48,8 @@ def test_large_erdos_renyi_graph(execution_number):
     linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker, predict_df).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
