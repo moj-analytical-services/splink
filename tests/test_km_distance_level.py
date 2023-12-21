@@ -9,16 +9,16 @@ from .decorator import mark_with_dialects_excluding
 
 @mark_with_dialects_excluding()
 def test_simple_run(dialect):
-    cl.distance_in_km_at_thresholds(
+    cl.DistanceInKMAtThresholds(
         lat_col="lat", long_col="long", km_thresholds=[1, 5, 10]
     ).create_comparison_dict(dialect)
     # print(
-    #    cl.distance_in_km_at_thresholds(
+    #    cl.DistanceInKMAtThresholds(
     #        lat_col="latlong[0]", long_col="latlong[1]", km_thresholds=[1, 5, 10]
     #    ).as_dict()
     # )
     # print(
-    #    cl.distance_in_km_at_thresholds(
+    #    cl.DistanceInKMAtThresholds(
     #        lat_col="ll['lat']", long_col="ll['long']", km_thresholds=[1, 5, 10]
     #    ).as_dict()
     # )
@@ -87,7 +87,7 @@ def test_km_distance_levels(dialect, test_helpers):
     settings_cl = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.distance_in_km_at_thresholds(
+            cl.DistanceInKMAtThresholds(
                 lat_col="lat", long_col="long", km_thresholds=[0.1, 1, 10, 300]
             )
         ],
@@ -123,9 +123,9 @@ def test_km_distance_levels(dialect, test_helpers):
 
     df = helper.convert_frame(df)
 
-    linker = helper.Linker(df, settings_cl)
+    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
     cl_df_e = linker.predict().as_pandas_dataframe()
-    linker = helper.Linker(df, settings_cll)
+    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
     cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
@@ -140,9 +140,11 @@ def test_km_distance_levels(dialect, test_helpers):
     for gamma, gamma_lookup in size_gamma_lookup.items():
         for linker_pred in linker_outputs.values():
             gamma_column_name_options = [
-                "gamma_custom_long_lat",
+                # cl version
+                "gamma_lat_long",
+                # our custom cll version
                 "gamma_custom_lat_long",
-            ]  # lat and long switch unpredictably
+            ]
             gamma_column_name = linker_pred.columns[
                 linker_pred.columns.str.contains("|".join(gamma_column_name_options))
             ][0]
