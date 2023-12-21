@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.linker import DuckDBLinker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
@@ -12,7 +11,9 @@ from .basic_settings import get_settings_dict
 def test_splink_2_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
@@ -80,7 +81,9 @@ def test_splink_2_predict_sqlite():
 def test_splink_2_em_fixed_u():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -124,7 +127,9 @@ def test_splink_2_em_fixed_u():
 def test_splink_2_em_no_fix():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -178,7 +183,9 @@ def test_lambda():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     ma = linker.predict().as_pandas_dataframe()
     f1 = ma["unique_id_l"] == 924

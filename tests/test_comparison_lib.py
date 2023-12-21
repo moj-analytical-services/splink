@@ -2,7 +2,6 @@ import pandas as pd
 
 import splink.comparison_library as cl
 from splink.column_expression import ColumnExpression
-from splink.duckdb.linker import DuckDBLinker
 
 
 def test_distance_function_comparison():
@@ -28,7 +27,9 @@ def test_distance_function_comparison():
             ),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     df_pred = linker.predict().as_pandas_dataframe()
 
@@ -79,7 +80,9 @@ def test_set_to_lowercase():
 
     df = pd.DataFrame(data)
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

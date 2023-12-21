@@ -2,7 +2,6 @@ import pandas as pd
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
 
 from .decorator import mark_with_dialects_excluding
 
@@ -223,7 +222,9 @@ def test_haversine_level():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(df, settings, input_table_aliases="test")
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, input_table_aliases="test", database_api=db_api)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

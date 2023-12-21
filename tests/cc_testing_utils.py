@@ -5,7 +5,7 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+from splink.duckdb.linker import DuckDBDataFrame
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -31,7 +31,11 @@ def register_cc_df(G):
     table_name = "__splink__df_predict_graph"
     # this registers our table under __splink__df__{table_name}
     # but our cc function actively looks for "__splink__df_predict"
-    linker = DuckDBLinker(df_concat, settings_dict, input_table_aliases=table_name)
+    db_api = DuckDBAPI()
+
+    linker = Linker(
+        df_concat, settings_dict, input_table_aliases=table_name, database_api=db_api
+    )
 
     # re-register under our required name to run the CC function
     linker.register_table(df_concat, table_name, overwrite=True)

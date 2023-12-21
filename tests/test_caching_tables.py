@@ -7,7 +7,6 @@ from splink.comparison_library import (
     ExactMatch,
     LevenshteinAtThresholds,
 )
-from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def get_duckdb_table_names_as_list(con):
@@ -30,7 +29,10 @@ def test_cache_tracking_works():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
@@ -88,7 +90,10 @@ def test_cache_used_when_registering_nodes_table():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_table_input_nodes_concat_with_tf(splink__df_concat_with_tf)
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -137,7 +142,9 @@ def test_cache_used_when_registering_tf_tables():
     }
 
     # First test do not register any tf tables
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -157,7 +164,9 @@ def test_cache_used_when_registering_tf_tables():
     assert "__splink__df_tf_surname" in cte_table_aliases_used
 
     # Then try the same after registering surname tf table
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -176,7 +185,9 @@ def test_cache_used_when_registering_tf_tables():
     assert "__splink__df_tf_surname" not in cte_table_aliases_used
 
     # Then try the same after registering both
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.register_term_frequency_lookup(first_name_tf_table, "first_name")
@@ -210,7 +221,10 @@ def test_cache_invalidation():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.compute_tf_table("name")
@@ -222,7 +236,10 @@ def test_cache_invalidation():
     assert len_before == len_after
     assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.compute_tf_table("name")
@@ -253,7 +270,10 @@ def test_table_deletions():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_table", settings, connection=con)
+    db_api = DuckDBAPI(connection=con)
+
+
+    linker = Linker("my_table", settings, database_api=db_api)
 
     table_names_before = set(get_duckdb_table_names_as_list(linker._con))
 
@@ -299,7 +319,10 @@ def test_table_deletions_with_preregistered():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_data_table", settings, connection=con)
+    db_api = DuckDBAPI(connection=con)
+
+
+    linker = Linker("my_data_table", settings, database_api=db_api)
     linker.register_table_input_nodes_concat_with_tf("my_nodes_with_tf_table")
 
     table_names_before = set(get_duckdb_table_names_as_list(linker._con))
@@ -332,7 +355,10 @@ def test_single_deletion():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     tf_table = linker.compute_tf_table("name")

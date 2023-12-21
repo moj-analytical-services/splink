@@ -35,7 +35,7 @@ import pandas as pd
 import pytest
 
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+from splink.duckdb.linker import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
 from splink.predict import predict_from_comparison_vectors_sqls
 
@@ -59,7 +59,9 @@ def test_splink_converges_to_known_params():
         "linker_uid": "abc",
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     # This test is fiddly because you need to know the hash of the
     # comparison vector table, but to find this out you need to run the test

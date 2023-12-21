@@ -3,7 +3,6 @@ import os
 import pandas as pd
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
-from splink.duckdb.linker import DuckDBLinker
 
 
 def test_2_to_3(tmp_path):
@@ -59,9 +58,13 @@ def test_2_to_3(tmp_path):
     converted = convert_settings_from_v2_to_v3(settings)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    DuckDBLinker(
-        df,
-        converted,
+    db_api = DuckDBAPI(
         connection=os.path.join(tmp_path, "duckdb.db"),
         output_schema="splink_in_duckdb",
+    )
+
+    Linker(
+        df,
+        converted,
+        database_api=db_api,
     )

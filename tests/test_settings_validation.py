@@ -7,7 +7,6 @@ from splink.comparison import Comparison
 from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.blocking_rule_library import block_on
-from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import ErrorLogger
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
@@ -245,7 +244,9 @@ def test_settings_validation_logs(caplog):
 
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
-        DuckDBLinker(DF, settings, validate_settings=True)
+        db_api = DuckDBAPI()
+
+        Linker(DF, settings, validate_settings=True, database_api=db_api)
 
         # Define expected log segments
         expected_log_segments = [
@@ -305,9 +306,12 @@ def test_settings_validation_on_2_to_3_converter():
     }
 
     converted = convert_settings_from_v2_to_v3(settings)
-    DuckDBLinker(
+    db_api = DuckDBAPI()
+
+    Linker(
         df,
         converted,
+        database_api=db_api
     )
 
 
@@ -317,9 +321,12 @@ def test_validate_sql_dialect():
     settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
 
     with pytest.raises(Exception) as excinfo:
-        DuckDBLinker(
+        db_api = DuckDBAPI()
+
+        Linker(
             df,
             settings,
+            database_api=db_api
         )
     assert str(excinfo.value) == (
         "Incompatible SQL dialect! `settings` dictionary uses dialect "
@@ -335,8 +342,11 @@ def test_comparison_validation():
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
     # are tested elsewhere.
-    DuckDBLinker(
+    db_api = DuckDBAPI()
+
+    Linker(
         pd.DataFrame({"a": [1, 2, 3]}),
+        database_api=db_api
     )
 
     settings = get_settings_dict()

@@ -4,7 +4,6 @@ from pandas.testing import assert_frame_equal
 from splink.comparison_library import (
     ExactMatch,
 )
-from splink.duckdb.linker import DuckDBLinker
 
 df_1 = [
     {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
@@ -31,7 +30,9 @@ def test_size_density_dedupe():
             ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
@@ -59,8 +60,13 @@ def test_size_density_link():
             ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(
-        [df_1, df_2], settings, input_table_aliases=["df_left", "df_right"]
+    db_api = DuckDBAPI()
+
+    linker = Linker(
+        [df_1, df_2],
+        settings,
+        input_table_aliases=["df_left", "df_right"],
+        database_api=db_api,
     )
 
     df_predict = linker.predict()
