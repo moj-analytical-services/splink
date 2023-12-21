@@ -1,6 +1,8 @@
 import pandas as pd
 
 import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 # ground truth:
 # true matches ALWAYS match on gender

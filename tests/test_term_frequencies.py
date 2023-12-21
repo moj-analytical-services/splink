@@ -1,6 +1,9 @@
 import pandas as pd
 import pytest
 
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
+
 
 def get_data():
     city_counts = {
@@ -153,7 +156,6 @@ def test_weight():
 
     db_api = DuckDBAPI(connection=":memory:")
 
-
     linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()
     results = filter_results(df_predict)
@@ -204,7 +206,6 @@ def test_weightand_clamp():
     }
 
     db_api = DuckDBAPI(connection=":memory:")
-
 
     linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()

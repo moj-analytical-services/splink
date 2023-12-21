@@ -3,6 +3,8 @@ from copy import deepcopy
 import pandas as pd
 
 from splink.comparison_library import ExactMatch
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 settings_template = {
     "probability_two_random_records_match": 0.01,

@@ -2,7 +2,9 @@ import pandas as pd
 import pytest
 
 import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
 from splink.exceptions import EMTrainingException
+from splink.linker import Linker
 
 
 def test_clear_error_when_empty_block():

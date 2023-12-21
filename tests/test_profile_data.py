@@ -7,9 +7,7 @@ from pyspark.sql.types import StringType
 
 from splink.duckdb.linker import DuckDBLinker
 from splink.misc import ensure_is_list
-from splink.profile_data import (
-    _col_or_expr_frequencies_raw_data_sql,
-)
+from splink.profile_data import _col_or_expr_frequencies_raw_data_sql
 from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 

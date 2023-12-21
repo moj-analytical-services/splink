@@ -3,6 +3,8 @@ import os
 import pandas as pd
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_2_to_3(tmp_path):

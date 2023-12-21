@@ -5,6 +5,8 @@ import os
 import pandas as pd
 
 import splink.comparison_level_library as cll
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_regression(tmp_path):
@@ -60,12 +62,7 @@ def test_regression(tmp_path):
                 output_schema="splink_in_duckdb",
             )
 
-
-            linker = Linker(
-                df.copy(),
-                settings_dict,
-                database_api=db_api
-            )
+            linker = Linker(df.copy(), settings_dict, database_api=db_api)
 
             linker.predict()
 
@@ -125,7 +122,6 @@ def test_discussion_example(tmp_path):
             }
 
             db_api = DuckDBAPI()
-
 
             linker = Linker(df.copy(), settings_dict, database_api=db_api)
 

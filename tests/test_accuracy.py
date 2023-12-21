@@ -6,7 +6,9 @@ from splink.accuracy import (
     truth_space_table_from_labels_with_predictions_sqls,
 )
 from splink.comparison_library import ExactMatch
+from splink.database_api import DuckDBAPI
 from splink.duckdb.blocking_rule_library import block_on
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 
@@ -43,7 +45,6 @@ def test_scored_labels_table():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
 
@@ -105,7 +106,6 @@ def test_truth_space_table():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
 
@@ -217,13 +217,9 @@ def test_roc_chart_link_and_dedupe():
     df_labels = df_labels.drop(["cluster_l", "cluster_r", "merge"], axis=1)
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
-    db_api = DuckDBAPI(
-        connection=":memory:", input_table_aliases="fake_data_1"
-    )
+    db_api = DuckDBAPI(connection=":memory:", input_table_aliases="fake_data_1")
 
-    linker = Linker(
-        df, settings_dict, database_api=db_api
-    )
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     linker.register_table(df_labels, "labels")
 
@@ -285,7 +281,6 @@ def test_prediction_errors_from_labels_table():
 
     db_api = DuckDBAPI()
 
-
     linker = Linker(df, settings, database_api=db_api)
 
     linker.register_table(df_labels, "labels")
@@ -302,7 +297,6 @@ def test_prediction_errors_from_labels_table():
     assert (1, 2) not in records  # tp
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
 
@@ -322,7 +316,6 @@ def test_prediction_errors_from_labels_table():
     assert (1, 2) not in records  # tp
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
     linker.register_table(df_labels, "labels")
@@ -401,7 +394,6 @@ def test_prediction_errors_from_labels_column():
 
     db_api = DuckDBAPI()
 
-
     linker = Linker(df, settings, database_api=db_api)
 
     df_res = linker.prediction_errors_from_labels_column(
@@ -418,7 +410,6 @@ def test_prediction_errors_from_labels_column():
     assert (1, 5) not in records  # TN
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
 
@@ -481,7 +472,6 @@ def test_truth_space_table_from_labels_column_dedupe_only():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
 
@@ -551,7 +541,6 @@ def test_truth_space_table_from_labels_column_link_only():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker([df_left, df_right], settings, database_api=db_api)
 

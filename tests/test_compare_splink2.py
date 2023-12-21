@@ -1,6 +1,8 @@
 import pandas as pd
 import pytest
 
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker

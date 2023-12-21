@@ -2,6 +2,8 @@ import logging
 
 import pytest
 
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 from splink.spark.jar_location import similarity_jar_location
 
 # ruff: noqa: F401

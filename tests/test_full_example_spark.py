@@ -11,10 +11,7 @@ from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
-from .linker_utils import (
-    _test_write_functionality,
-    register_roc_data,
-)
+from .linker_utils import _test_write_functionality, register_roc_data
 
 
 def test_full_example_spark(spark, df_spark, tmp_path):

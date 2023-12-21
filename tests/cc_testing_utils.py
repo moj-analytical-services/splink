@@ -5,7 +5,9 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
+from splink.database_api import DuckDBAPI
 from splink.duckdb.linker import DuckDBDataFrame
+from splink.linker import Linker
 
 
 def generate_random_graph(graph_size, seed=None):

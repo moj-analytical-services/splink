@@ -1,9 +1,9 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from splink.comparison_library import (
-    ExactMatch,
-)
+from splink.comparison_library import ExactMatch
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 df_1 = [
     {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},

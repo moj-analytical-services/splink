@@ -4,10 +4,7 @@ from collections import UserDict
 
 import pandas as pd
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import (
-    INTEGER,
-    TEXT,
-)
+from sqlalchemy.types import INTEGER, TEXT
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl

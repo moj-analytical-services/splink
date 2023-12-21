@@ -3,10 +3,9 @@ import pandas as pd
 import sqlglot
 from sqlglot.expressions import CTE, Identifier, TableAlias
 
-from splink.comparison_library import (
-    ExactMatch,
-    LevenshteinAtThresholds,
-)
+from splink.comparison_library import ExactMatch, LevenshteinAtThresholds
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def get_duckdb_table_names_as_list(con):
@@ -30,7 +29,6 @@ def test_cache_tracking_works():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
@@ -91,7 +89,6 @@ def test_cache_used_when_registering_nodes_table():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
@@ -223,7 +220,6 @@ def test_cache_invalidation():
 
     db_api = DuckDBAPI()
 
-
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
@@ -237,7 +233,6 @@ def test_cache_invalidation():
     assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
@@ -271,7 +266,6 @@ def test_table_deletions():
     }
 
     db_api = DuckDBAPI(connection=con)
-
 
     linker = Linker("my_table", settings, database_api=db_api)
 
@@ -321,7 +315,6 @@ def test_table_deletions_with_preregistered():
 
     db_api = DuckDBAPI(connection=con)
 
-
     linker = Linker("my_data_table", settings, database_api=db_api)
     linker.register_table_input_nodes_concat_with_tf("my_nodes_with_tf_table")
 
@@ -356,7 +349,6 @@ def test_single_deletion():
     }
 
     db_api = DuckDBAPI()
-
 
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache

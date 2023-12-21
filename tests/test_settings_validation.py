@@ -6,8 +6,10 @@ import pytest
 from splink.comparison import Comparison
 from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
+from splink.database_api import DuckDBAPI
 from splink.duckdb.blocking_rule_library import block_on
 from splink.exceptions import ErrorLogger
+from splink.linker import Linker
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
     InvalidTableNamesLogGenerator,
@@ -308,11 +310,7 @@ def test_settings_validation_on_2_to_3_converter():
     converted = convert_settings_from_v2_to_v3(settings)
     db_api = DuckDBAPI()
 
-    Linker(
-        df,
-        converted,
-        database_api=db_api
-    )
+    Linker(df, converted, database_api=db_api)
 
 
 def test_validate_sql_dialect():
@@ -323,11 +321,7 @@ def test_validate_sql_dialect():
     with pytest.raises(Exception) as excinfo:
         db_api = DuckDBAPI()
 
-        Linker(
-            df,
-            settings,
-            database_api=db_api
-        )
+        Linker(df, settings, database_api=db_api)
     assert str(excinfo.value) == (
         "Incompatible SQL dialect! `settings` dictionary uses dialect "
         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
@@ -344,10 +338,7 @@ def test_comparison_validation():
     # are tested elsewhere.
     db_api = DuckDBAPI()
 
-    Linker(
-        pd.DataFrame({"a": [1, 2, 3]}),
-        database_api=db_api
-    )
+    Linker(pd.DataFrame({"a": [1, 2, 3]}), database_api=db_api)
 
     settings = get_settings_dict()
 
