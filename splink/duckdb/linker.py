@@ -39,21 +39,21 @@ class DuckDBDataFrame(SplinkDataFrame):
     def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
-        self.linker._delete_table_from_database(self.physical_name)
+        self.db_api._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.linker._con.query(sql).to_df().to_dict(orient="records")
+        return self.db_api._con.query(sql).to_df().to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.linker._con.query(sql).to_df()
+        return self.db_api._con.query(sql).to_df()
 
     def to_parquet(self, filepath, overwrite=False):
         if not overwrite:
@@ -72,7 +72,7 @@ class DuckDBDataFrame(SplinkDataFrame):
             os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (FORMAT PARQUET);"
-        self.linker._con.query(sql)
+        self.db_api._con.query(sql)
 
     def to_csv(self, filepath, overwrite=False):
         if not overwrite:
@@ -91,7 +91,7 @@ class DuckDBDataFrame(SplinkDataFrame):
             os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (HEADER, DELIMITER ',');"
-        self.linker._con.query(sql)
+        self.db_api._con.query(sql)
 
 
 class DuckDBLinker(Linker):
