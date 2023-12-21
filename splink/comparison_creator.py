@@ -4,18 +4,52 @@ from typing import List, Union, final
 from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
+from .exceptions import SplinkException
+from .misc import ensure_is_list
 
 
 class ComparisonCreator(ABC):
-    # TODO: need to think about what this is used for - do we need multiple columns
-    # if we are sticking with storing a col_name ?
-    def __init__(self, col_name: Union[str, ColumnExpression] = None):
+    def __init__(
+        self,
+        col_name_or_names: Union[
+            List[Union[str, ColumnExpression]], Union[str, ColumnExpression]
+        ] = None,
+    ):
         """
         Class to author Comparisons
         Args:
-            col_name (str): Input column name
+            col_name_or_names (str, ColumnExpression): Input column name(s).
+                Can be a single item or a list.
         """
-        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        if col_name_or_names is None:
+            cols = []
+        else:
+            # use list rather than iterable so we don't decompose strings
+            cols = ensure_is_list(col_name_or_names)
+        # TODO: would this be nicer as a dict?
+        self.col_expressions = list(
+            map(
+                ColumnExpression.instantiate_if_str,
+                cols,
+            )
+        )
+
+    # many ComparisonCreators have a single column expression, so provide a
+    # convenience property for this case. Error if there are none or many
+    @property
+    def col_expression(self) -> ColumnExpression:
+        num_cols = len(self.col_expressions)
+        if num_cols > 1:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has more than one element: {type(self)}"
+            )
+        if num_cols == 0:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has no elements: {type(self)}"
+            )
+        return self.col_expressions[0]
 
     # TODO: property?
     @abstractmethod
