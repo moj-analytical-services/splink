@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from .database_api import DatabaseAPI
 
 
 class SplinkDataFrame:
@@ -18,10 +18,12 @@ class SplinkDataFrame:
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name: str, physical_name: str, linker: Linker):
+    def __init__(
+        self, templated_name: str, physical_name: str, database_api: DatabaseAPI
+    ):
         self.templated_name = templated_name
         self.physical_name = physical_name
-        self.linker = linker
+        self.db_api = database_api
         self._target_schema = "splink"
         self.created_by_splink = False
         self.sql_used_to_create = None
@@ -83,7 +85,7 @@ class SplinkDataFrame:
 
         """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
-        self.linker._remove_splinkdataframe_from_cache(self)
+        self.db_api._remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
         """Return the dataframe as a list of record dictionaries.
