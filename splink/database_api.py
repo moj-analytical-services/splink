@@ -8,6 +8,7 @@ from .cache_dict_with_logging import CacheDictWithLogging
 from .dialects import DuckDBDialect
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
+    duckdb_load_from_file,
     validate_duckdb_connection,
 )
 from .duckdb.linker import DuckDBDataFrame
@@ -63,7 +64,11 @@ class DatabaseAPI:
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
 
-    def __init__(self, connection: str = ":memory:", output_schema: str = None,):
+    def __init__(
+        self,
+        connection: str = ":memory:",
+        output_schema: str = None,
+    ):
         super().__init__()
         validate_duckdb_connection(connection, logger)
 
@@ -142,6 +147,9 @@ class DuckDBAPI(DatabaseAPI):
         except error:
             return False
         return True
+
+    def load_from_file(self, file_path: str):
+        return duckdb_load_from_file(file_path)
 
     def execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
