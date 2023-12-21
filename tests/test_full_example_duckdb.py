@@ -122,7 +122,7 @@ def test_full_example_duckdb(tmp_path):
     linker.save_model_to_json(path)
 
     db_api = DuckDBAPI()
-    linker_2 = Linker(df, database_api=db_api)
+    linker_2 = Linker(df, settings_dict=simple_settings, database_api=db_api)
     linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
