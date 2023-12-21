@@ -13,12 +13,12 @@ df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 __splink__dummy_frame = pd.DataFrame(["id"])
 
 
-def make_mock_execute(linker):
-    # creates a mock version of linker._execute_sql_against_backend,
+def make_mock_execute(db_api):
+    # creates a mock version of linker.execute_sql_against_backend,
     # so we can count calls
-    dummy_splink_df = DuckDBDataFrame("template", "__splink__dummy_frame", linker)
+    dummy_splink_df = DuckDBDataFrame("template", "__splink__dummy_frame", db_api)
     mock_execute = create_autospec(
-        linker._execute_sql_against_backend, return_value=dummy_splink_df
+        db_api.execute_sql_against_backend, return_value=dummy_splink_df
     )
     return mock_execute
 
@@ -36,7 +36,7 @@ def test_cache_id(tmp_path):
 
     db_api = DuckDBAPI()
 
-    linker_2 = Linker(df, database_api=db_api)
+    linker_2 = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
     linker_2.load_model(path)
 
     assert linker_2._settings_obj._cache_uid == prior
@@ -44,7 +44,7 @@ def test_cache_id(tmp_path):
     # Test initialising settings
     db_api = DuckDBAPI()
 
-    linker = Linker(df, database_api=db_api)
+    linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
     prior = linker._cache_uid
 
     linker.load_settings(get_settings_dict())
@@ -128,26 +128,26 @@ def test_cache_access_initialise_df_concat(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         # shouldn't touch DB if we don't materialise
         linker._initialise_df_concat_with_tf(materialise=False)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
         # this should create the table in the db
         linker._initialise_df_concat_with_tf(materialise=True)
         # NB don't specify amount of times it is called, as will depend on debug_mode
-        mock_execute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.assert_called()
         # reset the call counter on the mock
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.reset_mock()
 
         # this should NOT touch the database, but instead use the cache
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
         # this should also use the cache - concat will just refer to concat_with_tf
         linker._initialise_df_concat(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
@@ -159,15 +159,15 @@ def test_cache_access_compute_tf_table(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         linker.compute_tf_table("first_name")
-        mock_execute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.assert_called()
         # reset the call counter on the mock
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.reset_mock()
 
         linker.compute_tf_table("first_name")
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
@@ -180,40 +180,40 @@ def test_invalidate_cache(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
 
         # this should NOT touch the database, but instead use the cache
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
         # create this:
         linker.compute_tf_table("surname")
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
         # then check the cache
         linker.compute_tf_table("surname")
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
         linker.invalidate_cache()
 
         # now we _SHOULD_ compute afresh:
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
         # but now draw from the cache
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
         # and should compute this again:
         linker.compute_tf_table("surname")
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
         # then check the cache
         linker.compute_tf_table("surname")
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
@@ -225,38 +225,38 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
 
         # should use cache
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
     db_api = DuckDBAPI()
 
     new_linker = Linker(df, settings, database_api=db_api)
     new_linker.debug_mode = debug_mode
     with patch.object(
-        new_linker, "_execute_sql_against_backend", new=make_mock_execute(new_linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         # new linker should recalculate df_concat_with_tf
         new_linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_called()
-        mock_execute_sql_pipeline.reset_mock()
+        mockexecute_sql_pipeline.assert_called()
+        mockexecute_sql_pipeline.reset_mock()
 
         # but now read from the cache
         new_linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         # original linker should still have result cached
         linker._initialise_df_concat_with_tf(materialise=True)
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
@@ -269,14 +269,14 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
         linker.register_table_input_nodes_concat_with_tf(df)
         # now this should be cached, as I have manually registered
         linker._initialise_df_concat_with_tf()
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
@@ -289,11 +289,11 @@ def test_cache_register_compute_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
-    ) as mock_execute_sql_pipeline:
+        db_api, "execute_sql_against_backend", new=make_mock_execute(db_api)
+    ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
         linker.register_term_frequency_lookup(df, "first_name")
         # now this should be cached, as I have manually registered
         linker.compute_tf_table("first_name")
-        mock_execute_sql_pipeline.assert_not_called()
+        mockexecute_sql_pipeline.assert_not_called()
