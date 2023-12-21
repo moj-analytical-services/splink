@@ -246,10 +246,10 @@ class Linker:
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
         input_tables = ensure_is_list(input_table_or_tables)
-        # TODO: restore this kind of special handling:
-        # input_tables = [
-        #     duckdb_load_from_file(t) if isinstance(t, str) else t for t in input_tables
-        # ]
+        input_tables = [
+            self.db_api.load_from_file(t) if isinstance(t, str) else t
+            for t in input_tables
+        ]
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
