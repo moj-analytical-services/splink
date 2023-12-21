@@ -1,30 +1,31 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Union, final
+from typing import List, Union, final
 
 from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
 from .exceptions import SplinkException
-from .misc import ensure_is_iterable
+from .misc import ensure_is_list
 
 
 class ComparisonCreator(ABC):
     def __init__(
         self,
         col_name_or_names: Union[
-            Iterable[Union[str, ColumnExpression]], Union[str, ColumnExpression]
+            List[Union[str, ColumnExpression]], Union[str, ColumnExpression]
         ] = None,
     ):
         """
         Class to author Comparisons
         Args:
             col_name_or_names (str, ColumnExpression): Input column name(s).
-                Can be a single item or an Iterable.
+                Can be a single item or a list.
         """
         if col_name_or_names is None:
             cols = []
         else:
-            cols = ensure_is_iterable(col_name_or_names)
+            # use list rather than iterable so we don't decompose strings
+            cols = ensure_is_list(col_name_or_names)
         # TODO: would this be nicer as a dict?
         self.col_expressions = list(
             map(

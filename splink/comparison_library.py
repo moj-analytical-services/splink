@@ -494,24 +494,23 @@ class DistanceInKMAtThresholds(ComparisonCreator):
         self,
         lat_col: str,
         long_col: str,
-        km_thresholds=[0.1, 1],
+        km_thresholds: Union[Iterable[float], float],
     ):
         """
         A comparison of the latitude, longitude coordinates defined in
         'lat_col' and 'long col' giving the great circle distance between them in km.
 
-        An example of the output with default arguments and km_thresholds = [1, 10]
-        would be
+        An example of the output with km_thresholds = [1, 10] would be:
 
         * The two coordinates are within 1 km of one another
         * The two coordinates are within 10 km of one another
-        * Anything else (i.e. the distance between coordinates lie outside this range)
+        * Anything else (i.e. the distance between coordinates are > 10km apart)
 
         Args:
             lat_col(str): The name of the latitude column to compare.
             long_col(str): The name of the longitude column to compare.
-            km_thresholds (list, optional): The km thresholds for the distance levels.
-                Defaults to [0.1, 1].
+            km_thresholds (iterable[float] | float): The km threshold(s) for the
+                distance levels.
         """
 
         thresholds_as_iterable = ensure_is_iterable(km_thresholds)
