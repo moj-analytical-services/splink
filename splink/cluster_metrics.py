@@ -38,10 +38,8 @@ def _node_degree_sql(
     sql = f"""
         SELECT
             *
-        FROM
-            {edges_tn}
-        WHERE
-            match_probability >= {threshold_match_probability}
+        FROM {edges_tn}
+        WHERE match_probability >= {threshold_match_probability}
     """
     output_tn = "__splink__truncated_edges"
     sql_info = {"sql": sql, "output_table_name": output_tn}
