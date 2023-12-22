@@ -25,7 +25,7 @@ def _node_degree_sql(
         composite_uid_clusters (str): unique id for clusters.
         threshold_match_probability (float): Filter the pairwise match
             predictions to include only pairwise comparisons with a
-            match_probability above this threshold.
+            match_probability at or above this threshold.
 
     Returns:
         array of dicts, with sql string and output name
