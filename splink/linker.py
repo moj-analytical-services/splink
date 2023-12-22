@@ -11,7 +11,6 @@ from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
-import sqlglot
 
 from splink.input_column import InputColumn
 from splink.settings_validation.log_invalid_columns import (
@@ -80,7 +79,6 @@ from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
-from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
@@ -742,27 +740,9 @@ class Linker:
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
-        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(final_sql))
-        try:
-            return self._run_sql_execution(final_sql, templated_name, physical_name)
-        except Exception as e:
-            # Parse our SQL through sqlglot to pretty print
-            try:
-                final_sql = sqlglot.parse_one(
-                    final_sql,
-                    read=self._sql_dialect,
-                ).sql(pretty=True)
-                # if sqlglot produces any errors, just report the raw SQL
-            except Exception:
-                pass
-
-            raise SplinkException(
-                f"Error executing the following sql for table "
-                f"`{templated_name}`({physical_name}):\n{final_sql}"
-                f"\n\nError was: {e}"
-            ) from e
+        return self.db_api._log_and_run_sql_execution(
+            final_sql, templated_name, physical_name
+        )
 
     def register_table(self, input, table_name, overwrite=False):
         """

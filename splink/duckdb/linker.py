@@ -2,29 +2,22 @@ from __future__ import annotations
 
 import logging
 import os
-from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
-import duckdb
 import pandas as pd
 from duckdb import DuckDBPyConnection
 
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..misc import (
-    ensure_is_list,
-)
 from ..splink_dataframe import SplinkDataFrame
-from .duckdb_helpers.duckdb_helpers import (
-    create_temporary_duckdb_connection,
-    duckdb_load_from_file,
-    validate_duckdb_connection,
-)
 
 logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from ..database_api import DuckDBAPI
 
 
 class DuckDBDataFrame(SplinkDataFrame):
-    linker: DuckDBLinker
+    db_api: DuckDBAPI
 
     @property
     def columns(self) -> list[InputColumn]:
@@ -139,53 +132,9 @@ class DuckDBLinker(Linker):
                 dictionary for any potential errors that may cause splink to fail.
         """
 
-        self._sql_dialect_ = "duckdb"
-
-        validate_duckdb_connection(connection, logger)
-
-        if isinstance(connection, str):
-            con_lower = connection.lower()
-        if isinstance(connection, DuckDBPyConnection):
-            con = connection
-        elif con_lower == ":memory:":
-            con = duckdb.connect(database=connection)
-        elif con_lower == ":temporary:":
-            con = create_temporary_duckdb_connection(self)
-        else:
-            con = duckdb.connect(database=connection)
-
-        self._con = con
-
-        # If user has provided pandas dataframes, need to register
-        # them with the database, using user-provided aliases
-        # if provided or a created alias if not
-        input_tables = ensure_is_list(input_table_or_tables)
-        input_tables = [
-            duckdb_load_from_file(t) if isinstance(t, str) else t for t in input_tables
-        ]
-
-        input_aliases = self._ensure_aliases_populated_and_is_list(
-            input_table_or_tables, input_table_aliases
-        )
-
-        accepted_df_dtypes = [pd.DataFrame]
-        try:
-            # If pyarrow is installed, add to the accepted list
-            import pyarrow as pa
-
-            accepted_df_dtypes.append(pa.lib.Table)
-        except ImportError:
-            pass
-
-        super().__init__(
-            input_tables,
-            settings_dict,
-            accepted_df_dtypes,
-            set_up_basic_logging,
-            input_table_aliases=input_aliases,
-            validate_settings=validate_settings,
-        )
-
+        # TODO: last bit of logic not translated
+        input_tables = None
+        input_aliases = None
         # Quickly check for casting error in duckdb/pandas
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
             if isinstance(table, pd.DataFrame):
@@ -193,99 +142,6 @@ class DuckDBLinker(Linker):
                     alias = f"__splink__input_table_{i}"
 
                 self._check_cast_error(alias)
-
-        if output_schema:
-            self._con.execute(
-                f"""
-                    CREATE SCHEMA IF NOT EXISTS {output_schema};
-                    SET schema '{output_schema}';
-                """
-            )
-
-    def _table_to_splink_dataframe(
-        self, templated_name, physical_name
-    ) -> DuckDBDataFrame:
-        return DuckDBDataFrame(templated_name, physical_name, self)
-
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-        # In the case of a table already existing in the database,
-        # execute sql is only reached if the user has explicitly turned off the cache
-        self._delete_table_from_database(physical_name)
-
-        sql = f"""
-        CREATE TABLE {physical_name}
-        AS
-        ({sql})
-        """
-        self._log_and_run_sql_execution(sql, templated_name, physical_name)
-
-        return DuckDBDataFrame(templated_name, physical_name, self)
-
-    def _run_sql_execution(self, final_sql, templated_name, physical_name):
-        self._con.execute(final_sql)
-
-    def register_table(self, input, table_name, overwrite=False):
-        # If the user has provided a table name, return it as a SplinkDataframe
-        if isinstance(input, str):
-            return self._table_to_splink_dataframe(table_name, input)
-
-        # Check if table name is already in use
-        exists = self._table_exists_in_database(table_name)
-        if exists:
-            if not overwrite:
-                raise ValueError(
-                    f"Table '{table_name}' already exists in database. "
-                    "Please use the 'overwrite' argument if you wish to overwrite"
-                )
-            else:
-                self._con.unregister(table_name)
-
-        self._table_registration(input, table_name)
-        return self._table_to_splink_dataframe(table_name, table_name)
-
-    def _table_registration(self, input, table_name):
-        if isinstance(input, dict):
-            input = pd.DataFrame(input)
-        elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
-
-        # Registration errors will automatically
-        # occur if an invalid data type is passed as an argument
-        self._con.register(table_name, input)
-
-    def _random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        percent = proportion * 100
-        if seed:
-            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
-        else:
-            return f"USING SAMPLE {percent}% (bernoulli)"
-
-    @property
-    def _infinity_expression(self):
-        return "cast('infinity' as float8)"
-
-    def _table_exists_in_database(self, table_name):
-        sql = f"PRAGMA table_info('{table_name}');"
-
-        # From duckdb 0.5.0, duckdb will raise a CatalogException
-        # which does not exist in 0.4.0 or before
-
-        try:
-            from duckdb import CatalogException
-
-            error = (RuntimeError, CatalogException)
-        except ImportError:
-            error = RuntimeError
-
-        try:
-            self._con.execute(sql)
-        except error:
-            return False
-        return True
 
     def _check_cast_error(self, alias):
         from duckdb import InvalidInputException
@@ -302,20 +158,3 @@ class DuckDBLinker(Linker):
                 "columns. Try converting dataframes "
                 "to pyarrow tables before adding to your linker."
             ) from e
-
-    def _delete_table_from_database(self, name):
-        drop_sql = f"""
-        DROP TABLE IF EXISTS {name}"""
-        self._con.execute(drop_sql)
-
-    def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
-        """
-        https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
-        """
-        if delete_intermediate_tables:
-            self._delete_tables_created_by_splink_from_db()
-        with TemporaryDirectory() as tmpdir:
-            self._con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
-            new_con = duckdb.connect(database=output_path)
-            new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
-            new_con.close()

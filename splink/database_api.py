@@ -1,4 +1,5 @@
 import logging
+from tempfile import TemporaryDirectory
 
 import duckdb
 import pandas as pd
@@ -125,8 +126,6 @@ class DuckDBAPI(DatabaseAPI):
     def table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> DuckDBDataFrame:
-        # TODO: this is a slight lie atm,
-        # as DuckDBDataFrame thinks we are passing a Linker
         return DuckDBDataFrame(templated_name, physical_name, self)
 
     def table_exists_in_database(self, table_name):
@@ -135,6 +134,7 @@ class DuckDBAPI(DatabaseAPI):
         # From duckdb 0.5.0, duckdb will raise a CatalogException
         # which does not exist in 0.4.0 or before
 
+        # TODO: probably we can drop this compat now?
         try:
             from duckdb import CatalogException
 
@@ -186,3 +186,17 @@ class DuckDBAPI(DatabaseAPI):
         except ImportError:
             pass
         return accepted_df_dtypes
+
+    # special methods for use:
+
+    def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
+        """
+        https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
+        """
+        if delete_intermediate_tables:
+            self._delete_tables_created_by_splink_from_db()
+        with TemporaryDirectory() as tmpdir:
+            self._con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
+            new_con = duckdb.connect(database=output_path)
+            new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
+            new_con.close()
