@@ -39,23 +39,23 @@ def _node_degree_sql(
         FROM {df_predict.physical_name}
         WHERE match_probability >= {threshold_match_probability}
     """
-    output_tn = "__splink__truncated_edges"
-    sql_info = {"sql": sql, "output_table_name": output_tn}
+    truncated_edges_table_name = "__splink__truncated_edges"
+    sql_info = {"sql": sql, "output_table_name": truncated_edges_table_name}
     sqls.append(sql_info)
 
     sql = f"""
         SELECT
             {composite_uid_edges_l} AS node,
             {composite_uid_edges_r} AS neighbour
-        FROM {output_tn}
+        FROM {truncated_edges_table_name}
             UNION ALL
         SELECT
             {composite_uid_edges_r} AS node,
             {composite_uid_edges_l} AS neighbour
-        FROM {output_tn}
+        FROM {truncated_edges_table_name}
     """
-    output_tn = "__splink__all_nodes"
-    sql_info = {"sql": sql, "output_table_name": output_tn}
+    all_nodes_table_name = "__splink__all_nodes"
+    sql_info = {"sql": sql, "output_table_name": all_nodes_table_name}
     sqls.append(sql_info)
 
     # join clusters table to capture edge-less nodes
@@ -68,7 +68,7 @@ def _node_degree_sql(
         FROM
             {df_clustered.physical_name} c
         LEFT JOIN
-            {output_tn} n
+            {all_nodes_table_name} n
         ON
             c.{composite_uid_clusters} = n.node
         GROUP BY composite_unique_id, cluster_id
