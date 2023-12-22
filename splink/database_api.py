@@ -135,6 +135,7 @@ class DuckDBAPI(DatabaseAPI):
         # From duckdb 0.5.0, duckdb will raise a CatalogException
         # which does not exist in 0.4.0 or before
 
+        # TODO: probably we can drop this compat now?
         try:
             from duckdb import CatalogException
 
