@@ -2230,8 +2230,8 @@ class Linker:
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return {
-            "clusters": df_cluster_metrics,
             "nodes": df_node_metrics,
+            "clusters": df_cluster_metrics,
         }
 
     def profile_columns(
