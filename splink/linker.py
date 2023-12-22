@@ -2132,9 +2132,9 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        df_cluster_metrics = self._execute_sql_pipeline()
+        df_node_metrics = self._execute_sql_pipeline()
 
-        return df_cluster_metrics
+        return df_node_metrics
 
     def _compute_metrics_clusters(
         self,
