@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from duckdb import DuckDBPyConnection
@@ -11,10 +12,12 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from ..database_api import DuckDBAPI
 
 
 class DuckDBDataFrame(SplinkDataFrame):
-    linker: DuckDBLinker
+    db_api: DuckDBAPI
 
     @property
     def columns(self) -> list[InputColumn]:
