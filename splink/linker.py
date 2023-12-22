@@ -2153,7 +2153,7 @@ class Linker:
 
     # a user-facing function, which is currently 'private' (Beta functionality)
     # while functionality is developed, as breaking changes may occur
-    def _compute_cluster_metrics(
+    def _compute_graph_metrics(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,

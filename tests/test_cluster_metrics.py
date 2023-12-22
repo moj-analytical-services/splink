@@ -39,7 +39,7 @@ def test_size_density_dedupe():
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
-    df_result = linker._compute_cluster_metrics(
+    df_result = linker._compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.9
     )["clusters"].as_pandas_dataframe()
     # not testing this here - it's not relevant for small clusters anyhow
@@ -72,7 +72,7 @@ def test_size_density_link():
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     df_result = (
-        linker._compute_cluster_metrics(
+        linker._compute_graph_metrics(
             df_predict, df_clustered, threshold_match_probability=0.99
         )["clusters"]
         .as_pandas_dataframe()
@@ -225,7 +225,7 @@ def test_metrics(dialect, test_helpers):
     df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
     df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
 
-    cm = linker._compute_cluster_metrics(df_predict, df_clustered, 0.95)
+    cm = linker._compute_graph_metrics(df_predict, df_clustered, 0.95)
     df_cm = cm["clusters"].as_pandas_dataframe()
 
     expected = [
