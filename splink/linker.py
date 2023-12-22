@@ -2114,6 +2114,27 @@ class Linker:
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
     ) -> SplinkDataFrame:
+        """
+        Internal function for computing node-level metrics.
+
+        Accepts outputs of `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of node metrics.
+
+        Node metrics produced:
+        * node_degree (absolute number of neighbouring nodes)
+
+        Output table has a single row per input node, along with the cluster id (as
+        assigned in `linker.cluster_pairwise_at_threshold()`, along with the metric
+        node_degree):
+        |-------------------------------------------------|
+        | composite_unique_id | cluster_id  | node_degree |
+        |---------------------|-------------|-------------|
+        | s1-__-10001         | s1-__-10001 | 6           |
+        | s1-__-10002         | s1-__-10001 | 4           |
+        | s1-__-10003         | s1-__-10003 | 2           |
+        ...
+        """
         uid_cols = self._settings_obj._unique_id_input_columns
         # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
@@ -2140,6 +2161,30 @@ class Linker:
         self,
         df_node_metrics: SplinkDataFrame,
     ) -> SplinkDataFrame:
+        """
+        Internal function for computing cluster-level metrics.
+
+        Accepts output of `linker._compute_node_metrics()` (which has the relevant
+        information from `linker.predict() and
+        `linker.cluster_pairwise_at_threshold()`), produces a table of cluster metrics.
+
+        Cluster metrics produced:
+        * n_nodes (aka cluster size, number of nodes in cluster)
+        * n_edges (number of edges in cluster)
+        * density (number of edges normalised wrt maximum possible number)
+        * cluster_centralisation (average absolute deviation from maximum node_degree
+            normalised wrt maximum possible value)
+
+        Output table has a single row per cluster, along with the cluster_metrics
+        listed above
+        |--------------------------------------------------------------------|
+        | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
+        |-------------|---------|---------|---------|------------------------|
+        | s1-__-10006 | 4       | 4       | 0.66667 | 0.6666                 |
+        | s1-__-10008 | 6       | 5       | 0.33333 | 0.4                    |
+        | s1-__-10013 | 11      | 19      | 0.34545 | 0.3111                 |
+        ...
+        """
 
         sqls = _size_density_centralisation_sql(
             df_node_metrics,
