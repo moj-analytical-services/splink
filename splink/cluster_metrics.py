@@ -32,13 +32,11 @@ def _node_degree_sql(
         for computing cluster size and density
     """
     sqls = []
-    edges_tn = df_predict.physical_name
-    clusters_tn = df_clustered.physical_name
 
     sql = f"""
         SELECT
             *
-        FROM {edges_tn}
+        FROM {df_predict.physical_name}
         WHERE match_probability >= {threshold_match_probability}
     """
     output_tn = "__splink__truncated_edges"
@@ -68,7 +66,7 @@ def _node_degree_sql(
             c.cluster_id AS cluster_id,
             COUNT(*) FILTER (WHERE neighbour IS NOT NULL) AS node_degree
         FROM
-            {clusters_tn} c
+            {df_clustered.physical_name} c
         LEFT JOIN
             {output_tn} n
         ON
