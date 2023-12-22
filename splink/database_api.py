@@ -125,8 +125,6 @@ class DuckDBAPI(DatabaseAPI):
     def table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> DuckDBDataFrame:
-        # TODO: this is a slight lie atm,
-        # as DuckDBDataFrame thinks we are passing a Linker
         return DuckDBDataFrame(templated_name, physical_name, self)
 
     def table_exists_in_database(self, table_name):
