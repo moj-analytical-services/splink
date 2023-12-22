@@ -105,7 +105,6 @@ def _size_density_centralisation_sql(
             cluster_id,
             COUNT(*) AS n_nodes,
             SUM(node_degree)/2.0 AS n_edges,
-            MAX(node_degree) AS max_degree,
             CASE
                 WHEN COUNT(*) > 2 THEN
                     1.0*(COUNT(*) * MAX(node_degree) -  SUM(node_degree)) /
