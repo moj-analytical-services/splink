@@ -73,7 +73,7 @@ def _node_degree_sql(
             c.{composite_uid_clusters} = n.node
         GROUP BY composite_unique_id, cluster_id
     """
-    sql_info = {"sql": sql, "output_table_name": "__splink__cluster_metrics_nodes"}
+    sql_info = {"sql": sql, "output_table_name": "__splink__graph_metrics_nodes"}
     sqls.append(sql_info)
     return sqls
 
@@ -133,7 +133,7 @@ def _size_density_centralisation_sql(
             cluster_centralisation
         FROM __splink__counts_per_cluster
     """
-    sql = {"sql": sql, "output_table_name": "__splink__cluster_metrics_clusters"}
+    sql = {"sql": sql, "output_table_name": "__splink__graph_metrics_clusters"}
     sqls.append(sql)
 
     return sqls
