@@ -56,8 +56,18 @@ class NullLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
+        valid_string_pattern: str = None,
+        invalid_dates_as_null: bool = False,
     ):
-        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        col_expression = ColumnExpression.instantiate_if_str(col_name)
+
+        # if invalid_dates_as_null, then supplied pattern is a date format
+        if invalid_dates_as_null:
+            col_expression = col_expression.try_parse_date(valid_string_pattern)
+        # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
+        elif valid_string_pattern is not None:
+            col_expression = col_expression.regex_extract(valid_string_pattern)
+        self.col_expression = col_expression
         self.is_null_level = True
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
