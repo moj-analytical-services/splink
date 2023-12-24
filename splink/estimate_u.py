@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
@@ -49,6 +50,12 @@ def _proportion_sample_size_link_only(
     # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
     sample_size = proportion * total_nodes
     return proportion, sample_size
+
+
+def _get_duckdb_salting(max_pairs):
+    logged = math.log(max_pairs, 10)
+    logged = max(logged - 4, 0)
+    return math.ceil(2.5**logged)
 
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
@@ -118,18 +125,11 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e5:
-        if max_pairs < 1e6:
-            salting_partitions = 2
-        elif max_pairs < 1e7:
-            salting_partitions = 4
-        elif max_pairs < 1e8:
-            salting_partitions = 10
-        elif max_pairs < 1e9:
-            salting_partitions = 20
-        else:
-            salting_partitions = 50
         br = blocking_rule_to_obj(
-            {"blocking_rule": "1=1", "salting_partitions": salting_partitions}
+            {
+                "blocking_rule": "1=1",
+                "salting_partitions": _get_duckdb_salting(max_pairs),
+            }
         )
         settings_obj._blocking_rules_to_generate_predictions = [br]
     else:
