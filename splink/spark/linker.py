@@ -72,7 +72,6 @@ class SparkDataFrame(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
-
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
         if spark is None:

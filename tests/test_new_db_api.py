@@ -105,6 +105,7 @@ def test_full_run(dialect, test_helpers, tmp_path):
         overwrite=True,
     )
 
+
 @mark_with_dialects_excluding()
 def test_charts(dialect, test_helpers, tmp_path):
     helper = test_helpers[dialect]

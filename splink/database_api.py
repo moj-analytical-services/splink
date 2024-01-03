@@ -59,6 +59,16 @@ class DatabaseAPI:
                 f"\n\nError was: {e}"
             ) from e
 
+    def execute_sql_against_backend(
+        self, sql: str, templated_name: str, physical_name: str
+    ):
+        sql = self._setup_for_execute_sql(sql, physical_name)
+        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        output_df = self._cleanup_for_execute_sql(
+            spark_df, templated_name, physical_name
+        )
+        return output_df
+
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
@@ -170,9 +180,7 @@ class DuckDBAPI(DatabaseAPI):
     def load_from_file(self, file_path: str):
         return duckdb_load_from_file(file_path)
 
-    def execute_sql_against_backend(
-        self, sql: str, templated_name: str, physical_name: str
-    ):
+    def _setup_for_execute_sql(self, sql, physical_name):
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -182,7 +190,9 @@ class DuckDBAPI(DatabaseAPI):
         AS
         ({sql})
         """
-        self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        return sql
+
+    def _cleanup_for_execute_sql(self, table, templated_name, physical_name):
 
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
         return output_df
@@ -209,8 +219,7 @@ class DuckDBAPI(DatabaseAPI):
 
     def process_input_tables(self, input_tables):
         return [
-            self.load_from_file(t) if isinstance(t, str) else t
-            for t in input_tables
+            self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
         ]
 
     # special methods for use:
@@ -326,13 +335,13 @@ class SparkAPI(DatabaseAPI):
         elif len(query_result) == 0:
             return False
 
-    def execute_sql_against_backend(
-        self, sql: str, templated_name: str, physical_name: str
-    ):
+    def _setup_for_execute_sql(self, sql, physical_name):
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
-        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        return sql
+
+    def _cleanup_for_execute_sql(self, table, templated_name, physical_name):
         spark_df = self._break_lineage_and_repartition(
-            spark_df, templated_name, physical_name
+            table, templated_name, physical_name
         )
 
         # After blocking, want to repartition
