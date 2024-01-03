@@ -22,7 +22,7 @@ from .duckdb.duckdb_helpers.duckdb_helpers import (
 from .duckdb.linker import DuckDBDataFrame
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import ensure_is_list, major_minor_version_greater_equal_than
+from .misc import major_minor_version_greater_equal_than
 from .spark.jar_location import get_scala_udfs
 from .spark.linker import SparkDataFrame
 from .splink_dataframe import SplinkDataFrame
@@ -78,6 +78,14 @@ class DatabaseAPI:
 
         self._table_registration(input, table_name)
         return self.table_to_splink_dataframe(table_name, table_name)
+
+    def process_input_tables(self, input_tables):
+        """
+        Process list of input tables from whatever form they arrive in to that suitable
+        for linker.
+        Default just passes through - backends can specialise if desired
+        """
+        return input_tables
 
     # should probably also be responsible for cache
     # TODO: stick this in a cache-api that lives on this
@@ -198,6 +206,12 @@ class DuckDBAPI(DatabaseAPI):
             pass
         return accepted_df_dtypes
 
+    def process_input_tables(self, input_tables):
+        return [
+            self.load_from_file(t) if isinstance(t, str) else t
+            for t in input_tables
+        ]
+
     # special methods for use:
 
     def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
@@ -233,7 +247,7 @@ class SparkAPI(DatabaseAPI):
 
         self.repartition_after_blocking = repartition_after_blocking
 
-        # TODO: hmmm breaking this flow. Lazy spark ??
+        # TODO: hmmm breaking this flow. Lazy spark ??
         # self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
         self.spark = spark
 
@@ -262,6 +276,7 @@ class SparkAPI(DatabaseAPI):
         # self._drop_splink_cached_tables()
         # self._check_ansi_enabled_if_converting_dates()
 
+        # TODO: (ideally) set things up so databricks can inherit from this
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             enable_splink(spark)
@@ -420,6 +435,7 @@ class SparkAPI(DatabaseAPI):
 
         num_partitions = self.num_partitions_on_repartition
 
+        # TODO: why regex not == ?
         if re.fullmatch(r"__splink__df_predict", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition)
 
@@ -497,7 +513,7 @@ class SparkAPI(DatabaseAPI):
                 f"{self.splink_data_store}."
             )
 
-        # set non-databricks environment default method as parquest in case nothing else
+        # set non-databricks environment default method as parquet in case nothing else
         # specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
