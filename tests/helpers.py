@@ -9,6 +9,8 @@ from sqlalchemy.types import (
     TEXT,
 )
 
+from splink.database_api import DuckDBAPI
+
 # import splink.duckdb.blocking_rule_library as brl_duckdb
 # import splink.duckdb.comparison_library as cl_duckdb
 # import splink.duckdb.comparison_template_library as ctl_duckdb
@@ -33,7 +35,12 @@ class TestHelper(ABC):
     def Linker(self):
         pass
 
-    def extra_linker_args(self):
+    @property
+    @abstractmethod
+    def DatabaseAPI(self):
+        pass
+
+    def db_api_args(self):
         return {}
 
     @property
@@ -71,6 +78,10 @@ class DuckDBTestHelper(TestHelper):
     def Linker(self):
         return DuckDBLinker
 
+    @property
+    def DatabaseAPI(self):
+        return DuckDBAPI
+
     def convert_frame(self, df):
         return df
 
@@ -99,7 +110,12 @@ class SparkTestHelper(TestHelper):
     def Linker(self):
         return SparkLinker
 
-    def extra_linker_args(self):
+    @property
+    def DatabaseAPI(self):
+        # TODO: spark when we have spark
+        return DuckDBAPI
+
+    def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
 
     def convert_frame(self, df):

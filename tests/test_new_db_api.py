@@ -2,8 +2,9 @@ import os
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.database_api import DuckDBAPI
 from splink.linker import Linker
+
+from .decorator import mark_with_dialects_excluding
 
 comparison_name = cl.CustomComparison(
     "name",
@@ -54,13 +55,12 @@ cl_settings = {
 }
 
 
-def test_run_predict(test_helpers):
-    # use dialect + helper to ease transition once we have all dialects back
-    dialect = "duckdb"
+@mark_with_dialects_excluding()
+def test_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = DuckDBAPI()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
     linker = Linker(
         df,
         cl_settings,
@@ -69,13 +69,12 @@ def test_run_predict(test_helpers):
     linker.predict()
 
 
-def test_full_run(test_helpers, tmp_path):
-    # use dialect + helper to ease transition once we have all dialects back
-    dialect = "duckdb"
+@mark_with_dialects_excluding()
+def test_full_run(dialect, test_helpers, tmp_path):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = DuckDBAPI()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
     linker = Linker(
         df,
         cl_settings,
