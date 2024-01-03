@@ -2,7 +2,9 @@ import logging
 import math
 import os
 import re
+from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
+from typing import final
 
 import duckdb
 import pandas as pd
@@ -30,14 +32,24 @@ from .splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-class DatabaseAPI:
+class DatabaseAPI(ABC):
+    """
+    DatabaseAPI class handles _all_ interactions with the database
+    Anything backend-specific (but not related to SQL dialects) lives here also
+
+    This is intented to be subclassed for specific backends
+    """
     def __init__(self):
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
+    @final
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
-        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
+        """
+        Log some sql, then call _run_sql_execution()
+        Any errors will be converted to SplinkException with more detail
+        """
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
         try:
@@ -62,6 +74,13 @@ class DatabaseAPI:
     def execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
     ):
+        """
+        Create a table in the backend using some given sql
+
+        Table will have physical_name in the backend.
+
+        Returns a SplinkDataFrame which also uses templated_name
+        """
         sql = self._setup_for_execute_sql(sql, physical_name)
         spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         output_df = self._cleanup_for_execute_sql(
@@ -69,7 +88,14 @@ class DatabaseAPI:
         )
         return output_df
 
+    # TODO: think this can be final
+    @final
     def register_table(self, input, table_name, overwrite=False):
+        """
+        Register a table in backend, with some input
+
+        Type of input accepted may depend on the backend
+        """
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self.table_to_splink_dataframe(table_name, input)
@@ -88,6 +114,28 @@ class DatabaseAPI:
 
         self._table_registration(input, table_name)
         return self.table_to_splink_dataframe(table_name, table_name)
+
+    @abstractmethod
+    def _table_registration(self, input, table_name) -> None:
+        """
+        Actually register table with backend.
+
+        Overwrite if it already exists.
+        """
+        pass
+
+    @abstractmethod
+    def table_to_splink_dataframe(
+        self, templated_name, physical_name
+    ) -> SplinkDataFrame:
+        pass
+
+    @abstractmethod
+    def table_exists_in_database(self, table_name) -> bool:
+        """
+        Check if table_name exists in the backend
+        """
+        pass
 
     def process_input_tables(self, input_tables):
         """
