@@ -9,7 +9,7 @@ from sqlalchemy.types import (
     TEXT,
 )
 
-from splink.database_api import DuckDBAPI
+from splink.database_api import DuckDBAPI, SparkAPI
 
 # import splink.duckdb.blocking_rule_library as brl_duckdb
 # import splink.duckdb.comparison_library as cl_duckdb
@@ -112,8 +112,7 @@ class SparkTestHelper(TestHelper):
 
     @property
     def DatabaseAPI(self):
-        # TODO: spark when we have spark
-        return DuckDBAPI
+        return SparkAPI
 
     def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
