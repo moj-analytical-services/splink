@@ -184,7 +184,8 @@ class DuckDBAPI(DatabaseAPI):
         """
         self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
-        return DuckDBDataFrame(templated_name, physical_name, self)
+        output_df = self.table_to_splink_dataframe(templated_name, physical_name)
+        return output_df
 
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
         self._con.execute(final_sql)
