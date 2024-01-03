@@ -184,6 +184,21 @@ class SparkDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
 
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
+
 
 class SqliteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
