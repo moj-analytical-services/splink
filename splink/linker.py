@@ -246,16 +246,20 @@ class Linker:
         input_tables = ensure_is_list(input_table_or_tables)
         input_tables = self.db_api.process_input_tables(input_tables)
 
+        # aliases -> list
+        # if aliases is None, then just the input tables
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
 
+        # these will always be populated by this function
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_tables,
             input_aliases,
             self.db_api.accepted_df_dtypes,
         )
 
+        # make dict alias: SplinkDataFrame (of corresponding table)
         self._input_tables_dict = self._get_input_tables_dict(
             homogenised_tables, homogenised_aliases
         )
@@ -931,11 +935,6 @@ class Linker:
         return input_table_aliases
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
-        input_table_or_tables = ensure_is_list(input_table_or_tables)
-
-        input_table_aliases = self._ensure_aliases_populated_and_is_list(
-            input_table_or_tables, input_table_aliases
-        )
 
         d = {}
         for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
