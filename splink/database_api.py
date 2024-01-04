@@ -50,12 +50,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
 
     @final
-    def _log_and_run_sql_execution(
+    def log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> TablishType:
         """
         Log some sql, then call _run_sql_execution()
         Any errors will be converted to SplinkException with more detail
+        names are only relevant for logging, not execution
         """
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
@@ -78,6 +79,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 f"\n\nError was: {e}"
             ) from e
 
+    # TODO: rename this?
     def execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
@@ -89,7 +91,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Returns a SplinkDataFrame which also uses templated_name
         """
         sql = self._setup_for_execute_sql(sql, physical_name)
-        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        spark_df = self.log_and_run_sql_execution(sql, templated_name, physical_name)
         output_df = self._cleanup_for_execute_sql(
             spark_df, templated_name, physical_name
         )

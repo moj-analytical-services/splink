@@ -483,7 +483,7 @@ class Linker:
                 alias = f"__splink__input_table_{i}"
 
             if isinstance(table, accepted_df_dtypes):
-                self._table_registration(table, alias)
+                self.db_api._table_registration(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -735,7 +735,7 @@ class Linker:
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
-        return self.db_api._log_and_run_sql_execution(
+        return self.db_api.log_and_run_sql_execution(
             final_sql, templated_name, physical_name
         )
 
@@ -767,28 +767,6 @@ class Linker:
         """
 
         return self.db_api.register_table(input, table_name, overwrite)
-
-    def _table_registration(self, input, table_name):
-        """
-        Register a table to your backend database, to be used in one of the
-        splink methods, or simply to allow querying.
-
-        Tables can be of type: dictionary, record level dictionary,
-        pandas dataframe, pyarrow table and in the spark case, a spark df.
-
-        This function is contains no overwrite functionality, so it can be used
-        where we don't want to allow for overwriting.
-
-        Args:
-            input: The data you wish to register. This can be either a dictionary,
-                pandas dataframe, pyarrow table or a spark dataframe.
-            table_name (str): The name you wish to assign to the table.
-
-        Returns:
-            None
-        """
-
-        return self.db_api._table_registration(input, table_name)
 
     def query_sql(self, sql, output_type="pandas"):
         """
