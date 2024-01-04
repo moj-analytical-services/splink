@@ -55,7 +55,7 @@ def _proportion_sample_size_link_only(
 def _get_duckdb_salting(max_pairs):
     logged = math.log(max_pairs, 10)
     logged = max(logged - 4, 0)
-    return math.ceil(2.5**logged)
+    return math.ceil(2.5**logged) * 2
 
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
