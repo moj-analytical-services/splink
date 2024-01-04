@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
-from typing import List, Union, final
+from typing import Generic, List, TypeVar, Union, final
 
 import duckdb
 import pandas as pd
@@ -32,7 +32,11 @@ from .splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-class DatabaseAPI(ABC):
+# a placeholder type. This will depend on the backend subclass - something
+# 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
+TablishType = TypeVar("TablishType")
+
+class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
     """
     DatabaseAPI class handles _all_ interactions with the database
@@ -47,7 +51,7 @@ class DatabaseAPI(ABC):
     @final
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
+    ) -> TablishType:
         """
         Log some sql, then call _run_sql_execution()
         Any errors will be converted to SplinkException with more detail
@@ -133,7 +137,7 @@ class DatabaseAPI(ABC):
     @abstractmethod
     def _run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
-    ):
+    ) -> TablishType:
         pass
 
     @abstractmethod
@@ -182,8 +186,10 @@ class DatabaseAPI(ABC):
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
 
+
 # alias for brevity:
 ddb_con = duckdb.DuckDBPyConnection
+
 
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
@@ -255,7 +261,9 @@ class DuckDBAPI(DatabaseAPI):
     def load_from_file(self, file_path: str):
         return duckdb_load_from_file(file_path)
 
-    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+    def _run_sql_execution(
+        self, final_sql, templated_name, physical_name
+    ) -> duckdb.DuckDBPyRelation:
         return self._con.sql(final_sql)
 
     def _delete_table_from_database(self, name):
