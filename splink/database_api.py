@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
-from typing import final
+from typing import List, Union, final
 
 import duckdb
 import pandas as pd
@@ -15,7 +15,7 @@ from pyspark.sql.utils import AnalysisException
 
 from .cache_dict_with_logging import CacheDictWithLogging
 from .databricks.enable_splink import enable_splink
-from .dialects import DuckDBDialect, SparkDialect
+from .dialects import DuckDBDialect, SparkDialect, SplinkDialect
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
@@ -33,14 +33,16 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseAPI(ABC):
+    sql_dialect: SplinkDialect
     """
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
 
     This is intented to be subclassed for specific backends
     """
-    def __init__(self):
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
+
+    def __init__(self) -> None:
+        self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
 
     @final
     def _log_and_run_sql_execution(
@@ -59,7 +61,7 @@ class DatabaseAPI(ABC):
             try:
                 final_sql = sqlglot.parse_one(
                     final_sql,
-                    read=self._sql_dialect,
+                    read=self.sql_dialect,
                 ).sql(pretty=True)
                 # if sqlglot produces any errors, just report the raw SQL
             except Exception:
@@ -73,7 +75,7 @@ class DatabaseAPI(ABC):
 
     def execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
-    ):
+    ) -> SplinkDataFrame:
         """
         Create a table in the backend using some given sql
 
@@ -90,7 +92,7 @@ class DatabaseAPI(ABC):
 
     # TODO: think this can be final
     @final
-    def register_table(self, input, table_name, overwrite=False):
+    def register_table(self, input, table_name, overwrite=False) -> SplinkDataFrame:
         """
         Register a table in backend, with some input
 
@@ -109,14 +111,37 @@ class DatabaseAPI(ABC):
                     "Please use the 'overwrite' argument if you wish to overwrite"
                 )
             else:
-                # TODO: agnosticise
-                self._con.unregister(table_name)
+                self._delete_table_from_database(table_name)
 
         self._table_registration(input, table_name)
         return self.table_to_splink_dataframe(table_name, table_name)
 
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        # returns sql
+        # sensible default:
+        self._delete_table_from_database(physical_name)
+        sql = f"CREATE TABLE {physical_name} AS ({sql})"
+        return sql
+
+    def _cleanup_for_execute_sql(
+        self, table, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        # sensible default:
+        output_df = self.table_to_splink_dataframe(templated_name, physical_name)
+        return output_df
+
     @abstractmethod
-    def _table_registration(self, input, table_name) -> None:
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ):
+        pass
+
+    @abstractmethod
+    def _delete_table_from_database(self, name: str):
+        pass
+
+    @abstractmethod
+    def _table_registration(self, input, table_name: str) -> None:
         """
         Actually register table with backend.
 
@@ -131,13 +156,13 @@ class DatabaseAPI(ABC):
         pass
 
     @abstractmethod
-    def table_exists_in_database(self, table_name) -> bool:
+    def table_exists_in_database(self, table_name: str) -> bool:
         """
         Check if table_name exists in the backend
         """
         pass
 
-    def process_input_tables(self, input_tables):
+    def process_input_tables(self, input_tables) -> List:
         """
         Process list of input tables from whatever form they arrive in to that suitable
         for linker.
@@ -157,13 +182,15 @@ class DatabaseAPI(ABC):
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
 
+# alias for brevity:
+ddb_con = duckdb.DuckDBPyConnection
 
 class DuckDBAPI(DatabaseAPI):
     sql_dialect = DuckDBDialect()
 
     def __init__(
         self,
-        connection: str = ":memory:",
+        connection: Union[str, ddb_con] = ":memory:",
         output_schema: str = None,
     ):
         super().__init__()
@@ -171,7 +198,7 @@ class DuckDBAPI(DatabaseAPI):
 
         if isinstance(connection, str):
             con_lower = connection.lower()
-        if isinstance(connection, duckdb.DuckDBPyConnection):
+        if isinstance(connection, ddb_con):
             con = connection
         elif con_lower == ":memory:":
             con = duckdb.connect(database=connection)
@@ -228,25 +255,8 @@ class DuckDBAPI(DatabaseAPI):
     def load_from_file(self, file_path: str):
         return duckdb_load_from_file(file_path)
 
-    def _setup_for_execute_sql(self, sql, physical_name):
-        # In the case of a table already existing in the database,
-        # execute sql is only reached if the user has explicitly turned off the cache
-        self._delete_table_from_database(physical_name)
-
-        sql = f"""
-        CREATE TABLE {physical_name}
-        AS
-        ({sql})
-        """
-        return sql
-
-    def _cleanup_for_execute_sql(self, table, templated_name, physical_name):
-
-        output_df = self.table_to_splink_dataframe(templated_name, physical_name)
-        return output_df
-
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
-        self._con.execute(final_sql)
+        return self._con.sql(final_sql)
 
     def _delete_table_from_database(self, name):
         drop_sql = f"""
@@ -383,11 +393,13 @@ class SparkAPI(DatabaseAPI):
         elif len(query_result) == 0:
             return False
 
-    def _setup_for_execute_sql(self, sql, physical_name):
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
         return sql
 
-    def _cleanup_for_execute_sql(self, table, templated_name, physical_name):
+    def _cleanup_for_execute_sql(
+        self, table: spark_df, templated_name: str, physical_name: str
+    ):
         spark_df = self._break_lineage_and_repartition(
             table, templated_name, physical_name
         )
@@ -399,7 +411,9 @@ class SparkAPI(DatabaseAPI):
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
-    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> spark_df:
         return self.spark.sql(final_sql)
 
     def _delete_table_from_database(self, name):
