@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
 TablishType = TypeVar("TablishType")
 
+
 class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
     """
@@ -59,7 +60,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
         try:
-            return self._run_sql_execution(final_sql, templated_name, physical_name)
+            return self._run_sql_execution(final_sql)
         except Exception as e:
             # Parse our SQL through sqlglot to pretty print
             try:
@@ -135,14 +136,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return output_df
 
     @abstractmethod
-    def _run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> TablishType:
+    def _run_sql_execution(self, final_sql: str) -> TablishType:
         pass
 
-    @abstractmethod
     def _delete_table_from_database(self, name: str):
-        pass
+        # sensible default:
+        drop_sql = f"DROP TABLE IF EXISTS {name}"
+        self._run_sql_execution(drop_sql)
 
     @abstractmethod
     def _table_registration(self, input, table_name: str) -> None:
@@ -261,15 +261,8 @@ class DuckDBAPI(DatabaseAPI):
     def load_from_file(self, file_path: str):
         return duckdb_load_from_file(file_path)
 
-    def _run_sql_execution(
-        self, final_sql, templated_name, physical_name
-    ) -> duckdb.DuckDBPyRelation:
+    def _run_sql_execution(self, final_sql: str) -> duckdb.DuckDBPyRelation:
         return self._con.sql(final_sql)
-
-    def _delete_table_from_database(self, name):
-        drop_sql = f"""
-        DROP TABLE IF EXISTS {name}"""
-        self._con.execute(drop_sql)
 
     @property
     def accepted_df_dtypes(self):
@@ -419,9 +412,7 @@ class SparkAPI(DatabaseAPI):
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
-    def _run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> spark_df:
+    def _run_sql_execution(self, final_sql: str) -> spark_df:
         return self.spark.sql(final_sql)
 
     def _delete_table_from_database(self, name):
