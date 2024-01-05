@@ -4,12 +4,12 @@ import hashlib
 import json
 import logging
 import os
-import re
 import time
 import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+from typing import Dict
 
 
 from splink.input_column import InputColumn
@@ -89,7 +89,6 @@ from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
     ensure_is_list,
-    ensure_is_tuple,
     parse_duration,
     prob_to_bayes_factor,
 )
@@ -246,22 +245,9 @@ class Linker:
         input_tables = ensure_is_list(input_table_or_tables)
         input_tables = self.db_api.process_input_tables(input_tables)
 
-        # aliases -> list
-        # if aliases is None, then just the input tables
-        input_aliases = self._ensure_aliases_populated_and_is_list(
-            input_table_or_tables, input_table_aliases
-        )
-
-        # these will always be populated by this function
-        homogenised_tables, homogenised_aliases = self._register_input_tables(
+        self._input_tables_dict = self._register_input_tables(
             input_tables,
-            input_aliases,
-            self.db_api.accepted_df_dtypes,
-        )
-
-        # make dict alias: SplinkDataFrame (of corresponding table)
-        self._input_tables_dict = self._get_input_tables_dict(
-            homogenised_tables, homogenised_aliases
+            input_table_aliases,
         )
 
         self._validate_input_dfs()
@@ -460,40 +446,22 @@ class Linker:
             proportion, sample_size, seed=seed, table=table, unique_id=unique_id
         )
 
-    def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
-        # 'homogenised' means all entries are strings representing tables
-        homogenised_tables = []
-        homogenised_aliases = []
-        accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
+    def _register_input_tables(
+        self, input_tables, input_aliases
+    ) -> Dict[str, SplinkDataFrame]:
 
-        existing_tables = []
-        for alias in input_aliases:
-            # Check if alias is a string (indicating a table name) and that it is not
-            # a file path.
-            if not isinstance(alias, str) or re.match(pattern=r".*", string=alias):
-                continue
-            exists = self._table_exists_in_database(alias)
-            if exists:
-                existing_tables.append(f"'{alias}'")
-        if existing_tables:
-            input_tables = ", ".join(existing_tables)
-            raise ValueError(
-                f"Table(s): {input_tables} already exists in database. "
-                "Please remove or rename it/them before retrying"
-            )
+        if input_aliases is None:
+            input_table_aliases = [
+                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
+            ]
+            overwrite = True
+        else:
+            input_table_aliases = input_aliases
+            overwrite = False
 
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-            if isinstance(alias, accepted_df_dtypes):
-                alias = f"__splink__input_table_{i}"
-
-            if isinstance(table, accepted_df_dtypes):
-                self.db_api._table_registration(table, alias)
-                table = alias
-
-            homogenised_tables.append(table)
-            homogenised_aliases.append(alias)
-
-        return homogenised_tables, homogenised_aliases
+        return self.db_api.register_multiple_tables(
+            input_tables, input_table_aliases, overwrite
+        )
 
     def _setup_settings_objs(self, settings_dict):
         # Setup the linker class's required settings
@@ -923,23 +891,6 @@ class Linker:
         new_settings = deepcopy(self._settings_obj_)
         new_linker._settings_obj_ = new_settings
         return new_linker
-
-    def _ensure_aliases_populated_and_is_list(
-        self, input_table_or_tables, input_table_aliases
-    ):
-        if input_table_aliases is None:
-            input_table_aliases = input_table_or_tables
-
-        input_table_aliases = ensure_is_list(input_table_aliases)
-
-        return input_table_aliases
-
-    def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
-
-        d = {}
-        for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
-            d[table_alias] = self._table_to_splink_dataframe(table_alias, table_name)
-        return d
 
     def _get_input_tf_dict(self, df_dict):
         d = {}

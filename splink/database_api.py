@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
-from typing import Generic, List, TypeVar, Union, final
+from typing import Dict, Generic, List, TypeVar, Union, final
 
 import duckdb
 import pandas as pd
@@ -97,31 +97,45 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         )
         return output_df
 
-    # TODO: think this can be final
+    @final
+    def register_multiple_tables(
+        self, input_tables, input_aliases, overwrite=False
+    ) -> Dict[str, SplinkDataFrame]:
+        tables_as_splink_dataframes = {}
+        existing_tables = []
+        for table, alias in zip(input_tables, input_aliases):
+            if isinstance(table, str):
+                # already registered - this should be a table name
+                continue
+            exists = self.table_exists_in_database(alias)
+            # if table exists, and we are not overwriting, we have a problem!
+            if exists:
+                if not overwrite:
+                    existing_tables.append(table)
+                else:
+                    self._delete_table_from_database(alias)
+
+        if existing_tables:
+            existing_tables_str = ", ".join(existing_tables)
+            msg = (
+                f"Table(s): {existing_tables_str} already exists in database. "
+                "Please remove or rename before retrying"
+            )
+            raise ValueError(msg)
+        for table, alias in zip(input_tables, input_aliases):
+            if not isinstance(table, str):
+                self._table_registration(table, alias)
+                table = alias
+            sdf = self.table_to_splink_dataframe(table, alias)
+            tables_as_splink_dataframes[alias] = sdf
+        return tables_as_splink_dataframes
+
     @final
     def register_table(self, input, table_name, overwrite=False) -> SplinkDataFrame:
-        """
-        Register a table in backend, with some input
-
-        Type of input accepted may depend on the backend
-        """
-        # If the user has provided a table name, return it as a SplinkDataframe
-        if isinstance(input, str):
-            return self.table_to_splink_dataframe(table_name, input)
-
-        # Check if table name is already in use
-        exists = self.table_exists_in_database(table_name)
-        if exists:
-            if not overwrite:
-                raise ValueError(
-                    f"Table '{table_name}' already exists in database. "
-                    "Please use the 'overwrite' argument if you wish to overwrite"
-                )
-            else:
-                self._delete_table_from_database(table_name)
-
-        self._table_registration(input, table_name)
-        return self.table_to_splink_dataframe(table_name, table_name)
+        tables_dict = self.register_multiple_tables(
+            [input], [table_name], overwrite=overwrite
+        )
+        return tables_dict[table_name]
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         # returns sql
