@@ -1652,7 +1652,7 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
+        blocking_rule = blocking_rule_to_obj(blocking_rule)
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
