@@ -65,6 +65,7 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
+    print("final order by")
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
@@ -72,6 +73,7 @@ def predict_from_comparison_vectors_sqls(
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}
+    order by 1
     """
 
     sql = {
