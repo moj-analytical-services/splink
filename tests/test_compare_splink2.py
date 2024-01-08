@@ -4,7 +4,6 @@ import pytest
 from splink.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
@@ -32,9 +31,9 @@ def test_splink_2_predict():
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
-def test_splink_2_predict_spark(df_spark):
+def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
-    linker = SparkLinker(df_spark, settings_dict)
+    linker = Linker(df_spark, settings_dict, spark_api)
 
     df_e = linker.predict().as_pandas_dataframe()
     f1 = df_e["unique_id_l"] == "479"
