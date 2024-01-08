@@ -2,8 +2,9 @@ import os
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.database_api import DuckDBAPI
 from splink.linker import Linker
+
+from .decorator import mark_with_dialects_excluding
 
 comparison_name = cl.CustomComparison(
     "name",
@@ -54,13 +55,12 @@ cl_settings = {
 }
 
 
-def test_run_predict(test_helpers):
-    # use dialect + helper to ease transition once we have all dialects back
-    dialect = "duckdb"
+@mark_with_dialects_excluding()
+def test_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = DuckDBAPI()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
     linker = Linker(
         df,
         cl_settings,
@@ -69,13 +69,12 @@ def test_run_predict(test_helpers):
     linker.predict()
 
 
-def test_full_run(test_helpers, tmp_path):
-    # use dialect + helper to ease transition once we have all dialects back
-    dialect = "duckdb"
+@mark_with_dialects_excluding()
+def test_full_run(dialect, test_helpers, tmp_path):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = DuckDBAPI()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
     linker = Linker(
         df,
         cl_settings,
@@ -105,3 +104,32 @@ def test_full_run(test_helpers, tmp_path):
         os.path.join(tmp_path, "test_csd_duckdb.html"),
         overwrite=True,
     )
+
+
+@mark_with_dialects_excluding()
+def test_charts(dialect, test_helpers, tmp_path):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    linker = Linker(
+        df,
+        cl_settings,
+        db_api,
+    )
+    linker.profile_columns("first_name")
+    linker.missingness_chart()
+    linker.cumulative_num_comparisons_from_blocking_rules_chart()
+
+    linker.estimate_probability_two_random_records_match(
+        ["l.first_name = r.first_name AND l.surname = r.surname"],
+        0.6,
+    )
+    linker.estimate_u_using_random_sampling(500)
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.first_name = r.first_name"
+    )
+    linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname")
+
+    linker.match_weights_chart()
+    linker.m_u_parameters_chart()

@@ -12,7 +12,7 @@ import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
 import splink.spark.blocking_rule_library as brl_spark
 import splink.sqlite.blocking_rule_library as brl_sqlite
-from splink.database_api import DuckDBAPI
+from splink.database_api import DuckDBAPI, SparkAPI
 from splink.linker import Linker
 from splink.postgres.linker import PostgresLinker
 from splink.spark.linker import SparkLinker
@@ -25,7 +25,12 @@ class TestHelper(ABC):
     def Linker(self):
         pass
 
-    def extra_linker_args(self):
+    @property
+    @abstractmethod
+    def DatabaseAPI(self):
+        pass
+
+    def db_api_args(self):
         return {}
 
     @property
@@ -71,6 +76,10 @@ class DuckDBTestHelper(TestHelper):
         # create fresh api each time
         return {"database_api": DuckDBAPI()}
 
+    @property
+    def DatabaseAPI(self):
+        return DuckDBAPI
+
     def convert_frame(self, df):
         return df
 
@@ -95,7 +104,11 @@ class SparkTestHelper(TestHelper):
     def Linker(self):
         return SparkLinker
 
-    def extra_linker_args(self):
+    @property
+    def DatabaseAPI(self):
+        return SparkAPI
+
+    def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
 
     def convert_frame(self, df):
