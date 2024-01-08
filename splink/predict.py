@@ -29,6 +29,7 @@ def predict_from_comparison_vectors_sqls(
     sql = f"""
     select {select_cols_expr} {clerical_match_score}
     from __splink__df_comparison_vectors
+    order by 1
     """
 
     sql = {

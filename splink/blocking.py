@@ -369,7 +369,6 @@ def block_using_rules_sqls(linker: Linker):
     if linker._sql_dialect == "duckdb" and not linker._train_u_using_random_sample_mode:
         unioned_sql = f"""
         {unioned_sql}
-        order by 1
         """
 
     sqls.append({"sql": unioned_sql, "output_table_name": "__splink__df_blocked"})
