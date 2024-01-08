@@ -65,7 +65,6 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
-    print("order by 1")
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
@@ -73,7 +72,6 @@ def predict_from_comparison_vectors_sqls(
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}
-    order by 1
     """
 
     sql = {
@@ -141,6 +139,7 @@ def predict_from_agreement_pattern_counts_sqls(
         "output_table_name": "__splink__df_predict",
     }
     sqls.append(sql)
+    return sqls
 
     return sqls
 

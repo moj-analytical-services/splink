@@ -239,7 +239,8 @@ class SaltedBlockingRule(BlockingRule):
 
             sqls.append(sql)
 
-        return " UNION ALL ".join(sqls)
+        print("union")
+        return " UNION  ".join(sqls)
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
