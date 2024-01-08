@@ -15,7 +15,6 @@ import splink.sqlite.blocking_rule_library as brl_sqlite
 from splink.database_api import DuckDBAPI, SparkAPI
 from splink.linker import Linker
 from splink.postgres.linker import PostgresLinker
-from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 
 
@@ -102,11 +101,15 @@ class SparkTestHelper(TestHelper):
 
     @property
     def Linker(self):
-        return SparkLinker
+        return Linker
 
     @property
     def DatabaseAPI(self):
         return SparkAPI
+
+    def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": SparkAPI(**self.db_api_args())}
 
     def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
