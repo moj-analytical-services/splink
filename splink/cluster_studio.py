@@ -188,7 +188,7 @@ def _get_random_cluster_ids(
 
 
 def _get_cluster_id_of_each_size(
-    linker: "Linker", connected_components: SplinkDataFrame, rows_per_cluster: int
+    linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
 ):
     sql = f"""
     select
@@ -218,7 +218,7 @@ def _get_cluster_id_of_each_size(
         cluster_id,
         cluster_size
     from __splink__cluster_count_row_numbered
-    where row_num <= {rows_per_cluster}
+    where row_num <= {rows_per_partition}
     """
 
     linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
