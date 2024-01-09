@@ -2,30 +2,28 @@ from copy import deepcopy
 
 import pandas as pd
 
+import splink.comparison_library as cl
+
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
-def get_different_settings_dicts(exact_match):
+def get_different_settings_dicts():
     settings = get_settings_dict()
     settings_tf = deepcopy(settings, None)
     # Settings with two term frequency columns
-    settings_tf["comparisons"][1] = exact_match(
+    settings_tf["comparisons"][1] = cl.ExactMatch(
         "surname",
         term_frequency_adjustments=True,
-        m_probability_exact_match=0.7,
-        m_probability_else=0.1,
-    )
+    ).configure(m_probabilities=[0.7, 0.1])
     settings_no_tf = deepcopy(settings, None)
     # Settings with no term frequencies
-    settings_no_tf["comparisons"][0] = exact_match(
+    settings_no_tf["comparisons"][0] = cl.ExactMatch(
         "first_name",
         term_frequency_adjustments=False,
-        m_probability_exact_match=0.7,
-        m_probability_else=0.1,
-    )
+    ).configure(m_probabilities=[0.7, 0.1])
     return settings_tf, settings_no_tf, settings
 
 
@@ -46,7 +44,7 @@ def test_tf_tables_init_works(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    for idx, s in enumerate(get_different_settings_dicts(helper.cl.ExactMatch)):
+    for idx, s in enumerate(get_different_settings_dicts()):
         linker = Linker(
             df,
             s,
