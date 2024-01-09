@@ -228,41 +228,48 @@ def _get_cluster_id_of_each_size(
     return df_cluster_sample_with_size.as_record_dict()
 
 
-def _get_lowest_density_cluster_ids(
+def _get_lowest_density_clusters(
     linker: "Linker",
     df_cluster_metrics: SplinkDataFrame,
-    sample_size: int,
+    rows_per_partition: int,
     min_nodes: int,
 ):
-    """Retrieves cluster IDs based on density metric, ordered from least to
-    most dense.
+    """Samples lowest density clusters stratified by size.
 
     Args:
         linker: An instance of the Splink Linker class.
         df_cluster_metrics (SplinkDataFrame): dataframe containing
-        cluster metrics, including density.
-        sample_size (int): size of sample returned.
+        cluster metrics including density.
+        rows_per_partition (int):
         min_nodes (int): The minimum number of nodes a cluster must contain
         to be included in the sample.
 
     Returns:
-        list: A list of cluster IDs based on density metric, ordered from least to
-        most dense.
+        list: A list of cluster IDs of the least dense clusters across different sizes
     """
-    # Ordering: least dense clusters first
+
     sql = f"""
-    SELECT cluster_id
-    FROM {df_cluster_metrics.physical_name}
-    WHERE n_nodes >= {min_nodes}
-    ORDER BY density
-    LIMIT {sample_size}
+    select
+        cluster_id,
+        n_nodes as cluster_size,
+        row_number() over (partition by n_nodes order by density) as row_num
+    from {df_cluster_metrics.physical_name}
+    where n_nodes >= {min_nodes}
     """
 
-    df_density_sample = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__density_sample"
-    )
+    linker._enqueue_sql(sql, "__splink__partition_clusters_by_size")
 
-    return [r["cluster_id"] for r in df_density_sample.as_record_dict()]
+    sql = f"""
+    select
+        cluster_id
+    from __splink__partition_clusters_by_size
+    where row_num <= {rows_per_partition}
+    """
+
+    linker._enqueue_sql(sql, "__splink__lowest_density_clusters")
+    df_cluster_sample_lowest_density = linker._execute_sql_pipeline()
+
+    return [r["cluster_id"] for r in df_cluster_sample_lowest_density.as_record_dict()]
 
 
 def render_splink_cluster_studio_html(
@@ -310,9 +317,11 @@ def render_splink_cluster_studio_html(
             else:
                 # Using sensible default for min_nodes. Might become option
                 # for users in future
-                cluster_ids = _get_lowest_density_cluster_ids(
-                    linker, _df_cluster_metrics, sample_size, min_nodes=3
+                cluster_ids = _get_lowest_density_clusters(
+                    linker, _df_cluster_metrics, 1, 3
                 )
+                if len(cluster_ids) > sample_size:
+                    cluster_ids = random.sample(cluster_ids, k=sample_size)
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
