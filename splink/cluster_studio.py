@@ -234,18 +234,19 @@ def _get_lowest_density_clusters(
     rows_per_partition: int,
     min_nodes: int,
 ):
-    """Samples lowest density clusters stratified by size.
+    """Returns cluster ids of lowest density clusters across different sized clusters
+    by performing stratified sampling.
 
     Args:
         linker: An instance of the Splink Linker class.
         df_cluster_metrics (SplinkDataFrame): dataframe containing
         cluster metrics including density.
-        rows_per_partition (int):
-        min_nodes (int): The minimum number of nodes a cluster must contain
+        rows_per_partition (int): number of rows in each strata (partition)
+        min_nodes (int): minimum number of nodes a cluster must contain
         to be included in the sample.
 
     Returns:
-        list: A list of cluster IDs of the least dense clusters across different sizes
+        list: A list of cluster ids of lowest density clusters of different sizes
     """
 
     sql = f"""
@@ -307,7 +308,7 @@ def render_splink_cluster_studio_html(
             ]
             cluster_ids = [c["cluster_id"] for c in cluster_ids]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
-        if sampling_method == "lowest_density_clusters":
+        if sampling_method == "lowest_density_by_size":
             if _df_cluster_metrics is None:
                 raise SplinkException(
                     """To sample by density, you must provide a cluster metrics table
