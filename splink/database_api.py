@@ -111,7 +111,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             # if table exists, and we are not overwriting, we have a problem!
             if exists:
                 if not overwrite:
-                    existing_tables.append(table)
+                    existing_tables.append(alias)
                 else:
                     self._delete_table_from_database(alias)
 

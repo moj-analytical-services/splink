@@ -456,7 +456,7 @@ class Linker:
             ]
             overwrite = True
         else:
-            input_table_aliases = input_aliases
+            input_table_aliases = ensure_is_list(input_aliases)
             overwrite = False
 
         return self.db_api.register_multiple_tables(
