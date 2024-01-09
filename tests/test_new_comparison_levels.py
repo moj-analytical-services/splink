@@ -124,9 +124,7 @@ comparison_name = cl.CustomComparison(
             "(surname_l IS NULL OR surname_r IS NULL) "
         ).configure(is_null_level=True),
         {
-            "sql_condition": (
-                "first_name_l || surname_l = first_name_r || surname_r"
-            ),
+            "sql_condition": ("first_name_l || surname_l = first_name_r || surname_r"),
             "label_for_charts": "both names matching",
         },
         cll.CustomLevel(
