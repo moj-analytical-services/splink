@@ -126,7 +126,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             if not isinstance(table, str):
                 self._table_registration(table, alias)
                 table = alias
-            sdf = self.table_to_splink_dataframe(table, alias)
+            sdf = self.table_to_splink_dataframe(alias, table)
             tables_as_splink_dataframes[alias] = sdf
         return tables_as_splink_dataframes
 
