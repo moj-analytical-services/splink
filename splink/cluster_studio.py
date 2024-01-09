@@ -219,7 +219,6 @@ def _get_cluster_id_of_each_size(
         cluster_size
     from __splink__cluster_count_row_numbered
     where row_num <= {rows_per_cluster}
-    and cluster_size > 1
     """
 
     linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
