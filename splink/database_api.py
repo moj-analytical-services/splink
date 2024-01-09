@@ -247,7 +247,7 @@ class DuckDBAPI(DatabaseAPI):
 
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
-        self._con.register(table_name, input)
+        self._con.sql(f"CREATE TABLE {table_name} AS SELECT * FROM input")
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name
