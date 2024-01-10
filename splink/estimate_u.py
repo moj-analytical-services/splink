@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import math
+import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
@@ -50,12 +50,6 @@ def _proportion_sample_size_link_only(
     # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
     sample_size = proportion * total_nodes
     return proportion, sample_size
-
-
-def _get_duckdb_salting(max_pairs):
-    logged = math.log(max_pairs, 10)
-    logged = max(logged - 4, 0)
-    return math.ceil(2.5**logged)
 
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
@@ -124,11 +118,11 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
-    if linker._sql_dialect == "duckdb" and max_pairs > 1e5:
+    if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
             {
                 "blocking_rule": "1=1",
-                "salting_partitions": _get_duckdb_salting(max_pairs),
+                "salting_partitions": multiprocessing.cpu_count(),
             }
         )
         settings_obj._blocking_rules_to_generate_predictions = [br]
