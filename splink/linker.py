@@ -2125,8 +2125,8 @@ class Linker:
         * node_degree (absolute number of neighbouring nodes)
 
         Output table has a single row per input node, along with the cluster id (as
-        assigned in `linker.cluster_pairwise_at_threshold()`, along with the metric
-        node_degree):
+        assigned in `linker.cluster_pairwise_at_threshold()`) and the metric
+        node_degree:
         |-------------------------------------------------|
         | composite_unique_id | cluster_id  | node_degree |
         |---------------------|-------------|-------------|
