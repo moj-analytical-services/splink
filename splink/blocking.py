@@ -362,16 +362,8 @@ def block_using_rules_sqls(linker: Linker):
         sql = br.create_blocked_pairs_sql(linker, where_condition, probability)
         br_sqls.append(sql)
 
-    unioned_sql = " UNION ALL ".join(br_sqls)
+    sql = " UNION ALL ".join(br_sqls)
 
-    # see https://github.com/duckdb/duckdb/discussions/9710
-    # this generates a huge speedup because it triggers parallelisation
-    if linker._sql_dialect == "duckdb" and not linker._train_u_using_random_sample_mode:
-        unioned_sql = f"""
-        {unioned_sql}
-        order by 1
-        """
-
-    sqls.append({"sql": unioned_sql, "output_table_name": "__splink__df_blocked"})
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
 
     return sqls
