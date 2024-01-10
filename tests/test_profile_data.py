@@ -9,7 +9,6 @@ from splink.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.misc import ensure_is_list
 from splink.profile_data import _col_or_expr_frequencies_raw_data_sql
-from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
@@ -117,7 +116,7 @@ def test_profile_with_arrays_duckdb():
     )
 
 
-def test_profile_with_arrays_spark(spark):
+def test_profile_with_arrays_spark(spark, spark_api):
     settings = {
         "link_type": "dedupe_only",
         "unique_id_column_name": "id",
@@ -125,9 +124,10 @@ def test_profile_with_arrays_spark(spark):
     spark_df = spark.read.parquet("tests/datasets/arrays_df.parquet")
     spark_df.persist()
 
-    linker = SparkLinker(
+    linker = Linker(
         spark_df,
         settings,
+        spark_api,
     )
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
@@ -156,10 +156,10 @@ def test_profile_using_sqlite():
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
-def test_profile_using_spark(df_spark):
+def test_profile_using_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
-    linker = SparkLinker(df_spark, settings_dict)
+    linker =Linker(df_spark, settings_dict, spark_api)
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],

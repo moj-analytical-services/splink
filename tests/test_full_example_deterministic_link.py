@@ -3,18 +3,18 @@ import os
 import pandas as pd
 import pytest
 
-from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+from splink.database_api import DuckDBAPI, SparkAPI
+from splink.linker import Linker
 
 
 @pytest.mark.parametrize(
-    ("Linker"),
+    ("DatabaseAPI"),
     [
-        pytest.param(DuckDBLinker, id="DuckDB Deterministic Link Test"),
-        pytest.param(SparkLinker, id="Spark Deterministic Link Test"),
+        pytest.param(DuckDBAPI, id="DuckDB Deterministic Link Test"),
+        pytest.param(SparkAPI, id="Spark Deterministic Link Test"),
     ],
 )
-def test_deterministic_link_full_example(tmp_path, spark, Linker):
+def test_deterministic_link_full_example(tmp_path, spark, DatabaseAPI):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = {
@@ -29,13 +29,14 @@ def test_deterministic_link_full_example(tmp_path, spark, Linker):
         "retain_intermediate_calculation_columns": True,
     }
 
-    if Linker == SparkLinker:
+    if DatabaseAPI == SparkAPI:
         # ensure the same datatype within a column to solve spark parsing issues
         df = df.astype(str)
 
         df = spark.createDataFrame(df)
         df.persist()
-    linker = Linker(df, settings)
+    db_api = DatabaseAPI()
+    linker = Linker(df, settings, db_api)
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 
