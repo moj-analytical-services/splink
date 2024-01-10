@@ -268,9 +268,9 @@ def _get_lowest_density_clusters(
     """
 
     linker._enqueue_sql(sql, "__splink__lowest_density_clusters")
-    df_cluster_sample_lowest_density = linker._execute_sql_pipeline()
+    df_lowest_density_clusters = linker._execute_sql_pipeline()
 
-    return [r["cluster_id"] for r in df_cluster_sample_lowest_density.as_record_dict()]
+    return [r["cluster_id"] for r in df_lowest_density_clusters.as_record_dict()]
 
 
 def render_splink_cluster_studio_html(
@@ -319,7 +319,7 @@ def render_splink_cluster_studio_html(
                 # Using sensible default for min_nodes. Might become option
                 # for users in future
                 cluster_ids = _get_lowest_density_clusters(
-                    linker, _df_cluster_metrics, 1, 3
+                    linker, _df_cluster_metrics, rows_per_partition=1, min_nodes=3
                 )
                 if len(cluster_ids) > sample_size:
                     cluster_ids = random.sample(cluster_ids, k=sample_size)
