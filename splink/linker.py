@@ -2205,7 +2205,8 @@ class Linker:
         threshold_match_probability: float,
     ) -> Dict[str, SplinkDataFrame]:
         """
-        Generates a table containing cluster metrics and returns a Splink dataframe
+        Generates tables containing graph metrics (for nodes, edges, and clusters),
+        and returns a dictionary of Splink dataframes
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
