@@ -126,7 +126,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             if not isinstance(table, str):
                 self._table_registration(table, alias)
                 table = alias
-            sdf = self.table_to_splink_dataframe(table, alias)
+            sdf = self.table_to_splink_dataframe(alias, table)
             tables_as_splink_dataframes[alias] = sdf
         return tables_as_splink_dataframes
 
@@ -247,7 +247,7 @@ class DuckDBAPI(DatabaseAPI):
 
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
-        self._con.register(table_name, input)
+        self._con.sql(f"CREATE TABLE {table_name} AS SELECT * FROM input")
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name
