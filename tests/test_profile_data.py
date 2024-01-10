@@ -12,6 +12,7 @@ from splink.profile_data import _col_or_expr_frequencies_raw_data_sql
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
@@ -28,6 +29,7 @@ def generate_raw_profile_dataset(columns_to_profile, linker):
     return linker._execute_sql_pipeline().as_pandas_dataframe()
 
 
+@mark_with_dialects_including("duckdb")
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["blank"] = None
@@ -80,6 +82,7 @@ def test_profile_using_duckdb():
 #     )
 
 
+@mark_with_dialects_including("duckdb")
 def test_profile_with_arrays_duckdb():
     dic = {
         "id": {0: 1, 1: 2, 2: 3, 3: 4},
@@ -116,6 +119,7 @@ def test_profile_with_arrays_duckdb():
     )
 
 
+@mark_with_dialects_including("spark")
 def test_profile_with_arrays_spark(spark, spark_api):
     settings = {
         "link_type": "dedupe_only",
@@ -139,6 +143,7 @@ def test_profile_with_arrays_spark(spark, spark_api):
     )
 
 
+@mark_with_dialects_including("sqlite")
 def test_profile_using_sqlite():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -156,10 +161,11 @@ def test_profile_using_sqlite():
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
+@mark_with_dialects_including("spark")
 def test_profile_using_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
-    linker =Linker(df_spark, settings_dict, spark_api)
+    linker = Linker(df_spark, settings_dict, spark_api)
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
@@ -181,6 +187,7 @@ def test_profile_using_spark(df_spark, spark_api):
     assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
 
 
+@mark_with_dialects_including("duckdb")
 def test_profile_null_columns(caplog):
 
     df = pd.DataFrame(

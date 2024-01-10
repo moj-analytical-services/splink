@@ -4,6 +4,8 @@ import splink.spark.blocking_rule_library as brl
 from splink.linker import Linker
 from tests.basic_settings import get_settings_dict
 
+from .decorator import mark_with_dialects_including
+
 
 def check_same_ids(df1, df2, unique_id_col="unique_id"):
     col_l = f"{unique_id_col}_l"
@@ -42,6 +44,7 @@ def generate_linker_output(
     return df_predict.sort_values(by=["unique_id_l", "unique_id_r"], ignore_index=True)
 
 
+@mark_with_dialects_including("spark")
 def test_salting_spark(spark, spark_api):
     # Test that the number of rows in salted link jobs is identical
     # to those not salted.
@@ -74,7 +77,9 @@ def test_salting_spark(spark, spark_api):
     df_spark = spark.read.csv(
         "./tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
-    df2 = generate_linker_output(df=df_spark, spark_api=spark_api, blocking_rules=blocking_rules_salted)
+    df2 = generate_linker_output(
+        df=df_spark, spark_api=spark_api, blocking_rules=blocking_rules_salted
+    )
 
     check_same_ids(df1, df2)
     check_answer(df1, df2)

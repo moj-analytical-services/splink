@@ -539,7 +539,6 @@ class SparkAPI(DatabaseAPI):
 
             self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
 
-
     # TODO: this repartition jazz knows too much about the linker
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:

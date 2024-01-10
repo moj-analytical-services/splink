@@ -1,21 +1,17 @@
 import os
 
 import pandas as pd
-import pytest
 
-from splink.database_api import DuckDBAPI, SparkAPI
 from splink.linker import Linker
 
+from .decorator import mark_with_dialects_excluding
 
-@pytest.mark.parametrize(
-    ("DatabaseAPI"),
-    [
-        pytest.param(DuckDBAPI, id="DuckDB Deterministic Link Test"),
-        pytest.param(SparkAPI, id="Spark Deterministic Link Test"),
-    ],
-)
-def test_deterministic_link_full_example(tmp_path, spark, DatabaseAPI):
+
+@mark_with_dialects_excluding()
+def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
+    helper = test_helpers[dialect]
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",
@@ -29,14 +25,7 @@ def test_deterministic_link_full_example(tmp_path, spark, DatabaseAPI):
         "retain_intermediate_calculation_columns": True,
     }
 
-    if DatabaseAPI == SparkAPI:
-        # ensure the same datatype within a column to solve spark parsing issues
-        df = df.astype(str)
-
-        df = spark.createDataFrame(df)
-        df.persist()
-    db_api = DatabaseAPI()
-    linker = Linker(df, settings, db_api)
+    linker = Linker(df, settings, **helper.extra_linker_args())
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 

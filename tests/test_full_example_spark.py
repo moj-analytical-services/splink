@@ -67,7 +67,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
             database="1111",
-        )
+        ),
     )
 
     linker.profile_columns(
@@ -143,7 +143,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         SparkAPI(
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
-        )
+        ),
     )
 
     # Test saving and loading
@@ -171,7 +171,7 @@ def test_link_only(df_spark, spark_api):
         SparkAPI(
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
-        )
+        ),
     )
     df_predict = linker.predict().as_pandas_dataframe()
 
