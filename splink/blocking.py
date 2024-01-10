@@ -238,7 +238,6 @@ class SaltedBlockingRule(BlockingRule):
             """
 
             sqls.append(sql)
-
         return " UNION ALL ".join(sqls)
 
 
