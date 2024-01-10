@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import logging
-from itertools import compress
-
-from pyspark.sql.dataframe import DataFrame as spark_df
 
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -72,24 +69,6 @@ class SparkDataFrame(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
-    def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
-        self.spark = spark
-        if spark is None:
-            # Ensure at least one of the input dataframes is a spark df
-            spark_inputs = [isinstance(d, spark_df) for d in input_tables]
-            if any(spark_inputs):
-                for t in list(compress(input_tables, spark_inputs)):
-                    # t.sparkSession can be used only from spark 3.3.0 onwards
-                    self.spark = t.sql_ctx.sparkSession
-                    break
-
-        if self.spark is None:
-            raise ValueError(
-                "If input_table_or_tables are strings or pandas dataframes rather than "
-                "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise the linker."
-            )
-
     def _drop_splink_cached_tables(self):
         # Clean up Splink cache that may exist from any previous splink session
 
