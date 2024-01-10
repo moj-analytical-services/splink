@@ -252,7 +252,8 @@ def _get_lowest_density_clusters(
     sql = f"""
     select
         cluster_id,
-        n_nodes as cluster_size,
+        n_nodes,
+        density,
         row_number() over (partition by n_nodes order by density) as row_num
     from {df_cluster_metrics.physical_name}
     where n_nodes >= {min_nodes}
@@ -262,7 +263,8 @@ def _get_lowest_density_clusters(
 
     sql = f"""
     select
-        cluster_id
+        cluster_id,
+        round(density, 4) as density_4dp
     from __splink__partition_clusters_by_size
     where row_num <= {rows_per_partition}
     """
@@ -270,7 +272,7 @@ def _get_lowest_density_clusters(
     linker._enqueue_sql(sql, "__splink__lowest_density_clusters")
     df_lowest_density_clusters = linker._execute_sql_pipeline()
 
-    return [r["cluster_id"] for r in df_lowest_density_clusters.as_record_dict()]
+    return df_lowest_density_clusters.as_record_dict()
 
 
 def render_splink_cluster_studio_html(
@@ -323,6 +325,12 @@ def render_splink_cluster_studio_html(
                 )
                 if len(cluster_ids) > sample_size:
                     cluster_ids = random.sample(cluster_ids, k=sample_size)
+                cluster_names = [
+                    f"Cluster ID: {c['cluster_id']}, density (4dp)  {c['density_4dp']}"
+                    for c in cluster_ids
+                ]
+                cluster_ids = [c["cluster_id"] for c in cluster_ids]
+                named_clusters_dict = dict(zip(cluster_ids, cluster_names))
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
