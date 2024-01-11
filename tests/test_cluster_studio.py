@@ -41,8 +41,8 @@ def test_density_sample():
     )
 
     expect = [
-        {"cluster_id": "D", "density_4dp": 0.2},
         {"cluster_id": "A", "density_4dp": 0.3333},
+        {"cluster_id": "D", "density_4dp": 0.2},
     ]
 
     assert result == expect
