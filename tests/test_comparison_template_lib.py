@@ -454,9 +454,9 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
         "comparisons": [
             ctl.EmailComparison(
                 col_name=col_name,
-                levenshtein_thresholds=[2],
-                damerau_levenshtein_thresholds=[2],
                 invalid_emails_as_null=True,
+                thresholds=[2],
+                fuzzy_metric="damerau_levenshtein",
                 include_domain_match_level=True,
             )
         ],
@@ -468,17 +468,26 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
+    # size_gamma_lookup = {
+    #     9: [(1, 2)],  # Exact match
+    #     8: [(1, 3), (2, 3)],  # Exact match on username, different domain
+    #     7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
+    #     6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
+    #     5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
+    #     4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
+    #     3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
+    #     2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
+    #     1: [(1, 10), (2, 10)],  # Domain-only match#
+    #     0: [(1, 11), (2, 11)],  # Everything else
+    #     -1: [(1, 12)],  # Null level- invalid email
+    # }
     size_gamma_lookup = {
-        9: [(1, 2)],  # Exact match
-        8: [(1, 3), (2, 3)],  # Exact match on username, different domain
-        7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
-        6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
-        5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
-        4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
-        3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
-        2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
+        5: [(1, 2)],  # Exact match
+        4: [(1, 3), (2, 3)],  # Exact match on username, different domain
+        3: [(1, 5), (2, 5), (1, 4), (2, 4)],  # Fuzzy match- full email (dmlev)
+        2: [(1, 8), (2, 8), (1, 7), (2, 7), (1, 6), (2, 6)],  # Fuzzy match- username only (dmlev)
         1: [(1, 10), (2, 10)],  # Domain-only match#
-        0: [(1, 11), (2, 11)],  # Everything else
+        0: [(1, 11), (2, 11), (1, 9), (2, 9)],  # Everything else
         -1: [(1, 12)],  # Null level- invalid email
     }
 
