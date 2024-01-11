@@ -254,7 +254,7 @@ def _get_lowest_density_clusters(
         cluster_id,
         n_nodes,
         density,
-        row_number() over (partition by n_nodes order by density) as row_num
+        row_number() over (partition by n_nodes order by density, cluster_id) as row_num
     from {df_cluster_metrics.physical_name}
     where n_nodes >= {min_nodes}
     """
