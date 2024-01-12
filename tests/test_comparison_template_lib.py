@@ -485,7 +485,14 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
         5: [(1, 2)],  # Exact match
         4: [(1, 3), (2, 3)],  # Exact match on username, different domain
         3: [(1, 5), (2, 5), (1, 4), (2, 4)],  # Fuzzy match- full email (dmlev)
-        2: [(1, 8), (2, 8), (1, 7), (2, 7), (1, 6), (2, 6)],  # Fuzzy match- username only (dmlev)
+        2: [
+            (1, 8),
+            (2, 8),
+            (1, 7),
+            (2, 7),
+            (1, 6),
+            (2, 6),
+        ],  # Fuzzy match- username only (dmlev)
         1: [(1, 10), (2, 10)],  # Domain-only match#
         0: [(1, 11), (2, 11), (1, 9), (2, 9)],  # Everything else
         -1: [(1, 12)],  # Null level- invalid email
