@@ -11,6 +11,9 @@ _fuzzy_levels = {
     "jaro_winkler": cll.JaroWinklerLevel,
     "levenshtein": cll.LevenshteinLevel,
 }
+# metric names single quoted and comma-separated for error messages
+_AVAILABLE_METRICS_STRING = ", ".join(map(lambda x: f"'{x}'", _fuzzy_levels.keys()))
+
 _DEFAULT_EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$"
 
 
@@ -45,8 +48,13 @@ class EmailComparison(ComparisonCreator):
         self.domain_match = include_domain_match_level
 
         if self.thresholds:
-            # TODO: nice error if bad
-            self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
+            try:
+                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid value for {fuzzy_metric=}.  "
+                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
+                ) from None
             # store metric for description
             self.fuzzy_metric = fuzzy_metric
 
@@ -100,20 +108,21 @@ class EmailComparison(ComparisonCreator):
             plural = "s" if len(self.thresholds) == 1 else ""
             comparison_desc = (
                 f"{self.fuzzy_metric} at threshold{plural} "
-                f"{comma_separated_thresholds_string} vs"
+                f"{comma_separated_thresholds_string} vs. "
             )
             if self.username_fuzzy:
                 comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
                 plural = "s" if len(self.thresholds) == 1 else ""
                 comparison_desc = (
                     f"{self.fuzzy_metric} on username at threshold{plural} "
-                    f"{comma_separated_thresholds_string} vs"
+                    f"{comma_separated_thresholds_string} vs. "
                 )
 
         if self.domain_match:
-            comparison_desc += "Domain-only match vs."
+            comparison_desc += "Domain-only match vs. "
 
         comparison_desc += "anything else"
+        return comparison_desc
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
