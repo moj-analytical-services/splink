@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Allow salting in EM training ([#1832](https://github.com/moj-analytical-services/splink/pull/1832))
+
 ## [3.9.10] - 2023-12-07
 
 ### Changed
