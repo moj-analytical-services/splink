@@ -6,7 +6,7 @@ tags:
 # Creating new comparisons and comparison levels for libraries
 
 The Fellegi-Sunter model that Splink implements depends on having several comparisons, which are each composed of two or more comparison levels.
-Splink provides several _ready-made_ [comparisons](../../comparison_library.html) and [comparison levels](../../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../../topic_guides/customising_comparisons.html#method-4-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../../topic_guides/backends.html) (or for any available dialects).
+Splink provides several _ready-made_ [comparisons](../../comparison_library.html) and [comparison levels](../../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../../topic_guides/comparisons/customising_comparisons.html#method-4-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../../topic_guides/splink_fundamentals/backends/backends.html) (or for any available dialects).
 
 Having created a custom comparison you may decide that your use case is common enough that you want to contribute it to Splink for other users to benefit from. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
 
