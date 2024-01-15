@@ -13,7 +13,6 @@ class ComparisonCreator(ABC):
         self,
         col_name_or_names: Union[
             List[Union[str, ColumnExpression]], Union[str, ColumnExpression]
-        ] = None,
     ):
         """
         Class to author Comparisons

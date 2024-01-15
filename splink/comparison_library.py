@@ -29,6 +29,9 @@ class CustomComparison(ComparisonCreator):
         self._output_column_name = output_column_name
         self._comparison_levels = comparison_levels
         self._description = description
+        # we deliberately don't call super().__init__() - all that does is set up
+        # column expressions, which we do not need here as we are dealing with
+        # levels directly
 
     @staticmethod
     def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict]):
