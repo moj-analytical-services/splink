@@ -1,37 +1,37 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, final
+from typing import Dict, List, Union, final
 
 from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
 from .exceptions import SplinkException
-from .misc import ensure_is_list
 
 
 class ComparisonCreator(ABC):
+    DEFAULT_COL_EXP_KEY = "__default__"
+
     def __init__(
         self,
         col_name_or_names: Union[
-            List[Union[str, ColumnExpression]], Union[str, ColumnExpression]
+            Dict[str, Union[str, ColumnExpression]], Union[str, ColumnExpression]
+        ],
     ):
         """
         Class to author Comparisons
         Args:
             col_name_or_names (str, ColumnExpression): Input column name(s).
-                Can be a single item or a list.
+                Can be a single item or a dict.
         """
-        if col_name_or_names is None:
-            cols = []
+        # if it's not a dict, assume it is a single expression-like
+        if not isinstance(col_name_or_names, dict):
+            cols = {self.DEFAULT_COL_EXP_KEY: col_name_or_names}
         else:
-            # use list rather than iterable so we don't decompose strings
-            cols = ensure_is_list(col_name_or_names)
-        # TODO: would this be nicer as a dict?
-        self.col_expressions = list(
-            map(
-                ColumnExpression.instantiate_if_str,
-                cols,
-            )
-        )
+            cols = col_name_or_names
+
+        self.col_expressions = {
+            name_reference: ColumnExpression.instantiate_if_str(column)
+            for name_reference, column in cols.items()
+        }
 
     # many ComparisonCreators have a single column expression, so provide a
     # convenience property for this case. Error if there are none or many
@@ -48,7 +48,14 @@ class ComparisonCreator(ABC):
                 "Cannot get `ComparisonLevelCreator.col_expression` when "
                 f"`.col_expressions` has no elements: {type(self)}"
             )
-        return self.col_expressions[0]
+        try:
+            col_expression = self.col_expressions[self.DEFAULT_COL_EXP_KEY]
+        except KeyError:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has non-default single entry: {type(self)}"
+            ) from None
+        return col_expression
 
     # TODO: property?
     @abstractmethod
