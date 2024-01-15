@@ -94,6 +94,11 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'regex_extract' function"
+        )
+
 
 class DuckDBDialect(SplinkDialect):
     _dialect_name_for_factory = "duckdb"
@@ -131,6 +136,9 @@ class DuckDBDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        return f"regexp_extract({name}, '{pattern}', {capture_group})"
+
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"
@@ -167,6 +175,9 @@ class SparkDialect(SplinkDialect):
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
+
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
 
 class SqliteDialect(SplinkDialect):
@@ -246,6 +257,18 @@ class PostgresDialect(SplinkDialect):
         return f"""
             {date_f} <= {clc.date_threshold}
         """
+
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        # full match - wrap pattern in parentheses so first group is whole expression
+        if capture_group == 0:
+            pattern = f"({pattern})"
+        if capture_group > 1:
+            # currently no easy way to capture non-first groups
+            raise ValueError(
+                "'postgres' backend does not currently support a capture_group greater "
+                "than 1. To proceed you must use your own SQL expression"
+            )
+        return f"substring({name} from '{pattern}')"
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self
