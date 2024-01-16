@@ -4,6 +4,7 @@ import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+import splink.comparison_template_library as ctl
 
 from .decorator import mark_with_dialects_excluding
 
@@ -169,6 +170,39 @@ def test_cl_creators_run_predict(dialect, test_helpers):
 
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
+    linker.predict()
+
+
+comparison_email_ctl = ctl.EmailComparison(
+    "email",
+    invalid_emails_as_null=True,
+    include_domain_match_level=True,
+    fuzzy_metric="levenshtein",
+    thresholds=[1, 3],
+)
+ctl_settings = cl_settings
+ctl_settings = {
+    "link_type": "dedupe_only",
+    "comparisons": [
+        # TODO: replace cl only with ctl
+        comparison_name,
+        comparison_city,
+        comparison_email_ctl,
+        comparison_dob,
+    ],
+    "blocking_rules_to_generate_predictions": [
+        "l.dob = r.dob",
+        "l.first_name = r.first_name",
+    ],
+}
+
+
+@mark_with_dialects_excluding()
+def test_ctl_creators_run_predict(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = helper.Linker(df, ctl_settings, **helper.extra_linker_args())
     linker.predict()
 
 

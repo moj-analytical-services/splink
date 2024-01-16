@@ -177,6 +177,35 @@ class SparkDialect(SplinkDialect):
     def default_date_format(self):
         return "yyyy-MM-dd"
 
+    def date_diff(self, clc: "ComparisonLevelCreator"):
+        # need custom solution as sqlglot gets confused by 'metric', as in Spark
+        # datediff _only_ works in days
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+        datediff_args = f"{col.name_l}, {col.name_r}"
+
+        if clc.date_metric == "day":
+            date_f = f"""
+                abs(
+                    datediff(
+                        {datediff_args}
+                    )
+                )
+            """
+        elif clc.date_metric in ["month", "year"]:
+            date_f = f"""
+                floor(abs(
+                    months_between(
+                        {datediff_args}
+                    )"""
+            if clc.date_metric == "year":
+                date_f += " / 12))"
+            else:
+                date_f += "))"
+        return f"""
+            {date_f} <= {clc.date_threshold}
+        """
+
     def try_parse_date(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
@@ -225,19 +254,9 @@ class PostgresDialect(SplinkDialect):
         instead are UDFs which are automatically registered by Splink
         """
 
-        if clc.date_format is None:
-            clc.date_format = "yyyy-MM-dd"
-
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
-
-        if clc.cast_strings_to_date:
-            datediff_args = f"""
-                to_date({col.name_l}, '{clc.date_format}'),
-                to_date({col.name_r}, '{clc.date_format}')
-            """
-        else:
-            datediff_args = f"{col.name_l}, {col.name_r}"
+        datediff_args = f"{col.name_l}, {col.name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
@@ -260,6 +279,15 @@ class PostgresDialect(SplinkDialect):
         return f"""
             {date_f} <= {clc.date_threshold}
         """
+
+    @property
+    def default_date_format(self):
+        return "YYYY-MM-DD"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""to_date({name}, '{date_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self
