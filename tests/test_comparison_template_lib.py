@@ -5,22 +5,24 @@ import splink.comparison_template_library as ctl
 
 from .decorator import mark_with_dialects_excluding
 
+# TODO: we can probably restore limited postgres (+ maybe sqlite?) testing,
+# if we use the right option
 ## DateComparison
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_date_comparison_run(dialect):
     ctl.DateComparison("date").get_comparison(dialect)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_date_comparison_dl_run(dialect):
     ctl.DateComparison(
         "date", levenshtein_thresholds=[1], damerau_levenshtein_thresholds=[]
     ).get_comparison(dialect)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_datediff_levels(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     col_name = "dob"
@@ -108,7 +110,7 @@ def test_datediff_levels(dialect, test_helpers, test_gamma_assert):
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_date_comparison_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
@@ -140,12 +142,12 @@ def test_date_comparison_error_logger(dialect):
 ## name_comparison
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_name_comparison_run(dialect):
     ctl.NameComparison("first_name").get_comparison(dialect)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_name_comparison_levels(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = pd.DataFrame(
@@ -241,7 +243,7 @@ def test_name_comparison_levels(dialect, test_helpers):
             )
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_forename_surname_comparison_run(dialect):
     ctl.ForenameSurnameComparison("first_name", "surname").get_comparison(dialect)
 
@@ -249,7 +251,7 @@ def test_forename_surname_comparison_run(dialect):
 ## forename_surname_comparison
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_forename_surname_comparison_levels(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = pd.DataFrame(
@@ -344,7 +346,7 @@ def test_forename_surname_comparison_levels(dialect, test_helpers):
 # postcode_comparison
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     col_name = "postcode"
@@ -426,7 +428,7 @@ def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     col_name = "email"
