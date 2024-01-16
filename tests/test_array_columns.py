@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import splink.comparison_library as cl
 from tests.decorator import mark_with_dialects_excluding
 
 
@@ -56,8 +57,8 @@ def test_array_comparisons(test_helpers, dialect):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            helper.cl.ArrayIntersectAtSizes("postcode", [4, 3, 2, 1]),
-            helper.cl.ExactMatch("first_name"),
+            cl.ArrayIntersectAtSizes("postcode", [4, 3, 2, 1]),
+            cl.ExactMatch("first_name"),
         ],
     }
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
@@ -91,8 +92,8 @@ def test_array_comparisons(test_helpers, dialect):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            helper.cl.ArrayIntersectAtSizes("postcode", [3, 1]),
-            helper.cl.ExactMatch("first_name"),
+            cl.ArrayIntersectAtSizes("postcode", [3, 1]),
+            cl.ExactMatch("first_name"),
         ],
     }
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
@@ -125,7 +126,7 @@ def test_array_comparisons(test_helpers, dialect):
         settings = {
             "link_type": "dedupe_only",
             "comparisons": [
-                helper.cl.ArrayIntersectAtSizes("postcode", [-1, 2]),
-                helper.cl.ExactMatch("first_name"),
+                cl.ArrayIntersectAtSizes("postcode", [-1, 2]),
+                cl.ExactMatch("first_name"),
             ],
         }
