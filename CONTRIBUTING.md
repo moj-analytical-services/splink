@@ -18,7 +18,7 @@ Contributions to Splink are not limited to the code. Feedback and input on our d
 
 Behind the scenes, the Splink documentation is split into 2 parts:
 
-- The [Tutorials](./docs/demos/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/examples_index.md) are stored in a separate repo - [splink_demos](https://github.com/moj-analytical-services/splink_demos)
+- The [Tutorials](./docs/demos/tutorials/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/demos/examples/examples_index.md) are stored in a separate repo - [splink_demos](https://github.com/moj-analytical-services/splink_demos)
 - Everything else is stored in the Splink repo either in:
     - the [docs folder](https://github.com/moj-analytical-services/splink/tree/master/docs)
     - the Splink code itself. E.g. docstrings from [linker.py](https://github.com/moj-analytical-services/splink/blob/master/splink/linker.py) feed directly into the [Linker API docs](./docs/linker.md).
