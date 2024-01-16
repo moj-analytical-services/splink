@@ -60,6 +60,13 @@ plugins:
   - mkdocs-video:
       is_video: True
       video_autoplay: false
+  - git-committers:
+      repository: moj-analytical-services/splink
+      branch: master
+  - rss:
+      match_path: blog/posts/.* 
+      date_from_meta:
+        as_creation: date
 
 markdown_extensions:
   - abbr
@@ -86,9 +93,10 @@ markdown_extensions:
   - toc:
       permalink: True
       toc_depth: 3
+  - attr_list
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - footnotes
   - neoteroi.cards
 nav:

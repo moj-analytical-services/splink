@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from jinja2 import Template
 
+from .exceptions import SplinkException
 from .misc import EverythingEncoder, read_resource
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 
 def _quo_if_str(x):
-    if type(x) is str:
+    if isinstance(x, str):
         return f"'{x}'"
     else:
         return str(x)
@@ -42,6 +43,18 @@ def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
 def df_clusters_as_records(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
+    """Retrieves distinct clusters which exist in df_clustered_nodes based on
+    list of cluster IDs provided and converts them to a record dictionary.
+
+    Args:
+        linker: An instance of the Splink Linker class.
+        df_clustered_nodes (SplinkDataFrame): Result of
+        cluster_pairwise_predictions_at_threshold().
+        cluster_ids (list): List of cluster IDs to filter the results.
+
+    Returns:
+    dict: A record dictionary of the specified cluster IDs.
+    """
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
     df_clusters = linker._sql_to_splink_dataframe_checking_cache(
         sql, "__splink__scs_clusters"
@@ -50,6 +63,15 @@ def df_clusters_as_records(
 
 
 def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
+    """Generates SQL query to select all columns from df_clustered_nodes
+    for list of cluster IDs provided.
+
+    Args:
+        df_clustered_nodes (SplinkDataFrame): result of
+        cluster_pairwise_predictions_at_threshold()
+        cluster_ids (list): List of cluster IDs to filter the results
+    """
+
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -65,9 +87,20 @@ def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
 def create_df_nodes(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
+    """Retrieves nodes from df_clustered_nodes for list of cluster IDs provided.
+
+    Args:
+        linker: An instance of the Splink Linker class.
+        df_clustered_nodes (SplinkDataFrame): Result of
+        cluster_pairwise_predictions_at_threshold().
+        cluster_ids (list): List of cluster IDs to filter the results.
+
+    Returns:
+        A SplinkDataFrame containing the nodes for the specified cluster IDs.
+    """
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
     df_nodes = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__scs_clusters"
+        sql, "__splink__scs_nodes"
     )
     return df_nodes
 
@@ -158,7 +191,9 @@ def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_cluster: int
 ):
     sql = f"""
-    select cluster_id, count(*) as cluster_size,
+    select
+        cluster_id,
+        count(*) as cluster_size,
         max({linker._settings_obj._unique_id_column_name}) as ordering
     from {connected_components.physical_name}
     group by cluster_id
@@ -167,9 +202,11 @@ def _get_cluster_id_of_each_size(
 
     linker._enqueue_sql(sql, "__splink__cluster_count")
 
+    # Assign unique row number to each row in partition
     sql = """
     select
-        cluster_id, cluster_size,
+        cluster_id,
+        cluster_size,
         row_number() over (partition by cluster_size order by ordering) as row_num
     from __splink__cluster_count
     """
@@ -177,15 +214,55 @@ def _get_cluster_id_of_each_size(
     linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
 
     sql = f"""
-    select cluster_id, cluster_size
+    select
+        cluster_id,
+        cluster_size
     from __splink__cluster_count_row_numbered
-    where row_num <= {rows_per_cluster} and cluster_size > 1
+    where row_num <= {rows_per_cluster}
+    and cluster_size > 1
     """
 
     linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
     df_cluster_sample_with_size = linker._execute_sql_pipeline()
 
     return df_cluster_sample_with_size.as_record_dict()
+
+
+def _get_lowest_density_cluster_ids(
+    linker: "Linker",
+    df_cluster_metrics: SplinkDataFrame,
+    sample_size: int,
+    min_nodes: int,
+):
+    """Retrieves cluster IDs based on density metric, ordered from least to
+    most dense.
+
+    Args:
+        linker: An instance of the Splink Linker class.
+        df_cluster_metrics (SplinkDataFrame): dataframe containing
+        cluster metrics, including density.
+        sample_size (int): size of sample returned.
+        min_nodes (int): The minimum number of nodes a cluster must contain
+        to be included in the sample.
+
+    Returns:
+        list: A list of cluster IDs based on density metric, ordered from least to
+        most dense.
+    """
+    # Ordering: least dense clusters first
+    sql = f"""
+    SELECT cluster_id
+    FROM {df_cluster_metrics.physical_name}
+    WHERE n_nodes >= {min_nodes}
+    ORDER BY density
+    LIMIT {sample_size}
+    """
+
+    df_density_sample = linker._sql_to_splink_dataframe_checking_cache(
+        sql, "__splink__density_sample"
+    )
+
+    return [r["cluster_id"] for r in df_density_sample.as_record_dict()]
 
 
 def render_splink_cluster_studio_html(
@@ -199,6 +276,7 @@ def render_splink_cluster_studio_html(
     cluster_ids: list = None,
     cluster_names: list = None,
     overwrite: bool = False,
+    _df_cluster_metrics: SplinkDataFrame = None,
 ):
     bundle_observable_notebook = True
 
@@ -222,6 +300,19 @@ def render_splink_cluster_studio_html(
             ]
             cluster_ids = [c["cluster_id"] for c in cluster_ids]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
+        if sampling_method == "lowest_density_clusters":
+            if _df_cluster_metrics is None:
+                raise SplinkException(
+                    """To sample by density, you must provide a cluster metrics table
+                      containing density. This can be generated by calling the
+                      _compute_cluster_metrics method on the linker."""
+                )
+            else:
+                # Using sensible default for min_nodes. Might become option
+                # for users in future
+                cluster_ids = _get_lowest_density_cluster_ids(
+                    linker, _df_cluster_metrics, sample_size, min_nodes=3
+                )
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
