@@ -5,7 +5,7 @@ import splink.comparison_template_library as ctl
 
 from .decorator import mark_with_dialects_excluding
 
-# TODO: we can probably restore limited postgres (+ maybe sqlite?) testing,
+# TODO: we can probably restore limited postgres (+ maybe sqlite?) testing,
 # if we use the right option
 ## DateComparison
 
