@@ -29,6 +29,9 @@ class CustomComparison(ComparisonCreator):
         self._output_column_name = output_column_name
         self._comparison_levels = comparison_levels
         self._description = description
+        # we deliberately don't call super().__init__() - all that does is set up
+        # column expressions, which we do not need here as we are dealing with
+        # levels directly
 
     @staticmethod
     def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict]):
@@ -515,11 +518,16 @@ class DistanceInKMAtThresholds(ComparisonCreator):
 
         thresholds_as_iterable = ensure_is_iterable(km_thresholds)
         self.thresholds = [*thresholds_as_iterable]
-        super().__init__(col_name_or_names=[lat_col, long_col])
+        super().__init__(
+            col_name_or_names={
+                "latitude_column": lat_col,
+                "longitude_column": long_col,
+            }
+        )
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-        lat_col = self.col_expressions[0]
-        long_col = self.col_expressions[1]
+        lat_col = self.col_expressions["latitude_column"]
+        long_col = self.col_expressions["longitude_column"]
         return [
             cll.Or(cll.NullLevel(lat_col), cll.NullLevel(long_col)),
             *[
@@ -538,6 +546,6 @@ class DistanceInKMAtThresholds(ComparisonCreator):
         )
 
     def create_output_column_name(self) -> str:
-        lat_col = self.col_expressions[0]
-        long_col = self.col_expressions[1]
+        lat_col = self.col_expressions["latitude_column"]
+        long_col = self.col_expressions["longitude_column"]
         return f"{lat_col.output_column_name}_{long_col.output_column_name}"
