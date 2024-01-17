@@ -10,6 +10,7 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+from typing import Dict
 
 import sqlglot
 
@@ -53,7 +54,10 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_metrics import _size_density_sql
+from .cluster_metrics import (
+    _node_degree_sql,
+    _size_density_centralisation_sql,
+)
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_creator import ComparisonCreator
@@ -1181,6 +1185,8 @@ class Linker:
         settings_dict["sql_dialect"] = settings_dict.get(
             "sql_dialect", self._sql_dialect
         )
+
+        self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
@@ -1678,8 +1684,7 @@ class Linker:
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
 
-        # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
+        blocking_rule = blocking_rule_to_obj(blocking_rule)
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -2131,13 +2136,105 @@ class Linker:
 
         return cc
 
-    def _compute_cluster_metrics(
+    def _compute_metrics_nodes(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
-    ):
-        """Generates a table containing cluster metrics and returns a Splink dataframe
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing node-level metrics.
+
+        Accepts outputs of `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of node metrics.
+
+        Node metrics produced:
+        * node_degree (absolute number of neighbouring nodes)
+
+        Output table has a single row per input node, along with the cluster id (as
+        assigned in `linker.cluster_pairwise_at_threshold()`) and the metric
+        node_degree:
+        |-------------------------------------------------|
+        | composite_unique_id | cluster_id  | node_degree |
+        |---------------------|-------------|-------------|
+        | s1-__-10001         | s1-__-10001 | 6           |
+        | s1-__-10002         | s1-__-10001 | 4           |
+        | s1-__-10003         | s1-__-10003 | 2           |
+        ...
+        """
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # need composite unique ids
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
+
+        sqls = _node_degree_sql(
+            df_predict,
+            df_clustered,
+            composite_uid_edges_l,
+            composite_uid_edges_r,
+            composite_uid_clusters,
+            threshold_match_probability,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_node_metrics = self._execute_sql_pipeline()
+
+        return df_node_metrics
+
+    def _compute_metrics_clusters(
+        self,
+        df_node_metrics: SplinkDataFrame,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing cluster-level metrics.
+
+        Accepts output of `linker._compute_node_metrics()` (which has the relevant
+        information from `linker.predict() and
+        `linker.cluster_pairwise_at_threshold()`), produces a table of cluster metrics.
+
+        Cluster metrics produced:
+        * n_nodes (aka cluster size, number of nodes in cluster)
+        * n_edges (number of edges in cluster)
+        * density (number of edges normalised wrt maximum possible number)
+        * cluster_centralisation (average absolute deviation from maximum node_degree
+            normalised wrt maximum possible value)
+
+        Output table has a single row per cluster, along with the cluster_metrics
+        listed above
+        |--------------------------------------------------------------------|
+        | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
+        |-------------|---------|---------|---------|------------------------|
+        | s1-__-10006 | 4       | 4       | 0.66667 | 0.6666                 |
+        | s1-__-10008 | 6       | 5       | 0.33333 | 0.4                    |
+        | s1-__-10013 | 11      | 19      | 0.34545 | 0.3111                 |
+        ...
+        """
+
+        sqls = _size_density_centralisation_sql(
+            df_node_metrics,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+        return df_cluster_metrics
+
+    # a user-facing function, which is currently 'private' (Beta functionality)
+    # while functionality is developed, as breaking changes may occur
+    def _compute_graph_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> Dict[str, SplinkDataFrame]:
+        """
+        Generates tables containing graph metrics (for nodes, edges, and clusters),
+        and returns a dictionary of Splink dataframes
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
@@ -2148,32 +2245,23 @@ class Linker:
                 threshold.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
-            cluster metrics
+            dict[str, SplinkDataFrame]: A dictionary of SplinkDataFrames
+                containing cluster IDs and selected cluster, node, or edge metrics
+                key "nodes" for nodes metrics table
+                key "edges" for edge metrics table
+                key "clusters" for cluster metrics table
 
         """
-
-        # Get unique id columns
-        uid_cols = self._settings_obj._unique_id_input_columns
-        # Create unique id for left-hand edges
-        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-        # Create unique id for clusters
-        composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
-
-        sqls = _size_density_sql(
-            df_predict,
-            df_clustered,
-            threshold_match_probability,
-            composite_uid_edges_l,
-            composite_uid_clusters,
+        df_node_metrics = self._compute_metrics_nodes(
+            df_predict, df_clustered, threshold_match_probability
         )
+        # don't need edges as information is baked into node metrics
+        df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_cluster_metrics = self._execute_sql_pipeline()
-
-        return df_cluster_metrics
+        return {
+            "nodes": df_node_metrics,
+            "clusters": df_cluster_metrics,
+        }
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
@@ -3482,6 +3570,7 @@ class Linker:
         cluster_names: list = None,
         overwrite: bool = False,
         return_html_as_string=False,
+        _df_cluster_metrics: SplinkDataFrame = None,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -3491,8 +3580,8 @@ class Linker:
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
-            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
-                `random`.
+            sampling_method (str, optional): `random`, `by_cluster_size` or
+                `lowest_density_clusters`. Defaults to `random`.
             sample_size (int, optional): Number of clusters to show in the dahboard.
                 Defaults to 10.
             cluster_ids (list): The IDs of the clusters that will be displayed in the
@@ -3532,6 +3621,7 @@ class Linker:
             cluster_ids=cluster_ids,
             overwrite=overwrite,
             cluster_names=cluster_names,
+            _df_cluster_metrics=_df_cluster_metrics,
         )
 
         if return_html_as_string:

@@ -14,7 +14,6 @@ from sqlglot.optimizer.simplify import simplify
 
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .default_from_jsonschema import default_value_from_schema
-from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import (
     dedupe_preserving_order,
@@ -197,21 +196,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            # if we have a string, as happens when we are coming from .as_dict(),
-            # then we do not need to worry
-            if isinstance(val, str):
-                val_str = val
-            # otherwise we have a ColumnExpression. Make sure there are no transforms
-            # on it, otherwise a no-no as a tf column
-            elif not val.is_pure_column_or_column_reference:
-                raise SplinkException(
-                    "`tf_adjustment_column` must have a pure column or "
-                    "column reference, but found ColumnExpression: "
-                    f"{val}."
-                )
-            else:
-                val_str = val.name
-            return InputColumn(val_str, sql_dialect=self.sql_dialect)
+            return InputColumn(val, sql_dialect=self.sql_dialect)
         else:
             return None
 

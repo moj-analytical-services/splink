@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from inspect import signature
 from typing import final
 
+from .column_expression import ColumnExpression
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect
 
@@ -38,6 +39,9 @@ class ComparisonLevelCreator(ABC):
 
         for attr in allowed_attrs:
             if (value := getattr(self, attr, None)) is not None:
+                if isinstance(value, ColumnExpression):
+                    value.sql_dialect = sql_dialect
+                    value = value.name
                 level_dict[attr] = value
 
         return level_dict

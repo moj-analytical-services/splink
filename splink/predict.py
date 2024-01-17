@@ -65,6 +65,10 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
+    if settings_obj._sql_dialect == "duckdb":
+        order_by_statement = "order by 1"
+    else:
+        order_by_statement = ""
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
@@ -72,6 +76,7 @@ def predict_from_comparison_vectors_sqls(
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}
+    {order_by_statement}
     """
 
     sql = {

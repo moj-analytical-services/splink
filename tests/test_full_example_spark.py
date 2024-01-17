@@ -49,7 +49,7 @@ def test_full_example_spark(spark, df_spark, tmp_path):
             cl.DamerauLevenshteinAtThresholds("dob", 2),
             {
                 "comparison_levels": [
-                    cll.ArrayIntersectLevel("email"),
+                    cll.ArrayIntersectLevel("email", min_intersection=1),
                     cll.ElseLevel(),
                 ]
             },
