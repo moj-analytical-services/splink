@@ -239,6 +239,7 @@ def test_null_pattern_match(dialect, test_helpers):
     # only entry should be in Null level
     assert df_e["gamma_name"][0] == -1
 
+
 comparison_email_ctl = ctl.EmailComparison(
     "email",
     invalid_emails_as_null=True,
@@ -270,7 +271,6 @@ def test_ctl_creators_run_predict(dialect, test_helpers):
 
     linker = helper.Linker(df, ctl_settings, **helper.extra_linker_args())
     linker.predict()
-
 
 
 def test_custom_dialect_no_string_lookup():
