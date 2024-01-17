@@ -208,6 +208,36 @@ def test_regex_fall_through(dialect, test_helpers):
     assert df_e["gamma_name"][0] == 0
 
 
+@mark_with_dialects_excluding("sqlite")
+def test_null_pattern_match(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "groat"},
+            {"unique_id": 2, "name": "float"},
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "comparison_levels": [
+                    # this pattern does matches no data:
+                    cll.NullLevel("name", valid_string_pattern=".*ook"),
+                    cll.ExactMatchLevel(ColumnExpression("name")),
+                    cll.ElseLevel(),
+                ]
+            }
+        ],
+    }
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    # only entry should be in Null level
+    assert df_e["gamma_name"][0] == -1
+
+
 def test_custom_dialect_no_string_lookup():
     from splink.dialects import SplinkDialect
 
