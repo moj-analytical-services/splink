@@ -169,6 +169,10 @@ class ExactMatchLevel(ComparisonLevelCreator):
                     "substr() etc."
                 )
             # leave tf_minimum_u_value as None
+            # Since we know that it's a pure column reference it's fine to assign the
+            #  raw unescaped value to the dict - it will be processed via `InputColumn` when
+            # the dict is read
+            
             self.configure(
                 tf_adjustment_column=self.col_expression.raw_sql_expression,
                 tf_adjustment_weight=1.0,
