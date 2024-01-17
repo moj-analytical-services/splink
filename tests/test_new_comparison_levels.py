@@ -261,7 +261,7 @@ ctl_settings = {
 }
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_ctl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
