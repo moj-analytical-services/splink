@@ -1,10 +1,13 @@
 import gc
 
+import pandas as pd
 import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink.column_expression import ColumnExpression
 import splink.comparison_template_library as ctl
+
 
 from .decorator import mark_with_dialects_excluding
 
@@ -171,6 +174,68 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
     linker.predict()
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_regex_fall_through(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "groat"},
+            {"unique_id": 2, "name": "float"},
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "comparison_levels": [
+                    cll.NullLevel("name"),
+                    # this pattern does not match any data:
+                    cll.ExactMatchLevel(
+                        ColumnExpression("name").regex_extract("^wr.*")
+                    ),
+                    cll.ElseLevel(),
+                ]
+            }
+        ],
+    }
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    # only entry should be in Else level
+    assert df_e["gamma_name"][0] == 0
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_null_pattern_match(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "groat"},
+            {"unique_id": 2, "name": "float"},
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "comparison_levels": [
+                    # this pattern does matches no data:
+                    cll.NullLevel("name", valid_string_pattern=".*ook"),
+                    cll.ExactMatchLevel(ColumnExpression("name")),
+                    cll.ElseLevel(),
+                ]
+            }
+        ],
+    }
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    # only entry should be in Null level
+    assert df_e["gamma_name"][0] == -1
 
 
 comparison_email_ctl = ctl.EmailComparison(

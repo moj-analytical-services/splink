@@ -39,6 +39,7 @@ from .blocking import (
     BlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
+    materialise_exploded_id_tables,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
@@ -1461,10 +1462,15 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
-        return self._execute_sql_pipeline([concat_with_tf])
+
+        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+        return deterministic_link_df
 
     def estimate_u_using_random_sampling(
         self, max_pairs: int = None, seed: int = None, *, target_rows=None
@@ -1684,7 +1690,15 @@ class Linker:
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
 
+        # Extract the blocking rule
+        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
+        # and raise error if not specfically a BlockingRule
         blocking_rule = blocking_rule_to_obj(blocking_rule)
+        if type(blocking_rule) is not BlockingRule:
+            raise TypeError(
+                "EM blocking rules must be plain blocking rules, not "
+                "salted or exploding blocking rules"
+            )
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1783,6 +1797,10 @@ class Linker:
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
 
+        # If exploded blocking rules exist, we need to materialise
+        # the tables of ID pairs
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -1808,6 +1826,9 @@ class Linker:
 
         predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
+
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+
         return predictions
 
     def find_matches_to_new_records(
@@ -4053,3 +4074,10 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
+
+    def _explode_arrays_sql(
+        self, tbl_name, columns_to_explode, other_columns_to_retain
+    ):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
+        )
