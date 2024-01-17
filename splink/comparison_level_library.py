@@ -170,7 +170,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 )
             # leave tf_minimum_u_value as None
             self.configure(
-                tf_adjustment_column=self.col_expression,
+                tf_adjustment_column=self.col_expression.raw_sql_expression,
                 tf_adjustment_weight=1.0,
             )
 
