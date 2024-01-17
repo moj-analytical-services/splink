@@ -389,11 +389,11 @@ def materialise_exploded_id_tables(linker: Linker):
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
     exploded_tables = []
+
+    input_dataframe = linker._initialise_df_concat_with_tf()
+    input_colnames = {col.name for col in input_dataframe.columns}
+
     for br in exploding_blocking_rules:
-        input_dataframe = linker._initialise_df_concat_with_tf()
-
-        input_colnames = {col.name for col in input_dataframe.columns}
-
         arrays_to_explode_quoted = [
             InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
             for colname in br.array_columns_to_explode
