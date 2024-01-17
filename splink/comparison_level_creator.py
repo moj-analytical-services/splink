@@ -109,6 +109,16 @@ class ComparisonLevelCreator(ABC):
     def is_null_level(self, is_null_level: bool):
         self._is_null_level = is_null_level
 
+    @final
+    @property
+    def is_exact_match_level(self) -> bool:
+        return getattr(self, "_is_exact_match_level", False)
+
+    @final
+    @is_exact_match_level.setter
+    def is_exact_match_level(self, is_exact_match_level: bool):
+        self._is_exact_match_level = is_exact_match_level
+
     def __repr__(self) -> str:
         return (
             f"Comparison level generator for {self.create_label_for_charts()}. "

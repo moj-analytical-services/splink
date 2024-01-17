@@ -67,6 +67,11 @@ class ComparisonCreator(ABC):
         # furnish comparison levels with m and u probabilities as needed
         comparison_levels = self.create_comparison_levels()
 
+        if self.term_frequency_adjustments:
+            for cl in comparison_levels:
+                if cl.is_exact_match_level:
+                    cl.term_frequency_adjustments = True
+
         if self.m_probabilities:
             m_values = self.m_probabilities.copy()
             comparison_levels = [
@@ -128,6 +133,7 @@ class ComparisonCreator(ABC):
     def configure(
         self,
         *,
+        term_frequency_adjustments: bool = False,
         m_probabilities: list[float] = None,
         u_probabilities: list[float] = None,
     ) -> "ComparisonCreator":
@@ -147,12 +153,25 @@ class ComparisonCreator(ABC):
                 # in that order
             )
         Args:
+            term_frequency_adjustments (bool, optional): Whether term frequency
+                adjustments are switched on for this comparison. Only applied
+                to exact match levels. Default: False
             m_probabilities (list, optional): List of m probabilities
             u_probabilities (list, optional): List of u probabilities
         """
+        self.term_frequency_adjustments = term_frequency_adjustments
         self.m_probabilities = m_probabilities
         self.u_probabilities = u_probabilities
         return self
+
+    @property
+    def term_frequency_adjustments(self):
+        return getattr(self, "_term_frequency_adjustments", False)
+
+    @final
+    @term_frequency_adjustments.setter
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
+        self._term_frequency_adjustments = term_frequency_adjustments
 
     @final
     @property
