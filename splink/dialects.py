@@ -1,5 +1,5 @@
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
@@ -94,7 +94,11 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
+    @final
     def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        return f"NULLIF({self._regex_extract_raw(name, pattern, capture_group)}, '')"
+
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'regex_extract' function"
         )
@@ -136,7 +140,7 @@ class DuckDBDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
-    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
 
@@ -205,7 +209,7 @@ class SparkDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
 
-    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
 
@@ -287,7 +291,7 @@ class PostgresDialect(SplinkDialect):
             {date_f} <= {clc.date_threshold}
         """
 
-    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         # full match - wrap pattern in parentheses so first group is whole expression
         if capture_group == 0:
             pattern = f"({pattern})"

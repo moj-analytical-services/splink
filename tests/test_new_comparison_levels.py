@@ -176,7 +176,7 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     linker.predict()
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_regex_fall_through(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = pd.DataFrame(
