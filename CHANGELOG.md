@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.9.11] - 2024-01-17
+
+### Added
+
+- Ability to block on array columns by specifying `arrays_to_explode` in your blocking rule. ([#1692](https://github.com/moj-analytical-services/splink/pull/1692))
+- Added ability to sample by density in cluster studio by @zslade in ([#1754](https://github.com/moj-analytical-services/splink/pull/1754))
+
 ### Changed
 
+- Splink now fully parallelises data linkage when using DuckDB ([#1796](https://github.com/moj-analytical-services/splink/pull/1796))
+
 ### Fixed
+
+- Allow salting in EM training ([#1832](https://github.com/moj-analytical-services/splink/pull/1832))
 
 ## [3.9.10] - 2023-12-07
 
@@ -20,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed issue with  `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
+- Fixed issue with `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
 - Delete cached tables before resetting the cache ([#1752](https://github.com/moj-analytical-services/splink/pull/1752)
 
 ## [3.9.9] - 2023-11-14
@@ -57,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.10...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.11...HEAD
+[3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11
 [3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...3.9.10
 [3.9.9]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...3.9.9
 [3.9.8]: https://github.com/moj-analytical-services/splink/compare/v3.9.7...v3.9.8
