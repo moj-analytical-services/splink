@@ -229,6 +229,7 @@ nav:
         - Testing: "dev_guides/changing_splink/testing.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+        - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
         - Understanding and debugging Splink: "dev_guides/debug_modes.md"
         - Transpilation using sqlglot: "dev_guides/transpilation.md"
