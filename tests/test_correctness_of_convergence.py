@@ -31,6 +31,8 @@
 # df = add_match_prob(df, settings_for_data_generation)
 
 
+import re
+
 import pandas as pd
 import pytest
 
@@ -61,16 +63,6 @@ def test_splink_converges_to_known_params():
 
     linker = DuckDBLinker(df, settings)
 
-    # This test is fiddly because you need to know the hash of the
-    # comparison vector table, but to find this out you need to run the test
-
-    # If the test is failing, run it and look at the output for a line like
-    # CREATE TABLE __splink__df_comparison_vectors_abc123
-    # and modify the following line to include the value of the hash (abc123 above)
-
-    cvv_hashed_tablename = "__splink__df_comparison_vectors_cf129c9c9"
-    linker.register_table(df, cvv_hashed_tablename)
-
     em_training_session = EMTrainingSession(
         linker,
         "1=1",
@@ -78,6 +70,19 @@ def test_splink_converges_to_known_params():
         fix_m_probabilities=False,
         fix_probability_two_random_records_match=False,
     )
+
+    # This test is fiddly because you need to know the hash of the
+    # comparison vector table 'in advance'.  To get it, we run
+    # code that looks for the table and fails to find it
+    # We can then register a table with that name
+    try:
+        em_training_session._comparison_vectors()
+    except Exception as e:
+        pattern = r"__splink__df_comparison_vectors_[a-f0-9]{9}"
+
+        cvv_hashed_tablename = re.search(pattern, str(e)).group()
+
+    linker.register_table(df, cvv_hashed_tablename)
 
     em_training_session._train()
 

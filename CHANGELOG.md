@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Splink now fully parallelises data linkage when using DuckDB ([#1796](https://github.com/moj-analytical-services/splink/pull/1796))
+
 ### Fixed
+
+- Allow salting in EM training ([#1832](https://github.com/moj-analytical-services/splink/pull/1832))
 
 ## [3.9.10] - 2023-12-07
 
@@ -20,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed issue with  `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
+- Fixed issue with `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
 - Delete cached tables before resetting the cache ([#1752](https://github.com/moj-analytical-services/splink/pull/1752)
 
 ## [3.9.9] - 2023-11-14
