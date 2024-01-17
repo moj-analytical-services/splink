@@ -14,16 +14,16 @@ def get_different_settings_dicts():
     settings = get_settings_dict()
     settings_tf = deepcopy(settings, None)
     # Settings with two term frequency columns
-    settings_tf["comparisons"][1] = cl.ExactMatch(
-        "surname",
+    settings_tf["comparisons"][1] = cl.ExactMatch("surname").configure(
         term_frequency_adjustments=True,
-    ).configure(m_probabilities=[0.7, 0.1])
+        m_probabilities=[0.7, 0.1],
+    )
     settings_no_tf = deepcopy(settings, None)
     # Settings with no term frequencies
-    settings_no_tf["comparisons"][0] = cl.ExactMatch(
-        "first_name",
+    settings_no_tf["comparisons"][0] = cl.ExactMatch("first_name").configure(
         term_frequency_adjustments=False,
-    ).configure(m_probabilities=[0.7, 0.1])
+        m_probabilities=[0.7, 0.1],
+    )
     return settings_tf, settings_no_tf, settings
 
 
