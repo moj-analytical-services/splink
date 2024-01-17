@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Ability to block on array columns by specifying `arrays_to_explode` in your blocking rule. ([#1692](https://github.com/moj-analytical-services/splink/pull/1692))
+
 ### Changed
 
 - Splink now fully parallelises data linkage when using DuckDB ([#1796](https://github.com/moj-analytical-services/splink/pull/1796))
