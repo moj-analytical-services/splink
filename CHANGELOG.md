@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Ability to block on array columns by specifying `arrays_to_explode` in your blocking rule. ([#1692](https://github.com/moj-analytical-services/splink/pull/1692))
+- Added ability to sample by density in luster studio by @zslade in ([#1754](https://github.com/moj-analytical-services/splink/pull/1754))
 
 ### Changed
 
