@@ -154,7 +154,6 @@ class DuckDBDialect(SplinkDialect):
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
-
     # TODO: this is only needed for duckdb < 0.9.0.
     # should we just ditch support for that? (only for cll - engine should still work)
     def array_intersect(self, clc: "ComparisonLevelCreator"):
@@ -168,7 +167,7 @@ class DuckDBDialect(SplinkDialect):
             f" - list_unique(list_concat({col.name_l}, {col.name_r}))"
             f" >= {threshold}"
         ).strip()
- 
+
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
