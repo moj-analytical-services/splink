@@ -192,15 +192,16 @@ def test_regex_fall_through(dialect, test_helpers):
                 "comparison_levels": [
                     cll.NullLevel("name"),
                     # this pattern does not match any data:
-                    cll.ExactMatchLevel(ColumnExpression("name").regex_extract("^wr.*")),
+                    cll.ExactMatchLevel(
+                        ColumnExpression("name").regex_extract("^wr.*")
+                    ),
                     cll.ElseLevel(),
                 ]
             }
-        ]
+        ],
     }
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-
     df_e = linker.predict().as_pandas_dataframe()
 
     # only entry should be in Else level

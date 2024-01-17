@@ -89,14 +89,28 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    @staticmethod
+    def _wrap_in_nullif(func):
+        def nullif_wrapped_function(*args, **kwargs):
+            # convert empty strings to NULL
+            return f"NULLIF({func(*args, **kwargs)}, '')"
+
+        return nullif_wrapped_function
+
+    @final
     def try_parse_date(self, name: str, date_format: str = None):
+        return self._wrap_in_nullif(self._try_parse_date_raw)(name, date_format)
+
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
     @final
     def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
-        return f"NULLIF({self._regex_extract_raw(name, pattern, capture_group)}, '')"
+        return self._wrap_in_nullif(self._regex_extract_raw)(
+            name, pattern, capture_group
+        )
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         raise NotImplementedError(
@@ -135,7 +149,7 @@ class DuckDBDialect(SplinkDialect):
     def default_date_format(self):
         return "%Y-%m-%d"
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
@@ -204,7 +218,7 @@ class SparkDialect(SplinkDialect):
             {date_f} <= {clc.date_threshold}
         """
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
