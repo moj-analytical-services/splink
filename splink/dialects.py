@@ -269,19 +269,9 @@ class PostgresDialect(SplinkDialect):
         instead are UDFs which are automatically registered by Splink
         """
 
-        if clc.date_format is None:
-            clc.date_format = "yyyy-MM-dd"
-
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
-
-        if clc.cast_strings_to_date:
-            datediff_args = f"""
-                to_date({col.name_l}, '{clc.date_format}'),
-                to_date({col.name_r}, '{clc.date_format}')
-            """
-        else:
-            datediff_args = f"{col.name_l}, {col.name_r}"
+        datediff_args = f"{col.name_l}, {col.name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
@@ -316,6 +306,15 @@ class PostgresDialect(SplinkDialect):
                 "than 1. To proceed you must use your own SQL expression"
             )
         return f"substring({name} from '{pattern}')"
+
+    @property
+    def default_date_format(self):
+        return "YYYY-MM-DD"
+
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""to_date({name}, '{date_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self

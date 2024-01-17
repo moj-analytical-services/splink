@@ -12,8 +12,8 @@ toc_depth: 2
 ---
 # Documentation for `comparison_library`
 
-The `comparison_library` contains pre-made comparisons available for use directly [as described in this topic guide](./topic_guides/customising_comparisons.html#method-1-using-the-comparisonlibrary).
-However, not every comparison is available for every [Splink-compatible SQL backend](./topic_guides/backends.html).
+The `comparison_library` contains pre-made comparisons available for use directly [as described in this topic guide](./topic_guides/comparisons/customising_comparisons.html#method-1-using-the-comparisonlibrary).
+However, not every comparison is available for every [Splink-compatible SQL backend](./topic_guides/splink_fundamentals/backends/backends.html).
 
 The pre-made Splink comparisons available for each SQL dialect are as given in this table:
 
