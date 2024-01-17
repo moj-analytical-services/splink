@@ -60,18 +60,13 @@ class NullLevel(ComparisonLevelCreator):
         invalid_dates_as_null: bool = False,
     ):
         col_expression = ColumnExpression.instantiate_if_str(col_name)
-        # if we are using regex or date parsing, we will also need to check for
-        # the empty string, as this is what is returned by some backends
-        self.check_for_empty_string = False
 
         # if invalid_dates_as_null, then supplied pattern is a date format
         if invalid_dates_as_null:
             col_expression = col_expression.try_parse_date(valid_string_pattern)
-            self.check_for_empty_string = True
         # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
         elif valid_string_pattern is not None:
             col_expression = col_expression.regex_extract(valid_string_pattern)
-            self.check_for_empty_string = True
         self.col_expression = col_expression
         self.is_null_level = True
 
@@ -79,8 +74,6 @@ class NullLevel(ComparisonLevelCreator):
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
         null_sql = f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
-        if self.check_for_empty_string:
-            null_sql = f"({null_sql}) OR " f"({col.name_l} = '' OR {col.name_r} = '')"
         return null_sql
 
     def create_label_for_charts(self) -> str:
