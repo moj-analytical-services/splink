@@ -15,6 +15,120 @@ _fuzzy_levels = {
 # metric names single quoted and comma-separated for error messages
 _AVAILABLE_METRICS_STRING = ", ".join(map(lambda x: f"'{x}'", _fuzzy_levels.keys()))
 
+
+_VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
+
+
+class PostcodeComparison(ComparisonCreator):
+    """
+    A wrapper to generate a comparison for a poscode column 'col_name'
+        with preselected defaults.
+
+    The default arguments will give a comparison with levels:\n
+    - Exact match on full postcode
+    - Exact match on sector
+    - Exact match on district
+    - Exact match on area
+    - All other comparisons
+    """
+
+    SECTOR_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]"
+    DISTRICT_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?"
+    AREA_REGEX = "^[A-Za-z]{1,2}"
+
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        *,
+        invalid_postcodes_as_null=False,
+        valid_postcode_regex=_VALID_POSTCODE_REGEX,
+        include_full_match_level=True,
+        include_sector_match_level=True,
+        include_district_match_level=True,
+        include_area_match_level=True,
+        lat_col: Union[str, ColumnExpression] = None,
+        long_col: Union[str, ColumnExpression] = None,
+        km_thresholds: Union[float, List[float]] = [],
+    ):
+        self.valid_postcode_regex = (
+            valid_postcode_regex if invalid_postcodes_as_null else None
+        )
+
+        self.full_match = include_full_match_level
+        self.sector_match = include_sector_match_level
+        self.district_match = include_district_match_level
+        self.area_match = include_area_match_level
+
+        cols = {"postcode": col_name}
+        if km_thresholds:
+            km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
+            self.km_thresholds = [*km_thresholds_as_iterable]
+            cols["latitude"] = lat_col
+            cols["longitude"] = long_col
+        super().__init__(cols)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        full_col_expression = self.col_expressions["postcode"]
+        sector_col_expression = full_col_expression.regex_extract(self.SECTOR_REGEX)
+        district_col_expression = full_col_expression.regex_extract(self.DISTRICT_REGEX)
+        area_col_expression = full_col_expression.regex_extract(self.AREA_REGEX)
+
+        levels = [
+            # Null level accept pattern if not None, otherwise will ignore
+            cll.NullLevel(
+                full_col_expression, valid_string_pattern=self.valid_postcode_regex
+            ),
+        ]
+        if self.full_match:
+            levels.append(cll.ExactMatchLevel(full_col_expression))
+        if self.sector_match:
+            levels.append(cll.ExactMatchLevel(sector_col_expression))
+        if self.district_match:
+            levels.append(cll.ExactMatchLevel(district_col_expression))
+        if self.area_match:
+            levels.append(cll.ExactMatchLevel(area_col_expression))
+        if self.km_thresholds:
+            lat_col_expression = self.col_expressions["latitude"]
+            long_col_expression = self.col_expressions["longitude"]
+            levels.extend(
+                [
+                    cll.DistanceInKMLevel(
+                        lat_col_expression, long_col_expression, km_threshold
+                    )
+                    for km_threshold in self.km_thresholds
+                ]
+            )
+
+        levels.append(cll.ElseLevel())
+        return levels
+
+    def create_description(self) -> str:
+        comparison_desc = ""
+        if self.full_match:
+            comparison_desc += "Exact match vs. "
+
+        if self.sector_match:
+            comparison_desc += "Exact sector match vs. "
+        if self.district_match:
+            comparison_desc += "Exact district match vs. "
+        if self.area_match:
+            comparison_desc += "Exact area match vs. "
+
+        if self.km_thresholds:
+            comma_separated_thresholds_string = ", ".join(map(str, self.km_thresholds))
+            plural = "s" if len(self.km_thresholds) > 1 else ""
+            comparison_desc = (
+                f"km distance within threshold{plural} "
+                f"{comma_separated_thresholds_string} vs. "
+            )
+
+        comparison_desc += "anything else"
+        return comparison_desc
+
+    def create_output_column_name(self) -> str:
+        return self.col_expressions["postcode"].output_column_name
+
+
 _DEFAULT_EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$"
 
 
