@@ -84,7 +84,9 @@ def test_datediff_levels(dialect, test_helpers, test_gamma_assert):
         "comparisons": [
             ctl.DateComparison(
                 # TODO: revert to default damerau_levenshtein metric
-                ColumnExpression("dob").try_parse_date(), fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+                ColumnExpression("dob").try_parse_date(),
+                fuzzy_metric="levenshtein",
+                fuzzy_thresholds=[2],
             )
         ],
     }
@@ -216,29 +218,24 @@ def test_name_comparison_levels(dialect, test_helpers):
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 6, 1: 4, 2: 0, 3: 2, 4: 2, 5: 1}
-    # 5: exact_match
-    # 4: dmetaphone exact match
-    # 3: damerau_levenshtein <= 1
+    size_gamma_lookup = {0: 6, 1: 6, 2: 0, 3: 2, 4: 1}
+    # 4: exact_match
+    # 3: dmetaphone exact match
     # 2: jaro_winkler > 0.9
     # 1: jaro_winkler > 0.8
     # 0: else
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        assert (
-            sum(linker_output["gamma_custom_first_name_first_name_metaphone"] == gamma)
-            == expected_size
-        )
+        assert sum(linker_output["gamma_first_name"] == gamma) == expected_size
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        5: [[1, 6]],
-        4: [(2, 3), (4, 5)],
-        3: [(4, 6)],
+        4: [[1, 6]],
+        3: [(2, 3), (4, 5)],
         2: [],
-        1: [(1, 2), (2, 6)],
+        1: [(1, 2), (2, 6), (4, 6)],
         0: [(2, 4), (5, 6)],
     }
 
@@ -248,7 +245,7 @@ def test_name_comparison_levels(dialect, test_helpers):
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
-                ]["gamma_custom_first_name_first_name_metaphone"].values[0]
+                ]["gamma_first_name"].values[0]
                 == gamma
             )
 
