@@ -322,7 +322,7 @@ def test_forename_surname_comparison_levels(dialect, test_helpers):
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        gamma_matches = linker_output.filter(like="gamma_custom") == gamma
+        gamma_matches = linker_output.filter(like="gamma_forename_surname") == gamma
         gamma_matches_size = gamma_matches.sum().values[0]
         assert gamma_matches_size == expected_size
 
@@ -344,7 +344,7 @@ def test_forename_surname_comparison_levels(dialect, test_helpers):
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
                 ]
-                .filter(like="gamma_custom")
+                .filter(like="gamma_forename_surname")
                 .values[0][0]
                 == gamma
             )
