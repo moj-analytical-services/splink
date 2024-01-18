@@ -154,6 +154,99 @@ class DateComparison(ComparisonCreator):
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
+
+class NameComparison(ComparisonCreator):
+    """
+    A wrapper to generate a comparison for a name column the data in
+    `col_name` with preselected defaults.
+
+    The default arguments will give a comparison with comparison levels:
+    - Exact match
+    - Jaro Winkler similarity >= 0.9
+    - Jaro Winkler similarity >= 0.8
+    - Anything else
+    """
+
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        *,
+        include_exact_match_level: bool = True,
+        phonetic_col_name: Union[str, ColumnExpression] = None,
+        fuzzy_metric: str = "jaro_winkler",
+        fuzzy_thresholds: Union[float, list] = [0.9, 0.8],
+    ):
+        fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
+        self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
+
+        self.exact_match = include_exact_match_level
+
+        if self.fuzzy_thresholds:
+            try:
+                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid value for {fuzzy_metric=}.  "
+                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
+                ) from None
+            # store metric for description
+            self.fuzzy_metric = fuzzy_metric
+
+        cols = {"name": col_name}
+        if phonetic_col_name is not None:
+            cols["phonetic_name"] = phonetic_col_name
+            self.phonetic_col = True
+        else:
+            self.phonetic_col = False
+        super().__init__(cols)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        name_col_expression = self.col_expressions["name"]
+
+        levels = [
+            cll.NullLevel(name_col_expression),
+        ]
+        if self.exact_match:
+            levels.append(cll.ExactMatchLevel(name_col_expression))
+        if self.phonetic_col:
+            phonetic_col_expression = self.col_expressions["phonetic_name"]
+            levels.append(cll.ExactMatchLevel(phonetic_col_expression))
+
+        if self.fuzzy_thresholds:
+            levels.extend(
+                [
+                    self.fuzzy_level(name_col_expression, threshold)
+                    for threshold in self.fuzzy_thresholds
+                ]
+            )
+
+        levels.append(cll.ElseLevel())
+        return levels
+
+    def create_description(self) -> str:
+        comparison_desc = ""
+        if self.exact_match:
+            comparison_desc += "Exact match vs"
+        if self.phonetic_col:
+            comparison_desc += "Phonetic name match vs. "
+
+        if self.fuzzy_thresholds:
+            comma_separated_thresholds_string = ", ".join(
+                map(str, self.fuzzy_thresholds)
+            )
+            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
+            comparison_desc = (
+                f"{self.fuzzy_metric} at threshold{plural} "
+                f"{comma_separated_thresholds_string} vs. "
+            )
+
+        comparison_desc += "anything else"
+        return comparison_desc
+
+    def create_output_column_name(self) -> str:
+        return self.col_expressions["name"].output_column_name
+
+
 _VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
 
 
