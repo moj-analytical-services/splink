@@ -16,6 +16,144 @@ _fuzzy_levels = {
 _AVAILABLE_METRICS_STRING = ", ".join(map(lambda x: f"'{x}'", _fuzzy_levels.keys()))
 
 
+class DateComparison(ComparisonCreator):
+    """
+    A wrapper to generate a comparison for a date column the data in
+    `col_name` with preselected defaults.
+
+    The default arguments will give a comparison with comparison levels:\n
+    - Exact match (1st of January only)
+    - Exact match (all other dates)
+    - Damerau-Levenshtein distance <= 1
+    - Date difference <= 1 month
+    - Date difference <= 1 year
+    - Date difference <= 10 years
+    - Anything else
+    """
+
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        *,
+        date_format: str = None,
+        invalid_dates_as_null: bool = False,
+        include_exact_match_level: bool = True,
+        separate_1st_january: bool = False,
+        fuzzy_metric: str = "damerau_levenshtein",
+        fuzzy_thresholds: Union[float, List[float]] = [1],
+        datediff_thresholds: Union[int, List[int]] = [1, 1, 10],
+        datediff_metrics: Union[str, List[str]] = ["month", "year", "year"],
+    ):
+        fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
+        self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
+
+        date_thresholds_as_iterable = ensure_is_iterable(datediff_thresholds)
+        self.date_thresholds = [*date_thresholds_as_iterable]
+        date_metrics_as_iterable = ensure_is_iterable(datediff_metrics)
+        self.date_metrics = [*date_metrics_as_iterable]
+        # TODO: check lengths match!
+
+        self.date_format = date_format
+        self.invalid_dates_as_null = invalid_dates_as_null
+
+        self.separate_1st_january = separate_1st_january
+        self.exact_match = include_exact_match_level
+
+        if self.fuzzy_thresholds:
+            try:
+                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid value for {fuzzy_metric=}.  "
+                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
+                ) from None
+            # store metric for description
+            self.fuzzy_metric = fuzzy_metric
+
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        col_expression = self.col_expression
+
+        levels = [
+            # Null level accept pattern if not None, otherwise will ignore
+            cll.NullLevel(
+                col_expression,
+                valid_string_pattern=self.date_format,
+                invalid_dates_as_null=self.invalid_dates_as_null,
+            ),
+        ]
+        if self.separate_1st_january:
+            levels.append(
+                cll.And(
+                    cll.CustomLevel(
+                        # TODO: surely this depends on date format??
+                        sql_condition=(
+                            f"SUBSTR({col_expression.name_l}, 6, 5) = '01-01'"
+                        ),
+                        label_for_charts="Match 1st Jan.",
+                    ),
+                    cll.ExactMatchLevel(col_expression),
+                )
+            )
+        if self.exact_match:
+            levels.append(cll.ExactMatchLevel(col_expression))
+
+        if self.fuzzy_thresholds:
+            levels.extend(
+                [
+                    self.fuzzy_level(col_expression, threshold)
+                    for threshold in self.fuzzy_thresholds
+                ]
+            )
+        if self.date_thresholds:
+            for threshold, metric in zip(self.date_thresholds, self.date_metrics):
+                levels.append(
+                    cll.DatediffLevel(
+                        col_expression, date_threshold=threshold, date_metric=metric
+                    )
+                )
+
+        levels.append(cll.ElseLevel())
+        return levels
+
+    def create_description(self) -> str:
+        comparison_desc = ""
+        if self.exact_match:
+            comparison_desc += "Exact match "
+            if self.separate_1st_january:
+                comparison_desc += "(with separate 1st Jan) "
+            comparison_desc += "vs. "
+
+        if self.fuzzy_thresholds:
+            comma_separated_thresholds_string = ", ".join(
+                map(str, self.fuzzy_thresholds)
+            )
+            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
+            comparison_desc = (
+                f"{self.fuzzy_metric} at threshold{plural} "
+                f"{comma_separated_thresholds_string} vs. "
+            )
+
+        if self.date_thresholds:
+            datediff_separated_thresholds_string = ", ".join(
+                [
+                    f"{m.title()}(s): {v}"
+                    for v, m in zip(self.date_thresholds, self.date_metrics)
+                ]
+            )
+            plural = "s" if len(self.date_thresholds) > 1 else ""
+            comparison_desc += (
+                f"dates within the following threshold{plural} "
+                f"{datediff_separated_thresholds_string} vs. "
+            )
+
+        comparison_desc += "anything else"
+        return comparison_desc
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
+
 _VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
 
 
