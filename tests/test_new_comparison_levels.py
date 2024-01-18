@@ -251,7 +251,7 @@ comparison_name_ctl = ctl.NameComparison(
     include_exact_match_level=False,
     phonetic_col_name="surname",  # ignore the fact this is nonsense
     fuzzy_metric="levenshtein",
-    fuzzy_thresholds=[1, 2]
+    fuzzy_thresholds=[1, 2],
 )
 comparison_dob_ctl = ctl.DateComparison(
     ColumnExpression("dob").try_parse_date(),
@@ -259,8 +259,7 @@ comparison_dob_ctl = ctl.DateComparison(
     fuzzy_metric="levenshtein",
 )
 comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
-    "first_name", "surname",
-    fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+    "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
 )
 ctl_settings = cl_settings
 ctl_settings = {
