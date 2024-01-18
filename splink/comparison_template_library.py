@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from . import comparison_level_library as cll
+from .column_expression import ColumnExpression
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
 from .misc import ensure_is_iterable
@@ -24,7 +25,7 @@ class EmailComparison(ComparisonCreator):
 
     def __init__(
         self,
-        col_name: str,
+        col_name: Union[str, ColumnExpression],
         *,
         invalid_emails_as_null: bool = False,
         valid_email_regex: str = _DEFAULT_EMAIL_REGEX,
@@ -34,11 +35,11 @@ class EmailComparison(ComparisonCreator):
         include_domain_match_level: bool = False,
         # TODO: typing.Literal? enum?
         fuzzy_metric: str = "jaro_winkler",
-        thresholds: Union[float, List[float]] = [0.88],
+        fuzzy_thresholds: Union[float, List[float]] = [0.88],
     ):
 
-        thresholds_as_iterable = ensure_is_iterable(thresholds)
-        self.thresholds = [*thresholds_as_iterable]
+        thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
+        self.fuzzy_thresholds = [*thresholds_as_iterable]
 
         self.valid_email_regex = valid_email_regex if invalid_emails_as_null else None
 
@@ -47,7 +48,7 @@ class EmailComparison(ComparisonCreator):
         self.username_fuzzy = include_username_fuzzy_level
         self.domain_match = include_domain_match_level
 
-        if self.thresholds:
+        if self.fuzzy_thresholds:
             try:
                 self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
             except KeyError:
@@ -62,8 +63,8 @@ class EmailComparison(ComparisonCreator):
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         full_col_expression = self.col_expression
-        username_col_expression = self.col_expression.regex_extract(self.USERNAME_REGEX)
-        domain_col_expression = self.col_expression.regex_extract(self.DOMAIN_REGEX)
+        username_col_expression = full_col_expression.regex_extract(self.USERNAME_REGEX)
+        domain_col_expression = full_col_expression.regex_extract(self.DOMAIN_REGEX)
 
         levels = [
             # Null level accept pattern if not None, otherwise will ignore
@@ -75,18 +76,18 @@ class EmailComparison(ComparisonCreator):
             levels.append(cll.ExactMatchLevel(full_col_expression))
         if self.username_match:
             levels.append(cll.ExactMatchLevel(username_col_expression))
-        if self.thresholds:
+        if self.fuzzy_thresholds:
             levels.extend(
                 [
                     self.fuzzy_level(full_col_expression, threshold)
-                    for threshold in self.thresholds
+                    for threshold in self.fuzzy_thresholds
                 ]
             )
             if self.username_fuzzy:
                 levels.extend(
                     [
                         self.fuzzy_level(username_col_expression, threshold)
-                        for threshold in self.thresholds
+                        for threshold in self.fuzzy_thresholds
                     ]
                 )
         if self.domain_match:
@@ -103,16 +104,20 @@ class EmailComparison(ComparisonCreator):
         if self.username_match:
             comparison_desc += "Exact username match different domain vs. "
 
-        if self.thresholds:
-            comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-            plural = "s" if len(self.thresholds) == 1 else ""
+        if self.fuzzy_thresholds:
+            comma_separated_thresholds_string = ", ".join(
+                map(str, self.fuzzy_thresholds)
+            )
+            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
             comparison_desc = (
                 f"{self.fuzzy_metric} at threshold{plural} "
                 f"{comma_separated_thresholds_string} vs. "
             )
             if self.username_fuzzy:
-                comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-                plural = "s" if len(self.thresholds) == 1 else ""
+                comma_separated_thresholds_string = ", ".join(
+                    map(str, self.fuzzy_thresholds)
+                )
+                plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
                 comparison_desc = (
                     f"{self.fuzzy_metric} on username at threshold{plural} "
                     f"{comma_separated_thresholds_string} vs. "
