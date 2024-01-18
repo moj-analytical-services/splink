@@ -247,6 +247,151 @@ class NameComparison(ComparisonCreator):
         return self.col_expressions["name"].output_column_name
 
 
+class ForenameSurnameComparison(ComparisonCreator):
+    """
+    A wrapper to generate a comparison for a name column the data in
+    `col_name` with preselected defaults.
+
+    The default arguments will give a comparison with comparison levels:\n
+    - Exact match forename and surname\n
+    - Macth of forename and surname reversed\n
+    - Exact match surname\n
+    - Exact match forename\n
+    - Fuzzy match surname jaro-winkler >= 0.88\n
+    - Fuzzy match forename jaro-winkler>=  0.88\n
+    - Anything else
+    """
+
+    def __init__(
+        self,
+        forename_col_name: Union[str, ColumnExpression],
+        surname_col_name: Union[str, ColumnExpression],
+        *,
+        include_exact_match_level: bool = True,
+        include_columns_reversed: bool = True,
+        # TODO: think about how this works and maybe restore?
+        # tf_adjustment_col_forename_and_surname: str = None,
+        phonetic_forename_col_name: Union[str, ColumnExpression] = None,
+        phonetic_surname_col_name: Union[str, ColumnExpression] = None,
+        fuzzy_metric: str = "jaro_winkler",
+        fuzzy_thresholds: Union[float, List[float]] = [0.88],
+    ):
+        fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
+        self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
+
+        self.exact_match = include_exact_match_level
+        self.columns_reversed = include_columns_reversed
+
+        if self.fuzzy_thresholds:
+            try:
+                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid value for {fuzzy_metric=}.  "
+                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
+                ) from None
+            # store metric for description
+            self.fuzzy_metric = fuzzy_metric
+        cols = {"forename": forename_col_name, "surname": surname_col_name}
+        if (
+            phonetic_forename_col_name is not None
+            and phonetic_surname_col_name is not None
+        ):
+            # TODO: warn if only one set?
+            self.phonetic_match = True
+            cols["phonetic_forename"] = phonetic_forename_col_name
+            cols["phonetic_surname"] = phonetic_surname_col_name
+        else:
+            self.phonetic_match = False
+        super().__init__(cols)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        forename_col_expression = self.col_expressions["forename"]
+        surname_col_expression = self.col_expressions["surname"]
+
+        levels = [
+            cll.And(
+                cll.NullLevel(forename_col_expression),
+                cll.NullLevel(surname_col_expression),
+            )
+        ]
+        if self.exact_match:
+            levels.append(
+                cll.And(
+                    cll.ExactMatchLevel(forename_col_expression),
+                    cll.ExactMatchLevel(surname_col_expression),
+                )
+            )
+        if self.phonetic_match:
+            phonetic_forename_col_expression = self.col_expressions["phonetic_forename"]
+            phonetic_surname_col_expression = self.col_expressions["phonetic_surname"]
+            levels.append(
+                cll.And(
+                    cll.ExactMatchLevel(phonetic_forename_col_expression),
+                    cll.ExactMatchLevel(phonetic_surname_col_expression),
+                )
+            )
+        if self.columns_reversed:
+            levels.append(
+                cll.ColumnsReversedLevel(
+                    forename_col_expression, surname_col_expression
+                )
+            )
+
+        levels.append(cll.ExactMatchLevel(surname_col_expression))
+        levels.append(cll.ExactMatchLevel(forename_col_expression))
+
+        if self.fuzzy_thresholds:
+            levels.extend(
+                [
+                    self.fuzzy_level(surname_col_expression, threshold)
+                    for threshold in self.fuzzy_thresholds
+                ]
+            )
+            levels.extend(
+                [
+                    self.fuzzy_level(forename_col_expression, threshold)
+                    for threshold in self.fuzzy_thresholds
+                ]
+            )
+        levels.append(cll.ElseLevel())
+        return levels
+
+    def create_description(self) -> str:
+        comparison_desc = ""
+        if self.exact_match:
+            comparison_desc += "Exact match both names vs. "
+
+        if self.phonetic_match:
+            comparison_desc += "Exact phonetic match both names vs. "
+        if self.columns_reversed:
+            comparison_desc += "Names reversed vs. "
+        comparison_desc += "Surname only match vs. "
+        comparison_desc += "Forename only match vs. "
+
+        if self.fuzzy_thresholds:
+            comma_separated_thresholds_string = ", ".join(
+                map(str, self.fuzzy_thresholds)
+            )
+            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
+            comparison_desc = (
+                f"{self.fuzzy_metric} surname at threshold{plural} "
+                f"{comma_separated_thresholds_string} vs. "
+            )
+            comparison_desc = (
+                f"{self.fuzzy_metric} forename at threshold{plural} "
+                f"{comma_separated_thresholds_string} vs. "
+            )
+
+        comparison_desc += "anything else"
+        return comparison_desc
+
+    def create_output_column_name(self) -> str:
+        forename_output_name = self.col_expressions["forename"].output_column_name
+        surname_output_name = self.col_expressions["surname"].output_column_name
+        return f"{forename_output_name}_{surname_output_name}"
+
+
 _VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
 
 
