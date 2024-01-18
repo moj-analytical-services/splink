@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 import splink.comparison_template_library as ctl
+from splink.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -18,7 +19,7 @@ def test_date_comparison_run(dialect):
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_date_comparison_dl_run(dialect):
     ctl.DateComparison(
-        "date", levenshtein_thresholds=[1], damerau_levenshtein_thresholds=[]
+        "date", fuzzy_thresholds=[1], fuzzy_metric="levenshtein"
     ).get_comparison(dialect)
 
 
@@ -80,17 +81,26 @@ def test_datediff_levels(dialect, test_helpers, test_gamma_assert):
     # Generate our various settings objs
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctl.DateComparison("dob", cast_strings_to_date=True)],
+        "comparisons": [
+            ctl.DateComparison(
+                # TODO: revert to default damerau_levenshtein metric
+                ColumnExpression("dob").try_parse_date(), fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+            )
+        ],
     }
 
     # We need to put our column in datetime format for this to work
 
     df = helper.convert_frame(df)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker.debug_mode = True
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 8, 1: 15, 2: 5, 3: 5, 4: 1, 5: 2}
+    # 0 - else, 1 - 10 years, 2 - 1 year, 3 - 1 month, 4 - fuzzy, 5 - date match
+    size_gamma_lookup = {0: 8, 1: 15, 2: 5, 3: 3, 4: 3, 5: 2}
+    # Dam-lev version - difference between 1-months and fuzzy level
+    # size_gamma_lookup = {0: 8, 1: 15, 2: 6, 3: 5, 4: 1, 5: 2}
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
@@ -457,7 +467,7 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
             ctl.EmailComparison(
                 col_name=col_name,
                 invalid_emails_as_null=True,
-                thresholds=[2],
+                fuzzy_thresholds=[2],
                 fuzzy_metric="damerau_levenshtein",
                 include_domain_match_level=True,
             )
