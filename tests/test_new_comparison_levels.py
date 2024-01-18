@@ -247,18 +247,19 @@ comparison_email_ctl = ctl.EmailComparison(
     fuzzy_thresholds=[1, 3],
 )
 comparison_name_ctl = ctl.NameComparison(
-    "forename",
+    "first_name",
     include_exact_match_level=False,
     phonetic_col_name="surname",  # ignore the fact this is nonsense
     fuzzy_metric="levenshtein",
     fuzzy_thresholds=[1, 2]
 )
 comparison_dob_ctl = ctl.DateComparison(
-    "dob",
+    ColumnExpression("dob").try_parse_date(),
     invalid_dates_as_null=True,
+    fuzzy_metric="levenshtein",
 )
 comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
-    "forename", "surname",
+    "first_name", "surname",
     fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
 )
 ctl_settings = cl_settings
