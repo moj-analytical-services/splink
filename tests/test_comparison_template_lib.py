@@ -350,7 +350,7 @@ def test_forename_surname_comparison_levels(dialect, test_helpers):
             )
 
 
-# postcode_comparison
+# PostcodeComparison
 
 
 @mark_with_dialects_excluding("postgres", "sqlite")
@@ -409,7 +409,7 @@ def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            ctl.postcode_comparison(
+            ctl.PostcodeComparison(
                 col_name=col_name,
                 lat_col="lat",
                 long_col="long",
