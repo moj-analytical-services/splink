@@ -246,15 +246,30 @@ comparison_email_ctl = ctl.EmailComparison(
     fuzzy_metric="levenshtein",
     fuzzy_thresholds=[1, 3],
 )
+comparison_name_ctl = ctl.NameComparison(
+    "forename",
+    include_exact_match_level=False,
+    phonetic_col_name="surname",  # ignore the fact this is nonsense
+    fuzzy_metric="levenshtein",
+    fuzzy_thresholds=[1, 2]
+)
+comparison_dob_ctl = ctl.DateComparison(
+    "dob",
+    invalid_dates_as_null=True,
+)
+comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
+    "forename", "surname",
+    fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+)
 ctl_settings = cl_settings
 ctl_settings = {
     "link_type": "dedupe_only",
     "comparisons": [
-        # TODO: replace cl only with ctl
-        comparison_name,
-        comparison_city,
+        comparison_name_ctl,
+        # obviously not realistic:
+        comparison_forenamesurname_ctl,
         comparison_email_ctl,
-        comparison_dob,
+        comparison_dob_ctl,
     ],
     "blocking_rules_to_generate_predictions": [
         "l.dob = r.dob",
