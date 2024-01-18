@@ -244,7 +244,7 @@ comparison_email_ctl = ctl.EmailComparison(
     invalid_emails_as_null=True,
     include_domain_match_level=True,
     fuzzy_metric="levenshtein",
-    thresholds=[1, 3],
+    fuzzy_thresholds=[1, 3],
 )
 ctl_settings = cl_settings
 ctl_settings = {
