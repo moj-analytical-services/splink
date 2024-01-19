@@ -412,7 +412,7 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
                     self.col_expression,
                     self.distance_function_name,
                     threshold,
-                    higher_is_more_similar=self.higher_is_more_similar
+                    higher_is_more_similar=self.higher_is_more_similar,
                 )
                 for threshold in self.thresholds
             ],
