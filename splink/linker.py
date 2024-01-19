@@ -37,6 +37,7 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
+    SaltedBlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
@@ -1665,7 +1666,7 @@ class Linker:
         # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
         # and raise error if not specfically a BlockingRule
         blocking_rule = blocking_rule_to_obj(blocking_rule)
-        if type(blocking_rule) is not BlockingRule:
+        if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
                 "salted or exploding blocking rules"
