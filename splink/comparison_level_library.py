@@ -389,6 +389,56 @@ class JaccardLevel(ComparisonLevelCreator):
         return f"Jaccard distance of '{col.label} >= {self.distance_threshold}'"
 
 
+class DistanceFunctionLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_function_name: str,
+        distance_threshold: Union[int, float],
+        higher_is_more_similar: bool = True,
+    ):
+        """A comparison level using an arbitrary distance function
+
+        e.g. `custom_distance(val_l, val_r) >= (<=) distance_threshold`
+
+        The function given by `distance_function_name` must exist in the SQL
+        backend you use, and must take two parameters of the type in `col_name,
+        returning a numeric type
+
+        Args:
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the SQL distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            higher_is_more_similar (bool): Are higher values of the distance function
+                more similar? (e.g. True for Jaro-Winkler, False for Levenshtein)
+                Default is True
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_function_name = distance_function_name
+        self.distance_threshold = distance_threshold
+        self.higher_is_more_similar = higher_is_more_similar
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        d_fn = self.distance_function_name
+        less_or_greater_than = ">" if self.higher_is_more_similar else "<"
+        return (
+            f"{d_fn}({col.name_l}, {col.name_r}) "
+            f"{less_or_greater_than}= {self.distance_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        less_or_greater = "greater" if self.higher_is_more_similar else "less"
+        return (
+            f"`{self.distance_function_name}` distance of '{col.label} "
+            f"{less_or_greater} than {self.distance_threshold}'"
+        )
+
+
 class DatediffLevel(ComparisonLevelCreator):
     def __init__(
         self,
