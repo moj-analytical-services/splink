@@ -52,6 +52,22 @@ def validate_numeric_parameter(
             f"{lower_bound} and {upper_bound} for {level_name}"
         )
 
+def validate_categorical_parameter(
+    allowed_values: List[str],
+    parameter_value: str,
+    level_name: str,
+    parameter_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if parameter_value in allowed_values:
+        return parameter_value
+    else:
+        comma_quote_separated_options = "', '".join(allowed_values)
+        raise ValueError(
+            f"'{parameter_name}' must be one of: "
+            f"'{comma_quote_separated_options}'"
+        )
+
 
 class NullLevel(ComparisonLevelCreator):
     def __init__(
@@ -410,13 +426,18 @@ class DatediffLevel(ComparisonLevelCreator):
             date_format (str): The format of the date string
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_metric = date_metric
         self.date_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=float("inf"),
             parameter_value=date_threshold,
             level_name=self.__class__.__name__,
             parameter_name="date_threshold"
+        )
+        self.date_metric = validate_categorical_parameter(
+            allowed_values=["day", "month", "year"],
+            parameter_value=date_metric,
+            level_name=self.__class__.__name__,
+            parameter_name="date_metric",
         )
 
     @unsupported_splink_dialects(["sqlite"])
