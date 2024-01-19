@@ -55,6 +55,31 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
+## Use Cases
+
+Here is a list of some of our known users and their use cases:
+
+=== "Public Sector (UK)"
+
+	- [Office for National Statistics](https://www.ons.gov.uk/)'s [Business Index](https://unece.org/sites/default/files/2023-04/ML2023_S1_UK_Breton_A.pdf) (formerly the Inter Departmental Business Register), [Demographic Index](https://uksa.statisticsauthority.gov.uk/wp-content/uploads/2023/02/EAP182-Quality-work-for-Demographic-Index-MDQA.pdf) and the [2021 Census](https://github.com/Data-Linkage/Splink-census-linkage/blob/main/SplinkCaseStudy.pdf)
+	- [Lewisham Council](https://lewisham.gov.uk/) (London) [identified and auto-enrolled over 500 additional eligibile families](https://schoolsweek.co.uk/councils-800-exercise-results-in-1-2m-school-funding-boost/) to receive Free School Meals
+	- [London Office of Technology and Innovation](https://loti.london/) created a dashboard to help [better measure and reduce rough sleeping](https://loti.london/projects/rough-sleeping-insights-project/) across London
+	- [Competition and Markets Authority](https://www.gov.uk/government/organisations/competition-and-markets-authority) identified ['Persons with Significant Control' and estimating ownership groups](https://assets.publishing.service.gov.uk/media/626ab6c4d3bf7f0e7f9d5a9b/220426_Annex_-State_of_Competition_Appendices_FINAL.pdf) across companies
+	- [Office for Health Improvement and Disparities](https://www.gov.uk/government/organisations/office-for-health-improvement-and-disparities) linked Health and Justice data to [assess the pathways between probation and specialist alcohol and drug treatment services](https://www.gov.uk/government/statistics/pathways-between-probation-and-addiction-treatment-in-england#:~:text=Details,of%20Health%20and%20Social%20Care)
+	- [Ministry of Defence](https://www.gov.uk/government/organisations/ministry-of-defence) recently launched their [Veteran's Card system](https://www.gov.uk/government/news/hm-armed-forces-veteran-cards-will-officially-launch-in-the-new-year-following-a-successful-assessment-from-the-central-digital-and-data-office) which uses Splink to verify applicants against historic records. This project was shortlisted for the [Civil Service Awards](https://www.civilserviceawards.com/creative-solutions-award/)
+
+=== "Public Sector (International)"
+
+	- [Chilean Ministry of Health](https://www.gob.cl/en/ministries/ministry-of-health/) and [University College London](https://www.ucl.ac.uk/) have [assessed the access to immunisation programs among the migrant population](https://ijpds.org/article/view/2348)
+	- [Florida Cancer Registry](https://www.floridahealth.gov/diseases-and-conditions/cancer/cancer-registry/index.html), published a [feasibility study](https://scholar.googleusercontent.com/scholar?q=cache:sADwxy-D75IJ:scholar.google.com/+splink+florida&hl=en&as_sdt=0,5) which showed Splink was faster and more accurate than alternatives
+
+=== "Academia"
+	- [Stanford University](https://www.stanford.edu/) investigated the impact of [recieving government assisstance has on polotical attitudes](https://www.cambridge.org/core/journals/american-political-science-review/article/abs/does-receiving-government-assistance-shape-political-attitudes-evidence-from-agricultural-producers/39552BC5A496EAB6CB484FCA51C6AF21)
+	- [Bern University](https://arbor.bfh.ch/) researched how [Active Learning can be applied to Biomedical Record Linkage](https://ebooks.iospress.nl/doi/10.3233/SHTI230545)
+
+
+Sadly, we don't hear about the majority of our users or what they are working on. If you have a use case and it is not shown here please [add it to the list](https://github.com/moj-analytical-services/splink/edit/use_cases/docs/index.md)!
+
 ## Awards
 
 🥇 [Analysis in Government Awards 2020: Innovative Methods: Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
