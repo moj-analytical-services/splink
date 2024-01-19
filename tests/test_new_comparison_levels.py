@@ -251,10 +251,11 @@ comparison_name_ctl = ctl.NameComparison(
     fuzzy_metric="levenshtein",
     fuzzy_thresholds=[1, 2],
 )
+# TODO: restore mix of fuzzy + date levels when postgres can handle it
 comparison_dob_ctl = ctl.DateComparison(
     ColumnExpression("dob").try_parse_date(),
-    invalid_dates_as_null=True,
-    fuzzy_metric="levenshtein",
+    invalid_dates_as_null=False, # already cast, so don't need to validate here
+    fuzzy_thresholds=[],
 )
 comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
     "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
