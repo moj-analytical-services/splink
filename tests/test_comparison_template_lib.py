@@ -130,7 +130,7 @@ def test_date_comparison_error_logger(dialect):
             "date", datediff_thresholds=[1, 2], datediff_metrics=["month"]
         ).get_comparison(dialect)
     # Check metric and threshold are the correct way around
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ctl.DateComparison(
             "date", datediff_thresholds=["month"], datediff_metrics=[1]
         ).get_comparison(dialect)
