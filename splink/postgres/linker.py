@@ -236,6 +236,24 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _create_try_cast_date_function(self):
+        # postgres to_date will give an error if the date can't be parsed
+        # to be consistent with other backends we instead create a version
+        # which instead returns NULL, allowing us more flexibility
+        sql = """
+        CREATE OR REPLACE FUNCTION try_cast_date(date_string text, format text)
+        RETURNS date AS $func$
+        BEGIN
+            BEGIN
+                RETURN to_date(date_string, format);
+            EXCEPTION WHEN OTHERS THEN
+                RETURN NULL;
+            END;
+        END
+        $func$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _create_datediff_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION datediff(x date, y date)
@@ -292,6 +310,8 @@ class PostgresLinker(Linker):
         # if people have issues with permissions we can allow these to be optional
         # need for predict_from_comparison_vectors_sql (could adjust)
         self._create_log2_function()
+        # need for date-casting
+        self._create_try_cast_date_function()
         # need for datediff levels
         self._create_datediff_function()
         self._create_months_between_function()
