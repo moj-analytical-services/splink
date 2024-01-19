@@ -57,6 +57,7 @@ def validate_numeric_parameter(
             f"{lower_bound} and {upper_bound} for {level_name}"
         )
 
+
 def validate_categorical_parameter(
     allowed_values: List[str],
     parameter_value: str,
@@ -69,8 +70,7 @@ def validate_categorical_parameter(
     else:
         comma_quote_separated_options = "', '".join(allowed_values)
         raise ValueError(
-            f"'{parameter_name}' must be one of: "
-            f"'{comma_quote_separated_options}'"
+            f"'{parameter_name}' must be one of: " f"'{comma_quote_separated_options}'"
         )
 
 
@@ -436,7 +436,7 @@ class DatediffLevel(ComparisonLevelCreator):
             upper_bound=float("inf"),
             parameter_value=date_threshold,
             level_name=self.__class__.__name__,
-            parameter_name="date_threshold"
+            parameter_name="date_threshold",
         )
         self.date_metric = validate_categorical_parameter(
             allowed_values=["day", "month", "year"],
