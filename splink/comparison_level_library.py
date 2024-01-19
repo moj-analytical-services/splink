@@ -44,6 +44,11 @@ def validate_numeric_parameter(
     parameter_name: str = "distance_threshold",
 ) -> Union[int, float]:
     """Check if a distance threshold falls between two bounds."""
+    if not isinstance(parameter_value, (int, float)):
+        raise TypeError(
+            f"'{parameter_name}' must be numeric, but received type "
+            f"{type(parameter_value)}"
+        )
     if lower_bound <= parameter_value <= upper_bound:
         return parameter_value
     else:
