@@ -181,8 +181,8 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 )
             # leave tf_minimum_u_value as None
             # Since we know that it's a pure column reference it's fine to assign the
-            #  raw unescaped value to the dict - it will be processed via `InputColumn` when
-            # the dict is read
+            # raw unescaped value to the dict - it will be processed via `InputColumn`
+            # when the dict is read
 
             self.configure(
                 tf_adjustment_column=self.col_expression.raw_sql_expression,
@@ -277,7 +277,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
         dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
         return f"{dm_lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
-    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+    def create_label_for_charts(self) -> str:
         return (
             f"Damerau-Levenshtein distance of {self.col_expression.label} "
             f"<= {self.distance_threshold}"

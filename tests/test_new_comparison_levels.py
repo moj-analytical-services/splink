@@ -5,9 +5,8 @@ import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.column_expression import ColumnExpression
 import splink.comparison_template_library as ctl
-
+from splink.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -245,17 +244,32 @@ comparison_email_ctl = ctl.EmailComparison(
     invalid_emails_as_null=True,
     include_domain_match_level=True,
     fuzzy_metric="levenshtein",
-    thresholds=[1, 3],
+    fuzzy_thresholds=[1, 3],
+)
+comparison_name_ctl = ctl.NameComparison(
+    "first_name",
+    include_exact_match_level=False,
+    phonetic_col_name="surname",  # ignore the fact this is nonsense
+    fuzzy_metric="levenshtein",
+    fuzzy_thresholds=[1, 2],
+)
+comparison_dob_ctl = ctl.DateComparison(
+    ColumnExpression("dob").try_parse_date(),
+    invalid_dates_as_null=True,
+    fuzzy_metric="levenshtein",
+)
+comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
+    "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
 )
 ctl_settings = cl_settings
 ctl_settings = {
     "link_type": "dedupe_only",
     "comparisons": [
-        # TODO: replace cl only with ctl
-        comparison_name,
-        comparison_city,
+        comparison_name_ctl,
+        # obviously not realistic:
+        comparison_forenamesurname_ctl,
         comparison_email_ctl,
-        comparison_dob,
+        comparison_dob_ctl,
     ],
     "blocking_rules_to_generate_predictions": [
         "l.dob = r.dob",
