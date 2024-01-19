@@ -410,8 +410,14 @@ class DatediffLevel(ComparisonLevelCreator):
             date_format (str): The format of the date string
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_threshold = date_threshold
         self.date_metric = date_metric
+        self.date_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=date_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="date_threshold"
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -523,7 +529,13 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.min_intersection = min_intersection
+        self.min_intersection = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=min_intersection,
+            level_name=self.__class__.__name__,
+            parameter_name="min_intersection",
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
