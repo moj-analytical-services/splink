@@ -36,18 +36,19 @@ def _translate_sql_string(
     return tree.sql(dialect=to_sqlglot_dialect)
 
 
-def validate_distance_threshold(
+def validate_numeric_parameter(
     lower_bound: Union[int, float],
     upper_bound: Union[int, float],
-    distance_threshold: Union[int, float],
+    parameter_value: Union[int, float],
     level_name: str,
+    parameter_name: str = "distance_threshold",
 ) -> Union[int, float]:
     """Check if a distance threshold falls between two bounds."""
-    if lower_bound <= distance_threshold <= upper_bound:
-        return distance_threshold
+    if lower_bound <= parameter_value <= upper_bound:
+        return parameter_value
     else:
         raise ValueError(
-            "'distance_threshold' must be between "
+            f"'{parameter_name}' must be between "
             f"{lower_bound} and {upper_bound} for {level_name}"
         )
 
@@ -301,10 +302,10 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -336,10 +337,10 @@ class JaroLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -371,10 +372,10 @@ class JaccardLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
