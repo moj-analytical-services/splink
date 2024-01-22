@@ -2234,7 +2234,7 @@ class Linker:
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or 
+                to include only pairwise comparisons with a match_probability at or
                 above this threshold.
 
         Returns:
