@@ -364,6 +364,74 @@ class JaroWinklerAtThresholds(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
+class DistanceFunctionAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        distance_function_name,
+        distance_threshold_or_thresholds: Union[Iterable[float], float],
+        higher_is_more_similar: bool = True,
+    ):
+        """
+        Represents a comparison of the data in `col_name` with three or more levels:
+            - Exact match in `col_name`
+            - Custom distance function levels at specified thresholds
+            - ...
+            - Anything else
+
+        For example, with distance_threshold_or_thresholds = [1, 3]
+        and distance_function 'hamming', with higher_is_more_similar False
+        the levels are:
+            - Exact match in `col_name`
+            - Hamming distance of `col_name` <= 1
+            - Hamming distance of `col_name` <= 3
+            - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare.
+            distance_function_name (str): the name of the SQL distance function
+            distance_threshold_or_thresholds (Union[float, list], optional): The
+                threshold(s) to use for the distance function level(s).
+            higher_is_more_similar (bool): Are higher values of the distance function
+                more similar? (e.g. True for Jaro-Winkler, False for Levenshtein)
+                Default is True
+        """
+
+        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        self.distance_function_name = distance_function_name
+        self.higher_is_more_similar = higher_is_more_similar
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            cll.ExactMatchLevel(self.col_expression),
+            *[
+                cll.DistanceFunctionLevel(
+                    self.col_expression,
+                    self.distance_function_name,
+                    threshold,
+                    higher_is_more_similar=self.higher_is_more_similar,
+                )
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
+        return (
+            f"Exact match '{self.col_expression.label}' vs. "
+            f"`{self.distance_function_name}` at thresholds "
+            f"{comma_separated_thresholds_string} vs. "
+            "anything else"
+        )
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
+
+
 class DatediffAtThresholds(ComparisonCreator):
     def __init__(
         self,
@@ -382,6 +450,18 @@ class DatediffAtThresholds(ComparisonCreator):
 
         date_thresholds_as_iterable = ensure_is_iterable(date_thresholds)
         self.date_thresholds = [*date_thresholds_as_iterable]
+
+        num_metrics = len(self.date_metrics)
+        num_thresholds = len(self.date_thresholds)
+        if num_thresholds == 0:
+            raise ValueError("`date_thresholds` must have at least one entry")
+        if num_metrics == 0:
+            raise ValueError("`date_metrics` must have at least one entry")
+        if num_metrics != num_thresholds:
+            raise ValueError(
+                "`date_thresholds` and `date_metrics` must have "
+                "the same number of entries"
+            )
 
         self.cast_strings_to_dates = cast_strings_to_dates
         self.date_format = date_format

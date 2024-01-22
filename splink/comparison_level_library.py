@@ -36,19 +36,41 @@ def _translate_sql_string(
     return tree.sql(dialect=to_sqlglot_dialect)
 
 
-def validate_distance_threshold(
+def validate_numeric_parameter(
     lower_bound: Union[int, float],
     upper_bound: Union[int, float],
-    distance_threshold: Union[int, float],
+    parameter_value: Union[int, float],
     level_name: str,
+    parameter_name: str = "distance_threshold",
 ) -> Union[int, float]:
     """Check if a distance threshold falls between two bounds."""
-    if lower_bound <= distance_threshold <= upper_bound:
-        return distance_threshold
+    if not isinstance(parameter_value, (int, float)):
+        raise TypeError(
+            f"'{parameter_name}' must be numeric, but received type "
+            f"{type(parameter_value)}"
+        )
+    if lower_bound <= parameter_value <= upper_bound:
+        return parameter_value
     else:
         raise ValueError(
-            "'distance_threshold' must be between "
+            f"'{parameter_name}' must be between "
             f"{lower_bound} and {upper_bound} for {level_name}"
+        )
+
+
+def validate_categorical_parameter(
+    allowed_values: List[str],
+    parameter_value: str,
+    level_name: str,
+    parameter_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if parameter_value in allowed_values:
+        return parameter_value
+    else:
+        comma_quote_separated_options = "', '".join(allowed_values)
+        raise ValueError(
+            f"'{parameter_name}' must be one of: " f"'{comma_quote_separated_options}'"
         )
 
 
@@ -350,10 +372,10 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -385,10 +407,10 @@ class JaroLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -420,10 +442,10 @@ class JaccardLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -436,6 +458,56 @@ class JaccardLevel(ComparisonLevelCreator):
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return f"Jaccard distance of '{col.label} >= {self.distance_threshold}'"
+
+
+class DistanceFunctionLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_function_name: str,
+        distance_threshold: Union[int, float],
+        higher_is_more_similar: bool = True,
+    ):
+        """A comparison level using an arbitrary distance function
+
+        e.g. `custom_distance(val_l, val_r) >= (<=) distance_threshold`
+
+        The function given by `distance_function_name` must exist in the SQL
+        backend you use, and must take two parameters of the type in `col_name,
+        returning a numeric type
+
+        Args:
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the SQL distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            higher_is_more_similar (bool): Are higher values of the distance function
+                more similar? (e.g. True for Jaro-Winkler, False for Levenshtein)
+                Default is True
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_function_name = distance_function_name
+        self.distance_threshold = distance_threshold
+        self.higher_is_more_similar = higher_is_more_similar
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        d_fn = self.distance_function_name
+        less_or_greater_than = ">" if self.higher_is_more_similar else "<"
+        return (
+            f"{d_fn}({col.name_l}, {col.name_r}) "
+            f"{less_or_greater_than}= {self.distance_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        less_or_greater = "greater" if self.higher_is_more_similar else "less"
+        return (
+            f"`{self.distance_function_name}` distance of '{col.label} "
+            f"{less_or_greater} than {self.distance_threshold}'"
+        )
 
 
 class DatediffLevel(ComparisonLevelCreator):
@@ -458,8 +530,19 @@ class DatediffLevel(ComparisonLevelCreator):
             date_format (str): The format of the date string
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_threshold = date_threshold
-        self.date_metric = date_metric
+        self.date_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=date_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="date_threshold",
+        )
+        self.date_metric = validate_categorical_parameter(
+            allowed_values=["day", "month", "year"],
+            parameter_value=date_metric,
+            level_name=self.__class__.__name__,
+            parameter_name="date_metric",
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -571,7 +654,13 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.min_intersection = min_intersection
+        self.min_intersection = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=min_intersection,
+            level_name=self.__class__.__name__,
+            parameter_name="min_intersection",
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
