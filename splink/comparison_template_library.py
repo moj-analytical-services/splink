@@ -51,7 +51,18 @@ class DateComparison(ComparisonCreator):
         self.date_thresholds = [*date_thresholds_as_iterable]
         date_metrics_as_iterable = ensure_is_iterable(datediff_metrics)
         self.date_metrics = [*date_metrics_as_iterable]
-        # TODO: check lengths match!
+
+        num_metrics = len(self.date_metrics)
+        num_thresholds = len(self.date_thresholds)
+        if num_thresholds == 0:
+            raise ValueError("`date_thresholds` must have at least one entry")
+        if num_metrics == 0:
+            raise ValueError("`date_metrics` must have at least one entry")
+        if num_metrics != num_thresholds:
+            raise ValueError(
+                "`date_thresholds` and `date_metrics` must have "
+                "the same number of entries"
+            )
 
         self.date_format = date_format
         self.invalid_dates_as_null = invalid_dates_as_null

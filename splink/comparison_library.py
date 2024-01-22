@@ -451,6 +451,18 @@ class DatediffAtThresholds(ComparisonCreator):
         date_thresholds_as_iterable = ensure_is_iterable(date_thresholds)
         self.date_thresholds = [*date_thresholds_as_iterable]
 
+        num_metrics = len(self.date_metrics)
+        num_thresholds = len(self.date_thresholds)
+        if num_thresholds == 0:
+            raise ValueError("`date_thresholds` must have at least one entry")
+        if num_metrics == 0:
+            raise ValueError("`date_metrics` must have at least one entry")
+        if num_metrics != num_thresholds:
+            raise ValueError(
+                "`date_thresholds` and `date_metrics` must have "
+                "the same number of entries"
+            )
+
         self.cast_strings_to_dates = cast_strings_to_dates
         self.date_format = date_format
 
