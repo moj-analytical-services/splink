@@ -97,7 +97,6 @@ class SplinkDialect(ABC):
 
         return nullif_wrapped_function
 
-    @final
     def try_parse_date(self, name: str, date_format: str = None):
         return self._wrap_in_nullif(self._try_parse_date_raw)(name, date_format)
 
@@ -325,10 +324,10 @@ class PostgresDialect(SplinkDialect):
     def default_date_format(self):
         return "YYYY-MM-DD"
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None):
+    def try_parse_date(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
-        return f"""to_date({name}, '{date_format}')"""
+        return f"""try_cast_date({name}, '{date_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self

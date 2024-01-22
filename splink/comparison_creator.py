@@ -32,6 +32,7 @@ class ComparisonCreator(ABC):
             name_reference: ColumnExpression.instantiate_if_str(column)
             for name_reference, column in cols.items()
         }
+        self._validate()
 
     # many ComparisonCreators have a single column expression, so provide a
     # convenience property for this case. Error if there are none or many
@@ -56,6 +57,10 @@ class ComparisonCreator(ABC):
                 f"`.col_expressions` has non-default single entry: {type(self)}"
             ) from None
         return col_expression
+
+    def _validate(self) -> None:
+        # create levels - let them raise errors if there are issues
+        self.create_comparison_levels()
 
     # TODO: property?
     @abstractmethod
