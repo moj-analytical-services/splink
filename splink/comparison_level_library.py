@@ -229,13 +229,12 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         literal_datatype: str,
         side_of_comparison: str = "both",
     ):
-        # TODO: add support for literals that are not strings
-        if side_of_comparison not in ["left", "right", "both"]:
-            raise ValueError(
-                "side_of_comparison should be 'left', 'right'"
-                f" or 'both', not {side_of_comparison}"
-            )
-        self.side_of_comparison = side_of_comparison
+        self.side_of_comparison = validate_categorical_parameter(
+            allowed_values=["left", "right", "both"],
+            parameter_value=side_of_comparison,
+            level_name=self.__class__.__name__,
+            parameter_name="side_of_comparison",
+        )
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
         self.literal_value_undialected = literal_value
