@@ -240,14 +240,19 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
         self.literal_value_undialected = literal_value
 
-        # TODO: use andy's categorical validation here
-        self.literal_datatype = literal_datatype
+        self.literal_datatype = validate_categorical_parameter(
+            allowed_values=["string", "int", "float", "date"],
+            parameter_value=literal_datatype,
+            level_name=self.__class__.__name__,
+            parameter_name="literal_datatype",
+        )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
         dialect = sql_dialect.sqlglot_name
         lit = self.literal_value_undialected
+
         if self.literal_datatype == "string":
             dialected = parse_one(f"'{lit}'").sql(dialect)
         elif self.literal_datatype == "date":
