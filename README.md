@@ -164,6 +164,10 @@ You can see all of the interactive charts provided in Splink by checking out the
 
 To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
+## Use Cases
+
+To see how users are using Splink in the wild, check out the [Use Cases](./index.md#use-cases) section of the docs
+
 ## Awards
 
 🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
