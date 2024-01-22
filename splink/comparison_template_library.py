@@ -96,13 +96,13 @@ class DateComparison(ComparisonCreator):
         ]
         if self.separate_1st_january:
             levels.append(
+                # TODO: surely this depends on date format
                 cll.And(
-                    cll.CustomLevel(
-                        # TODO: surely this depends on date format??
-                        sql_condition=(
-                            f"SUBSTR({col_expression.name_l}, 6, 5) = '01-01'"
-                        ),
-                        label_for_charts="Match 1st Jan.",
+                    cll.LiteralMatchLevel(
+                        col_expression.substr(6, 5),
+                        literal_value="01-01",
+                        literal_datatype="string",
+                        side_of_comparison="left",
                     ),
                     cll.ExactMatchLevel(col_expression),
                 )
@@ -520,7 +520,6 @@ _DEFAULT_EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$"
 
 
 class EmailComparison(ComparisonCreator):
-
     USERNAME_REGEX = "^[^@]+"
     DOMAIN_REGEX = "@([^@]+)$"
 
@@ -538,7 +537,6 @@ class EmailComparison(ComparisonCreator):
         fuzzy_metric: str = "jaro_winkler",
         fuzzy_thresholds: Union[float, List[float]] = [0.88],
     ):
-
         thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
         self.fuzzy_thresholds = [*thresholds_as_iterable]
 
