@@ -204,6 +204,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         self,
         col_name: Union[str, ColumnExpression],
         literal_value: str,
+        literal_datatype: str,
         side_of_comparison: str = "both",
     ):
         # TODO: add support for literals that are not strings
@@ -215,25 +216,35 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         self.side_of_comparison = side_of_comparison
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.literal_value = literal_value
+        self.literal_value_undialected = literal_value
+
+        # TODO: use andy's categorical validation here
+        self.literal_datatype = literal_datatype
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
+        dialect = sql_dialect.sqlglot_name
+        lit = self.literal_value_undialected
+        if self.literal_datatype == "string":
+            dialected = parse_one(f"'{lit}'").sql(dialect)
+        elif self.literal_datatype == "date":
+            dialected = parse_one(f"cast('{lit}' as date)").sql(dialect)
+        elif self.literal_datatype == "int":
+            dialected = parse_one(f"cast({lit} as int)").sql(dialect)
+        elif self.literal_datatype == "float":
+            dialected = parse_one(f"cast({lit} as float)").sql(dialect)
 
         if self.side_of_comparison == "left":
-            return f"{col.name_l} = '{self.literal_value}'"
+            return f"{col.name_l} = {dialected}"
         elif self.side_of_comparison == "right":
-            return f"{col.name_r} = '{self.literal_value}'"
+            return f"{col.name_r} = {dialected}"
         elif self.side_of_comparison == "both":
-            return (
-                f"{col.name_l} = '{self.literal_value}'"
-                f" AND {col.name_r} = '{self.literal_value}'"
-            )
+            return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
 
     def create_label_for_charts(self) -> str:
         return (
-            f"{self.col_expression.label} = '{self.literal_value}' "
+            f"{self.col_expression.label} = {self.literal_value_undialected} "
             f"on {self.side_of_comparison}"
         )
 
