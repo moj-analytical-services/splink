@@ -166,7 +166,7 @@ To find the best place to ask a question, report a bug or get general advice, pl
 
 ## Use Cases
 
-To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs
+To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs.
 
 ## Awards
 
