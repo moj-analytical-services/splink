@@ -3,7 +3,7 @@ import re
 
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -105,11 +105,11 @@ def test_dedupe_only():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
     linker = DuckDBLinker(
@@ -155,11 +155,11 @@ def test_link_and_dedupe():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
     linker = DuckDBLinker(
@@ -209,11 +209,11 @@ def test_link_only_two():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
     linker = DuckDBLinker(
@@ -264,11 +264,11 @@ def test_link_only_three():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
     linker = DuckDBLinker(

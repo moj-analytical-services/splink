@@ -36,7 +36,7 @@ import re
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
 from splink.em_training_session import EMTrainingSession
 from splink.predict import predict_from_comparison_vectors_sqls
@@ -49,9 +49,9 @@ def test_splink_converges_to_known_params():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("col_1"),
-            cl.exact_match("col_2"),
-            cl.exact_match("col_3"),
+            cl.ExactMatch("col_1"),
+            cl.ExactMatch("col_2"),
+            cl.ExactMatch("col_3"),
         ],
         "max_iterations": 200,
         "em_convergence": 0.00001,

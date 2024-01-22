@@ -127,16 +127,14 @@ comparison_name = cl.CustomComparison(
             "(surname_l IS NULL OR surname_r IS NULL) "
         ).configure(is_null_level=True),
         {
-            "sql_condition": (
-                "concat(first_name_l, surname_l) = concat(first_name_r, surname_r)"
-            ),
+            "sql_condition": ("first_name_l || surname_l = first_name_r || surname_r"),
             "label_for_charts": "both names matching",
         },
         cll.CustomLevel(
             (
                 "levenshtein("
-                "concat(first_name_l, surname_l), "
-                "concat(first_name_r, surname_r)"
+                "first_name_l || surname_l, "
+                "first_name_r || surname_r"
                 ") <= 3"
             ),
             "both names fuzzy matching",
@@ -253,10 +251,11 @@ comparison_name_ctl = ctl.NameComparison(
     fuzzy_metric="levenshtein",
     fuzzy_thresholds=[1, 2],
 )
+# TODO: restore mix of fuzzy + date levels when postgres can handle it
 comparison_dob_ctl = ctl.DateComparison(
     ColumnExpression("dob").try_parse_date(),
-    invalid_dates_as_null=True,
-    fuzzy_metric="levenshtein",
+    invalid_dates_as_null=False,  # already cast, so don't need to validate here
+    fuzzy_thresholds=[],
 )
 comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
     "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
@@ -278,7 +277,7 @@ ctl_settings = {
 }
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_ctl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")

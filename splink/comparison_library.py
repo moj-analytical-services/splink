@@ -11,7 +11,7 @@ class CustomComparison(ComparisonCreator):
     def __init__(
         self,
         output_column_name: str,
-        comparison_levels: list[Union[ComparisonLevelCreator, dict]],
+        comparison_levels: List[Union[ComparisonLevelCreator, dict]],
         description: str = None,
     ):
         """
@@ -437,8 +437,8 @@ class DatediffAtThresholds(ComparisonCreator):
         self,
         col_name: str,
         *,
-        date_metrics: Union[str, list[str]],
-        date_thresholds: Union[int, list[int]],
+        date_metrics: Union[str, List[str]],
+        date_thresholds: Union[int, List[int]],
         cast_strings_to_dates: bool = False,
         date_format: str = None,
         term_frequency_adjustments=False,

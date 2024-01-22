@@ -4,8 +4,7 @@ import os
 
 import pandas as pd
 
-import splink.duckdb.comparison_level_library as cll
-from splink.duckdb.comparison_level_library import else_level
+import splink.comparison_level_library as cll
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -79,12 +78,12 @@ def test_discussion_example(tmp_path):
     for rmc in [True, False]:
         for ricc in [True, False]:
             levels = [
-                cll.exact_match_level("fname", term_frequency_adjustments=True),
-                cll.null_level("fname"),
-                cll.distance_function_level(
+                cll.ExactMatchLevel("fname", term_frequency_adjustments=True),
+                cll.NullLevel("fname"),
+                cll.DistanceFunctionLevel(
                     "fname", "jaro_winkler_similarity", 0.8, True
                 ),
-                cll.distance_function_level(
+                cll.DistanceFunctionLevel(
                     "fname", "jaro_winkler_similarity", 0.65, True
                 ),
                 {
@@ -97,7 +96,7 @@ def test_discussion_example(tmp_path):
                     "tf_adjustment_column": "metaphone_fname",
                     "tf_adjustment_weight": 1.0,
                 },
-                else_level(),
+                cll.ElseLevel(),
             ]
 
             settings_dict = {

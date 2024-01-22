@@ -1,6 +1,6 @@
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 # ground truth:
@@ -121,9 +121,9 @@ def test_m_u_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.exact_match("tm_partial"),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.ExactMatch("tm_partial"),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
     linker = DuckDBLinker(df, settings)
@@ -147,9 +147,9 @@ def test_parameter_estimate_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.levenshtein_at_thresholds("first_name", [1]),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.LevenshteinAtThresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
     linker = DuckDBLinker(df, settings)
@@ -183,8 +183,8 @@ def test_parameter_estimate_charts():
         "link_type": "dedupe_only",
         "comparisons": [
             # no observations of levenshtein == 1 in this data
-            cl.levenshtein_at_thresholds("gender", [1]),
-            cl.levenshtein_at_thresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("gender", [1]),
+            cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
     linker = DuckDBLinker(df, settings)

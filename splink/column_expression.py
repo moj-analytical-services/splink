@@ -225,3 +225,7 @@ class ColumnExpression:
             return "transformed " + self.raw_sql_expression
         else:
             return self.raw_sql_expression
+
+    def __repr__(self):
+        # TODO: need to include transform info, but guard for case of no dialect
+        return f"ColumnExpression(sql_expression='{self.raw_sql_expression}')"
