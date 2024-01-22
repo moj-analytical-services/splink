@@ -3,9 +3,9 @@ import pandas as pd
 import sqlglot
 from sqlglot.expressions import CTE, Identifier, TableAlias
 
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
+from splink.comparison_library import (
+    ExactMatch,
+    LevenshteinAtThresholds,
 )
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
@@ -26,7 +26,7 @@ def test_cache_tracking_works():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -83,7 +83,9 @@ def test_cache_used_when_registering_nodes_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
@@ -130,8 +132,8 @@ def test_cache_used_when_registering_tf_tables():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name", term_frequency_adjustments=True),
-            exact_match("surname", term_frequency_adjustments=True),
+            ExactMatch("first_name").configure(term_frequency_adjustments=True),
+            ExactMatch("surname").configure(term_frequency_adjustments=True),
         ],
         "blocking_rules_to_generate_predictions": ["l.surname = r.surname"],
     }
@@ -206,7 +208,7 @@ def test_cache_invalidation():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -249,7 +251,7 @@ def test_table_deletions():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -294,7 +296,9 @@ def test_table_deletions_with_preregistered():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
@@ -328,7 +332,7 @@ def test_single_deletion():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 

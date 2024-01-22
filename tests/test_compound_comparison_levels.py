@@ -1,7 +1,7 @@
 import pandas as pd
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -82,7 +82,7 @@ def test_compound_comparison_level():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("city"),
+            cl.ExactMatch("city"),
             {
                 "output_column_name": "company_comparison",
                 "comparison_levels": [
@@ -108,10 +108,10 @@ def test_compound_comparison_level():
                         "sql_condition": sql_and_clauses_joined_with_ors,
                         "label_for_charts": "2 out of 3 columns match",
                     },
-                    cll.exact_match_level("first_name"),
-                    cll.exact_match_level("middle_name"),
-                    cll.exact_match_level("surname"),
-                    cll.else_level(),
+                    cll.ExactMatchLevel("first_name"),
+                    cll.ExactMatchLevel("middle_name"),
+                    cll.ExactMatchLevel("surname"),
+                    cll.ElseLevel(),
                 ],
             },
         ],
@@ -199,14 +199,14 @@ def test_complex_compound_comparison_level():
             {
                 "output_column_name": "my_comparison",
                 "comparison_levels": [
-                    cll.null_level("col_1"),
-                    cll.exact_match_level("col_7"),
-                    cll.exact_match_level("col_3"),
+                    cll.NullLevel("col_1"),
+                    cll.ExactMatchLevel("col_7"),
+                    cll.ExactMatchLevel("col_3"),
                     {
                         "sql_condition": complex_condition_sql,
                         "label_for_charts": "complex condition",
                     },
-                    cll.else_level(),
+                    cll.ElseLevel(),
                 ],
             }
         ],

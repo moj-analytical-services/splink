@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pandas as pd
 
-from splink.duckdb.comparison_library import exact_match
+from splink.comparison_library import ExactMatch
 from splink.duckdb.linker import DuckDBLinker
 
 settings_template = {
@@ -13,9 +13,9 @@ settings_template = {
         "l.surname = r.surname",
     ],
     "comparisons": [
-        exact_match("first_name", term_frequency_adjustments=True),
-        exact_match("surname"),
-        exact_match("dob"),
+        ExactMatch("first_name").configure(term_frequency_adjustments=True),
+        ExactMatch("surname"),
+        ExactMatch("dob"),
     ],
     "retain_matching_columns": True,
     "retain_intermediate_calculation_columns": True,

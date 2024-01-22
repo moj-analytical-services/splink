@@ -56,7 +56,7 @@ def test_salting_spark(spark):
     ]
 
     blocking_rules_salted = [
-        brl.exact_match_rule("surname", salting_partitions=3),
+        brl.block_on("surname", salting_partitions=3),
         {"blocking_rule": "l.first_name = r.first_name", "salting_partitions": 7},
         "l.dob = r.dob",
     ]

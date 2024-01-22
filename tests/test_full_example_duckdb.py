@@ -6,8 +6,8 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -27,7 +27,7 @@ def test_full_example_duckdb(tmp_path):
 
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
-    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][1] = cl.JaccardAtThresholds("SUR name")
 
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
@@ -249,7 +249,7 @@ def test_duckdb_arrow_array():
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
-            "comparisons": [cl.exact_match("b")],
+            "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
     )
@@ -288,22 +288,24 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_pattern=".*"),
-                    cll.exact_match_level("full_name", term_frequency_adjustments=True),
-                    cll.columns_reversed_level(
-                        "first_name", "surname", tf_adjustment_column="full_name"
+                    cll.NullLevel("full_name", valid_string_pattern=".*"),
+                    cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
+                    cll.ColumnsReversedLevel("first_name", "surname").configure(
+                        tf_adjustment_column="full_name"
                     ),
-                    cll.exact_match_level(
-                        "first_name", term_frequency_adjustments=True
-                    ),
-                    cll.else_level(),
+                    cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
+                    cll.ElseLevel(),
                 ],
             },
-            cl.damerau_levenshtein_at_thresholds(
-                "dob", 2, term_frequency_adjustments=True
+            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
+                term_frequency_adjustments=True
             ),
-            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.JaroWinklerAtThresholds("city", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

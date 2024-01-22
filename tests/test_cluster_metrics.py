@@ -2,8 +2,8 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
+from splink.comparison_library import (
+    ExactMatch,
 )
 from splink.duckdb.linker import DuckDBLinker
 
@@ -29,9 +29,9 @@ def test_size_density_dedupe():
         "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
     }
     linker = DuckDBLinker(df_1, settings)
@@ -59,9 +59,9 @@ def test_size_density_link():
         "probability_two_random_records_match": 0.01,
         "link_type": "link_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
     }
     linker = DuckDBLinker(

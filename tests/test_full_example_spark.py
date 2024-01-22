@@ -5,8 +5,8 @@ import pyspark.sql.functions as f
 import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.spark.comparison_level_library as cll
-import splink.spark.comparison_library as cl
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -34,7 +34,7 @@ def test_full_example_spark(spark, df_spark, tmp_path):
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
-    settings_dict["comparisons"][1] = cl.exact_match("surname")
+    settings_dict["comparisons"][1] = cl.ExactMatch("surname")
     settings_dict["comparisons"].append(name_comparison(cll, "surname"))
 
     settings = {
@@ -44,16 +44,16 @@ def test_full_example_spark(spark, df_spark, tmp_path):
             {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
         ],
         "comparisons": [
-            cl.jaro_winkler_at_thresholds("first_name", 0.9),
-            cl.jaro_at_thresholds("surname", 0.9),
-            cl.damerau_levenshtein_at_thresholds("dob", 2),
+            cl.JaroWinklerAtThresholds("first_name", 0.9),
+            cl.JaroAtThresholds("surname", 0.9),
+            cl.DamerauLevenshteinAtThresholds("dob", 2),
             {
                 "comparison_levels": [
-                    cll.array_intersect_level("email"),
-                    cll.else_level(),
+                    cll.ArrayIntersectLevel("email", min_intersection=1),
+                    cll.ElseLevel(),
                 ]
             },
-            cl.jaccard_at_thresholds("city", [0.9]),
+            cl.JaccardAtThresholds("city", [0.9]),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

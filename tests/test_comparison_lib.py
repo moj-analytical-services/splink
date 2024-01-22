@@ -1,6 +1,7 @@
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
+from splink.column_expression import ColumnExpression
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -19,10 +20,10 @@ def test_distance_function_comparison():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "forename", "hamming", [1, 2], higher_is_more_similar=False
             ),
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "surname", "hamming", [1, 2], higher_is_more_similar=False
             ),
         ],
@@ -59,7 +60,7 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
-def test_set_to_lowercase_parameter():
+def test_set_to_lowercase():
     data = [
         {"id": 1, "forename": "John"},
         {"id": 2, "forename": "john"},
@@ -71,7 +72,7 @@ def test_set_to_lowercase_parameter():
         "unique_id_column_name": "id",
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [],
-        "comparisons": [cl.exact_match("forename", set_to_lowercase=True)],
+        "comparisons": [cl.ExactMatch(ColumnExpression("forename").lower())],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
