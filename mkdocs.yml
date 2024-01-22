@@ -160,6 +160,8 @@ nav:
           - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
           - Regular Expressions: "topic_guides/comparisons/regular_expressions.md"
         - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+      - Evaluation:
+        - Overview: "topic_guides/evaluation/overview.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
