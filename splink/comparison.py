@@ -72,8 +72,11 @@ class Comparison:
                 # cl is a dict
                 # TODO: remove support for this
                 cl = ComparisonLevel(
-                    **cl, comparison=self,
-                    sql_dialect=None if settings_obj is None else settings_obj._sql_dialect
+                    **cl,
+                    comparison=self,
+                    sql_dialect=None
+                    if settings_obj is None
+                    else settings_obj._sql_dialect,
                 )
 
             self.comparison_levels.append(cl)
@@ -104,7 +107,13 @@ class Comparison:
         # want comparison levels to always be ComparisonLevel, not dict
         comparison_dict = deepcopy(self.as_dict())
         comparison_dict["comparison_levels"] = [
-            ComparisonLevel(**cl_dict)
+            ComparisonLevel(
+                **cl_dict,
+                # TODO: Comparison should also store dialect
+                sql_dialect=None
+                if self._settings_obj is None
+                else self._settings_obj._sql_dialect,
+            )
             for cl_dict in comparison_dict["comparison_levels"]
         ]
         cc = Comparison(comparison_dict, self._settings_obj)

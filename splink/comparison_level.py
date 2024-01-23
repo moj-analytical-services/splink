@@ -136,6 +136,8 @@ class ComparisonLevel:
     def __init__(
         self,
         sql_condition: str,
+        # TODO: dialect vs dialect name
+        sql_dialect: str,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -145,9 +147,6 @@ class ComparisonLevel:
         m_probability: float = None,
         u_probability: float = None,
         comparison: Comparison = None,
-        # TODO: dialect vs dialect name
-        # TODO: make this compulsory?
-        sql_dialect: str = None,
     ):
         self.comparison: Comparison = comparison
         self._sql_dialect = sql_dialect
