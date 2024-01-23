@@ -81,10 +81,10 @@ def test_discussion_example(tmp_path):
             levels = [
                 cll.ExactMatchLevel("fname", term_frequency_adjustments=True),
                 cll.NullLevel("fname"),
-                cll.distance_function_level(
+                cll.DistanceFunctionLevel(
                     "fname", "jaro_winkler_similarity", 0.8, True
                 ),
-                cll.distance_function_level(
+                cll.DistanceFunctionLevel(
                     "fname", "jaro_winkler_similarity", 0.65, True
                 ),
                 {

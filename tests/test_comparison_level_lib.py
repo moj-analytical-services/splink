@@ -1,12 +1,13 @@
 import pandas as pd
 
+import splink.comparison_level_library as cll
+
 from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
 def test_column_reversal(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "forename": "John", "surname": "Smith", "full_name": "John Smith"},
@@ -50,7 +51,6 @@ def test_column_reversal(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_perc_difference(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "amount": 1.2},
@@ -100,7 +100,6 @@ def test_perc_difference(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "name": "harry"},
@@ -179,9 +178,8 @@ def test_levenshtein_level(test_helpers, dialect):
 
 # postgres has no Damerau-Levenshtein
 @mark_with_dialects_excluding("postgres")
-def test_DamerauLevenshteinLevel(test_helpers, dialect):
+def test_damerau_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "name": "harry"},

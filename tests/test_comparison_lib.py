@@ -21,10 +21,10 @@ def test_distance_function_comparison():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "forename", "hamming", [1, 2], higher_is_more_similar=False
             ),
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "surname", "hamming", [1, 2], higher_is_more_similar=False
             ),
         ],

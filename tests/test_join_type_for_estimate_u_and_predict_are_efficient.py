@@ -109,7 +109,7 @@ def test_dedupe_only():
             cl.ExactMatch("first_name"),
             cl.ExactMatch("surname"),
             cl.ExactMatch("dob"),
-            cl.ExactMatch("city", term_frequency_adjustments=True),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
             cl.ExactMatch("email"),
         ],
     }
@@ -161,7 +161,7 @@ def test_link_and_dedupe():
             cl.ExactMatch("first_name"),
             cl.ExactMatch("surname"),
             cl.ExactMatch("dob"),
-            cl.ExactMatch("city", term_frequency_adjustments=True),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
             cl.ExactMatch("email"),
         ],
     }
@@ -217,7 +217,7 @@ def test_link_only_two():
             cl.ExactMatch("first_name"),
             cl.ExactMatch("surname"),
             cl.ExactMatch("dob"),
-            cl.ExactMatch("city", term_frequency_adjustments=True),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
             cl.ExactMatch("email"),
         ],
     }
@@ -274,7 +274,7 @@ def test_link_only_three():
             cl.ExactMatch("first_name"),
             cl.ExactMatch("surname"),
             cl.ExactMatch("dob"),
-            cl.ExactMatch("city", term_frequency_adjustments=True),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
             cl.ExactMatch("email"),
         ],
     }

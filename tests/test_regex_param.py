@@ -99,7 +99,9 @@ record_pairs_gamma_name = {
 }
 
 
-@mark_with_dialects_excluding()
+# TODO: we can restore postgres if we translate from Jaro + JaroWinkler
+# which should be okay as these are not crucial to the test
+@mark_with_dialects_excluding("postgres", "sqlite")
 @pytest.mark.parametrize(
     ("level_set", "record_pairs_gamma"),
     [

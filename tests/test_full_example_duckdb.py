@@ -302,18 +302,22 @@ def test_small_example_duckdb(tmp_path):
                 "comparison_levels": [
                     cll.NullLevel("full_name", valid_string_pattern=".*"),
                     cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
-                    cll.ColumnsReversedLevel(
-                        "first_name", "surname", tf_adjustment_column="full_name"
+                    cll.ColumnsReversedLevel("first_name", "surname").configure(
+                        tf_adjustment_column="full_name"
                     ),
                     cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
                     cll.ElseLevel(),
                 ],
             },
-            cl.DamerauLevenshteinAtThresholds(
-                "dob", 2, term_frequency_adjustments=True
+            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
+                term_frequency_adjustments=True
             ),
-            cl.JaroAtThresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.JaroWinklerAtThresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.JaroWinklerAtThresholds("city", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 
+import splink.comparison_library as cl
+
 from .decorator import mark_with_dialects_excluding
 
 
@@ -34,11 +36,11 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
             "l.first_name = r.first_name and l.surname = r.surname",
         ],
         "comparisons": [
-            helper.cl.ExactMatch("first_name"),
-            helper.cl.ExactMatch("surname"),
-            helper.cl.ExactMatch("city"),
-            helper.cl.ExactMatch("email"),
-            helper.cl.ExactMatch("dob"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+            cl.ExactMatch("email"),
+            cl.ExactMatch("dob"),
         ],
         "retain_intermediate_calculation_columns": True,
         "retain_matching_columns": True,

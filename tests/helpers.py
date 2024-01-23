@@ -6,8 +6,6 @@ import pandas as pd
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import INTEGER, TEXT
 
-import splink.comparison_level_library as cll
-import splink.comparison_library as cl
 import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
 import splink.spark.blocking_rule_library as brl_spark
@@ -46,20 +44,6 @@ class TestHelper(ABC):
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
 
-    # will be able to remove this once it's all universal, but as a stepping stone
-    @property
-    def cll(self):
-        return cll
-
-    @property
-    def cl(self):
-        return cl
-
-    # @property
-    # @abstractmethod
-    # def ctl(self):
-    #     pass
-
     @property
     @abstractmethod
     def brl(self):
@@ -85,10 +69,6 @@ class DuckDBTestHelper(TestHelper):
     @property
     def date_format(self):
         return "%Y-%m-%d"
-
-    # @property
-    # def ctl(self):
-    #     return ctl_duckdb
 
     @property
     def brl(self):
@@ -129,10 +109,6 @@ class SparkTestHelper(TestHelper):
         df.persist()
         return df
 
-    # @property
-    # def ctl(self):
-    #     return ctl_spark
-
     @property
     def brl(self):
         return brl_spark
@@ -168,10 +144,6 @@ class SQLiteTestHelper(TestHelper):
 
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
-
-    # @property
-    # def ctl(self):
-    #     return ctl_sqlite
 
     @property
     def brl(self):
@@ -221,10 +193,6 @@ class PostgresTestHelper(TestHelper):
 
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
-
-    # @property
-    # def ctl(self):
-    #     return ctl_postgres
 
     @property
     def brl(self):
