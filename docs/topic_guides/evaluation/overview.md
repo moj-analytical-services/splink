@@ -8,15 +8,15 @@ This set of topic guide is intended to provide some structure and guidance on ho
 
 Evaluation in a data linking pipeline can be broken into 3 broad categories:
 
-### Model Evaluation
+### :material-chart-tree: Model Evaluation
 
 After you have trained your model, you can start evaluating the parameters and overall design of the model. To see how, check out the [Model Evaluation guide](./model.md).
 
-### Edge (Link) Evaluation
+### :octicons-link-16: Edge (Link) Evaluation
 
 Once you have trained a model, you will use it to predict the probability of links (edges) between entities (nodes). To see how to evaluate these links, check out the [Edge Evaluation guide](./edges.md).
 
-### :simple-graphql: Cluster Evaluation
+### :fontawesome-solid-circle-nodes: Cluster Evaluation
 
 Once you have chosen a linkage threshold, the edges are used to generate clusters of records. To see how to evaluate these clusters, check out the [Cluster Evaluation guide](./clusters.md).
 
