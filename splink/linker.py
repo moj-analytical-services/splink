@@ -3984,6 +3984,6 @@ class Linker:
     def _explode_arrays_sql(
         self, tbl_name, columns_to_explode, other_columns_to_retain
     ):
-        raise NotImplementedError(
-            f"Unnesting blocking rules are not supported for {type(self)}"
+        return self._sql_dialect_object.explode_arrays_sql(
+            tbl_name, columns_to_explode, other_columns_to_retain
         )
