@@ -162,6 +162,9 @@ nav:
         - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
       - Evaluation:
         - Overview: "topic_guides/evaluation/overview.md"
+        - Model: "topic_guides/evaluation/model.md"
+        - Edges (Links): "topic_guides/evaluation/edges.md"
+        - Clusters: "topic_guides/evaluation/clusters.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
