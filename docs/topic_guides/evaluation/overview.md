@@ -24,7 +24,7 @@ Once you have chosen a linkage threshold, the edges are used to generate cluster
 
 !!! note
 
-    In reality, the development of a linkage pipeline involves iterating through multiple versions of models, links and clusters. E.g For each model version you will generally want to see the downstream impact on the links and clusters generated. As such, you will likely revisit each stage in the evaluation pipeline a number of times before settling on a final output.
+    In reality, the development of a linkage pipeline involves iterating through multiple versions of models, links and clusters. For example, for each model version you will generally want to understand the downstream impact on the links and clusters generated. As such, you will likely revisit each stage of evaluation a number of times before settling on a final output.
 
     The aim of these guides, and the tools provided in Splink, is to ensure that you are able to extract enough information from each iteration to better understand how your pipeline is working and identify areas for improvement.
 
