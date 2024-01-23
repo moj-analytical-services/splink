@@ -141,17 +141,15 @@ Once you have initialised the `linker` object, there is no difference in the sub
 [**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](../../comparisons/comparators.md) functions.
 However, some are available for Splink users as python [user-defined functions (UDFs)](../../../dev_guides/udfs.html#sqlite):
 
-- [`levenshtein`](../../../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
-- [`damerau_levenshtein`](../../../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
-- [`jaro`](../../../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
-- [`jaro_winkler`](../../../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
+* [`levenshtein`](../../../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
+* [`damerau_levenshtein`](../../../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
+* [`jaro`](../../../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
+* [`jaro_winkler`](../../../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
 
 However, there are a couple of points to note:
 
-- These functions are implemented using the [rapidfuzz](https://maxbachmann.github.io/RapidFuzz/) package, which must be installed if you wish to make use of them, via e.g. `pip install rapidfuzz`. If you do not wish to do so you can disable the use of these functions when creating your linker:
-
+* These functions are implemented using the [rapidfuzz](https://maxbachmann.github.io/RapidFuzz/) package, which must be installed if you wish to make use of them, via e.g. `pip install rapidfuzz`. If you do not wish to do so you can disable the use of these functions when creating your linker:
 ```py
 linker = SQLiteLinker(df, settings, ..., register_udfs=False)
 ```
-
-- As these functions are implemented in python they will be considerably slower than any native-SQL comparisons. If you find that your model-training or predictions are taking a large time to run, you may wish to consider instead switching to DuckDB (or some other backend).
+* As these functions are implemented in python they will be considerably slower than any native-SQL comparisons. If you find that your model-training or predictions are taking a large time to run, you may wish to consider instead switching to DuckDB (or some other backend).
