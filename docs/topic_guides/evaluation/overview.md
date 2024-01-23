@@ -2,7 +2,7 @@
 
 Evaluation is a non-trivial, but crucial, task in data linkage. Linkage pipelines are complex and require many design decisions, each of which has an impact on the end result. 
 
-This set of topic guide is intended to provide some structure and guidance on how to evaluate a Splink model alongside its resulting links and clusters.
+This set of topic guides is intended to provide some structure and guidance on how to evaluate a Splink model alongside its resulting links and clusters.
 
 ## How do we evaluate different stages of the pipeline?
 
