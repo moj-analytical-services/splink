@@ -269,4 +269,6 @@ extra:
       link: https://pypi.org/project/splink/
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
+    - icon: fontawesome/solid/rss
+      link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
