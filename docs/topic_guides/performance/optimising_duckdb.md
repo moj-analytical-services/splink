@@ -120,3 +120,7 @@ linker = DuckDBLinker(
 ```
 
 See also [this section](https://duckdb.org/docs/guides/performance/how-to-tune-workloads.html#larger-than-memory-workloads-out-of-core-processing) of the DuckDB docs
+
+#### Reducing salting
+
+Empirically we have noticed that there is a tension between parallelism and total memory usage. If you're running out of memory, you could consider reducing parallelism.
