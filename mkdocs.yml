@@ -170,6 +170,8 @@ nav:
         - Spark Performance:
             - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
             - Salting blocking rules: "topic_guides/performance/salting.md"
+        - DuckDB Performance:
+            - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:
@@ -235,6 +237,7 @@ nav:
         - Testing: "dev_guides/changing_splink/testing.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+        - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
         - Understanding and debugging Splink: "dev_guides/debug_modes.md"
         - Transpilation using sqlglot: "dev_guides/transpilation.md"
@@ -274,4 +277,6 @@ extra:
       link: https://pypi.org/project/splink/
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
+    - icon: fontawesome/solid/rss
+      link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
