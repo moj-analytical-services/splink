@@ -165,6 +165,8 @@ nav:
         - Spark Performance:
             - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
             - Salting blocking rules: "topic_guides/performance/salting.md"
+        - DuckDB Performance:
+            - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:
