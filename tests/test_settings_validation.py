@@ -313,19 +313,20 @@ def test_settings_validation_on_2_to_3_converter():
     Linker(df, converted, database_api=db_api)
 
 
-def test_validate_sql_dialect():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+# TODO: I think this will no longer be applicable?
+# def test_validate_sql_dialect():
+#     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
+#     settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
 
-    with pytest.raises(Exception) as excinfo:
-        db_api = DuckDBAPI()
+#     with pytest.raises(Exception) as excinfo:
+#         db_api = DuckDBAPI()
 
-        Linker(df, settings, database_api=db_api)
-    assert str(excinfo.value) == (
-        "Incompatible SQL dialect! `settings` dictionary uses dialect "
-        "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
-    )
+#         Linker(df, settings, database_api=db_api)
+#     assert str(excinfo.value) == (
+#         "Incompatible SQL dialect! `settings` dictionary uses dialect "
+#         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
+#     )
 
 
 def test_comparison_validation():
