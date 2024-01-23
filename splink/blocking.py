@@ -7,7 +7,9 @@ from sqlglot import parse_one
 from sqlglot.expressions import Column, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 
+from .input_column import InputColumn
 from .misc import ensure_is_list
+from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
@@ -27,12 +29,25 @@ def blocking_rule_to_obj(br):
         sqlglot_dialect = br.get("sql_dialect", None)
 
         salting_partitions = br.get("salting_partitions", None)
-        if salting_partitions is None:
-            return BlockingRule(blocking_rule, sqlglot_dialect)
-        else:
+        arrays_to_explode = br.get("arrays_to_explode", None)
+
+        if arrays_to_explode is not None and salting_partitions is not None:
+            raise ValueError(
+                "Splink does not support blocking rules that are "
+                " both salted and exploding"
+            )
+
+        if salting_partitions is not None:
             return SaltedBlockingRule(
                 blocking_rule, sqlglot_dialect, salting_partitions
             )
+
+        if arrays_to_explode is not None:
+            return ExplodingBlockingRule(
+                blocking_rule, sqlglot_dialect, arrays_to_explode
+            )
+
+        return BlockingRule(blocking_rule, sqlglot_dialect)
 
     else:
         br = BlockingRule(br)
@@ -69,8 +84,7 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    @property
-    def exclude_pairs_generated_by_this_rule_sql(self):
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
@@ -81,15 +95,15 @@ class BlockingRule:
         # meaning these comparisons get lost
         return f"coalesce(({self.blocking_rule_sql}),false)"
 
-    @property
-    def exclude_pairs_generated_by_all_preceding_rules_sql(self):
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
         """A SQL string that excludes the results of ALL previous blocking rules from
         the pairwise comparisons generated.
         """
         if not self.preceding_rules:
             return ""
         or_clauses = [
-            br.exclude_pairs_generated_by_this_rule_sql for br in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql(linker)
+            for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
@@ -107,8 +121,8 @@ class BlockingRule:
             inner join {linker._input_tablename_r} as r
             on
             ({self.blocking_rule_sql})
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
             """
         return sql
 
@@ -233,12 +247,179 @@ class SaltedBlockingRule(BlockingRule):
             inner join {linker._input_tablename_r} as r
             on
             ({self.blocking_rule_sql} {salt_condition})
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
             """
 
             sqls.append(sql)
         return " UNION ALL ".join(sqls)
+
+
+class ExplodingBlockingRule(BlockingRule):
+    def __init__(
+        self,
+        blocking_rule: BlockingRule | dict | str,
+        sqlglot_dialect: str = None,
+        array_columns_to_explode: list = [],
+    ):
+        super().__init__(blocking_rule, sqlglot_dialect)
+        self.array_columns_to_explode: List[str] = array_columns_to_explode
+        self.exploded_id_pair_table: SplinkDataFrame = None
+
+    def marginal_exploded_id_pairs_table_sql(self, linker: Linker, br: BlockingRule):
+        """generates a table of the marginal id pairs from the exploded blocking rule
+        i.e. pairs are only created that match this blocking rule and NOT any of
+        the preceding blocking rules
+        """
+
+        settings_obj = linker._settings_obj
+        unique_id_col = settings_obj._unique_id_column_name
+
+        link_type = settings_obj._link_type
+
+        if linker._two_dataset_link_only:
+            link_type = "two_dataset_link_only"
+
+        if linker._self_link_mode:
+            link_type = "self_link"
+
+        where_condition = _sql_gen_where_condition(
+            link_type, settings_obj._unique_id_input_columns
+        )
+
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
+        if link_type == "two_dataset_link_only":
+            where_condition = (
+                where_condition + " and l.source_dataset < r.source_dataset"
+            )
+
+        sql = f"""
+            select distinct
+                {id_expr_l} as {unique_id_col}_l,
+                {id_expr_r} as {unique_id_col}_r
+            from __splink__df_concat_with_tf_unnested as l
+            inner join __splink__df_concat_with_tf_unnested as r
+            on ({br.blocking_rule_sql})
+            {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            """
+
+        return sql
+
+    def drop_materialised_id_pairs_dataframe(self):
+        self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
+        self.exploded_id_pair_table = None
+
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
+
+        unique_id_column = linker._settings_obj._unique_id_column_name
+        splink_df = self.exploded_id_pair_table
+        ids_to_compare_sql = f"select * from {splink_df.physical_name}"
+
+        settings_obj = linker._settings_obj
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
+        return f"""EXISTS (
+            select 1 from ({ids_to_compare_sql}) as ids_to_compare
+            where (
+                {id_expr_l} = ids_to_compare.{unique_id_column}_l and
+                {id_expr_r} = ids_to_compare.{unique_id_column}_r
+            )
+        )
+        """
+
+    def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
+        columns_to_select = linker._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
+
+        if self.exploded_id_pair_table is None:
+            raise ValueError(
+                "Exploding blocking rules are not supported for the function you have"
+                " called."
+            )
+        settings_obj = linker._settings_obj
+        id_expr_l = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "l"
+        )
+        id_expr_r = _composite_unique_id_from_nodes_sql(
+            settings_obj._unique_id_input_columns, "r"
+        )
+
+        exploded_id_pair_table = self.exploded_id_pair_table
+        unique_id_col = linker._settings_obj._unique_id_column_name
+        sql = f"""
+            select
+                {sql_select_expr},
+                '{self.match_key}' as match_key
+                {probability}
+            from {exploded_id_pair_table.physical_name} as pairs
+            left join {linker._input_tablename_l} as l
+                on pairs.{unique_id_col}_l={id_expr_l}
+            left join {linker._input_tablename_r} as r
+                on pairs.{unique_id_col}_r={id_expr_r}
+        """
+        return sql
+
+    def as_dict(self):
+        output = super().as_dict()
+        output["arrays_to_explode"] = self.array_columns_to_explode
+        return output
+
+
+def materialise_exploded_id_tables(linker: Linker):
+    settings_obj = linker._settings_obj
+
+    blocking_rules = settings_obj._blocking_rules_to_generate_predictions
+    exploding_blocking_rules = [
+        br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
+    ]
+    exploded_tables = []
+
+    input_dataframe = linker._initialise_df_concat_with_tf()
+    input_colnames = {col.name for col in input_dataframe.columns}
+
+    for br in exploding_blocking_rules:
+        arrays_to_explode_quoted = [
+            InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
+            for colname in br.array_columns_to_explode
+        ]
+        expl_sql = linker._explode_arrays_sql(
+            "__splink__df_concat_with_tf",
+            br.array_columns_to_explode,
+            list(input_colnames.difference(arrays_to_explode_quoted)),
+        )
+
+        linker._enqueue_sql(
+            expl_sql,
+            "__splink__df_concat_with_tf_unnested",
+        )
+
+        base_name = "__splink__marginal_exploded_ids_blocking_rule"
+        table_name = f"{base_name}_mk_{br.match_key}"
+
+        sql = br.marginal_exploded_id_pairs_table_sql(linker, br)
+
+        linker._enqueue_sql(sql, table_name)
+
+        marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
+        br.exploded_id_pair_table = marginal_ids_table
+        exploded_tables.append(marginal_ids_table)
+    return exploding_blocking_rules
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
