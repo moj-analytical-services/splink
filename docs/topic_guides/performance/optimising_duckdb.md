@@ -10,15 +10,15 @@ tags:
 
 This topic guide describes how to configure DuckDB to optimise performance
 
-It is assumed readers have already read the more general [guide to linking big data](./drivers_of_performance.md), and have chosen appropriate blocking rules
+It is assumed readers have already read the more general [guide to linking big data](./drivers_of_performance.md), and have chosen appropriate blocking rules.
 
 ## Summary:
 
-- From `splink==3.9.11` onwards, DuckDB generally parallelises jobs well, so you should see 100% usage of all CPU cores for core Splink operations (parameter estimation and prediction)
+- From `splink==3.9.11` onwards, DuckDB generally parallelises jobs well, so you should see 100% usage of all CPU cores for the main Splink operations (parameter estimation and prediction)
 - In some cases `predict()` needs additional configuration to achieve 100% CPU use. You're most likely to need this in the following scenarios:
-  - Very high core count machines
-  - Splink models that contain a small number of `blocking_rules_to_generate_predictions`
-  - Splink models that have a relatively small number of input rows (less than around 500k)
+    - Very high core count machines
+    - Splink models that contain a small number of `blocking_rules_to_generate_predictions`
+    - Splink models that have a relatively small number of input rows (less than around 500k)
 - If you are facing memory issues with DuckDB, you have the option of using an on-disk database.
 - Reducing the amount of parallelism by removing salting can also sometimes reduce memory usage
 
@@ -30,19 +30,19 @@ You can find a blog post with formal benchmarks of DuckDB performance on a varie
 
 The number of CPU cores used is given by the following formula:
 
-$$
-\text{base parallelism} = \frac{\text{number of input rows}}{122,880}
-$$
+$\text{base parallelism} = \frac{\text{number of input rows}}{122,880}$
 
-$$
-\text{overall parallelism} = \text{base parallelism} \times \text{count of blocking rules} \times \text{number of salting partitions per blocking rule}
-$$
+$\text{blocking rule parallelism}$
+
+$= \text{count of blocking rules} \times$ $\text{number of salting partitions per blocking rule}$
+
+$\text{overall parallelism} = \text{base parallelism} \times \text{blocking rule parallelism}$
 
 If overall parallelism is less than the total number of threads, then you won't achieve 100% CPU usage.
 
 #### Example
 
-Consider a 1m input rows, 32 cores (64 hyperthreads)
+Consider a deduplication job with 1,000,000 input rows, on a machine with 32 cores (64 hyperthreads)
 
 In our Splink suppose we set:
 
@@ -71,10 +71,11 @@ We therefore have paralleism of $9 \times 3 \times 2 = 54$, which is less than t
 The above formula for overall parallelism assumes all blocking rules have the same number of salting partitions, which is not necessarily the case. In the more general case of variable numbers of salting partitions, the formula becomes
 
 $$
-\text{overall parallelism} = \text{base parallelism} \times \text{total number of salted blocking partitions across all blocking rules}
+\text{overall parallelism} =
+\text{base parallelism} \times \text{total number of salted blocking partitions across all blocking rules}
 $$
 
-So for example, with two blocking rules, if the first has 2 salting partitions, and the second has 10 salting partitions, when we would multiple base parallelism by 12.
+So for example, with two blocking rules, if the first has 2 salting partitions, and the second has 10 salting partitions, when we would multiply base parallelism by 12.
 
 This may be useful in the case one of the blocking rules produces more comparisons than another: the 'bigger' blocking rule can be salted more.
 
