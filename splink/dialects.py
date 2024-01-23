@@ -116,9 +116,7 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'regex_extract' function"
         )
 
-    def explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
         raise NotImplementedError(
             f"Unnesting blocking rules are not supported for {type(self)}"
         )
@@ -193,9 +191,7 @@ class DuckDBDialect(SplinkDialect):
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
 
-    def explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
         """Generated sql that explodes one or more columns in a table"""
         columns_to_explode = columns_to_explode.copy()
         other_columns_to_retain = other_columns_to_retain.copy()
@@ -297,9 +293,7 @@ class SparkDialect(SplinkDialect):
         else:
             return f" TABLESAMPLE ({percent} PERCENT) "
 
-    def explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
         """Generated sql that explodes one or more columns in a table"""
         columns_to_explode = columns_to_explode.copy()
         other_columns_to_retain = other_columns_to_retain.copy()

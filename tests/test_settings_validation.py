@@ -339,7 +339,11 @@ def test_comparison_validation():
     # are tested elsewhere.
     db_api = DuckDBAPI()
 
-    Linker(pd.DataFrame({"a": [1, 2, 3]}), {"link_type": "dedupe_only"}, database_api=db_api)
+    Linker(
+        pd.DataFrame({"a": [1, 2, 3]}),
+        {"link_type": "dedupe_only"},
+        database_api=db_api,
+    )
 
     settings = get_settings_dict()
 

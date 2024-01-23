@@ -227,8 +227,10 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
     }
 
     linker = helper.Linker(
-        [df_1, df_2, df_3], settings, input_table_aliases=["a_", "b_", "c_"],
-        **helper.extra_linker_args()
+        [df_1, df_2, df_3],
+        settings,
+        input_table_aliases=["a_", "b_", "c_"],
+        **helper.extra_linker_args(),
     )
     returned_triples = linker.predict().as_pandas_dataframe()[
         [
