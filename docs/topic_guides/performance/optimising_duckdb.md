@@ -15,7 +15,7 @@ It is assumed readers have already read the more general [guide to linking big d
 ## Summary:
 
 - From `splink==3.9.11` onwards, DuckDB generally parallelises jobs well, so you should see 100% usage of all CPU cores for the main Splink operations (parameter estimation and prediction)
-- In some cases `predict()` needs additional configuration to achieve 100% CPU use. You're most likely to need this in the following scenarios:
+- In some cases `predict()` needs salting on `blocking_rules_to_generate_predictions` to achieve 100% CPU use. You're most likely to need this in the following scenarios:
     - Very high core count machines
     - Splink models that contain a small number of `blocking_rules_to_generate_predictions`
     - Splink models that have a relatively small number of input rows (less than around 500k)
@@ -27,6 +27,10 @@ You can find a blog post with formal benchmarks of DuckDB performance on a varie
 ## Configuration
 
 ### Ensuring 100% CPU usage across all cores on `predict()`
+
+The aim is for overall parallelism of the predict() step to closely align to the number of thread/vCPU cores you have:
+- If parallelism is too low, you won't use all your threads
+- If parallelism is too high, runtime will be longer.
 
 The number of CPU cores used is given by the following formula:
 
@@ -42,7 +46,7 @@ If overall parallelism is less than the total number of threads, then you won't 
 
 #### Example
 
-Consider a deduplication job with 1,000,000 input rows, on a machine with 32 cores (64 hyperthreads)
+Consider a deduplication job with 1,000,000 input rows, on a machine with 32 cores (64 threads)
 
 In our Splink suppose we set:
 
@@ -64,7 +68,7 @@ Then we have:
 - 3 blocking rules
 - 2 salting partitions per blocking rule
 
-We therefore have paralleism of $9 \times 3 \times 2 = 54$, which is less than the 64 hyperthreads, and therefore we won't quite achieve full parallelism.
+We therefore have paralleism of $9 \times 3 \times 2 = 54$, which is less than the 64 threads, and therefore we won't quite achieve full parallelism.
 
 ### Generalisation
 
