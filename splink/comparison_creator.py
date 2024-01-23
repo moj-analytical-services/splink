@@ -1,21 +1,66 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, final
+from typing import Dict, List, Union, final
 
 from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
+from .exceptions import SplinkException
 
 
 class ComparisonCreator(ABC):
-    # TODO: need to think about what this is used for - do we need multiple columns
-    # if we are sticking with storing a col_name ?
-    def __init__(self, col_name: Union[str, ColumnExpression] = None):
+    DEFAULT_COL_EXP_KEY = "__default__"
+
+    def __init__(
+        self,
+        col_name_or_names: Union[
+            Dict[str, Union[str, ColumnExpression]], Union[str, ColumnExpression]
+        ],
+    ):
         """
         Class to author Comparisons
         Args:
-            col_name (str): Input column name
+            col_name_or_names (str, ColumnExpression): Input column name(s).
+                Can be a single item or a dict.
         """
-        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        # if it's not a dict, assume it is a single expression-like
+        if not isinstance(col_name_or_names, dict):
+            cols = {self.DEFAULT_COL_EXP_KEY: col_name_or_names}
+        else:
+            cols = col_name_or_names
+
+        self.col_expressions = {
+            name_reference: ColumnExpression.instantiate_if_str(column)
+            for name_reference, column in cols.items()
+        }
+        self._validate()
+
+    # many ComparisonCreators have a single column expression, so provide a
+    # convenience property for this case. Error if there are none or many
+    @property
+    def col_expression(self) -> ColumnExpression:
+        num_cols = len(self.col_expressions)
+        if num_cols > 1:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has more than one element: {type(self)}"
+            )
+        if num_cols == 0:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has no elements: {type(self)}"
+            )
+        try:
+            col_expression = self.col_expressions[self.DEFAULT_COL_EXP_KEY]
+        except KeyError:
+            raise SplinkException(
+                "Cannot get `ComparisonLevelCreator.col_expression` when "
+                f"`.col_expressions` has non-default single entry: {type(self)}"
+            ) from None
+        return col_expression
+
+    def _validate(self) -> None:
+        # create levels - let them raise errors if there are issues
+        self.create_comparison_levels()
 
     # TODO: property?
     @abstractmethod
@@ -26,6 +71,11 @@ class ComparisonCreator(ABC):
     def get_configured_comparison_levels(self) -> List[ComparisonLevelCreator]:
         # furnish comparison levels with m and u probabilities as needed
         comparison_levels = self.create_comparison_levels()
+
+        if self.term_frequency_adjustments:
+            for cl in comparison_levels:
+                if cl.is_exact_match_level:
+                    cl.term_frequency_adjustments = True
 
         if self.m_probabilities:
             m_values = self.m_probabilities.copy()
@@ -88,8 +138,9 @@ class ComparisonCreator(ABC):
     def configure(
         self,
         *,
-        m_probabilities: list[float] = None,
-        u_probabilities: list[float] = None,
+        term_frequency_adjustments: bool = False,
+        m_probabilities: List[float] = None,
+        u_probabilities: List[float] = None,
     ) -> "ComparisonCreator":
         """
         Configure the comparison creator with m and u probabilities. The first
@@ -107,12 +158,25 @@ class ComparisonCreator(ABC):
                 # in that order
             )
         Args:
+            term_frequency_adjustments (bool, optional): Whether term frequency
+                adjustments are switched on for this comparison. Only applied
+                to exact match levels. Default: False
             m_probabilities (list, optional): List of m probabilities
             u_probabilities (list, optional): List of u probabilities
         """
+        self.term_frequency_adjustments = term_frequency_adjustments
         self.m_probabilities = m_probabilities
         self.u_probabilities = u_probabilities
         return self
+
+    @property
+    def term_frequency_adjustments(self):
+        return getattr(self, "_term_frequency_adjustments", False)
+
+    @final
+    @term_frequency_adjustments.setter
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
+        self._term_frequency_adjustments = term_frequency_adjustments
 
     @final
     @property
@@ -121,7 +185,7 @@ class ComparisonCreator(ABC):
 
     @final
     @m_probabilities.setter
-    def m_probabilities(self, m_probabilities: list[float]):
+    def m_probabilities(self, m_probabilities: List[float]):
         if m_probabilities:
             num_probs_supplied = len(m_probabilities)
             num_non_null_levels = self.num_non_null_levels
@@ -140,7 +204,7 @@ class ComparisonCreator(ABC):
 
     @final
     @u_probabilities.setter
-    def u_probabilities(self, u_probabilities: list[float]):
+    def u_probabilities(self, u_probabilities: List[float]):
         if u_probabilities:
             num_probs_supplied = len(u_probabilities)
             num_non_null_levels = self.num_non_null_levels

@@ -3,11 +3,9 @@ import pandas as pd
 import sqlglot
 from sqlglot.expressions import CTE, Identifier, TableAlias
 
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
-)
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.comparison_library import ExactMatch, LevenshteinAtThresholds
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def get_duckdb_table_names_as_list(con):
@@ -26,11 +24,13 @@ def test_cache_tracking_works():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
@@ -83,12 +83,16 @@ def test_cache_used_when_registering_nodes_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_table_input_nodes_concat_with_tf(splink__df_concat_with_tf)
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -130,14 +134,16 @@ def test_cache_used_when_registering_tf_tables():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name", term_frequency_adjustments=True),
-            exact_match("surname", term_frequency_adjustments=True),
+            ExactMatch("first_name").configure(term_frequency_adjustments=True),
+            ExactMatch("surname").configure(term_frequency_adjustments=True),
         ],
         "blocking_rules_to_generate_predictions": ["l.surname = r.surname"],
     }
 
     # First test do not register any tf tables
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -157,7 +163,9 @@ def test_cache_used_when_registering_tf_tables():
     assert "__splink__df_tf_surname" in cte_table_aliases_used
 
     # Then try the same after registering surname tf table
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -176,7 +184,9 @@ def test_cache_used_when_registering_tf_tables():
     assert "__splink__df_tf_surname" not in cte_table_aliases_used
 
     # Then try the same after registering both
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.register_term_frequency_lookup(first_name_tf_table, "first_name")
@@ -206,11 +216,13 @@ def test_cache_invalidation():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.compute_tf_table("name")
@@ -222,7 +234,9 @@ def test_cache_invalidation():
     assert len_before == len_after
     assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     linker.compute_tf_table("name")
@@ -249,13 +263,15 @@ def test_table_deletions():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_table", settings, connection=con)
+    db_api = DuckDBAPI(connection=con)
 
-    table_names_before = set(get_duckdb_table_names_as_list(linker._con))
+    linker = Linker("my_table", settings, database_api=db_api)
+
+    table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 
     linker.compute_tf_table("name")
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -263,7 +279,7 @@ def test_table_deletions():
     # # The database should be empty except for the original non-splink table
     linker.delete_tables_created_by_splink_from_db()
 
-    table_names_after = set(get_duckdb_table_names_as_list(linker._con))
+    table_names_after = set(get_duckdb_table_names_as_list(db_api._con))
     assert table_names_before == table_names_after
     assert table_names_after == set(["my_table"])
 
@@ -294,15 +310,19 @@ def test_table_deletions_with_preregistered():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_data_table", settings, connection=con)
+    db_api = DuckDBAPI(connection=con)
+
+    linker = Linker("my_data_table", settings, database_api=db_api)
     linker.register_table_input_nodes_concat_with_tf("my_nodes_with_tf_table")
 
-    table_names_before = set(get_duckdb_table_names_as_list(linker._con))
+    table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 
     linker.compute_tf_table("name")
     linker.estimate_u_using_random_sampling(target_rows=1e4)
@@ -313,7 +333,7 @@ def test_table_deletions_with_preregistered():
 
     linker.delete_tables_created_by_splink_from_db()
 
-    table_names_after = set(get_duckdb_table_names_as_list(linker._con))
+    table_names_after = set(get_duckdb_table_names_as_list(db_api._con))
 
     assert table_names_before == table_names_after
 
@@ -328,20 +348,22 @@ def test_single_deletion():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
     tf_table = linker.compute_tf_table("name")
     table_name = tf_table.physical_name
     # Check it is in the cache and database
-    assert table_name in get_duckdb_table_names_as_list(linker._con)
+    assert table_name in get_duckdb_table_names_as_list(db_api._con)
     assert "__splink__df_tf_name" in cache
 
     tf_table.drop_table_from_database_and_remove_from_cache()
     # Check it is no longer in the cache or database
-    assert table_name not in get_duckdb_table_names_as_list(linker._con)
+    assert table_name not in get_duckdb_table_names_as_list(db_api._con)
     assert "__splink__df_tf_name" not in cache

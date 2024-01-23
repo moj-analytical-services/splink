@@ -1,5 +1,5 @@
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
@@ -89,9 +89,36 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    @staticmethod
+    def _wrap_in_nullif(func):
+        def nullif_wrapped_function(*args, **kwargs):
+            # convert empty strings to NULL
+            return f"NULLIF({func(*args, **kwargs)}, '')"
+
+        return nullif_wrapped_function
+
     def try_parse_date(self, name: str, date_format: str = None):
+        return self._wrap_in_nullif(self._try_parse_date_raw)(name, date_format)
+
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
+        )
+
+    @final
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+        return self._wrap_in_nullif(self._regex_extract_raw)(
+            name, pattern, capture_group
+        )
+
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'regex_extract' function"
+        )
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
         )
 
 
@@ -126,10 +153,27 @@ class DuckDBDialect(SplinkDialect):
     def default_date_format(self):
         return "%Y-%m-%d"
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
+
+    # TODO: this is only needed for duckdb < 0.9.0.
+    # should we just ditch support for that? (only for cll - engine should still work)
+    def array_intersect(self, clc: "ComparisonLevelCreator"):
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+        threshold = clc.min_intersection
+
+        # sum of individual (unique) array sizes, minus the (unique) union
+        return (
+            f"list_unique({col.name_l}) + list_unique({col.name_r})"
+            f" - list_unique(list_concat({col.name_l}, {col.name_r}))"
+            f" >= {threshold}"
+        ).strip()
+
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+        return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
     # TODO: roll out to other dialects, at least for now
     @property
@@ -146,6 +190,24 @@ class DuckDBDialect(SplinkDialect):
             return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        # base case
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"unnest({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+            other_columns_to_retain.append(column_to_explode)
+            return f"""select {','.join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501
 
 
 class SparkDialect(SplinkDialect):
@@ -179,10 +241,42 @@ class SparkDialect(SplinkDialect):
     def default_date_format(self):
         return "yyyy-MM-dd"
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def date_diff(self, clc: "ComparisonLevelCreator"):
+        # need custom solution as sqlglot gets confused by 'metric', as in Spark
+        # datediff _only_ works in days
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+        datediff_args = f"{col.name_l}, {col.name_r}"
+
+        if clc.date_metric == "day":
+            date_f = f"""
+                abs(
+                    datediff(
+                        {datediff_args}
+                    )
+                )
+            """
+        elif clc.date_metric in ["month", "year"]:
+            date_f = f"""
+                floor(abs(
+                    months_between(
+                        {datediff_args}
+                    )"""
+            if clc.date_metric == "year":
+                date_f += " / 12))"
+            else:
+                date_f += "))"
+        return f"""
+            {date_f} <= {clc.date_threshold}
+        """
+
+    def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
+
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+        return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
     @property
     def infinity_expression(self):
@@ -198,6 +292,22 @@ class SparkDialect(SplinkDialect):
             return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
         else:
             return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"explode({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+        return f"""select {','.join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
 
 class SqliteDialect(SplinkDialect):
@@ -242,19 +352,9 @@ class PostgresDialect(SplinkDialect):
         instead are UDFs which are automatically registered by Splink
         """
 
-        if clc.date_format is None:
-            clc.date_format = "yyyy-MM-dd"
-
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
-
-        if clc.cast_strings_to_date:
-            datediff_args = f"""
-                to_date({col.name_l}, '{clc.date_format}'),
-                to_date({col.name_r}, '{clc.date_format}')
-            """
-        else:
-            datediff_args = f"{col.name_l}, {col.name_r}"
+        datediff_args = f"{col.name_l}, {col.name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
@@ -277,6 +377,27 @@ class PostgresDialect(SplinkDialect):
         return f"""
             {date_f} <= {clc.date_threshold}
         """
+
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+        # full match - wrap pattern in parentheses so first group is whole expression
+        if capture_group == 0:
+            pattern = f"({pattern})"
+        if capture_group > 1:
+            # currently no easy way to capture non-first groups
+            raise ValueError(
+                "'postgres' backend does not currently support a capture_group greater "
+                "than 1. To proceed you must use your own SQL expression"
+            )
+        return f"substring({name} from '{pattern}')"
+
+    @property
+    def default_date_format(self):
+        return "YYYY-MM-DD"
+
+    def try_parse_date(self, name: str, date_format: str = None):
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""try_cast_date({name}, '{date_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self

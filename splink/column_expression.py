@@ -141,28 +141,31 @@ class ColumnExpression:
         self,
         name: str,
         pattern: str,
+        capture_group: int,
         dialect: SplinkDialect,
     ) -> str:
-        # TODO - add support for capture group.  This will require
-        # adding dialect specific functions because sqlglot doesn't yet support the
-        # position (capture group) arg.
-        sql = f"regexp_extract(___col___, '{pattern}')"
-        regex_extract_sql = sqlglot.parse_one(sql).sql(dialect=dialect.sqlglot_name)
+        # must use dialect specific functions because sqlglot doesn't yet support the
+        # position (capture group) arg
+        return dialect.regex_extract(
+            name,
+            pattern=pattern,
+            capture_group=capture_group,
+        )
 
-        return regex_extract_sql.replace("___col___", name)
-
-    def regex_extract(self, pattern: str, capture_group: int = 1):
+    def regex_extract(self, pattern: str, capture_group: int = 0):
         """Applies a regex extract transform to the input expression.
 
         Args:
             pattern (str): The regex pattern to match.
             capture_group (int): The capture group to extract from the matched pattern.
+                Defaults to 0, meaning the full pattern is extracted
 
         """
         clone = self._clone()
         op = partial(
             clone._regex_extract_dialected,
             pattern=pattern,
+            capture_group=capture_group,
         )
         clone.operations.append(op)
 
@@ -222,3 +225,7 @@ class ColumnExpression:
             return "transformed " + self.raw_sql_expression
         else:
             return self.raw_sql_expression
+
+    def __repr__(self):
+        # TODO: need to include transform info, but guard for case of no dialect
+        return f"ColumnExpression(sql_expression='{self.raw_sql_expression}')"

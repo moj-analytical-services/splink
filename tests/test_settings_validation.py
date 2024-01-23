@@ -4,11 +4,12 @@ import pandas as pd
 import pytest
 
 from splink.comparison import Comparison
+from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
+from splink.database_api import DuckDBAPI
 from splink.duckdb.blocking_rule_library import block_on
-from splink.duckdb.comparison_library import levenshtein_at_thresholds
-from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import ErrorLogger
+from splink.linker import Linker
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
     InvalidTableNamesLogGenerator,
@@ -219,7 +220,7 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
             comparisons_to_check=[
                 Comparison(email_comparison_to_check),
                 Comparison(city_comparison_to_check),
-                levenshtein_at_thresholds("first_name"),
+                LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
             valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         )
@@ -241,11 +242,13 @@ def test_settings_validation_logs(caplog):
     settings["unique_id_column_name"] = "abcde"
     settings["additional_columns_to_retain"] = ["abcde"]
     settings["blocking_rules_to_generate_predictions"] = ["l.abcde = z.abcde"]
-    settings["comparisons"][3] = levenshtein_at_thresholds("abcde")
+    settings["comparisons"][3] = LevenshteinAtThresholds("abcde")
 
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
-        DuckDBLinker(DF, settings, validate_settings=True)
+        db_api = DuckDBAPI()
+
+        Linker(DF, settings, validate_settings=True, database_api=db_api)
 
         # Define expected log segments
         expected_log_segments = [
@@ -305,40 +308,41 @@ def test_settings_validation_on_2_to_3_converter():
     }
 
     converted = convert_settings_from_v2_to_v3(settings)
-    DuckDBLinker(
-        df,
-        converted,
-    )
+    db_api = DuckDBAPI()
+
+    Linker(df, converted, database_api=db_api)
 
 
-def test_validate_sql_dialect():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+# TODO: I think this will no longer be applicable?
+# def test_validate_sql_dialect():
+#     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
+#     settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
 
-    with pytest.raises(Exception) as excinfo:
-        DuckDBLinker(
-            df,
-            settings,
-        )
-    assert str(excinfo.value) == (
-        "Incompatible SQL dialect! `settings` dictionary uses dialect "
-        "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
-    )
+#     with pytest.raises(Exception) as excinfo:
+#         db_api = DuckDBAPI()
+
+#         Linker(df, settings, database_api=db_api)
+#     assert str(excinfo.value) == (
+#         "Incompatible SQL dialect! `settings` dictionary uses dialect "
+#         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
+#     )
 
 
 def test_comparison_validation():
-    import splink.athena.comparison_level_library as ath_cll
-    import splink.duckdb.comparison_level_library as cll
-    import splink.spark.comparison_level_library as sp_cll
+    import splink.comparison_level_library as cll
+    from splink.comparison_library import ExactMatch
     from splink.exceptions import InvalidDialect
-    from splink.spark.comparison_library import exact_match
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
     # are tested elsewhere.
-    DuckDBLinker(
+    db_api = DuckDBAPI()
+
+    Linker(
         pd.DataFrame({"a": [1, 2, 3]}),
+        {"link_type": "dedupe_only"},
+        database_api=db_api,
     )
 
     settings = get_settings_dict()
@@ -349,22 +353,22 @@ def test_comparison_validation():
     }
 
     # cll instead of cl
-    email_cc = cll.exact_match_level("email")
+    email_cc = cll.ExactMatchLevel("email").get_comparison_level("duckdb")
     settings["comparisons"][3] = email_cc
     # random str
     settings["comparisons"][4] = "help"
     # missing key dict key and replaced w/ `comparison_lvls`
     settings["comparisons"].append(email_no_comp_level)
     # Check invalid import is detected
-    settings["comparisons"].append(exact_match("test"))
+    settings["comparisons"].append(ExactMatch("test").get_comparison("spark"))
     # mismashed comparison
     settings["comparisons"].append(
         {
             "comparison_levels": [
-                sp_cll.null_level("test"),
+                cll.NullLevel("test").get_comparison_level("spark"),
                 # Invalid Spark cll
-                ath_cll.exact_match_level("test"),
-                cll.else_level(),
+                cll.ExactMatchLevel("test").get_comparison_level("athena"),
+                cll.ElseLevel().get_comparison_level("duckdb"),
             ]
         }
     )
@@ -381,7 +385,7 @@ def test_comparison_validation():
 
     # Check our errors are raised
     errors = error_logger.raw_errors
-    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
+    assert len(errors) == len(settings["comparisons"]) - 3
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (

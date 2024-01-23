@@ -31,12 +31,16 @@
 # df = add_match_prob(df, settings_for_data_generation)
 
 
+import re
+
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.duckdb.linker import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
+from splink.linker import Linker
 from splink.predict import predict_from_comparison_vectors_sqls
 
 
@@ -47,9 +51,9 @@ def test_splink_converges_to_known_params():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("col_1"),
-            cl.exact_match("col_2"),
-            cl.exact_match("col_3"),
+            cl.ExactMatch("col_1"),
+            cl.ExactMatch("col_2"),
+            cl.ExactMatch("col_3"),
         ],
         "max_iterations": 200,
         "em_convergence": 0.00001,
@@ -59,17 +63,9 @@ def test_splink_converges_to_known_params():
         "linker_uid": "abc",
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    # This test is fiddly because you need to know the hash of the
-    # comparison vector table, but to find this out you need to run the test
-
-    # If the test is failing, run it and look at the output for a line like
-    # CREATE TABLE __splink__df_comparison_vectors_abc123
-    # and modify the following line to include the value of the hash (abc123 above)
-
-    cvv_hashed_tablename = "__splink__df_comparison_vectors_f9bd31158"
-    linker.register_table(df, cvv_hashed_tablename)
+    linker = Linker(df, settings, database_api=db_api)
 
     em_training_session = EMTrainingSession(
         linker,
@@ -78,6 +74,19 @@ def test_splink_converges_to_known_params():
         fix_m_probabilities=False,
         fix_probability_two_random_records_match=False,
     )
+
+    # This test is fiddly because you need to know the hash of the
+    # comparison vector table 'in advance'.  To get it, we run
+    # code that looks for the table and fails to find it
+    # We can then register a table with that name
+    try:
+        em_training_session._comparison_vectors()
+    except Exception as e:
+        pattern = r"__splink__df_comparison_vectors_[a-f0-9]{9}"
+
+        cvv_hashed_tablename = re.search(pattern, str(e)).group()
+
+    linker.register_table(df, cvv_hashed_tablename)
 
     em_training_session._train()
 

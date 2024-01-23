@@ -4,28 +4,15 @@ from collections import UserDict
 
 import pandas as pd
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import (
-    INTEGER,
-    TEXT,
-)
+from sqlalchemy.types import INTEGER, TEXT
 
+import splink.duckdb.blocking_rule_library as brl_duckdb
+import splink.postgres.blocking_rule_library as brl_postgres
+import splink.spark.blocking_rule_library as brl_spark
+import splink.sqlite.blocking_rule_library as brl_sqlite
 from splink.database_api import DuckDBAPI, SparkAPI
-
-# import splink.duckdb.blocking_rule_library as brl_duckdb
-# import splink.duckdb.comparison_library as cl_duckdb
-# import splink.duckdb.comparison_template_library as ctl_duckdb
-# import splink.postgres.blocking_rule_library as brl_postgres
-# import splink.postgres.comparison_library as cl_postgres
-# import splink.postgres.comparison_template_library as ctl_postgres
-# import splink.spark.blocking_rule_library as brl_spark
-# import splink.spark.comparison_library as cl_spark
-# import splink.spark.comparison_template_library as ctl_spark
-# import splink.sqlite.blocking_rule_library as brl_sqlite
-# import splink.sqlite.comparison_library as cl_sqlite
-# import splink.sqlite.comparison_template_library as ctl_sqlite
-from splink.duckdb.linker import DuckDBLinker
+from splink.linker import Linker
 from splink.postgres.linker import PostgresLinker
-from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 
 
@@ -57,26 +44,20 @@ class TestHelper(ABC):
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
 
-    # @property
-    # @abstractmethod
-    # def cl(self):
-    #     pass
-
-    # @property
-    # @abstractmethod
-    # def ctl(self):
-    #     pass
-
-    # @property
-    # @abstractmethod
-    # def brl(self):
-    #     pass
+    @property
+    @abstractmethod
+    def brl(self):
+        pass
 
 
 class DuckDBTestHelper(TestHelper):
     @property
     def Linker(self):
-        return DuckDBLinker
+        return Linker
+
+    def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": DuckDBAPI()}
 
     @property
     def DatabaseAPI(self):
@@ -89,17 +70,9 @@ class DuckDBTestHelper(TestHelper):
     def date_format(self):
         return "%Y-%m-%d"
 
-    # @property
-    # def cl(self):
-    #     return cl_duckdb
-
-    # @property
-    # def ctl(self):
-    #     return ctl_duckdb
-
-    # @property
-    # def brl(self):
-    #     return brl_duckdb
+    @property
+    def brl(self):
+        return brl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -108,11 +81,15 @@ class SparkTestHelper(TestHelper):
 
     @property
     def Linker(self):
-        return SparkLinker
+        return Linker
 
     @property
     def DatabaseAPI(self):
         return SparkAPI
+
+    def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": SparkAPI(**self.db_api_args())}
 
     def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
@@ -132,17 +109,9 @@ class SparkTestHelper(TestHelper):
         df.persist()
         return df
 
-    # @property
-    # def cl(self):
-    #     return cl_spark
-
-    # @property
-    # def ctl(self):
-    #     return ctl_spark
-
-    # @property
-    # def brl(self):
-    #     return brl_spark
+    @property
+    def brl(self):
+        return brl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -176,17 +145,9 @@ class SQLiteTestHelper(TestHelper):
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
 
-    # @property
-    # def cl(self):
-    #     return cl_sqlite
-
-    # @property
-    # def ctl(self):
-    #     return ctl_sqlite
-
-    # @property
-    # def brl(self):
-    #     return brl_sqlite
+    @property
+    def brl(self):
+        return brl_sqlite
 
 
 class PostgresTestHelper(TestHelper):
@@ -233,17 +194,9 @@ class PostgresTestHelper(TestHelper):
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
 
-    # @property
-    # def cl(self):
-    #     return cl_postgres
-
-    # @property
-    # def ctl(self):
-    #     return ctl_postgres
-
-    # @property
-    # def brl(self):
-    #     return brl_postgres
+    @property
+    def brl(self):
+        return brl_postgres
 
 
 class SplinkTestException(Exception):

@@ -36,19 +36,41 @@ def _translate_sql_string(
     return tree.sql(dialect=to_sqlglot_dialect)
 
 
-def validate_distance_threshold(
+def validate_numeric_parameter(
     lower_bound: Union[int, float],
     upper_bound: Union[int, float],
-    distance_threshold: Union[int, float],
+    parameter_value: Union[int, float],
     level_name: str,
+    parameter_name: str = "distance_threshold",
 ) -> Union[int, float]:
     """Check if a distance threshold falls between two bounds."""
-    if lower_bound <= distance_threshold <= upper_bound:
-        return distance_threshold
+    if not isinstance(parameter_value, (int, float)):
+        raise TypeError(
+            f"'{parameter_name}' must be numeric, but received type "
+            f"{type(parameter_value)}"
+        )
+    if lower_bound <= parameter_value <= upper_bound:
+        return parameter_value
     else:
         raise ValueError(
-            "'distance_threshold' must be between "
+            f"'{parameter_name}' must be between "
             f"{lower_bound} and {upper_bound} for {level_name}"
+        )
+
+
+def validate_categorical_parameter(
+    allowed_values: List[str],
+    parameter_value: str,
+    level_name: str,
+    parameter_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if parameter_value in allowed_values:
+        return parameter_value
+    else:
+        comma_quote_separated_options = "', '".join(allowed_values)
+        raise ValueError(
+            f"'{parameter_name}' must be one of: " f"'{comma_quote_separated_options}'"
         )
 
 
@@ -56,14 +78,25 @@ class NullLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
+        valid_string_pattern: str = None,
+        invalid_dates_as_null: bool = False,
     ):
-        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        col_expression = ColumnExpression.instantiate_if_str(col_name)
+
+        # if invalid_dates_as_null, then supplied pattern is a date format
+        if invalid_dates_as_null:
+            col_expression = col_expression.try_parse_date(valid_string_pattern)
+        # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
+        elif valid_string_pattern is not None:
+            col_expression = col_expression.regex_extract(valid_string_pattern)
+        self.col_expression = col_expression
         self.is_null_level = True
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
-        return f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
+        null_sql = f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
+        return null_sql
 
     def create_label_for_charts(self) -> str:
         return f"{self.col_expression.label} is NULL"
@@ -149,10 +182,16 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 adjustments to the exact match level. Defaults to False.
 
         """
-        config = {}
-
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.term_frequency_adjustments = term_frequency_adjustments
+        self.is_exact_match_level = True
 
+    @property
+    def term_frequency_adjustments(self):
+        return self.tf_adjustment_column is not None
+
+    @term_frequency_adjustments.setter
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
         if term_frequency_adjustments:
             if not self.col_expression.is_pure_column_or_column_reference:
                 raise ValueError(
@@ -161,12 +200,17 @@ class ExactMatchLevel(ComparisonLevelCreator):
                     "transforms applied to it such as lower(), "
                     "substr() etc."
                 )
-
-            config["tf_adjustment_column"] = col_name
-            config["tf_adjustment_weight"] = 1.0
             # leave tf_minimum_u_value as None
+            # Since we know that it's a pure column reference it's fine to assign the
+            # raw unescaped value to the dict - it will be processed via `InputColumn`
+            # when the dict is read
 
-        self.configure(**config)
+            self.configure(
+                tf_adjustment_column=self.col_expression.raw_sql_expression,
+                tf_adjustment_weight=1.0,
+            )
+
+        # TODO: how to 'turn off'?? configure doesn't currently allow
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
@@ -175,6 +219,60 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Exact match on {self.col_expression.label}"
+
+
+class LiteralMatchLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        literal_value: str,
+        literal_datatype: str,
+        side_of_comparison: str = "both",
+    ):
+        self.side_of_comparison = validate_categorical_parameter(
+            allowed_values=["left", "right", "both"],
+            parameter_value=side_of_comparison,
+            level_name=self.__class__.__name__,
+            parameter_name="side_of_comparison",
+        )
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.literal_value_undialected = literal_value
+
+        self.literal_datatype = validate_categorical_parameter(
+            allowed_values=["string", "int", "float", "date"],
+            parameter_value=literal_datatype,
+            level_name=self.__class__.__name__,
+            parameter_name="literal_datatype",
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        dialect = sql_dialect.sqlglot_name
+        lit = self.literal_value_undialected
+
+        if self.literal_datatype == "string":
+            dialected = parse_one(f"'{lit}'").sql(dialect)
+        elif self.literal_datatype == "date":
+            dialected = parse_one(f"cast('{lit}' as date)").sql(dialect)
+        elif self.literal_datatype == "int":
+            dialected = parse_one(f"cast({lit} as int)").sql(dialect)
+        elif self.literal_datatype == "float":
+            dialected = parse_one(f"cast({lit} as float)").sql(dialect)
+
+        if self.side_of_comparison == "left":
+            return f"{col.name_l} = {dialected}"
+        elif self.side_of_comparison == "right":
+            return f"{col.name_r} = {dialected}"
+        elif self.side_of_comparison == "both":
+            return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"{self.col_expression.label} = {self.literal_value_undialected} "
+            f"on {self.side_of_comparison}"
+        )
 
 
 class ColumnsReversedLevel(ComparisonLevelCreator):
@@ -254,7 +352,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
         dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
         return f"{dm_lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
-    def create_label_for_charts(self, sql_dialect: SplinkDialect) -> str:
+    def create_label_for_charts(self) -> str:
         return (
             f"Damerau-Levenshtein distance of {self.col_expression.label} "
             f"<= {self.distance_threshold}"
@@ -278,10 +376,10 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -313,10 +411,10 @@ class JaroLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -348,10 +446,10 @@ class JaccardLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = validate_distance_threshold(
+        self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=1,
-            distance_threshold=distance_threshold,
+            parameter_value=distance_threshold,
             level_name=self.__class__.__name__,
         )
 
@@ -364,6 +462,56 @@ class JaccardLevel(ComparisonLevelCreator):
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return f"Jaccard distance of '{col.label} >= {self.distance_threshold}'"
+
+
+class DistanceFunctionLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_function_name: str,
+        distance_threshold: Union[int, float],
+        higher_is_more_similar: bool = True,
+    ):
+        """A comparison level using an arbitrary distance function
+
+        e.g. `custom_distance(val_l, val_r) >= (<=) distance_threshold`
+
+        The function given by `distance_function_name` must exist in the SQL
+        backend you use, and must take two parameters of the type in `col_name,
+        returning a numeric type
+
+        Args:
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the SQL distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            higher_is_more_similar (bool): Are higher values of the distance function
+                more similar? (e.g. True for Jaro-Winkler, False for Levenshtein)
+                Default is True
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_function_name = distance_function_name
+        self.distance_threshold = distance_threshold
+        self.higher_is_more_similar = higher_is_more_similar
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        d_fn = self.distance_function_name
+        less_or_greater_than = ">" if self.higher_is_more_similar else "<"
+        return (
+            f"{d_fn}({col.name_l}, {col.name_r}) "
+            f"{less_or_greater_than}= {self.distance_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        less_or_greater = "greater" if self.higher_is_more_similar else "less"
+        return (
+            f"`{self.distance_function_name}` distance of '{col.label} "
+            f"{less_or_greater} than {self.distance_threshold}'"
+        )
 
 
 class DatediffLevel(ComparisonLevelCreator):
@@ -386,8 +534,19 @@ class DatediffLevel(ComparisonLevelCreator):
             date_format (str): The format of the date string
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_threshold = date_threshold
-        self.date_metric = date_metric
+        self.date_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=date_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="date_threshold",
+        )
+        self.date_metric = validate_categorical_parameter(
+            allowed_values=["day", "month", "year"],
+            parameter_value=date_metric,
+            level_name=self.__class__.__name__,
+            parameter_name="date_metric",
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -461,9 +620,6 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         self.not_null = not_null
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        ColumnExpression.instantiate_if_str(self.lat_col, splink_dialect=sql_dialect)
-        ColumnExpression.instantiate_if_str(self.long_col, splink_dialect=sql_dialect)
-
         self.lat_col_expression.sql_dialect = sql_dialect
         lat_col = self.lat_col_expression
 
@@ -502,7 +658,13 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.min_intersection = min_intersection
+        self.min_intersection = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=min_intersection,
+            level_name=self.__class__.__name__,
+            parameter_name="min_intersection",
+        )
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:

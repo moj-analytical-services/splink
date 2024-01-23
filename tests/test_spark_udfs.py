@@ -1,12 +1,12 @@
 import pandas as pd
 
-import splink.spark.comparison_level_library as cll
-from splink.spark.linker import SparkLinker
+import splink.comparison_level_library as cll
+from splink.linker import Linker
 
 first_name_cc = {
     "output_column_name": "first_name",
     "comparison_levels": [
-        cll.null_level("first_name"),
+        cll.NullLevel("first_name"),
         {
             "sql_condition": "Dmetaphone(first_name_l) = Dmetaphone(first_name_r)",
             "label_for_charts": "demeta",
@@ -15,14 +15,14 @@ first_name_cc = {
             "sql_condition": "jaro_winkler(first_name_l, first_name_r) >= 0.95",
             "label_for_charts": "jaro_winkler >= 0.95",
         },
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 }
 
 surname_cc = {
     "output_column_name": "surname",
     "comparison_levels": [
-        cll.null_level("surname"),
+        cll.NullLevel("surname"),
         {
             "sql_condition": "DmetaphoneAlt(surname_l) = DmetaphoneAlt(surname_r)",
             "label_for_charts": "demeta_alt",
@@ -31,7 +31,7 @@ surname_cc = {
             "sql_condition": "cosine_distance(surname_l, surname_r) <= 0.95",
             "label_for_charts": "cosine_distance <= 0.95",
         },
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 }
 
@@ -51,15 +51,17 @@ settings = {
 }
 
 
-def test_udf_registration(spark):
+def test_udf_registration(spark_api):
+    spark = spark_api.spark
     # Integration test to ensure spark loads our udfs without any issues
     df_spark = spark.read.csv(
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark,
         settings,
+        spark_api,
     )
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
@@ -70,15 +72,17 @@ def test_udf_registration(spark):
     linker.predict()
 
 
-def test_damerau_levenshtein(spark):
+def test_damerau_levenshtein(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_dam_lev = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_dam_lev,
         settings,
+        spark_api,
         input_table_aliases="test_dl_df",
     )
 
@@ -154,15 +158,17 @@ def test_damerau_levenshtein(spark):
     )
 
 
-def test_jaro(spark):
+def test_jaro(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_jaro = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_jaro,
         settings,
+        spark_api,
         input_table_aliases="test_jaro_df",
     )
 
@@ -233,15 +239,17 @@ def test_jaro(spark):
     assert spark.sql("""SELECT jaro_sim("aaapppp", "")  """).first()[0] == 0.0
 
 
-def test_jaro_winkler(spark):
+def test_jaro_winkler(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_jaro_winkler,
         settings,
+        spark_api,
         input_table_aliases="test_jw_df",
     )
 

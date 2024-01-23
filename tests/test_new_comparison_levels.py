@@ -1,9 +1,12 @@
 import gc
 
+import pandas as pd
 import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+import splink.comparison_template_library as ctl
+from splink.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -124,16 +127,14 @@ comparison_name = cl.CustomComparison(
             "(surname_l IS NULL OR surname_r IS NULL) "
         ).configure(is_null_level=True),
         {
-            "sql_condition": (
-                "concat(first_name_l, surname_l) = concat(first_name_r, surname_r)"
-            ),
+            "sql_condition": ("first_name_l || surname_l = first_name_r || surname_r"),
             "label_for_charts": "both names matching",
         },
         cll.CustomLevel(
             (
                 "levenshtein("
-                "concat(first_name_l, surname_l), "
-                "concat(first_name_r, surname_r)"
+                "first_name_l || surname_l, "
+                "first_name_r || surname_r"
                 ") <= 3"
             ),
             "both names fuzzy matching",
@@ -171,6 +172,117 @@ def test_cl_creators_run_predict(dialect, test_helpers):
 
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
+    linker.predict()
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_regex_fall_through(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "groat"},
+            {"unique_id": 2, "name": "float"},
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "comparison_levels": [
+                    cll.NullLevel("name"),
+                    # this pattern does not match any data:
+                    cll.ExactMatchLevel(
+                        ColumnExpression("name").regex_extract("^wr.*")
+                    ),
+                    cll.ElseLevel(),
+                ]
+            }
+        ],
+    }
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    # only entry should be in Else level
+    assert df_e["gamma_name"][0] == 0
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_null_pattern_match(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "groat"},
+            {"unique_id": 2, "name": "float"},
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "comparison_levels": [
+                    # this pattern does matches no data:
+                    cll.NullLevel("name", valid_string_pattern=".*ook"),
+                    cll.ExactMatchLevel(ColumnExpression("name")),
+                    cll.ElseLevel(),
+                ]
+            }
+        ],
+    }
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    # only entry should be in Null level
+    assert df_e["gamma_name"][0] == -1
+
+
+comparison_email_ctl = ctl.EmailComparison(
+    "email",
+    invalid_emails_as_null=True,
+    include_domain_match_level=True,
+    fuzzy_metric="levenshtein",
+    fuzzy_thresholds=[1, 3],
+)
+comparison_name_ctl = ctl.NameComparison(
+    "first_name",
+    include_exact_match_level=False,
+    phonetic_col_name="surname",  # ignore the fact this is nonsense
+    fuzzy_metric="levenshtein",
+    fuzzy_thresholds=[1, 2],
+)
+# TODO: restore mix of fuzzy + date levels when postgres can handle it
+comparison_dob_ctl = ctl.DateComparison(
+    ColumnExpression("dob").try_parse_date(),
+    invalid_dates_as_null=False,  # already cast, so don't need to validate here
+    fuzzy_thresholds=[],
+)
+comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
+    "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+)
+ctl_settings = cl_settings
+ctl_settings = {
+    "link_type": "dedupe_only",
+    "comparisons": [
+        comparison_name_ctl,
+        # obviously not realistic:
+        comparison_forenamesurname_ctl,
+        comparison_email_ctl,
+        comparison_dob_ctl,
+    ],
+    "blocking_rules_to_generate_predictions": [
+        "l.dob = r.dob",
+        "l.first_name = r.first_name",
+    ],
+}
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_ctl_creators_run_predict(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = helper.Linker(df, ctl_settings, **helper.extra_linker_args())
     linker.predict()
 
 

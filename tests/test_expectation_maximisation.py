@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
 from splink.exceptions import EMTrainingException
+from splink.linker import Linker
 
 
 def test_clear_error_when_empty_block():
@@ -20,13 +21,15 @@ def test_clear_error_when_empty_block():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.levenshtein_at_thresholds("name", 1),
-            cl.exact_match("surname"),
+            cl.LevenshteinAtThresholds("name", 1),
+            cl.ExactMatch("surname"),
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
@@ -43,15 +46,19 @@ def test_estimate_without_term_frequencies():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("email"),
         ],
     }
 
-    linker_0 = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker_1 = DuckDBLinker(df, settings)
+    linker_0 = Linker(df, settings, database_api=db_api)
+
+    db_api = DuckDBAPI()
+
+    linker_1 = Linker(df, settings, database_api=db_api)
 
     session_fast = linker_0.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",

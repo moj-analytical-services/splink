@@ -1,8 +1,9 @@
 import pandas as pd
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_compound_comparison_level():
@@ -82,7 +83,7 @@ def test_compound_comparison_level():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("city"),
+            cl.ExactMatch("city"),
             {
                 "output_column_name": "company_comparison",
                 "comparison_levels": [
@@ -108,16 +109,18 @@ def test_compound_comparison_level():
                         "sql_condition": sql_and_clauses_joined_with_ors,
                         "label_for_charts": "2 out of 3 columns match",
                     },
-                    cll.exact_match_level("first_name"),
-                    cll.exact_match_level("middle_name"),
-                    cll.exact_match_level("surname"),
-                    cll.else_level(),
+                    cll.ExactMatchLevel("first_name"),
+                    cll.ExactMatchLevel("middle_name"),
+                    cll.ExactMatchLevel("surname"),
+                    cll.ElseLevel(),
                 ],
             },
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     all_cols_match_level = linker._settings_obj.comparisons[1].comparison_levels[1]
     assert all_cols_match_level._is_exact_match
     assert set(all_cols_match_level._exact_match_colnames) == {
@@ -199,18 +202,20 @@ def test_complex_compound_comparison_level():
             {
                 "output_column_name": "my_comparison",
                 "comparison_levels": [
-                    cll.null_level("col_1"),
-                    cll.exact_match_level("col_7"),
-                    cll.exact_match_level("col_3"),
+                    cll.NullLevel("col_1"),
+                    cll.ExactMatchLevel("col_7"),
+                    cll.ExactMatchLevel("col_3"),
                     {
                         "sql_condition": complex_condition_sql,
                         "label_for_charts": "complex condition",
                     },
-                    cll.else_level(),
+                    cll.ElseLevel(),
                 ],
             }
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_parameters_using_expectation_maximisation("1=1")

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from inspect import signature
 from typing import final
 
+from .column_expression import ColumnExpression
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect
 
@@ -38,6 +39,9 @@ class ComparisonLevelCreator(ABC):
 
         for attr in allowed_attrs:
             if (value := getattr(self, attr, None)) is not None:
+                if isinstance(value, ColumnExpression):
+                    value.sql_dialect = sql_dialect
+                    value = value.name
                 level_dict[attr] = value
 
         return level_dict
@@ -104,6 +108,16 @@ class ComparisonLevelCreator(ABC):
     @is_null_level.setter
     def is_null_level(self, is_null_level: bool):
         self._is_null_level = is_null_level
+
+    @final
+    @property
+    def is_exact_match_level(self) -> bool:
+        return getattr(self, "_is_exact_match_level", False)
+
+    @final
+    @is_exact_match_level.setter
+    def is_exact_match_level(self, is_exact_match_level: bool):
+        self._is_exact_match_level = is_exact_match_level
 
     def __repr__(self) -> str:
         return (
