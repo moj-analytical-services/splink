@@ -26,7 +26,8 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     settings_obj._blocking_rules_to_generate_predictions = [
         BlockingRule(f"l.{label_colname} = r.{label_colname}")

@@ -68,9 +68,11 @@ class Comparison:
             if isinstance(cl, ComparisonLevel):
                 cl.comparison = self
             elif settings_obj is None:
-                cl = ComparisonLevel(cl, self)
+                cl = ComparisonLevel(**cl, comparison=self)
             else:
-                cl = ComparisonLevel(cl, self, sql_dialect=settings_obj._sql_dialect)
+                cl = ComparisonLevel(
+                    **cl, comparison=self, sql_dialect=settings_obj._sql_dialect
+                )
 
             self.comparison_levels.append(cl)
 
