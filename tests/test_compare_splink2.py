@@ -7,6 +7,7 @@ from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 
 
 def test_splink_2_predict():
@@ -31,6 +32,7 @@ def test_splink_2_predict():
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
+@mark_with_dialects_including("spark")
 def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
     linker = Linker(df_spark, settings_dict, spark_api)
@@ -47,6 +49,7 @@ def test_splink_2_predict_spark(df_spark, spark_api):
     assert expected_match_weight == pytest.approx(actual_match_weight)
 
 
+@mark_with_dialects_including("sqlite")
 def test_splink_2_predict_sqlite():
     import sqlite3
 

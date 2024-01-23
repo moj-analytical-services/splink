@@ -7,9 +7,11 @@ import pandas as pd
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 from .linker_utils import _test_table_registration, register_roc_data
 
 
+@mark_with_dialects_including("sqlite")
 def test_full_example_sqlite(tmp_path):
     con = sqlite3.connect(":memory:")
     con.create_function("sqrt", 1, sqrt)
@@ -60,6 +62,7 @@ def test_full_example_sqlite(tmp_path):
     linker.confusion_matrix_from_labels_table("labels")
 
 
+@mark_with_dialects_including("sqlite")
 def test_small_link_example_sqlite():
     con = sqlite3.connect(":memory:")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -80,6 +83,7 @@ def test_small_link_example_sqlite():
     linker.predict()
 
 
+@mark_with_dialects_including("sqlite")
 def test_default_conn_sqlite(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
