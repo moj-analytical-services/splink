@@ -4,8 +4,27 @@ from copy import deepcopy
 
 from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
+from .pipeline import SQLPipeline
+from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
+
+# TODO: in reality these live somewhere else:
+def df_concat_pipeline(table_or_tables, db_api):
+    # this is replacement for _initialise_df_concat(db_api, materialise=True)
+    # let's assume that the api will handle caching automatically
+    # TODO: how do we tell the cache that we would accept concat_with_tf as well?
+    pipeline = SQLPipeline()
+    sql = vertically_concatenate_sql(table_or_tables, db_api)
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+    return pipeline
+
+
+def materialise_df_concat(table_or_tables, db_api):
+    # this version always materialises
+    pipeline = df_concat_pipeline(table_or_tables, db_api)
+    concat_df = db_api._execute_sql_pipeline(pipeline)
+    return concat_df
 
 
 def _group_name(cols_or_expr):
@@ -193,7 +212,9 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
+def profile_columns(
+    table_or_tables, db_api, column_expressions=None, top_n=10, bottom_n=10
+):
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 
@@ -231,12 +252,26 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
             values to display in the respective charts.
     """
 
-    if not column_expressions:
-        column_expressions = [col.name for col in linker._input_columns()]
+    tables = ensure_is_list(table_or_tables)
 
-    df_concat = linker._initialise_df_concat()
+    tables = db_api.process_input_tables(tables)
+    # TODO: is this sensible?:
+    input_aliases = [f"__splink__profile_data_{idx}" for idx, _ in enumerate(tables)]
+    splink_df_dict = db_api.register_multiple_tables(
+        tables, input_aliases, overwrite=True
+    )
+    # TODO: can we be more permissive with typing?
+    splink_dfs = list(splink_df_dict.values())
+
+    # TODO: be more careful
+    if not column_expressions:
+        column_expressions = [col.name for col in splink_dfs[0].columns]
+
+    # TODO: do we _need_ to materialise? how to handle either way?
+    df_concat = materialise_df_concat(splink_dfs, db_api)
 
     input_dataframes = []
+    # TODO: why wouldn't this exist?
     if df_concat:
         input_dataframes.append(df_concat)
 
@@ -247,24 +282,32 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
         column_expressions_raw, "__splink__df_concat"
     )
 
-    linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(input_dataframes)
+    pipeline = SQLPipeline()
+
+    pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
+    # TODO: should this function handle resetting pipeline?
+    df_raw = db_api._execute_sql_pipeline(pipeline, input_dataframes)
+    # TODO: reset and reuse or fresh pipelines each time?
+    pipeline.reset()
 
     sqls = _get_df_percentiles()
     for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = linker._execute_sql_pipeline([df_raw])
+    df_percentiles = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    pipeline.reset()
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
-    linker._enqueue_sql(sql, "__splink__df_top_n")
-    df_top_n = linker._execute_sql_pipeline([df_raw])
+    pipeline.enqueue_sql(sql, "__splink__df_top_n")
+    df_top_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    pipeline.reset()
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
-    linker._enqueue_sql(sql, "__splink__df_bottom_n")
-    df_bottom_n = linker._execute_sql_pipeline([df_raw])
+    pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
+    df_bottom_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    pipeline.reset()
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []
