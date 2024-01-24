@@ -34,7 +34,7 @@ class EMTrainingSession:
     def __init__(
         self,
         linker: Linker,
-        blocking_rule_for_training: str,
+        blocking_rule_for_training: BlockingRule,
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
@@ -54,10 +54,10 @@ class EMTrainingSession:
         self._settings_obj._training_mode = True
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
-            blocking_rule = BlockingRule(blocking_rule_for_training)
+            blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
-        self._settings_obj._blocking_rule_for_training = blocking_rule
-        self._blocking_rule_for_training = blocking_rule
+        self._settings_obj._blocking_rule_for_training = blocking_rule_for_training
+        self._blocking_rule_for_training = blocking_rule_for_training
         self._settings_obj._estimate_without_term_frequencies = (
             estimate_without_term_frequencies
         )
@@ -68,7 +68,7 @@ class EMTrainingSession:
             )
         else:
             self._comparison_levels_to_reverse_blocking_rule = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                blocking_rule_for_training
+                blocking_rule_for_training.blocking_rule_sql
             )
 
         self._settings_obj._probability_two_random_records_match = (
@@ -87,7 +87,8 @@ class EMTrainingSession:
         if not comparisons_to_deactivate:
             comparisons_to_deactivate = []
             br_cols = get_columns_used_from_sql(
-                blocking_rule_for_training, self._settings_obj._sql_dialect
+                blocking_rule_for_training.blocking_rule_sql,
+                self._settings_obj._sql_dialect,
             )
             for cc in self._settings_obj.comparisons:
                 cc_cols = cc._input_columns_used_by_case_statement
