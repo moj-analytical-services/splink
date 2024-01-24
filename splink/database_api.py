@@ -1,7 +1,10 @@
+import hashlib
 import logging
 import math
 import os
+import random
 import re
+import time
 from abc import ABC, abstractmethod
 from itertools import compress
 from tempfile import TemporaryDirectory
@@ -25,7 +28,7 @@ from .duckdb.duckdb_helpers.duckdb_helpers import (
 from .duckdb.linker import DuckDBDataFrame
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import major_minor_version_greater_equal_than
+from .misc import major_minor_version_greater_equal_than, parse_duration
 from .spark.jar_location import get_scala_udfs
 from .spark.linker import SparkDataFrame
 from .splink_dataframe import SplinkDataFrame
@@ -40,6 +43,7 @@ TablishType = TypeVar("TablishType")
 
 class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
+    debug_mode: bool = False
     """
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
@@ -49,6 +53,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
+        # TODO: replace this:
+        self._cache_uid: str = str(random.choice(range(10000)))
 
     @final
     def log_and_run_sql_execution(
@@ -97,6 +103,88 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             spark_df, templated_name, physical_name
         )
         return output_df
+
+    def _sql_to_splink_dataframe(
+        self,
+        sql,
+        output_tablename_templated,
+        use_cache=True,
+    ) -> SplinkDataFrame:
+        # differences from execute_sql_against_backend:
+        # this _calculates_ physical name, and
+        # handles debug_mode
+        # TODO: also maybe caching? but maybe that is even lower down
+        to_hash = (sql + self._cache_uid).encode("utf-8")
+        hash = hashlib.sha256(to_hash).hexdigest()[:9]
+        # Ensure hash is valid sql table name
+        table_name_hash = f"{output_tablename_templated}_{hash}"
+
+        # TODO: caching
+
+        if self.debug_mode:  # TODO: i guess this makes sense on the dbapi? but think.
+            print(sql)  # noqa: T201
+            splink_dataframe = self.execute_sql_against_backend(
+                sql,
+                output_tablename_templated,
+                output_tablename_templated,
+            )
+
+            df_pd = splink_dataframe.as_pandas_dataframe()
+            try:
+                from IPython.display import display
+
+                display(df_pd)
+            except ModuleNotFoundError:
+                print(df_pd)  # noqa: T201
+
+        else:
+            splink_dataframe = self.execute_sql_against_backend(
+                sql, output_tablename_templated, table_name_hash
+            )
+
+        splink_dataframe.created_by_splink = True
+        splink_dataframe.sql_used_to_create = sql
+
+        return splink_dataframe
+
+    def _execute_sql_pipeline(
+        self,
+        pipeline,
+        input_dataframes: list[SplinkDataFrame] = [],
+        use_cache=True,
+    ) -> SplinkDataFrame:
+
+        if not self.debug_mode:
+            sql_gen = pipeline._generate_pipeline(input_dataframes)
+            output_tablename_templated = pipeline.output_table_name
+
+            # TODO: check cache
+            splink_dataframe = self._sql_to_splink_dataframe(
+                sql_gen,
+                output_tablename_templated,
+                use_cache,
+            )
+            return splink_dataframe
+        else:
+            # In debug mode, we do not pipeline the sql and print the
+            # results of each part of the pipeline
+            for task in pipeline._generate_pipeline_parts(input_dataframes):
+                start_time = time.time()
+                output_tablename = task.output_table_name
+                sql = task.sql
+                print("------")  # noqa: T201
+                print(  # noqa: T201
+                    f"--------Creating table: {output_tablename}--------"
+                )
+
+                splink_dataframe = self._sql_to_splink_dataframe(
+                    sql,
+                    output_tablename,
+                    use_cache=False,
+                )
+                run_time = parse_duration(time.time() - start_time)
+                print(f"Step ran in: {run_time}")  # noqa: T201
+            return splink_dataframe
 
     @final
     def register_multiple_tables(
