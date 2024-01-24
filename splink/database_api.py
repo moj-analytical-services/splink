@@ -44,7 +44,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
 
-    This is intented to be subclassed for specific backends
+    This is intended to be subclassed for specific backends
     """
 
     def __init__(self) -> None:
