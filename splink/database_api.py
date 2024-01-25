@@ -735,4 +735,3 @@ class SQLiteAPI(DatabaseAPI):
 
     def _run_sql_execution(self, final_sql: str) -> sqlite3.Cursor:
         return self.con.execute(final_sql)
-
