@@ -225,7 +225,9 @@ def test_metrics(dialect, test_helpers):
     df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
     df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
 
-    cm = linker._compute_graph_metrics(df_predict, df_clustered, 0.95)
+    cm = linker._compute_graph_metrics(
+        df_predict, df_clustered, threshold_match_probability=0.95
+    )
     df_cm = cm.clusters.as_pandas_dataframe()
 
     expected = [
