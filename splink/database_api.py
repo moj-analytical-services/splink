@@ -4,8 +4,8 @@ import math
 import os
 import random
 import re
-import time
 import sqlite3
+import time
 from abc import ABC, abstractmethod
 from itertools import compress
 from tempfile import TemporaryDirectory

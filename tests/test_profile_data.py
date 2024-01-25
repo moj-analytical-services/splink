@@ -6,7 +6,6 @@ from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
 
 from splink.database_api import DuckDBAPI, SQLiteAPI
-from splink.linker import Linker
 from splink.misc import ensure_is_list
 from splink.pipeline import SQLPipeline
 from splink.profile_data import (
@@ -150,18 +149,11 @@ def test_profile_using_sqlite():
 
     df.to_sql("fake_data_1", con, if_exists="replace")
 
-    settings_dict = get_settings_dict()
-
     db_api = SQLiteAPI(con)
-    linker = Linker(
-        "fake_data_1",
-        settings_dict,
-        db_api,
-    )
 
     profile_columns(
         df,
-        # db_api,
+        db_api,
         ["first_name", "surname", "first_name || surname"],
     )
 
