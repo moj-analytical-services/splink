@@ -4,6 +4,21 @@ from typing import Dict, List
 from splink.splink_dataframe import SplinkDataFrame
 
 
+def _truncated_edges_sql(
+    df_predict: SplinkDataFrame,
+    threshold_match_probability: float,
+) -> Dict[str, str]:
+    sql = f"""
+        SELECT
+            *
+        FROM {df_predict.physical_name}
+        WHERE match_probability >= {threshold_match_probability}
+    """
+    truncated_edges_table_name = "__splink__truncated_edges"
+    sql_info = {"sql": sql, "output_table_name": truncated_edges_table_name}
+    return sql_info
+
+
 def _node_degree_sql(
     df_predict: SplinkDataFrame,
     df_clustered: SplinkDataFrame,
@@ -34,14 +49,8 @@ def _node_degree_sql(
     """
     sqls = []
 
-    sql = f"""
-        SELECT
-            *
-        FROM {df_predict.physical_name}
-        WHERE match_probability >= {threshold_match_probability}
-    """
-    truncated_edges_table_name = "__splink__truncated_edges"
-    sql_info = {"sql": sql, "output_table_name": truncated_edges_table_name}
+    sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
+    truncated_edges_table_name = sql_info["output_table_name"]
     sqls.append(sql_info)
 
     sql = f"""
