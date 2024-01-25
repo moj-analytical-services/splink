@@ -13,7 +13,12 @@ For example, `or_(null_level("first_name"), null_level("surname"))` creates a ch
 
 The Splink comparison level composition functions available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_composition_library_dialect_table.md" %}
+||:simple-duckdb: <br> DuckDB|:simple-apachespark: <br> Spark|:simple-amazonaws: <br> Athena|:simple-sqlite: <br> SQLite|:simple-postgresql: <br> PostgreSql|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|[and_](#splink.comparison_level_composition.and_)|✓|✓|✓|✓|✓|
+|[not_](#splink.comparison_level_composition.not_)|✓|✓|✓|✓|✓|
+|[or_](#splink.comparison_level_composition.or_)|✓|✓|✓|✓|✓|
+
 
 
 
