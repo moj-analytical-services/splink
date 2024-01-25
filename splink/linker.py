@@ -59,6 +59,7 @@ from .cluster_metrics import (
     GraphMetricsResults,
     _bridges_from_igraph_sql,
     _edges_for_igraph_sql,
+    _full_bridges_sql,
     _node_degree_sql,
     _node_mapping_table_sql,
     _size_density_centralisation_sql,
@@ -2205,10 +2206,11 @@ class Linker:
 
         sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
         self._enqueue_sql(**sql_info)
+        df_truncated_edges = self._execute_sql_pipeline()
+
         sql_info = _edges_for_igraph_sql(
             df_node_mappings,
-            # truncated_edges_table_name,
-            "__splink__truncated_edges",
+            df_truncated_edges.physical_name,
             composite_uid_edges_l,
             composite_uid_edges_r,
         )
@@ -2219,12 +2221,19 @@ class Linker:
         df_bridges_pd = df_edges_for_igraph.iloc[bridges_indices, :]
         df_bridges = self.register_table(df_bridges_pd, "__splink__bridges")
 
-        sql_info = _bridges_from_igraph_sql(
-            df_node_mappings,
-            df_bridges
+        sql_info = _bridges_from_igraph_sql(df_node_mappings, df_bridges)
+        self._enqueue_sql(**sql_info)
+        df_bridges_only = self._execute_sql_pipeline()
+
+        sql_info = _full_bridges_sql(
+            df_truncated_edges,
+            df_bridges_only,
+            composite_uid_edges_l,
+            composite_uid_edges_r,
         )
         self._enqueue_sql(**sql_info)
-        return self._execute_sql_pipeline()
+        df_edge_metrics = self._execute_sql_pipeline()
+        return df_edge_metrics
 
     def _compute_metrics_clusters(
         self,
