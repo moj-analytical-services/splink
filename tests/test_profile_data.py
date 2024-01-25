@@ -5,11 +5,10 @@ import pandas as pd
 from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
 
-from splink.database_api import DuckDBAPI
+from splink.database_api import DuckDBAPI, SQLiteAPI
 from splink.linker import Linker
 from splink.misc import ensure_is_list
 from splink.profile_data import _col_or_expr_frequencies_raw_data_sql
-from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -151,10 +150,12 @@ def test_profile_using_sqlite():
 
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
-    linker = SQLiteLinker(
+
+    db_api = SQLiteAPI(con)
+    linker = Linker(
         "fake_data_1",
         settings_dict,
-        connection=con,
+        db_api,
     )
 
     linker.profile_columns(["first_name", "surname", "first_name || surname"])
