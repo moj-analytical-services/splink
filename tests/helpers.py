@@ -10,17 +10,15 @@ import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
 import splink.spark.blocking_rule_library as brl_spark
 import splink.sqlite.blocking_rule_library as brl_sqlite
-from splink.database_api import DuckDBAPI, SparkAPI
+from splink.database_api import DuckDBAPI, SparkAPI, SQLiteAPI
 from splink.linker import Linker
 from splink.postgres.linker import PostgresLinker
-from splink.sqlite.linker import SQLiteLinker
 
 
 class TestHelper(ABC):
     @property
-    @abstractmethod
     def Linker(self):
-        pass
+        return Linker
 
     @property
     @abstractmethod
@@ -51,10 +49,6 @@ class TestHelper(ABC):
 
 
 class DuckDBTestHelper(TestHelper):
-    @property
-    def Linker(self):
-        return Linker
-
     def extra_linker_args(self):
         # create fresh api each time
         return {"database_api": DuckDBAPI()}
@@ -80,16 +74,12 @@ class SparkTestHelper(TestHelper):
         self.spark = spark_creator_function()
 
     @property
-    def Linker(self):
-        return Linker
-
-    @property
     def DatabaseAPI(self):
         return SparkAPI
 
     def extra_linker_args(self):
         # create fresh api each time
-        return {"database_api": SparkAPI(**self.db_api_args())}
+        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
 
     def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
@@ -121,12 +111,16 @@ class SQLiteTestHelper(TestHelper):
         self.con = sqlite3.connect(":memory:")
         self._frame_counter = 0
 
-    @property
-    def Linker(self):
-        return SQLiteLinker
-
     def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
+
+    def db_api_args(self):
         return {"connection": self.con}
+
+    @property
+    def DatabaseAPI(self):
+        return SQLiteAPI
 
     @classmethod
     def _get_input_name(cls):

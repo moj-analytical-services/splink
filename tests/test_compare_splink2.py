@@ -1,10 +1,9 @@
 import pandas as pd
 import pytest
 
-from splink.database_api import DuckDBAPI
+from splink.database_api import DuckDBAPI, SQLiteAPI
 from splink.linker import Linker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -61,11 +60,8 @@ def test_splink_2_predict_sqlite():
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
 
-    linker = SQLiteLinker(
-        "fake_data_1",
-        settings_dict,
-        connection=con,
-    )
+    db_api = SQLiteAPI(con)
+    linker = Linker("fake_data_1", settings_dict, database_api=db_api)
 
     df_e = linker.predict().as_pandas_dataframe()
 
