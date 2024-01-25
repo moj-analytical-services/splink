@@ -17,7 +17,7 @@ from pyspark.sql.utils import AnalysisException
 
 from .cache_dict_with_logging import CacheDictWithLogging
 from .databricks.enable_splink import enable_splink
-from .dialects import DuckDBDialect, SparkDialect, SplinkDialect, SqliteDialect
+from .dialects import DuckDBDialect, SparkDialect, SplinkDialect, SQLiteDialect
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
@@ -649,7 +649,7 @@ class SparkAPI(DatabaseAPI):
 
 
 class SQLiteAPI(DatabaseAPI):
-    sql_dialect = SqliteDialect()
+    sql_dialect = SQLiteDialect()
 
     @staticmethod
     def dict_factory(cursor, row):

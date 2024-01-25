@@ -317,7 +317,7 @@ class SparkDialect(SplinkDialect):
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
 
-class SqliteDialect(SplinkDialect):
+class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
 
     @property
@@ -455,7 +455,7 @@ class AthenaDialect(SplinkDialect):
 _dialect_lookup = {
     "duckdb": DuckDBDialect(),
     "spark": SparkDialect(),
-    "sqlite": SqliteDialect(),
+    "sqlite": SQLiteDialect(),
     "postgres": PostgresDialect(),
     "athena": AthenaDialect(),
 }
