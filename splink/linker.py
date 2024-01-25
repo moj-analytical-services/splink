@@ -566,7 +566,14 @@ class Linker:
                 # There's no reason not to do this, since when
                 # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
-            sql = vertically_concatenate_sql(self)
+            sql = vertically_concatenate_sql(
+                list(self._input_tables_dict.values()),
+                self.db_api,
+                (
+                    self._settings_obj._source_dataset_column_name_is_required
+                    and not self._source_dataset_column_already_exists
+                ),
+            )
             self._enqueue_sql(sql, "__splink__df_concat")
             if materialise:
                 concat_df = self._execute_sql_pipeline()
@@ -592,7 +599,14 @@ class Linker:
                 # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
 
-            sql = vertically_concatenate_sql(self)
+            sql = vertically_concatenate_sql(
+                list(self._input_tables_dict.values()),
+                self.db_api,
+                (
+                    self._settings_obj._source_dataset_column_name_is_required
+                    and not self._source_dataset_column_already_exists
+                ),
+            )
             self._enqueue_sql(sql, "__splink__df_concat")
 
             sqls = compute_all_term_frequencies_sqls(self)
@@ -2262,7 +2276,11 @@ class Linker:
         """
 
         return profile_columns(
-            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
+            self.db_api,
+            column_expressions=column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
     def _get_labels_tablename_from_input(
@@ -3220,7 +3238,14 @@ class Linker:
 
         blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
-        sql = vertically_concatenate_sql(self)
+        sql = vertically_concatenate_sql(
+            list(self._input_tables_dict.values()),
+            self.db_api,
+            (
+                self._settings_obj._source_dataset_column_name_is_required
+                and not self._source_dataset_column_already_exists
+            ),
+        )
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(

@@ -89,7 +89,14 @@ def test_calculate_cartesian_equals_total_number_of_links(
     db_api = DuckDBAPI()
 
     linker = Linker(dfs, settings, database_api=db_api)
-    sql = vertically_concatenate_sql(linker)
+    sql = vertically_concatenate_sql(
+        list(linker._input_tables_dict.values()),
+        linker.db_api,
+        (
+            linker._settings_obj._source_dataset_column_name_is_required
+            and not linker._source_dataset_column_already_exists
+        ),
+    )
     linker._enqueue_sql(sql, "__splink__df_concat")
     df_concat = linker._execute_sql_pipeline()
 
