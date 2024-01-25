@@ -3,6 +3,7 @@ import os
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink.linker import Linker
+from splink.profile_data import profile_columns
 
 from .decorator import mark_with_dialects_excluding
 
@@ -117,7 +118,6 @@ def test_charts(dialect, test_helpers, tmp_path):
         cl_settings,
         db_api,
     )
-    linker.profile_columns("first_name")
     linker.missingness_chart()
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 
@@ -133,3 +133,11 @@ def test_charts(dialect, test_helpers, tmp_path):
 
     linker.match_weights_chart()
     linker.m_u_parameters_chart()
+
+@mark_with_dialects_excluding()
+def test_exploratory_charts(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    profile_columns(df, db_api, "first_name")

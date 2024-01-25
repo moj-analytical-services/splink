@@ -9,6 +9,7 @@ import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink.database_api import SparkAPI
 from splink.linker import Linker
+from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -60,17 +61,20 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         "max_iterations": 2,
     }
 
+    spark_api = SparkAPI(
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
+        database="1111",
+    )
     linker = Linker(
         df_spark,
         settings,
-        SparkAPI(
-            break_lineage_method="checkpoint",
-            num_partitions_on_repartition=2,
-            database="1111",
-        ),
+        spark_api,
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df_spark,
+        spark_api,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
     )
     linker.compute_tf_table("city")

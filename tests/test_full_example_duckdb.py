@@ -10,6 +10,7 @@ import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink.database_api import DuckDBAPI
 from splink.linker import Linker
+from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -50,7 +51,9 @@ def test_full_example_duckdb(tmp_path):
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"SUR name"',
