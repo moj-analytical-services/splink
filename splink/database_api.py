@@ -153,6 +153,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         input_dataframes: list[SplinkDataFrame] = [],
         use_cache=True,
     ) -> SplinkDataFrame:
+        """
+        Execute a given pipeline using input_dataframes as seeds if provided.
+        self.debug_mode controls whether this is CTE or individual tables.
+        pipeline is resest upon completion
+        """
 
         if not self.debug_mode:
             sql_gen = pipeline._generate_pipeline(input_dataframes)
@@ -164,7 +169,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 output_tablename_templated,
                 use_cache,
             )
-            return splink_dataframe
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
@@ -184,7 +188,10 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 )
                 run_time = parse_duration(time.time() - start_time)
                 print(f"Step ran in: {run_time}")  # noqa: T201
-            return splink_dataframe
+
+        # if there is an error the pipeline will not reset, leaving caller to handle
+        pipeline.reset()
+        return splink_dataframe
 
     @final
     def register_multiple_tables(

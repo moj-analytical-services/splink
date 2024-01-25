@@ -268,10 +268,10 @@ def profile_columns(
         column_expressions = [col.name for col in splink_dfs[0].columns]
 
     # TODO: do we _need_ to materialise? how to handle either way?
+    # that's why we need the if df_concat check
     df_concat = materialise_df_concat(splink_dfs, db_api)
 
     input_dataframes = []
-    # TODO: why wouldn't this exist?
     if df_concat:
         input_dataframes.append(df_concat)
 
@@ -285,29 +285,23 @@ def profile_columns(
     pipeline = SQLPipeline()
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    # TODO: should this function handle resetting pipeline?
     df_raw = db_api._execute_sql_pipeline(pipeline, input_dataframes)
-    # TODO: reset and reuse or fresh pipelines each time?
-    pipeline.reset()
 
     sqls = _get_df_percentiles()
     for sql in sqls:
         pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
     df_percentiles = db_api._execute_sql_pipeline(pipeline, [df_raw])
-    pipeline.reset()
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     pipeline.enqueue_sql(sql, "__splink__df_top_n")
     df_top_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
-    pipeline.reset()
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
     pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
     df_bottom_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
-    pipeline.reset()
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []
