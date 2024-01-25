@@ -674,8 +674,8 @@ class SQLiteAPI(DatabaseAPI):
                     "To use fuzzy string-matching udfs in SQLite you must install "
                     "the python package 'rapidfuzz'.  "
                     "If you do not wish to do so, and do not need to use any "
-                    "fuzzy string-matching comparisons, you can use the linker argument "
-                    "`register_udfs=False`.\n"
+                    "fuzzy string-matching comparisons, you can use the "
+                    "linker argument `register_udfs=False`.\n"
                     "See https://moj-analytical-services.github.io/splink/"
                     "topic_guides/backends.html#sqlite for more information"
                 ) from e

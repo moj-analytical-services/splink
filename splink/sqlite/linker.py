@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
-from math import log2, pow
 from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from ..exceptions import SplinkException
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
-from ..unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
