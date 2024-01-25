@@ -144,7 +144,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         # returns sql
         # sensible default:
         self._delete_table_from_database(physical_name)
-        sql = f"CREATE TABLE {physical_name} AS ({sql})"
+        sql = f"CREATE TABLE {physical_name} AS {sql}"
         return sql
 
     def _cleanup_for_execute_sql(
@@ -648,13 +648,6 @@ class SparkAPI(DatabaseAPI):
             self.break_lineage_method = "parquet"
 
 
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-
 class SQLiteAPI(DatabaseAPI):
     sql_dialect = SqliteDialect()
 
@@ -706,6 +699,8 @@ class SQLiteAPI(DatabaseAPI):
     def __init__(
         self, connection: Union[str, sql_con] = ":memory:", register_udfs=True
     ):
+        super().__init__()
+
         if isinstance(connection, str):
             connection = sqlite3.connect(connection)
         self.con = connection
@@ -726,10 +721,10 @@ class SQLiteAPI(DatabaseAPI):
             if_exists="replace",
         )
 
-    def _table_to_splink_dataframe(self, templated_name, physical_name):
+    def table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def _table_exists_in_database(self, table_name):
+    def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
         rec = self.con.execute(sql).fetchone()
@@ -739,4 +734,5 @@ class SQLiteAPI(DatabaseAPI):
             return True
 
     def _run_sql_execution(self, final_sql: str) -> sqlite3.Cursor:
-        return self.con.sql(final_sql)
+        return self.con.execute(final_sql)
+

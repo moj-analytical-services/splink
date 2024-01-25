@@ -89,6 +89,13 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        raise NotImplementedError(
+            f"Backend '{self.name}' needs a random_sample_sql added to its dialect"
+        )
+
     @staticmethod
     def _wrap_in_nullif(func):
         def nullif_wrapped_function(*args, **kwargs):
@@ -334,6 +341,23 @@ class SqliteDialect(SplinkDialect):
     @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        if seed:
+            raise NotImplementedError(
+                "SQLite does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
+
+        sample_size = int(sample_size)
+
+        return f"""ORDER BY RANDOM()
+            LIMIT {sample_size}
+            """
 
 
 class PostgresDialect(SplinkDialect):
