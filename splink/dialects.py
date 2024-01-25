@@ -342,6 +342,10 @@ class SqliteDialect(SplinkDialect):
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
 
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
