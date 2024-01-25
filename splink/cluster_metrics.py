@@ -88,6 +88,54 @@ def _node_degree_sql(
     return sqls
 
 
+def _node_mapping_table_sql(
+    df_node_metrics: SplinkDataFrame,
+):
+    nodes_table_name = df_node_metrics.physical_name
+    sql = f"""
+        SELECT
+            composite_unique_id,
+            row_number() OVER() AS rn,
+            rn - 1 AS index,
+        FROM
+            {nodes_table_name}
+    """
+    node_mapping_table_name = "__splink__nodes_integer_mapping"
+    sql_info = {"sql": sql, "output_table_name": node_mapping_table_name}
+    return sql_info
+
+
+def _edges_for_igraph_sql(
+    df_node_mappings: SplinkDataFrame,
+    truncated_edges_table_name: str,
+    composite_uid_edges_l: str,
+    composite_uid_edges_r: str,
+):
+    node_mapping_table_name = df_node_mappings.physical_name
+    sql = f"""
+        SELECT
+            edges_left_mapped.node_l,
+            m.index AS node_r
+        FROM (
+            SELECT
+                m.index AS node_l,
+                e.{composite_uid_edges_r} AS node_r
+            FROM
+                {truncated_edges_table_name} e
+            LEFT JOIN
+                {node_mapping_table_name} m
+            ON
+                e.{composite_uid_edges_l} = m.composite_unique_id
+        ) edges_left_mapped
+        LEFT JOIN
+            {node_mapping_table_name} m
+        ON
+            m.composite_unique_id = edges_left_mapped.node_r
+    """
+    edges_with_mapped_ids_table_name = "__splink__edges_with_mapped_ids"
+    sql_info = {"sql": sql, "output_table_name": edges_with_mapped_ids_table_name}
+    return sql_info
+
 def _size_density_centralisation_sql(
     df_node_metrics: SplinkDataFrame,
 ) -> List[Dict[str, str]]:
