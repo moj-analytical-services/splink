@@ -147,7 +147,7 @@ class GraphMetricsResults:
     clusters: SplinkDataFrame
 
     def __repr__(self):
-        return f"""
+        return """
 A data class of Splink dataframes containing metrics for nodes, edges and clusters.
 
 Access dataframes via attributes:

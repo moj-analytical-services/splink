@@ -10,7 +10,6 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict
 
 import sqlglot
 
@@ -57,9 +56,9 @@ from .charts import (
     waterfall_chart,
 )
 from .cluster_metrics import (
+    GraphMetricsResults,
     _node_degree_sql,
     _size_density_centralisation_sql,
-    GraphMetricsResults,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
