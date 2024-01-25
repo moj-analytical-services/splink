@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from .database_api import DatabaseAPI
 
 
-def vertically_concatenate_sql(input_tables: list, db_api: DatabaseAPI) -> str:
+def vertically_concatenate_sql(
+    input_tables: list, db_api: DatabaseAPI, include_source_dataset_column=True
+) -> str:
     """
     Using `input_table_or_tables`, create a single table with the columns and
     rows required for linking.
@@ -32,7 +34,8 @@ def vertically_concatenate_sql(input_tables: list, db_api: DatabaseAPI) -> str:
     select_columns_sql = ", ".join(columns)
 
     # should think about how these will work:
-    salting_required = False
+    salting_required = True
+    # fix this for now:
     # source_dataset_col_req = True
 
     # TODO: does it make sense to set this on db api? e.g.:
@@ -51,10 +54,8 @@ def vertically_concatenate_sql(input_tables: list, db_api: DatabaseAPI) -> str:
     create_sds_if_needed = ""
 
     for df_obj in input_tables:
-        # TODO: how does this work:
-        # onlt need if source_dataset_col_req
-        # if not linker._source_dataset_column_already_exists:
-        #     create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
+        if include_source_dataset_column:
+            create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
         sql = f"""
         select
         {create_sds_if_needed}
@@ -66,4 +67,3 @@ def vertically_concatenate_sql(input_tables: list, db_api: DatabaseAPI) -> str:
     sql = " UNION ALL ".join(sqls_to_union)
 
     return sql
-
