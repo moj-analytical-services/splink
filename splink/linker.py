@@ -2224,6 +2224,7 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
+        *,
         threshold_match_probability: float,
     ) -> GraphMetricsResults:
         """
