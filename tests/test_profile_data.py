@@ -19,9 +19,7 @@ from .decorator import mark_with_dialects_including
 
 def generate_raw_profile_dataset(table, columns_to_profile, db_api):
     input_alias = "__splink__profile_data"
-    splink_df = db_api.register_table(
-        table, input_alias, overwrite=True
-    )
+    splink_df = db_api.register_table(table, input_alias, overwrite=True)
 
     pipeline = SQLPipeline()
     db_api.debug_mode = True

@@ -75,7 +75,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     profile_columns(
         df_spark,
         spark_api,
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
     )
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")

@@ -59,7 +59,7 @@ def test_full_example_duckdb(tmp_path):
             '"SUR name"',
             'first_name || "SUR name"',
             "concat(city, first_name)",
-        ]
+        ],
     )
     linker.missingness_chart()
     linker.compute_tf_table("city")
