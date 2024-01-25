@@ -262,7 +262,7 @@ def test_metrics(dialect, test_helpers):
                 expected_row_details["cluster_centralisation"]
             )
 
-    df_nm = cm["nodes"].as_pandas_dataframe()
+    df_nm = cm.nodes.as_pandas_dataframe()
 
     for unique_id, expected_node_degree in expected_node_degrees:
         relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]
