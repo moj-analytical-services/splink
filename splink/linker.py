@@ -57,8 +57,11 @@ from .charts import (
 )
 from .cluster_metrics import (
     GraphMetricsResults,
+    _edges_for_igraph_sql,
     _node_degree_sql,
+    _node_mapping_table_sql,
     _size_density_centralisation_sql,
+    _truncated_edges_sql,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
@@ -2178,6 +2181,44 @@ class Linker:
 
         return df_node_metrics
 
+    def _compute_metrics_edges(
+        self,
+        df_node_metrics: SplinkDataFrame,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        try:
+            import igraph as ig
+        except ImportError:
+            raise SplinkException("you need igraph") from None
+        uid_cols = self._settings_obj._unique_id_input_columns
+        # need composite unique ids
+        composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        # composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
+
+        sql_info = _node_mapping_table_sql(df_node_metrics)
+        self._enqueue_sql(**sql_info)
+        df_node_mappings = self._execute_sql_pipeline()
+
+        sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
+        self._enqueue_sql(**sql_info)
+        sql_info = _edges_for_igraph_sql(
+            df_node_mappings,
+            # truncated_edges_table_name,
+            "__splink__truncated_edges",
+            composite_uid_edges_l,
+            composite_uid_edges_r,
+        )
+        self._enqueue_sql(**sql_info)
+        df_edges_for_igraph = self._execute_sql_pipeline().as_pandas_dataframe()
+        g = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
+        bridges = g.bridges()
+        df_bridges = df_edges_for_igraph.iloc[bridges, :]
+        print(df_bridges)
+        return df_node_mappings
+
     def _compute_metrics_clusters(
         self,
         df_node_metrics: SplinkDataFrame,
@@ -2249,11 +2290,17 @@ class Linker:
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics = self._compute_metrics_edges(
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return GraphMetricsResults(
-            nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
 
     def profile_columns(
