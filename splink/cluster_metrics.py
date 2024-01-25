@@ -136,6 +136,38 @@ def _edges_for_igraph_sql(
     sql_info = {"sql": sql, "output_table_name": edges_with_mapped_ids_table_name}
     return sql_info
 
+
+def _bridges_from_igraph_sql(
+    df_node_mappings: SplinkDataFrame,
+    df_bridges: SplinkDataFrame,
+):
+    node_mapping_table_name = df_node_mappings.physical_name
+    sql = f"""
+        SELECT
+            e.node_l AS node_l,
+            m.composite_unique_id AS node_r,
+            TRUE AS is_bridge
+        FROM(
+            SELECT
+                m.composite_unique_id AS node_l,
+                e.node_r
+            FROM
+                {df_bridges.physical_name} e
+            LEFT JOIN
+                {node_mapping_table_name} m
+            ON
+                e.node_l = m.index
+        ) e
+        LEFT JOIN
+            {node_mapping_table_name} m
+        ON
+            m.index = e.node_r
+    """
+    edges_with_mapped_ids_table_name = "__splink__bridges_only"
+    sql_info = {"sql": sql, "output_table_name": edges_with_mapped_ids_table_name}
+    return sql_info
+
+
 def _size_density_centralisation_sql(
     df_node_metrics: SplinkDataFrame,
 ) -> List[Dict[str, str]]:

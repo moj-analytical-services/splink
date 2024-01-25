@@ -57,6 +57,7 @@ from .charts import (
 )
 from .cluster_metrics import (
     GraphMetricsResults,
+    _bridges_from_igraph_sql,
     _edges_for_igraph_sql,
     _node_degree_sql,
     _node_mapping_table_sql,
@@ -2213,11 +2214,17 @@ class Linker:
         )
         self._enqueue_sql(**sql_info)
         df_edges_for_igraph = self._execute_sql_pipeline().as_pandas_dataframe()
-        g = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
-        bridges = g.bridges()
-        df_bridges = df_edges_for_igraph.iloc[bridges, :]
-        print(df_bridges)
-        return df_node_mappings
+        igraph_df = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
+        bridges_indices = igraph_df.bridges()
+        df_bridges_pd = df_edges_for_igraph.iloc[bridges_indices, :]
+        df_bridges = self.register_table(df_bridges_pd, "__splink__bridges")
+
+        sql_info = _bridges_from_igraph_sql(
+            df_node_mappings,
+            df_bridges
+        )
+        self._enqueue_sql(**sql_info)
+        return self._execute_sql_pipeline()
 
     def _compute_metrics_clusters(
         self,
