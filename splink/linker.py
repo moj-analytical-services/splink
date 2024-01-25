@@ -59,6 +59,7 @@ from .charts import (
 from .cluster_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
+    GraphMetricsResults,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
@@ -2224,10 +2225,10 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
-    ) -> Dict[str, SplinkDataFrame]:
+    ) -> GraphMetricsResult:
         """
-        Generates tables containing graph metrics (for nodes, edges, and clusters),
-        and returns a dictionary of Splink dataframes
+        Generates tables containing graph metrics (for nodes, edges and clusters),
+        and returns a data class of Splink dataframes
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
@@ -2238,11 +2239,11 @@ class Linker:
                 above this threshold.
 
         Returns:
-            dict[str, SplinkDataFrame]: A dictionary of SplinkDataFrames
-                containing cluster IDs and selected cluster, node, or edge metrics
-                key "nodes" for nodes metrics table
-                key "edges" for edge metrics table
-                key "clusters" for cluster metrics table
+            GraphMetricsResult: A data class containing SplinkDataFrames
+            of cluster IDs and selected node, edge or cluster metrics.
+                attribute "nodes" for nodes metrics table
+                attribute "edges" for edge metrics table
+                attribute "clusters" for cluster metrics table
 
         """
         df_node_metrics = self._compute_metrics_nodes(
@@ -2251,10 +2252,7 @@ class Linker:
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
-        return {
-            "nodes": df_node_metrics,
-            "clusters": df_cluster_metrics,
-        }
+        return GraphMetricsResults(nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics)
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
