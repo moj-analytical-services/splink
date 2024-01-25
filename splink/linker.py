@@ -2252,7 +2252,9 @@ class Linker:
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
-        return GraphMetricsResults(nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics)
+        return GraphMetricsResults(
+            nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics
+        )
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
