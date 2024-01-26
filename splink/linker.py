@@ -41,6 +41,7 @@ from .blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from .blocking_rule_creator import BlockingRuleCreator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
@@ -238,6 +239,7 @@ class Linker:
             # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
             self._instantiate_comparison_levels(settings_dict)
+            self._instantiate_blocking_rules(settings_dict)
             self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
@@ -566,6 +568,23 @@ class Linker:
                         comparison_levels[idx_cl] = level.get_comparison_level(dialect)
             elif isinstance(comparison, ComparisonCreator):
                 comparisons[idx_c] = comparison.get_comparison(dialect)
+
+    def _instantiate_blocking_rules(self, settings_dict):
+        """
+        Mutate our settings_dict, so that any BlockingRuleCreator
+        instances are instead replaced with BlockingRules
+        """
+        dialect = self._sql_dialect
+        if settings_dict is None:
+            return
+        if "blocking_rules_to_generate_predictions" not in settings_dict:
+            return
+        brs = settings_dict["blocking_rules_to_generate_predictions"]
+        for idx_c, br in enumerate(brs):
+            if isinstance(br, BlockingRuleCreator):
+                brs[idx_c] = br.get_blocking_rule(dialect)
+
+        1=1
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
