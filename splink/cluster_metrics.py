@@ -101,7 +101,7 @@ def _node_mapping_table_sql(
             {nodes_table_name}
     """
     row_number_table_name = "__splink__nodes_numbered"
-    sql_info = {"sql": sql, "output_table_name":  row_number_table_name}
+    sql_info = {"sql": sql, "output_table_name": row_number_table_name}
     sql_infos.append(sql_info)
     sql = f"""
         SELECT
@@ -185,6 +185,7 @@ def _full_bridges_sql(
     composite_uid_edges_l: str,
     composite_uid_edges_r: str,
 ):
+    # TODO: instead of joining could we union with missing rows?
     sql = f"""
         SELECT
             e.{composite_uid_edges_l} AS composite_unique_id_l,
