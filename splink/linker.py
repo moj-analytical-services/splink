@@ -2229,9 +2229,7 @@ class Linker:
         df_edges_for_igraph = edges_for_igraph.as_pandas_dataframe()
         # feed our edges to igraph, get the edges which are bridges as a pandas frame,
         # and register this table with our backend
-        igraph_df = ig.Graph.DataFrame(
-            df_edges_for_igraph, directed=False
-        )
+        igraph_df = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
         bridges_indices = igraph_df.bridges()
         df_bridges_pd = df_edges_for_igraph.iloc[bridges_indices, :]
         df_bridges = self.register_table(
