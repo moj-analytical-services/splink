@@ -758,7 +758,7 @@ class PostgresAPI(DatabaseAPI):
         super().__init__()
         if not isinstance(engine, Engine):
             raise ValueError(
-                "You must supply a sqlalchemy engine " "to create a PostgresLinker."
+                "You must supply a sqlalchemy engine to create a PostgresAPI."
             )
 
         self._engine = engine
