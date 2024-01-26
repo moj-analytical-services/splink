@@ -1,7 +1,7 @@
 import pandas as pd
 
 import splink.comparison_level_library as cll
-from splink.spark.linker import SparkLinker
+from splink.linker import Linker
 
 first_name_cc = {
     "output_column_name": "first_name",
@@ -51,15 +51,17 @@ settings = {
 }
 
 
-def test_udf_registration(spark):
+def test_udf_registration(spark_api):
+    spark = spark_api.spark
     # Integration test to ensure spark loads our udfs without any issues
     df_spark = spark.read.csv(
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark,
         settings,
+        spark_api,
     )
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
@@ -70,15 +72,17 @@ def test_udf_registration(spark):
     linker.predict()
 
 
-def test_damerau_levenshtein(spark):
+def test_damerau_levenshtein(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_dam_lev = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_dam_lev,
         settings,
+        spark_api,
         input_table_aliases="test_dl_df",
     )
 
@@ -154,15 +158,17 @@ def test_damerau_levenshtein(spark):
     )
 
 
-def test_jaro(spark):
+def test_jaro(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_jaro = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_jaro,
         settings,
+        spark_api,
         input_table_aliases="test_jaro_df",
     )
 
@@ -233,15 +239,17 @@ def test_jaro(spark):
     assert spark.sql("""SELECT jaro_sim("aaapppp", "")  """).first()[0] == 0.0
 
 
-def test_jaro_winkler(spark):
+def test_jaro_winkler(spark_api):
+    spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark_jaro_winkler,
         settings,
+        spark_api,
         input_table_aliases="test_jw_df",
     )
 

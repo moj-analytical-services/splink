@@ -4,29 +4,32 @@ from collections import UserDict
 
 import pandas as pd
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import (
-    INTEGER,
-    TEXT,
-)
+from sqlalchemy.types import INTEGER, TEXT
 
 import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
 import splink.spark.blocking_rule_library as brl_spark
 import splink.sqlite.blocking_rule_library as brl_sqlite
-from splink.duckdb.linker import DuckDBLinker
-from splink.postgres.linker import PostgresLinker
-from splink.spark.linker import SparkLinker
-from splink.sqlite.linker import SQLiteLinker
+from splink.database_api import DuckDBAPI, PostgresAPI, SparkAPI, SQLiteAPI
+from splink.linker import Linker
 
 
 class TestHelper(ABC):
     @property
-    @abstractmethod
     def Linker(self):
+        return Linker
+
+    @property
+    @abstractmethod
+    def DatabaseAPI(self):
         pass
 
-    def extra_linker_args(self):
+    def db_api_args(self):
         return {}
+
+    def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
 
     @property
     def date_format(self):
@@ -50,8 +53,8 @@ class TestHelper(ABC):
 
 class DuckDBTestHelper(TestHelper):
     @property
-    def Linker(self):
-        return DuckDBLinker
+    def DatabaseAPI(self):
+        return DuckDBAPI
 
     def convert_frame(self, df):
         return df
@@ -70,10 +73,10 @@ class SparkTestHelper(TestHelper):
         self.spark = spark_creator_function()
 
     @property
-    def Linker(self):
-        return SparkLinker
+    def DatabaseAPI(self):
+        return SparkAPI
 
-    def extra_linker_args(self):
+    def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
 
     def convert_frame(self, df):
@@ -103,12 +106,12 @@ class SQLiteTestHelper(TestHelper):
         self.con = sqlite3.connect(":memory:")
         self._frame_counter = 0
 
-    @property
-    def Linker(self):
-        return SQLiteLinker
-
-    def extra_linker_args(self):
+    def db_api_args(self):
         return {"connection": self.con}
+
+    @property
+    def DatabaseAPI(self):
+        return SQLiteAPI
 
     @classmethod
     def _get_input_name(cls):
@@ -141,10 +144,10 @@ class PostgresTestHelper(TestHelper):
         self.engine = pg_engine
 
     @property
-    def Linker(self):
-        return PostgresLinker
+    def DatabaseAPI(self):
+        return PostgresAPI
 
-    def extra_linker_args(self):
+    def db_api_args(self):
         return {"engine": self.engine}
 
     @classmethod

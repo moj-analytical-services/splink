@@ -1,11 +1,10 @@
 import duckdb
 import pandas as pd
 
-from splink.analyse_blocking import (
-    cumulative_comparisons_generated_by_blocking_rules,
-)
+from splink.analyse_blocking import cumulative_comparisons_generated_by_blocking_rules
 from splink.blocking import BlockingRule
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -312,7 +311,9 @@ def test_analyse_blocking_fast_methodology():
         ]
     )
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "1=1",
@@ -320,7 +321,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 5 * 5
 
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name OR l.surname = r.surname",
@@ -333,7 +336,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
     settings = {"link_type": "link_and_dedupe"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_1, df_2], settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name"
@@ -341,7 +346,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 6 * 6 + 1 * 1 + 1 * 1
 
     settings = {"link_type": "link_only"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_1, df_2], settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name"
@@ -375,7 +382,9 @@ def test_analyse_blocking_fast_methodology():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
 
-    linker = DuckDBLinker(df, {"link_type": "dedupe_only"})
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
     for br in blocking_rules:
         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
         results[br]["count_from_efficient_fn_dedupe_only"] = c
@@ -403,7 +412,9 @@ def test_analyse_blocking_fast_methodology():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_link_only": res.iloc[0][0]}
 
-    linker = DuckDBLinker([df_l, df_r], {"link_type": "link_only"})
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_l, df_r], {"link_type": "link_only"}, database_api=db_api)
     for br in blocking_rules:
         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
         results[br]["count_from_efficient_fn_link_only"] = c

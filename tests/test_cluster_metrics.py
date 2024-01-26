@@ -2,10 +2,9 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
-from splink.comparison_library import (
-    ExactMatch,
-)
-from splink.duckdb.linker import DuckDBLinker
+from splink.comparison_library import ExactMatch
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 
@@ -34,7 +33,9 @@ def test_size_density_dedupe():
             ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
@@ -64,8 +65,13 @@ def test_size_density_link():
             ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(
-        [df_1, df_2], settings, input_table_aliases=["df_left", "df_right"]
+    db_api = DuckDBAPI()
+
+    linker = Linker(
+        [df_1, df_2],
+        settings,
+        input_table_aliases=["df_left", "df_right"],
+        database_api=db_api,
     )
 
     df_predict = linker.predict()

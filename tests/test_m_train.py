@@ -1,7 +1,8 @@
 import pandas as pd
 
 from splink.comparison_library import LevenshteinAtThresholds
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_m_train():
@@ -21,7 +22,9 @@ def test_m_train():
     }
 
     # Train from label column
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_m_from_label_column("cluster")
     cc_name = linker._settings_obj.comparisons[0]
@@ -50,7 +53,9 @@ def test_m_train():
             val["unique_id_l"] = uid_r
             val["unique_id_r"] = uid_l
 
-    linker_pairwise = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker_pairwise = Linker(df, settings, database_api=db_api)
 
     linker_pairwise.register_table(df_labels, "labels")
     linker_pairwise.estimate_m_from_pairwise_labels("labels")

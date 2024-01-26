@@ -8,7 +8,8 @@ import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -17,6 +18,10 @@ from .linker_utils import (
     _test_write_functionality,
     register_roc_data,
 )
+
+simple_settings = {
+    "link_type": "dedupe_only",
+}
 
 
 @mark_with_dialects_including("duckdb")
@@ -33,12 +38,13 @@ def test_full_example_duckdb(tmp_path):
         'l."SUR name" = r."SUR name"',
     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+    linker = Linker(
         df,
-        connection=os.path.join(tmp_path, "duckdb.db"),
-        output_schema="splink_in_duckdb",
+        settings_dict=settings_dict,
+        database_api=db_api,
+        # output_schema="splink_in_duckdb",
     )
-    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
@@ -115,11 +121,12 @@ def test_full_example_duckdb(tmp_path):
     path = os.path.join(tmp_path, "model.json")
     linker.save_model_to_json(path)
 
-    linker_2 = DuckDBLinker(df)
+    db_api = DuckDBAPI()
+    linker_2 = Linker(df, settings_dict=simple_settings, database_api=db_api)
     linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
-    DuckDBLinker(df, settings_dict=path)
+    Linker(df, database_api=db_api, settings_dict=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -167,10 +174,8 @@ def test_link_only(input, source_l, source_r):
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
 
-    linker = DuckDBLinker(
-        input,
-        settings,
-    )
+    db_api = DuckDBAPI()
+    linker = Linker(input, settings, database_api=db_api)
     df_predict = linker.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -210,18 +215,22 @@ def test_link_only(input, source_l, source_r):
 def test_duckdb_load_from_file(df):
     settings = get_settings_dict()
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         df,
         settings,
+        database_api=db_api,
     )
 
     assert len(linker.predict().as_pandas_dataframe()) == 3167
 
     settings["link_type"] = "link_only"
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df, df],
         settings,
+        database_api=db_api,
         input_table_aliases=["testing1", "testing2"],
     )
 
@@ -244,7 +253,8 @@ def test_duckdb_arrow_array():
     # {"uid": 1, "a": ['james', 'john'], "b": 1},
     #     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         array_data,
         {
             "link_type": "dedupe_only",
@@ -252,6 +262,7 @@ def test_duckdb_arrow_array():
             "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
+        database_api=db_api,
     )
     df = linker.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
@@ -265,12 +276,13 @@ def test_cast_error():
     data = {"id": range(0, len(forenames)), "forename": forenames}
     df = pd.DataFrame(data)
 
+    db_api = DuckDBAPI()
     with pytest.raises(InvalidInputException):
-        DuckDBLinker(df)
+        Linker(df, settings_dict=simple_settings, database_api=db_api)
 
     # convert to pyarrow table
     df = pa.Table.from_pandas(df)
-    DuckDBLinker(df)
+    Linker(df, settings_dict=simple_settings, database_api=db_api)
 
 
 @mark_with_dialects_including("duckdb")
@@ -311,7 +323,8 @@ def test_small_example_duckdb(tmp_path):
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"

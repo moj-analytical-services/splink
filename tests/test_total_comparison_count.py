@@ -4,7 +4,8 @@ import pytest
 from splink.analyse_blocking import (
     number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
 )
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 from splink.misc import calculate_cartesian
 from splink.vertically_concatenate import vertically_concatenate_sql
 
@@ -85,7 +86,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
     dfs = list(map(make_dummy_frame, frame_sizes))
     settings = {"link_type": link_type}
 
-    linker = DuckDBLinker(dfs, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(dfs, settings, database_api=db_api)
     sql = vertically_concatenate_sql(linker)
     linker._enqueue_sql(sql, "__splink__df_concat")
     df_concat = linker._execute_sql_pipeline()

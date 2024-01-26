@@ -37,8 +37,10 @@ import pandas as pd
 import pytest
 
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.duckdb.linker import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
+from splink.linker import Linker
 from splink.predict import predict_from_comparison_vectors_sqls
 
 
@@ -61,7 +63,9 @@ def test_splink_converges_to_known_params():
         "linker_uid": "abc",
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     em_training_session = EMTrainingSession(
         linker,
