@@ -17,10 +17,18 @@ import sqlglot
 from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
+from sqlalchemy import text
+from sqlalchemy.engine import Engine
 
 from .cache_dict_with_logging import CacheDictWithLogging
 from .databricks.enable_splink import enable_splink
-from .dialects import DuckDBDialect, SparkDialect, SplinkDialect, SQLiteDialect
+from .dialects import (
+    DuckDBDialect,
+    PostgresDialect,
+    SparkDialect,
+    SplinkDialect,
+    SQLiteDialect,
+)
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
@@ -29,7 +37,12 @@ from .duckdb.duckdb_helpers.duckdb_helpers import (
 from .duckdb.linker import DuckDBDataFrame
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import major_minor_version_greater_equal_than, parse_duration
+from .misc import (
+    ensure_is_list,
+    major_minor_version_greater_equal_than,
+    parse_duration,
+)
+from .postgres.linker import PostgresDataFrame
 from .spark.jar_location import get_scala_udfs
 from .spark.linker import SparkDataFrame
 from .splink_dataframe import SplinkDataFrame
@@ -830,3 +843,182 @@ class SQLiteAPI(DatabaseAPI):
 
     def _run_sql_execution(self, final_sql: str) -> sqlite3.Cursor:
         return self.con.execute(final_sql)
+
+
+class PostgresAPI(DatabaseAPI):
+    sql_dialect = PostgresDialect()
+
+    def __init__(
+        self,
+        engine: Engine,
+        schema: str = "splink",
+        other_schemas_to_search: Union[str, List[str]] = [],
+    ):
+        super().__init__()
+        if not isinstance(engine, Engine):
+            raise ValueError(
+                "You must supply a sqlalchemy engine to create a PostgresAPI."
+            )
+
+        self._engine = engine
+        self._db_schema = schema
+        self._create_splink_schema(other_schemas_to_search)
+
+        self._register_custom_functions()
+        self._register_extensions()
+
+    def _table_registration(self, input, table_name):
+        if isinstance(input, dict):
+            input = pd.DataFrame(input)
+        elif isinstance(input, list):
+            input = pd.DataFrame.from_records(input)
+
+        # Will error if an invalid data type is passed
+        input.to_sql(
+            table_name,
+            con=self._engine,
+            index=False,
+            if_exists="replace",
+            schema=self._db_schema,
+        )
+
+    def table_to_splink_dataframe(self, templated_name, physical_name):
+        return PostgresDataFrame(templated_name, physical_name, self)
+
+    def table_exists_in_database(self, table_name):
+        sql = f"""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_name = '{table_name}';
+        """
+
+        rec = self._run_sql_execution(sql).fetchall()
+        return len(rec) > 0
+
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str = None, physical_name: str = None
+    ):
+        with self._engine.connect() as con:
+            res = con.execute(text(final_sql))
+        return res
+
+    # postgres udf registrations:
+    def _create_log2_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION log2(n float8)
+        RETURNS float8 AS $$
+        SELECT log(2.0, n::numeric)::float8;
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _extend_round_function(self):
+        # extension of round to double
+        sql = """
+        CREATE OR REPLACE FUNCTION round(n float8, dp integer)
+        RETURNS numeric AS $$
+        SELECT round(n::numeric, dp);
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_try_cast_date_function(self):
+        # postgres to_date will give an error if the date can't be parsed
+        # to be consistent with other backends we instead create a version
+        # which instead returns NULL, allowing us more flexibility
+        sql = """
+        CREATE OR REPLACE FUNCTION try_cast_date(date_string text, format text)
+        RETURNS date AS $func$
+        BEGIN
+            BEGIN
+                RETURN to_date(date_string, format);
+            EXCEPTION WHEN OTHERS THEN
+                RETURN NULL;
+            END;
+        END
+        $func$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_datediff_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION datediff(x date, y date)
+        RETURNS integer AS $$
+        SELECT x - y;
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+        sql_cast = """
+        CREATE OR REPLACE FUNCTION datediff(x {dateish_type}, y {dateish_type})
+        RETURNS integer AS $$
+        SELECT datediff(DATE(x), DATE(y));
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        for dateish_type in ("timestamp", "timestamp with time zone"):
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
+
+    def _create_months_between_function(self):
+        # number of average-length (per year) months between two dates
+        # logic could be improved/made consistent with other backends
+        # but this is reasonable for now
+        # 30.4375 days
+        ave_length_month = 365.25 / 12
+        sql = f"""
+        CREATE OR REPLACE FUNCTION ave_months_between(x date, y date)
+        RETURNS float8 AS $$
+        SELECT (datediff(x, y)/{ave_length_month})::float8;
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+        sql_cast = """
+        CREATE OR REPLACE FUNCTION ave_months_between(
+            x {dateish_type}, y {dateish_type}
+        )
+        RETURNS integer AS $$
+        SELECT (ave_months_between(DATE(x), DATE(y)))::int;
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        for dateish_type in ("timestamp", "timestamp with time zone"):
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
+
+    def _create_array_intersect_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION array_intersect(x anyarray, y anyarray)
+        RETURNS anyarray AS $$
+        SELECT ARRAY( SELECT DISTINCT * FROM UNNEST(x) WHERE UNNEST = ANY(y) )
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _register_custom_functions(self):
+        # if people have issues with permissions we can allow these to be optional
+        # need for predict_from_comparison_vectors_sql (could adjust)
+        self._create_log2_function()
+        # need for date-casting
+        self._create_try_cast_date_function()
+        # need for datediff levels
+        self._create_datediff_function()
+        self._create_months_between_function()
+        # need for array_intersect levels
+        self._create_array_intersect_function()
+        # extension of round to handle doubles - used in unlinkables
+        self._extend_round_function()
+
+    def _register_extensions(self):
+        sql = """
+        CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_splink_schema(self, other_schemas_to_search):
+        other_schemas_to_search = ensure_is_list(other_schemas_to_search)
+        # always search _db_schema first, and public last
+        schemas_to_search = [self._db_schema] + other_schemas_to_search + ["public"]
+        search_path = ",".join(schemas_to_search)
+        sql = f"""
+        CREATE SCHEMA IF NOT EXISTS {self._db_schema};
+        SET search_path TO {search_path};
+        """
+        self._run_sql_execution(sql)

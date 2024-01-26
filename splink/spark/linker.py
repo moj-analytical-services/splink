@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -11,10 +12,12 @@ from .spark_helpers.custom_spark_dialect import Dialect
 logger = logging.getLogger(__name__)
 
 Dialect["customspark"]
+if TYPE_CHECKING:
+    from ..database_api import SparkAPI
 
 
 class SparkDataFrame(SplinkDataFrame):
-    db_api: SparkLinker
+    db_api: SparkAPI
 
     @property
     def columns(self) -> list[InputColumn]:

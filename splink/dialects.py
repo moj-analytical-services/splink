@@ -435,6 +435,29 @@ class PostgresDialect(SplinkDialect):
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
         """.strip()
 
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        if seed:
+            # TODO: we could maybe do seeds by handling it in calling function
+            # need to execute setseed() in surrounding session
+            raise NotImplementedError(
+                "Postgres does not support seeds in random "
+                "samples. Please remove the `seed` parameter."
+            )
+
+        sample_size = int(sample_size)
+
+        return f"""ORDER BY RANDOM()
+            LIMIT {sample_size}
+            """
+
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
 
 class AthenaDialect(SplinkDialect):
     _dialect_name_for_factory = "athena"
