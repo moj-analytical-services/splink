@@ -763,7 +763,6 @@ class PostgresAPI(DatabaseAPI):
 
         self._engine = engine
         self._db_schema = schema
-        # Create splink schema
         self._create_splink_schema(other_schemas_to_search)
 
         # Create custom SQL functions in database
