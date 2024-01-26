@@ -7,25 +7,23 @@ from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.spark.linker import SparkLinker
+from splink.database_api import SparkAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
-from .linker_utils import (
-    _test_write_functionality,
-    register_roc_data,
-)
+from .linker_utils import _test_write_functionality, register_roc_data
 
 
-def test_full_example_spark(spark, df_spark, tmp_path):
+def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
-    linker = SparkLinker(df_spark, get_settings_dict())
+    linker = Linker(df_spark, get_settings_dict(), spark_api)
 
     # Test that writing to files works as expected
     def spark_csv_read(x):
-        return linker.spark.read.csv(x, header=True).toPandas()
+        return linker.db_api.spark.read.csv(x, header=True).toPandas()
 
     _test_write_functionality(linker, spark_csv_read)
 
@@ -62,12 +60,14 @@ def test_full_example_spark(spark, df_spark, tmp_path):
         "max_iterations": 2,
     }
 
-    linker = SparkLinker(
+    linker = Linker(
         df_spark,
         settings,
-        break_lineage_method="checkpoint",
-        num_partitions_on_repartition=2,
-        database="1111",
+        SparkAPI(
+            break_lineage_method="checkpoint",
+            num_partitions_on_repartition=2,
+            database="1111",
+        ),
     )
 
     linker.profile_columns(
@@ -137,25 +137,27 @@ def test_full_example_spark(spark, df_spark, tmp_path):
     # Test differing inputs are accepted
     settings["link_type"] = "link_only"
 
-    linker = SparkLinker(
+    linker = Linker(
         [df_spark, df_spark.toPandas()],
         settings,
-        break_lineage_method="checkpoint",
-        num_partitions_on_repartition=2,
+        SparkAPI(
+            break_lineage_method="checkpoint",
+            num_partitions_on_repartition=2,
+        ),
     )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
     linker.save_model_to_json(path)
 
-    linker_2 = SparkLinker(df_spark)
+    linker_2 = Linker(df_spark, settings_dict=None, database_api=spark_api)
     linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
-    SparkLinker(df_spark, settings_dict=path)
+    Linker(df_spark, settings_dict=path, database_api=spark_api)
 
 
-def test_link_only(df_spark):
+def test_link_only(df_spark, spark_api):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
@@ -163,11 +165,13 @@ def test_link_only(df_spark):
     df_spark_a = df_spark.withColumn("source_dataset", f.lit("my_left_ds"))
     df_spark_b = df_spark.withColumn("source_dataset", f.lit("my_right_ds"))
 
-    linker = SparkLinker(
+    linker = Linker(
         [df_spark_a, df_spark_b],
         settings,
-        break_lineage_method="checkpoint",
-        num_partitions_on_repartition=2,
+        SparkAPI(
+            break_lineage_method="checkpoint",
+            num_partitions_on_repartition=2,
+        ),
     )
     df_predict = linker.predict().as_pandas_dataframe()
 
@@ -186,13 +190,13 @@ def test_link_only(df_spark):
     ],
 )
 @mark_with_dialects_including("spark")
-def test_spark_load_from_file(df, spark):
+def test_spark_load_from_file(df, spark, spark_api):
     settings = get_settings_dict()
 
-    linker = SparkLinker(
+    linker = Linker(
         df,
         settings,
-        spark=spark,
+        spark_api,
     )
 
     assert len(linker.predict().as_pandas_dataframe()) == 3167

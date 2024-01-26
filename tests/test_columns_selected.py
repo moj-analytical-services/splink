@@ -5,7 +5,8 @@ import os
 import pandas as pd
 
 import splink.comparison_level_library as cll
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_regression(tmp_path):
@@ -56,12 +57,12 @@ def test_regression(tmp_path):
                 "em_convergence": 0.01,
             }
 
-            linker = DuckDBLinker(
-                df.copy(),
-                settings_dict,
+            db_api = DuckDBAPI(
                 connection=os.path.join(tmp_path, "duckdb.db"),
                 output_schema="splink_in_duckdb",
             )
+
+            linker = Linker(df.copy(), settings_dict, database_api=db_api)
 
             linker.predict()
 
@@ -120,6 +121,8 @@ def test_discussion_example(tmp_path):
                 "em_convergence": 0.01,
             }
 
-            linker = DuckDBLinker(df.copy(), settings_dict)
+            db_api = DuckDBAPI()
+
+            linker = Linker(df.copy(), settings_dict, database_api=db_api)
 
             linker.predict()

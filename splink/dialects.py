@@ -89,6 +89,13 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        raise NotImplementedError(
+            f"Backend '{self.name}' needs a random_sample_sql added to its dialect"
+        )
+
     @staticmethod
     def _wrap_in_nullif(func):
         def nullif_wrapped_function(*args, **kwargs):
@@ -114,6 +121,11 @@ class SplinkDialect(ABC):
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'regex_extract' function"
+        )
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
         )
 
 
@@ -169,6 +181,40 @@ class DuckDBDialect(SplinkDialect):
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
+
+    # TODO: roll out to other dialects, at least for now
+    @property
+    def infinity_expression(self):
+        return "cast('infinity' as float8)"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        else:
+            return f"USING SAMPLE {percent}% (bernoulli)"
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        # base case
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"unnest({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+            other_columns_to_retain.append(column_to_explode)
+            return f"""select {','.join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501
 
 
 class SparkDialect(SplinkDialect):
@@ -239,8 +285,39 @@ class SparkDialect(SplinkDialect):
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
 
-class SqliteDialect(SplinkDialect):
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"explode({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+        return f"""select {','.join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
+
+
+class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
 
     @property
@@ -264,6 +341,27 @@ class SqliteDialect(SplinkDialect):
     @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        if seed:
+            raise NotImplementedError(
+                "SQLite does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
+
+        sample_size = int(sample_size)
+
+        return f"""ORDER BY RANDOM()
+            LIMIT {sample_size}
+            """
 
 
 class PostgresDialect(SplinkDialect):
@@ -337,6 +435,29 @@ class PostgresDialect(SplinkDialect):
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
         """.strip()
 
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        if seed:
+            # TODO: we could maybe do seeds by handling it in calling function
+            # need to execute setseed() in surrounding session
+            raise NotImplementedError(
+                "Postgres does not support seeds in random "
+                "samples. Please remove the `seed` parameter."
+            )
+
+        sample_size = int(sample_size)
+
+        return f"""ORDER BY RANDOM()
+            LIMIT {sample_size}
+            """
+
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
 
 class AthenaDialect(SplinkDialect):
     _dialect_name_for_factory = "athena"
@@ -357,7 +478,7 @@ class AthenaDialect(SplinkDialect):
 _dialect_lookup = {
     "duckdb": DuckDBDialect(),
     "spark": SparkDialect(),
-    "sqlite": SqliteDialect(),
+    "sqlite": SQLiteDialect(),
     "postgres": PostgresDialect(),
     "athena": AthenaDialect(),
 }

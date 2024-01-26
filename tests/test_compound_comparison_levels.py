@@ -2,7 +2,8 @@ import pandas as pd
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_compound_comparison_level():
@@ -117,7 +118,9 @@ def test_compound_comparison_level():
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     all_cols_match_level = linker._settings_obj.comparisons[1].comparison_levels[1]
     assert all_cols_match_level._is_exact_match
     assert set(all_cols_match_level._exact_match_colnames) == {
@@ -211,6 +214,8 @@ def test_complex_compound_comparison_level():
             }
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_parameters_using_expectation_maximisation("1=1")

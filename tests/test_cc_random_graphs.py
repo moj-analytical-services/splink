@@ -17,10 +17,12 @@ from tests.cc_testing_utils import (
 @pytest.mark.parametrize("execution_number", range(20))
 def test_small_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=500)
-    linker = register_cc_df(g)
+    linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
 
@@ -29,10 +31,12 @@ def test_small_erdos_renyi_graph(execution_number):
 @pytest.mark.parametrize("execution_number", range(10))
 def test_medium_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=10000)
-    linker = register_cc_df(g)
+    linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
 
@@ -41,9 +45,11 @@ def test_medium_erdos_renyi_graph(execution_number):
 @pytest.mark.parametrize("execution_number", range(2))
 def test_large_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=100000)
-    linker = register_cc_df(g)
+    linker, predict_df = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker).sort_values(by=["node_id", "representative"]),
+        run_cc_implementation(linker, predict_df).sort_values(
+            by=["node_id", "representative"]
+        ),
         networkx_solve(g).sort_values(by=["node_id", "representative"]),
     )
