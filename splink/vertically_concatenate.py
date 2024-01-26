@@ -7,12 +7,10 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .database_api import DatabaseAPI
+    from .linker import Linker
 
 
-def vertically_concatenate_sql(
-    input_tables: list, db_api: DatabaseAPI, include_source_dataset_column=True
-) -> str:
+def vertically_concatenate_sql(linker: Linker) -> str:
     """
     Using `input_table_or_tables`, create a single table with the columns and
     rows required for linking.
@@ -28,42 +26,56 @@ def vertically_concatenate_sql(
     """
 
     # Use column order from first table in dict
-    df_obj = input_tables[0]
+    df_obj = next(iter(linker._input_tables_dict.values()))
     columns = df_obj.columns_escaped
 
     select_columns_sql = ", ".join(columns)
 
-    # should think about how these will work:
-    salting_required = True
-    # fix this for now:
-    # source_dataset_col_req = True
+    salting_reqiured = False
 
-    # TODO: does it make sense to set this on db api? e.g.:
-    # if db_api.salting_required:
-    #     salting_required = True
+    # For data profiling, we need to vertically concat
+    # but user may not have provided a settings dict yet
+    if linker._settings_obj_ is None:
+        source_dataset_col_req = True
+    else:
+        source_dataset_col_req = (
+            linker._settings_obj._source_dataset_column_name_is_required
+        )
+
+        salting_reqiured = linker._settings_obj.salting_required
+
     # see https://github.com/duckdb/duckdb/discussions/9710
     # in duckdb to parallelise we need salting
+    if linker._sql_dialect == "duckdb":
+        salting_reqiured = True
 
-    if salting_required:
+    if salting_reqiured:
         salt_sql = ", random() as __splink_salt"
     else:
         salt_sql = ""
 
-    sqls_to_union = []
+    if source_dataset_col_req:
+        sqls_to_union = []
 
-    create_sds_if_needed = ""
+        create_sds_if_needed = ""
 
-    for df_obj in input_tables:
-        if include_source_dataset_column:
-            create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
+        for df_obj in linker._input_tables_dict.values():
+            if not linker._source_dataset_column_already_exists:
+                create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
+            sql = f"""
+            select
+            {create_sds_if_needed}
+            {select_columns_sql}
+            {salt_sql}
+            from {df_obj.physical_name}
+            """
+            sqls_to_union.append(sql)
+        sql = " UNION ALL ".join(sqls_to_union)
+    else:
         sql = f"""
-        select
-        {create_sds_if_needed}
-        {select_columns_sql}
-        {salt_sql}
-        from {df_obj.physical_name}
-        """
-        sqls_to_union.append(sql)
-    sql = " UNION ALL ".join(sqls_to_union)
+            select {select_columns_sql}
+            {salt_sql}
+            from {df_obj.physical_name}
+            """
 
     return sql
