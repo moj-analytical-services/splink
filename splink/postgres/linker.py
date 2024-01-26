@@ -7,7 +7,6 @@ from sqlalchemy.engine import Engine
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
-from ..unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 

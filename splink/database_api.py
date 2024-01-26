@@ -785,10 +785,10 @@ class PostgresAPI(DatabaseAPI):
             schema=self._db_schema,
         )
 
-    def _table_to_splink_dataframe(self, templated_name, physical_name):
+    def table_to_splink_dataframe(self, templated_name, physical_name):
         return PostgresDataFrame(templated_name, physical_name, self)
 
-    def _table_exists_in_database(self, table_name):
+    def table_exists_in_database(self, table_name):
         sql = f"""
         SELECT table_name
         FROM information_schema.tables
