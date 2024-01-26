@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from sqlalchemy.engine import Engine
 
@@ -9,14 +10,16 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from ..database_api import PostgresAPI
 
 
 class PostgresDataFrame(SplinkDataFrame):
-    linker: PostgresLinker
+    db_api: PostgresAPI
 
-    def __init__(self, df_name, physical_name, linker):
-        super().__init__(df_name, physical_name, linker)
-        self._db_schema = linker._db_schema
+    def __init__(self, df_name, physical_name, db_api):
+        super().__init__(df_name, physical_name, db_api)
+        self._db_schema = db_api._db_schema
         self.physical_name = f"{self.physical_name}"
 
     @property
@@ -26,7 +29,7 @@ class PostgresDataFrame(SplinkDataFrame):
         FROM information_schema.columns
         WHERE table_name = '{self.physical_name}';
         """
-        res = self.linker._run_sql_execution(sql).fetchall()
+        res = self.db_api._run_sql_execution(sql).fetchall()
         cols = [r["column_name"] for r in res]
 
         return [InputColumn(c, sql_dialect="postgres") for c in cols]
@@ -46,7 +49,7 @@ class PostgresDataFrame(SplinkDataFrame):
         WHERE table_name = '{self.physical_name}';
         """
 
-        res = self.linker._run_sql_execution(sql).fetchall()
+        res = self.db_api._run_sql_execution(sql).fetchall()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the postgres db provided.\n"
@@ -57,7 +60,7 @@ class PostgresDataFrame(SplinkDataFrame):
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
-        self.linker._delete_table_from_database(self.physical_name)
+        self.db_api._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
         sql = f"""
@@ -67,7 +70,7 @@ class PostgresDataFrame(SplinkDataFrame):
         if limit:
             sql += f" LIMIT {limit}"
         sql += ";"
-        res = self.linker._run_sql_execution(sql).mappings().all()
+        res = self.db_api._run_sql_execution(sql).mappings().all()
         return [dict(r) for r in res]
 
 

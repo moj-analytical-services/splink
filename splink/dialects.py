@@ -435,7 +435,7 @@ class PostgresDialect(SplinkDialect):
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
         """.strip()
 
-    def _random_sample_sql(
+    def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
         if proportion == 1.0:
@@ -455,7 +455,7 @@ class PostgresDialect(SplinkDialect):
             """
 
     @property
-    def _infinity_expression(self):
+    def infinity_expression(self):
         return "'infinity'"
 
 
