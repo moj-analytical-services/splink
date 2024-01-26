@@ -85,35 +85,3 @@ class PostgresLinker(Linker):
         other_schemas_to_search: str | list = [],
     ):
         pass
-
-    def _random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        if seed:
-            # TODO: we could maybe do seeds by handling it in calling function
-            # need to execute setseed() in surrounding session
-            raise NotImplementedError(
-                "Postgres does not support seeds in random "
-                "samples. Please remove the `seed` parameter."
-            )
-
-        sample_size = int(sample_size)
-
-        if unique_id is None:
-            # unique_id col, with source_dataset column if needed to disambiguate
-            unique_id_cols = self._settings_obj._unique_id_input_columns
-            unique_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
-        if table is None:
-            table = "__splink__df_concat_with_tf"
-        return (
-            f"WHERE {unique_id} IN ("
-            f"    SELECT {unique_id} FROM {table}"
-            f"    ORDER BY RANDOM() LIMIT {sample_size}"
-            f")"
-        )
-
-    @property
-    def _infinity_expression(self):
-        return "'infinity'"
