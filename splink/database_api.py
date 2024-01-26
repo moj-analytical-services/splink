@@ -165,7 +165,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def _execute_sql_pipeline(
         self,
         pipeline,
-        input_dataframes: list[SplinkDataFrame] = [],
+        input_dataframes: List[SplinkDataFrame] = [],
         use_cache=True,
     ) -> SplinkDataFrame:
         """
