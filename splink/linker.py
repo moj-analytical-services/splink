@@ -2200,8 +2200,9 @@ class Linker:
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         # composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
-        sql_info = _node_mapping_table_sql(df_node_metrics)
-        self._enqueue_sql(**sql_info)
+        sql_infos = _node_mapping_table_sql(df_node_metrics)
+        for sql_info in sql_infos:
+            self._enqueue_sql(**sql_info)
         df_node_mappings = self._execute_sql_pipeline()
 
         sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)

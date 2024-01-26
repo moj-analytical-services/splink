@@ -92,17 +92,28 @@ def _node_mapping_table_sql(
     df_node_metrics: SplinkDataFrame,
 ):
     nodes_table_name = df_node_metrics.physical_name
+    sql_infos = []
     sql = f"""
         SELECT
             composite_unique_id,
-            row_number() OVER() AS rn,
-            rn - 1 AS index,
+            row_number() OVER(ORDER BY 1) AS rn
         FROM
             {nodes_table_name}
     """
+    row_number_table_name = "__splink__nodes_numbered"
+    sql_info = {"sql": sql, "output_table_name":  row_number_table_name}
+    sql_infos.append(sql_info)
+    sql = f"""
+        SELECT
+            composite_unique_id,
+            rn - 1 AS new_id
+        FROM
+            {row_number_table_name}
+    """
     node_mapping_table_name = "__splink__nodes_integer_mapping"
     sql_info = {"sql": sql, "output_table_name": node_mapping_table_name}
-    return sql_info
+    sql_infos.append(sql_info)
+    return sql_infos
 
 
 def _edges_for_igraph_sql(
@@ -115,10 +126,10 @@ def _edges_for_igraph_sql(
     sql = f"""
         SELECT
             edges_left_mapped.node_l,
-            m.index AS node_r
+            m.new_id AS node_r
         FROM (
             SELECT
-                m.index AS node_l,
+                m.new_id AS node_l,
                 e.{composite_uid_edges_r} AS node_r
             FROM
                 {truncated_edges_table_name} e
@@ -156,12 +167,12 @@ def _bridges_from_igraph_sql(
             LEFT JOIN
                 {node_mapping_table_name} m
             ON
-                e.node_l = m.index
+                e.node_l = m.new_id
         ) e
         LEFT JOIN
             {node_mapping_table_name} m
         ON
-            m.index = e.node_r
+            m.new_id = e.node_r
     """
     edges_with_mapped_ids_table_name = "__splink__bridges_only"
     sql_info = {"sql": sql, "output_table_name": edges_with_mapped_ids_table_name}
@@ -178,7 +189,7 @@ def _full_bridges_sql(
         SELECT
             e.{composite_uid_edges_l} AS composite_unique_id_l,
             e.{composite_uid_edges_r} AS composite_unique_id_r,
-            ifnull(is_bridge, FALSE) AS is_bridge
+            COALESCE(b.is_bridge, FALSE) AS is_bridge
         FROM
         {df_truncated_edges.physical_name} e
         LEFT JOIN
