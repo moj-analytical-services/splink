@@ -10,9 +10,8 @@ import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
 import splink.spark.blocking_rule_library as brl_spark
 import splink.sqlite.blocking_rule_library as brl_sqlite
-from splink.database_api import DuckDBAPI, SparkAPI, SQLiteAPI
+from splink.database_api import DuckDBAPI, PostgresAPI, SparkAPI, SQLiteAPI
 from splink.linker import Linker
-from splink.postgres.linker import PostgresLinker
 
 
 class TestHelper(ABC):
@@ -27,6 +26,10 @@ class TestHelper(ABC):
 
     def db_api_args(self):
         return {}
+
+    def extra_linker_args(self):
+        # create fresh api each time
+        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
 
     @property
     def date_format(self):
@@ -49,10 +52,6 @@ class TestHelper(ABC):
 
 
 class DuckDBTestHelper(TestHelper):
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"database_api": DuckDBAPI()}
-
     @property
     def DatabaseAPI(self):
         return DuckDBAPI
@@ -76,10 +75,6 @@ class SparkTestHelper(TestHelper):
     @property
     def DatabaseAPI(self):
         return SparkAPI
-
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
 
     def db_api_args(self):
         return {"spark": self.spark, "num_partitions_on_repartition": 1}
@@ -110,10 +105,6 @@ class SQLiteTestHelper(TestHelper):
     def __init__(self):
         self.con = sqlite3.connect(":memory:")
         self._frame_counter = 0
-
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
 
     def db_api_args(self):
         return {"connection": self.con}
@@ -153,10 +144,10 @@ class PostgresTestHelper(TestHelper):
         self.engine = pg_engine
 
     @property
-    def Linker(self):
-        return PostgresLinker
+    def DatabaseAPI(self):
+        return PostgresAPI
 
-    def extra_linker_args(self):
+    def db_api_args(self):
         return {"engine": self.engine}
 
     @classmethod
