@@ -132,3 +132,13 @@ def add_suffix_to_all_column_identifiers(
         identifier.args["this"] = identifier.args["this"] + suffix
 
     return tree.sql(dialect=sqlglot_dialect)
+
+
+# TODO: can we get rid of add_quotes_and_table_prefix and use this everywhere instead
+def add_table_to_all_column_identifiers(
+    sql_str: str, table_name: str, sqlglot_dialect: str
+):
+    tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
+    for col in tree.find_all(exp.Column):
+        col.args["table"] = table_name
+    return tree.sql(dialect=sqlglot_dialect)

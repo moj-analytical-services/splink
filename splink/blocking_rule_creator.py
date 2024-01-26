@@ -57,7 +57,7 @@ class ExactMatchRule(BlockingRuleCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
-        return f"{col.name_l} = {col.name_r}"
+        return f"{col.l_name} = {col.r_name}"
 
 
 class _Merge(BlockingRuleCreator):

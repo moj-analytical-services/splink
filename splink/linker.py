@@ -455,7 +455,6 @@ class Linker:
     def _register_input_tables(
         self, input_tables, input_aliases
     ) -> Dict[str, SplinkDataFrame]:
-
         if input_aliases is None:
             input_table_aliases = [
                 f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
@@ -567,9 +566,7 @@ class Linker:
         brs = settings_dict["blocking_rules_to_generate_predictions"]
         for idx_c, br in enumerate(brs):
             if isinstance(br, BlockingRuleCreator):
-                brs[idx_c] = br.get_blocking_rule(dialect)
-
-        1=1
+                brs[idx_c] = br.create_blocking_rule_dict(dialect)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
