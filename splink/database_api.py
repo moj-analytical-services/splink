@@ -765,7 +765,6 @@ class PostgresAPI(DatabaseAPI):
         self._db_schema = schema
         self._create_splink_schema(other_schemas_to_search)
 
-        # Create custom SQL functions in database
         self._register_custom_functions()
         self._register_extensions()
 
