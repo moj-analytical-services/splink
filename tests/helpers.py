@@ -6,10 +6,6 @@ import pandas as pd
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import INTEGER, TEXT
 
-import splink.duckdb.blocking_rule_library as brl_duckdb
-import splink.postgres.blocking_rule_library as brl_postgres
-import splink.spark.blocking_rule_library as brl_spark
-import splink.sqlite.blocking_rule_library as brl_sqlite
 from splink.database_api import DuckDBAPI, PostgresAPI, SparkAPI, SQLiteAPI
 from splink.linker import Linker
 
@@ -45,11 +41,6 @@ class TestHelper(ABC):
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
 
-    @property
-    @abstractmethod
-    def brl(self):
-        pass
-
 
 class DuckDBTestHelper(TestHelper):
     @property
@@ -62,10 +53,6 @@ class DuckDBTestHelper(TestHelper):
     @property
     def date_format(self):
         return "%Y-%m-%d"
-
-    @property
-    def brl(self):
-        return brl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -93,10 +80,6 @@ class SparkTestHelper(TestHelper):
         df = self.spark.read.parquet(path)
         df.persist()
         return df
-
-    @property
-    def brl(self):
-        return brl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -129,10 +112,6 @@ class SQLiteTestHelper(TestHelper):
 
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
-
-    @property
-    def brl(self):
-        return brl_sqlite
 
 
 class PostgresTestHelper(TestHelper):
@@ -178,10 +157,6 @@ class PostgresTestHelper(TestHelper):
 
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
-
-    @property
-    def brl(self):
-        return brl_postgres
 
 
 class SplinkTestException(Exception):
