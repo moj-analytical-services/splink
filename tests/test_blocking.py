@@ -9,7 +9,7 @@ from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-def test_binary_composition_internals_OR(dialect):
+def test_preceding_blocking_rules(dialect):
     settings = get_settings_dict()
     br_surname = block_on("surname", salting_partitions=4).get_blocking_rule(dialect)
 
