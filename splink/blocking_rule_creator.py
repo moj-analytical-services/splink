@@ -41,6 +41,7 @@ class BlockingRuleCreator(ABC):
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         level_dict = {
             "blocking_rule": self.create_sql(sql_dialect),
+            "sql_dialect": sql_dialect_str,
         }
 
         if self.salting_partitions and self.arrays_to_explode:
