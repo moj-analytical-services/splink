@@ -9,7 +9,7 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict
+from typing import Dict, Union
 
 
 from splink.input_column import InputColumn
@@ -1511,7 +1511,7 @@ class Linker:
 
     def estimate_parameters_using_expectation_maximisation(
         self,
-        blocking_rule: str,
+        blocking_rule: Union[str, BlockingRuleCreator],
         comparisons_to_deactivate: list[str | Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
@@ -1569,8 +1569,8 @@ class Linker:
             ```
 
         Args:
-            blocking_rule (BlockingRule | str): The blocking rule used to generate
-                pairwise record comparisons.
+            blocking_rule (BlockingRuleCreator | str): The blocking rule used to
+                generate pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
@@ -1620,10 +1620,8 @@ class Linker:
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
-
-        # Extract the blocking rule
-        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
-        # and raise error if not specfically a BlockingRule
+        if isinstance(blocking_rule, BlockingRuleCreator):
+            blocking_rule = blocking_rule.create_blocking_rule_dict(self._sql_dialect)
         blocking_rule = blocking_rule_to_obj(blocking_rule)
         if type(blocking_rule) is not BlockingRule:
             raise TypeError(
