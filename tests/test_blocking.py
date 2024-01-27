@@ -22,7 +22,7 @@ def test_binary_composition_internals_OR(dialect):
 
     preceding_rules = [
         block_on("first_name").get_blocking_rule(dialect),
-        block_on("dob", dialect),
+        block_on("dob").get_blocking_rule(dialect),
     ]
     br_surname.add_preceding_rules(preceding_rules)
     assert br_surname.preceding_rules == preceding_rules

@@ -3,8 +3,7 @@ import logging
 import pandas as pd
 import pytest
 
-from splink.blocking import blocking_rule_to_obj
-from splink.blocking_rule_creator import BlockingRuleCreator, block_on
+from splink.blocking_rule_creator import block_on
 from splink.comparison import Comparison
 from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3

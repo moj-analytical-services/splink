@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Union, final
 
-from .blocking import BlockingRule
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .column_expression import ColumnExpression
 from .dialects import SplinkDialect
 
@@ -44,7 +44,7 @@ class BlockingRuleCreator(ABC):
 
     @final
     def get_blocking_rule(self, sql_dialect_str: str) -> BlockingRule:
-        return BlockingRule(self.create_blocking_rule_dict(sql_dialect_str))
+        return blocking_rule_to_obj(self.create_blocking_rule_dict(sql_dialect_str))
 
 
 class ExactMatchRule(BlockingRuleCreator):
