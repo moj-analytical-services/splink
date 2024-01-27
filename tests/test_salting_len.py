@@ -1,6 +1,6 @@
 import pytest
 
-import splink.spark.blocking_rule_library as brl
+from splink.blocking_rule_creator import block_on
 from splink.linker import Linker
 from tests.basic_settings import get_settings_dict
 
@@ -60,7 +60,7 @@ def test_salting_spark(spark, spark_api):
     ]
 
     blocking_rules_salted = [
-        brl.block_on("surname", salting_partitions=3),
+        block_on("surname", salting_partitions=3).get_blocking_rule("spark"),
         {"blocking_rule": "l.first_name = r.first_name", "salting_partitions": 7},
         "l.dob = r.dob",
     ]
