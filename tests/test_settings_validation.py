@@ -27,12 +27,6 @@ from splink.settings_validation.valid_types import (
 
 from .basic_settings import get_settings_dict
 
-
-def br_creator_to_br(br_creator: BlockingRuleCreator, dialect: str):
-    br = br_creator.create_blocking_rule_dict(dialect)
-    return blocking_rule_to_obj(br)
-
-
 DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 VALID_INPUT_COLUMNS = DF.columns
 
@@ -91,9 +85,9 @@ blocking_rule_test_cases = {
     'dmetaphone(c."surname", r."surname")': [
         InvalidTableNamesLogGenerator({"c.surname"})
     ],
-    br_creator_to_br(block_on("left", "right"), "duckdb").blocking_rule_sql: [
-        MissingColumnsLogGenerator({"left", "right"})
-    ],
+    block_on("left", "right")
+    .get_blocking_rule("duckdb")
+    .blocking_rule_sql: [MissingColumnsLogGenerator({"left", "right"})],
 }
 
 

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Union, final
 
+from .blocking import BlockingRule
 from .column_expression import ColumnExpression
 from .dialects import SplinkDialect
 
@@ -40,6 +41,10 @@ class BlockingRuleCreator(ABC):
             level_dict["arrays_to_explode"] = self.arrays_to_explode
 
         return level_dict
+
+    @final
+    def get_blocking_rule(self, sql_dialect_str: str) -> BlockingRule:
+        return BlockingRule(self.create_blocking_rule_dict(sql_dialect_str))
 
 
 class ExactMatchRule(BlockingRuleCreator):

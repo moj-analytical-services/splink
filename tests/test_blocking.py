@@ -8,15 +8,10 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
-def br_creator_to_br(br_creator: BlockingRuleCreator, dialect: str):
-    br = br_creator.create_blocking_rule_dict(dialect)
-    return blocking_rule_to_obj(br)
-
-
 @mark_with_dialects_excluding()
 def test_binary_composition_internals_OR(dialect):
     settings = get_settings_dict()
-    br_surname = br_creator_to_br(block_on("surname", salting_partitions=4), dialect)
+    br_surname = block_on("surname", salting_partitions=4).get_blocking_rule(dialect)
 
     q, _ = _get_dialect_quotes(dialect)
     em_rule = f"(l.{q}surname{q} = r.{q}surname{q})"
@@ -26,8 +21,8 @@ def test_binary_composition_internals_OR(dialect):
     assert br_surname.preceding_rules == []
 
     preceding_rules = [
-        br_creator_to_br(block_on("first_name"), dialect),
-        br_creator_to_br(block_on("dob"), dialect),
+        block_on("first_name").get_blocking_rule(dialect),
+        block_on("dob", dialect),
     ]
     br_surname.add_preceding_rules(preceding_rules)
     assert br_surname.preceding_rules == preceding_rules
@@ -39,7 +34,7 @@ def test_binary_composition_internals_OR(dialect):
         BlockingRule("l.help = r.help"),
         "l.help2 = r.help2",
         {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
-        br_creator_to_br(block_on("help4"), dialect),
+        block_on("help4").get_blocking_rule(dialect),
     ]
     brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
     brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
