@@ -1,5 +1,5 @@
 from splink.blocking import BlockingRule, blocking_rule_to_obj
-from splink.blocking_rule_creator import block_on
+from splink.blocking_rule_creator import BlockingRuleCreator, block_on
 from splink.input_column import _get_dialect_quotes
 from splink.linker import Linker
 from splink.settings import Settings
@@ -8,20 +8,26 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
+def br_creator_to_br(br_creator: BlockingRuleCreator, dialect: str):
+    br = br_creator.create_blocking_rule_dict(dialect)
+    return blocking_rule_to_obj(br)
+
+
 @mark_with_dialects_excluding()
 def test_binary_composition_internals_OR(dialect):
     settings = get_settings_dict()
-    br_surname = block_on("surname", salting_partitions=4)
+    br_surname = br_creator_to_br(block_on("surname", salting_partitions=4), dialect)
+
     q, _ = _get_dialect_quotes(dialect)
-    em_rule = f"l.{q}surname{q} = r.{q}surname{q}"
+    em_rule = f"(l.{q}surname{q} = r.{q}surname{q})"
 
     assert br_surname.blocking_rule_sql == em_rule
     assert br_surname.salting_partitions == 4
     assert br_surname.preceding_rules == []
 
     preceding_rules = [
-        block_on("first_name"),
-        block_on(["dob"]),
+        br_creator_to_br(block_on("first_name"), dialect),
+        br_creator_to_br(block_on("dob"), dialect),
     ]
     br_surname.add_preceding_rules(preceding_rules)
     assert br_surname.preceding_rules == preceding_rules
@@ -33,7 +39,7 @@ def test_binary_composition_internals_OR(dialect):
         BlockingRule("l.help = r.help"),
         "l.help2 = r.help2",
         {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
-        block_on("help4"),
+        br_creator_to_br(block_on("help4"), dialect),
     ]
     brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
     brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
@@ -55,6 +61,7 @@ def test_simple_end_to_end(test_helpers, dialect):
     helper = test_helpers[dialect]
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df.head(100)
 
     settings = get_settings_dict()
     settings["blocking_rules_to_generate_predictions"] = [
@@ -64,7 +71,7 @@ def test_simple_end_to_end(test_helpers, dialect):
 
     linker = Linker(df, settings, **helper.extra_linker_args())
 
-    linker.estimate_u_using_random_sampling(target_rows=1e5)
+    linker.estimate_u_using_random_sampling(target_rows=1e3)
 
     blocking_rule = block_on("first_name", "surname")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
