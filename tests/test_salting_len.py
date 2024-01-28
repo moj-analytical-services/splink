@@ -1,6 +1,6 @@
 import pytest
 
-from splink.blocking_rule_creator import block_on
+from splink.blocking_rule_library import block_on
 from splink.linker import Linker
 from tests.basic_settings import get_settings_dict
 

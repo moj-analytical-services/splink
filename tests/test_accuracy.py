@@ -5,7 +5,7 @@ from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.blocking_rule_creator import block_on
+from splink.blocking_rule_library import block_on
 from splink.comparison_library import ExactMatch
 from splink.database_api import DuckDBAPI
 from splink.linker import Linker

@@ -3,7 +3,7 @@ from copy import deepcopy
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink.blocking_rule_creator import block_on
+from splink.blocking_rule_library import block_on
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
