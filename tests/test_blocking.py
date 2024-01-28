@@ -56,7 +56,6 @@ def test_simple_end_to_end(test_helpers, dialect):
     helper = test_helpers[dialect]
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.head(100)
 
     settings = get_settings_dict()
     settings["blocking_rules_to_generate_predictions"] = [
