@@ -119,7 +119,15 @@ class CustomRule(BlockingRuleCreator):
 
 class _Merge(BlockingRuleCreator):
     @final
-    def __init__(self, *blocking_rules: Union[BlockingRuleCreator, dict]):
+    def __init__(
+        self,
+        *blocking_rules: Union[BlockingRuleCreator, dict],
+        salting_partitions=None,
+        arrays_to_explode=None,
+    ):
+        super().__init__(
+            salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
+        )
         num_levels = len(blocking_rules)
         if num_levels == 0:
             raise ValueError(
@@ -129,7 +137,10 @@ class _Merge(BlockingRuleCreator):
 
     @property
     def salting_partitions(self):
-        if hasattr(self, "_salting_partitions"):
+        if (
+            hasattr(self, "_salting_partitions")
+            and self._salting_partitions is not None
+        ):
             return self._salting_partitions
 
         return max(
