@@ -9,23 +9,6 @@ from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 
-# TODO: in reality these live somewhere else:
-def df_concat_pipeline(table_or_tables, db_api):
-    # this is replacement for _initialise_df_concat(db_api, materialise=True)
-    # let's assume that the api will handle caching automatically
-    # TODO: how do we tell the cache that we would accept concat_with_tf as well?
-    pipeline = SQLPipeline()
-    sql = vertically_concatenate_sql(table_or_tables, db_api)
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-    return pipeline
-
-
-def materialise_df_concat(table_or_tables, db_api):
-    # this version always materialises
-    pipeline = df_concat_pipeline(table_or_tables, db_api)
-    concat_df = db_api._execute_sql_pipeline(pipeline)
-    return concat_df
-
 
 def _group_name(cols_or_expr):
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
@@ -261,28 +244,35 @@ def profile_columns(
         tables, input_aliases, overwrite=True
     )
     # TODO: can we be more permissive with typing?
-    splink_dfs = list(splink_df_dict.values())
+    input_dataframes = list(splink_df_dict.values())
 
     # TODO: be more careful
     if not column_expressions:
-        column_expressions = [col.name for col in splink_dfs[0].columns]
-
-    # TODO: do we _need_ to materialise? how to handle either way?
-    # that's why we need the if df_concat check
-    df_concat = materialise_df_concat(splink_dfs, db_api)
-
-    input_dataframes = []
-    if df_concat:
-        input_dataframes.append(df_concat)
+        column_expressions = [col.name for col in input_dataframes[0].columns]
 
     column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
 
+    pipeline = SQLPipeline()
+
+    cols_to_select = ", ".join(column_expressions)
+    template = """
+    select {cols_to_select}
+    from {table_name}
+    """
+
+    sql_df_concat = " UNION ALL".join(
+        [
+            template.format(cols_to_select=cols_to_select, table_name=table_name)
+            for table_name in input_aliases
+        ]
+    )
+
+    pipeline.enqueue_sql(sql_df_concat, "__splink__df_concat")
+
     sql = _col_or_expr_frequencies_raw_data_sql(
         column_expressions_raw, "__splink__df_concat"
     )
-
-    pipeline = SQLPipeline()
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = db_api._execute_sql_pipeline(pipeline, input_dataframes)
