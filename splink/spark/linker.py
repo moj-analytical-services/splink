@@ -4,9 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from ..input_column import InputColumn
-from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
-from ..term_frequencies import colname_to_tf_tablename
 from .spark_helpers.custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)

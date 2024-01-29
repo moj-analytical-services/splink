@@ -3,11 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import pandas as pd
-
 from ..input_column import InputColumn
-from ..linker import Linker
-from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)

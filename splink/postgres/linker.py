@@ -3,10 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from sqlalchemy.engine import Engine
-
 from ..input_column import InputColumn
-from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
