@@ -72,18 +72,3 @@ class PostgresDataFrame(SplinkDataFrame):
         sql += ";"
         res = self.db_api._run_sql_execution(sql).mappings().all()
         return [dict(r) for r in res]
-
-
-class PostgresLinker(Linker):
-    def __init__(
-        self,
-        input_table_or_tables,
-        settings_dict=None,
-        engine: Engine = None,
-        set_up_basic_logging=True,
-        input_table_aliases: str | list = None,
-        validate_settings: bool = True,
-        schema="splink",
-        other_schemas_to_search: str | list = [],
-    ):
-        pass
