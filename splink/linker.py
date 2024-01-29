@@ -562,14 +562,7 @@ class Linker:
                 # There's no reason not to do this, since when
                 # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
-            sql = vertically_concatenate_sql(
-                list(self._input_tables_dict.values()),
-                self.db_api,
-                (
-                    self._settings_obj._source_dataset_column_name_is_required
-                    and not self._source_dataset_column_already_exists
-                ),
-            )
+            sql = vertically_concatenate_sql(self)
             self._enqueue_sql(sql, "__splink__df_concat")
             if materialise:
                 concat_df = self._execute_sql_pipeline()
@@ -595,14 +588,7 @@ class Linker:
                 # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
 
-            sql = vertically_concatenate_sql(
-                list(self._input_tables_dict.values()),
-                self.db_api,
-                (
-                    self._settings_obj._source_dataset_column_name_is_required
-                    and not self._source_dataset_column_already_exists
-                ),
-            )
+            sql = vertically_concatenate_sql(self)
             self._enqueue_sql(sql, "__splink__df_concat")
 
             sqls = compute_all_term_frequencies_sqls(self)
@@ -3106,14 +3092,7 @@ class Linker:
 
         blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
-        sql = vertically_concatenate_sql(
-            list(self._input_tables_dict.values()),
-            self.db_api,
-            (
-                self._settings_obj._source_dataset_column_name_is_required
-                and not self._source_dataset_column_already_exists
-            ),
-        )
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
