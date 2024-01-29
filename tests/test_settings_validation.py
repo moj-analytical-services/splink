@@ -331,8 +331,6 @@ def test_settings_validation_on_2_to_3_converter():
 
 def test_comparison_validation():
     import splink.comparison_level_library as cll
-    from splink.comparison_library import ExactMatch
-    from splink.exceptions import InvalidDialect
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
