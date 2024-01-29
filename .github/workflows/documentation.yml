@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - link-fixing
 
   workflow_dispatch:
 
