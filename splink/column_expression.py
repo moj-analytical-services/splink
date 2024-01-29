@@ -8,7 +8,10 @@ import sqlglot
 
 from .dialects import SplinkDialect
 from .input_column import SqlglotColumnTreeBuilder
-from .sql_transform import add_suffix_to_all_column_identifiers
+from .sql_transform import (
+    add_suffix_to_all_column_identifiers,
+    add_table_to_all_column_identifiers,
+)
 
 
 class ColumnExpression:
@@ -208,6 +211,22 @@ class ColumnExpression:
         sql_expression = self.parse_input_string(self.sql_dialect)
         base_name = add_suffix_to_all_column_identifiers(
             sql_expression, "_r", self.sql_dialect.sqlglot_name
+        )
+        return self.apply_operations(base_name, self.sql_dialect)
+
+    @property
+    def l_name(self) -> str:
+        sql_expression = self.parse_input_string(self.sql_dialect)
+        base_name = add_table_to_all_column_identifiers(
+            sql_expression, "l", self.sql_dialect.sqlglot_name
+        )
+        return self.apply_operations(base_name, self.sql_dialect)
+
+    @property
+    def r_name(self) -> str:
+        sql_expression = self.parse_input_string(self.sql_dialect)
+        base_name = add_table_to_all_column_identifiers(
+            sql_expression, "r", self.sql_dialect.sqlglot_name
         )
         return self.apply_operations(base_name, self.sql_dialect)
 
