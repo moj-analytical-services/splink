@@ -147,18 +147,11 @@ class GraphMetricsResults:
     clusters: SplinkDataFrame
 
     def __repr__(self):
-        return """
-A data class of Splink dataframes containing metrics for nodes, edges and clusters.
-
-Access dataframes via attributes:
-`compute_graph_metrics.nodes` for node metrics,
-`compute_graph_metrics.edges` for edge metrics and
-`compute_graph_metrics.clusters` for cluster metrics
-
-or equivalently unpack like so:
-```node_metrics, edge_metrics, cluster_metrics = (
-    df_graph_metrics.nodes,
-    df_graph_metrics.edges,
-    df_graph_metrics.clusters,
-)```
-"""
+        msg = (
+            "A data class of Splink dataframes containing metrics for nodes, edges and clusters.\n"
+            "\nAccess dataframes via attributes:\n"
+            "`compute_graph_metrics.nodes` for node metrics,\n"
+            "`compute_graph_metrics.edges` for edge metrics, and\n"
+            "`compute_graph_metrics.clusters` for cluster metrics\n"
+        )
+        return msg
