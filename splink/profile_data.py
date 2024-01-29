@@ -5,7 +5,6 @@ from copy import deepcopy
 from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
 from .pipeline import SQLPipeline
-from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 
