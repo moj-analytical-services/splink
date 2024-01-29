@@ -148,7 +148,8 @@ class GraphMetricsResults:
 
     def __repr__(self):
         msg = (
-            "A data class of Splink dataframes containing metrics for nodes, edges and clusters.\n"
+            "A data class of Splink dataframes containing metrics for nodes, edges "
+            "and clusters.\n"
             "\nAccess dataframes via attributes:\n"
             "`compute_graph_metrics.nodes` for node metrics,\n"
             "`compute_graph_metrics.edges` for edge metrics, and\n"
