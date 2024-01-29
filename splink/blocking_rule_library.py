@@ -157,6 +157,13 @@ def block_on(
     salting_partitions=None,
     arrays_to_explode=None,
 ) -> BlockingRuleCreator:
+    if isinstance(col_names_or_exprs[0], list):
+        raise TypeError(
+            "block_on no longer accepts a list as the first argument. "
+            "Please pass individual column names or expressions as separate arguments"
+            ' e.g. block_on("first_name", "dob") not block_on(["first_name", "dob"])'
+        )
+
     if len(col_names_or_exprs) == 1:
         br = ExactMatchRule(col_names_or_exprs[0])
     else:
