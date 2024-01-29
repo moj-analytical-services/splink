@@ -43,8 +43,8 @@ def test_density_sample():
     result = sorted(result, key=lambda x: x["cluster_id"])
 
     expect = [
-        {"cluster_id": "B", "density_4dp": 0.6667},
-        {"cluster_id": "E", "density_4dp": 0.2},
+        {"cluster_id": "B", "density_4dp": 0.6667, "cluster_size": 3},
+        {"cluster_id": "E", "density_4dp": 0.2, "cluster_size": 10},
     ]
 
     assert result == expect
