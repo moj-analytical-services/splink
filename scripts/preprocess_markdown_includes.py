@@ -41,3 +41,16 @@ for root, _dirs, files in os.walk("docs"):
                     # if we can't find include file then warn but carry on
                     except FileNotFoundError as e:
                         logging.warning(f"Couldn't find specified include file: {e}")
+
+# nasty hack:
+# also adjust CONTRIBUTING.md links - mismatch between links as on github and
+# where it fits in folder hierarchy of docs
+with open(Path(".") / "CONTRIBUTING.md", "r") as f:
+    contributing_text = f.read()
+# in docs CONTRIBUTING.md 'thinks' it's already in docs/, so remove that level from
+# relative links
+new_text = re.sub(
+    "docs/", "", contributing_text
+)
+with open(Path(".") / "CONTRIBUTING.md", "w") as f:
+    f.write(new_text)
