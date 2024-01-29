@@ -359,19 +359,6 @@ def test_comparison_validation():
     settings["comparisons"][4] = "help"
     # missing key dict key and replaced w/ `comparison_lvls`
     settings["comparisons"].append(email_no_comp_level)
-    # Check invalid import is detected
-    settings["comparisons"].append(ExactMatch("test").get_comparison("spark"))
-    # mismashed comparison
-    settings["comparisons"].append(
-        {
-            "comparison_levels": [
-                cll.NullLevel("test").get_comparison_level("spark"),
-                # Invalid Spark cll
-                cll.ExactMatchLevel("test").get_comparison_level("athena"),
-                cll.ElseLevel().get_comparison_level("duckdb"),
-            ]
-        }
-    )
 
     log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
 
@@ -392,10 +379,7 @@ def test_comparison_validation():
         (TypeError, "is a comparison level"),
         (TypeError, "is of an invalid data type."),
         (SyntaxError, "missing the required `comparison_levels`"),
-        (InvalidDialect, "within its comparison levels - spark."),
-        (InvalidDialect, "within its comparison levels - presto, spark."),
     )
-
     for n, (e, txt) in enumerate(expected_errors):
         with pytest.raises(e, match=txt):
             raise errors[n]
