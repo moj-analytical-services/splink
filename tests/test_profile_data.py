@@ -24,13 +24,12 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
 
     column_expressions_raw = ensure_is_list(columns_to_profile)
 
-    sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, input_alias
-    )
+    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions_raw, input_alias)
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
 
     return db_api._execute_sql_pipeline(pipeline, []).as_pandas_dataframe()
+
 
 @mark_with_dialects_including("duckdb")
 def test_profile_using_duckdb():
