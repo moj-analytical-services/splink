@@ -131,13 +131,15 @@ class ComparisonLevel:
     │    ├─-- ComparisonLevel: All other
     ├─-- etc.
     ```
+
+    ComparisonLevel is a dialected object.
     """
 
     def __init__(
         self,
         sql_condition: str,
-        # TODO: dialect vs dialect name
-        sql_dialect: str,
+        # TODO: do we want dialect or just dialect name?
+        sqlglot_dialect_name: str,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -149,7 +151,7 @@ class ComparisonLevel:
         comparison: Comparison = None,
     ):
         self.comparison: Comparison = comparison
-        self._sql_dialect = sql_dialect
+        self._sqlglot_dialect_name = sqlglot_dialect_name
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -178,7 +180,8 @@ class ComparisonLevel:
 
     @property
     def sql_dialect(self):
-        return self._sql_dialect
+        # TODO: align name with attribute
+        return self._sqlglot_dialect_name
 
     @property
     def is_null_level(self) -> bool:

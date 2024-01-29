@@ -74,7 +74,7 @@ class Comparison:
                 cl = ComparisonLevel(
                     **cl,
                     comparison=self,
-                    sql_dialect=None
+                    sqlglot_dialect_name=None
                     if settings_obj is None
                     else settings_obj._sql_dialect,
                 )
@@ -110,7 +110,7 @@ class Comparison:
             ComparisonLevel(
                 **cl_dict,
                 # TODO: Comparison should also store dialect
-                sql_dialect=None
+                sqlglot_dialect_name=None
                 if self._settings_obj is None
                 else self._settings_obj._sql_dialect,
             )
