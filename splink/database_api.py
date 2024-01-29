@@ -26,20 +26,20 @@ from .dialects import (
     SplinkDialect,
     SQLiteDialect,
 )
+from .duckdb.dataframe import DuckDBDataFrame
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
     validate_duckdb_connection,
 )
-from .duckdb.linker import DuckDBDataFrame
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .misc import ensure_is_list, major_minor_version_greater_equal_than
-from .postgres.linker import PostgresDataFrame
+from .postgres.dataframe import PostgresDataFrame
+from .spark.dataframe import SparkDataFrame
 from .spark.jar_location import get_scala_udfs
-from .spark.linker import SparkDataFrame
 from .splink_dataframe import SplinkDataFrame
-from .sqlite.linker import SQLiteDataFrame
+from .sqlite.dataframe import SQLiteDataFrame
 
 logger = logging.getLogger(__name__)
 
