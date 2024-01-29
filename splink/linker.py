@@ -9,7 +9,7 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict
+from typing import Dict, Union
 
 
 from splink.input_column import InputColumn
@@ -39,6 +39,7 @@ from .blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from .blocking_rule_creator import BlockingRuleCreator
 from .charts import (
     accuracy_chart,
     completeness_chart,
@@ -239,6 +240,7 @@ class Linker:
             # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
             self._instantiate_comparison_levels(settings_dict)
+            self._instantiate_blocking_rules(settings_dict)
             self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
@@ -453,7 +455,6 @@ class Linker:
     def _register_input_tables(
         self, input_tables, input_aliases
     ) -> Dict[str, SplinkDataFrame]:
-
         if input_aliases is None:
             input_table_aliases = [
                 f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
@@ -551,6 +552,21 @@ class Linker:
                         comparison_levels[idx_cl] = level.get_comparison_level(dialect)
             elif isinstance(comparison, ComparisonCreator):
                 comparisons[idx_c] = comparison.get_comparison(dialect)
+
+    def _instantiate_blocking_rules(self, settings_dict):
+        """
+        Mutate our settings_dict, so that any BlockingRuleCreator
+        instances are instead replaced with BlockingRules
+        """
+        dialect = self._sql_dialect
+        if settings_dict is None:
+            return
+        if "blocking_rules_to_generate_predictions" not in settings_dict:
+            return
+        brs = settings_dict["blocking_rules_to_generate_predictions"]
+        for idx_c, br in enumerate(brs):
+            if isinstance(br, BlockingRuleCreator):
+                brs[idx_c] = br.create_blocking_rule_dict(dialect)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1495,7 +1511,7 @@ class Linker:
 
     def estimate_parameters_using_expectation_maximisation(
         self,
-        blocking_rule: str,
+        blocking_rule: Union[str, BlockingRuleCreator],
         comparisons_to_deactivate: list[str | Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
@@ -1553,8 +1569,8 @@ class Linker:
             ```
 
         Args:
-            blocking_rule (BlockingRule | str): The blocking rule used to generate
-                pairwise record comparisons.
+            blocking_rule (BlockingRuleCreator | str): The blocking rule used to
+                generate pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
@@ -1604,10 +1620,8 @@ class Linker:
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
-
-        # Extract the blocking rule
-        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
-        # and raise error if not specfically a BlockingRule
+        if isinstance(blocking_rule, BlockingRuleCreator):
+            blocking_rule = blocking_rule.create_blocking_rule_dict(self._sql_dialect)
         blocking_rule = blocking_rule_to_obj(blocking_rule)
         if type(blocking_rule) is not BlockingRule:
             raise TypeError(

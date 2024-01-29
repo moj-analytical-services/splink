@@ -3,11 +3,11 @@ import logging
 import pandas as pd
 import pytest
 
+from splink.blocking_rule_library import block_on
 from splink.comparison import Comparison
 from splink.comparison_library import LevenshteinAtThresholds
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.database_api import DuckDBAPI
-from splink.duckdb.blocking_rule_library import block_on
 from splink.exceptions import ErrorLogger
 from splink.linker import Linker
 from splink.settings_validation.log_invalid_columns import (
@@ -84,9 +84,9 @@ blocking_rule_test_cases = {
     'dmetaphone(c."surname", r."surname")': [
         InvalidTableNamesLogGenerator({"c.surname"})
     ],
-    block_on(["left", "right"]).blocking_rule_sql: [
-        MissingColumnsLogGenerator({"left", "right"})
-    ],
+    block_on("left", "right")
+    .get_blocking_rule("duckdb")
+    .blocking_rule_sql: [MissingColumnsLogGenerator({"left", "right"})],
 }
 
 
