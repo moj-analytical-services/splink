@@ -357,7 +357,7 @@ class SparkAPI(DatabaseAPI):
 
         self._set_splink_datastore(catalog, database)
 
-        if self.register_udfs_automatically:
+        if register_udfs_automatically:
             self._register_udfs_from_jar()
 
         # TODO: also need to think about where these live:
