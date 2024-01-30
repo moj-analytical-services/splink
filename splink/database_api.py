@@ -4,7 +4,6 @@ import os
 import re
 import sqlite3
 from abc import ABC, abstractmethod
-from itertools import compress
 from tempfile import TemporaryDirectory
 from typing import Dict, Generic, List, TypeVar, Union, final
 
