@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Template
 
@@ -342,7 +342,7 @@ def render_splink_cluster_studio_html(
     template_path = "files/splink_cluster_studio/cluster_template.j2"
     template = Template(read_resource(template_path))
 
-    template_data = {
+    template_data: dict[str, Any] = {
         "raw_edge_data": json.dumps(edges_recs, cls=EverythingEncoder),
         "raw_node_data": json.dumps(nodes_recs, cls=EverythingEncoder),
         "raw_clusters_data": json.dumps(cluster_recs, cls=EverythingEncoder),
