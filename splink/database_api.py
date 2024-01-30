@@ -449,21 +449,6 @@ class SparkAPI(DatabaseAPI):
         if self.register_udfs_automatically:
             self._register_udfs_from_jar()
 
-    def _get_spark_from_input_tables(self, input_tables):
-        spark_inputs = [isinstance(d, spark_df) for d in input_tables]
-        if any(spark_inputs):
-            for t in list(compress(input_tables, spark_inputs)):
-                # t.sparkSession can be used only from spark 3.3.0 onwards
-                self.spark = t.sql_ctx.sparkSession
-                break
-
-        if self.spark is None:
-            raise ValueError(
-                "If input_table_or_tables are strings or pandas dataframes rather than "
-                "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise SparkAPI."
-            )
-
     def _clean_pandas_df(self, df):
         return df.fillna(nan).replace([nan, pd.NA], [None, None])
 
