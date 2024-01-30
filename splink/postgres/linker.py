@@ -210,7 +210,7 @@ class PostgresLinker(Linker):
         WHERE table_name = '{table_name}';
         """
 
-        rec = self._run_sql_execution(sql).fetchall()
+        rec = self._run_sql_execution(sql).mappings().all()
         return len(rec) > 0
 
     def _delete_table_from_database(self, name):
