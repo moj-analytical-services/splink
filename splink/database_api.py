@@ -330,8 +330,9 @@ class SparkAPI(DatabaseAPI):
 
     def __init__(
         self,
+        *,
+        spark_session,
         break_lineage_method=None,
-        spark=None,
         catalog=None,
         database=None,
         # TODO: what to do about repartitions:
@@ -351,8 +352,8 @@ class SparkAPI(DatabaseAPI):
         self.register_udfs_automatically = register_udfs_automatically
 
         # TODO: hmmm breaking this flow. Lazy spark ??
-        # self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
-        self.spark = spark
+
+        self.spark = spark_session
 
         # TODO: also need to think about where these live:
         # self._drop_splink_cached_tables()
@@ -361,7 +362,7 @@ class SparkAPI(DatabaseAPI):
         # TODO: (ideally) set things up so databricks can inherit from this
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
-            enable_splink(spark)
+            enable_splink(self.spark)
 
         self._set_default_break_lineage_method()
 
@@ -431,12 +432,6 @@ class SparkAPI(DatabaseAPI):
     @property
     def accepted_df_dtypes(self):
         return [pd.DataFrame, spark_df]
-
-    def process_input_tables(self, input_tables):
-        # if we don't have a spark instance yet, grab it from provided tables
-        if self.spark is None:
-            self._get_spark_from_input_tables(input_tables)
-        return input_tables
 
     # special methods:
     @property
