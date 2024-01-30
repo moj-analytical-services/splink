@@ -129,9 +129,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
-    sqls = block_using_rules_sqls(training_linker)
-    for sql in sqls:
-        training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    sql_infos = block_using_rules_sqls(training_linker)
+    for sql_info in sql_infos:
+        training_linker._enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(

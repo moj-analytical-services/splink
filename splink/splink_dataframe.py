@@ -37,7 +37,7 @@ class SplinkDataFrame:
         cols = self.columns
         return [c.name for c in cols]
 
-    def validate():
+    def validate(self):
         pass
 
     @property

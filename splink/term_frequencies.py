@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(input_column: InputColumn):
-    input_column = input_column.unquote().name.replace(" ", "_")
-    return f"__splink__df_tf_{input_column}"
+    column_name_str = input_column.unquote().name.replace(" ", "_")
+    return f"__splink__df_tf_{column_name_str}"
 
 
 def term_frequencies_for_single_column_sql(
@@ -56,7 +56,7 @@ def _join_tf_to_input_df_sql(linker: Linker):
         select_cols.append(f"{tbl}.{tf_col}")
 
     select_cols.insert(0, "__splink__df_concat.*")
-    select_cols = ", ".join(select_cols)
+    select_cols_str = ", ".join(select_cols)
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
@@ -72,12 +72,12 @@ def _join_tf_to_input_df_sql(linker: Linker):
     #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name)
     #     for col in tf_cols
     # ]
-    left_joins = " ".join(left_joins)
+    left_joins_str = " ".join(left_joins)
 
     sql = f"""
-    select {select_cols}
+    select {select_cols_str }
     from __splink__df_concat
-    {left_joins}
+    {left_joins_str}
     """
 
     return sql

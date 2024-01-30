@@ -761,13 +761,13 @@ class PostgresAPI(DatabaseAPI):
         WHERE table_name = '{table_name}';
         """
 
-        rec = self._run_sql_execution(sql).fetchall()
+        rec = self._run_sql_execution(sql).mappings().all()
         return len(rec) > 0
 
     def _run_sql_execution(
         self, final_sql: str, templated_name: str = None, physical_name: str = None
     ):
-        with self._engine.connect() as con:
+        with self._engine.begin() as con:
             res = con.execute(text(final_sql))
         return res
 
@@ -883,7 +883,7 @@ class PostgresAPI(DatabaseAPI):
 
     def _create_splink_schema(self, other_schemas_to_search):
         other_schemas_to_search = ensure_is_list(other_schemas_to_search)
-        # always search _db_schema first, and public last
+        # always search _db_schema first and public last
         schemas_to_search = [self._db_schema] + other_schemas_to_search + ["public"]
         search_path = ",".join(schemas_to_search)
         sql = f"""
