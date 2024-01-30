@@ -31,11 +31,11 @@ def predict_from_comparison_vectors_sqls(
     from __splink__df_comparison_vectors
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_match_weight_parts",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     select_cols = settings_obj._columns_to_select_for_predict
     select_cols_expr = ",".join(select_cols)
@@ -79,11 +79,11 @@ def predict_from_comparison_vectors_sqls(
     {order_by_statement}
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
@@ -110,11 +110,11 @@ def predict_from_agreement_pattern_counts_sqls(
     from __splink__agreement_pattern_counts
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_match_weight_parts",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     select_cols = []
     for cc in settings_obj.comparisons:
@@ -139,11 +139,11 @@ def predict_from_agreement_pattern_counts_sqls(
     from __splink__df_match_weight_parts
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
