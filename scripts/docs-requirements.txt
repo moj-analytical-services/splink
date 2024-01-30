@@ -9,6 +9,7 @@ mkdocs-material-extensions
 mkdocs-mermaid2-plugin
 mkdocs-monorepo-plugin
 mkdocs-semiliterate
+mkdocs-simple-hooks==0.1.5
 mkdocs-simple-plugin
 mkdocstrings
 mkdocstrings-python
