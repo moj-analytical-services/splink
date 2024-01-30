@@ -373,31 +373,6 @@ class SparkAPI(DatabaseAPI):
 
         self._set_default_break_lineage_method()
 
-    def _set_splink_datastore(self, catalog, database):
-        # spark.catalog.currentCatalog() is not available in versions of spark before
-        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
-        # setting, but will revert to default in Spark versions greater than 3.4.0
-        threshold = "3.4.0"
-
-        if (
-            major_minor_version_greater_equal_than(self.spark.version, threshold)
-            and not catalog
-        ):
-            # set the catalog and database of where to write output tables
-            catalog = (
-                catalog if catalog is not None else self.spark.catalog.currentCatalog()
-            )
-        database = (
-            database if database is not None else self.spark.catalog.currentDatabase()
-        )
-
-        # this defines the catalog.database location where splink's data outputs will
-        # be stored. The filter will remove none, so if catalog is not provided and
-        # spark version is < 3.3.0 we will use the default catalog.
-        self.splink_data_store = ".".join(
-            [f"`{x}`" for x in [catalog, database] if x is not None]
-        )
-
     def _table_registration(self, input, table_name) -> None:
         if isinstance(input, dict):
             input = pd.DataFrame(input)
@@ -467,6 +442,31 @@ class SparkAPI(DatabaseAPI):
 
     def _clean_pandas_df(self, df):
         return df.fillna(nan).replace([nan, pd.NA], [None, None])
+
+    def _set_splink_datastore(self, catalog, database):
+        # spark.catalog.currentCatalog() is not available in versions of spark before
+        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
+        # setting, but will revert to default in Spark versions greater than 3.4.0
+        threshold = "3.4.0"
+
+        if (
+            major_minor_version_greater_equal_than(self.spark.version, threshold)
+            and not catalog
+        ):
+            # set the catalog and database of where to write output tables
+            catalog = (
+                catalog if catalog is not None else self.spark.catalog.currentCatalog()
+            )
+        database = (
+            database if database is not None else self.spark.catalog.currentDatabase()
+        )
+
+        # this defines the catalog.database location where splink's data outputs will
+        # be stored. The filter will remove none, so if catalog is not provided and
+        # spark version is < 3.3.0 we will use the default catalog.
+        self.splink_data_store = ".".join(
+            [f"`{x}`" for x in [catalog, database] if x is not None]
+        )
 
     def _register_udfs_from_jar(self):
         # TODO: this should check if these are already registered and skip if so
