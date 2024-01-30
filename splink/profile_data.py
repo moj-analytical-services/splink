@@ -244,17 +244,17 @@ def profile_columns(
     )
     # TODO: can we be more permissive with typing?
     input_dataframes = list(splink_df_dict.values())
+    input_columns = input_dataframes[0].columns_escaped
 
-    # TODO: be more careful
     if not column_expressions:
-        column_expressions = [col.name for col in input_dataframes[0].columns]
-
-    column_expressions_raw = ensure_is_list(column_expressions)
-    column_expressions = expressions_to_sql(column_expressions_raw)
+        column_expressions = input_columns
+    else:
+        column_expressions_raw = ensure_is_list(column_expressions)
+        column_expressions = expressions_to_sql(column_expressions_raw)
 
     pipeline = SQLPipeline()
 
-    cols_to_select = ", ".join(column_expressions)
+    cols_to_select = ", ".join(input_columns)
     template = """
     select {cols_to_select}
     from {table_name}
