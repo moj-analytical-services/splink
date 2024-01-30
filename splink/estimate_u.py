@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
-from .blocking import block_using_rules_sqls
+from .blocking import block_using_rules_sqls, blocking_rule_to_obj
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -117,7 +118,16 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
-    settings_obj._blocking_rules_to_generate_predictions = []
+    if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
+        br = blocking_rule_to_obj(
+            {
+                "blocking_rule": "1=1",
+                "salting_partitions": multiprocessing.cpu_count(),
+            }
+        )
+        settings_obj._blocking_rules_to_generate_predictions = [br]
+    else:
+        settings_obj._blocking_rules_to_generate_predictions = []
 
     sql_infos = block_using_rules_sqls(training_linker)
     for sql_info in sql_infos:

@@ -39,6 +39,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
+          version: '1.7.0'
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -99,8 +100,25 @@ jobs:
         run: python3 scripts/preprocess_markdown_includes.py
 
       - run: tree docs/
-      - run: pip install --upgrade pip
-      - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
+      - name: install docs dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/docs-requirements.txt
+
+      - name: build documentation
+        run: mkdocs build
+
+      - name: check links
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          fail: true
+          args: --offline site/ --verbose './**/*.html'
+
+      - run: |
+          pip install ghp-import==2.1.0
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          ghp-import -opfm "Update docs from commit ${{ github.sha }}" site
 
       - run: pip freeze
       - run: mkdocs --version

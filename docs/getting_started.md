@@ -123,7 +123,7 @@ For more detailed tutorial, please see [section below](#tutorial).
 
 ## :link: Tutorials
 
-You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutorial_Introduction.ipynb).
+You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials/00_Tutorial_Introduction.ipynb).
 
 ## :material-video: Videos
 
