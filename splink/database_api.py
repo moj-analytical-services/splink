@@ -346,8 +346,6 @@ class SparkAPI(DatabaseAPI):
         # these properties will be needed whenever spark is _actually_ set up
         self.repartition_after_blocking = repartition_after_blocking
 
-        self.register_udfs_automatically = register_udfs_automatically
-
         # TODO: hmmm breaking this flow. Lazy spark ??
 
         self.spark = spark_session
