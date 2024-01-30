@@ -137,10 +137,6 @@ class PostgresLinker(Linker):
             res = con.execute(text(final_sql))
         return res
 
-    def _run_sql_execution_and_commit(self, sql):
-        with self._engine.begin() as con:
-            con.execute(text(sql))
-
     def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
@@ -228,7 +224,7 @@ class PostgresLinker(Linker):
         SELECT log(2.0, n::numeric)::float8;
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
     def _extend_round_function(self):
         # extension of round to double
@@ -238,7 +234,7 @@ class PostgresLinker(Linker):
         SELECT round(n::numeric, dp);
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
     def _create_datediff_function(self):
         sql = """
@@ -247,7 +243,7 @@ class PostgresLinker(Linker):
         SELECT x - y;
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
         sql_cast = """
         CREATE OR REPLACE FUNCTION datediff(x {dateish_type}, y {dateish_type})
@@ -256,9 +252,7 @@ class PostgresLinker(Linker):
         $$ LANGUAGE SQL IMMUTABLE;
         """
         for dateish_type in ("timestamp", "timestamp with time zone"):
-            self._run_sql_execution_and_commit(
-                sql_cast.format(dateish_type=dateish_type)
-            )
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
 
     def _create_months_between_function(self):
         # number of average-length (per year) months between two dates
@@ -272,7 +266,7 @@ class PostgresLinker(Linker):
         SELECT (datediff(x, y)/{ave_length_month})::float8;
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
         sql_cast = """
         CREATE OR REPLACE FUNCTION ave_months_between(
@@ -283,9 +277,7 @@ class PostgresLinker(Linker):
         $$ LANGUAGE SQL IMMUTABLE;
         """
         for dateish_type in ("timestamp", "timestamp with time zone"):
-            self._run_sql_execution_and_commit(
-                sql_cast.format(dateish_type=dateish_type)
-            )
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
 
     def _create_array_intersect_function(self):
         sql = """
@@ -294,7 +286,7 @@ class PostgresLinker(Linker):
         SELECT ARRAY( SELECT DISTINCT * FROM UNNEST(x) WHERE UNNEST = ANY(y) )
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
     def _register_custom_functions(self):
         # if people have issues with permissions we can allow these to be optional
@@ -312,7 +304,7 @@ class PostgresLinker(Linker):
         sql = """
         CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
 
     def _create_splink_schema(self, other_schemas_to_search):
         other_schemas_to_search = ensure_is_list(other_schemas_to_search)
@@ -323,4 +315,4 @@ class PostgresLinker(Linker):
         CREATE SCHEMA IF NOT EXISTS {self._db_schema};
         SET search_path TO {search_path};
         """
-        self._run_sql_execution_and_commit(sql)
+        self._run_sql_execution(sql)
