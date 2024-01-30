@@ -346,14 +346,22 @@ class SparkAPI(DatabaseAPI):
 
         # these properties will be needed whenever spark is _actually_ set up
         self.repartition_after_blocking = repartition_after_blocking
-        self.num_partitions_on_repartition = num_partitions_on_repartition
-        self.catalog = catalog
-        self.database = database
+
         self.register_udfs_automatically = register_udfs_automatically
 
         # TODO: hmmm breaking this flow. Lazy spark ??
 
         self.spark = spark_session
+
+        if num_partitions_on_repartition:
+            self.num_partitions_on_repartition = num_partitions_on_repartition
+        else:
+            self.set_default_num_partitions_on_repartition_if_missing()
+
+        self._set_splink_datastore(catalog, database)
+
+        if self.register_udfs_automatically:
+            self._register_udfs_from_jar()
 
         # TODO: also need to think about where these live:
         # self._drop_splink_cached_tables()
@@ -365,6 +373,31 @@ class SparkAPI(DatabaseAPI):
             enable_splink(self.spark)
 
         self._set_default_break_lineage_method()
+
+    def _set_splink_datastore(self, catalog, database):
+        # spark.catalog.currentCatalog() is not available in versions of spark before
+        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
+        # setting, but will revert to default in Spark versions greater than 3.4.0
+        threshold = "3.4.0"
+
+        if (
+            major_minor_version_greater_equal_than(self.spark.version, threshold)
+            and not catalog
+        ):
+            # set the catalog and database of where to write output tables
+            catalog = (
+                catalog if catalog is not None else self.spark.catalog.currentCatalog()
+            )
+        database = (
+            database if database is not None else self.spark.catalog.currentDatabase()
+        )
+
+        # this defines the catalog.database location where splink's data outputs will
+        # be stored. The filter will remove none, so if catalog is not provided and
+        # spark version is < 3.3.0 we will use the default catalog.
+        self.splink_data_store = ".".join(
+            [f"`{x}`" for x in [catalog, database] if x is not None]
+        )
 
     def _table_registration(self, input, table_name) -> None:
         if isinstance(input, dict):
@@ -433,49 +466,8 @@ class SparkAPI(DatabaseAPI):
     def accepted_df_dtypes(self):
         return [pd.DataFrame, spark_df]
 
-    # special methods:
-    @property
-    def spark(self):
-        return self._spark
-
-    @spark.setter
-    def spark(self, spark):
-        self._spark = spark
-        if spark is None:
-            return
-        # if we have a proper spark instance, then set it up!
-        self.set_default_num_partitions_on_repartition_if_missing()
-        self._set_catalog_and_database_if_not_provided(self.catalog, self.database)
-        if self.register_udfs_automatically:
-            self._register_udfs_from_jar()
-
     def _clean_pandas_df(self, df):
         return df.fillna(nan).replace([nan, pd.NA], [None, None])
-
-    def _set_catalog_and_database_if_not_provided(self, catalog, database):
-        # spark.catalog.currentCatalog() is not available in versions of spark before
-        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
-        # setting, but will revert to default in Spark versions greater than 3.4.0
-        threshold = "3.4.0"
-        self.catalog = catalog
-        if (
-            major_minor_version_greater_equal_than(self.spark.version, threshold)
-            and not self.catalog
-        ):
-            # set the catalog and database of where to write output tables
-            self.catalog = (
-                catalog if catalog is not None else self.spark.catalog.currentCatalog()
-            )
-        self.database = (
-            database if database is not None else self.spark.catalog.currentDatabase()
-        )
-
-        # this defines the catalog.database location where splink's data outputs will
-        # be stored. The filter will remove none, so if catalog is not provided and
-        # spark version is < 3.3.0 we will use the default catalog.
-        self.splink_data_store = ".".join(
-            [f"`{x}`" for x in [self.catalog, self.database] if x is not None]
-        )
 
     def _register_udfs_from_jar(self):
         # TODO: this should check if these are already registered and skip if so
@@ -514,22 +506,21 @@ class SparkAPI(DatabaseAPI):
             spark_df.limit(1).checkpoint()
 
     def set_default_num_partitions_on_repartition_if_missing(self):
-        if self.num_partitions_on_repartition is None:
-            parallelism_value = 200
-            try:
-                parallelism_value = self.spark.conf.get("spark.default.parallelism")
-                parallelism_value = int(parallelism_value)
-            except Exception:
-                pass
+        parallelism_value = 200
+        try:
+            parallelism_value = self.spark.conf.get("spark.default.parallelism")
+            parallelism_value = int(parallelism_value)
+        except Exception:
+            pass
 
-            # Prefer spark.sql.shuffle.partitions if set
-            try:
-                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
-                parallelism_value = int(parallelism_value)
-            except Exception:
-                pass
+        # Prefer spark.sql.shuffle.partitions if set
+        try:
+            parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
+            parallelism_value = int(parallelism_value)
+        except Exception:
+            pass
 
-            self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
+        self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
 
     # TODO: this repartition jazz knows too much about the linker
     def _repartition_if_needed(self, spark_df, templated_name):
