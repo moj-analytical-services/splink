@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Template
 
@@ -20,8 +20,8 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     uid_cols = linker._settings_obj._unique_id_input_columns
     uid_cols_l = [uid_col.name_l for uid_col in uid_cols]
     uid_cols_r = [uid_col.name_r for uid_col in uid_cols]
-    uid_cols = uid_cols_l + uid_cols_r
-    uid_expr = " || '-' ||".join(uid_cols)
+    uid_col_lr_names = uid_cols_l + uid_cols_r
+    uid_expr = " || '-' ||".join(uid_col_lr_names)
 
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
 
@@ -46,11 +46,11 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     from __splink__df_predict
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict_with_row_id",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = """
     select *,
@@ -60,11 +60,11 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     from __splink__df_predict_with_row_id
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_predict_with_row_num",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = f"""
     select *
@@ -72,12 +72,12 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     where row_example_index <= {example_rows_per_category}
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_example_rows",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
@@ -98,12 +98,12 @@ def comparison_viewer_table_sqls(
     on ser.gam_concat = cvd.gam_concat
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_comparison_viewer_table",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
     return sqls
 
 
@@ -121,7 +121,7 @@ def render_splink_comparison_viewer_html(
     template_path = "files/splink_comparison_viewer/template.j2"
     template = Template(read_resource(template_path))
 
-    template_data = {
+    template_data: dict[str, Any] = {
         "comparison_vector_data": json.dumps(
             comparison_vector_data, cls=EverythingEncoder
         ),

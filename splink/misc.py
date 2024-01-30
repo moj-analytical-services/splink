@@ -162,16 +162,16 @@ def ascii_uid(len):
 
 def parse_duration(duration: float) -> str:
     # math.ceil to clean up our output for anything over a minute
-    d = int(ceil(duration))
-    if d < 60:
+    seconds = int(ceil(duration))
+    if seconds < 60:
         return "{:.5f} seconds".format(duration)
 
-    d = datetime(1, 1, 1) + timedelta(seconds=d)
-    time_index = namedtuple("Time", ["Hour", "Minute", "Second"])
-    duration = time_index(d.hour, d.minute, d.second)
+    d = datetime(1, 1, 1) + timedelta(seconds=seconds)
+    time_index = namedtuple("time_index", ["Hour", "Minute", "Second"])
+    duration_info = time_index(d.hour, d.minute, d.second)
 
     txt_duration = []
-    for t, field in zip(duration, duration._fields):
+    for t, field in zip(duration_info, duration_info._fields):
         if t == 0:
             continue
         txt = f"{t} {field}s" if t > 1 else f"{t} {field}"

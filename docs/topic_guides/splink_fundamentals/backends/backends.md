@@ -17,29 +17,44 @@ The Splink code you write is almost identical between backends, so it's straight
 ## Choosing a backend
 
 ### Considerations when choosing a SQL backend for Splink
+
 When choosing which backend to use when getting started with Splink, there are a number of factors to consider:
 
 - the size of the dataset(s)
 - the amount of boilerplate code/configuration required
 - access to specific (sometimes proprietary) platforms
 - the backend-specific features offered by Splink
-- the level of support and active development offered by Splink  
+- the level of support and active development offered by Splink
 
 Below is a short summary of each of the backends available in Splink.
 
 ### :simple-duckdb: DuckDB
 
-DuckDB is recommended for smaller datasets (1-2 million records), and would be our primary recommendation for getting started with Splink. It is fast, easy to set up, can be run on any device with python installed and it is installed automatically with Splink via `pip install splink`. DuckDB has complete coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md) and, as a mainstay of the Splink development team, is actively maintained with features being added regularly.
+DuckDB is recommended for most users. It is the fastest backend, and is capable of linking large datasets, especially if you have access to high-spec machines.
 
-Often, it's a good idea to start working using DuckDB on a sample of data, because it will produce results very quickly. When you're comfortable with your model, you may wish to migrate to a big data backend to estimate/predict on the full dataset.
+As a rough guide it can:
 
-See the DuckDB [deduplication example notebook](../../../demos/examples/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with DuckDB.
+- Link up to around 5 million records on a modern laptop (4 core/16GB RAM)
+- Link tens of millions of records on high spec cloud computers very fast.
+
+For further details, see the results of formal benchmarking [here](https://www.robinlinacre.com/fast_deduplication/).
+
+DuckDB is also recommended because for many users its simplest to set up.
+
+It can be run on any device with python installed and it is installed automatically with Splink via `pip install splink`. DuckDB has complete coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md) and, as a mainstay of the Splink development team, is actively maintained with features being added regularly.
+
+See the DuckDB [deduplication example notebook](../../../demos/examples/duckdb/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with DuckDB.
 
 ### :simple-apachespark: Spark
 
-Spark is a system for distributed computing which is great for large datasets (10-100+ million records). It is more involved in terms of configuration, with more boilerplate code than the likes of DuckDB. Spark has complete coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md) and, as a mainstay of the Splink development team, is actively maintained with features being added regularly.
+Spark is a system for distributed computing which is great for large datasets. It is more involved in terms of configuration, with more boilerplate code than the likes of DuckDB. Spark has complete coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md) and, as a mainstay of the Splink development team, is actively maintained with features being added regularly.
 
-If working with Databricks, the Spark backend is recommended, however as the Splink development team does not have access to a Databricks environment there will be instances where we will be unable to provide support.
+Spark is primarily recommended for users who either:
+
+- Need to link enormous datasets (100 million records+), and have experience out of memory/out of disk problems with DuckDB
+- Or have easier access to a Spark cluster than a single high-spec instance to run DuckDB
+
+If working with Databricks note that the Splink development team does not have access to a Databricks environment there will be instances where we will be unable to provide support.
 
 See the Spark [deduplication example notebook](../../../demos/examples/spark/deduplicate_1k_synthetic.ipynb) to get a better idea of how Splink works with Spark.
 
@@ -118,8 +133,6 @@ Once you have initialised the `linker` object, there is no difference in the sub
     linker = PostgresLinker(your_args)
 
     ```
-
-
 
 ## Additional Information for specific backends
 

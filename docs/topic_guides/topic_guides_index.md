@@ -11,5 +11,5 @@ The topic guides are broken up into the following categories:
 5. [Comparing Records](comparisons/customising_comparisons.ipynb) - for guidance on defining `Comparison`s withing a Splink model. Including how comparing records are structured within `Comparison`s, how to utilise string comparators for fuzzy matching and how deal with skewed data with Term Frequency Adjustments.
 6. Model Training - for guidance on the methods for training a Splink model, and how to choose them for specific use cases. (Coming soon)
 7. Clustering - for guidance on how records are clustered together. (Coming Soon)
-8. Model QA - for guidance on how to Quality Assure a Splink model & the resulting clusters. Including Clerical Labelling. (Coming Soon)
+8. [Evaluation](./evaluation/overview.md) - for guidance on how to evaluate Splink models, links and clusters (including Clerical Labelling). 
 9. [Performance](performance/drivers_of_performance.md) - for guidance on how to make Splink models run more efficiently.

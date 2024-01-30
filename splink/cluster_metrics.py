@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List
 
 from splink.splink_dataframe import SplinkDataFrame
@@ -137,3 +138,21 @@ def _size_density_centralisation_sql(
     sqls.append(sql)
 
     return sqls
+
+
+@dataclass
+class GraphMetricsResults:
+    nodes: SplinkDataFrame
+    edges: SplinkDataFrame
+    clusters: SplinkDataFrame
+
+    def __repr__(self):
+        msg = (
+            "A data class of Splink dataframes containing metrics for nodes, edges "
+            "and clusters.\n"
+            "\nAccess dataframes via attributes:\n"
+            "`compute_graph_metrics.nodes` for node metrics,\n"
+            "`compute_graph_metrics.edges` for edge metrics, and\n"
+            "`compute_graph_metrics.clusters` for cluster metrics\n"
+        )
+        return msg
