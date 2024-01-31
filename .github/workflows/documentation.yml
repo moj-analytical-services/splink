@@ -125,6 +125,10 @@ jobs:
           name: built_site
           path: site
 
+      # some environment info:
+      - run: pip freeze
+      - run: mkdocs --version
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -151,7 +155,3 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           ghp-import -opfm "Update docs from commit ${{ github.sha }}" site
-
-      # some environment info:
-      - run: pip freeze
-      - run: mkdocs --version
