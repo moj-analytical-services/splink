@@ -96,9 +96,6 @@ jobs:
           name: generated_files
           path: docs/includes/generated_files
 
-      - name: Preprocess markdown include files
-        run: python3 scripts/preprocess_markdown_includes.py
-
       - run: tree docs/
       - name: install docs dependencies
         run: |
