@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from jinja2 import StrictUndefined, Template, UndefinedError
+
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -10,72 +12,78 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def vertically_concatenate_sql(linker: Linker) -> str:
+class PartialJinjaTemplate:
+    def __init__(self, template_str):
+        self.template = Template(template_str, undefined=StrictUndefined)
+        self.values = {}
+
+    def add_value(self, key, value):
+        self.values[key] = value
+
+    def render(self):
+        try:
+            return self.template.render(self.values)
+        except UndefinedError as e:
+            raise ValueError(f"Template rendering failed. Missing value for: {str(e)}")
+
+
+def vertically_concatenate_sql(linker: Linker) -> PartialJinjaTemplate:
+    template = """
+    {% if source_dataset_col_req %}
+        {% for df_obj in input_tables %}
+            select
+            {% if not source_dataset_column_already_exists %}
+                '{{ df_obj.templated_name }}' as source_dataset,
+            {% endif %}
+            {{ ", ".join(columns) }}
+            {% if salting_required %}
+                , random() as __splink_salt
+            {% endif %}
+            from {{ df_obj.physical_name }}
+            {% if not loop.last %}
+                UNION ALL
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        select {{ ", ".join(columns) }}
+        {% if salting_required %}
+            , random() as __splink_salt
+        {% endif %}
+        from {{ df_obj.physical_name }}
+    {% endif %}
     """
-    Using `input_table_or_tables`, create a single table with the columns and
-    rows required for linking.
 
-    This table will later be the basis for the generation of pairwise record comparises,
-    and will also be used to generate the term frequency adjustment tables.
+    partial_template = PartialJinjaTemplate(template)
 
-    If multiple input tables are provided, this single table is the vertical
-    concatenation of all the input tables.  In this case, a 'source_dataset' column
-    is created.  This is used to uniquely identify rows in the vertical concatenation.
-    Without it, ID collisions would be possible leading to ambiguity e.g. if several
-    of the input tables have the same ID.
-    """
-
-    # Use column order from first table in dict
     df_obj = next(iter(linker._input_tables_dict.values()))
     columns = df_obj.columns_escaped
+    input_tables = list(linker._input_tables_dict.values())
 
-    select_columns_sql = ", ".join(columns)
-
-    salting_reqiured = False
-
-    # For data profiling, we need to vertically concat
-    # but user may not have provided a settings dict yet
     if linker._settings_obj_ is None:
         source_dataset_col_req = True
+        salting_required = False
     else:
         source_dataset_col_req = (
             linker._settings_obj._source_dataset_column_name_is_required
         )
+        salting_required = linker._settings_obj.salting_required
 
-        salting_reqiured = linker._settings_obj.salting_required
-
-    # see https://github.com/duckdb/duckdb/discussions/9710
-    # in duckdb to parallelise we need salting
+    # Overriding salting_required if the SQL dialect is DuckDB
     if linker._sql_dialect == "duckdb":
-        salting_reqiured = True
+        salting_required = True
 
-    if salting_reqiured:
-        salt_sql = ", random() as __splink_salt"
-    else:
-        salt_sql = ""
+    source_dataset_column_already_exists = linker._source_dataset_column_already_exists
 
-    if source_dataset_col_req:
-        sqls_to_union = []
+    # Adding values to the partial template
+    partial_template.add_value("source_dataset_col_req", source_dataset_col_req)
+    partial_template.add_value("input_tables", input_tables)
+    partial_template.add_value("columns", columns)
+    partial_template.add_value("salting_required", salting_required)
+    partial_template.add_value(
+        "source_dataset_column_already_exists", source_dataset_column_already_exists
+    )
+    partial_template.add_value("df_obj", df_obj)  # Add this line
 
-        create_sds_if_needed = ""
-
-        for df_obj in linker._input_tables_dict.values():
-            if not linker._source_dataset_column_already_exists:
-                create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
-            sql = f"""
-            select
-            {create_sds_if_needed}
-            {select_columns_sql}
-            {salt_sql}
-            from {df_obj.physical_name}
-            """
-            sqls_to_union.append(sql)
-        sql = " UNION ALL ".join(sqls_to_union)
-    else:
-        sql = f"""
-            select {select_columns_sql}
-            {salt_sql}
-            from {df_obj.physical_name}
-            """
-
+    sql = partial_template.render()
+    print(sql)
     return sql
