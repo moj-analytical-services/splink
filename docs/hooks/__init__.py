@@ -18,6 +18,7 @@ INCLUDE_MARKDOWN_REGEX = (
     r"\s*%}"
 )
 
+
 def include_markdown(markdown: str) -> str | None:
     """
     Takes markdown string content and replaces blocks such as:
@@ -38,9 +39,7 @@ def include_markdown(markdown: str) -> str | None:
         try:
             with open(Path("docs") / include_path) as f_inc:
                 include_text = f_inc.read()
-                new_text = re.sub(
-                    text_to_replace, include_text, markdown
-                )
+                new_text = re.sub(text_to_replace, include_text, markdown)
                 # update text, in case we are iterating
                 markdown = new_text
         # if we can't find include file then warn but carry on
@@ -64,9 +63,7 @@ def re_route_links(markdown: str, page_title: str) -> str | None:
     # the 'proper' way to do this would be to check if the file lives outside
     # the docs/ folder, and only adjust if so, rather relying on title
     # (which could be changed), and must be opted-into
-    relevant_file_titles = (
-        "Contributor Guide",
-    )
+    relevant_file_titles = ("Contributor Guide",)
     if page_title not in relevant_file_titles:
         return
 
