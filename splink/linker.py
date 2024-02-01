@@ -1128,9 +1128,7 @@ class Linker:
         self._settings_dict = settings_dict  # overwrite or add
 
         # Get the SQL dialect from settings_dict or use the default
-        sql_dialect = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
+        sql_dialect = settings_dict.get("sql_dialect", self._sql_dialect)
         settings_dict["sql_dialect"] = sql_dialect
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
 
