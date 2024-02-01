@@ -18,7 +18,10 @@ class EMTrainingException(SplinkException):
 class ComparisonSettingsException(SplinkException):
     def __init__(self, message=""):
         # Add the default message to the beginning of the provided message
-        full_message = "Errors were detected in your settings object's comparisons:"
+        full_message = (
+            "The following errors were identified within your "
+            "settings object's comparisons"
+        )
         if message:
             full_message += ":\n" + message
         super().__init__(full_message)
@@ -51,23 +54,14 @@ class ErrorLogger:
     @property
     def errors(self) -> str:
         """Return concatenated error messages."""
-        return "\n".join([f" - {e}" for e in self.error_queue])
+        return "\n".join(self.error_queue)
 
-    def append(self, error: Union[list, str, Exception]) -> None:
+    def append(self, error: Union[str, Exception]) -> None:
         """Append an error to the error list.
 
         Args:
-            error: An error message string, an Exception instance or
-                a list or tuple containing your strings or exceptions.
+            error: An error message string or an Exception instance.
         """
-
-        if isinstance(error, (list, tuple)):
-            for e in error:
-                self._append(e)
-        else:
-            self._append(error)
-
-    def _append(self, error: Union[str, Exception]) -> None:
         # Ignore if None
         if error is None:
             return
@@ -85,9 +79,7 @@ class ErrorLogger:
                 "The 'error' argument must be a string or an Exception instance."
             )
 
-    def raise_and_log_all_errors(
-        self, exception: Exception = SplinkException, additional_txt=""
-    ) -> Exception:
+    def raise_and_log_all_errors(self, exception=SplinkException, additional_txt=""):
         """Raise a custom exception with all logged errors.
 
         Args:
@@ -96,3 +88,6 @@ class ErrorLogger:
         """
         if self.error_queue:
             raise exception(f"\n{self.errors}{additional_txt}")
+
+
+warnings.simplefilter("always", SplinkDeprecated)
