@@ -170,7 +170,7 @@ To see how users are using Splink in the wild, check out the [Use Cases](https:/
 
 ## Awards
 
-❓ Future of Government Awards: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
+❓ Future of Government Awards 2023: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
