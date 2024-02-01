@@ -83,13 +83,18 @@ Sadly, we don't hear about the majority of our users or what they are working on
 
 ## Awards
 
-🥇 [Analysis in Government Awards 2020: Innovative Methods: Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+❓ Future of Government Awards: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
-🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
+🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
-🥇 [Analysis in Government Awards 2022: People's Choice Award - Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+🥈 Analysis in Government Awards 2022: Innovative Methods - [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
-🥈 [Analysis in Government Awards 2022: Innovative Methods Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+
+🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+
+🥇 MoJ Data and Analytical Services Directorate (DASD) Awards 2020: Innovation and Impact - Winner
+
 
 ## Citation
 
