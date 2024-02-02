@@ -4,7 +4,7 @@ The parameters in a trained Splink model determine the match probability (Splink
 
 ## Look at the model parameters
 
-The final model is summarised in the [match weights chart](../../charts/match_weights_chart.ipynb) with each bar in the chart signifying the match weight (i.e. the amount of positive or negative evidence for a match) for each comparison level in your model.
+The final model is summarised in the [match weights chart](../../charts/match_weights_chart.ipynb) with each bar in the chart signifying the match weight (i.e. the amount of evidence for or against a match) for each comparison level in your model.
 
 If, after some investigation, you still can't make sense of some of the match weights, take a look at the corresponding $m$ and $u$ values generated to see if they make logical sense. These can be produced with the [m u parameters chart](https://moj-analytical-services.github.io/splink/charts/m_u_parameters_chart.html).
 
