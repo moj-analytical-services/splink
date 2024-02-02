@@ -17,7 +17,7 @@ If, after some investigation, you still can't make sense of some of the match we
 
 The process of training a model can offer some insight into its usefulness. The more stable a model is in the training process, the more reliable the outputs are.
 
-Stability of model training is seen clearly in the Expectation Maximaisation stage (for $m$ training):
+Stability of model training can be seen in the Expectation Maximisation stage (for $m$ training):
 
 - Stability across EM training sessions can be seen through the [parameter estimates chart](https://moj-analytical-services.github.io/splink/charts/parameter_estimate_comparisons_chart.html)
 
