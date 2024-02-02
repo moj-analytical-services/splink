@@ -1,6 +1,6 @@
 # Model Evaluation
 
-The parameters of a trained Splink model build up a set of rules for scoring any pairwise records comparisons. Before scoring any pairs of records there are a number of ways to check whether your model will perform as you expect.
+The parameters in a trained Splink model determine the match probability (Splink score) assigned to pairwise record comparisons. Before scoring any pairs of records there are a number of ways to check whether your model will perform as you expect.
 
 ## Look at the model parameters
 
