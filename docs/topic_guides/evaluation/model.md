@@ -15,7 +15,7 @@ If, after some investigation, you still can't make sense of some of the match we
 
 ## Look at the model training
 
-The process of training a model can offer some insight into its usefulness. The more stable a model is in the training process, the more reliable the outputs are.
+The behaviour of a model during training can offer some insight into its utility. The more stable a model is in the training process, the more reliable the outputs are.
 
 Stability of model training can be seen in the Expectation Maximisation stage (for $m$ training):
 
