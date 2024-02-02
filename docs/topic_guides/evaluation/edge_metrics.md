@@ -14,3 +14,11 @@ Also referred to as a Type I Error
 
 Also referred to as a Type II Error
 
+### Confusion Matrix
+These can be summarised in a Confusion Matrix
+
+![](./image/confusion_matrix.drawio.png)
+
+## Metrics for Linkage
+
+The confusion matrix consists of number

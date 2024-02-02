@@ -4,14 +4,21 @@ Once you have a trained model, you use it to generate edges (links) between enti
 
 There are two distinct types of Edge Evaluation that should be considered at this stage:
 
-1. Overall Metrics
+1. Edge Metrics
 2. Spot checking
 
 with the insights from both of these feeding into Threshold Selection ahead of of the Clustering stage.
 
-## Overall Metrics
+<hr>
 
-For a rundown of all the overall metrics available in Splink, check out the [metrics guide](./edge_metrics.md). These metrics required a "ground truth" to compare against which can be achieved by Clerical Labelling.
+## Edge Metrics
+
+Edge Metrics measure for how the links perform at an overall level.
+
+ For a summary of all the edge metrics available in Splink, check out the [metrics guide](./edge_metrics.md). These metrics require:
+
+ - a probability threshold threshold to be chosen
+ - a "ground truth" to compare against (which can be achieved by Clerical Labelling)
 
 ## Spot Checking
 
