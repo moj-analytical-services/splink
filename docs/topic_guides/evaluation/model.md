@@ -30,4 +30,4 @@ Stability of model training can be seen in the Expectation Maximisation stage (f
 
 Evaluating a trained model is not an exact science - there are no metrics which can definitively say whether a model is good or bad at this stage. In most cases, applying human logic and heuristics is the best you can do to establish whether the model is sensible. Given the variety of potential use cases of Splink, there is no perfect, universal model, just models that can be tuned to produce useful outputs for a given application.
 
-The tools within Splink are intended to help identify areas where your model may not be performaing as expected. In future versions releases we hope to automatically flag where there are areas of a model that require further investigation to make this process easier for the user.
+The tools within Splink are intended to help identify areas where your model may not be performing as expected. In future versions releases we hope to automatically flag where there are areas of a model that require further investigation to make this process easier for the user.
