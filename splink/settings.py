@@ -44,6 +44,7 @@ class Settings:
         self._settings_dict = settings_dict
         s_else_d = self._from_settings_dict_else_default
         ccs = self._settings_dict["comparisons"]
+        # TODO: I think this should _not_ be dialected
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []
