@@ -5,9 +5,6 @@ import pytest
 
 from splink.comparison_creator import ComparisonCreator
 from splink.comparison_level_creator import ComparisonLevelCreator
-from splink.database_api import DuckDBAPI
-
-db_api = DuckDBAPI()
 
 
 class ComparisonLevelTestSpec:
@@ -103,7 +100,7 @@ def execute_sql_for_test(sql, db_api):
 
 
 def run_tests_with_args(
-    test_spec: Union[ComparisonLevelTestSpec, ComparisonTestSpec], db_api: DuckDBAPI
+    test_spec: Union[ComparisonLevelTestSpec, ComparisonTestSpec], db_api
 ):
     tests = (
         test_spec.tests
