@@ -1,8 +1,8 @@
 import logging
+import re
 
 import pandas as pd
 import pytest
-import re
 
 from splink.comparison import Comparison
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
