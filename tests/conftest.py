@@ -69,7 +69,7 @@ def spark():
 # TODO: align this with test_helper
 @pytest.fixture(scope="function")
 def spark_api(spark):
-    yield SparkAPI(spark=spark, num_partitions_on_repartition=1)
+    yield SparkAPI(spark_session=spark, num_partitions_on_repartition=1)
 
 
 @pytest.fixture(scope="module")
