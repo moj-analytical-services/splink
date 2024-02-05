@@ -242,12 +242,12 @@ def profile_columns(
     splink_df_dict = db_api.register_multiple_tables(
         tables, input_aliases, overwrite=True
     )
-    # TODO: can we be more permissive with typing?
     input_dataframes = list(splink_df_dict.values())
     input_columns = input_dataframes[0].columns_escaped
 
     if not column_expressions:
-        column_expressions = input_columns
+        column_expressions_raw = input_columns
+        column_expressions =  expressions_to_sql(input_columns)
     else:
         column_expressions_raw = ensure_is_list(column_expressions)
         column_expressions = expressions_to_sql(column_expressions_raw)
