@@ -14,25 +14,27 @@ Graph metrics can also help us home in on problematic clusters, such as those co
 
 ### What is a high quality cluster?
 
-When it comes to data linking, the highest quality clusters will be those containing all possible true matches (no false negatives) and no false matches (no false positives).
+When it comes to data linking, the highest quality clusters will be those containing all possible true matches (there will be no false negatives) and no false matches (no false positives).
 
-This idealised situation is rarely realised in practice, at least not across all clusters generated. Blocking rules, necessary to make computations tractable, can prevent record comparisons between some true matches ever being made, and the limitations of data and resources can place an upper bound on the level of quality that's possible to achieve. However, graph metrics can help us get closer to a satisfactory level of quality as well as monitor it going forward.
+Generating clusters which all adhere to this ideal is rare in practice.
+Blocking rules, necessary to make computations tractable, can prevent record comparisons between some true matches ever being made, and data limitations can place an upper bound on the level of quality achievable.
+Despite this, graph metrics can help us get closer to a satisfactory level of quality as well as monitor it going forward.
 
-### What does high quality look like for you?
+### What does cluster quality look like for you?
 
-The extent of cluster evaluation efforts and what is considered 'good enough' will vary greatly with linkage use-case. You might have a labeled dataset or quality assured outputs from another model which provide a clear target for cluster quality.
+The extent of cluster evaluation efforts and what is considered 'good enough' will vary greatly with linkage use-case.
+You might already have gold standard/labelled data or quality assured outputs from another model which define a clear benchmark for cluster quality.
 
-Domain knowledge can also help set expectations of what is reasonable when it comes to evaluating clusters. For example, ...cluster size.
+Domain knowledge is also very instructive for guiding evaluation efforts and setting expectations of what is considered reasonable or good. For example, you might already know that a large cluster (containing say 100 nodes) is suspicious for a particular deduped dataset.
 
-However, you also might not have a clear idea of wat good looks like which...makes it difficult to make a judgement call on quality with little or no idea...
+However, you may have little or no clear idea of what good quality clusters look like for your linkage.
 
-This topic guide is intended to help users develop a better understanding of their clusters and help them wisely focus quality assurance efforts, regardless of how much prior knowledge they have about what qualifies quality...
-And in that way can create an expectation/baseline of what good looks like.
+Whatever level of prior knowledge, this topic guide is designed to help users develop a better understanding of their clusters and help focus quality assurance efforts to get the best out of their linkage models.
 
 <hr>
 <br>
 
-# Linked data as graphs <-- to go somewhere upstream
+## Linked data as graphs <-- to go somewhere upstream
 
 For clarity, let us first define what we mean by a graph. A graph is a collection of points (nodes) connected by lines (edges).
 
