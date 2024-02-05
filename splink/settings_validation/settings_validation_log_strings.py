@@ -1,6 +1,5 @@
 from functools import partial
-from typing import NamedTuple
-from typing import List, Tuple
+from typing import List, NamedTuple, Tuple
 
 
 def indent_error_message(message):

@@ -1,8 +1,8 @@
 import logging
+import re
 
 import pandas as pd
 import pytest
-import re
 
 from splink.blocking_rule_library import block_on
 from splink.comparison import Comparison
