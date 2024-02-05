@@ -2,6 +2,10 @@ import warnings
 from typing import List, Union
 
 
+def format_text_as_red(text):
+    return f"\033[91m{text}\033[0m"
+
+
 # base class for any type of custom exception
 class SplinkException(Exception):
     pass
@@ -18,9 +22,9 @@ class EMTrainingException(SplinkException):
 class ComparisonSettingsException(SplinkException):
     def __init__(self, message=""):
         # Add the default message to the beginning of the provided message
-        full_message = "Errors were detected in your settings object's comparisons:"
+        full_message = "Errors were detected in your settings object's comparisons"
         if message:
-            full_message += ":\n" + message
+            full_message += "\n" + message
         super().__init__(full_message)
 
 
@@ -51,39 +55,39 @@ class ErrorLogger:
     @property
     def errors(self) -> str:
         """Return concatenated error messages."""
-        return "\n".join([f" - {e}" for e in self.error_queue])
 
-    def append(self, error: Union[list, str, Exception]) -> None:
-        """Append an error to the error list.
+        return "\n\n".join([f"{e}" for e in self.error_queue])
+
+    def log_error(self, error: Union[list, str, Exception]) -> None:
+        """
+        Log an error or a list of errors.
 
         Args:
-            error: An error message string, an Exception instance or
-                a list or tuple containing your strings or exceptions.
+            error: An error message, an Exception instance, or a list containing strings or exceptions.
         """
-
         if isinstance(error, (list, tuple)):
             for e in error:
-                self._append(e)
+                self._log_single_error(e)
         else:
-            self._append(error)
+            self._log_single_error(error)
 
-    def _append(self, error: Union[str, Exception]) -> None:
-        # Ignore if None
+    def _log_single_error(self, error: Union[str, Exception]) -> None:
+        """Log a single error message or Exception."""
         if error is None:
             return
 
         self.raw_errors.append(error)
+        error_str = self._format_error(error)
+        self.error_queue.append(error_str)
 
-        if isinstance(error, str):
-            self.error_queue.append(error)
-        elif isinstance(error, Exception):
-            error_name = error.__class__.__name__
-            logged_exception = f"{error_name}: {str(error)}"
-            self.error_queue.append(logged_exception)
+    def _format_error(self, error: Union[str, Exception]) -> str:
+        """Format an error message or Exception for logging."""
+        if isinstance(error, Exception):
+            return f"{format_text_as_red(error.__class__.__name__)}: {error}"
+        elif isinstance(error, str):
+            return f"{error}"
         else:
-            raise ValueError(
-                "The 'error' argument must be a string or an Exception instance."
-            )
+            raise ValueError("Error must be a string or an Exception instance.")
 
     def raise_and_log_all_errors(
         self, exception: Exception = SplinkException, additional_txt=""
@@ -95,4 +99,5 @@ class ErrorLogger:
             additional_txt: Additional text to append to the error message.
         """
         if self.error_queue:
-            raise exception(f"\n{self.errors}{additional_txt}")
+            error_message = f"\n{self.errors}\n{additional_txt}"
+            raise exception(error_message)
