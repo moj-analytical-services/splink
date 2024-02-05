@@ -164,7 +164,10 @@ nav:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
         - Edges (Links): "topic_guides/evaluation/edges.md"
-        - Clusters: "topic_guides/evaluation/clusters.md"
+        - Clusters: 
+          - Overview: "topic_guides/evaluation/clusters/overview.md"
+          - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
+          - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
