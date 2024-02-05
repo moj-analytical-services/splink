@@ -3,7 +3,6 @@ import pytest
 import splink.comparison_library as cl
 from tests.decorator import mark_with_dialects_excluding
 from tests.literal_utils import (
-    ComparisonLevelTestSpec,
     ComparisonTestSpec,
     LiteralTestValues,
     run_tests_with_args,
