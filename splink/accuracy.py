@@ -197,7 +197,7 @@ def truth_space_table_from_labels_column(
 
     sql = f"""
     select
-    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    case when ({label_colname}_l = {label_colname}_r) then cast(1.0 as float8) else cast(0.0 as float8) end AS clerical_match_score,
     not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
@@ -353,7 +353,7 @@ def prediction_errors_from_label_column(
 
     sql = f"""
     select
-    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    case when ({label_colname}_l = {label_colname}_r) then cast(1.0 as float8) else cast(0.0 as float8) end AS clerical_match_score,
     not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
