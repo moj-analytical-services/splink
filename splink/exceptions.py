@@ -63,7 +63,8 @@ class ErrorLogger:
         Log an error or a list of errors.
 
         Args:
-            error: An error message, an Exception instance, or a list containing strings or exceptions.
+            error: An error message, an Exception instance, or a list
+                containing strings or exceptions.
         """
         if isinstance(error, (list, tuple)):
             for e in error:
