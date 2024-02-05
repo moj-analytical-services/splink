@@ -17,11 +17,14 @@ class ComparisonLevelTestSpec:
             ComparisonLevelCreator, Type[ComparisonLevelCreator]
         ],
         tests: List,
-        keyword_arg_overrides: dict = None,
+        default_keyword_args: dict = None,
     ):
         self.tests = tests
         self.comparison_level_or_class = comparison_level_or_class
-        self.keyword_arg_overrides = keyword_arg_overrides
+
+        self.default_keyword_args = (
+            {} if default_keyword_args is None else default_keyword_args
+        )
 
     @property
     def has_class_not_instance(self) -> bool:
@@ -35,7 +38,7 @@ class ComparisonLevelTestSpec:
     @property
     def comparison_level_creator(self) -> ComparisonLevelCreator:
         if self.has_class_not_instance:
-            return self.comparison_level_or_class(**self.keyword_arg_overrides)
+            return self.comparison_level_or_class(**self.keyword_args_combined)
         else:
             return self.comparison_level_or_class
 
@@ -44,17 +47,26 @@ class ComparisonLevelTestSpec:
 
         return f"select {sql} as in_level from __splink__test_table"
 
+    @property
+    def keyword_args_combined(self):
+        return {**self.default_keyword_args, **self.keyword_arg_overrides}
+
 
 class ComparisonTestSpec:
     def __init__(
         self,
         comparison_or_class: Union[ComparisonCreator, Type[ComparisonCreator]],
         tests: List,
-        keyword_arg_overrides: dict = None,
+        default_keyword_args: dict = None,
     ):
         self.tests = tests
         self.comparison_level_or_class = comparison_or_class
-        self.keyword_arg_overrides = keyword_arg_overrides
+
+        self.default_keyword_args = (
+            {} if default_keyword_args is None else default_keyword_args
+        )
+
+        self.keyword_arg_overrides = {}
 
     @property
     def has_class_not_instance(self) -> bool:
@@ -79,6 +91,10 @@ class ComparisonTestSpec:
         sql = f"CASE {sql} END "
         return f"select {sql} as gamma_value from __splink__test_table"
 
+    @property
+    def keyword_args_combined(self):
+        return {**self.default_keyword_args, **self.keyword_arg_overrides}
+
 
 def execute_sql_for_test(sql, db_api):
     return db_api.execute_sql_against_backend(
@@ -97,6 +113,10 @@ def run_tests_with_args(
         if test.sql_dialects:
             if sqlglot_name not in test.sql_dialects:
                 continue
+        if test.keyword_arg_overrides:
+            test_spec.keyword_arg_overrides = test.keyword_arg_overrides
+        else:
+            test_spec.keyword_arg_overrides = {}
 
         sql = test_spec.get_sql(sqlglot_name)
 
