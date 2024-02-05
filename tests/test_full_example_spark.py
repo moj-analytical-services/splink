@@ -61,15 +61,15 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         "max_iterations": 2,
     }
 
-    spark_api = SparkAPI(
-        break_lineage_method="checkpoint",
-        num_partitions_on_repartition=2,
-        database="1111",
-    )
     linker = Linker(
         df_spark,
         settings,
-        spark_api,
+        SparkAPI(
+            spark_session=spark,
+            break_lineage_method="checkpoint",
+            num_partitions_on_repartition=2,
+            database="1111",
+        ),
     )
 
     profile_columns(
@@ -145,6 +145,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         [df_spark, df_spark.toPandas()],
         settings,
         SparkAPI(
+            spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
         ),
@@ -161,7 +162,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     Linker(df_spark, settings_dict=path, database_api=spark_api)
 
 
-def test_link_only(df_spark, spark_api):
+def test_link_only(spark, df_spark, spark_api):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
@@ -173,6 +174,7 @@ def test_link_only(df_spark, spark_api):
         [df_spark_a, df_spark_b],
         settings,
         SparkAPI(
+            spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
         ),

@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - "**dev"
     paths:
       - splink/**
       - docs/demos/tutorials/**
@@ -40,7 +41,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: '1.7.0'
+          version: "1.7.0"
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true

@@ -464,8 +464,8 @@ def solve_connected_components(
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
-    iteration, root_rows = 0, 1
-    while root_rows > 0:
+    iteration, root_rows_count = 0, 1
+    while root_rows_count > 0:
         start_time = time.time()
         iteration += 1
 
@@ -508,8 +508,10 @@ def solve_connected_components(
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
-        root_rows = root_rows[0]["count"]
-        logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
+        root_rows_count = root_rows[0]["count"]
+        logger.info(
+            f"Completed iteration {iteration}, root rows count {root_rows_count}"
+        )
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 

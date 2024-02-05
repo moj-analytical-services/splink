@@ -48,7 +48,7 @@ In general, Deterministic linkage is:
 
 ??? note "Deterministic Linkage in Splink"
 
-    While Splink is primarily a tool for Probabilistic linkage, Deterministic linkage is also supported (utilising blocking rules). See the [example notebooks](TO-BE-UPDATED) to see how this is Deterministic linkage is implemented in Splink.
+    While Splink is primarily a tool for Probabilistic linkage, Deterministic linkage is also supported (utilising blocking rules). See the [example notebooks](../../demos/examples/duckdb/deterministic_dedupe.ipynb) to see how this is Deterministic linkage is implemented in Splink.
 
 ## Probabilistic Linkage
 

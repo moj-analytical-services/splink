@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from copy import deepcopy
+from typing import TYPE_CHECKING, Optional
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -67,14 +68,20 @@ class Comparison:
         for cl in comparison_level_list:
             if isinstance(cl, ComparisonLevel):
                 cl.comparison = self
-            elif settings_obj is None:
-                cl = ComparisonLevel(cl, self)
             else:
-                cl = ComparisonLevel(cl, self, sql_dialect=settings_obj._sql_dialect)
+                # cl is a dict
+                # TODO: remove support for this
+                cl = ComparisonLevel(
+                    **cl,
+                    comparison=self,
+                    sqlglot_dialect_name=None
+                    if settings_obj is None
+                    else settings_obj._sql_dialect,
+                )
 
             self.comparison_levels.append(cl)
 
-        self._settings_obj: Settings = settings_obj
+        self._settings_obj: Optional[Settings] = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels
@@ -97,7 +104,19 @@ class Comparison:
         of the original e.g. modifying the copy will not affect the original.
         This method implements ensures the Comparison can be deepcopied.
         """
-        cc = Comparison(self.as_dict(), self._settings_obj)
+        # want comparison levels to always be ComparisonLevel, not dict
+        comparison_dict = deepcopy(self.as_dict())
+        comparison_dict["comparison_levels"] = [
+            ComparisonLevel(
+                **cl_dict,
+                # TODO: Comparison should also store dialect
+                sqlglot_dialect_name=None
+                if self._settings_obj is None
+                else self._settings_obj._sql_dialect,
+            )
+            for cl_dict in comparison_dict["comparison_levels"]
+        ]
+        cc = Comparison(comparison_dict, self._settings_obj)
         return cc
 
     @property

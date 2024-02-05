@@ -26,7 +26,7 @@ class PostgresDataFrame(SplinkDataFrame):
         FROM information_schema.columns
         WHERE table_name = '{self.physical_name}';
         """
-        res = self.db_api._run_sql_execution(sql).fetchall()
+        res = self.db_api._run_sql_execution(sql).mappings().all()
         cols = [r["column_name"] for r in res]
 
         return [InputColumn(c, sql_dialect="postgres") for c in cols]
@@ -46,7 +46,7 @@ class PostgresDataFrame(SplinkDataFrame):
         WHERE table_name = '{self.physical_name}';
         """
 
-        res = self.db_api._run_sql_execution(sql).fetchall()
+        res = self.db_api._run_sql_execution(sql).mappings().all()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the postgres db provided.\n"

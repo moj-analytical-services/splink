@@ -43,7 +43,7 @@ DuckDB is also recommended because for many users its simplest to set up.
 
 It can be run on any device with python installed and it is installed automatically with Splink via `pip install splink`. DuckDB has complete coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md) and, as a mainstay of the Splink development team, is actively maintained with features being added regularly.
 
-See the DuckDB [deduplication example notebook](../../../demos/examples/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with DuckDB.
+See the DuckDB [deduplication example notebook](../../../demos/examples/duckdb/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with DuckDB.
 
 ### :simple-apachespark: Spark
 
