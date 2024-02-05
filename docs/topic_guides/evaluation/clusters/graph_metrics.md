@@ -1,32 +1,11 @@
-# Linked data as graphs <-- to go somewhere upstream
-
-For clarity, let us first define what we mean by a graph. A graph is a collection of points (nodes) connected by lines (edges).
-
-[Include picture here]
-
-In data linking, we refer to these collections of nodes as clusters, within which the nodes represent the entity to be linked (e.g. person or journey) and the edges represent a potential match.
-
-[Include picture here]
-
-Edges come with an associate Splink score (the probability of two records being a match). This makes graphs (clusters) produced by Splink so called weighted graphs, as each edge has a weight (Splink score).
-
-Graphs can also be directed or undirected. Directed (undirected) graphs are those in which edges (do not) have an associated direction. For example, ...
-
-[insert image]
-
-[Impact of directed versus non-directed on the definitions below...]
-[Are there any differences between our definitions and those in the literature?]
-
-Other properties of graphs such as self-loops and multi-edges are not be present in clusters produced with Splink.
-
 # Graph metrics
 
-Graph metrics quantify the characteristics of a graph (a cluster). A simple example of a graph metric is cluster size, which is the number of nodes in a cluster.
+Graph metrics quantify the characteristics of a graph. A simple example of a graph metric is cluster size, which is the number of nodes in a cluster.
 
 For data linking with Splink, it is useful to sort graph metrics into three categories:
-- cluster metrics, 
-- node metrics, and 
-- edge metrics
+* cluster metrics, 
+* node metrics, and 
+* edge metrics
 
 Each of these are defined below together with examples and how they can be applied to linked data to evaluate cluster quality. The examples given are of all metrics currently available in Splink.
 
