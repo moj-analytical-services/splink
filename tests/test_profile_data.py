@@ -32,6 +32,17 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
 
 
 @mark_with_dialects_including("duckdb")
+def test_profile_default_cols_duckdb():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    db_api = DuckDBAPI()
+
+    profile_columns(
+        df,
+        db_api,
+    )
+
+
+@mark_with_dialects_including("duckdb")
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["blank"] = None
