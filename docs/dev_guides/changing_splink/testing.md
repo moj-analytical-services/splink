@@ -130,8 +130,8 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 Splink utilises [github actions](https://docs.github.com/en/actions) to run tests for each pull request. This consists of a few independent checks:
 
 * The full test suite is run separately against several different python versions
-* The [example notebooks](../../demos/examples_index.html) are checked to ensure they run without error
-* The [tutorial notebooks](../../demos/00_Tutorial_Introduction.html) are checked to ensure they run without error
+* The [example notebooks](../../demos/examples/examples_index.md) are checked to ensure they run without error
+* The [tutorial notebooks](../../demos/tutorials/00_Tutorial_Introduction.html) are checked to ensure they run without error
 
 ## Writing tests
 

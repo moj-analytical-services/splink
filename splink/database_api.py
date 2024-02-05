@@ -26,20 +26,20 @@ from .dialects import (
     SplinkDialect,
     SQLiteDialect,
 )
+from .duckdb.dataframe import DuckDBDataFrame
 from .duckdb.duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
     validate_duckdb_connection,
 )
-from .duckdb.linker import DuckDBDataFrame
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .misc import ensure_is_list, major_minor_version_greater_equal_than
-from .postgres.linker import PostgresDataFrame
+from .postgres.dataframe import PostgresDataFrame
+from .spark.dataframe import SparkDataFrame
 from .spark.jar_location import get_scala_udfs
-from .spark.linker import SparkDataFrame
 from .splink_dataframe import SplinkDataFrame
-from .sqlite.linker import SQLiteDataFrame
+from .sqlite.dataframe import SQLiteDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -793,13 +793,13 @@ class PostgresAPI(DatabaseAPI):
         WHERE table_name = '{table_name}';
         """
 
-        rec = self._run_sql_execution(sql).fetchall()
+        rec = self._run_sql_execution(sql).mappings().all()
         return len(rec) > 0
 
     def _run_sql_execution(
         self, final_sql: str, templated_name: str = None, physical_name: str = None
     ):
-        with self._engine.connect() as con:
+        with self._engine.begin() as con:
             res = con.execute(text(final_sql))
         return res
 
@@ -915,7 +915,7 @@ class PostgresAPI(DatabaseAPI):
 
     def _create_splink_schema(self, other_schemas_to_search):
         other_schemas_to_search = ensure_is_list(other_schemas_to_search)
-        # always search _db_schema first, and public last
+        # always search _db_schema first and public last
         schemas_to_search = [self._db_schema] + other_schemas_to_search + ["public"]
         search_path = ",".join(schemas_to_search)
         sql = f"""

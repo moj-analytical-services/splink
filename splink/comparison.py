@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -81,7 +81,7 @@ class Comparison:
 
             self.comparison_levels.append(cl)
 
-        self._settings_obj: Settings = settings_obj
+        self._settings_obj: Optional[Settings] = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels
