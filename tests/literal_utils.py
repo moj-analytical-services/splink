@@ -1,35 +1,83 @@
 import json
+from typing import List, Type, Union
 
-import duckdb
 import pytest
-import sqlglot
-import sqlglot.expressions as exp
 
-import splink.comparison_level_library as cll
-from splink import exceptions
+from splink.comparison_creator import ComparisonCreator
+from splink.comparison_level_creator import ComparisonLevelCreator
 from splink.database_api import DuckDBAPI
-from splink.linker import Linker
 
 db_api = DuckDBAPI()
 
 
-def get_comparison_level(test_spec, test):
-    if "comparison_level" in test_spec:
-        return test_spec["comparison_level"]
-    else:
-        kwargs = test_spec.get("kwargs", {})
-        kwargs_overrides = test.get("kwargs_overrides", {})
-        kwargs.update(kwargs_overrides)
-        comparison_level_class = test_spec["comparison_level_class"]
-        return comparison_level_class(**kwargs)
+class ComparisonLevelTestSpec:
+    def __init__(
+        self,
+        comparison_level_or_class: Union[
+            ComparisonLevelCreator, Type[ComparisonLevelCreator]
+        ],
+        tests: List,
+        keyword_arg_overrides: dict = None,
+    ):
+        self.tests = tests
+        self.comparison_level_or_class = comparison_level_or_class
+        self.keyword_arg_overrides = keyword_arg_overrides
+
+    @property
+    def has_class_not_instance(self) -> bool:
+        if isinstance(self.comparison_level_or_class, type) and issubclass(
+            self.comparison_level_or_class, ComparisonLevelCreator
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def comparison_level_creator(self) -> ComparisonLevelCreator:
+        if self.has_class_not_instance:
+            return self.comparison_level_or_class(**self.keyword_arg_overrides)
+        else:
+            return self.comparison_level_or_class
+
+    def get_sql(self, sqlglot_name):
+        sql = self.comparison_level_creator.get_comparison_level("duckdb").sql_condition
+
+        return f"select {sql} as in_level from __splink__test_table"
 
 
-def get_sql(comparison_level, db_api):
-    sql = comparison_level.create_level_dict(db_api.sql_dialect.sqlglot_name)[
-        "sql_condition"
-    ]
+class ComparisonTestSpec:
+    def __init__(
+        self,
+        comparison_or_class: Union[ComparisonCreator, Type[ComparisonCreator]],
+        tests: List,
+        keyword_arg_overrides: dict = None,
+    ):
+        self.tests = tests
+        self.comparison_level_or_class = comparison_or_class
+        self.keyword_arg_overrides = keyword_arg_overrides
 
-    return f"select {sql} as in_level from __splink__test_table"
+    @property
+    def has_class_not_instance(self) -> bool:
+        if isinstance(self.comparison_level_or_class, type) and issubclass(
+            self.comparison_level_or_class, ComparisonCreator
+        ):
+            return True
+        else:
+            return False
+
+    @property
+    def comparison_creator(self) -> ComparisonCreator:
+        if self.has_class_not_instance:
+            return self.comparison_level_or_class(**self.keyword_arg_overrides)
+        else:
+            return self.comparison_level_or_class
+
+    def get_sql(self, sqlglot_name):
+        c = self.comparison_creator.get_comparison(sqlglot_name)
+        sqls = [cl._when_then_comparison_vector_value_sql for cl in c.comparison_levels]
+        sql = " ".join(sqls)
+        sql = f"CASE {sql} END "
+        return f"select {sql} as gamma_value from __splink__test_table"
 
 
 def execute_sql_for_test(sql, db_api):
@@ -38,27 +86,63 @@ def execute_sql_for_test(sql, db_api):
     ).as_pandas_dataframe()
 
 
-def run_tests_with_args(test_spec, db_api):
-    tests = test_spec["tests"]
+def run_tests_with_args(
+    test_spec: Union[ComparisonLevelTestSpec, ComparisonTestSpec], db_api: DuckDBAPI
+):
+    tests = (
+        test_spec.tests
+    )  # Assuming tests are now a list of LiteralTestValues objects
+    sqlglot_name = db_api.sql_dialect.sqlglot_name
     for test in tests:
-        sqlglot_dialects = test.get(
-            "sqlglot_dialects", [db_api.sql_dialect.sqlglot_name]
-        )
-        if db_api.sql_dialect.sqlglot_name not in sqlglot_dialects:
-            continue
+        if test.sql_dialects:
+            if sqlglot_name not in test.sql_dialects:
+                continue
 
-        comparison_level = get_comparison_level(test_spec, test)
-        sql = get_sql(comparison_level, db_api)
-        table_as_dict = [test["values"]]
+        sql = test_spec.get_sql(sqlglot_name)
+
+        # Adjust to the structure of LiteralTestValues
+
+        table_as_dict = test.vals_for_df
         db_api._delete_table_from_database("__splink__test_table")
         db_api._table_registration(table_as_dict, "__splink__test_table")
 
-        if "expected_exception" in test:
-            with pytest.raises(test["expected_exception"]):
-                in_level = execute_sql_for_test(sql, db_api).iloc[0, 0]
+        if test.expected_exception:
+            with pytest.raises(test.expected_exception):
+                actual_value = execute_sql_for_test(sql, db_api).iloc[0, 0]
             continue
 
-        in_level = execute_sql_for_test(sql, db_api).iloc[0, 0]
+        actual_value = execute_sql_for_test(sql, db_api).iloc[0, 0]
+
+        # Determine the expected result based on the type of test_spec
+        if isinstance(test_spec, ComparisonTestSpec):
+            expected_result = test.expected_gamma_val
+        else:  # Assuming it's ComparisonLevelTestSpec or similar
+            expected_result = test.expected_in_level
+
         assert (
-            in_level == test["expected_to_be_in_level"]
-        ), f"Failed test: values={json.dumps(test)}, sql={sql}"
+            actual_value == expected_result
+        ), f"Failed test: values={json.dumps(test.values)}, sql={sql}"
+
+
+class LiteralTestValues:
+    def __init__(
+        self,
+        values,
+        *,
+        expected_in_level=None,
+        expected_gamma_val=None,
+        sql_dialects=None,
+        keyword_arg_overrides=None,
+        expected_exception=None,
+    ):
+        self.values = values
+
+        self.expected_in_level = expected_in_level
+        self.expected_gamma_val = expected_gamma_val
+        self.sql_dialects = sql_dialects
+        self.keyword_arg_overrides = keyword_arg_overrides
+        self.expected_exception = expected_exception
+
+    @property
+    def vals_for_df(self):
+        return [self.values]
