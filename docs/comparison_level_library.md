@@ -21,7 +21,23 @@ However, not every comparison level is available for every [Splink-compatible SQ
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
+||:simple-duckdb: <br> DuckDB|:simple-apachespark: <br> Spark|:simple-amazonaws: <br> Athena|:simple-sqlite: <br> SQLite|:simple-postgresql: <br> PostgreSql|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|[array_intersect_level](#splink.comparison_level_library.ArrayIntersectLevelBase)|✓|✓|✓||✓|
+|[columns_reversed_level](#splink.comparison_level_library.ColumnsReversedLevelBase)|✓|✓|✓|✓|✓|
+|[damerau_levenshtein_level](#splink.comparison_level_library.DamerauLevenshteinLevelBase)|✓|✓||✓||
+|[datediff_level](#splink.comparison_level_library.DatediffLevelBase)|✓|✓|✓||✓|
+|[distance_function_level](#splink.comparison_level_library.DistanceFunctionLevelBase)|✓|✓|✓|✓|✓|
+|[distance_in_km_level](#splink.comparison_level_library.DistanceInKmLevelBase)|✓|✓|✓||✓|
+|[else_level](#splink.comparison_level_library.ElseLevelBase)|✓|✓|✓|✓|✓|
+|[exact_match_level](#splink.comparison_level_library.ExactMatchLevelBase)|✓|✓|✓|✓|✓|
+|[jaccard_level](#splink.comparison_level_library.JaccardLevelBase)|✓|✓||||
+|[jaro_level](#splink.comparison_level_library.JaroLevelBase)|✓|✓||✓||
+|[jaro_winkler_level](#splink.comparison_level_library.JaroWinklerLevelBase)|✓|✓||✓||
+|[levenshtein_level](#splink.comparison_level_library.LevenshteinLevelBase)|✓|✓|✓|✓|✓|
+|[null_level](#splink.comparison_level_library.NullLevelBase)|✓|✓|✓|✓|✓|
+|[percentage_difference_level](#splink.comparison_level_library.PercentageDifferenceLevelBase)|✓|✓|✓|✓|✓|
+
 
 
 
