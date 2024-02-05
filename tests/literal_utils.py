@@ -126,27 +126,7 @@ def run_tests_with_args(
         if db_api.table_exists_in_database("__splink__test_table"):
             db_api._delete_table_from_database("__splink__test_table")
 
-        if sqlglot_name != "postgres":
-            db_api._table_registration(table_as_dict, "__splink__test_table")
-        else:
-            dtypes = {}
-            df = pd.DataFrame(table_as_dict)
-            for colname, values in df.items():
-                # TODO: will fail if first value is null
-                if isinstance(values[0], list):
-                    # TODO: will fail if first array is empty
-                    initial_array_val = values[0][0]
-                    if isinstance(initial_array_val, int):
-                        dtypes[colname] = postgresql.ARRAY(INTEGER)
-                    elif isinstance(initial_array_val, str):
-                        dtypes[colname] = postgresql.ARRAY(TEXT)
-            df.to_sql(
-                "__splink__test_table",
-                con=db_api._engine,
-                schema=db_api._db_schema,
-                if_exists="replace",
-                dtype=dtypes,
-            )
+        db_api._table_registration(table_as_dict, "__splink__test_table")
 
         if test.expected_exception:
             with pytest.raises(test.expected_exception):
