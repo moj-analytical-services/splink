@@ -22,6 +22,7 @@ class ComparisonSettingsException(SplinkException):
     def __init__(self, message=""):
         # Add the default message to the beginning of the provided message
         full_message = "Errors were detected in your settings object's comparisons"
+
         if message:
             full_message += "\n" + message
         super().__init__(full_message)
