@@ -2,23 +2,38 @@ This guide is intended to be a reference guide for Edge Metrics used throughout 
 
 ## The Basics
 
-### True Positive
+Any Edge (Link) within a Splink model will fall into one of four categories:
 
-### True Negative
+#### 1. True Positive
 
-### False Positive
+A True Positive is a case where a Splink model correctly identifies a match between two records.
 
-Also referred to as a Type I Error
+#### 2. True Negative
 
-### False Negative
+A True Negative is a case where a Splink model correctly identifies a non-match between two records.
+
+#### 3. False Positive
+
+A False Positive is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
+
+Also referred to as a Type I Error.
+
+#### 4. False Negative
+
+A False Negative is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
 
 Also referred to as a Type II Error
 
 ### Confusion Matrix
 These can be summarised in a Confusion Matrix
 
-![](./image/confusion_matrix.drawio.png)
+![](./image/confusion_matrix.drawio.png){:style="height:500px;width:600px"}
+
+In a perfect model there would be no False Positives or False Negatives (i.e. FP = 0 and FN = 0).
 
 ## Metrics for Linkage
 
-The confusion matrix consists of number
+The confusion matrix shows **counts** of each link type, but we are generally more interested in **proportions**. I.e. what percentage of the time do the model get the answer right?
+
+
+![](./image/confusion_matrix_2.drawio.png){:style="height:500px;width:600px"}
