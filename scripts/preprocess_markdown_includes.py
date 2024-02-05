@@ -49,8 +49,6 @@ with open(Path(".") / "CONTRIBUTING.md", "r") as f:
     contributing_text = f.read()
 # in docs CONTRIBUTING.md 'thinks' it's already in docs/, so remove that level from
 # relative links
-new_text = re.sub(
-    "docs/", "", contributing_text
-)
+new_text = re.sub("docs/", "", contributing_text)
 with open(Path(".") / "CONTRIBUTING.md", "w") as f:
     f.write(new_text)

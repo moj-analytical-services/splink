@@ -22,6 +22,7 @@ class ComparisonSettingsException(SplinkException):
     def __init__(self, message=""):
         # Add the default message to the beginning of the provided message
         full_message = "Errors were detected in your settings object's comparisons"
+        
         if message:
             full_message += "\n" + message
         super().__init__(full_message)
@@ -88,9 +89,7 @@ class ErrorLogger:
         else:
             raise ValueError("Error must be a string or an Exception instance.")
 
-    def raise_and_log_all_errors(
-        self, exception: Exception = SplinkException, additional_txt=""
-    ) -> Exception:
+    def raise_and_log_all_errors(self, exception=SplinkException, additional_txt=""):
         """Raise a custom exception with all logged errors.
 
         Args:
