@@ -154,8 +154,8 @@ def create_invalid_comparison_level_log_string(
     )
 
     log_message = (
-        f"\nThe comparison `{comparison_string}` contains the following invalid levels:\n"
-        f"{invalid_levels_str}\n\n"
+        f"\nThe comparison `{comparison_string}` contains the following invalid "
+        f"levels:\n{invalid_levels_str}\n\n"
         "Please only include dictionaries or objects of "
         "the `ComparisonLevel` class."
     )
