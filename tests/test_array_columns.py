@@ -10,7 +10,7 @@ from tests.literal_utils import (
 
 
 # No SQLite - no array comparisons in library
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "spark")
 def test_array_comparison_1(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
