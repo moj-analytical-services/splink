@@ -247,10 +247,9 @@ def profile_columns(
 
     if not column_expressions:
         column_expressions_raw = input_columns
-        column_expressions = expressions_to_sql(input_columns)
     else:
         column_expressions_raw = ensure_is_list(column_expressions)
-        column_expressions = expressions_to_sql(column_expressions_raw)
+    column_expressions = expressions_to_sql(column_expressions_raw)
 
     pipeline = SQLPipeline()
 
