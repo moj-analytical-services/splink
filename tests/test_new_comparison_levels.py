@@ -364,7 +364,6 @@ def test_valid_custom_dialect():
 
 
 def test_invalid_dialect():
-
     # force garbage collection so we forget about any other test dialects
     # previously defined
     gc.collect()
