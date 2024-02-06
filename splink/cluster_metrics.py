@@ -181,11 +181,10 @@ def _bridges_from_igraph_sql(
 
 def _full_bridges_sql(
     df_truncated_edges: SplinkDataFrame,
-    df_bridges_only: SplinkDataFrame,
+    bridges_only_table_name: str,
     composite_uid_edges_l: str,
     composite_uid_edges_r: str,
 ):
-    # TODO: instead of joining could we union with missing rows?
     sql = f"""
         SELECT
             e.{composite_uid_edges_l} AS composite_unique_id_l,
@@ -194,7 +193,7 @@ def _full_bridges_sql(
         FROM
         {df_truncated_edges.physical_name} e
         LEFT JOIN
-        {df_bridges_only.physical_name} b
+        {bridges_only_table_name} b
         ON
             e.{composite_uid_edges_l} = b.node_l
         AND e.{composite_uid_edges_r} = b.node_r

@@ -2238,11 +2238,10 @@ class Linker:
         # map our bridge edges back to the original node labelling
         sql_info = _bridges_from_igraph_sql(df_node_mappings, df_bridges)
         self._enqueue_sql(**sql_info)
-        df_bridges_only = self._execute_sql_pipeline()
         # and adjoin edges which are _not_ bridges, labelling them as such
         sql_info = _full_bridges_sql(
             df_truncated_edges,
-            df_bridges_only,
+            sql_info["output_table_name"],
             composite_uid_edges_l,
             composite_uid_edges_r,
         )
