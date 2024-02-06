@@ -30,9 +30,6 @@ If you don't have an intuition of what seems reasonable, then it is worth inspec
 
 There also might be a lower bound on cluster size. For example, when linking two datasets in which you know people appear least once in each, the minimum expected size of cluster will be 2. Clusters smaller than the minimum size indicate links have been missed. This could be due to blocking rules not letting through all record comparisons of true matches.
 
-Lisewise, the modal cluster size...bimodal distributions.
-
-
 ### Example: cluster density
 
 The density of a cluster is given by the number of edges it contains divided by the maximum possible number of edges. Density ranges from 0 to 1. A density of 1 means that all nodes are connected to all other nodes in a cluster.
@@ -44,9 +41,9 @@ When evaluating clusters, a high density (closer to 1) is generally considered g
 A low density could indicate links being missed. This could happen for example if blocking rules are too tight or the clustering threshold is too high.
 A sample of low density clusters can be inspected in Splink Cluster Studio Dashboard with the option `sampling_method = "lowest_density_clusters_by_size"`. When inspecting a cluster, ask yourself the question: why aren't more links being formed between record nodes?
 
-Bear in mind, small clusters are more likely to achieve a higher density as fewer record comparisons are required to form the maximum edges possible (for instance, a density of 0.66 for a cluster of size 3 can be achieved with only 2 comparisons).
+Bear in mind, small clusters are more likely to achieve a higher density as fewer record comparisons are required to form the maximum edges possible (for instance, a maximum density of 1 for a cluster of size 3 can be achieved with only 3 record comparisons).
 
-So it's important to consider a range of sizes when looking evaluating density so ensure you're not just focussed on very big clusters. Smaller clusters can also have the advantage of being easier to spot-check by eye. This is why Cluster Studio Dashboard option `sampling_method = "lowest_density_clusters_by_size"` performs stratified sampling across different cluster sizes.
+So it's important to consider a range of sizes when evaluating density to ensure you're not just focussed on very big clusters. Smaller clusters also have the advantage of being easier to assess by eye. This is why the Cluster Studio Dashboard option `sampling_method = "lowest_density_clusters_by_size"` performs stratified sampling across different cluster sizes.
 
 <!-- With each increase in N, the number of possible edges increases. It might be 'harder' for bigger clusters to attain a higher density because blocking rules may prevent all record comparisons of nodes within a cluster. -->
 
@@ -60,13 +57,13 @@ Node metrics quantify the properties of the nodes within clusters.
 
 ### Example: node degree
 
-A node degree is the number of edges (links) connected to a node.
+Node degree is the number of edges (links) connected to a node.
 
-<!-- within clusters or across clusters?
+High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
 
-High node degree also places more pressure on a node to be a legitimate member of a cluster as its removal could dramatically change the cluster’s structure. Therefore...  -->
+However, erroneous links (false positives) could also be the reason for high node degree, so it can be worth inspecting the edges of highly connected nodes.
 
-Low node degree
+Just like with density it is important to bear in mind custer size when looking at node degree, as bigger clusters can achieve higher node degree than smaller ones. Low node degree for bigger clusters can be more significant than for smaller clusters.
 
 [TBC]
 
@@ -82,4 +79,4 @@ An edge is classified as a bridge if its removal splits a cluster into two small
 
 Bridges can be signalers of false positives in linked data, especially when joining two highly connected clusters. Examining bridges can shed light on potential errors in the linking process leading to false positive links.
 
-To see how to compute these metrics in Splink, see the next chapter, [How to...]()
+A guide on [how to compute these graph metrics with Splink]() is given in the next chapter.
