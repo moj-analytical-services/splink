@@ -44,12 +44,16 @@ class Settings:
         self._settings_dict = settings_dict
         s_else_d = self._from_settings_dict_else_default
         ccs = self._settings_dict["comparisons"]
-        # TODO: I think this should _not_ be dialected
+        # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []
         for cc in ccs:
-            self.comparisons.append(Comparison(**cc, settings_obj=self))
+            self.comparisons.append(
+                Comparison(
+                    **cc, settings_obj=self, sqlglot_dialect_name=self._sql_dialect
+                )
+            )
 
         self._link_type = s_else_d("link_type")
         self._probability_two_random_records_match = s_else_d(

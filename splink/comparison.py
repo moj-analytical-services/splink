@@ -58,6 +58,7 @@ class Comparison:
     def __init__(
         self,
         comparison_levels: List[ComparisonLevel],
+        sqlglot_dialect_name: str,
         output_column_name: str = None,
         comparison_description: str = None,
         settings_obj: Settings = None,
@@ -87,6 +88,7 @@ class Comparison:
 
         self._settings_obj: Optional[Settings] = settings_obj
 
+        self.sqlglot_dialect_name = sqlglot_dialect_name
         self.output_column_name = (
             output_column_name or self._default_output_column_name()
         )
@@ -118,16 +120,14 @@ class Comparison:
         # want comparison levels to always be ComparisonLevel, not dict
         comparison_dict = deepcopy(self.as_dict())
         comparison_dict["comparison_levels"] = [
-            ComparisonLevel(
-                **cl_dict,
-                # TODO: Comparison should also store dialect
-                sqlglot_dialect_name=None
-                if self._settings_obj is None
-                else self._settings_obj._sql_dialect,
-            )
+            ComparisonLevel(**cl_dict, sqlglot_dialect_name=self.sqlglot_dialect_name)
             for cl_dict in comparison_dict["comparison_levels"]
         ]
-        cc = Comparison(**comparison_dict, settings_obj=self._settings_obj)
+        cc = Comparison(
+            **comparison_dict,
+            sqlglot_dialect_name=self.sqlglot_dialect_name,
+            settings_obj=self._settings_obj,
+        )
         return cc
 
     @property

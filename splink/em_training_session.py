@@ -407,10 +407,7 @@ class EMTrainingSession:
 
     def __repr__(self):
         deactivated_cols = ", ".join(
-            [
-                cc.output_column_name
-                for cc in self._comparisons_that_cannot_be_estimated
-            ]
+            [cc.output_column_name for cc in self._comparisons_that_cannot_be_estimated]
         )
         blocking_rule = self._blocking_rule_for_training.blocking_rule_sql
         return (

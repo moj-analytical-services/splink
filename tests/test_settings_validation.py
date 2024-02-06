@@ -218,8 +218,8 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
         check_comparison_for_missing_or_invalid_sql_strings(
             sql_dialect="duckdb",
             comparisons_to_check=[
-                Comparison(**email_comparison_to_check),
-                Comparison(**city_comparison_to_check),
+                Comparison(**email_comparison_to_check, sqlglot_dialect_name="duckdb"),
+                Comparison(**city_comparison_to_check, sqlglot_dialect_name="duckdb"),
                 LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
             valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
