@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -55,17 +55,21 @@ class Comparison:
 
     """
 
-    def __init__(self, comparison_dict, settings_obj: Settings = None):
-        # Protected because we don't want to modify
-        self._comparison_dict = comparison_dict
-        comparison_level_list = comparison_dict["comparison_levels"]
+    def __init__(
+        self,
+        comparison_levels: List[ComparisonLevel],
+        output_column_name: str = None,
+        comparison_description: str = None,
+        settings_obj: Settings = None
+    ):
+
         self.comparison_levels: list[ComparisonLevel] = []
 
         # If comparison_levels are already of type ComparisonLevel, register
         # the settings object on them
         # otherwise turn the dictionaries into ComparisonLevel
 
-        for cl in comparison_level_list:
+        for cl in comparison_levels:
             if isinstance(cl, ComparisonLevel):
                 cl.comparison = self
             else:
