@@ -27,5 +27,4 @@ done
 
 ruff --show-source splink/
 ruff --show-source tests/
-ruff --show-source benchmarking/
 ruff --show-source scripts/

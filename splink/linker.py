@@ -236,6 +236,8 @@ class Linker:
             input_table_aliases,
         )
 
+        self._validate_input_dfs()
+        self._validate_settings(validate_settings)
         self._em_training_sessions = []
 
         self._find_new_matches_mode = False
@@ -316,14 +318,14 @@ class Linker:
 
     @property
     def _cache_uid(self):
-        if getattr(self, "_settings_dict", None):
+        if self._settings_dict:
             return self._settings_obj._cache_uid
         else:
             return self._cache_uid_no_settings
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if getattr(self, "_settings_dict", None):
+        if self._settings_dict:
             self._settings_obj._cache_uid = value
         else:
             self._cache_uid_no_settings = value
@@ -478,13 +480,23 @@ class Linker:
         else:
             return True
 
+    def _validate_settings_components(self, settings_dict):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if settings_dict is None:
+            return
+
+        log_comparison_errors(
+            # null if not in dict - check using value is ignored
+            settings_dict.get("comparisons", None),
+            self._sql_dialect,
+        )
+
     def _validate_settings(self, validate_settings):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
             return
-
-        self._validate_input_dfs()
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
@@ -3554,11 +3566,6 @@ class Linker:
         will be recomputed.
         This is useful, for example, if the input data tables have changed.
         """
-
-        # Nothing to delete
-        if len(self._intermediate_table_cache) == 0:
-            return
-
         # Before Splink executes a SQL command, it checks the cache to see
         # whether a table already exists with the name of the output table
 
