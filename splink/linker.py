@@ -2990,7 +2990,9 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: list[dict], filter_nulls=True, hide_details=False):
+    def waterfall_chart(
+        self, records: list[dict], filter_nulls=True, hide_details=False
+    ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
