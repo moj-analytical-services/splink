@@ -49,7 +49,7 @@ class Settings:
 
         self.comparisons: list[Comparison] = []
         for cc in ccs:
-            self.comparisons.append(Comparison(cc, self))
+            self.comparisons.append(Comparison(**cc, settings_obj=self))
 
         self._link_type = s_else_d("link_type")
         self._probability_two_random_records_match = s_else_d(

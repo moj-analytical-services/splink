@@ -127,7 +127,7 @@ class Comparison:
             )
             for cl_dict in comparison_dict["comparison_levels"]
         ]
-        cc = Comparison(comparison_dict, self._settings_obj)
+        cc = Comparison(**comparison_dict, settings_obj=self._settings_obj)
         return cc
 
     @property
