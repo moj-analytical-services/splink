@@ -24,9 +24,9 @@ Cluster metrics refer to the characteristics of a cluster as a whole, rather tha
 
 Cluster size refers to the number of nodes within a cluster.
 
-When thinking about cluster size, it is important to consider the size of the biggest clusters produced and ask yourself, does this seem reasonable for the dataset being linked? For example, does it make sense that one person is appearing hundreds of times in the data resulting in a cluster of over 100 nodes? If the answer is no, then false positives links are probably being formed. This could be due to having blocking rules which are too loose or the clustering threshold which is too low.
+When thinking about cluster size, it is important to consider the size of the biggest clusters produced and ask yourself, does this seem reasonable for the dataset being linked? For example, does it make sense that one person is appearing hundreds of times in the linked data resulting in a cluster of over 100 nodes? If the answer is no, then false positives links are probably being formed. This could be due to having blocking rules which are too loose or a clustering threshold which is too low.
 
-If you don't have an intuition of what seems reasonable, then it is worth inspecting a sample of the largest clusters in Splink Cluster Studio to validate or invalidate links. From there you can develop an understanding of what maximum cluster size to expect.
+If you don't have an intuition of what seems reasonable, then it is worth inspecting a sample of the largest clusters in Splink's [Cluster Studio Dashboard]() to validate or invalidate links. From there you can develop an understanding of what maximum cluster size to expect.
 
 There also might be a lower bound on cluster size. For example, when linking two datasets in which you know people appear least once in each, the minimum expected size of cluster will be 2. Clusters smaller than the minimum size indicate links have been missed. This could be due to blocking rules not letting through all record comparisons of true matches.
 
@@ -38,12 +38,12 @@ The density of a cluster is given by the number of edges it contains divided by 
 
 When evaluating clusters, a high density (closer to 1) is generally considered good as it means there are many edges in support of the records in a cluster being linked.
 
-A low density could indicate links being missed. This could happen for example if blocking rules are too tight or the clustering threshold is too high.
+A low density could indicate links being missed. This could happen, for example, if blocking rules are too tight or the clustering threshold is too high.
 A sample of low density clusters can be inspected in Splink Cluster Studio Dashboard with the option `sampling_method = "lowest_density_clusters_by_size"`. When inspecting a cluster, ask yourself the question: why aren't more links being formed between record nodes?
 
-Bear in mind, small clusters are more likely to achieve a higher density as fewer record comparisons are required to form the maximum edges possible (for instance, a maximum density of 1 for a cluster of size 3 can be achieved with only 3 record comparisons).
+Bear in mind, small clusters are more likely to achieve a higher density as fewer record comparisons are required to form the maximum edges possible (the maximum density of 1 for a cluster of size 3 can be achieved with only 3 pairwise record comparisons).
 
-So it's important to consider a range of sizes when evaluating density to ensure you're not just focussed on very big clusters. Smaller clusters also have the advantage of being easier to assess by eye. This is why the Cluster Studio Dashboard option `sampling_method = "lowest_density_clusters_by_size"` performs stratified sampling across different cluster sizes.
+So, it's important to consider a range of sizes when evaluating density to ensure you're not just focussed on very big clusters. Smaller clusters also have the advantage of being easier to assess by eye. This is why the option `sampling_method = "lowest_density_clusters_by_size"` performs stratified sampling across different cluster sizes.
 
 <!-- With each increase in N, the number of possible edges increases. It might be 'harder' for bigger clusters to attain a higher density because blocking rules may prevent all record comparisons of nodes within a cluster. -->
 
@@ -57,15 +57,13 @@ Node metrics quantify the properties of the nodes within clusters.
 
 ### Example: node degree
 
-Node degree is the number of edges (links) connected to a node.
+Node degree is the number of edges connected to a node.
 
 High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
 
-However, erroneous links (false positives) could also be the reason for high node degree, so it can be worth inspecting the edges of highly connected nodes.
+However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to inspect the edges of highly connected nodes.
 
-Just like with density it is important to bear in mind custer size when looking at node degree, as bigger clusters can achieve higher node degree than smaller ones. Low node degree for bigger clusters can be more significant than for smaller clusters.
-
-[TBC]
+Just like with density it is important to bear in mind custer size when looking at node degree. By consequence of having more nodes to form links between, nodes within bigger clusters can achieve higher node degree than those in smaller ones, meaning that low node degree for big clusters can be more significant.
 
 ## 🔗 Edge metrics
 
