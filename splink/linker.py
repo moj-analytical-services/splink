@@ -236,8 +236,6 @@ class Linker:
             input_table_aliases,
         )
 
-        self._setup_settings_objs(deepcopy(settings_dict), validate_settings)
-
         self._em_training_sessions = []
 
         self._find_new_matches_mode = False
@@ -448,22 +446,25 @@ class Linker:
             input_tables, input_table_aliases, overwrite
         )
 
-    def _setup_settings_objs(self, settings_dict, validate_settings: bool = True):
-        # Always sets a default cache uid -> _cache_uid_no_settings
-        self._cache_uid = ascii_uid(8)
+    def _setup_settings_objs(self, settings_dict):
+        # Setup the linker class's required settings
+        self._settings_dict = settings_dict
+
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
+        if settings_dict is None:
+            self._cache_uid_no_settings = ascii_uid(8)
+        else:
+            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            settings_dict["linker_uid"] = uid
 
         if settings_dict is None:
             self._settings_obj_ = None
-            return
-
-        if not isinstance(settings_dict, (str, dict)):
-            raise ValueError(
-                "Invalid settings object supplied. Ensure this is either "
-                "None, a dictionary or a filepath to a settings object saved "
-                "as a json file."
-            )
-
-        self.load_settings(settings_dict, validate_settings)
+        else:
+            self._settings_obj_ = Settings(settings_dict)
 
     def _check_for_valid_settings(self):
         if (
@@ -1047,21 +1048,29 @@ class Linker:
             settings_dict = json.loads(p.read_text())
 
         # Store the cache ID so it can be reloaded after cache invalidation
-        cache_uid = self._cache_uid
+        cache_id = self._cache_uid
+        # So we don't run into any issues with generated tables having
+        # invalid columns as settings have been tweaked, invalidate
+        # the cache and allow these tables to be recomputed.
 
-        # Invalidate the cache if anything currently exists. If the settings are
-        # changing, our charts, tf tables, etc may need changing.
+        # This is less efficient, but triggers infrequently and ensures we don't
+        # run into issues where the defaults used conflict with the actual values
+        # supplied in settings.
+
+        # This is particularly relevant with `source_dataset`, which appears within
+        # concat_with_tf.
         self.invalidate_cache()
 
-        self._settings_dict = settings_dict  # overwrite or add
-
-        # Get the SQL dialect from settings_dict or use the default
-        sql_dialect = settings_dict.get("sql_dialect", self._sql_dialect)
+        # If a uid already exists in your settings object, prioritise this
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
 
         self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
-        # Check the final settings object
+        self._validate_input_dfs()
         self._validate_settings(validate_settings)
 
     def load_model(self, model_path: Path):
