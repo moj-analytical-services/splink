@@ -87,10 +87,11 @@ class Comparison:
 
         self._settings_obj: Optional[Settings] = settings_obj
 
+        self._output_column_name = (
+            output_column_name or self._default_output_column_name()
+        )
         self.comparison_description = (
-            comparison_description
-            if comparison_description is not None
-            else self._default_comparison_description()
+            comparison_description or self._default_comparison_description()
         )
 
         # Assign comparison vector values starting at highest level, count down to 0
@@ -192,17 +193,12 @@ class Comparison:
 
         return deduped_cols
 
-    @property
-    def _output_column_name(self):
-        if "output_column_name" in self._comparison_dict:
-            return self._comparison_dict["output_column_name"]
-        else:
-            cols = self._input_columns_used_by_case_statement
-            cols = [c.input_name for c in cols]
-            if len(cols) == 1:
-                return cols[0]
-            else:
-                return f"custom_{'_'.join(cols)}"
+    def _default_output_column_name(self):
+        cols = self._input_columns_used_by_case_statement
+        cols = [c.input_name for c in cols]
+        if len(cols) == 1:
+            return cols[0]
+        return f"custom_{'_'.join(cols)}"
 
     def _default_comparison_description(self):
         return self._output_column_name
