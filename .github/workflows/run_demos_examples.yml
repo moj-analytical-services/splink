@@ -61,6 +61,12 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
       #----------------------------------------------
+      #       pip install additional requirements
+      #----------------------------------------------
+      - name: Install additional requirements from demos_requirements.txt
+        run: |
+          poetry run pip install -r docs/demos/data/demos_requirements.txt
+      #----------------------------------------------
       # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
       - name: Modify Notebooks to reduce data size
