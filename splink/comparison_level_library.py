@@ -514,27 +514,41 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
-class DatediffLevel(ComparisonLevelCreator):
+class DateDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
         date_threshold: int,
-        date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
+        date_metric: str = "day",
     ):
-        """A comparison level using a date difference function
+        """
+        Computes the absolute elapsed time between two dates (total duration).
 
-        e.g. abs(date_diff('day', "mydate_l", "mydate_r")) <= 2  (duckdb dialect)
+        This function computes the amount of time that has passed between two dates,
+        in contrast to functions like `date_diff` found in some SQL backends,
+        which count the number of full calendar intervals (e.g., months, years) crossed.
+
+        For instance, the difference between January 29th and March 2nd would be less
+        than two months in terms of elapsed time, unlike a `date_diff` calculation that
+        would give an answer of 2 calendar intervals crossed.
+
+        That the thresold is inclusive e.g. a level with a 10 day threshold
+        will include difference in date of 10 days.
 
         Args:
-            col_name (str): Input column name
-            date_threshold (int): The threshold for the date difference
-            date_metric (str): The unit of time ('day', 'month', 'year')
-                for the threshold
-            cast_strings_to_date (bool): Whether to cast string columns to date format
-            date_format (str): The format of the date string
+            col_name (str): The name of the input column containing the dates to compare.
+            date_threshold (int): The maximum allowed difference between the two dates,
+                in units specified by `date_metric`.
+            date_metric (str): The unit of time to use when comparing the dates.
+                Can be 'day', 'month', or 'year'.
+            cast_strings_to_date (bool): If True, the function will automatically
+                convert string columns to date format before comparing.
+            date_format (str): The format of the date strings in `col_name`,
+                if `cast_strings_to_date` is True. This should be a format string
+                suitable for use with the `DATE_FORMAT` function.
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_threshold = validate_numeric_parameter(
+        self.date_threshold_raw = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=float("inf"),
             parameter_value=date_threshold,
@@ -547,6 +561,13 @@ class DatediffLevel(ComparisonLevelCreator):
             level_name=self.__class__.__name__,
             parameter_name="date_metric",
         )
+        if date_metric == "day":
+            self.date_threshold_days = self.date_threshold_raw
+        if date_metric == "month":
+            self.date_threshold_days = self.date_threshold_raw * 365.25 / 12
+
+        if date_metric == "year":
+            self.date_threshold_days = self.date_threshold_raw * 365.25
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -561,16 +582,13 @@ class DatediffLevel(ComparisonLevelCreator):
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
 
-        if hasattr(sql_dialect, "date_diff"):
-            return sql_dialect.date_diff(self)
-
         # Use col as placeholder here because there's no guarantee the complex
         # transformed ColumnExpression will autotranspile
         sqlglot_base_dialect_sql = (
-            f"ABS(DATE_DIFF(___col____l, "
-            f"___col____r, '{self.date_metric}'))"
-            f"<= {self.date_threshold}"
+            f"ABS(cast(___col____l as date) - cast(___col____r as date)) "
+            f"<= {self.date_threshold_days}"
         )
+
         sqlglot_dialect_name = sql_dialect.sqlglot_name
         translated = _translate_sql_string(
             sqlglot_base_dialect_sql, sqlglot_dialect_name
@@ -584,7 +602,7 @@ class DatediffLevel(ComparisonLevelCreator):
         col = self.col_expression
         return (
             f"Date difference of '{col.label} <= "
-            f"{self.date_threshold} {self.date_metric}'"
+            f"{self.date_threshold_raw} {self.date_metric}'"
         )
 
 
