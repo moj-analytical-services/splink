@@ -31,7 +31,7 @@ Whatever the starting point, this topic guide is designed to help users develop 
 ## What this topic guide contains
 
 * An introduction to the [graph metrics]() currently available in Splink and how to apply them to linked data
-* A how-to guide on computing graph metrics in Splink
+* Instructions on how to compute graph metrics with Splink
 
 This topic guide is a work is work in progress and will be updated as new functionality and metrics are released.
 
