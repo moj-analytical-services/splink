@@ -3012,8 +3012,8 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
-            hide_details (bool, optional): When True, the Waterfall chart will render 
-                without showing the details of each record being compared. 
+            hide_details (bool, optional): When True, the Waterfall chart will render
+                without showing the details of each record being compared.
 
 
         Returns:
