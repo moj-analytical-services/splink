@@ -173,7 +173,7 @@ def create_invalid_comparison_log_string(
 
     log_message = (
         f"\n{comparison_string}\n"
-        f"{type_msg} and cannot be used as a standalone comparison.\n"
+        f"{type_msg} and must be nested within a comparison.\n"
         "Please only include dictionaries or objects of the `Comparison` class.\n"
     )
     return indent_error_message(log_message)
