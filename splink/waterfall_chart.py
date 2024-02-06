@@ -79,10 +79,10 @@ def _comparison_records(record_as_dict, comparison: Comparison, hide_details=Fal
     output_records.append(waterfall_record)
     # Term frequency record if needed
 
-    if c._has_tf_adjustments and hide_details == False:
+    if c._has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
 
-        if cl._tf_adjustment_input_column is not None:
+        if cl._tf_adjustment_input_column is not None and hide_details == False:
             waterfall_record_2["value_l"] = str(
                 record_as_dict[cl._tf_adjustment_input_column.unquote().name_l]
             )
