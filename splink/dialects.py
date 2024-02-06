@@ -105,7 +105,7 @@ class SplinkDialect(ABC):
         return nullif_wrapped_function
 
     def try_parse_date(self, name: str, date_format: str = None):
-        return self._wrap_in_nullif(self._try_parse_date_raw)(name, date_format)
+        return self._try_parse_date_raw(name, date_format)
 
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         raise NotImplementedError(
