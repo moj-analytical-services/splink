@@ -41,7 +41,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: '1.7.0'
+          version: "1.7.0"
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -78,5 +78,4 @@ jobs:
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
-          pip install pytest-xdist
           python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
