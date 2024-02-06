@@ -338,7 +338,9 @@ def test_is_bridge(dialect, test_helpers):
     df_clustered = linker.register_table(helper.convert_frame(df_c), "br_clusters")
 
     # linker.debug_mode = True
-    cm = linker._compute_graph_metrics(df_predict, df_clustered, threshold_match_probability=0.95)
+    cm = linker._compute_graph_metrics(
+        df_predict, df_clustered, threshold_match_probability=0.95
+    )
     df_em = cm.edges.as_pandas_dataframe()
 
     for row in df_e.iterrows():
