@@ -16,7 +16,6 @@ from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
-from sqlalchemy.engine.url import URL
 
 from .cache_dict_with_logging import CacheDictWithLogging
 from .databricks.enable_splink import enable_splink
