@@ -20,16 +20,18 @@ Generating clusters which all adhere to this ideal is rare in practice. Blocking
 
 ### What does cluster quality look like for you?
 
-The extent of cluster evaluation efforts and what is considered 'good enough' will vary greatly with linkage use-case.
-You might already have gold standard, labelled data or quality assured outputs from another model which define a clear benchmark for cluster quality.
+The extent of cluster evaluation efforts and what is considered 'good enough' will vary greatly with linkage use-case. You might already have labelled data or quality assured outputs from another model which define a clear benchmark for cluster quality.
 
-Domain knowledge is also very instructive for guiding evaluation efforts and setting expectations of what is considered reasonable or good. For example, you might already know that a large cluster (containing say 100 nodes) is suspicious for a your deduped dataset.
+Domain knowledge can also set expectations of what is deemed reasonable or good. For example, you might already know that a large cluster (containing say 100 nodes) is suspicious for a your deduplicated dataset.
 
-However, you may also have little or no clear idea of what good quality clusters look like for your linkage.
+However, you may also have little or no knowledge about the data or a clear idea of what good quality clusters look like for your linkage.
 
-Whatever level of prior expectation, this topic guide is designed to help users develop a better understanding of their clusters and help focus quality assurance efforts to get the best out of their linkage models.
+Whatever the starting point, this topic guide is designed to help users develop a better understanding of their clusters and help focus quality assurance efforts to get the best out of their linkage models.
 
-What this topic guide includes...
+## What this topic guide contains:
+
+* An introduction to the graph metrics currently available in Splink and how to apply them to linked data
+* A how-to guide on computing graph metrics in Splink
 
 <hr>
 <br>
