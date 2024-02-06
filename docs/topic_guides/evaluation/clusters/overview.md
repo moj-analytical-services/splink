@@ -47,12 +47,3 @@ In data linking, we refer to these collections of nodes as clusters, within whic
 [Include picture here]
 
 Edges come with an associate Splink score (the probability of two records being a match). This makes graphs (clusters) produced by Splink so called weighted graphs, as each edge has a weight (Splink score).
-
-Graphs can also be directed or undirected. Directed (undirected) graphs are those in which edges (do not) have an associated direction. For example, ...
-
-[insert image]
-
-[Impact of directed versus non-directed on the definitions below...]
-[Are there any differences between our definitions and those in the literature?]
-
-Other properties of graphs such as self-loops and multi-edges are not be present in clusters produced with Splink.
