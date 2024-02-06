@@ -87,7 +87,7 @@ class Comparison:
 
         self._settings_obj: Optional[Settings] = settings_obj
 
-        self._output_column_name = (
+        self.output_column_name = (
             output_column_name or self._default_output_column_name()
         )
         self.comparison_description = (
@@ -148,7 +148,7 @@ class Comparison:
 
     @property
     def _bf_column_name(self):
-        return f"{self._settings_obj._bf_prefix}{self._output_column_name}".replace(
+        return f"{self._settings_obj._bf_prefix}{self.output_column_name}".replace(
             " ", "_"
         )
 
@@ -160,7 +160,7 @@ class Comparison:
     def _bf_tf_adj_column_name(self):
         bf = self._settings_obj._bf_prefix
         tf = self._settings_obj._tf_prefix
-        cc_name = self._output_column_name
+        cc_name = self.output_column_name
         return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
@@ -201,11 +201,11 @@ class Comparison:
         return f"custom_{'_'.join(cols)}"
 
     def _default_comparison_description(self):
-        return self._output_column_name
+        return self.output_column_name
 
     @property
     def _gamma_column_name(self):
-        return f"{self._gamma_prefix}{self._output_column_name}".replace(" ", "_")
+        return f"{self._gamma_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def _tf_adjustment_input_col_names(self):
@@ -328,7 +328,7 @@ class Comparison:
 
     def as_dict(self):
         d = {
-            "output_column_name": self._output_column_name,
+            "output_column_name": self.output_column_name,
             "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
         d["comparison_description"] = self.comparison_description
@@ -336,7 +336,7 @@ class Comparison:
 
     def _as_completed_dict(self):
         return {
-            "column_name": self._output_column_name,
+            "column_name": self.output_column_name,
             "comparison_levels": [
                 cl._as_completed_dict() for cl in self.comparison_levels
             ],
@@ -386,7 +386,7 @@ class Comparison:
             messages.append("some m values are not trained")
 
         message = ", ".join(messages)
-        message = f"    - {self._output_column_name} ({message})."
+        message = f"    - {self.output_column_name} ({message})."
         return message
 
     @property
@@ -398,7 +398,7 @@ class Comparison:
         records = []
         for cl in self.comparison_levels:
             record = {}
-            record["comparison_name"] = self._output_column_name
+            record["comparison_name"] = self.output_column_name
             record = {**record, **cl._as_detailed_record}
             records.append(record)
         return records
@@ -409,7 +409,7 @@ class Comparison:
         for cl in self.comparison_levels:
             new_records = cl._parameter_estimates_as_records
             for r in new_records:
-                r["comparison_name"] = self._output_column_name
+                r["comparison_name"] = self.output_column_name
             records.extend(new_records)
 
         return records
@@ -432,7 +432,7 @@ class Comparison:
     def _not_trained_messages(self):
         msgs = []
 
-        cname = self._output_column_name
+        cname = self.output_column_name
 
         header = f"Comparison: '{cname}':\n"
 

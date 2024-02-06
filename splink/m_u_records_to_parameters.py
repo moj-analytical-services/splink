@@ -32,7 +32,7 @@ def not_trained_message(comparison_level: ComparisonLevel):
     c = comparison_level.comparison
     cl = comparison_level
     return (
-        f"not trained for {c._output_column_name} - "
+        f"not trained for {c.output_column_name} - "
         f"{cl.label_for_charts} (comparison vector value: "
         f"{cl._comparison_vector_value}). This usually means the "
         "comparison level was never observed in the training data."
@@ -46,7 +46,7 @@ def append_u_probability_to_comparison_level_trained_probabilities(
     c = cl.comparison
 
     try:
-        u_probability = m_u_records_lookup[c._output_column_name][
+        u_probability = m_u_records_lookup[c.output_column_name][
             cl._comparison_vector_value
         ]["u_probability"]
 
@@ -67,7 +67,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
     c = cl.comparison
 
     try:
-        m_probability = m_u_records_lookup[c._output_column_name][
+        m_probability = m_u_records_lookup[c.output_column_name][
             cl._comparison_vector_value
         ]["m_probability"]
 
