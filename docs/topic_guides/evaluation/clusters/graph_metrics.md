@@ -7,7 +7,7 @@ For data linking with Splink, it is useful to sort graph metrics into three cate
 * node metrics, and 
 * edge metrics
 
-Each of these are defined below together with examples and how they can be applied to linked data to evaluate cluster quality. The examples given are of all metrics currently available in Splink.
+Each of these are defined below together with examples and explanations of how they can be applied to linked data to evaluate cluster quality. The examples given are of all metrics currently available in Splink.
 
 !!! note
 

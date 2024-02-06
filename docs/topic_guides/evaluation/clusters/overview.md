@@ -29,6 +29,8 @@ However, you may also have little or no clear idea of what good quality clusters
 
 Whatever level of prior expectation, this topic guide is designed to help users develop a better understanding of their clusters and help focus quality assurance efforts to get the best out of their linkage models.
 
+What this topic guide includes...
+
 <hr>
 <br>
 
