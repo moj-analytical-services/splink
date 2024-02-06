@@ -56,15 +56,12 @@
 ]
 ::/cards::
 
-## Model Training
+## Evaluation
+
+### Model Evaluation
 
 ::cards::
 [
-    {
-    "title": "`comparison viewer dashboard`",
-    "image": "./img/comparison_viewer_dashboard.png",
-    "url": "./comparison_viewer_dashboard.ipynb"
-    },
     {
     "title": "`match weights chart`",
     "image": "./img/match_weights_chart.png",
@@ -89,28 +86,13 @@
     "title": "`unlinkables chart`",
     "image": "./img/unlinkables_chart.png",
     "url": "./unlinkables_chart.ipynb"
-    },
-    {
-    "title": "`waterfall chart`",
-    "image": "./img/waterfall_chart.png",
-    "url": "./waterfall_chart.ipynb"
-    },   
+    },  
 ]
 ::/cards::
 
-## Clustering
+### Edge (Link) Evaluation
 
-::cards::
-[
-    {
-    "title": "`cluster studio dashboard`",
-    "image": "./img/cluster_studio_dashboard.png",
-    "url": "./cluster_studio_dashboard.ipynb"
-    },
-]
-::/cards::
-
-## Model Evaluation
+#### Overall
 
 ::cards::
 [
@@ -133,6 +115,41 @@
     "title": "`roc chart fromm labels table`",
     "image": "./img/roc_chart_from_labels_table.png",
     "url": "./roc_chart_from_labels_table.ipynb"
+    },
+]
+::/cards::
+
+#### Spot Checking
+
+::cards::
+[
+    {
+    "title": "`comparison viewer dashboard`",
+    "image": "./img/comparison_viewer_dashboard.png",
+    "url": "./comparison_viewer_dashboard.ipynb"
+    },
+    {
+    "title": "`waterfall chart`",
+    "image": "./img/waterfall_chart.png",
+    "url": "./waterfall_chart.ipynb"
+    },   
+]
+::/cards::
+
+### Cluster Evaluation
+
+#### Overall
+
+
+
+#### Spot Checking
+
+::cards::
+[
+    {
+    "title": "`cluster studio dashboard`",
+    "image": "./img/cluster_studio_dashboard.png",
+    "url": "./cluster_studio_dashboard.ipynb"
     },
 ]
 ::/cards::

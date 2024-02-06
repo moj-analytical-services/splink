@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.9.12] - 2024-01-30
+
+### Fixed
+
+- Support `sqlalchemy >= 2.0.0` ([#1908](https://github.com/moj-analytical-services/splink/pull/1908))
+
 ## [3.9.11] - 2024-01-17
 
 ### Added
@@ -68,7 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.11...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.12...HEAD
+[3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
 [3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11
 [3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...3.9.10
 [3.9.9]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...3.9.9
