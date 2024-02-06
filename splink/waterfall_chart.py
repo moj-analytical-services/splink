@@ -82,7 +82,7 @@ def _comparison_records(record_as_dict, comparison: Comparison, hide_details=Fal
     if c._has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
 
-        if cl._tf_adjustment_input_column is not None and hide_details == False:
+        if cl._tf_adjustment_input_column is not None and hide_details is False:
             waterfall_record_2["value_l"] = str(
                 record_as_dict[cl._tf_adjustment_input_column.unquote().name_l]
             )
