@@ -1,10 +1,7 @@
 import json
 from typing import List, Type, Union
 
-import pandas as pd
 import pytest
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import INTEGER, TEXT
 
 from splink.comparison_creator import ComparisonCreator
 from splink.comparison_level_creator import ComparisonLevelCreator
