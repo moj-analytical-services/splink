@@ -2190,6 +2190,28 @@ class Linker:
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
     ) -> SplinkDataFrame:
+        """
+        Internal function for computing edge-level metrics.
+
+        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of edge metrics.
+
+        Uses `igraph` under-the-hood for calculations
+
+        Edge metrics produced:
+        * is_bridge (is the edge a bridge?)
+
+        Output table has a single row per edge, and the metric is_bridge:
+        |-------------------------------------------------------------|
+        | composite_unique_id_l | composite_unique_id_r   | is_bridge |
+        |-----------------------|-------------------------|-----------|
+        | s1-__-10001           | s1-__-10003             | true      |
+        | s1-__-10001           | s1-__-10005             | false     |
+        | s1-__-10005           | s1-__-10009             | false     |
+        | s1-__-10021           | s1-__-10024             | true      |
+        ...
+        """
         try:
             import igraph as ig
         except ImportError:
