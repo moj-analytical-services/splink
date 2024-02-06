@@ -60,7 +60,7 @@ class Comparison:
         comparison_levels: List[ComparisonLevel],
         output_column_name: str = None,
         comparison_description: str = None,
-        settings_obj: Settings = None
+        settings_obj: Settings = None,
     ):
 
         self.comparison_levels: list[ComparisonLevel] = []
@@ -86,6 +86,12 @@ class Comparison:
             self.comparison_levels.append(cl)
 
         self._settings_obj: Optional[Settings] = settings_obj
+
+        self.comparison_description = (
+            comparison_description
+            if comparison_description is not None
+            else self._default_comparison_description()
+        )
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels
@@ -198,12 +204,8 @@ class Comparison:
             else:
                 return f"custom_{'_'.join(cols)}"
 
-    @property
-    def _comparison_description(self):
-        if "comparison_description" in self._comparison_dict:
-            return self._comparison_dict["comparison_description"]
-        else:
-            return self._output_column_name
+    def _default_comparison_description(self):
+        return self._output_column_name
 
     @property
     def _gamma_column_name(self):
@@ -333,10 +335,7 @@ class Comparison:
             "output_column_name": self._output_column_name,
             "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
-        if "comparison_description" in self._comparison_dict:
-            d["comparison_description"] = self._comparison_dict[
-                "comparison_description"
-            ]
+        d["comparison_description"] = self.comparison_description
         return d
 
     def _as_completed_dict(self):
@@ -429,7 +428,7 @@ class Comparison:
 
     def __repr__(self):
         return (
-            f"<Comparison {self._comparison_description} with "
+            f"<Comparison {self.comparison_description} with "
             f"{self._num_levels} levels at {hex(id(self))}>"
         )
 
@@ -473,12 +472,7 @@ class Comparison:
 
         comp_levels = self._comparison_level_description_list
 
-        if "comparison_description" in self._comparison_dict:
-            main_desc = (
-                f"of {input_cols}\nDescription: '{self._comparison_description}'"
-            )
-        else:
-            main_desc = f"of {input_cols}"
+        main_desc = f"of {input_cols}\nDescription: '{self.comparison_description}'"
 
         desc = f"Comparison {main_desc}\nComparison levels:\n{comp_levels}"
         return desc
@@ -491,10 +485,7 @@ class Comparison:
 
         comp_levels = self._comparison_level_description_list
 
-        if "comparison_description" in self._comparison_dict:
-            main_desc = f"'{self._comparison_description}' of {input_cols}"
-        else:
-            main_desc = f"of {input_cols}"
+        main_desc = f"'{self.comparison_description}' of {input_cols}"
 
         desc = (
             f"Comparison {main_desc}.\n"
