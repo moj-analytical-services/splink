@@ -1,5 +1,10 @@
 from functools import partial
-from typing import NamedTuple
+from typing import List, NamedTuple, Tuple
+
+
+def indent_error_message(message):
+    """Indents an error message by 4 spaces."""
+    return "\n    ".join(message.splitlines())
 
 
 class InvalidColumnsLogGenerator(NamedTuple):
@@ -136,3 +141,62 @@ def construct_missing_column_in_comparison_level_log(invalid_cls) -> str:
         output_warning.append(construct_invalid_sql_log_string(comp_lvls))
 
     return "\n".join(output_warning)
+
+
+def create_invalid_comparison_level_log_string(
+    comparison_string: str, invalid_comparison_levels: List[Tuple[str, str]]
+):
+    invalid_levels_str = ",\n".join(
+        [
+            f"- Type: {type_name}. Level: {level}"
+            for level, type_name in invalid_comparison_levels
+        ]
+    )
+
+    log_message = (
+        f"\nThe comparison `{comparison_string}` contains the following invalid "
+        f"levels:\n{invalid_levels_str}\n\n"
+        "Please only include dictionaries or objects of "
+        "the `ComparisonLevel` class."
+    )
+
+    return indent_error_message(log_message)
+
+
+def create_invalid_comparison_log_string(
+    comparison_string: str, comparison_level: bool
+):
+    if comparison_level:
+        type_msg = "is a comparison level"
+    else:
+        type_msg = "is of an invalid data type"
+
+    log_message = (
+        f"\n{comparison_string}\n"
+        f"{type_msg} and must be nested within a comparison.\n"
+        "Please only include dictionaries or objects of the `Comparison` class.\n"
+    )
+    return indent_error_message(log_message)
+
+
+def create_no_comparison_levels_error_log_string(comparison_string: str):
+    log_message = (
+        f"\n{comparison_string}\n"
+        "is missing the required `comparison_levels` dictionary"
+        "key. Please ensure you\ninclude this in all comparisons"
+        "used in your settings object.\n"
+    )
+    return indent_error_message(log_message)
+
+
+def create_incorrect_dialect_import_log_string(
+    comparison_string: str, comparison_dialects: List[str]
+):
+    log_message = (
+        f"\n{comparison_string}\n"
+        "contains the following invalid SQL dialect(s)"
+        f"within its comparison levels - {', '.join(comparison_dialects)}.\n"
+        "Please ensure that you're importing comparisons designed "
+        "for your specified linker.\n"
+    )
+    return indent_error_message(log_message)
