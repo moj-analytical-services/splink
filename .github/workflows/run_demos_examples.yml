@@ -78,4 +78,4 @@ jobs:
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
+          python -m pytest -vv --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb

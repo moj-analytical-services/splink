@@ -79,4 +79,4 @@ jobs:
       - name: Test with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
+          python -m pytest -vv --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
