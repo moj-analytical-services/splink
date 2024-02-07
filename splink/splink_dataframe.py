@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .input_column import InputColumn
+
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -29,7 +31,7 @@ class SplinkDataFrame:
         self.sql_used_to_create = None
 
     @property
-    def columns(self):
+    def columns(self) -> list[InputColumn]:
         pass
 
     @property

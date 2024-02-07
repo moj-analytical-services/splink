@@ -2145,7 +2145,11 @@ class Linker:
         """
 
         return profile_columns(
-            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
+            self.db_api,
+            column_expressions=column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
     def _get_labels_tablename_from_input(
