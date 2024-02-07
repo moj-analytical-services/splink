@@ -381,7 +381,7 @@ class PostgresDialect(SplinkDialect):
         return (
             f"EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
             f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) "
-            f"<= {clc.date_threshold_seconds}"
+            f"<= {clc.time_threshold_seconds}"
         )
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):

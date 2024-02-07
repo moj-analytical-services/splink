@@ -518,8 +518,8 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
-        date_threshold: int,
-        date_metric: str = "day",
+        time_threshold: Union[int, float],
+        time_metric: str = "day",
     ):
         """
         Computes the absolute elapsed time between two dates (total duration).
@@ -537,46 +537,43 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
         Args:
             col_name (str): The name of the input column containing the dates to compare
-            date_threshold (int): The maximum allowed difference between the two dates,
+            time_threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
-            date_metric (str): The unit of time to use when comparing the dates.
-                Can be 'day', 'month', or 'year'.
+            time_metric (str): The unit of time to use when comparing the dates.
+                Can be 'second', 'minute', 'hour', 'day', 'month', or 'year'.
             cast_strings_to_date (bool): If True, the function will automatically
                 convert string columns to date format before comparing.
-            date_format (str): The format of the date strings in `col_name`,
-                if `cast_strings_to_date` is True. This should be a format string
-                suitable for use with the `DATE_FORMAT` function.
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.date_threshold_raw = validate_numeric_parameter(
+        self.time_threshold_raw = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=float("inf"),
-            parameter_value=date_threshold,
+            parameter_value=time_threshold,
             level_name=self.__class__.__name__,
-            parameter_name="date_threshold",
+            parameter_name="time_threshold",
         )
-        self.date_metric = validate_categorical_parameter(
+        self.time_metric = validate_categorical_parameter(
             allowed_values=["second", "minute", "hour", "day", "month", "year"],
-            parameter_value=date_metric,
+            parameter_value=time_metric,
             level_name=self.__class__.__name__,
-            parameter_name="date_metric",
+            parameter_name="time_metric",
         )
 
-        if date_metric == "second":
-            self.date_threshold_seconds = self.date_threshold_raw
-        if date_metric == "minute":
-            self.date_threshold_seconds = self.date_threshold_raw * 60
-        if date_metric == "hour":
-            self.date_threshold_seconds = self.date_threshold_raw * 60 * 60
-        day_mult = 60 * 60 * 24
-        if date_metric == "day":
-            self.date_threshold_seconds = self.date_threshold_raw * day_mult
-        if date_metric == "month":
-            self.date_threshold_seconds = (
-                self.date_threshold_raw * day_mult * 365.25 / 12
-            )
-        if date_metric == "year":
-            self.date_threshold_seconds = self.date_threshold_raw * day_mult * 365.25
+        self.time_threshold_seconds = self.convert_time_metric_to_seconds(
+            self.time_threshold_raw, self.time_metric
+        )
+
+    def convert_time_metric_to_seconds(self, threshold: int, metric: str) -> float:
+
+        conversion_factors = {
+            "second": 1,
+            "minute": 60,
+            "hour": 60 * 60,
+            "day": 60 * 60 * 24,
+            "month": 60 * 60 * 24 * 365.25 / 12,
+            "year": 60 * 60 * 24 * 365.25,
+        }
+        return threshold * conversion_factors[metric]
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -589,8 +586,8 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         col = self.col_expression
 
         # If the dialect has an override, use it
-        if hasattr(sql_dialect, "date_diff"):
-            return sql_dialect.date_diff(self)
+        if hasattr(sql_dialect, "absolute_time_difference"):
+            return sql_dialect.absolute_time_difference(self)
 
         sqlglot_base_dialect_sql = (
             "abs(epoch(cast(___col____l as timestamp))"
@@ -610,9 +607,13 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return (
-            f"Date difference of '{col.label} <= "
-            f"{self.date_threshold_raw} {self.date_metric}'"
+            f"Abs difference of '{col.label} <= "
+            f"{self.time_threshold_raw} {self.time_metric}'"
         )
+
+
+class AbsoluteDateDifferenceLevel(AbsoluteTimeDifferenceLevel):
+    pass
 
 
 class DistanceInKMLevel(ComparisonLevelCreator):
