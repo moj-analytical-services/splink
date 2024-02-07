@@ -41,19 +41,19 @@ class DateComparison(ComparisonCreator):
         separate_1st_january: bool = False,
         fuzzy_metric: str = "damerau_levenshtein",
         fuzzy_thresholds: Union[float, List[float]] = [1],
-        datediff_thresholds: Union[int, List[int]] = [1, 1, 10],
-        datediff_metrics: Union[str, List[str]] = ["month", "year", "year"],
+        datetime_thresholds: Union[int, List[int]] = [1, 1, 10],
+        datetime_metrics: Union[str, List[str]] = ["month", "year", "year"],
     ):
         fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
         self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
 
-        date_thresholds_as_iterable = ensure_is_iterable(datediff_thresholds)
-        self.date_thresholds = [*date_thresholds_as_iterable]
-        date_metrics_as_iterable = ensure_is_iterable(datediff_metrics)
-        self.date_metrics = [*date_metrics_as_iterable]
+        date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
+        self.datetime_thresholds = [*date_thresholds_as_iterable]
+        date_metrics_as_iterable = ensure_is_iterable(datetime_metrics)
+        self.datetime_metrics = [*date_metrics_as_iterable]
 
-        num_metrics = len(self.date_metrics)
-        num_thresholds = len(self.date_thresholds)
+        num_metrics = len(self.datetime_metrics)
+        num_thresholds = len(self.datetime_thresholds)
         if num_thresholds == 0:
             raise ValueError("`date_thresholds` must have at least one entry")
         if num_metrics == 0:
@@ -117,11 +117,13 @@ class DateComparison(ComparisonCreator):
                     for threshold in self.fuzzy_thresholds
                 ]
             )
-        if self.date_thresholds:
-            for threshold, metric in zip(self.date_thresholds, self.date_metrics):
+        if self.datetime_thresholds:
+            for threshold, metric in zip(
+                self.datetime_thresholds, self.datetime_metrics
+            ):
                 levels.append(
                     cll.AbsoluteTimeDifferenceLevel(
-                        col_expression, date_threshold=threshold, date_metric=metric
+                        col_expression, threshold=threshold, metric=metric
                     )
                 )
 
@@ -146,14 +148,14 @@ class DateComparison(ComparisonCreator):
                 f"{comma_separated_thresholds_string} vs. "
             )
 
-        if self.date_thresholds:
+        if self.datetime_thresholds:
             datediff_separated_thresholds_string = ", ".join(
                 [
                     f"{m.title()}(s): {v}"
-                    for v, m in zip(self.date_thresholds, self.date_metrics)
+                    for v, m in zip(self.datetime_thresholds, self.datetime_metrics)
                 ]
             )
-            plural = "s" if len(self.date_thresholds) > 1 else ""
+            plural = "s" if len(self.datetime_thresholds) > 1 else ""
             comparison_desc += (
                 f"dates within the following threshold{plural} "
                 f"{datediff_separated_thresholds_string} vs. "

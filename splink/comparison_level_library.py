@@ -519,7 +519,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         self,
         col_name: Union[str, ColumnExpression],
         threshold: Union[int, float],
-        metric: str = "day",
+        metric: str,
     ):
         """
         Computes the absolute elapsed time between two dates (total duration).
