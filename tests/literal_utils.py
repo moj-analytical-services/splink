@@ -138,9 +138,10 @@ def run_tests_with_args(
         else:  # Assuming it's ComparisonLevelTestSpec or similar
             expected_result = test.expected_in_level
 
-        assert (
-            actual_value == expected_result
-        ), f"Failed test: values={json.dumps(test.values)}, sql={sql}"
+        assert actual_value == expected_result, (
+            f"Failed test: actual_value={actual_value} expected_value={expected_result}"
+            f" values={json.dumps(test.values)}, sql={sql}"
+        )
 
 
 class LiteralTestValues:

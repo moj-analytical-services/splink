@@ -11,7 +11,7 @@ from tests.literal_utils import (
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_datediff_levels(test_helpers, dialect):
+def test_absolute_time_difference_levels_date(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
 
@@ -39,7 +39,35 @@ def test_datediff_levels(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_datediff_at_thresholds(test_helpers, dialect):
+def test_absolute_time_difference_levels_timestamp(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    col_exp = ColumnExpression("dob").try_parse_timestamp()
+    test_spec = ComparisonLevelTestSpec(
+        cll.AbsoluteTimeDifference,
+        default_keyword_args={
+            "date_metric": "second",
+            "col_name": col_exp,
+        },
+        tests=[
+            LiteralTestValues(
+                {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
+                keyword_arg_overrides={"date_threshold": 61},
+                expected_in_level=True,
+            ),
+            LiteralTestValues(
+                {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
+                keyword_arg_overrides={"date_threshold": 59},
+                expected_in_level=False,
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_absolute_time_difference_at_thresholds(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
 
