@@ -267,7 +267,7 @@ class SparkDialect(SplinkDialect):
 
     @property
     def default_timestamp_format(self):
-        return "yyyy-MM-dd'T'HH:mm:ssXXX"
+        return "yyyy-MM-dd\\'T\\'HH:mm:ssXXX"
 
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
@@ -379,8 +379,8 @@ class PostgresDialect(SplinkDialect):
         col = clc.col_expression
 
         return (
-            f"EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
-            f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) "
+            f"ABS(EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
+            f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) )"
             f"<= {clc.time_threshold_seconds}"
         )
 
