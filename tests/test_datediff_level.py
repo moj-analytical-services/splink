@@ -17,7 +17,7 @@ def test_absolute_time_difference_levels_date(test_helpers, dialect):
 
     col_exp = ColumnExpression("dob").try_parse_date()
     test_spec = ComparisonLevelTestSpec(
-        cll.AbsoluteTimeDifference,
+        cll.AbsoluteTimeDifferenceLevel,
         default_keyword_args={
             "date_metric": "day",
             "col_name": col_exp,
@@ -45,7 +45,7 @@ def test_absolute_time_difference_levels_timestamp(test_helpers, dialect):
 
     col_exp = ColumnExpression("dob").try_parse_timestamp()
     test_spec = ComparisonLevelTestSpec(
-        cll.AbsoluteTimeDifference,
+        cll.AbsoluteTimeDifferenceLevel,
         default_keyword_args={
             "date_metric": "second",
             "col_name": col_exp,

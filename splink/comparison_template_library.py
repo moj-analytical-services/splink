@@ -120,7 +120,7 @@ class DateComparison(ComparisonCreator):
         if self.date_thresholds:
             for threshold, metric in zip(self.date_thresholds, self.date_metrics):
                 levels.append(
-                    cll.DatediffLevel(
+                    cll.AbsoluteTimeDifferenceLevel(
                         col_expression, date_threshold=threshold, date_metric=metric
                     )
                 )
