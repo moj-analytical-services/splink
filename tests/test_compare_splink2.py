@@ -218,7 +218,7 @@ def test_lambda():
     )
 
     for cc in linker._settings_obj.comparisons:
-        if cc._output_column_name not in ("first_name", "surname"):
+        if cc.output_column_name not in ("first_name", "surname"):
             cl = cc._get_comparison_level_by_comparison_vector_value(1)
             cl.m_probability = 0.9
             cl.u_probability = 0.1

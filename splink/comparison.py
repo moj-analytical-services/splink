@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -55,17 +55,22 @@ class Comparison:
 
     """
 
-    def __init__(self, comparison_dict, settings_obj: Settings = None):
-        # Protected because we don't want to modify
-        self._comparison_dict = comparison_dict
-        comparison_level_list = comparison_dict["comparison_levels"]
+    def __init__(
+        self,
+        comparison_levels: List[ComparisonLevel],
+        sqlglot_dialect_name: str,
+        output_column_name: str = None,
+        comparison_description: str = None,
+        settings_obj: Settings = None,
+    ):
+
         self.comparison_levels: list[ComparisonLevel] = []
 
         # If comparison_levels are already of type ComparisonLevel, register
         # the settings object on them
         # otherwise turn the dictionaries into ComparisonLevel
 
-        for cl in comparison_level_list:
+        for cl in comparison_levels:
             if isinstance(cl, ComparisonLevel):
                 cl.comparison = self
             else:
@@ -82,6 +87,14 @@ class Comparison:
             self.comparison_levels.append(cl)
 
         self._settings_obj: Optional[Settings] = settings_obj
+
+        self.sqlglot_dialect_name = sqlglot_dialect_name
+        self.output_column_name = (
+            output_column_name or self._default_output_column_name()
+        )
+        self.comparison_description = (
+            comparison_description or self._default_comparison_description()
+        )
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels
@@ -107,16 +120,14 @@ class Comparison:
         # want comparison levels to always be ComparisonLevel, not dict
         comparison_dict = deepcopy(self.as_dict())
         comparison_dict["comparison_levels"] = [
-            ComparisonLevel(
-                **cl_dict,
-                # TODO: Comparison should also store dialect
-                sqlglot_dialect_name=None
-                if self._settings_obj is None
-                else self._settings_obj._sql_dialect,
-            )
+            ComparisonLevel(**cl_dict, sqlglot_dialect_name=self.sqlglot_dialect_name)
             for cl_dict in comparison_dict["comparison_levels"]
         ]
-        cc = Comparison(comparison_dict, self._settings_obj)
+        cc = Comparison(
+            **comparison_dict,
+            sqlglot_dialect_name=self.sqlglot_dialect_name,
+            settings_obj=self._settings_obj,
+        )
         return cc
 
     @property
@@ -137,7 +148,7 @@ class Comparison:
 
     @property
     def _bf_column_name(self):
-        return f"{self._settings_obj._bf_prefix}{self._output_column_name}".replace(
+        return f"{self._settings_obj._bf_prefix}{self.output_column_name}".replace(
             " ", "_"
         )
 
@@ -149,7 +160,7 @@ class Comparison:
     def _bf_tf_adj_column_name(self):
         bf = self._settings_obj._bf_prefix
         tf = self._settings_obj._tf_prefix
-        cc_name = self._output_column_name
+        cc_name = self.output_column_name
         return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
@@ -182,28 +193,19 @@ class Comparison:
 
         return deduped_cols
 
-    @property
-    def _output_column_name(self):
-        if "output_column_name" in self._comparison_dict:
-            return self._comparison_dict["output_column_name"]
-        else:
-            cols = self._input_columns_used_by_case_statement
-            cols = [c.input_name for c in cols]
-            if len(cols) == 1:
-                return cols[0]
-            else:
-                return f"custom_{'_'.join(cols)}"
+    def _default_output_column_name(self):
+        cols = self._input_columns_used_by_case_statement
+        cols = [c.input_name for c in cols]
+        if len(cols) == 1:
+            return cols[0]
+        return f"custom_{'_'.join(cols)}"
 
-    @property
-    def _comparison_description(self):
-        if "comparison_description" in self._comparison_dict:
-            return self._comparison_dict["comparison_description"]
-        else:
-            return self._output_column_name
+    def _default_comparison_description(self):
+        return self.output_column_name
 
     @property
     def _gamma_column_name(self):
-        return f"{self._gamma_prefix}{self._output_column_name}".replace(" ", "_")
+        return f"{self._gamma_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def _tf_adjustment_input_col_names(self):
@@ -326,18 +328,15 @@ class Comparison:
 
     def as_dict(self):
         d = {
-            "output_column_name": self._output_column_name,
+            "output_column_name": self.output_column_name,
             "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
-        if "comparison_description" in self._comparison_dict:
-            d["comparison_description"] = self._comparison_dict[
-                "comparison_description"
-            ]
+        d["comparison_description"] = self.comparison_description
         return d
 
     def _as_completed_dict(self):
         return {
-            "column_name": self._output_column_name,
+            "column_name": self.output_column_name,
             "comparison_levels": [
                 cl._as_completed_dict() for cl in self.comparison_levels
             ],
@@ -387,7 +386,7 @@ class Comparison:
             messages.append("some m values are not trained")
 
         message = ", ".join(messages)
-        message = f"    - {self._output_column_name} ({message})."
+        message = f"    - {self.output_column_name} ({message})."
         return message
 
     @property
@@ -399,7 +398,7 @@ class Comparison:
         records = []
         for cl in self.comparison_levels:
             record = {}
-            record["comparison_name"] = self._output_column_name
+            record["comparison_name"] = self.output_column_name
             record = {**record, **cl._as_detailed_record}
             records.append(record)
         return records
@@ -410,7 +409,7 @@ class Comparison:
         for cl in self.comparison_levels:
             new_records = cl._parameter_estimates_as_records
             for r in new_records:
-                r["comparison_name"] = self._output_column_name
+                r["comparison_name"] = self.output_column_name
             records.extend(new_records)
 
         return records
@@ -425,7 +424,7 @@ class Comparison:
 
     def __repr__(self):
         return (
-            f"<Comparison {self._comparison_description} with "
+            f"<Comparison {self.comparison_description} with "
             f"{self._num_levels} levels at {hex(id(self))}>"
         )
 
@@ -433,7 +432,7 @@ class Comparison:
     def _not_trained_messages(self):
         msgs = []
 
-        cname = self._output_column_name
+        cname = self.output_column_name
 
         header = f"Comparison: '{cname}':\n"
 
@@ -469,12 +468,7 @@ class Comparison:
 
         comp_levels = self._comparison_level_description_list
 
-        if "comparison_description" in self._comparison_dict:
-            main_desc = (
-                f"of {input_cols}\nDescription: '{self._comparison_description}'"
-            )
-        else:
-            main_desc = f"of {input_cols}"
+        main_desc = f"of {input_cols}\nDescription: '{self.comparison_description}'"
 
         desc = f"Comparison {main_desc}\nComparison levels:\n{comp_levels}"
         return desc
@@ -487,10 +481,7 @@ class Comparison:
 
         comp_levels = self._comparison_level_description_list
 
-        if "comparison_description" in self._comparison_dict:
-            main_desc = f"'{self._comparison_description}' of {input_cols}"
-        else:
-            main_desc = f"of {input_cols}"
+        main_desc = f"'{self.comparison_description}' of {input_cols}"
 
         desc = (
             f"Comparison {main_desc}.\n"

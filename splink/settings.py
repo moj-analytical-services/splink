@@ -44,12 +44,16 @@ class Settings:
         self._settings_dict = settings_dict
         s_else_d = self._from_settings_dict_else_default
         ccs = self._settings_dict["comparisons"]
-        # TODO: I think this should _not_ be dialected
+        # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []
         for cc in ccs:
-            self.comparisons.append(Comparison(cc, self))
+            self.comparisons.append(
+                Comparison(
+                    **cc, settings_obj=self, sqlglot_dialect_name=self._sql_dialect
+                )
+            )
 
         self._link_type = s_else_d("link_type")
         self._probability_two_random_records_match = s_else_d(
@@ -101,7 +105,7 @@ class Settings:
             if not c._has_null_level:
                 logger.warning(
                     "Warning: No null level found for comparison "
-                    f"{c._output_column_name}.\n"
+                    f"{c.output_column_name}.\n"
                     "In most cases you want to define a comparison level that deals"
                     " with the case that one or both sides of the comparison are null."
                     "\nThis comparison level should have the `is_null_level` flag to "
@@ -293,7 +297,7 @@ class Settings:
 
     def _get_comparison_by_output_column_name(self, name):
         for cc in self.comparisons:
-            if cc._output_column_name == name:
+            if cc.output_column_name == name:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 

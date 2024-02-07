@@ -947,7 +947,7 @@ class Linker:
             for reverse_level in reverse_levels:
                 # Get comparison level on current settings obj
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level.comparison._output_column_name
+                    reverse_level.comparison.output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
@@ -961,7 +961,7 @@ class Linker:
 
                 logger.log(
                     15,
-                    f"Reversing comparison level {cc._output_column_name}"
+                    f"Reversing comparison level {cc.output_column_name}"
                     f" using bayes factor {bf:,.3f}",
                 )
 
@@ -3323,7 +3323,7 @@ class Linker:
 
         # Comparisons with TF adjustments
         tf_comparisons = [
-            c._output_column_name
+            c.output_column_name
             for c in self._settings_obj.comparisons
             if any([cl._has_tf_adjustments for cl in c.comparison_levels])
         ]
