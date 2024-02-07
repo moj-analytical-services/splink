@@ -514,7 +514,7 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
-class DateDifferenceLevel(ComparisonLevelCreator):
+class AbsoluteTimeDifference(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
@@ -556,18 +556,27 @@ class DateDifferenceLevel(ComparisonLevelCreator):
             parameter_name="date_threshold",
         )
         self.date_metric = validate_categorical_parameter(
-            allowed_values=["day", "month", "year"],
+            allowed_values=["second", "minute", "hour", "day", "month", "year"],
             parameter_value=date_metric,
             level_name=self.__class__.__name__,
             parameter_name="date_metric",
         )
-        if date_metric == "day":
-            self.date_threshold_days = self.date_threshold_raw
-        if date_metric == "month":
-            self.date_threshold_days = self.date_threshold_raw * 365.25 / 12
 
+        if date_metric == "second":
+            self.date_threshold_seconds = self.date_threshold_raw
+        if date_metric == "minute":
+            self.date_threshold_seconds = self.date_threshold_raw * 60
+        if date_metric == "hour":
+            self.date_threshold_seconds = self.date_threshold_raw * 60 * 60
+        day_mult = 60 * 60 * 24
+        if date_metric == "day":
+            self.date_threshold_seconds = self.date_threshold_raw * day_mult
+        if date_metric == "month":
+            self.date_threshold_seconds = (
+                self.date_threshold_raw * day_mult * 365.25 / 12
+            )
         if date_metric == "year":
-            self.date_threshold_days = self.date_threshold_raw * 365.25
+            self.date_threshold_seconds = self.date_threshold_raw * day_mult * 365.25
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -576,17 +585,24 @@ class DateDifferenceLevel(ComparisonLevelCreator):
         must be implemented in the dialect, which will be used instead
         """
 
-        if self.date_metric not in ("day", "month", "year"):
+        if self.date_metric not in ("second", "minute", "hour", "day", "month", "year"):
             raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
 
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
 
-        # Use col as placeholder here because there's no guarantee the complex
-        # transformed ColumnExpression will autotranspile
+        # If the dialect has an override, use it
+        if hasattr(sql_dialect, "date_diff"):
+            return sql_dialect.date_diff(self)
+
+        # SQL dialects are consistent in the subtraction operator on dates
+        # resulting in the number of days, but not in the subtraction operator
+        # on datetimes/timestamps.  Far simpler to do it this way
+        # albeit with loss of precision for the time part of the datetime
         sqlglot_base_dialect_sql = (
-            f"ABS(cast(___col____l as date) - cast(___col____r as date)) "
-            f"<= {self.date_threshold_days}"
+            "abs(epoch(cast(___col____l as timestamp))"
+            " - epoch(cast(___col____r as timestamp)))"
+            f"<= {self.date_threshold_seconds}"
         )
 
         sqlglot_dialect_name = sql_dialect.sqlglot_name

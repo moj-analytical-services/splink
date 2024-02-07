@@ -346,6 +346,18 @@ class PostgresDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
+    def absolute_time_difference(self, clc: "ComparisonLevelCreator"):
+        # need custom solution as sqlglot gets confused by 'metric', as in Spark
+        # datediff _only_ works in days
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+
+        return (
+            f"EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
+            f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) "
+            f"<= {clc.date_threshold_seconds}"
+        )
+
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         # full match - wrap pattern in parentheses so first group is whole expression
         if capture_group == 0:
