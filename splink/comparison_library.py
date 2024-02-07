@@ -437,18 +437,18 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         self,
         col_name: str,
         *,
-        time_metrics: Union[str, List[str]],
-        time_thresholds: Union[int, List[int]],
-        cast_strings_to_dates: bool = False,
+        metrics: Union[str, List[str]],
+        thresholds: Union[int, List[int]],
+        cast_strings_to_datetimes: bool = False,
         datetime_format: str = None,
         term_frequency_adjustments=False,
         invalid_dates_as_null=True,
     ):
-        time_metrics_as_iterable = ensure_is_iterable(time_metrics)
+        time_metrics_as_iterable = ensure_is_iterable(metrics)
         # unpack it to a list so we can repeat iteration if needed
         self.time_metrics = [*time_metrics_as_iterable]
 
-        time_thresholds_as_iterable = ensure_is_iterable(time_thresholds)
+        time_thresholds_as_iterable = ensure_is_iterable(thresholds)
         self.time_thresholds = [*time_thresholds_as_iterable]
 
         num_metrics = len(self.time_metrics)
@@ -463,7 +463,7 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
                 "the same number of entries"
             )
 
-        self.cast_strings_to_dates = cast_strings_to_dates
+        self.cast_strings_to_dates = cast_strings_to_datetimes
         self.datetime_format = datetime_format
 
         self.term_frequency_adjustments = term_frequency_adjustments
@@ -497,8 +497,8 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
             *[
                 cll.AbsoluteTimeDifferenceLevel(
                     date_diff_col,
-                    time_threshold=time_threshold,
-                    time_metric=time_metric,
+                    threshold=time_threshold,
+                    metric=time_metric,
                 )
                 for (time_threshold, time_metric) in zip(
                     self.time_thresholds, self.time_metrics

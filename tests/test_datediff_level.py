@@ -73,7 +73,10 @@ def test_absolute_time_difference_at_thresholds(test_helpers, dialect):
 
     test_spec = ComparisonTestSpec(
         cl.AbsoluteTimeDifferenceAtThresholds(
-            "dob", date_thresholds=[1], date_metrics=["day"], cast_strings_to_dates=True
+            "dob",
+            date_thresholds=[1],
+            date_metrics=["day"],
+            cast_strings_to_datetimes=True,
         ),
         tests=[
             LiteralTestValues(

@@ -518,8 +518,8 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
-        time_threshold: Union[int, float],
-        time_metric: str = "day",
+        threshold: Union[int, float],
+        metric: str = "day",
     ):
         """
         Computes the absolute elapsed time between two dates (total duration).
@@ -537,9 +537,9 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
         Args:
             col_name (str): The name of the input column containing the dates to compare
-            time_threshold (int): The maximum allowed difference between the two dates,
+            threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
-            time_metric (str): The unit of time to use when comparing the dates.
+            metric (str): The unit of time to use when comparing the dates.
                 Can be 'second', 'minute', 'hour', 'day', 'month', or 'year'.
             cast_strings_to_date (bool): If True, the function will automatically
                 convert string columns to date format before comparing.
@@ -548,15 +548,15 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         self.time_threshold_raw = validate_numeric_parameter(
             lower_bound=0,
             upper_bound=float("inf"),
-            parameter_value=time_threshold,
+            parameter_value=threshold,
             level_name=self.__class__.__name__,
-            parameter_name="time_threshold",
+            parameter_name="threshold",
         )
         self.time_metric = validate_categorical_parameter(
             allowed_values=["second", "minute", "hour", "day", "month", "year"],
-            parameter_value=time_metric,
+            parameter_value=metric,
             level_name=self.__class__.__name__,
-            parameter_name="time_metric",
+            parameter_name="metric",
         )
 
         self.time_threshold_seconds = self.convert_time_metric_to_seconds(
