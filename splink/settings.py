@@ -21,7 +21,26 @@ class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
 
-    def __init__(self, settings_dict):
+    def __init__(
+        self,
+        link_type: str,
+        comparisons: List[Comparison],
+        blocking_rules_to_generate_predictions: List[BlockingRule] = [],
+        probability_two_random_records_match: float = 0.0001,
+        em_convergence: float = 0.0001,
+        max_iterations: int = 25,
+        retain_matching_columns: bool = True,
+        retain_intermediate_calculation_columns: bool = False,
+        additional_columns_to_retain: List[str] = [],
+        unique_id_column_name: str = "unique_id",
+        source_dataset_column_name: str = "source_dataset",
+        bayes_factor_column_prefix: str = "bf_",
+        term_frequency_adjustment_column_prefix: str = "tf_",
+        comparison_vector_value_column_prefix: str = "gamma_",
+        sql_dialect: str = None,
+        linker_uid: str = None,
+    ):
+        settings_dict = {}
         settings_dict = deepcopy(settings_dict)
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
