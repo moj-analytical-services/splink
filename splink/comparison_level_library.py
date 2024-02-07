@@ -514,7 +514,7 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
-class AbsoluteTimeDifference(ComparisonLevelCreator):
+class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
