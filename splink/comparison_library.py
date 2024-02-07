@@ -521,7 +521,6 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
 
 
 class AbsoluteDateDifferenceAtThresholds(AbsoluteTimeDifferenceAtThresholds):
-
     @property
     def datetime_parse_function(self):
         return self.col_expression.try_parse_date
