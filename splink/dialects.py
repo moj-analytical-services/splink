@@ -112,6 +112,14 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+        return self._try_parse_timestamp_raw(name, timestamp_format)
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'try_parse_timestamp' function"
+        )
+
     @final
     def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
         return self._wrap_in_nullif(self._regex_extract_raw)(
@@ -160,10 +168,19 @@ class DuckDBDialect(SplinkDialect):
     def default_date_format(self):
         return "%Y-%m-%d"
 
+    @property
+    def default_timestamp_format(self):
+        return "%Y-%m-%dT%H:%M:%S%z"
+
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""try_strptime({name}, '{timestamp_format}')"""
 
     # TODO: this is only needed for duckdb < 0.9.0.
     # should we just ditch support for that? (only for cll - engine should still work)
@@ -248,10 +265,19 @@ class SparkDialect(SplinkDialect):
     def default_date_format(self):
         return "yyyy-MM-dd"
 
+    @property
+    def default_timestamp_format(self):
+        return "yyyy-MM-dd'T'HH:mm:ssXXX"
+
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""to_timestamp({name}, '{timestamp_format}')"""
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
@@ -374,10 +400,19 @@ class PostgresDialect(SplinkDialect):
     def default_date_format(self):
         return "YYYY-MM-DD"
 
+    @property
+    def default_timestamp_format(self):
+        return "YYYY-MM-DD HH24:MI:SS"
+
     def try_parse_date(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_cast_date({name}, '{date_format}')"""
+
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""try_cast_timestamp({name}, '{timestamp_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self

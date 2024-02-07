@@ -585,9 +585,6 @@ class AbsoluteTimeDifference(ComparisonLevelCreator):
         must be implemented in the dialect, which will be used instead
         """
 
-        if self.date_metric not in ("second", "minute", "hour", "day", "month", "year"):
-            raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
-
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
 
@@ -595,10 +592,6 @@ class AbsoluteTimeDifference(ComparisonLevelCreator):
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
 
-        # SQL dialects are consistent in the subtraction operator on dates
-        # resulting in the number of days, but not in the subtraction operator
-        # on datetimes/timestamps.  Far simpler to do it this way
-        # albeit with loss of precision for the time part of the datetime
         sqlglot_base_dialect_sql = (
             "abs(epoch(cast(___col____l as timestamp))"
             " - epoch(cast(___col____r as timestamp)))"

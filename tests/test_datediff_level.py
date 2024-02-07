@@ -17,7 +17,7 @@ def test_datediff_levels(test_helpers, dialect):
 
     col_exp = ColumnExpression("dob").try_parse_date()
     test_spec = ComparisonLevelTestSpec(
-        cll.DatediffLevel,
+        cll.AbsoluteTimeDifference,
         default_keyword_args={
             "date_metric": "day",
             "col_name": col_exp,
@@ -44,7 +44,7 @@ def test_datediff_at_thresholds(test_helpers, dialect):
     db_api = helper.extra_linker_args()["database_api"]
 
     test_spec = ComparisonTestSpec(
-        cl.DatediffAtThresholds(
+        cl.AbsoluteTimeDifferenceAtThresholds(
             "dob", date_thresholds=[1], date_metrics=["day"], cast_strings_to_dates=True
         ),
         tests=[

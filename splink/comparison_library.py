@@ -432,7 +432,7 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
-class DatediffAtThresholds(ComparisonCreator):
+class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
@@ -491,7 +491,7 @@ class DatediffAtThresholds(ComparisonCreator):
                 term_frequency_adjustments=self.term_frequency_adjustments,
             ),
             *[
-                cll.DatediffLevel(
+                cll.AbsoluteTimeDifference(
                     date_diff_col,
                     date_threshold=date_threshold,
                     date_metric=date_metric,
@@ -506,7 +506,7 @@ class DatediffAtThresholds(ComparisonCreator):
     def create_description(self) -> str:
         return (
             f"Exact match '{self.col_expression.label}' vs. "
-            f"date difference at thresholds "
+            f"abs time difference at thresholds "
             f"{self.date_thresholds} "
             f"with metrics {self.date_metrics} vs. "
             "anything else"
