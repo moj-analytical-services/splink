@@ -592,7 +592,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         sqlglot_base_dialect_sql = (
             "abs(epoch(cast(___col____l as timestamp))"
             " - epoch(cast(___col____r as timestamp)))"
-            f"<= {self.date_threshold_seconds}"
+            f"<= {self.time_threshold_seconds}"
         )
 
         sqlglot_dialect_name = sql_dialect.sqlglot_name

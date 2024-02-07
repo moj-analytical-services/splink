@@ -19,18 +19,18 @@ def test_absolute_time_difference_levels_date(test_helpers, dialect):
     test_spec = ComparisonLevelTestSpec(
         cll.AbsoluteTimeDifferenceLevel,
         default_keyword_args={
-            "date_metric": "day",
+            "metric": "day",
             "col_name": col_exp,
         },
         tests=[
             LiteralTestValues(
                 values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
-                keyword_arg_overrides={"date_threshold": 30},
+                keyword_arg_overrides={"hreshold": 30},
                 expected_in_level=True,
             ),
             LiteralTestValues(
                 values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
-                keyword_arg_overrides={"date_threshold": 26},
+                keyword_arg_overrides={"threshold": 26},
                 expected_in_level=False,
             ),
         ],
@@ -47,18 +47,18 @@ def test_absolute_time_difference_levels_timestamp(test_helpers, dialect):
     test_spec = ComparisonLevelTestSpec(
         cll.AbsoluteTimeDifferenceLevel,
         default_keyword_args={
-            "date_metric": "second",
+            "metric": "second",
             "col_name": col_exp,
         },
         tests=[
             LiteralTestValues(
                 {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
-                keyword_arg_overrides={"date_threshold": 61},
+                keyword_arg_overrides={"threshold": 61},
                 expected_in_level=True,
             ),
             LiteralTestValues(
                 {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
-                keyword_arg_overrides={"date_threshold": 59},
+                keyword_arg_overrides={"threshold": 59},
                 expected_in_level=False,
             ),
         ],
@@ -72,10 +72,10 @@ def test_absolute_time_difference_at_thresholds(test_helpers, dialect):
     db_api = helper.extra_linker_args()["database_api"]
 
     test_spec = ComparisonTestSpec(
-        cl.AbsoluteTimeDifferenceAtThresholds(
+        cl.AbsoluteDateDifferenceAtThresholds(
             "dob",
-            date_thresholds=[1],
-            date_metrics=["day"],
+            thresholds=[1],
+            metrics=["day"],
             cast_strings_to_datetimes=True,
         ),
         tests=[
