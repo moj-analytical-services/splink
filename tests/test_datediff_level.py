@@ -25,7 +25,7 @@ def test_absolute_time_difference_levels_date(test_helpers, dialect):
         tests=[
             LiteralTestValues(
                 values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
-                keyword_arg_overrides={"hreshold": 30},
+                keyword_arg_overrides={"threshold": 30},
                 expected_in_level=True,
             ),
             LiteralTestValues(
@@ -74,15 +74,23 @@ def test_absolute_time_difference_at_thresholds(test_helpers, dialect):
     test_spec = ComparisonTestSpec(
         cl.AbsoluteDateDifferenceAtThresholds(
             "dob",
-            thresholds=[1],
-            metrics=["day"],
+            thresholds=[1, 2],
+            metrics=["day", "month"],
             cast_strings_to_datetimes=True,
         ),
         tests=[
             LiteralTestValues(
-                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                values={"dob_l": "2000-01-01", "dob_r": "2020-01-01"},
                 expected_gamma_val=0,
-            )
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-15"},
+                expected_gamma_val=1,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-ab-cd", "dob_r": "2000-01-28"},
+                expected_gamma_val=-1,
+            ),
         ],
     )
 
