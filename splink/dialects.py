@@ -402,7 +402,7 @@ class PostgresDialect(SplinkDialect):
 
     @property
     def default_timestamp_format(self):
-        return "YYYY-MM-DD HH24:MI:SS"
+        return "YYYY-MM-DDTHH24:MI:SS"
 
     def try_parse_date(self, name: str, date_format: str = None):
         if date_format is None:
