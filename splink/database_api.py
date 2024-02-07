@@ -835,11 +835,11 @@ class PostgresAPI(DatabaseAPI):
         # to be consistent with other backends we instead create a version
         # which instead returns NULL, allowing us more flexibility
         sql = """
-        CREATE OR REPLACE FUNCTION try_cast_timestamp(timestamp_string text, format text)
+        CREATE OR REPLACE FUNCTION try_cast_timestamp(timestamp_str text, format text)
         RETURNS timestamp AS $func$
         BEGIN
             BEGIN
-                RETURN to_timestamp(timestamp_string, format);
+                RETURN to_timestamp(timestamp_str, format);
             EXCEPTION WHEN OTHERS THEN
                 RETURN NULL;
             END;

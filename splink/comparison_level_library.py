@@ -536,7 +536,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         will include difference in date of 10 days.
 
         Args:
-            col_name (str): The name of the input column containing the dates to compare.
+            col_name (str): The name of the input column containing the dates to compare
             date_threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
             date_metric (str): The unit of time to use when comparing the dates.
