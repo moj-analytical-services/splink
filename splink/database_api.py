@@ -1,10 +1,12 @@
+import hashlib
 import logging
 import math
 import os
+import random
 import re
 import sqlite3
+import time
 from abc import ABC, abstractmethod
-from itertools import compress
 from tempfile import TemporaryDirectory
 from typing import Dict, Generic, List, TypeVar, Union, final
 
@@ -34,7 +36,11 @@ from .duckdb.duckdb_helpers.duckdb_helpers import (
 )
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import ensure_is_list, major_minor_version_greater_equal_than
+from .misc import (
+    ensure_is_list,
+    major_minor_version_greater_equal_than,
+    parse_duration,
+)
 from .postgres.dataframe import PostgresDataFrame
 from .spark.dataframe import SparkDataFrame
 from .spark.jar_location import get_scala_udfs
@@ -51,6 +57,7 @@ TablishType = TypeVar("TablishType")
 
 class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
+    debug_mode: bool = False
     """
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
@@ -60,6 +67,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
+        # TODO: replace this:
+        self._cache_uid: str = str(random.choice(range(10000)))
 
     @final
     def log_and_run_sql_execution(
@@ -108,6 +117,95 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             spark_df, templated_name, physical_name
         )
         return output_df
+
+    def _sql_to_splink_dataframe(
+        self,
+        sql,
+        output_tablename_templated,
+        use_cache=True,
+    ) -> SplinkDataFrame:
+        # differences from execute_sql_against_backend:
+        # this _calculates_ physical name, and
+        # handles debug_mode
+        # TODO: also maybe caching? but maybe that is even lower down
+        to_hash = (sql + self._cache_uid).encode("utf-8")
+        hash = hashlib.sha256(to_hash).hexdigest()[:9]
+        # Ensure hash is valid sql table name
+        table_name_hash = f"{output_tablename_templated}_{hash}"
+
+        # TODO: caching
+
+        if self.debug_mode:  # TODO: i guess this makes sense on the dbapi? but think.
+            print(sql)  # noqa: T201
+            splink_dataframe = self.execute_sql_against_backend(
+                sql,
+                output_tablename_templated,
+                output_tablename_templated,
+            )
+
+            df_pd = splink_dataframe.as_pandas_dataframe()
+            try:
+                from IPython.display import display
+
+                display(df_pd)
+            except ModuleNotFoundError:
+                print(df_pd)  # noqa: T201
+
+        else:
+            splink_dataframe = self.execute_sql_against_backend(
+                sql, output_tablename_templated, table_name_hash
+            )
+
+        splink_dataframe.created_by_splink = True
+        splink_dataframe.sql_used_to_create = sql
+
+        return splink_dataframe
+
+    def _execute_sql_pipeline(
+        self,
+        pipeline,
+        input_dataframes: List[SplinkDataFrame] = [],
+        use_cache=True,
+    ) -> SplinkDataFrame:
+        """
+        Execute a given pipeline using input_dataframes as seeds if provided.
+        self.debug_mode controls whether this is CTE or individual tables.
+        pipeline is resest upon completion
+        """
+
+        if not self.debug_mode:
+            sql_gen = pipeline._generate_pipeline(input_dataframes)
+            output_tablename_templated = pipeline.output_table_name
+
+            # TODO: check cache
+            splink_dataframe = self._sql_to_splink_dataframe(
+                sql_gen,
+                output_tablename_templated,
+                use_cache,
+            )
+        else:
+            # In debug mode, we do not pipeline the sql and print the
+            # results of each part of the pipeline
+            for task in pipeline._generate_pipeline_parts(input_dataframes):
+                start_time = time.time()
+                output_tablename = task.output_table_name
+                sql = task.sql
+                print("------")  # noqa: T201
+                print(  # noqa: T201
+                    f"--------Creating table: {output_tablename}--------"
+                )
+
+                splink_dataframe = self._sql_to_splink_dataframe(
+                    sql,
+                    output_tablename,
+                    use_cache=False,
+                )
+                run_time = parse_duration(time.time() - start_time)
+                print(f"Step ran in: {run_time}")  # noqa: T201
+
+        # if there is an error the pipeline will not reset, leaving caller to handle
+        pipeline.reset()
+        return splink_dataframe
 
     @final
     def register_multiple_tables(
@@ -330,8 +428,9 @@ class SparkAPI(DatabaseAPI):
 
     def __init__(
         self,
+        *,
+        spark_session,
         break_lineage_method=None,
-        spark=None,
         catalog=None,
         database=None,
         # TODO: what to do about repartitions:
@@ -345,14 +444,20 @@ class SparkAPI(DatabaseAPI):
 
         # these properties will be needed whenever spark is _actually_ set up
         self.repartition_after_blocking = repartition_after_blocking
-        self.num_partitions_on_repartition = num_partitions_on_repartition
-        self.catalog = catalog
-        self.database = database
-        self.register_udfs_automatically = register_udfs_automatically
 
         # TODO: hmmm breaking this flow. Lazy spark ??
-        # self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
-        self.spark = spark
+
+        self.spark = spark_session
+
+        if num_partitions_on_repartition:
+            self.num_partitions_on_repartition = num_partitions_on_repartition
+        else:
+            self.set_default_num_partitions_on_repartition_if_missing()
+
+        self._set_splink_datastore(catalog, database)
+
+        if register_udfs_automatically:
+            self._register_udfs_from_jar()
 
         # TODO: also need to think about where these live:
         # self._drop_splink_cached_tables()
@@ -361,7 +466,7 @@ class SparkAPI(DatabaseAPI):
         # TODO: (ideally) set things up so databricks can inherit from this
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
-            enable_splink(spark)
+            enable_splink(self.spark)
 
         self._set_default_break_lineage_method()
 
@@ -432,61 +537,24 @@ class SparkAPI(DatabaseAPI):
     def accepted_df_dtypes(self):
         return [pd.DataFrame, spark_df]
 
-    def process_input_tables(self, input_tables):
-        # if we don't have a spark instance yet, grab it from provided tables
-        if self.spark is None:
-            self._get_spark_from_input_tables(input_tables)
-        return input_tables
-
-    # special methods:
-    @property
-    def spark(self):
-        return self._spark
-
-    @spark.setter
-    def spark(self, spark):
-        self._spark = spark
-        if spark is None:
-            return
-        # if we have a proper spark instance, then set it up!
-        self.set_default_num_partitions_on_repartition_if_missing()
-        self._set_catalog_and_database_if_not_provided(self.catalog, self.database)
-        if self.register_udfs_automatically:
-            self._register_udfs_from_jar()
-
-    def _get_spark_from_input_tables(self, input_tables):
-        spark_inputs = [isinstance(d, spark_df) for d in input_tables]
-        if any(spark_inputs):
-            for t in list(compress(input_tables, spark_inputs)):
-                # t.sparkSession can be used only from spark 3.3.0 onwards
-                self.spark = t.sql_ctx.sparkSession
-                break
-
-        if self.spark is None:
-            raise ValueError(
-                "If input_table_or_tables are strings or pandas dataframes rather than "
-                "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise SparkAPI."
-            )
-
     def _clean_pandas_df(self, df):
         return df.fillna(nan).replace([nan, pd.NA], [None, None])
 
-    def _set_catalog_and_database_if_not_provided(self, catalog, database):
+    def _set_splink_datastore(self, catalog, database):
         # spark.catalog.currentCatalog() is not available in versions of spark before
         # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
         # setting, but will revert to default in Spark versions greater than 3.4.0
         threshold = "3.4.0"
-        self.catalog = catalog
+
         if (
             major_minor_version_greater_equal_than(self.spark.version, threshold)
-            and not self.catalog
+            and not catalog
         ):
             # set the catalog and database of where to write output tables
-            self.catalog = (
+            catalog = (
                 catalog if catalog is not None else self.spark.catalog.currentCatalog()
             )
-        self.database = (
+        database = (
             database if database is not None else self.spark.catalog.currentDatabase()
         )
 
@@ -494,7 +562,7 @@ class SparkAPI(DatabaseAPI):
         # be stored. The filter will remove none, so if catalog is not provided and
         # spark version is < 3.3.0 we will use the default catalog.
         self.splink_data_store = ".".join(
-            [f"`{x}`" for x in [self.catalog, self.database] if x is not None]
+            [f"`{x}`" for x in [catalog, database] if x is not None]
         )
 
     def _register_udfs_from_jar(self):
@@ -534,22 +602,21 @@ class SparkAPI(DatabaseAPI):
             spark_df.limit(1).checkpoint()
 
     def set_default_num_partitions_on_repartition_if_missing(self):
-        if self.num_partitions_on_repartition is None:
-            parallelism_value = 200
-            try:
-                parallelism_value = self.spark.conf.get("spark.default.parallelism")
-                parallelism_value = int(parallelism_value)
-            except Exception:
-                pass
+        parallelism_value = 200
+        try:
+            parallelism_value = self.spark.conf.get("spark.default.parallelism")
+            parallelism_value = int(parallelism_value)
+        except Exception:
+            pass
 
-            # Prefer spark.sql.shuffle.partitions if set
-            try:
-                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
-                parallelism_value = int(parallelism_value)
-            except Exception:
-                pass
+        # Prefer spark.sql.shuffle.partitions if set
+        try:
+            parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
+            parallelism_value = int(parallelism_value)
+        except Exception:
+            pass
 
-            self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
+        self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
 
     # TODO: this repartition jazz knows too much about the linker
     def _repartition_if_needed(self, spark_df, templated_name):

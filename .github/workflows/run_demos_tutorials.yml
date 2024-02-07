@@ -62,6 +62,12 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
       #----------------------------------------------
+      #       pip install additional requirements
+      #----------------------------------------------
+      - name: Install additional requirements from demos_requirements.txt
+        run: |
+          poetry run pip install -r docs/demos/data/demos_requirements.txt
+      #----------------------------------------------
       # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
       - name: Modify Notebooks to reduce data size
@@ -73,5 +79,4 @@ jobs:
       - name: Test with pytest
         run: |
           source .venv/bin/activate
-          pip install pytest-xdist
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
+          python -m pytest -vv --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb

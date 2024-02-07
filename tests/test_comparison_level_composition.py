@@ -107,7 +107,6 @@ def test_not():
 
 @mark_with_dialects_excluding()
 def test_null_level_composition(dialect):
-
     c = (
         cll.And(cll.NullLevel("first_name"), cll.NullLevel("surname")).configure(
             is_null_level=True

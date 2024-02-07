@@ -9,6 +9,7 @@ import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink.database_api import SparkAPI
 from splink.linker import Linker
+from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -64,14 +65,17 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         df_spark,
         settings,
         SparkAPI(
+            spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
             database="1111",
         ),
     )
 
-    linker.profile_columns(
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
+    profile_columns(
+        df_spark,
+        spark_api,
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
     )
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
@@ -141,6 +145,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         [df_spark, df_spark.toPandas()],
         settings,
         SparkAPI(
+            spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
         ),
@@ -157,7 +162,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     Linker(df_spark, settings_dict=path, database_api=spark_api)
 
 
-def test_link_only(df_spark, spark_api):
+def test_link_only(spark, df_spark, spark_api):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
@@ -169,6 +174,7 @@ def test_link_only(df_spark, spark_api):
         [df_spark_a, df_spark_b],
         settings,
         SparkAPI(
+            spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
         ),

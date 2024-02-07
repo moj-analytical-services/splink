@@ -64,7 +64,7 @@ class SparkTestHelper(TestHelper):
         return SparkAPI
 
     def db_api_args(self):
-        return {"spark": self.spark, "num_partitions_on_repartition": 1}
+        return {"spark_session": self.spark, "num_partitions_on_repartition": 1}
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)

@@ -57,7 +57,8 @@ def cumulative_comparisons_generated_by_blocking_rules(
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     concat = linker._initialise_df_concat(materialise=True)
 

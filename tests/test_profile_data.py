@@ -6,42 +6,58 @@ from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
 
 from splink.database_api import DuckDBAPI, SQLiteAPI
-from splink.linker import Linker
 from splink.misc import ensure_is_list
-from splink.profile_data import _col_or_expr_frequencies_raw_data_sql
+from splink.pipeline import SQLPipeline
+from splink.profile_data import (
+    _col_or_expr_frequencies_raw_data_sql,
+    profile_columns,
+)
 
-from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
 
 
-def generate_raw_profile_dataset(columns_to_profile, linker):
-    linker._initialise_df_concat()
+def generate_raw_profile_dataset(table, columns_to_profile, db_api):
+    input_alias = "__splink__profile_data"
+    _splink_df = db_api.register_table(table, input_alias, overwrite=True)
+
+    pipeline = SQLPipeline()
 
     column_expressions_raw = ensure_is_list(columns_to_profile)
 
-    sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, "__splink__df_concat"
+    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions_raw, input_alias)
+
+    pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
+
+    return db_api._execute_sql_pipeline(pipeline, []).as_pandas_dataframe()
+
+
+@mark_with_dialects_including("duckdb")
+def test_profile_default_cols_duckdb():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    db_api = DuckDBAPI()
+
+    profile_columns(
+        df,
+        db_api,
     )
-
-    linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-
-    return linker._execute_sql_pipeline().as_pandas_dataframe()
 
 
 @mark_with_dialects_including("duckdb")
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["blank"] = None
-    settings_dict = get_settings_dict()
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=15,
     )
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             ["surname"],
@@ -53,7 +69,7 @@ def test_profile_using_duckdb():
         bottom_n=15,
     )
 
-    assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
+    assert len(generate_raw_profile_dataset(df, [["first_name", "blank"]], db_api)) == 0
 
 
 # probably dropping support for this, so won't fixup
@@ -102,16 +118,13 @@ def test_profile_with_arrays_duckdb():
     }
 
     df = pd.DataFrame(dic)
-    settings = {
-        "link_type": "dedupe_only",
-        "unique_id_column_name": "id",
-    }
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(df, settings, database_api=db_api)
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         column_expressions,
         top_n=3,
         bottom_n=3,
@@ -120,22 +133,14 @@ def test_profile_with_arrays_duckdb():
 
 @mark_with_dialects_including("spark")
 def test_profile_with_arrays_spark(spark, spark_api):
-    settings = {
-        "link_type": "dedupe_only",
-        "unique_id_column_name": "id",
-    }
     spark_df = spark.read.parquet("tests/datasets/arrays_df.parquet")
     spark_df.persist()
 
-    linker = Linker(
-        spark_df,
-        settings,
-        spark_api,
-    )
-
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
-    linker.profile_columns(
+    profile_columns(
+        spark_df,
+        spark_api,
         column_expressions,
         top_n=3,
         bottom_n=3,
@@ -149,31 +154,31 @@ def test_profile_using_sqlite():
     con = sqlite3.connect(":memory:")
 
     df.to_sql("fake_data_1", con, if_exists="replace")
-    settings_dict = get_settings_dict()
 
     db_api = SQLiteAPI(con)
-    linker = Linker(
-        "fake_data_1",
-        settings_dict,
-        db_api,
-    )
 
-    linker.profile_columns(["first_name", "surname", "first_name || surname"])
+    profile_columns(
+        df,
+        db_api,
+        ["first_name", "surname", "first_name || surname"],
+    )
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 @mark_with_dialects_including("spark")
 def test_profile_using_spark(df_spark, spark_api):
-    settings_dict = get_settings_dict()
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
-    linker = Linker(df_spark, settings_dict, spark_api)
 
-    linker.profile_columns(
+    profile_columns(
+        df_spark,
+        spark_api,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=15,
     )
-    linker.profile_columns(
+    profile_columns(
+        df_spark,
+        spark_api,
         [
             "first_name",
             ["surname"],
@@ -185,12 +190,16 @@ def test_profile_using_spark(df_spark, spark_api):
         bottom_n=15,
     )
 
-    assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
+    assert (
+        len(
+            generate_raw_profile_dataset(df_spark, [["first_name", "blank"]], spark_api)
+        )
+        == 0
+    )
 
 
 @mark_with_dialects_including("duckdb")
 def test_profile_null_columns(caplog):
-
     df = pd.DataFrame(
         [
             {"unique_id": 1, "test_1": 1, "test_2": None},
@@ -198,10 +207,8 @@ def test_profile_null_columns(caplog):
     )
 
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
 
-    linker.profile_columns(["test_1", "test_2"])
-
+    profile_columns(df, db_api, ["test_1", "test_2"])
     captured_logs = caplog.text
 
     assert (

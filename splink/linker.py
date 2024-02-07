@@ -1515,9 +1515,11 @@ class Linker:
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
-                self._settings_obj._get_comparison_by_output_column_name(n)
-                if isinstance(n, str)
-                else n
+                (
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
+                )
                 for n in comparisons_to_deactivate
             ]
             if comparison_levels_to_reverse_blocking_rule is None:
@@ -2143,7 +2145,11 @@ class Linker:
         """
 
         return profile_columns(
-            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
+            self.db_api,
+            column_expressions=column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
     def _get_labels_tablename_from_input(

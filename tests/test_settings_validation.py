@@ -279,26 +279,9 @@ def test_settings_validation_logs(caplog):
             assert header in caplog.text and error in caplog.text
 
 
-# TODO: I think this will no longer be applicable?
-# def test_validate_sql_dialect():
-#     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-#     settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
-
-#     with pytest.raises(Exception) as excinfo:
-#         db_api = DuckDBAPI()
-
-#         Linker(df, settings, database_api=db_api)
-#     assert str(excinfo.value) == (
-#         "Incompatible SQL dialect! `settings` dictionary uses dialect "
-#         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
-#     )
-
-
 def test_comparison_validation():
     import splink.comparison_level_library as cll
-    from splink.comparison_library import ExactMatch
-    from splink.exceptions import InvalidDialect
+    import splink.comparison_library as cl
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
@@ -314,10 +297,7 @@ def test_comparison_validation():
     settings = get_settings_dict()
 
     # Contents aren't tested as of yet
-    email_no_comp_level = {
-        "comparison_lvls": [],
-    }
-
+    email_no_comp_level = {"comparison_lvls": []}
     # cll instead of cl
     email_cc = cll.ExactMatchLevel("email").get_comparison_level("duckdb")
     settings["comparisons"][3] = email_cc
@@ -325,16 +305,14 @@ def test_comparison_validation():
     settings["comparisons"][4] = "help"
     # missing key dict key and replaced w/ `comparison_lvls`
     settings["comparisons"].append(email_no_comp_level)
-    # Check invalid import is detected
-    settings["comparisons"].append(ExactMatch("test").get_comparison("spark"))
-    # mismashed comparison
+    # a comparison containing another comparison
     settings["comparisons"].append(
         {
             "comparison_levels": [
-                cll.NullLevel("test").get_comparison_level("spark"),
+                cll.NullLevel("test"),
                 # Invalid Spark cll
-                cll.ExactMatchLevel("test").get_comparison_level("athena"),
-                cll.ElseLevel().get_comparison_level("duckdb"),
+                cl.ExactMatch("test"),
+                cll.ElseLevel(),
             ]
         }
     )
@@ -351,17 +329,16 @@ def test_comparison_validation():
 
     # Check our errors are raised
     errors = error_logger.raw_errors
-    assert len(errors) == len(settings["comparisons"]) - 3
+    # -3 as we have three valid comparisons
+    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
 
-    # Our expected error types and part of the corresponding error text
+    # These errors are raised in the order they are defined in the settings
     expected_errors = (
         (TypeError, "is a comparison level"),
         (TypeError, "is of an invalid data type."),
         (SyntaxError, "missing the required `comparison_levels`"),
-        (InvalidDialect, "within its comparison levels - spark."),
-        (InvalidDialect, "within its comparison levels - presto, spark."),
+        (TypeError, "contains the following invalid levels"),
     )
-
     for n, (e, txt) in enumerate(expected_errors):
         with pytest.raises(e, match=txt):
             raise errors[n]
