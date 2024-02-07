@@ -848,7 +848,6 @@ class PostgresAPI(DatabaseAPI):
         """
         self._run_sql_execution(sql)
 
-
     def _create_array_intersect_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION array_intersect(x anyarray, y anyarray)
