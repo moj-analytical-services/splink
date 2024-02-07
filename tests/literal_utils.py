@@ -1,5 +1,4 @@
 import json
-from copy import deepcopy
 from typing import List, Type, Union
 
 import pytest
@@ -49,10 +48,7 @@ class ComparisonLevelTestSpec:
 
     @property
     def keyword_args_combined(self):
-        copied_default = deepcopy(self.default_keyword_args)
-        copied_overrides = deepcopy(self.keyword_arg_overrides)
-
-        return {**copied_default, **copied_overrides}
+        return {**self.default_keyword_args, **self.keyword_arg_overrides}
 
 
 class ComparisonTestSpec:
@@ -96,10 +92,7 @@ class ComparisonTestSpec:
 
     @property
     def keyword_args_combined(self):
-        copied_default = deepcopy(self.default_keyword_args)
-        copied_overrides = deepcopy(self.keyword_arg_overrides)
-
-        return {**copied_default, **copied_overrides}
+        return {**self.default_keyword_args, **self.keyword_arg_overrides}
 
 
 def execute_sql_for_test(sql, db_api):
