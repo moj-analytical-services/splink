@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from typing import List, Type, Union
 
 import pytest
@@ -40,13 +41,18 @@ class ComparisonLevelTestSpec:
             return self.comparison_level_or_class
 
     def get_sql(self, sqlglot_name):
-        sql = self.comparison_level_creator.get_comparison_level("duckdb").sql_condition
+        sql = self.comparison_level_creator.get_comparison_level(
+            sqlglot_name
+        ).sql_condition
 
         return f"select {sql} as in_level from __splink__test_table"
 
     @property
     def keyword_args_combined(self):
-        return {**self.default_keyword_args, **self.keyword_arg_overrides}
+        copied_default = deepcopy(self.default_keyword_args)
+        copied_overrides = deepcopy(self.keyword_arg_overrides)
+
+        return {**copied_default, **copied_overrides}
 
 
 class ComparisonTestSpec:
@@ -77,7 +83,7 @@ class ComparisonTestSpec:
     @property
     def comparison_creator(self) -> ComparisonCreator:
         if self.has_class_not_instance:
-            return self.comparison_level_or_class(**self.keyword_arg_overrides)
+            return self.comparison_level_or_class(**self.keyword_args_combined)
         else:
             return self.comparison_level_or_class
 
@@ -90,7 +96,10 @@ class ComparisonTestSpec:
 
     @property
     def keyword_args_combined(self):
-        return {**self.default_keyword_args, **self.keyword_arg_overrides}
+        copied_default = deepcopy(self.default_keyword_args)
+        copied_overrides = deepcopy(self.keyword_arg_overrides)
+
+        return {**copied_default, **copied_overrides}
 
 
 def execute_sql_for_test(sql, db_api):
