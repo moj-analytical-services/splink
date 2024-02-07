@@ -590,8 +590,8 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
             return sql_dialect.absolute_time_difference(self)
 
         sqlglot_base_dialect_sql = (
-            "abs(epoch(cast(___col____l as timestamp))"
-            " - epoch(cast(___col____r as timestamp)))"
+            "abs(TIME_TO_UNIX(cast(___col____l as timestamp))"
+            " - TIME_TO_UNIX(cast(___col____r as timestamp)))"
             f"<= {self.time_threshold_seconds}"
         )
 
