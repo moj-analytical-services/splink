@@ -50,7 +50,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
                 "comparison_levels": [
                     cll.ArrayIntersectLevel("email", min_intersection=1),
                     cll.ElseLevel(),
-                ]
+                ],
             },
             cl.JaccardAtThresholds("city", [0.9]),
         ],

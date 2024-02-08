@@ -120,8 +120,8 @@ def test_cll_creators_instantiate_levels_with_config(dialect):
 
 
 comparison_name = cl.CustomComparison(
-    "name",
-    [
+    output_column_name="name",
+    comparison_levels=[
         cll.CustomLevel(
             "(first_name_l IS NULL OR first_name_r IS NULL) AND "
             "(surname_l IS NULL OR surname_r IS NULL) "
