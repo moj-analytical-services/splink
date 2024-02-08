@@ -105,6 +105,7 @@ class Settings:
         cc = Settings(**self.as_dict())
         return cc
 
+    # TODO: move this to Comparison
     def _warn_if_no_null_level_in_comparisons(self):
         for c in self.comparisons:
             if not c._has_null_level:
@@ -486,6 +487,7 @@ class Settings:
 
         logger.info(message)
 
+    # TODO: use property + raw None value instead?
     @property
     def _lambda_is_default(self):
         if self._probability_two_random_records_match == 0.0001:
