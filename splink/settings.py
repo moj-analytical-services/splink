@@ -37,10 +37,6 @@ class Settings:
         sql_dialect: str = None,
         linker_uid: str = None,
     ):
-        # If incoming comparisons are of type Comparison not dict, turn back into dict
-        # TODO: keep them as Comparison
-        ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in comparisons]
-
         # TODO: hook up validation here
         # Validate against schema before processing
         # validate_settings_against_schema(settings_dict)
@@ -50,12 +46,10 @@ class Settings:
 
         # TODO: streamline this logic
         self.comparisons: list[Comparison] = []
-        for cc in ccs:
-            self.comparisons.append(
-                Comparison(
-                    **cc, settings_obj=self, sqlglot_dialect_name=self._sql_dialect
-                )
-            )
+        for comparison in comparisons:
+            # TODO: not sure we need backref ultimately
+            comparison._settings_obj = self
+            self.comparisons.append(comparison)
 
         self._link_type = link_type
         self._probability_two_random_records_match = (
@@ -102,7 +96,7 @@ class Settings:
         """When we do EM training, we need a copy of the Settings which is independent
         of the original e.g. modifying the copy will not affect the original.
         This method implements ensures the Settings can be deepcopied."""
-        cc = Settings(**self.as_dict())
+        cc = Settings(**self._as_dict_for_copying())
         return cc
 
     # TODO: move this to Comparison
@@ -457,6 +451,15 @@ class Settings:
         return {
             **self._simple_dict_entries(),
             **current_settings,
+        }
+
+    def _as_dict_for_copying(self):
+        return {
+            **self._simple_dict_entries(),
+            "comparisons": self.comparisons,
+            "blocking_rules_to_generate_predictions": (
+                self._blocking_rules_to_generate_predictions
+            ),
         }
 
     def match_weights_chart(self, as_dict=False):

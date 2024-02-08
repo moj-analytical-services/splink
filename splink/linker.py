@@ -1139,28 +1139,28 @@ class Linker:
     #     Args:
     #         settings_dict (dict): A Splink settings dictionary
     #     """
-        # settings_dict = copy(settings_dict)
-        # # If a uid already exists in your settings object, prioritise this
-        # settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
-        # if "sql_dialect" in settings_dict:
-        #     sql_dialect_str = settings_dict["sql_dialect"]
-        #     del settings_dict["sql_dialect"]
-        # else:
-        #     sql_dialect_str = self._sql_dialect
-        # self._settings_dict = settings_dict
-        # self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
-        #     sql_dialect_str
-        # )
-        # self._validate_input_dfs()
-        # self._validate_dialect()
+    # settings_dict = copy(settings_dict)
+    # # If a uid already exists in your settings object, prioritise this
+    # settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+    # if "sql_dialect" in settings_dict:
+    #     sql_dialect_str = settings_dict["sql_dialect"]
+    #     del settings_dict["sql_dialect"]
+    # else:
+    #     sql_dialect_str = self._sql_dialect
+    # self._settings_dict = settings_dict
+    # self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+    #     sql_dialect_str
+    # )
+    # self._validate_input_dfs()
+    # self._validate_dialect()
 
-        # warnings.warn(
-        #     "`initialise_settings` is deprecated. We advise you use "
-        #     "`linker.load_settings()` when loading in your settings or a previously "
-        #     "trained model.",
-        #     SplinkDeprecated,
-        #     stacklevel=2,
-        # )
+    # warnings.warn(
+    #     "`initialise_settings` is deprecated. We advise you use "
+    #     "`linker.load_settings()` when loading in your settings or a previously "
+    #     "trained model.",
+    #     SplinkDeprecated,
+    #     stacklevel=2,
+    # )
 
     def load_settings_from_json(self, in_path: str | Path):
         """*This method is now deprecated. Please use `load_settings`
