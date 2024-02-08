@@ -105,6 +105,7 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
+from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -219,9 +220,9 @@ class Linker:
             # TODO: need to figure out how this flows with validation
             # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
-            self._instantiate_comparison_levels(settings_dict)
-            self._instantiate_blocking_rules(settings_dict)
-            self._validate_settings_components(settings_dict)
+            # self._instantiate_comparison_levels(settings_dict)
+            # self._instantiate_blocking_rules(settings_dict)
+            # self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         # logic from DuckDBLinker.__init__ - TODO: genericise
@@ -450,12 +451,17 @@ class Linker:
 
     def _setup_settings_objs(self, settings_dict):
         # Setup the linker class's required settings
-        self._settings_dict = settings_dict
+        self._settings_dict = copy(settings_dict)
 
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
         if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
+            settings_dialect_str = self._sql_dialect
+        elif settings_dict is None:
+            settings_dialect_str = self._sql_dialect
+        else:
+            settings_dialect_str = settings_dict["sql_dialect"]
+            del settings_dict["sql_dialect"]
 
         if settings_dict is None:
             self._cache_uid_no_settings = ascii_uid(8)
@@ -466,7 +472,9 @@ class Linker:
         if settings_dict is None:
             self._settings_obj_ = None
         else:
-            self._settings_obj_ = Settings(**settings_dict)
+            self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+                settings_dialect_str
+            )
 
     def _check_for_valid_settings(self):
         if (
@@ -1077,13 +1085,22 @@ class Linker:
 
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
+        if "sql_dialect" in settings_dict:
+            sql_dialect_str = settings_dict["sql_dialect"]
+            del settings_dict["sql_dialect"]
+        else:
+            sql_dialect_str = self._sql_dialect
+        # TODO: remove this once we have sorted spec
+        for br in settings_dict["blocking_rules_to_generate_predictions"]:
+            if isinstance(br, dict):
+                if "sql_dialect" in br:
+                    del br["sql_dialect"]
 
-        self._instantiate_comparison_levels(settings_dict)
+        # self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(**settings_dict)
+        self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+            sql_dialect_str
+        )
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
 
@@ -1104,41 +1121,46 @@ class Linker:
 
         return self.load_settings(model_path)
 
-    def initialise_settings(self, settings_dict: dict):
-        """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or `load_model` when loading
-         a pre-trained model.*
+    # def initialise_settings(self, settings_dict: dict):
+    #     """*This method is now deprecated. Please use `load_settings`
+    #     when loading existing settings or `load_model` when loading
+    #      a pre-trained model.*
 
-        Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
-        Examples:
+    #     Initialise settings for the linker.  To be used if settings were
+    #     not passed to the linker on creation.
+    #     Examples:
 
-            ```py
-            linker = Linker(df, db_api)
-            linker.profile_columns(["first_name", "surname"])
-            linker.initialise_settings(settings_dict)
-            ```
+    #         ```py
+    #         linker = Linker(df, db_api)
+    #         linker.profile_columns(["first_name", "surname"])
+    #         linker.initialise_settings(settings_dict)
+    #         ```
 
-        Args:
-            settings_dict (dict): A Splink settings dictionary
-        """
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
-        self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(**settings_dict)
-        self._validate_input_dfs()
-        self._validate_dialect()
+    #     Args:
+    #         settings_dict (dict): A Splink settings dictionary
+    #     """
+        # settings_dict = copy(settings_dict)
+        # # If a uid already exists in your settings object, prioritise this
+        # settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        # if "sql_dialect" in settings_dict:
+        #     sql_dialect_str = settings_dict["sql_dialect"]
+        #     del settings_dict["sql_dialect"]
+        # else:
+        #     sql_dialect_str = self._sql_dialect
+        # self._settings_dict = settings_dict
+        # self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+        #     sql_dialect_str
+        # )
+        # self._validate_input_dfs()
+        # self._validate_dialect()
 
-        warnings.warn(
-            "`initialise_settings` is deprecated. We advise you use "
-            "`linker.load_settings()` when loading in your settings or a previously "
-            "trained model.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
+        # warnings.warn(
+        #     "`initialise_settings` is deprecated. We advise you use "
+        #     "`linker.load_settings()` when loading in your settings or a previously "
+        #     "trained model.",
+        #     SplinkDeprecated,
+        #     stacklevel=2,
+        # )
 
     def load_settings_from_json(self, in_path: str | Path):
         """*This method is now deprecated. Please use `load_settings`
