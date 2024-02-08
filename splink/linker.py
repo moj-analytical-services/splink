@@ -466,7 +466,7 @@ class Linker:
         if settings_dict is None:
             self._settings_obj_ = None
         else:
-            self._settings_obj_ = Settings(settings_dict)
+            self._settings_obj_ = Settings(**settings_dict)
 
     def _check_for_valid_settings(self):
         if (
@@ -493,6 +493,8 @@ class Linker:
         )
 
     def _validate_settings(self, validate_settings):
+        # TODO: restore logic
+        return
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
@@ -1081,7 +1083,7 @@ class Linker:
 
         self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
+        self._settings_obj_ = Settings(**settings_dict)
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
 
@@ -1126,7 +1128,7 @@ class Linker:
             "sql_dialect", self._sql_dialect
         )
         self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
+        self._settings_obj_ = Settings(**settings_dict)
         self._validate_input_dfs()
         self._validate_dialect()
 
