@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import List
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
@@ -38,6 +39,7 @@ class Settings:
         linker_uid: str = None,
         # TODO: do we need this long-term?
         training_mode: bool = False,
+        blocking_rule_for_training: BlockingRule = None,
     ):
         # TODO: hook up validation here
         # Validate against schema before processing
@@ -77,7 +79,7 @@ class Settings:
         self._bf_prefix = bayes_factor_column_prefix
         self._tf_prefix = term_frequency_adjustment_column_prefix
         # TODO: can we factor these out?
-        self._blocking_rule_for_training = None
+        self._blocking_rule_for_training = blocking_rule_for_training
         self._training_mode = training_mode
 
         self._cache_uid = linker_uid
@@ -458,11 +460,12 @@ class Settings:
     def _as_dict_for_copying(self):
         return {
             **self._simple_dict_entries(),
-            "comparisons": self.comparisons,
+            "comparisons": [deepcopy(c) for c in self.comparisons],
             "blocking_rules_to_generate_predictions": (
-                self._blocking_rules_to_generate_predictions
+                [deepcopy(br) for br in self._blocking_rules_to_generate_predictions]
             ),
             "training_mode": self._training_mode,
+            "blocking_rule_for_training": self._blocking_rule_for_training,
         }
 
     def match_weights_chart(self, as_dict=False):
