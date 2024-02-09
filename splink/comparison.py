@@ -8,7 +8,7 @@ from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .settings import Settings
+    from .settings import ColumnInfoSettings, Settings
 
 
 class Comparison:
@@ -62,6 +62,7 @@ class Comparison:
         output_column_name: str = None,
         comparison_description: str = None,
         settings_obj: Settings = None,
+        column_info_settings: ColumnInfoSettings = None,
     ):
 
         self.comparison_levels: list[ComparisonLevel] = []
@@ -87,6 +88,7 @@ class Comparison:
             self.comparison_levels.append(cl)
 
         self._settings_obj: Optional[Settings] = settings_obj
+        self.column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
         self.sqlglot_dialect_name = sqlglot_dialect_name
         self.output_column_name = (
@@ -127,6 +129,7 @@ class Comparison:
             **comparison_dict,
             sqlglot_dialect_name=self.sqlglot_dialect_name,
             settings_obj=self._settings_obj,
+            column_info_settings=self.column_info_settings,
         )
         return cc
 
@@ -139,8 +142,8 @@ class Comparison:
         return [cl for cl in self.comparison_levels if not cl.is_null_level]
 
     @property
-    def _gamma_prefix(self):
-        return self._settings_obj._gamma_prefix
+    def gamma_prefix(self):
+        return self.column_info_settings.comparison_vector_value_column_prefix
 
     @property
     def _retain_intermediate_calculation_columns(self):
@@ -148,9 +151,8 @@ class Comparison:
 
     @property
     def _bf_column_name(self):
-        return f"{self._settings_obj._bf_prefix}{self.output_column_name}".replace(
-            " ", "_"
-        )
+        bf_prefix = self.column_info_settings.bayes_factor_column_prefix
+        return f"{bf_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def _has_null_level(self):
@@ -158,8 +160,8 @@ class Comparison:
 
     @property
     def _bf_tf_adj_column_name(self):
-        bf = self._settings_obj._bf_prefix
-        tf = self._settings_obj._tf_prefix
+        bf = self.column_info_settings.bayes_factor_column_prefix
+        tf = self.column_info_settings.term_frequency_adjustment_column_prefix
         cc_name = self.output_column_name
         return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
@@ -205,7 +207,7 @@ class Comparison:
 
     @property
     def _gamma_column_name(self):
-        return f"{self._gamma_prefix}{self.output_column_name}".replace(" ", "_")
+        return f"{self.gamma_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def _tf_adjustment_input_col_names(self):

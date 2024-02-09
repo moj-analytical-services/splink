@@ -59,11 +59,18 @@ class Settings:
         # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
         self._sql_dialect = sql_dialect
 
+        self.column_info_settings = ColumnInfoSettings(
+            comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
+            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
+        )
+
         # TODO: streamline this logic
         self.comparisons: list[Comparison] = []
         for comparison in comparisons:
             # TODO: not sure we need backref ultimately
             comparison._settings_obj = self
+            comparison.column_info_settings = self.column_info_settings
             self.comparisons.append(comparison)
 
         self._link_type = link_type
@@ -83,11 +90,6 @@ class Settings:
             blocking_rules_to_generate_predictions
         )
 
-        self.column_info_settings = ColumnInfoSettings(
-            comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
-            bayes_factor_column_prefix=bayes_factor_column_prefix,
-            term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
-        )
         # TODO: no thanks:
         self._source_dataset_column_name_ = source_dataset_column_name
         self._unique_id_column_name = unique_id_column_name
@@ -160,7 +162,14 @@ class Settings:
     @property
     def _additional_columns_to_retain(self):
         cols = self._additional_columns_to_retain_list
-        return [InputColumn(c, settings_obj=self) for c in cols]
+        return [
+            InputColumn(
+                c,
+                column_info_settings=self.column_info_settings,
+                sql_dialect=self._sql_dialect,
+            )
+            for c in cols
+        ]
 
     @property
     def _source_dataset_column_name_is_required(self):
@@ -180,11 +189,16 @@ class Settings:
         if self._source_dataset_column_name_is_required:
             col = InputColumn(
                 self._source_dataset_column_name,
-                settings_obj=self,
+                column_info_settings=self.column_info_settings,
+                sql_dialect=self._sql_dialect,
             )
             cols.append(col)
 
-        col = InputColumn(self._unique_id_column_name, settings_obj=self)
+        col = InputColumn(
+            self._unique_id_column_name,
+            column_info_settings=self.column_info_settings,
+            sql_dialect=self._sql_dialect,
+        )
         cols.append(col)
 
         return cols
@@ -194,7 +208,14 @@ class Settings:
         cols = set()
         for cc in self.comparisons:
             cols.update(cc._tf_adjustment_input_col_names)
-        return [InputColumn(c, settings_obj=self) for c in list(cols)]
+        return [
+            InputColumn(
+                c,
+                column_info_settings=self.column_info_settings,
+                sql_dialect=self._sql_dialect,
+            )
+            for c in list(cols)
+        ]
 
     @property
     def _needs_matchkey_column(self) -> bool:

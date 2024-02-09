@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING
 
 import sqlglot
 import sqlglot.expressions as exp
 
-from .default_from_jsonschema import default_value_from_schema
 from .sql_transform import sqlglot_tree_signature
+
+if TYPE_CHECKING:
+    from .settings import ColumnInfoSettings
 
 
 @dataclass(frozen=True)
@@ -167,12 +170,10 @@ class InputColumn:
     def __init__(
         self,
         raw_column_name_or_column_reference: str,
-        settings_obj=None,
+        column_info_settings: ColumnInfoSettings = None,
         sql_dialect: str = None,
     ):
-        # If settings_obj is None, then default values will be used
-        # from the jsonschama
-        self._settings_obj = settings_obj
+        self.column_info_settings = column_info_settings
 
         self.register_dialect(sql_dialect)
 
@@ -189,30 +190,17 @@ class InputColumn:
         )
 
     def register_dialect(self, sql_dialect: str):
-        if not sql_dialect and self._settings_obj:
-            sql_dialect = self._settings_obj._sql_dialect
-
         self.sql_dialect = sql_dialect
-
-    def from_settings_obj_else_default(self, key, schema_key=None):
-        # Covers the case where no settings obj is set on the comparison level
-        if self._settings_obj:
-            return getattr(self._settings_obj, key)
-        else:
-            if not schema_key:
-                schema_key = key
-            return default_value_from_schema(schema_key, "root")
 
     @property
     def _bf_prefix(self):
-        return self.from_settings_obj_else_default(
-            "_bf_prefix", "bayes_factor_column_prefix"
-        )
+        # TODO: remove this temp compat
+        return getattr(self.column_info_settings, "bayes_factor_column_prefix", "bf_")
 
     @property
     def _tf_prefix(self):
-        return self.from_settings_obj_else_default(
-            "_tf_prefix", "term_frequency_adjustment_column_prefix"
+        return getattr(
+            self.column_info_settings, "term_frequency_adjustment_column_prefix", "tf_"
         )
 
     def unquote(self) -> InputColumn:

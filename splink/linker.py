@@ -986,7 +986,11 @@ class Linker:
             SplinkDataFrame: The resultant table as a splink data frame
         """
 
-        input_col = InputColumn(column_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            column_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
@@ -3407,7 +3411,11 @@ class Linker:
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            col_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._cache_uid}"
         splink_dataframe = self.register_table(
