@@ -20,7 +20,7 @@ class Settings:
     def __init__(
         self,
         link_type: str,
-        # TODO: make this compulsory once we farm more stuff out of linker
+        # TODO: make everything compulsory at this level?
         comparisons: List[Comparison] = [],
         blocking_rules_to_generate_predictions: List[BlockingRule] = [],
         probability_two_random_records_match: float = 0.0001,
@@ -36,6 +36,8 @@ class Settings:
         comparison_vector_value_column_prefix: str = "gamma_",
         sql_dialect: str = None,
         linker_uid: str = None,
+        # TODO: do we need this long-term?
+        training_mode: bool = False,
     ):
         # TODO: hook up validation here
         # Validate against schema before processing
@@ -76,7 +78,7 @@ class Settings:
         self._tf_prefix = term_frequency_adjustment_column_prefix
         # TODO: can we factor these out?
         self._blocking_rule_for_training = None
-        self._training_mode = False
+        self._training_mode = training_mode
 
         self._cache_uid = linker_uid
 
@@ -460,6 +462,7 @@ class Settings:
             "blocking_rules_to_generate_predictions": (
                 self._blocking_rules_to_generate_predictions
             ),
+            "training_mode": self._training_mode,
         }
 
     def match_weights_chart(self, as_dict=False):
