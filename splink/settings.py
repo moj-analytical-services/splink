@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
+from copy import copy, deepcopy
 from typing import List
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
@@ -462,7 +462,9 @@ class Settings:
             **self._simple_dict_entries(),
             "comparisons": [deepcopy(c) for c in self.comparisons],
             "blocking_rules_to_generate_predictions": (
-                [deepcopy(br) for br in self._blocking_rules_to_generate_predictions]
+                # BlockingRules are simple, so only need a shallow copy
+                # TODO: can/should we rely on this?
+                [copy(br) for br in self._blocking_rules_to_generate_predictions]
             ),
             "training_mode": self._training_mode,
             "blocking_rule_for_training": self._blocking_rule_for_training,
