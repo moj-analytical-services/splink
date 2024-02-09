@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from copy import copy, deepcopy
+from dataclasses import asdict, dataclass
 from typing import List
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
@@ -12,6 +13,16 @@ from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_w
 from .parse_sql import get_columns_used_from_sql
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ColumnInfoSettings:
+    bayes_factor_column_prefix: str
+    term_frequency_adjustment_column_prefix: str
+    comparison_vector_value_column_prefix: str
+
+    def as_dict(self) -> dict:
+        return asdict(self)
 
 
 class Settings:
@@ -61,7 +72,6 @@ class Settings:
         )
         self._em_convergence = em_convergence
         self._max_iterations = max_iterations
-        self._unique_id_column_name = unique_id_column_name
 
         self._retain_matching_columns = retain_matching_columns
         self._retain_intermediate_calculation_columns = (
@@ -73,11 +83,15 @@ class Settings:
             blocking_rules_to_generate_predictions
         )
 
+        self.column_info_settings = ColumnInfoSettings(
+            comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
+            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
+        )
         # TODO: no thanks:
         self._source_dataset_column_name_ = source_dataset_column_name
-        self._gamma_prefix = comparison_vector_value_column_prefix
-        self._bf_prefix = bayes_factor_column_prefix
-        self._tf_prefix = term_frequency_adjustment_column_prefix
+        self._unique_id_column_name = unique_id_column_name
+
         # TODO: can we factor these out?
         self._blocking_rule_for_training = blocking_rule_for_training
         self._training_mode = training_mode
@@ -420,11 +434,9 @@ class Settings:
             "additional_columns_to_retain": self._additional_cols_to_retain_str,
             "unique_id_column_name": self._unique_id_column_name,
             "source_dataset_column_name": self._source_dataset_column_name,
-            "bayes_factor_column_prefix": self._bf_prefix,
-            "term_frequency_adjustment_column_prefix": self._tf_prefix,
-            "comparison_vector_value_column_prefix": self._gamma_prefix,
             "sql_dialect": self._sql_dialect,
             "linker_uid": self._cache_uid,
+            **self.column_info_settings.as_dict(),
         }
 
     def as_dict(self):
