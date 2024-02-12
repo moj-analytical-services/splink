@@ -104,9 +104,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path)
 
-    linker_2 = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
+    Linker(df, path, database_api=db_api)
 
 
 @mark_with_dialects_including("postgres")
