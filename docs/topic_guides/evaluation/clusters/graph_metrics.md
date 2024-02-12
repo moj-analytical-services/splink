@@ -27,9 +27,11 @@ Node degree is the number of edges connected to a node.
 
 High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
 
-However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to inspect the edges of highly connected nodes.
+However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to validate the edges of highly connected nodes.
 
-Just like with density it is important to bear in mind custer size when looking at node degree. By consequence of having more nodes to form links between, nodes within bigger clusters can achieve higher node degree than those in smaller ones, meaning that low node degree for big clusters can be more significant.
+It is important to consider [custer size]() when looking at node degree. By definition, larger clusters contain more nodes to form links between, allowing nodes within them to attain higher degrees compared to those in smaller clusters. Consequently, low node degree within larger clusters can carry greater significance.
+
+Bear in mind, that the degree of a single node in a cluster isn't necessarily representative of the overall connectedness of a cluster. This is where [cluster centralisation]() can help.
 
 ## 🔗 Edge metrics
 
@@ -76,6 +78,12 @@ So, it's important to consider a range of sizes when evaluating density to ensur
 
 ### Example: cluster centralisation
 
-Cluster centralisation is the average absolute deviation from maximum node degree normalised with respect to maximum possible value.
+Cluster centralisation is defined as the average absolute deviation from maximum [node degree]() normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. It ranges from 0 to 1.
+
+A high cluster centralisation (closer to 1) indicates that a few nodes are home to significantly more connections compared to the rest of the nodes in a cluster. This can help locate nodes with a lower number of connections (low node degree) relative to what is possible for that cluster.
+
+Low centralisation suggests that edges are more evenly distributed amoung nodes. Low centralisation can be good if all nodes within a clusters enjoy many connections. However low centralisation could also indicate that nodes are not as highly connected as they could be. 
+
+<br>
 
 A guide on [how to compute these graph metrics with Splink]() is given in the next chapter.
