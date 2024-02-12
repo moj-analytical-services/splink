@@ -42,7 +42,7 @@ def test_full_example_duckdb(tmp_path):
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
     linker = Linker(
         df,
-        settings_dict=settings_dict,
+        settings=settings_dict,
         database_api=db_api,
         # output_schema="splink_in_duckdb",
     )

@@ -18,10 +18,10 @@ def test_full_example_postgres(tmp_path, pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     linker = Linker(
         df,
+        settings_dict,
         {"link_type": "dedupe_only"},
         database_api=db_api,
     )
-    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."surname" = r."surname"'
@@ -123,6 +123,6 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
     linker = Linker(
         table_name,
         database_api=db_api,
-        settings_dict=settings_dict,
+        settings=settings_dict,
     )
     linker.predict()
