@@ -19,7 +19,6 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker = Linker(
         df,
         settings_dict,
-        {"link_type": "dedupe_only"},
         database_api=db_api,
     )
 
