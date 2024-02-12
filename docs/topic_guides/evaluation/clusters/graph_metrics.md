@@ -16,6 +16,33 @@ Each of these are defined below together with examples and explanations of how t
 
     It is important to consider metrics within the context of their distribution and the underlying dataset. For example: a cluster density (see below) of 0.4 might seem low but could actually be above average for the dataset in question; a cluster of size 80 might be suspiciously large for one dataset but not for another.
 
+
+## ⚫️ Node metrics
+
+Node metrics quantify the properties of the nodes within clusters.
+
+### Example: node degree
+
+Node degree is the number of edges connected to a node.
+
+High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
+
+However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to inspect the edges of highly connected nodes.
+
+Just like with density it is important to bear in mind custer size when looking at node degree. By consequence of having more nodes to form links between, nodes within bigger clusters can achieve higher node degree than those in smaller ones, meaning that low node degree for big clusters can be more significant.
+
+## 🔗 Edge metrics
+
+Edge metrics quantify the properties of edges within a cluster. 
+
+### Example: 'is bridge'
+
+An edge is classified as a bridge if its removal splits a cluster into two smaller clusters.
+
+[insert picture]
+
+Bridges can be signalers of false positives in linked data, especially when joining two highly connected clusters. Examining bridges can shed light on potential errors in the linking process leading to false positive links.
+
 ## :fontawesome-solid-circle-nodes: Cluster metrics
 
 Cluster metrics refer to the characteristics of a cluster as a whole, rather than the individual nodes and edges it contains.
@@ -49,32 +76,6 @@ So, it's important to consider a range of sizes when evaluating density to ensur
 
 ### Example: cluster centralisation
 
-[TBC]
-
-## ⚫️ Node metrics
-
-Node metrics quantify the properties of the nodes within clusters.
-
-### Example: node degree
-
-Node degree is the number of edges connected to a node.
-
-High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
-
-However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to inspect the edges of highly connected nodes.
-
-Just like with density it is important to bear in mind custer size when looking at node degree. By consequence of having more nodes to form links between, nodes within bigger clusters can achieve higher node degree than those in smaller ones, meaning that low node degree for big clusters can be more significant.
-
-## 🔗 Edge metrics
-
-Edge metrics quantify the properties of edges within a cluster. 
-
-### Example: 'is bridge'
-
-An edge is classified as a bridge if its removal splits a cluster into two smaller clusters.
-
-[insert picture]
-
-Bridges can be signalers of false positives in linked data, especially when joining two highly connected clusters. Examining bridges can shed light on potential errors in the linking process leading to false positive links.
+Cluster centralisation is the average absolute deviation from maximum node degree normalised with respect to maximum possible value.
 
 A guide on [how to compute these graph metrics with Splink]() is given in the next chapter.
