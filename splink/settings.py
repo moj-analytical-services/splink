@@ -102,15 +102,7 @@ class Settings:
 
         self._warn_if_no_null_level_in_comparisons()
 
-        # TODO: simplify this:
-        self._additional_cols_to_retain_str = additional_columns_to_retain
-        self._additional_cols_to_retain = [
-            InputColumn(c) for c in additional_columns_to_retain
-        ]
-        # TODO: adjust this:
-        self._additional_columns_to_retain_list = (
-            self._get_additional_columns_to_retain()
-        )
+        self._additional_col_names_to_retain = additional_columns_to_retain
 
     def __deepcopy__(self, memo) -> Settings:
         """When we do EM training, we need a copy of the Settings which is independent
@@ -134,7 +126,8 @@ class Settings:
                     "you're doing, you can ignore this warning"
                 )
 
-    def _get_additional_columns_to_retain(self):
+    @property
+    def _additional_column_names_to_retain(self) -> List[str]:
         cols_to_retain = []
 
         # Add any columns used in blocking rules but not model
@@ -156,12 +149,12 @@ class Settings:
             new_cols = list(set(used_by_brs) - set(already_used))
             cols_to_retain.extend(new_cols)
 
-        cols_to_retain.extend(self._additional_cols_to_retain_str)
+        cols_to_retain.extend(self._additional_col_names_to_retain)
         return cols_to_retain
 
     @property
-    def _additional_columns_to_retain(self):
-        cols = self._additional_columns_to_retain_list
+    def _additional_columns_to_retain(self) -> List[InputColumn]:
+        cols = self._additional_column_names_to_retain
         return [
             InputColumn(
                 c,
@@ -452,7 +445,7 @@ class Settings:
             "retain_intermediate_calculation_columns": (
                 self._retain_intermediate_calculation_columns
             ),
-            "additional_columns_to_retain": self._additional_cols_to_retain_str,
+            "additional_columns_to_retain": self._additional_col_names_to_retain,
             "unique_id_column_name": self._unique_id_column_name,
             "source_dataset_column_name": self._source_dataset_column_name,
             "sql_dialect": self._sql_dialect,
@@ -468,9 +461,7 @@ class Settings:
         current_settings = {
             "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
-            # TODO: unpick InputColumn recursion
-            # "additional_columns_to_retain":
-            #   [c.name() for c in self._additional_cols_to_retain],
+            "additional_columns_to_retain": self._additional_col_names_to_retain,
         }
         return {
             **self._simple_dict_entries(),
