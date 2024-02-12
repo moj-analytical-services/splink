@@ -134,7 +134,6 @@ class ComparisonCreator(ABC):
                 for cl in self.get_configured_comparison_levels()
             ],
         }
-
         return level_dict
 
     @final

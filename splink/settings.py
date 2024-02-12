@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
+from copy import copy, deepcopy
 from typing import List
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
-from .comparison_level import ComparisonLevel
-from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight
 from .parse_sql import get_columns_used_from_sql
-from .validate_jsonschema import validate_settings_against_schema
 
 logger = logging.getLogger(__name__)
 
@@ -21,66 +18,80 @@ class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
 
-    def __init__(self, settings_dict):
-        settings_dict = deepcopy(settings_dict)
-
-        # If incoming comparisons are of type Comparison not dict, turn back into dict
-        if "comparisons" in settings_dict:
-            ccs = settings_dict["comparisons"]
-        else:
-            ccs = []
-        ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
-
-        settings_dict["comparisons"] = ccs
-
-        for comparison_dict in settings_dict["comparisons"]:
-            comparison_dict["comparison_levels"] = [
-                cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
-                for cl in comparison_dict["comparison_levels"]
-            ]
-
+    def __init__(
+        self,
+        link_type: str,
+        # TODO: make everything compulsory at this level?
+        comparisons: List[Comparison] = [],
+        blocking_rules_to_generate_predictions: List[BlockingRule] = [],
+        probability_two_random_records_match: float = 0.0001,
+        em_convergence: float = 0.0001,
+        max_iterations: int = 25,
+        retain_matching_columns: bool = True,
+        retain_intermediate_calculation_columns: bool = False,
+        additional_columns_to_retain: List[str] = [],
+        unique_id_column_name: str = "unique_id",
+        source_dataset_column_name: str = "source_dataset",
+        bayes_factor_column_prefix: str = "bf_",
+        term_frequency_adjustment_column_prefix: str = "tf_",
+        comparison_vector_value_column_prefix: str = "gamma_",
+        sql_dialect: str = None,
+        linker_uid: str = None,
+        # TODO: do we need this long-term?
+        training_mode: bool = False,
+        blocking_rule_for_training: BlockingRule = None,
+    ):
+        # TODO: hook up validation here
         # Validate against schema before processing
-        validate_settings_against_schema(settings_dict)
-        self._settings_dict = settings_dict
-        s_else_d = self._from_settings_dict_else_default
-        ccs = self._settings_dict["comparisons"]
+        # validate_settings_against_schema(settings_dict)
+
         # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
-        self._sql_dialect = s_else_d("sql_dialect")
+        self._sql_dialect = sql_dialect
 
+        # TODO: streamline this logic
         self.comparisons: list[Comparison] = []
-        for cc in ccs:
-            self.comparisons.append(
-                Comparison(
-                    **cc, settings_obj=self, sqlglot_dialect_name=self._sql_dialect
-                )
-            )
+        for comparison in comparisons:
+            # TODO: not sure we need backref ultimately
+            comparison._settings_obj = self
+            self.comparisons.append(comparison)
 
-        self._link_type = s_else_d("link_type")
-        self._probability_two_random_records_match = s_else_d(
-            "probability_two_random_records_match"
+        self._link_type = link_type
+        self._probability_two_random_records_match = (
+            probability_two_random_records_match
         )
-        self._em_convergence = s_else_d("em_convergence")
-        self._max_iterations = s_else_d("max_iterations")
-        self._unique_id_column_name = s_else_d("unique_id_column_name")
+        self._em_convergence = em_convergence
+        self._max_iterations = max_iterations
+        self._unique_id_column_name = unique_id_column_name
 
-        self._retain_matching_columns = s_else_d("retain_matching_columns")
-        self._retain_intermediate_calculation_columns = s_else_d(
-            "retain_intermediate_calculation_columns"
+        self._retain_matching_columns = retain_matching_columns
+        self._retain_intermediate_calculation_columns = (
+            retain_intermediate_calculation_columns
         )
 
-        brs_as_strings = s_else_d("blocking_rules_to_generate_predictions")
+        # TODO: do we need to convert?
+        self._blocking_rules_to_generate_predictions = self._brs_as_objs(
+            blocking_rules_to_generate_predictions
+        )
 
-        self._blocking_rules_to_generate_predictions = self._brs_as_objs(brs_as_strings)
+        # TODO: no thanks:
+        self._source_dataset_column_name_ = source_dataset_column_name
+        self._gamma_prefix = comparison_vector_value_column_prefix
+        self._bf_prefix = bayes_factor_column_prefix
+        self._tf_prefix = term_frequency_adjustment_column_prefix
+        # TODO: can we factor these out?
+        self._blocking_rule_for_training = blocking_rule_for_training
+        self._training_mode = training_mode
 
-        self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
-        self._bf_prefix = s_else_d("bayes_factor_column_prefix")
-        self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
-        self._blocking_rule_for_training = None
-        self._training_mode = False
+        self._cache_uid = linker_uid
 
         self._warn_if_no_null_level_in_comparisons()
 
-        self._additional_cols_to_retain = self._get_raw_additional_cols_to_retain
+        # TODO: simplify this:
+        self._additional_cols_to_retain_str = additional_columns_to_retain
+        self._additional_cols_to_retain = [
+            InputColumn(c) for c in additional_columns_to_retain
+        ]
+        # TODO: adjust this:
         self._additional_columns_to_retain_list = (
             self._get_additional_columns_to_retain()
         )
@@ -89,17 +100,10 @@ class Settings:
         """When we do EM training, we need a copy of the Settings which is independent
         of the original e.g. modifying the copy will not affect the original.
         This method implements ensures the Settings can be deepcopied."""
-        cc = Settings(self.as_dict())
+        cc = Settings(**self._as_dict_for_copying())
         return cc
 
-    def _from_settings_dict_else_default(self, key):
-        # Don't want a default of None because that's a valid value sometimes
-        # i.e. need to distinguish between None and 'not found in settings dict'
-        val = self._settings_dict.get(key, "__val_not_found_in_settings_dict__")
-        if val == "__val_not_found_in_settings_dict__":
-            val = default_value_from_schema(key, "root")
-        return val
-
+    # TODO: move this to Comparison
     def _warn_if_no_null_level_in_comparisons(self):
         for c in self.comparisons:
             if not c._has_null_level:
@@ -114,16 +118,8 @@ class Settings:
                     "you're doing, you can ignore this warning"
                 )
 
-    @property
-    def _get_raw_additional_cols_to_retain(self):
-        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
-
-        # Add any columns used in blocking rules but not model
-        if a_cols:
-            return [InputColumn(c) for c in a_cols]
-
     def _get_additional_columns_to_retain(self):
-        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+        cols_to_retain = []
 
         # Add any columns used in blocking rules but not model
         if self._retain_matching_columns:
@@ -142,18 +138,10 @@ class Settings:
             already_used = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used))
-            a_cols.extend(new_cols)
+            cols_to_retain.extend(new_cols)
 
-        return a_cols
-
-    @property
-    def _cache_uid(self):
-        s_else_d = self._from_settings_dict_else_default
-        return s_else_d("linker_uid")
-
-    @_cache_uid.setter
-    def _cache_uid(self, value):
-        self._settings_dict["linker_uid"] = value
+        cols_to_retain.extend(self._additional_cols_to_retain_str)
+        return cols_to_retain
 
     @property
     def _additional_columns_to_retain(self):
@@ -167,8 +155,7 @@ class Settings:
     @property
     def _source_dataset_column_name(self):
         if self._source_dataset_column_name_is_required:
-            s_else_d = self._from_settings_dict_else_default
-            return s_else_d("source_dataset_column_name")
+            return self._source_dataset_column_name_
         else:
             return None
 
@@ -418,32 +405,70 @@ class Settings:
             output.extend(records)
         return output
 
+    def _simple_dict_entries(self) -> dict:
+        return {
+            "link_type": self._link_type,
+            "probability_two_random_records_match": (
+                self._probability_two_random_records_match
+            ),
+            "em_convergence": self._em_convergence,
+            "max_iterations": self._max_iterations,
+            "retain_matching_columns": self._retain_matching_columns,
+            "retain_intermediate_calculation_columns": (
+                self._retain_intermediate_calculation_columns
+            ),
+            "additional_columns_to_retain": self._additional_cols_to_retain_str,
+            "unique_id_column_name": self._unique_id_column_name,
+            "source_dataset_column_name": self._source_dataset_column_name,
+            "bayes_factor_column_prefix": self._bf_prefix,
+            "term_frequency_adjustment_column_prefix": self._tf_prefix,
+            "comparison_vector_value_column_prefix": self._gamma_prefix,
+            "sql_dialect": self._sql_dialect,
+            "linker_uid": self._cache_uid,
+        }
+
     def as_dict(self):
         """Serialise the current settings (including any estimated model parameters)
         to a dictionary, enabling the settings to be saved to disk and reloaded
         """
-        rr_match = self._probability_two_random_records_match
         brs = self._blocking_rules_to_generate_predictions
         current_settings = {
             "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
-            "probability_two_random_records_match": rr_match,
+            # TODO: unpick InputColumn recursion
+            # "additional_columns_to_retain":
+            #   [c.name() for c in self._additional_cols_to_retain],
         }
-        return {**self._settings_dict, **current_settings}
+        return {
+            **self._simple_dict_entries(),
+            **current_settings,
+        }
 
     def _as_completed_dict(self):
-        rr_match = self._probability_two_random_records_match
         brs = self._blocking_rules_to_generate_predictions
         current_settings = {
             "blocking_rules_to_generate_predictions": [
                 br._as_completed_dict() for br in brs
             ],
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
-            "probability_two_random_records_match": rr_match,
-            "unique_id_column_name": self._unique_id_column_name,
-            "source_dataset_column_name": self._source_dataset_column_name,
         }
-        return {**self._settings_dict, **current_settings}
+        return {
+            **self._simple_dict_entries(),
+            **current_settings,
+        }
+
+    def _as_dict_for_copying(self):
+        return {
+            **self._simple_dict_entries(),
+            "comparisons": [deepcopy(c) for c in self.comparisons],
+            "blocking_rules_to_generate_predictions": (
+                # BlockingRules are simple, so only need a shallow copy
+                # TODO: can/should we rely on this?
+                [copy(br) for br in self._blocking_rules_to_generate_predictions]
+            ),
+            "training_mode": self._training_mode,
+            "blocking_rule_for_training": self._blocking_rule_for_training,
+        }
 
     def match_weights_chart(self, as_dict=False):
         records = self._parameters_as_detailed_records
@@ -473,6 +498,7 @@ class Settings:
 
         logger.info(message)
 
+    # TODO: use property + raw None value instead?
     @property
     def _lambda_is_default(self):
         if self._probability_two_random_records_match == 0.0001:

@@ -8,8 +8,8 @@ from splink.profile_data import profile_columns
 from .decorator import mark_with_dialects_excluding
 
 comparison_name = cl.CustomComparison(
-    "name",
-    [
+    output_column_name="name",
+    comparison_levels=[
         cll.CustomLevel(
             "(first_name_l IS NULL OR first_name_r IS NULL) AND "
             "(surname_l IS NULL OR surname_r IS NULL) "
