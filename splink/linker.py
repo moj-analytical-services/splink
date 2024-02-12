@@ -338,8 +338,6 @@ class Linker:
     def _cache_uid(self, value):
         self._settings_obj._cache_uid = value
 
-
-
     @property
     def _input_tablename_l(self):
         if self._find_new_matches_mode:
