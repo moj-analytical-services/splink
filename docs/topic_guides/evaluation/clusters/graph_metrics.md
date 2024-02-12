@@ -78,7 +78,7 @@ Therefore it's important to consider a range of sizes when evaluating density to
 
 ### Example: cluster centralisation
 
-Cluster centralisation is defined as the average absolute deviation from maximum [node degree]() normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
+[Cluster centralisation]("https://en.wikipedia.org/wiki/Centrality#Degree_centrality") is defined as the deviation from maximum [node degree]() normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
 
 A high cluster centralisation (closer to 1) indicates that a few nodes are home to significantly more connections compared to the rest of the nodes in a cluster. This can help locate nodes with a lower number of connections (low node degree) relative to what is possible for that cluster.
 
