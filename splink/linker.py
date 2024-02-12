@@ -320,35 +320,16 @@ class Linker:
 
     @property
     def _source_dataset_column_already_exists(self):
-        if self._settings_obj_ is None:
-            return False
         input_cols = [c.unquote().name for c in self._input_columns()]
         return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _cache_uid(self):
-        if self._settings_dict:
-            return self._settings_obj._cache_uid
-        else:
-            return self._cache_uid_no_settings
+        return self._settings_obj._cache_uid
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if self._settings_dict:
-            self._settings_obj._cache_uid = value
-        else:
-            self._cache_uid_no_settings = value
-
-    @property
-    def _settings_obj(self) -> Settings:
-        if self._settings_obj_ is None:
-            raise ValueError(
-                "You did not provide a settings dictionary when you "
-                "created the linker.  To continue, you need to provide a settings "
-                "dictionary using the `load_settings()` method on your linker "
-                "object. i.e. linker.load_settings(settings_dict)"
-            )
-        return self._settings_obj_
+        self._settings_obj._cache_uid = value
 
     @property
     def _input_tablename_l(self):
@@ -478,19 +459,12 @@ class Linker:
         )
 
     def _check_for_valid_settings(self):
-        if (
-            # raw tables don't yet exist in db
-            not hasattr(self, "_input_tables_dict")
-        ):
-            return False
-        else:
-            return True
+        # raw tables don't yet exist in db
+        return hasattr(self, "_input_tables_dict")
 
     def _validate_settings_components(self, settings_dict):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
-        if settings_dict is None:
-            return
 
         log_comparison_errors(
             # null if not in dict - check using value is ignored
