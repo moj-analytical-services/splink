@@ -224,7 +224,14 @@ class Linker:
             if settings_path.is_file():
 
                 settings_dict = json.loads(settings_path.read_text())
-                self._setup_settings_objs(settings_dict)
+
+                # TODO: remove this once we have sorted spec
+                for br in settings_dict["blocking_rules_to_generate_predictions"]:
+                    if isinstance(br, dict):
+                        if "sql_dialect" in br:
+                            del br["sql_dialect"]
+
+                        self._setup_settings_objs(settings_dict)
 
             else:
                 raise ValueError(
