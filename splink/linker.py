@@ -463,7 +463,8 @@ class Linker:
         if settings_dict is None:
             self._cache_uid_no_settings = ascii_uid(8)
         else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            if (uid := settings_dict.get("linker_uid")) is None:
+                uid = ascii_uid(8)
             settings_dict["linker_uid"] = uid
 
         if settings_dict is None:
