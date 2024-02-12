@@ -103,7 +103,6 @@ from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
-from .settings import Settings
 from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
