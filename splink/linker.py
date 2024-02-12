@@ -2248,6 +2248,7 @@ class Linker:
         edges_for_igraph = self._execute_sql_pipeline()
         # we will need to manually register a table, so we use the hash from this table
         igraph_edges_hash = edges_for_igraph.physical_name[-9:]
+        # NB: for large data we may have to revise this and process in chunks
         df_edges_for_igraph = edges_for_igraph.as_pandas_dataframe()
         # feed our edges to igraph, get the edges which are bridges as a pandas frame,
         # and register this table with our backend
