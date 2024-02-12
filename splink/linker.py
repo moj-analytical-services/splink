@@ -85,6 +85,7 @@ from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
+from .settings import Settings
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
@@ -329,6 +330,11 @@ class Linker:
     @_cache_uid.setter
     def _cache_uid(self, value):
         self._settings_obj._cache_uid = value
+
+    @property
+    def _settings_obj(self) -> Settings:
+
+        return self._settings_obj_
 
     @property
     def _input_tablename_l(self):
