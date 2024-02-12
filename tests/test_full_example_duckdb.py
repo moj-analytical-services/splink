@@ -125,11 +125,11 @@ def test_full_example_duckdb(tmp_path):
     linker.save_model_to_json(path)
 
     db_api = DuckDBAPI()
-    linker_2 = Linker(df, settings_dict=simple_settings, database_api=db_api)
+    linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
     linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
-    Linker(df, database_api=db_api, settings_dict=path)
+    Linker(df, database_api=db_api, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -248,7 +248,7 @@ def test_duckdb_arrow_array():
     f = "./tests/datasets/test_array.parquet"
     array_data = pq.read_table(f)
 
-    # data is:
+    # data is
     # data_list = [
     # {"uid": 1, "a": ['robin', 'john'], "b": 1},
     # {"uid": 1, "a": ['robin', 'john'], "b": 1},
@@ -281,11 +281,11 @@ def test_cast_error():
 
     db_api = DuckDBAPI()
     with pytest.raises(InvalidInputException):
-        Linker(df, settings_dict=simple_settings, database_api=db_api)
+        Linker(df, settings=simple_settings, database_api=db_api)
 
     # convert to pyarrow table
     df = pa.Table.from_pandas(df)
-    Linker(df, settings_dict=simple_settings, database_api=db_api)
+    Linker(df, settings=simple_settings, database_api=db_api)
 
 
 @mark_with_dialects_including("duckdb")
