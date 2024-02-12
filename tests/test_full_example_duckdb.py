@@ -127,7 +127,7 @@ def test_full_example_duckdb(tmp_path):
     db_api = DuckDBAPI()
     linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
 
-    Linker(df, database_api=db_api, settings=path)
+    linker_2 = Linker(df, database_api=db_api, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
