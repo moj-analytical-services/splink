@@ -338,10 +338,7 @@ class Linker:
     def _cache_uid(self, value):
         self._settings_obj._cache_uid = value
 
-    @property
-    def _settings_obj(self) -> Settings:
 
-        return self._settings_obj_
 
     @property
     def _input_tablename_l(self):
@@ -466,7 +463,7 @@ class Linker:
         if settings_dict.get("linker_uid") is None:
             settings_dict["linker_uid"] = ascii_uid(8)
 
-        self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+        self._settings_obj = SettingsCreator(**settings_dict).get_settings(
             settings_dialect_str
         )
 
@@ -829,8 +826,8 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_settings = deepcopy(self._settings_obj_)
-        new_linker._settings_obj_ = new_settings
+        new_settings = deepcopy(self._settings_obj)
+        new_linker._settings_obj = new_settings
         return new_linker
 
     def _get_input_tf_dict(self, df_dict):
