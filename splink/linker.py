@@ -71,6 +71,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .edge_metrics import compute_edge_metrics
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -2151,6 +2152,39 @@ class Linker:
 
         return df_node_metrics
 
+    def _compute_metrics_edges(
+        self,
+        df_node_metrics: SplinkDataFrame,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing edge-level metrics.
+
+        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of edge metrics.
+
+        Uses `igraph` under-the-hood for calculations
+
+        Edge metrics produced:
+        * is_bridge (is the edge a bridge?)
+
+        Output table has a single row per edge, and the metric is_bridge:
+        |-------------------------------------------------------------|
+        | composite_unique_id_l | composite_unique_id_r   | is_bridge |
+        |-----------------------|-------------------------|-----------|
+        | s1-__-10001           | s1-__-10003             | True      |
+        | s1-__-10001           | s1-__-10005             | False     |
+        | s1-__-10005           | s1-__-10009             | False     |
+        | s1-__-10021           | s1-__-10024             | True      |
+        ...
+        """
+        return compute_edge_metrics(
+            self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
+        )
+
     def _compute_metrics_clusters(
         self,
         df_node_metrics: SplinkDataFrame,
@@ -2222,11 +2256,17 @@ class Linker:
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics = self._compute_metrics_edges(
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return GraphMetricsResults(
-            nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
 
     def profile_columns(

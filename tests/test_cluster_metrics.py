@@ -271,3 +271,93 @@ def test_metrics(dialect, test_helpers):
             f"Expected node degree {expected_node_degree} for node {unique_id}, "
             f"but found node degree {calculated_node_degree}"
         )
+
+
+def make_edge_row(
+    id_l: int, id_r: int, group_id: int, match_probability: float, is_bridge: bool
+):
+    return {
+        "unique_id_l": id_l,
+        "unique_id_r": id_r,
+        "cluster_id": group_id,
+        "match_probability": match_probability,
+        "is_bridge": is_bridge,
+    }
+
+
+@mark_with_dialects_excluding()
+def test_is_bridge(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df_e = pd.DataFrame(
+        [
+            # cluster 1 - triangle with offshoot
+            # 4 nodes, 4 edges
+            make_edge_row(1, 2, 1, 0.96, True),
+            make_edge_row(2, 3, 1, 0.96, False),
+            make_edge_row(3, 4, 1, 0.96, False),
+            make_edge_row(2, 4, 1, 0.96, False),
+            # cluster 2 - 2 triangles joined by bridge
+            # 6 nodes, 7 edges
+            make_edge_row(5, 6, 2, 0.95, False),
+            make_edge_row(6, 7, 2, 0.96, False),
+            make_edge_row(7, 5, 2, 0.99, False),
+            make_edge_row(8, 9, 2, 0.96, False),
+            make_edge_row(9, 10, 2, 0.96, False),
+            make_edge_row(10, 8, 2, 0.96, False),
+            make_edge_row(5, 10, 2, 0.96, True),
+            # cluster 2 - 2 triangles joined by bridge
+            # 7 nodes, 9 edges
+            make_edge_row(11, 12, 3, 0.96, False),
+            make_edge_row(11, 13, 3, 0.96, False),
+            make_edge_row(13, 14, 3, 0.96, False),
+            make_edge_row(12, 14, 3, 0.96, False),
+            make_edge_row(12, 15, 3, 0.96, False),
+            make_edge_row(13, 18, 3, 0.96, False),
+            make_edge_row(15, 18, 3, 0.96, False),
+            make_edge_row(16, 17, 3, 0.96, True),
+            make_edge_row(17, 18, 3, 0.96, True),
+            # not 'real' edges, shouldn't break things:
+            make_edge_row(1, 3, 1, 0.92, None),
+            make_edge_row(1, 6, 2, 0.945, None),
+            make_edge_row(5, 9, 2, 0.9, None),
+            make_edge_row(1, 13, 3, 0.9, None),
+            make_edge_row(6, 16, 3, 0.9, None),
+        ]
+    )
+    df_c = pd.DataFrame(
+        [{"cluster_id": 1, "unique_id": i} for i in range(1, 4 + 1)]
+        + [{"cluster_id": 2, "unique_id": i} for i in range(5, 10 + 1)]
+        + [{"cluster_id": 3, "unique_id": i} for i in range(11, 18 + 1)]
+    )
+    linker = helper.Linker(
+        helper.convert_frame(df_1),
+        {"link_type": "dedupe_only"},
+        **helper.extra_linker_args(),
+    )
+    df_predict = linker.register_table(helper.convert_frame(df_e), "br_predict")
+    df_clustered = linker.register_table(helper.convert_frame(df_c), "br_clusters")
+
+    # linker.debug_mode = True
+    cm = linker._compute_graph_metrics(
+        df_predict, df_clustered, threshold_match_probability=0.95
+    )
+    df_em = cm.edges.as_pandas_dataframe()
+
+    for row in df_e.iterrows():
+        node_l, node_r = (
+            row[1]["unique_id_l"],
+            row[1]["unique_id_r"],
+        )
+        relevant_row = df_em[
+            (df_em["composite_unique_id_l"] == node_l)
+            & (df_em["composite_unique_id_r"] == node_r)
+        ]
+        expected_is_bridge = row[1]["is_bridge"]
+        if expected_is_bridge is None:
+            assert relevant_row.empty
+        else:
+            calculated_is_bridge = relevant_row["is_bridge"].iloc[0]
+            assert calculated_is_bridge == expected_is_bridge, (
+                f"Expected is_bridge {expected_is_bridge} for edge {node_l}, {node_r}, "
+                f"but found is_bridge: {calculated_is_bridge}"
+            )
