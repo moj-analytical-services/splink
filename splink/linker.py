@@ -231,7 +231,7 @@ class Linker:
                         if "sql_dialect" in br:
                             del br["sql_dialect"]
 
-                        self._setup_settings_objs(settings_dict)
+                self._setup_settings_objs(settings_dict)
 
             else:
                 raise ValueError(
