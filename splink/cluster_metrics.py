@@ -105,19 +105,9 @@ def _node_mapping_table_sql(
     sql = f"""
         SELECT
             composite_unique_id,
-            row_number() OVER(ORDER BY 1) AS rn
+            row_number() OVER(ORDER BY 1) - 1 AS new_id
         FROM
             {nodes_table_name}
-    """
-    row_number_table_name = "__splink__nodes_numbered"
-    sql_info = {"sql": sql, "output_table_name": row_number_table_name}
-    sql_infos.append(sql_info)
-    sql = f"""
-        SELECT
-            composite_unique_id,
-            rn - 1 AS new_id
-        FROM
-            {row_number_table_name}
     """
     node_mapping_table_name = "__splink__nodes_integer_mapping"
     sql_info = {"sql": sql, "output_table_name": node_mapping_table_name}
