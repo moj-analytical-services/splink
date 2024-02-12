@@ -214,8 +214,8 @@ class Linker:
         elif isinstance(settings, dict):
             # TODO: need to figure out how this flows with validation
             # for now we instantiate all the correct types before the validator sees it
-            settings_dict = deepcopy(settings_dict)
-            # self._validate_settings_components(settings_dict)
+            settings_dict = deepcopy(settings)
+            # self._validate_settings_components(settings)
             self._setup_settings_objs(settings_dict)
 
             # TODO: deal with instantiating comparison levels in this path
