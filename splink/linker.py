@@ -456,6 +456,8 @@ class Linker:
 
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
+        # TODO: Add test of what happens if the db_api is for a different backend
+        # to the sql_dialect set in the settings dict
         if settings_dict.get("sql_dialect") is None:
             settings_dialect_str = self._sql_dialect
 
