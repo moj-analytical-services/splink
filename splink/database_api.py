@@ -14,8 +14,6 @@ import duckdb
 import pandas as pd
 import sqlglot
 from numpy import nan
-from pyspark.sql.dataframe import DataFrame as spark_df
-from pyspark.sql.utils import AnalysisException
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
@@ -46,6 +44,12 @@ from .spark.dataframe import SparkDataFrame
 from .spark.jar_location import get_scala_udfs
 from .splink_dataframe import SplinkDataFrame
 from .sqlite.dataframe import SQLiteDataFrame
+
+try:
+    from pyspark.sql.dataframe import DataFrame as spark_df
+    from pyspark.sql.utils import AnalysisException
+except ModuleNotFoundError:
+    print("pyspark module is not installed.")
 
 logger = logging.getLogger(__name__)
 
