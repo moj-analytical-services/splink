@@ -1649,9 +1649,11 @@ class Linker:
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
-                self._settings_obj._get_comparison_by_output_column_name(n)
-                if isinstance(n, str)
-                else n
+                (
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
+                )
                 for n in comparisons_to_deactivate
             ]
             if comparison_levels_to_reverse_blocking_rule is None:
@@ -3031,7 +3033,7 @@ class Linker:
         return match_weights_histogram(recs, width=width, height=height)
 
     def waterfall_chart(
-        self, records: list[dict], filter_nulls=True, hide_details=False
+        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
     ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
@@ -3052,8 +3054,9 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
-            hide_details (bool, optional): When True, the Waterfall chart will render
-                without showing the details of each record being compared.
+            remove_sensitive_data (bool, optional): When True, The waterfall chart will
+                contain match weights only, and all of the (potentially sensitive) data
+                from the input tables will be removed prior to the chart being created.
 
 
         Returns:
@@ -3062,7 +3065,9 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(records, self._settings_obj, filter_nulls, hide_details)
+        return waterfall_chart(
+            records, self._settings_obj, filter_nulls, remove_sensitive_data
+        )
 
     def unlinkables_chart(
         self,
