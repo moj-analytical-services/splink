@@ -517,8 +517,8 @@ def block_using_rules_sqls(linker: Linker):
     # property on the settings object, and avoided this logic but I wanted to be very
     # explicit about the difference between blocking for training
     # and blocking for predictions
-    if settings_obj._blocking_rule_for_training:
-        blocking_rules = [settings_obj._blocking_rule_for_training]
+    if settings_obj.training_settings.blocking_rule_for_training:
+        blocking_rules = [settings_obj.training_settings.blocking_rule_for_training]
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import pandas as pd
 
+from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
@@ -24,10 +25,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def count_agreement_patterns_sql(settings_obj: Settings):
+def count_agreement_patterns_sql(comparisons: List[Comparison]):
     """Count how many times each realized agreement pattern
     was observed across the blocked dataset."""
-    gamma_cols = [cc._gamma_column_name for cc in settings_obj.comparisons]
+    gamma_cols = [cc._gamma_column_name for cc in comparisons]
     gamma_cols_expr = ",".join(gamma_cols)
 
     sql = f"""
@@ -43,7 +44,7 @@ def count_agreement_patterns_sql(settings_obj: Settings):
 
 def compute_new_parameters_sql(settings_obj: Settings):
     """compute m and u counts from the results of predict"""
-    if getattr(settings_obj, "_estimate_without_term_frequencies", False):
+    if settings_obj.training_settings.estimate_without_term_frequencies:
         agreement_pattern_count = "agreement_pattern_count"
     else:
         agreement_pattern_count = "1"
@@ -217,14 +218,19 @@ def expectation_maximisation(
     """
 
     settings_obj = em_training_session._settings_obj
+    training_settings = settings_obj.training_settings
     linker = em_training_session._original_linker
+    comparisons = settings_obj.comparisons
+    probability_two_random_records_match = (
+        settings_obj._probability_two_random_records_match
+    )
 
-    max_iterations = settings_obj._max_iterations
-    em_convergece = settings_obj._em_convergence
+    max_iterations = training_settings.max_iterations
+    em_convergence = training_settings.em_convergence
     logger.info("")  # newline
 
-    if settings_obj._estimate_without_term_frequencies:
-        sql = count_agreement_patterns_sql(settings_obj)
+    if training_settings.estimate_without_term_frequencies:
+        sql = count_agreement_patterns_sql(comparisons)
         linker._enqueue_sql(sql, "__splink__agreement_pattern_counts")
         agreement_pattern_counts = linker._execute_sql_pipeline(
             [df_comparison_vector_values]
@@ -234,9 +240,10 @@ def expectation_maximisation(
         start_time = time.time()
 
         # Expectation step
-        if settings_obj._estimate_without_term_frequencies:
+        if training_settings.estimate_without_term_frequencies:
             sqls = predict_from_agreement_pattern_counts_sqls(
-                settings_obj,
+                comparisons,
+                probability_two_random_records_match,
                 sql_infinity_expression=linker._infinity_expression,
             )
         else:
@@ -250,7 +257,7 @@ def expectation_maximisation(
 
         sql = compute_new_parameters_sql(settings_obj)
         linker._enqueue_sql(sql, "__splink__m_u_counts")
-        if settings_obj._estimate_without_term_frequencies:
+        if training_settings.estimate_without_term_frequencies:
             df_params = linker._execute_sql_pipeline([agreement_pattern_counts])
         else:
             df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
@@ -267,6 +274,6 @@ def expectation_maximisation(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-        if max_change_dict["max_abs_change_value"] < em_convergece:
+        if max_change_dict["max_abs_change_value"] < em_convergence:
             break
     logger.info(f"\nEM converged after {i} iterations")

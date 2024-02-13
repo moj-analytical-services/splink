@@ -25,6 +25,22 @@ class ColumnInfoSettings:
         return asdict(self)
 
 
+@dataclass
+class TrainingSettings:
+    em_convergence: float
+    max_iterations: int
+    training_mode: bool
+    blocking_rule_for_training: BlockingRule
+    estimate_without_term_frequencies: bool
+
+    def as_dict(self) -> dict:
+        # TODO: we can remove estimate_without_term_frequencies if we want
+        naive_dict = asdict(self)
+        if brs := self.blocking_rule_for_training:
+            naive_dict["blocking_rule_for_training"] = [copy(br) for br in brs]
+        return naive_dict
+
+
 class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
@@ -36,21 +52,25 @@ class Settings:
         comparisons: List[Comparison] = [],
         blocking_rules_to_generate_predictions: List[BlockingRule] = [],
         probability_two_random_records_match: float = 0.0001,
-        em_convergence: float = 0.0001,
-        max_iterations: int = 25,
         retain_matching_columns: bool = True,
         retain_intermediate_calculation_columns: bool = False,
         additional_columns_to_retain: List[str] = [],
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
+        # ColumnInfoSettings
         bayes_factor_column_prefix: str = "bf_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
-        sql_dialect: str = None,
-        linker_uid: str = None,
+        # TrainingSettings
+        em_convergence: float = 0.0001,
+        max_iterations: int = 25,
         # TODO: do we need this long-term?
         training_mode: bool = False,
         blocking_rule_for_training: BlockingRule = None,
+        estimate_without_term_frequencies: bool = False,
+        # other
+        sql_dialect: str = None,
+        linker_uid: str = None,
     ):
         # TODO: hook up validation here
         # Validate against schema before processing
@@ -77,8 +97,14 @@ class Settings:
         self._probability_two_random_records_match = (
             probability_two_random_records_match
         )
-        self._em_convergence = em_convergence
-        self._max_iterations = max_iterations
+        self.training_settings = TrainingSettings(
+            em_convergence=em_convergence,
+            max_iterations=max_iterations,
+            # TODO: can we factor these out?
+            blocking_rule_for_training=blocking_rule_for_training,
+            training_mode=training_mode,
+            estimate_without_term_frequencies=estimate_without_term_frequencies,
+        )
 
         self._retain_matching_columns = retain_matching_columns
         self._retain_intermediate_calculation_columns = (
@@ -93,10 +119,6 @@ class Settings:
         # TODO: no thanks:
         self._source_dataset_column_name_ = source_dataset_column_name
         self._unique_id_column_name = unique_id_column_name
-
-        # TODO: can we factor these out?
-        self._blocking_rule_for_training = blocking_rule_for_training
-        self._training_mode = training_mode
 
         self._cache_uid = linker_uid
 
@@ -439,8 +461,6 @@ class Settings:
             "probability_two_random_records_match": (
                 self._probability_two_random_records_match
             ),
-            "em_convergence": self._em_convergence,
-            "max_iterations": self._max_iterations,
             "retain_matching_columns": self._retain_matching_columns,
             "retain_intermediate_calculation_columns": (
                 self._retain_intermediate_calculation_columns
@@ -450,9 +470,11 @@ class Settings:
             "source_dataset_column_name": self._source_dataset_column_name,
             "sql_dialect": self._sql_dialect,
             "linker_uid": self._cache_uid,
+            **self.training_settings.as_dict(),
             **self.column_info_settings.as_dict(),
         }
 
+    # TODO: once more settled, simplify the serialisation logic
     def as_dict(self):
         """Serialise the current settings (including any estimated model parameters)
         to a dictionary, enabling the settings to be saved to disk and reloaded
@@ -463,10 +485,14 @@ class Settings:
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "additional_columns_to_retain": self._additional_col_names_to_retain,
         }
-        return {
+        current_settings = {
             **self._simple_dict_entries(),
             **current_settings,
         }
+        del current_settings["training_mode"]
+        del current_settings["blocking_rule_for_training"]
+        del current_settings["estimate_without_term_frequencies"]
+        return current_settings
 
     def _as_completed_dict(self):
         brs = self._blocking_rules_to_generate_predictions
@@ -490,8 +516,6 @@ class Settings:
                 # TODO: can/should we rely on this?
                 [copy(br) for br in self._blocking_rules_to_generate_predictions]
             ),
-            "training_mode": self._training_mode,
-            "blocking_rule_for_training": self._blocking_rule_for_training,
         }
 
     def match_weights_chart(self, as_dict=False):

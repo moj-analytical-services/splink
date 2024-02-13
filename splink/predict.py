@@ -2,7 +2,9 @@ from __future__ import annotations
 
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
+from typing import List
 
+from .comparison import Comparison
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import Settings
 
@@ -89,14 +91,15 @@ def predict_from_comparison_vectors_sqls(
 
 
 def predict_from_agreement_pattern_counts_sqls(
-    settings_obj: Settings,
+    comparisons: List[Comparison],
+    probability_two_random_records_match: float,
     sql_infinity_expression="'infinity'",
 ) -> list[dict]:
     sqls = []
 
     select_cols = []
 
-    for cc in settings_obj.comparisons:
+    for cc in comparisons:
         cc_sqls = [cl._bayes_factor_sql for cl in cc.comparison_levels]
         sql = " ".join(cc_sqls)
         sql = f"CASE {sql} END as {cc._bf_column_name}"
@@ -117,14 +120,14 @@ def predict_from_agreement_pattern_counts_sqls(
     sqls.append(sql_info)
 
     select_cols = []
-    for cc in settings_obj.comparisons:
+    for cc in comparisons:
         select_cols.append(cc._gamma_column_name)
         select_cols.append(cc._bf_column_name)
     select_cols.append("agreement_pattern_count")
     select_cols_expr = ",".join(select_cols)
 
-    prior = settings_obj._probability_two_random_records_match
-    bf_terms = [cc._bf_column_name for cc in settings_obj.comparisons]
+    prior = probability_two_random_records_match
+    bf_terms = [cc._bf_column_name for cc in comparisons]
     bayes_factor_expr, match_prob_expr = _combine_prior_and_bfs(
         prior,
         bf_terms,

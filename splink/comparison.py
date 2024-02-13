@@ -294,7 +294,7 @@ class Comparison:
                 output_cols.extend(col.names_l_r)
 
         if (
-            self._settings_obj._training_mode
+            self._settings_obj.training_settings.training_mode
             or self._settings_obj._retain_matching_columns
         ):
             output_cols.append(self._gamma_column_name)
