@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 import splink.comparison_level_library as cll
@@ -14,6 +16,7 @@ from tests.literal_utils import (
 
 @mark_with_dialects_excluding("sqlite")
 def test_absolute_time_difference_levels_date(test_helpers, dialect):
+    # Check it's fine to pass a date into this function
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
 
@@ -41,25 +44,58 @@ def test_absolute_time_difference_levels_date(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_absolute_time_difference_levels_timestamp(test_helpers, dialect):
+def test_absolute_date_difference_levels_date(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
 
-    col_exp = ColumnExpression("dob").try_parse_timestamp()
+    col_exp = ColumnExpression("dob").try_parse_date()
     test_spec = ComparisonLevelTestSpec(
-        cll.AbsoluteTimeDifferenceLevel,
+        cll.AbsoluteDateDifferenceLevel,
         default_keyword_args={
-            "metric": "second",
+            "metric": "day",
             "col_name": col_exp,
         },
         tests=[
             LiteralTestValues(
-                {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 30},
+                expected_in_level=True,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 26},
+                expected_in_level=False,
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_absolute_time_difference_levels_no_parse(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonLevelTestSpec(
+        cll.AbsoluteTimeDifferenceLevel,
+        default_keyword_args={
+            "metric": "second",
+            "col_name": "dob",
+        },
+        tests=[
+            LiteralTestValues(
+                {
+                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
+                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
+                },
                 keyword_arg_overrides={"threshold": 61},
                 expected_in_level=True,
             ),
             LiteralTestValues(
-                {"dob_l": "2023-02-07T14:45:00Z", "dob_r": "2023-02-07T14:46:00Z"},
+                {
+                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
+                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
+                },
                 keyword_arg_overrides={"threshold": 59},
                 expected_in_level=False,
             ),
