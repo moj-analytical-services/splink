@@ -20,8 +20,24 @@ class ColumnInfoSettings:
     bayes_factor_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
+    _source_dataset_column_name: str
+    _source_dataset_column_name_is_required: str
+
+    @property
+    def source_dataset_column_name(self):
+        if self._source_dataset_column_name_is_required:
+            return self._source_dataset_column_name
+        else:
+            return None
 
     def as_dict(self) -> dict:
+        full_dict = self._as_full_dict()
+        full_dict["source_dataset_column_name"] = self._source_dataset_column_name
+        del full_dict["_source_dataset_column_name"]
+        del full_dict["_source_dataset_column_name_is_required"]
+        return full_dict
+
+    def _as_full_dict(self) -> dict:
         return asdict(self)
 
 
@@ -76,13 +92,17 @@ class Settings:
         # Validate against schema before processing
         # validate_settings_against_schema(settings_dict)
 
-        # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
         self._sql_dialect = sql_dialect
+        self._link_type = link_type
 
         self.column_info_settings = ColumnInfoSettings(
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
             bayes_factor_column_prefix=bayes_factor_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
+            _source_dataset_column_name=source_dataset_column_name,
+            # TODO: if we want this to keep in-sync with link type, can put logic in
+            # link_type setter
+            _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
         )
 
         # TODO: streamline this logic
@@ -93,7 +113,6 @@ class Settings:
             comparison.column_info_settings = self.column_info_settings
             self.comparisons.append(comparison)
 
-        self._link_type = link_type
         self._probability_two_random_records_match = (
             probability_two_random_records_match
         )
@@ -116,13 +135,6 @@ class Settings:
             blocking_rules_to_generate_predictions
         )
 
-        # TODO: if we want this to keep in-sync with link type, can put logic in
-        # link_type setter
-        self._source_dataset_column_name_is_required = (
-            self._get_source_dataset_column_name_is_required()
-        )
-        # TODO: no thanks:
-        self._source_dataset_column_name_ = source_dataset_column_name
         self._unique_id_column_name = unique_id_column_name
 
         self._cache_uid = linker_uid
@@ -195,19 +207,14 @@ class Settings:
         return self._link_type not in ["dedupe_only"]
 
     @property
-    def _source_dataset_column_name(self):
-        if self._source_dataset_column_name_is_required:
-            return self._source_dataset_column_name_
-        else:
-            return None
-
-    @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
-        if self._source_dataset_column_name_is_required:
+        if source_dataset_column_name := (
+            self.column_info_settings.source_dataset_column_name
+        ):
             col = InputColumn(
-                self._source_dataset_column_name,
+                source_dataset_column_name,
                 column_info_settings=self.column_info_settings,
                 sql_dialect=self._sql_dialect,
             )
@@ -250,8 +257,10 @@ class Settings:
     @property
     def _columns_used_by_comparisons(self):
         cols_used = []
-        if self._source_dataset_column_name_is_required:
-            cols_used.append(self._source_dataset_column_name)
+        if source_dataset_column_name := (
+            self.column_info_settings.source_dataset_column_name
+        ):
+            cols_used.append(source_dataset_column_name)
         cols_used.append(self._unique_id_column_name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
@@ -471,7 +480,6 @@ class Settings:
             ),
             "additional_columns_to_retain": self._additional_col_names_to_retain,
             "unique_id_column_name": self._unique_id_column_name,
-            "source_dataset_column_name": self._source_dataset_column_name,
             "sql_dialect": self._sql_dialect,
             "linker_uid": self._cache_uid,
             **self.training_settings.as_dict(),

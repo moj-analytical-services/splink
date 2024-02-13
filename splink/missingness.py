@@ -68,7 +68,11 @@ def completeness_data(linker, input_tablename=None, cols=None):
     if cols is None:
         cols = linker._settings_obj._columns_used_by_comparisons
 
-    if not (source_name := linker._settings_obj._source_dataset_column_name):
+    if not (
+        source_name := (
+            linker._settings_obj.column_info_settings.source_dataset_column_name
+        )
+    ):
         # Set source dataset to a literal string if dedupe_only
         source_name = "'_a'"
 

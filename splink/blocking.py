@@ -463,7 +463,7 @@ def block_using_rules_sqls(linker: Linker):
     ):
         source_dataset_col = (
             source_dataset_col
-        ) = linker._settings_obj._source_dataset_column_name
+        ) = linker._settings_obj.column_info_settings.source_dataset_column_name
         # Need df_l to be the one with the lowest id to preeserve the property
         # that the left dataset is the one with the lowest concatenated id
 

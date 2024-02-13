@@ -316,7 +316,10 @@ class Linker:
     @property
     def _source_dataset_column_already_exists(self):
         input_cols = [c.unquote().name for c in self._input_columns()]
-        return self._settings_obj._source_dataset_column_name in input_cols
+        return (
+            self._settings_obj.column_info_settings.source_dataset_column_name
+            in input_cols
+        )
 
     @property
     def _cache_uid(self):
