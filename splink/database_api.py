@@ -41,13 +41,14 @@ from .misc import (
 )
 from .postgres.dataframe import PostgresDataFrame
 from .spark.dataframe import SparkDataFrame
-from .spark.jar_location import get_scala_udfs
 from .splink_dataframe import SplinkDataFrame
 from .sqlite.dataframe import SQLiteDataFrame
 
 try:
     from pyspark.sql.dataframe import DataFrame as spark_df
     from pyspark.sql.utils import AnalysisException
+
+    from .spark.jar_location import get_scala_udfs
 except ModuleNotFoundError:
     print("pyspark module is not installed.")
 
