@@ -143,7 +143,7 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings: dict | Path | str,
+        settings: SettingsCreator | dict | Path | str,
         database_api,  # TODO: can't annotate atm due to circular imports
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
@@ -451,6 +451,8 @@ class Linker:
 
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
+        # TODO: Add test of what happens if the db_api is for a different backend
+        # to the sql_dialect set in the settings dict
         if settings_dict.get("sql_dialect") is None:
             settings_dialect_str = self._sql_dialect
 

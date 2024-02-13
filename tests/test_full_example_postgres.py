@@ -18,10 +18,9 @@ def test_full_example_postgres(tmp_path, pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     linker = Linker(
         df,
-        {"link_type": "dedupe_only"},
+        settings_dict,
         database_api=db_api,
     )
-    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."surname" = r."surname"'
@@ -105,9 +104,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path)
 
-    linker_2 = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
+    Linker(df, path, database_api=db_api)
 
 
 @mark_with_dialects_including("postgres")
@@ -123,6 +120,6 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
     linker = Linker(
         table_name,
         database_api=db_api,
-        settings_dict=settings_dict,
+        settings=settings_dict,
     )
     linker.predict()
