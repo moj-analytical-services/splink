@@ -18,7 +18,6 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
 from .cache_dict_with_logging import CacheDictWithLogging
-from .databricks.enable_splink import enable_splink
 from .dialects import (
     DuckDBDialect,
     PostgresDialect,
@@ -48,6 +47,7 @@ try:
     from pyspark.sql.dataframe import DataFrame as spark_df
     from pyspark.sql.utils import AnalysisException
 
+    from .databricks.enable_splink import enable_splink
     from .spark.jar_location import get_scala_udfs
 except ModuleNotFoundError:
     print("pyspark module is not installed.")
