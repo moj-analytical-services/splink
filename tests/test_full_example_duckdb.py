@@ -246,7 +246,7 @@ def test_duckdb_arrow_array():
     f = "./tests/datasets/test_array.parquet"
     array_data = pq.read_table(f)
 
-    # data is
+    # data is:
     # data_list = [
     # {"uid": 1, "a": ['robin', 'john'], "b": 1},
     # {"uid": 1, "a": ['robin', 'john'], "b": 1},
