@@ -841,14 +841,35 @@ class PostgresAPI(DatabaseAPI):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
-        # Will error if an invalid data type is passed
-        input.to_sql(
-            table_name,
-            con=self._engine,
-            index=False,
-            if_exists="replace",
-            schema=self._db_schema,
-        )
+        # Using Duckdb to insert the data ensures the correct datatypes
+        # and faster insertion (duckdb>=0.9.2)
+        con = duckdb.connect()
+
+        try:
+            con.execute("INSTALL postgres;")
+
+            url = self._engine.url
+
+            pg_con_str = (
+                f"postgresql://{url.username}:{url.password}"
+                f"@{url.host}:{url.port}/{url.database}"
+            )
+
+            con.execute(f"ATTACH '{pg_con_str}' AS pg_db (TYPE postgres);")
+            con.register("temp_df", input)
+            con.execute(
+                f"CREATE OR REPLACE TABLE pg_db.{self._db_schema}.{table_name} "
+                "AS SELECT * FROM temp_df;"
+            )
+
+        except (duckdb.HTTPException, duckdb.BinderException):
+            input.to_sql(
+                table_name,
+                con=self._engine,
+                index=False,
+                if_exists="replace",
+                schema=self._db_schema,
+            )
 
     def table_to_splink_dataframe(self, templated_name, physical_name):
         return PostgresDataFrame(templated_name, physical_name, self)
