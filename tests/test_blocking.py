@@ -2,7 +2,7 @@ from splink.blocking import BlockingRule, blocking_rule_to_obj
 from splink.blocking_rule_library import block_on
 from splink.input_column import _get_dialect_quotes
 from splink.linker import Linker
-from splink.settings import Settings
+from splink.settings_creator import SettingsCreator
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -28,7 +28,7 @@ def test_preceding_blocking_rules(dialect):
     assert br_surname.preceding_rules == preceding_rules
 
     # Check preceding rules
-    settings_tester = Settings(settings)
+    settings_tester = SettingsCreator(**settings).get_settings(dialect)
 
     brs_as_strings = [
         BlockingRule("l.help = r.help"),

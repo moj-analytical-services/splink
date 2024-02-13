@@ -38,7 +38,7 @@ class ExactMatchRule(BlockingRuleCreator):
 class CustomRule(BlockingRuleCreator):
     def __init__(
         self,
-        sql_condition: str,
+        blocking_rule: str,
         base_dialect_str: str = None,
         salting_partitions=None,
         arrays_to_explode=None,
@@ -46,7 +46,7 @@ class CustomRule(BlockingRuleCreator):
         super().__init__(
             salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
         )
-        self.sql_condition = sql_condition
+        self.sql_condition = blocking_rule
 
         self.base_dialect_str = base_dialect_str
 
