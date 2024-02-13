@@ -52,8 +52,8 @@ class TrainingSettings:
     def as_dict(self) -> dict:
         # TODO: we can remove estimate_without_term_frequencies if we want
         naive_dict = asdict(self)
-        if brs := self.blocking_rule_for_training:
-            naive_dict["blocking_rule_for_training"] = [copy(br) for br in brs]
+        if br := self.blocking_rule_for_training:
+            naive_dict["blocking_rule_for_training"] = copy(br)
         return naive_dict
 
 
