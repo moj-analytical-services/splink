@@ -116,6 +116,11 @@ class Settings:
             blocking_rules_to_generate_predictions
         )
 
+        # TODO: if we want this to keep in-sync with link type, can put logic in
+        # link_type setter
+        self._source_dataset_column_name_is_required = (
+            self._get_source_dataset_column_name_is_required()
+        )
         # TODO: no thanks:
         self._source_dataset_column_name_ = source_dataset_column_name
         self._unique_id_column_name = unique_id_column_name
@@ -186,8 +191,7 @@ class Settings:
             for c in cols
         ]
 
-    @property
-    def _source_dataset_column_name_is_required(self):
+    def _get_source_dataset_column_name_is_required(self):
         return self._link_type not in ["dedupe_only"]
 
     @property
