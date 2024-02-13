@@ -45,12 +45,12 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker = deepcopy(linker)
 
     settings_obj = linker._settings_obj
-    linker._settings_obj_ = settings_obj
+    linker._settings_obj = settings_obj
     linker._analyse_blocking_mode = True
 
     if blocking_rules:
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
-        linker._settings_obj_._blocking_rules_to_generate_predictions = brs_as_objs
+        linker._settings_obj._blocking_rules_to_generate_predictions = brs_as_objs
 
     # Turn tf off.  No need to apply term frequencies to perform these calcs
     settings_obj._retain_matching_columns = False
@@ -88,7 +88,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     for sql_info in sql_infos:
         linker._enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
 
-    brs_as_objs = linker._settings_obj_._blocking_rules_to_generate_predictions
+    brs_as_objs = linker._settings_obj._blocking_rules_to_generate_predictions
 
     sql = """
         select
