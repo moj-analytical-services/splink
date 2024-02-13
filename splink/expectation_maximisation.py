@@ -60,7 +60,7 @@ def compute_new_parameters_sql(settings_obj: Settings):
     union_sqls = [
         sql_template.format(
             gamma_column=cc._gamma_column_name,
-            output_column_name=cc._output_column_name,
+            output_column_name=cc.output_column_name,
             agreement_pattern_count=agreement_pattern_count,
         )
         for cc in settings_obj.comparisons
@@ -162,7 +162,7 @@ def populate_m_u_from_lookup(
     c = comparison_level.comparison
     if not em_training_session._training_fix_m_probabilities:
         try:
-            m_probability = m_u_records_lookup[c._output_column_name][
+            m_probability = m_u_records_lookup[c.output_column_name][
                 cl._comparison_vector_value
             ]["m_probability"]
 
@@ -172,7 +172,7 @@ def populate_m_u_from_lookup(
 
     if not em_training_session._training_fix_u_probabilities:
         try:
-            u_probability = m_u_records_lookup[c._output_column_name][
+            u_probability = m_u_records_lookup[c.output_column_name][
                 cl._comparison_vector_value
             ]["u_probability"]
 

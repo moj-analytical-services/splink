@@ -40,7 +40,7 @@ def test_scored_labels_table():
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            block_on("dob").get_blocking_rule("duckdb"),
+            block_on("dob"),
         ],
     }
 
@@ -101,7 +101,7 @@ def test_truth_space_table():
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            block_on("dob").get_blocking_rule("duckdb"),
+            block_on("dob"),
         ],
     }
 

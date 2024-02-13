@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Iterable, List, Union
 
 from . import comparison_level_library as cll
@@ -10,9 +11,9 @@ from .misc import ensure_is_iterable
 class CustomComparison(ComparisonCreator):
     def __init__(
         self,
-        output_column_name: str,
         comparison_levels: List[Union[ComparisonLevelCreator, dict]],
-        description: str = None,
+        output_column_name: str = None,
+        comparison_description: str = None,
     ):
         """
         Represents a comparison of the data with custom supplied levels.
@@ -28,7 +29,7 @@ class CustomComparison(ComparisonCreator):
 
         self._output_column_name = output_column_name
         self._comparison_levels = comparison_levels
-        self._description = description
+        self._description = comparison_description
         # we deliberately don't call super().__init__() - all that does is set up
         # column expressions, which we do not need here as we are dealing with
         # levels directly
@@ -39,7 +40,32 @@ class CustomComparison(ComparisonCreator):
             return cl
         if isinstance(cl, dict):
             # TODO: swap this if we develop a more uniform approach to (de)serialising
-            return CustomLevel(**cl)
+            cl_dict = copy(cl)
+            configurable_parameters = (
+                "is_null_level",
+                "m_probability",
+                "u_probability",
+                "tf_adjustment_column",
+                "tf_adjustment_weight",
+                "tf_minimum_u_value",
+                "label_for_charts",
+            )
+            # split dict in two depending whether or not entries are 'configurables'
+            configurables = {
+                key: value
+                for key, value in cl_dict.items()
+                if key in configurable_parameters
+            }
+            cl_dict = {
+                key: value
+                for key, value in cl_dict.items()
+                if key not in configurable_parameters
+            }
+
+            custom_comparison = CustomLevel(**cl_dict)
+            if configurables:
+                custom_comparison.configure(**configurables)
+            return custom_comparison
         raise ValueError(
             "`comparison_levels` entries must be `dict` or `ComparisonLevelCreator, "
             f"but found type {type(cl)} for entry {cl}"

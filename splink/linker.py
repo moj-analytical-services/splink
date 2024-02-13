@@ -61,7 +61,6 @@ from .cluster_metrics import (
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
-from .comparison_creator import ComparisonCreator
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
     comparison_vector_distribution_sql,
@@ -105,6 +104,7 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
+from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -219,9 +219,7 @@ class Linker:
             # TODO: need to figure out how this flows with validation
             # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
-            self._instantiate_comparison_levels(settings_dict)
-            self._instantiate_blocking_rules(settings_dict)
-            self._validate_settings_components(settings_dict)
+            # self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         # logic from DuckDBLinker.__init__ - TODO: genericise
@@ -450,23 +448,31 @@ class Linker:
 
     def _setup_settings_objs(self, settings_dict):
         # Setup the linker class's required settings
-        self._settings_dict = settings_dict
+        self._settings_dict = copy(settings_dict)
 
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
         if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
+            settings_dialect_str = self._sql_dialect
+        elif settings_dict is None:
+            settings_dialect_str = self._sql_dialect
+        else:
+            settings_dialect_str = settings_dict["sql_dialect"]
+            del settings_dict["sql_dialect"]
 
         if settings_dict is None:
             self._cache_uid_no_settings = ascii_uid(8)
         else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            if (uid := settings_dict.get("linker_uid")) is None:
+                uid = ascii_uid(8)
             settings_dict["linker_uid"] = uid
 
         if settings_dict is None:
             self._settings_obj_ = None
         else:
-            self._settings_obj_ = Settings(settings_dict)
+            self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+                settings_dialect_str
+            )
 
     def _check_for_valid_settings(self):
         if (
@@ -493,6 +499,8 @@ class Linker:
         )
 
     def _validate_settings(self, validate_settings):
+        # TODO: restore logic
+        return
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
@@ -511,42 +519,6 @@ class Linker:
             input_columns=self._input_tables_dict,
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
-
-    def _instantiate_comparison_levels(self, settings_dict):
-        """
-        Mutate our settings_dict, so that any ComparisonLevelCreator
-        instances are instead replaced with ComparisonLevels
-        """
-        dialect = self._sql_dialect
-        if settings_dict is None:
-            return
-        if "comparisons" not in settings_dict:
-            return
-        comparisons = settings_dict["comparisons"]
-        for idx_c, comparison in enumerate(comparisons):
-            if isinstance(comparison, dict):
-                comparison_levels = comparison["comparison_levels"]
-                for idx_cl, level in enumerate(comparison_levels):
-                    # if we have a ComparisonLevelCreator
-                    if not isinstance(level, dict):
-                        comparison_levels[idx_cl] = level.get_comparison_level(dialect)
-            elif isinstance(comparison, ComparisonCreator):
-                comparisons[idx_c] = comparison.get_comparison(dialect)
-
-    def _instantiate_blocking_rules(self, settings_dict):
-        """
-        Mutate our settings_dict, so that any BlockingRuleCreator
-        instances are instead replaced with BlockingRules
-        """
-        dialect = self._sql_dialect
-        if settings_dict is None:
-            return
-        if "blocking_rules_to_generate_predictions" not in settings_dict:
-            return
-        brs = settings_dict["blocking_rules_to_generate_predictions"]
-        for idx_c, br in enumerate(brs):
-            if isinstance(br, BlockingRuleCreator):
-                brs[idx_c] = br.create_blocking_rule_dict(dialect)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -947,7 +919,7 @@ class Linker:
             for reverse_level in reverse_levels:
                 # Get comparison level on current settings obj
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level.comparison._output_column_name
+                    reverse_level.comparison.output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
@@ -961,7 +933,7 @@ class Linker:
 
                 logger.log(
                     15,
-                    f"Reversing comparison level {cc._output_column_name}"
+                    f"Reversing comparison level {cc.output_column_name}"
                     f" using bayes factor {bf:,.3f}",
                 )
 
@@ -1075,13 +1047,21 @@ class Linker:
 
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
+        if "sql_dialect" in settings_dict:
+            sql_dialect_str = settings_dict["sql_dialect"]
+            del settings_dict["sql_dialect"]
+        else:
+            sql_dialect_str = self._sql_dialect
+        # TODO: remove this once we have sorted spec
+        for br in settings_dict["blocking_rules_to_generate_predictions"]:
+            if isinstance(br, dict):
+                if "sql_dialect" in br:
+                    del br["sql_dialect"]
 
-        self._instantiate_comparison_levels(settings_dict)
         self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
+        self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
+            sql_dialect_str
+        )
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
 
@@ -1101,42 +1081,6 @@ class Linker:
         """
 
         return self.load_settings(model_path)
-
-    def initialise_settings(self, settings_dict: dict):
-        """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or `load_model` when loading
-         a pre-trained model.*
-
-        Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
-        Examples:
-
-            ```py
-            linker = Linker(df, db_api)
-            linker.profile_columns(["first_name", "surname"])
-            linker.initialise_settings(settings_dict)
-            ```
-
-        Args:
-            settings_dict (dict): A Splink settings dictionary
-        """
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
-        self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
-        self._validate_input_dfs()
-        self._validate_dialect()
-
-        warnings.warn(
-            "`initialise_settings` is deprecated. We advise you use "
-            "`linker.load_settings()` when loading in your settings or a previously "
-            "trained model.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
 
     def load_settings_from_json(self, in_path: str | Path):
         """*This method is now deprecated. Please use `load_settings`
@@ -2145,7 +2089,11 @@ class Linker:
         """
 
         return profile_columns(
-            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
+            self.db_api,
+            column_expressions=column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
     def _get_labels_tablename_from_input(
@@ -3319,7 +3267,7 @@ class Linker:
 
         # Comparisons with TF adjustments
         tf_comparisons = [
-            c._output_column_name
+            c.output_column_name
             for c in self._settings_obj.comparisons
             if any([cl._has_tf_adjustments for cl in c.comparison_levels])
         ]
