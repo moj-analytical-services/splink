@@ -190,6 +190,18 @@ class InputColumn:
         )
 
     def register_dialect(self, sql_dialect: str):
+        if self.column_info_settings is not None:
+            column_info_sql_dialect = self.column_info_settings.sql_dialect
+            if sql_dialect is not None:
+                if sql_dialect != column_info_sql_dialect:
+                    raise ValueError(
+                        f"Mismatched dialect in `InputColumn`: {sql_dialect=}, "
+                        f"but `column_info_settings` has dialect: "
+                        f"'{column_info_sql_dialect}'"
+                    )
+            else:
+                sql_dialect = column_info_sql_dialect
+
         self.sql_dialect = sql_dialect
 
     @property
