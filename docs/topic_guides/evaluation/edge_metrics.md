@@ -1,24 +1,27 @@
 This guide is intended to be a reference guide for Edge Metrics used throughout Splink. It will build up from basic principles into more complex metrics.
 
+!!! note
+    All of these metrics are dependent on having a "ground truth" to compare against. This is generally provided by **clerical labelling** (i.e. labels created by a human). For more on how to generate this ground truth (and the impact that can have on Edge Metrics), check out the [Clerical Labelling Topic Guide](./labelling.md).
+
 ## The Basics
 
 Any Edge (Link) within a Splink model will fall into one of four categories:
 
-#### 1. True Positive
+#### True Positive
 
 A True Positive is a case where a Splink model correctly identifies a match between two records.
 
-#### 2. True Negative
+#### True Negative
 
 A True Negative is a case where a Splink model correctly identifies a non-match between two records.
 
-#### 3. False Positive
+#### False Positive
 
 A False Positive is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
 
 Also referred to as a Type I Error.
 
-#### 4. False Negative
+#### False Negative
 
 A False Negative is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
 
@@ -36,12 +39,16 @@ The confusion matrix shows **counts** of each link type, but we are generally mo
 
 ### Accuracy
 
-The simplest metric is $\textsf{Accuracy} = \frac{(TP+TN)}{(P+N)}$
+The simplest metric is 
+
+$$\textsf{Accuracy} = \frac{\textsf{True Positives}+\textsf{True Negatives}}{\textsf{All Predictions}}$$
 
 This measures the proportion of correct classifications (of any kind). This may be useful for balanced data but high accuracy can be achieved by simply assuming the majority class for highly imbalanced data (e.g. assuming non-matches).
 
+<hr>
 
 ![](./image/confusion_matrix_extra.drawio.png)
+
 
 ### True Positive Rate (Recall)
 
@@ -80,11 +87,11 @@ $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{Al
 
 This section contains composite metrics i.e. combinations of metrics that can been derived from the confusion matrix (Precision, Recall, Specificity and Negative Predictive Value). 
 
-Data linkage has a number of different outcomes (True Positives, False Positives etc.) with each of these has a different impact on your specific use case. It is very rare that a single metric defines the desired behaviour of a model. Therefore, evaluating performance with a composite metric (or a combination of metrics) is advised.
+Any comparison of two records has a number of possible outcomes (True Positives, False Positives etc.), each of which has a different impact on your specific use case. It is very rare that a single metric defines the desired behaviour of a model. Therefore, evaluating performance with a composite metric (or a combination of metrics) is advised.
 
 ### F Score
 
-The F is a weighted harmonic mean of Precision (PPV) and Recall (TPR). For a a general weight $\beta$:
+The F-Score is a weighted harmonic mean of Precision (PPV) and Recall (TPR). For a a general weight $\beta$:
 
 $$F_{\beta} = \frac{(1 + \beta^2) \cdot \textsf{Precision} \cdot \textsf{Recall}}{\beta^2 \cdot \textsf{Precision} + \textsf{Recall}}$$
 
@@ -100,7 +107,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 
     F-score does not account for class imbalance in the data, and is asymmetric (i.e. it considers the prediction of matching records, but ignores how well the model correctly predicts non-matching records).
 
-### P4-Score
+### P4 Score
 
 $P_{4}$ is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
 
@@ -108,6 +115,16 @@ $$ 4\left[\frac{1}{\textsf{Recall}}+\frac{1}{\textsf{Specificity}}+\frac{1}{\tex
 
 This addresses one of the issues with the F-Score as it considers how well the model predicts non-matching records as well as matching records.
 
+Note here that all metrics are given equal weighting.
+
 ### Matthews Correlation Coefficient (MCC)
 
-The Matthews Correlation Coefficient ($\phi$) 
+The Matthews Correlation Coefficient ($\phi$) is a measure of how correlation between predictions and actual observations.
+
+$$ \phi = \sqrt{\textsf{Recall} \cdot \textsf{Specificity} \cdot \textsf{Precision} \cdot \textsf{Negative Predictive Value}} - \sqrt{(1 - \textsf{Recall})(1 - \textsf{Specificity})(1 - \textsf{Precision})(1 - \textsf{Negative Predictive Value})} $$
+
+!!! note
+
+    Unlike the other metrics in this guide, $\phi$ is a correlation coefficient, so can range from -1 to 1 (as opposed to a range of 0 to 1).
+
+    In reality, linkage models should never be negatively correlated with actual observations, so $\phi$ can be used in the same way as other metrics.
