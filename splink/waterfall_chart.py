@@ -40,7 +40,7 @@ def _final_score_record(record_as_dict):
     return rec
 
 
-def _comparison_records(record_as_dict, comparison: Comparison):
+def _comparison_records(record_as_dict, comparison: Comparison, hide_details=False):
     output_records = []
     waterfall_record = {}
 
@@ -62,12 +62,18 @@ def _comparison_records(record_as_dict, comparison: Comparison):
     input_cols_used = c._input_columns_used_by_case_statement
     input_cols_l = [ic.unquote().name_l for ic in input_cols_used]
     input_cols_r = [ic.unquote().name_r for ic in input_cols_used]
-    waterfall_record["value_l"] = ", ".join(
-        [str(record_as_dict[n]) for n in input_cols_l]
-    )
-    waterfall_record["value_r"] = ", ".join(
-        [str(record_as_dict[n]) for n in input_cols_r]
-    )
+
+    if hide_details:
+        waterfall_record["value_l"] = ""
+        waterfall_record["value_r"] = ""
+    else:
+        waterfall_record["value_l"] = ", ".join(
+            [str(record_as_dict[n]) for n in input_cols_l]
+        )
+        waterfall_record["value_r"] = ", ".join(
+            [str(record_as_dict[n]) for n in input_cols_r]
+        )
+
     waterfall_record["term_frequency_adjustment"] = False
 
     output_records.append(waterfall_record)
@@ -76,7 +82,7 @@ def _comparison_records(record_as_dict, comparison: Comparison):
     if c._has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
 
-        if cl._tf_adjustment_input_column is not None:
+        if cl._tf_adjustment_input_column is not None and hide_details is False:
             waterfall_record_2["value_l"] = str(
                 record_as_dict[cl._tf_adjustment_input_column.unquote().name_l]
             )
@@ -120,12 +126,12 @@ def _comparison_records(record_as_dict, comparison: Comparison):
     return output_records
 
 
-def record_to_waterfall_data(record_as_dict, settings_obj):
+def record_to_waterfall_data(record_as_dict, settings_obj, hide_details):
     comparisons = settings_obj.comparisons
     waterfall_records = [_prior_record(settings_obj)]
 
     for cc in comparisons:
-        records = _comparison_records(record_as_dict, cc)
+        records = _comparison_records(record_as_dict, cc, hide_details)
         waterfall_records.extend(records)
 
     waterfall_records.append(_final_score_record(record_as_dict))
@@ -134,10 +140,10 @@ def record_to_waterfall_data(record_as_dict, settings_obj):
     return waterfall_records
 
 
-def records_to_waterfall_data(records, settings_obj):
+def records_to_waterfall_data(records, settings_obj, hide_details):
     waterfall_data = []
     for i, record in enumerate(records):
-        new_data = record_to_waterfall_data(record, settings_obj)
+        new_data = record_to_waterfall_data(record, settings_obj, hide_details)
         for rec in new_data:
             rec["record_number"] = i
         waterfall_data.extend(new_data)

@@ -71,6 +71,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .edge_metrics import compute_edge_metrics
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -226,16 +227,6 @@ class Linker:
 
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
-        if not isinstance(settings_dict, (dict, type(None))):
-            # Run if you've entered a filepath
-            # feed it a blank settings dictionary
-            self._setup_settings_objs(None)
-            self.load_settings(settings_dict)
-        else:
-            self._validate_settings_components(settings_dict)
-            settings_dict = deepcopy(settings_dict)
-            self._setup_settings_objs(settings_dict)
-
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_table_or_tables,
             input_table_aliases,
@@ -246,8 +237,8 @@ class Linker:
             homogenised_tables, homogenised_aliases
         )
 
-        self._validate_input_dfs()
-        self._validate_settings(validate_settings)
+        self._setup_settings_objs(deepcopy(settings_dict), validate_settings)
+
         self._em_training_sessions = []
 
         self._find_new_matches_mode = False
@@ -328,14 +319,14 @@ class Linker:
 
     @property
     def _cache_uid(self):
-        if self._settings_dict:
+        if getattr(self, "_settings_dict", None):
             return self._settings_obj._cache_uid
         else:
             return self._cache_uid_no_settings
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if self._settings_dict:
+        if getattr(self, "_settings_dict", None):
             self._settings_obj._cache_uid = value
         else:
             self._cache_uid_no_settings = value
@@ -477,25 +468,22 @@ class Linker:
 
         return homogenised_tables, homogenised_aliases
 
-    def _setup_settings_objs(self, settings_dict):
-        # Setup the linker class's required settings
-        self._settings_dict = settings_dict
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
-
-        if settings_dict is None:
-            self._cache_uid_no_settings = ascii_uid(8)
-        else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
-            settings_dict["linker_uid"] = uid
+    def _setup_settings_objs(self, settings_dict, validate_settings: bool = True):
+        # Always sets a default cache uid -> _cache_uid_no_settings
+        self._cache_uid = ascii_uid(8)
 
         if settings_dict is None:
             self._settings_obj_ = None
-        else:
-            self._settings_obj_ = Settings(settings_dict)
+            return
+
+        if not isinstance(settings_dict, (str, dict)):
+            raise ValueError(
+                "Invalid settings object supplied. Ensure this is either "
+                "None, a dictionary or a filepath to a settings object saved "
+                "as a json file."
+            )
+
+        self.load_settings(settings_dict, validate_settings)
 
     def _check_for_valid_settings(self):
         if (
@@ -509,23 +497,13 @@ class Linker:
         else:
             return True
 
-    def _validate_settings_components(self, settings_dict):
-        # Vaidate our settings after plugging them through
-        # `Settings(<settings>)`
-        if settings_dict is None:
-            return
-
-        log_comparison_errors(
-            # null if not in dict - check using value is ignored
-            settings_dict.get("comparisons", None),
-            self._sql_dialect,
-        )
-
     def _validate_settings(self, validate_settings):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
             return
+
+        self._validate_input_dfs()
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
@@ -1142,27 +1120,23 @@ class Linker:
             settings_dict = json.loads(p.read_text())
 
         # Store the cache ID so it can be reloaded after cache invalidation
-        cache_id = self._cache_uid
-        # So we don't run into any issues with generated tables having
-        # invalid columns as settings have been tweaked, invalidate
-        # the cache and allow these tables to be recomputed.
+        cache_uid = self._cache_uid
 
-        # This is less efficient, but triggers infrequently and ensures we don't
-        # run into issues where the defaults used conflict with the actual values
-        # supplied in settings.
-
-        # This is particularly relevant with `source_dataset`, which appears within
-        # concat_with_tf.
+        # Invalidate the cache if anything currently exists. If the settings are
+        # changing, our charts, tf tables, etc may need changing.
         self.invalidate_cache()
 
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
-        self._settings_dict = settings_dict
+        self._settings_dict = settings_dict  # overwrite or add
+
+        # Get the SQL dialect from settings_dict or use the default
+        sql_dialect = settings_dict.get("sql_dialect", self._sql_dialect)
+        settings_dict["sql_dialect"] = sql_dialect
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
+
+        # Check the user's comparisons (if they exist)
+        log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
         self._settings_obj_ = Settings(settings_dict)
-        self._validate_input_dfs()
+        # Check the final settings object
         self._validate_settings(validate_settings)
 
     def load_model(self, model_path: Path):
@@ -1675,9 +1649,11 @@ class Linker:
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
-                self._settings_obj._get_comparison_by_output_column_name(n)
-                if isinstance(n, str)
-                else n
+                (
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
+                )
                 for n in comparisons_to_deactivate
             ]
             if comparison_levels_to_reverse_blocking_rule is None:
@@ -2178,6 +2154,39 @@ class Linker:
 
         return df_node_metrics
 
+    def _compute_metrics_edges(
+        self,
+        df_node_metrics: SplinkDataFrame,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing edge-level metrics.
+
+        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of edge metrics.
+
+        Uses `igraph` under-the-hood for calculations
+
+        Edge metrics produced:
+        * is_bridge (is the edge a bridge?)
+
+        Output table has a single row per edge, and the metric is_bridge:
+        |-------------------------------------------------------------|
+        | composite_unique_id_l | composite_unique_id_r   | is_bridge |
+        |-----------------------|-------------------------|-----------|
+        | s1-__-10001           | s1-__-10003             | True      |
+        | s1-__-10001           | s1-__-10005             | False     |
+        | s1-__-10005           | s1-__-10009             | False     |
+        | s1-__-10021           | s1-__-10024             | True      |
+        ...
+        """
+        return compute_edge_metrics(
+            self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
+        )
+
     def _compute_metrics_clusters(
         self,
         df_node_metrics: SplinkDataFrame,
@@ -2249,11 +2258,17 @@ class Linker:
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics = self._compute_metrics_edges(
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return GraphMetricsResults(
-            nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
 
     def profile_columns(
@@ -3017,7 +3032,9 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: list[dict], filter_nulls=True):
+    def waterfall_chart(
+        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+    ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -3037,6 +3054,9 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+            remove_sensitive_data (bool, optional): When True, The waterfall chart will
+                contain match weights only, and all of the (potentially sensitive) data
+                from the input tables will be removed prior to the chart being created.
 
 
         Returns:
@@ -3045,7 +3065,9 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(records, self._settings_obj, filter_nulls)
+        return waterfall_chart(
+            records, self._settings_obj, filter_nulls, remove_sensitive_data
+        )
 
     def unlinkables_chart(
         self,
@@ -3753,6 +3775,11 @@ class Linker:
         will be recomputed.
         This is useful, for example, if the input data tables have changed.
         """
+
+        # Nothing to delete
+        if len(self._intermediate_table_cache) == 0:
+            return
+
         # Before Splink executes a SQL command, it checks the cache to see
         # whether a table already exists with the name of the output table
 

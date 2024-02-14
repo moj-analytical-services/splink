@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pandas as pd
 import pytest
@@ -330,6 +331,7 @@ def test_validate_sql_dialect():
 def test_comparison_validation():
     import splink.athena.comparison_level_library as ath_cll
     import splink.duckdb.comparison_level_library as cll
+    import splink.duckdb.comparison_library as cl
     import splink.spark.comparison_level_library as sp_cll
     from splink.exceptions import InvalidDialect
     from splink.spark.comparison_library import exact_match
@@ -344,10 +346,7 @@ def test_comparison_validation():
     settings = get_settings_dict()
 
     # Contents aren't tested as of yet
-    email_no_comp_level = {
-        "comparison_lvls": [],
-    }
-
+    email_no_comp_level = {"comparison_lvls": []}
     # cll instead of cl
     email_cc = cll.exact_match_level("email")
     settings["comparisons"][3] = email_cc
@@ -368,6 +367,17 @@ def test_comparison_validation():
             ]
         }
     )
+    # a comparison containing another comparison
+    settings["comparisons"].append(
+        {
+            "comparison_levels": [
+                cll.null_level("test"),
+                # Invalid Spark cll
+                cl.exact_match("test"),
+                cll.else_level(),
+            ]
+        }
+    )
 
     log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
 
@@ -381,17 +391,25 @@ def test_comparison_validation():
 
     # Check our errors are raised
     errors = error_logger.raw_errors
+    # -3 as we have three valid comparisons
     assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
 
-    # Our expected error types and part of the corresponding error text
+    # These errors are raised in the order they are defined in the settings
     expected_errors = (
         (TypeError, "is a comparison level"),
         (TypeError, "is of an invalid data type."),
         (SyntaxError, "missing the required `comparison_levels`"),
         (InvalidDialect, "within its comparison levels - spark."),
-        (InvalidDialect, "within its comparison levels - presto, spark."),
+        (InvalidDialect, re.compile(r".*(presto.*spark|spark.*presto).*")),
+        (TypeError, "contains the following invalid levels"),
     )
 
     for n, (e, txt) in enumerate(expected_errors):
-        with pytest.raises(e, match=txt):
-            raise errors[n]
+        if isinstance(txt, re.Pattern):
+            # If txt is a compiled regular expression, use re.search
+            with pytest.raises(e) as exc_info:
+                raise errors[n]
+            assert txt.search(str(exc_info.value)), f"Regex did not match for error {n}"
+        else:
+            with pytest.raises(e, match=txt):
+                raise errors[n]

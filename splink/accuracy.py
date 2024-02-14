@@ -114,7 +114,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
             as match_probability,
-        row_count,
+        cast(row_count as float8) as row_count,
         cast(P as float8) as p,
         cast(N as float8) as n,
         cast(TP as float8) as tp,
@@ -197,7 +197,10 @@ def truth_space_table_from_labels_column(
 
     sql = f"""
     select
-    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    case
+        when ({label_colname}_l = {label_colname}_r)
+        then cast(1.0 as float8) else cast(0.0 as float8)
+    end AS clerical_match_score,
     not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
@@ -353,7 +356,10 @@ def prediction_errors_from_label_column(
 
     sql = f"""
     select
-    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    case
+        when ({label_colname}_l = {label_colname}_r)
+        then cast(1.0 as float8) else cast(0.0 as float8)
+    end AS clerical_match_score,
     not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
