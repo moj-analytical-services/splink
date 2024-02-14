@@ -20,8 +20,10 @@ class ColumnInfoSettings:
     bayes_factor_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
+    unique_id_column_name: str
     _source_dataset_column_name: str
     _source_dataset_column_name_is_required: str
+    sql_dialect: str
 
     @property
     def source_dataset_column_name(self):
@@ -29,6 +31,27 @@ class ColumnInfoSettings:
             return self._source_dataset_column_name
         else:
             return None
+
+    @property
+    def unique_id_input_columns(self) -> list[InputColumn]:
+        cols = []
+
+        if source_dataset_column_name := (self.source_dataset_column_name):
+            col = InputColumn(
+                source_dataset_column_name,
+                column_info_settings=self,
+                sql_dialect=self.sql_dialect,
+            )
+            cols.append(col)
+
+        col = InputColumn(
+            self.unique_id_column_name,
+            column_info_settings=self,
+            sql_dialect=self.sql_dialect,
+        )
+        cols.append(col)
+
+        return cols
 
     def as_dict(self) -> dict:
         full_dict = self._as_full_dict()
@@ -71,9 +94,9 @@ class Settings:
         retain_matching_columns: bool = True,
         retain_intermediate_calculation_columns: bool = False,
         additional_columns_to_retain: List[str] = [],
+        # ColumnInfoSettings
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
-        # ColumnInfoSettings
         bayes_factor_column_prefix: str = "bf_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
@@ -99,10 +122,12 @@ class Settings:
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
             bayes_factor_column_prefix=bayes_factor_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
+            unique_id_column_name=unique_id_column_name,
             _source_dataset_column_name=source_dataset_column_name,
             # TODO: if we want this to keep in-sync with link type, can put logic in
             # link_type setter
             _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
+            sql_dialect=sql_dialect,
         )
 
         # TODO: streamline this logic
@@ -134,8 +159,6 @@ class Settings:
         self._blocking_rules_to_generate_predictions = self._brs_as_objs(
             blocking_rules_to_generate_predictions
         )
-
-        self._unique_id_column_name = unique_id_column_name
 
         self._cache_uid = linker_uid
 
@@ -207,29 +230,6 @@ class Settings:
         return self._link_type not in ["dedupe_only"]
 
     @property
-    def _unique_id_input_columns(self) -> list[InputColumn]:
-        cols = []
-
-        if source_dataset_column_name := (
-            self.column_info_settings.source_dataset_column_name
-        ):
-            col = InputColumn(
-                source_dataset_column_name,
-                column_info_settings=self.column_info_settings,
-                sql_dialect=self._sql_dialect,
-            )
-            cols.append(col)
-
-        col = InputColumn(
-            self._unique_id_column_name,
-            column_info_settings=self.column_info_settings,
-            sql_dialect=self._sql_dialect,
-        )
-        cols.append(col)
-
-        return cols
-
-    @property
     def _term_frequency_columns(self) -> list[InputColumn]:
         cols = set()
         for cc in self.comparisons:
@@ -255,13 +255,11 @@ class Settings:
         return len(self._blocking_rules_to_generate_predictions) > 1
 
     @property
-    def _columns_used_by_comparisons(self):
+    def _columns_used_by_comparisons(self) -> List[str]:
         cols_used = []
-        if source_dataset_column_name := (
-            self.column_info_settings.source_dataset_column_name
-        ):
-            cols_used.append(source_dataset_column_name)
-        cols_used.append(self._unique_id_column_name)
+        for uid_col in self.column_info_settings.unique_id_input_columns:
+            cols_used.append(uid_col.name)
+            cols_used.append(uid_col.name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
             cols = [c.name for c in cols]
@@ -270,10 +268,10 @@ class Settings:
         return dedupe_preserving_order(cols_used)
 
     @property
-    def _columns_to_select_for_blocking(self):
+    def _columns_to_select_for_blocking(self) -> List[str]:
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.l_name_as_l)
             cols.append(uid_col.r_name_as_r)
 
@@ -286,10 +284,10 @@ class Settings:
         return dedupe_preserving_order(cols)
 
     @property
-    def _columns_to_select_for_comparison_vector_values(self):
+    def _columns_to_select_for_comparison_vector_values(self) -> List[str]:
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -309,7 +307,7 @@ class Settings:
     def _columns_to_select_for_bayes_factor_parts(self):
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -329,7 +327,7 @@ class Settings:
     def _columns_to_select_for_predict(self):
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -479,7 +477,6 @@ class Settings:
                 self._retain_intermediate_calculation_columns
             ),
             "additional_columns_to_retain": self._additional_col_names_to_retain,
-            "unique_id_column_name": self._unique_id_column_name,
             "sql_dialect": self._sql_dialect,
             "linker_uid": self._cache_uid,
             **self.training_settings.as_dict(),

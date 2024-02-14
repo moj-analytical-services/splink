@@ -36,7 +36,7 @@ def generate_labelling_tool_comparisons(
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    where {settings._unique_id_column_name} = '{unique_id}'
+    where {settings.column_info_settings.unique_id_column_name} = '{unique_id}'
     {source_dataset_condition}
     """
 

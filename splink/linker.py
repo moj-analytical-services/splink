@@ -304,7 +304,9 @@ class Linker:
 
         remove_columns = []
         if not include_unique_id_col_names:
-            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+            remove_columns.extend(
+                self._settings_obj.column_info_settings.unique_id_input_columns
+            )
         if not include_additional_columns_to_retain:
             remove_columns.extend(self._settings_obj._additional_columns_to_retain)
 
@@ -1671,7 +1673,7 @@ class Linker:
         self._self_link_mode = True
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
@@ -1793,7 +1795,7 @@ class Linker:
         | s1-__-10003         | s1-__-10003 | 2           |
         ...
         """
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")

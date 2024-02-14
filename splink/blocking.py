@@ -273,7 +273,10 @@ class ExplodingBlockingRule(BlockingRule):
         """
 
         settings_obj = linker._settings_obj
-        unique_id_col = settings_obj._unique_id_column_name
+        unique_id_col = settings_obj.column_info_settings.unique_id_column_name
+        unique_id_input_columns = (
+            settings_obj.column_info_settings.unique_id_input_columns
+        )
 
         link_type = settings_obj._link_type
 
@@ -283,16 +286,10 @@ class ExplodingBlockingRule(BlockingRule):
         if linker._self_link_mode:
             link_type = "self_link"
 
-        where_condition = _sql_gen_where_condition(
-            link_type, settings_obj._unique_id_input_columns
-        )
+        where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
-        )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         if link_type == "two_dataset_link_only":
             where_condition = (
@@ -322,17 +319,17 @@ class ExplodingBlockingRule(BlockingRule):
         so that subsequent statements do not produce duplicate pairs
         """
 
-        unique_id_column = linker._settings_obj._unique_id_column_name
+        unique_id_column = (
+            linker._settings_obj.column_info_settings.unique_id_column_name
+        )
+        unique_id_input_columns = (
+            linker._settings_obj.column_info_settings.unique_id_input_columns
+        )
         splink_df = self.exploded_id_pair_table
         ids_to_compare_sql = f"select * from {splink_df.physical_name}"
 
-        settings_obj = linker._settings_obj
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
-        )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         return f"""EXISTS (
             select 1 from ({ids_to_compare_sql}) as ids_to_compare
@@ -353,15 +350,14 @@ class ExplodingBlockingRule(BlockingRule):
                 " called."
             )
         settings_obj = linker._settings_obj
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
+        unique_id_col = settings_obj.column_info_settings.unique_id_column_name
+        unique_id_input_columns = (
+            settings_obj.column_info_settings.unique_id_input_columns
         )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         exploded_id_pair_table = self.exploded_id_pair_table
-        unique_id_col = linker._settings_obj._unique_id_column_name
         sql = f"""
             select
                 {sql_select_expr},
@@ -510,7 +506,7 @@ def block_using_rules_sqls(linker: Linker):
         link_type = "self_link"
 
     where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_input_columns
+        link_type, settings_obj.column_info_settings.unique_id_input_columns
     )
 
     # We could have had a single 'blocking rule'

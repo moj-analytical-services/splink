@@ -30,7 +30,7 @@ def block_from_labels(
 
     df = linker._table_to_splink_dataframe(labels_table_name, labels_table_name)
 
-    unique_id_col = linker._settings_obj._unique_id_column_name
+    unique_id_col = linker._settings_obj.column_info_settings.unique_id_column_name
 
     source_dataset_col = (
         linker._settings_obj.column_info_settings.source_dataset_column_name
