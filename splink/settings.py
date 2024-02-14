@@ -87,6 +87,7 @@ class Settings:
     def __init__(
         self,
         link_type: str,
+        *,
         # TODO: make everything compulsory at this level?
         comparisons: List[Comparison] = [],
         blocking_rules_to_generate_predictions: List[BlockingRule] = [],
