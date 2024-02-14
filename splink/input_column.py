@@ -173,7 +173,7 @@ class InputColumn:
         column_info_settings: ColumnInfoSettings = None,
         sql_dialect: str = None,
     ):
-        self.column_info_settings = column_info_settings
+        self.column_info_settings = deepcopy(column_info_settings)
 
         self.register_dialect(sql_dialect)
 
