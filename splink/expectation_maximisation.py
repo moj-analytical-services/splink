@@ -14,7 +14,6 @@ from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from .settings import Settings
 from .splink_dataframe import SplinkDataFrame
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -42,9 +41,11 @@ def count_agreement_patterns_sql(comparisons: List[Comparison]):
     return sql
 
 
-def compute_new_parameters_sql(settings_obj: Settings):
+def compute_new_parameters_sql(
+    estimate_without_term_frequencies: bool, comparisons: List[Comparison]
+):
     """compute m and u counts from the results of predict"""
-    if settings_obj.training_settings.estimate_without_term_frequencies:
+    if estimate_without_term_frequencies:
         agreement_pattern_count = "agreement_pattern_count"
     else:
         agreement_pattern_count = "1"
@@ -64,7 +65,7 @@ def compute_new_parameters_sql(settings_obj: Settings):
             output_column_name=cc.output_column_name,
             agreement_pattern_count=agreement_pattern_count,
         )
-        for cc in settings_obj.comparisons
+        for cc in comparisons
     ]
 
     # Probability of two random records matching
@@ -255,7 +256,10 @@ def expectation_maximisation(
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_new_parameters_sql(settings_obj)
+        sql = compute_new_parameters_sql(
+            training_settings.estimate_without_term_frequencies,
+            settings_obj.comparisons,
+        )
         linker._enqueue_sql(sql, "__splink__m_u_counts")
         if training_settings.estimate_without_term_frequencies:
             df_params = linker._execute_sql_pipeline([agreement_pattern_counts])

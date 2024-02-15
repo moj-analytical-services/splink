@@ -50,7 +50,10 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     """
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
-    sql = compute_new_parameters_sql(settings_obj)
+    sql = compute_new_parameters_sql(
+        settings_obj.training_settings.estimate_without_term_frequencies,
+        settings_obj.comparisons,
+    )
     training_linker._enqueue_sql(sql, "__splink__m_u_counts")
 
     df_params = training_linker._execute_sql_pipeline([concat_with_tf])

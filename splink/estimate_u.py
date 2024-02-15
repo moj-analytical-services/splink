@@ -155,7 +155,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
-    sql = compute_new_parameters_sql(settings_obj)
+    sql = compute_new_parameters_sql(
+        settings_obj.training_settings.estimate_without_term_frequencies,
+        settings_obj.comparisons,
+    )
     linker._enqueue_sql(sql, "__splink__m_u_counts")
     df_params = training_linker._execute_sql_pipeline(sample_dataframe)
 
