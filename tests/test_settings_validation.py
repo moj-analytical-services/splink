@@ -1,5 +1,4 @@
 import logging
-import re
 
 import pandas as pd
 import pytest
@@ -343,11 +342,5 @@ def test_comparison_validation():
         (TypeError, "contains the following invalid levels"),
     )
     for n, (e, txt) in enumerate(expected_errors):
-        if isinstance(txt, re.Pattern):
-            # If txt is a compiled regular expression, use re.search
-            with pytest.raises(e) as exc_info:
-                raise errors[n]
-            assert txt.search(str(exc_info.value)), f"Regex did not match for error {n}"
-        else:
-            with pytest.raises(e, match=txt):
-                raise errors[n]
+        with pytest.raises(e, match=txt):
+            raise errors[n]
