@@ -140,6 +140,22 @@ class ColumnExpression:
 
         return clone
 
+    def _cast_to_string_dialected(self, name: str, dialect: SplinkDialect):
+        cast_sql = sqlglot.parse_one("cast(___col___ as string)").sql(
+            dialect=dialect.sqlglot_name
+        )
+        return cast_sql.replace("___col___", name)
+
+    def cast_to_string(self):
+        """
+        Applies a cast to string transform to the input expression.
+        """
+        clone = self._clone()
+        op = partial(clone._cast_to_string_dialected)
+        clone.operations.append(op)
+
+        return clone
+
     def _regex_extract_dialected(
         self,
         name: str,

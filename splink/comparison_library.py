@@ -4,7 +4,7 @@ from typing import Iterable, List, Union
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_library import CustomLevel
+from .comparison_level_library import CustomLevel, DateMetricType
 from .misc import ensure_is_iterable
 
 
@@ -463,13 +463,14 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         self,
         col_name: str,
         *,
-        metrics: Union[str, List[str]],
-        thresholds: Union[int, List[int]],
-        cast_strings_to_datetimes: bool = False,
+        input_is_string: bool,
+        metrics: Union[DateMetricType, List[DateMetricType]],
+        thresholds: Union[int, float, List[Union[int, float]]],
         datetime_format: str = None,
         term_frequency_adjustments=False,
         invalid_dates_as_null=True,
     ):
+        """Invalid dates as null does nothing if input is not a string"""
         time_metrics_as_iterable = ensure_is_iterable(metrics)
         # unpack it to a list so we can repeat iteration if needed
         self.time_metrics = [*time_metrics_as_iterable]
@@ -479,6 +480,7 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
 
         num_metrics = len(self.time_metrics)
         num_thresholds = len(self.time_thresholds)
+
         if num_thresholds == 0:
             raise ValueError("`time_thresholds` must have at least one entry")
         if num_metrics == 0:
@@ -489,12 +491,16 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
                 "the same number of entries"
             )
 
-        self.cast_strings_to_dates = cast_strings_to_datetimes
+        self.input_is_string = input_is_string
+
+        if input_is_string:
+            self.invalid_dates_as_null = invalid_dates_as_null
+        else:
+            self.invalid_dates_as_null = False
+
         self.datetime_format = datetime_format
 
         self.term_frequency_adjustments = term_frequency_adjustments
-
-        self.invalid_dates_as_null = invalid_dates_as_null
 
         super().__init__(col_name)
 
@@ -507,12 +513,8 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         if self.invalid_dates_as_null:
             null_col = self.datetime_parse_function(self.datetime_format)
         else:
-            null_col = col
 
-        if self.cast_strings_to_dates:
-            date_diff_col = self.datetime_parse_function(self.datetime_format)
-        else:
-            date_diff_col = col
+            null_col = col
 
         return [
             cll.NullLevel(null_col),
@@ -522,7 +524,8 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
             ),
             *[
                 cll.AbsoluteTimeDifferenceLevel(
-                    date_diff_col,
+                    col,
+                    input_is_string=self.input_is_string,
                     threshold=time_threshold,
                     metric=time_metric,
                 )

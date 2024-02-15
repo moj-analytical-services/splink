@@ -79,15 +79,10 @@ class NullLevel(ComparisonLevelCreator):
         self,
         col_name: Union[str, ColumnExpression],
         valid_string_pattern: str = None,
-        invalid_dates_as_null: bool = False,
     ):
         col_expression = ColumnExpression.instantiate_if_str(col_name)
 
-        # if invalid_dates_as_null, then supplied pattern is a date format
-        if invalid_dates_as_null:
-            col_expression = col_expression.try_parse_date(valid_string_pattern)
-        # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
-        elif valid_string_pattern is not None:
+        if valid_string_pattern is not None:
             col_expression = col_expression.regex_extract(valid_string_pattern)
         self.col_expression = col_expression
         self.is_null_level = True
@@ -514,14 +509,17 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
+DateMetricType = Literal["second", "minute", "hour", "day", "month", "year"]
+
+
 class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
         *,
+        input_is_string: bool,
         threshold: Union[int, float],
-        metric: Literal["second", "minute", "hour", "day", "month", "year"],
-        input_is_string=False,
+        metric: DateMetricType,
         datetime_format: str = None,
     ):
         """
@@ -540,12 +538,12 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
         Args:
             col_name (str): The name of the input column containing the dates to compare
+            input_is_string (bool): Indicates if the input dates are in
+                string format, requiring parsing according to `datetime_format`.
             threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
             metric (str): The unit of time to use when comparing the dates.
                 Can be 'second', 'minute', 'hour', 'day', 'month', or 'year'.
-            input_is_string (bool, optional): Indicates if the input dates are in
-                string format, requiring parsing according to `datetime_format`.
             datetime_format (str, optional): The format string for parsing dates.
                 ISO 8601 format used if not provided.
 

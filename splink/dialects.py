@@ -379,8 +379,8 @@ class PostgresDialect(SplinkDialect):
         col = clc.col_expression
 
         return (
-            f"ABS(EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
-            f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) )"
+            f"ABS(EXTRACT(EPOCH FROM {col.name_l}) "
+            f"- EXTRACT(EPOCH FROM {col.name_r}))"
             f"<= {clc.time_threshold_seconds}"
         )
 
