@@ -70,6 +70,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .edge_metrics import compute_edge_metrics
 
 # NOQA:I001
 # TODO: circular - restore
@@ -454,6 +455,8 @@ class Linker:
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
             return
+
+        self._validate_input_dfs()
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
@@ -1307,6 +1310,10 @@ class Linker:
                     self._settings_obj._get_comparison_by_output_column_name(n)
                     if isinstance(n, str)
                     else n
+                )(
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
                 )
                 for n in comparisons_to_deactivate
             ]
@@ -1808,6 +1815,39 @@ class Linker:
 
         return df_node_metrics
 
+    def _compute_metrics_edges(
+        self,
+        df_node_metrics: SplinkDataFrame,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing edge-level metrics.
+
+        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of edge metrics.
+
+        Uses `igraph` under-the-hood for calculations
+
+        Edge metrics produced:
+        * is_bridge (is the edge a bridge?)
+
+        Output table has a single row per edge, and the metric is_bridge:
+        |-------------------------------------------------------------|
+        | composite_unique_id_l | composite_unique_id_r   | is_bridge |
+        |-----------------------|-------------------------|-----------|
+        | s1-__-10001           | s1-__-10003             | True      |
+        | s1-__-10001           | s1-__-10005             | False     |
+        | s1-__-10005           | s1-__-10009             | False     |
+        | s1-__-10021           | s1-__-10024             | True      |
+        ...
+        """
+        return compute_edge_metrics(
+            self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
+        )
+
     def _compute_metrics_clusters(
         self,
         df_node_metrics: SplinkDataFrame,
@@ -1879,11 +1919,17 @@ class Linker:
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics = self._compute_metrics_edges(
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
         # don't need edges as information is baked into node metrics
         df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return GraphMetricsResults(
-            nodes=df_node_metrics, edges=None, clusters=df_cluster_metrics
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
 
     def profile_columns(
@@ -2622,7 +2668,9 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: list[dict], filter_nulls=True):
+    def waterfall_chart(
+        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+    ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -2642,6 +2690,9 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+            remove_sensitive_data (bool, optional): When True, The waterfall chart will
+                contain match weights only, and all of the (potentially sensitive) data
+                from the input tables will be removed prior to the chart being created.
 
 
         Returns:
@@ -2650,7 +2701,9 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(records, self._settings_obj, filter_nulls)
+        return waterfall_chart(
+            records, self._settings_obj, filter_nulls, remove_sensitive_data
+        )
 
     def unlinkables_chart(
         self,
@@ -3358,6 +3411,11 @@ class Linker:
         will be recomputed.
         This is useful, for example, if the input data tables have changed.
         """
+
+        # Nothing to delete
+        if len(self._intermediate_table_cache) == 0:
+            return
+
         # Before Splink executes a SQL command, it checks the cache to see
         # whether a table already exists with the name of the output table
 
