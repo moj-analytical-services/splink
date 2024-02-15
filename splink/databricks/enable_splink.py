@@ -1,4 +1,8 @@
+import logging
+
 from splink.spark.jar_location import similarity_jar_location
+
+logger = logging.getLogger(__name__)
 
 
 def enable_splink(spark):
@@ -39,7 +43,8 @@ def enable_splink(spark):
             optionModule.apply(None),
             optionModule.apply(None)
         )
-    except:
+    except Exception as e:
+        logger.warn('failed to initialize for 14.x+', e)
         try:
             # This will fix the exception when running on Databricks Runtime 13.x
             lib = JavaJarId(
@@ -49,7 +54,9 @@ def enable_splink(spark):
                 optionModule.apply(None),
                 optionModule.apply(None)
             )
-        except:
+        except Exception as ex:
+            logger.warn('failed to initialize for 13.x', ex)
+
             # This will work for < 13.x
             lib = JavaJarId(
                 JarURI,
