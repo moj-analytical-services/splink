@@ -17,7 +17,7 @@ tags:
         - confusion_matrix_from_labels_column
         - precision_recall_chart_from_labels_column
         - precision_recall_chart_from_labels_table
-        - prediction_errors_from_label_column
+        - prediction_errors_from_labels_column
         - prediction_errors_from_labels_table
         - roc_chart_from_labels_column
         - roc_chart_from_labels_table
