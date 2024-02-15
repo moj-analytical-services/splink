@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
-from typing import List
+from pathlib import Path
+from typing import List, Union
 
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule
@@ -112,3 +115,32 @@ class SettingsCreator:
             ]
         ]
         return Settings(**creator_dict, sql_dialect=sql_dialect_str)
+
+    @classmethod
+    def from_path_or_dict(cls, path_or_dict: Union[Path, str, dict]) -> SettingsCreator:
+
+        if isinstance(path_or_dict, (str, Path)):
+            settings_path = Path(path_or_dict)
+            if settings_path.is_file():
+
+                settings_dict = json.loads(settings_path.read_text())
+
+                # TODO: remove this once we have sorted spec
+                for br in settings_dict["blocking_rules_to_generate_predictions"]:
+                    if isinstance(br, dict):
+                        if "sql_dialect" in br:
+                            del br["sql_dialect"]
+
+        elif isinstance(path_or_dict, dict):
+            settings_dict = deepcopy(path_or_dict)
+        else:
+            raise ValueError(f"Path {settings_path} does not point to a valid file.")
+
+        # TODO: need to figure out how this flows with validation
+        # for now we instantiate all the correct types before the validator sees it
+        # self._validate_settings_components(settings)
+
+        # TODO: should SettingsCreator deal with the logic of sql_dialect being
+        # set?
+        settings_dict.pop("sql_dialect", None)
+        return SettingsCreator(**settings_dict)
