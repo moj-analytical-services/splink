@@ -2,30 +2,51 @@
 
 Once you have a trained model, you use it to generate edges (links) between entities (nodes). These edges will have a Match Weight and corresponding Probability.
 
-There are two distinct types of Edge Evaluation that should be considered at this stage:
+There are several ways to evaluate the to check whether the links in your model perform as you expect.
 
-1. [Edge Metrics](#edge-metrics)
-2. [Spot Checking](#spot-checking)
+## Consider the Edge Metrics
 
-with the insights from both of these feeding into [Threshold Selection](#threshold-selection) ahead of of the Clustering stage.
+Edge Metrics measure for how links perform at an overall level.
 
-<hr>
+First, consider how you would like your model to perform. What is important for your use case? Do you want to ensure that you capture all possible matches? Or do you want to minimise the number of incorrectly predicted matches? Perhaps a combination of both?
 
-## Edge Metrics
+For a summary of all the edge metrics available in Splink, check out the [Edge Metrics guide](./edge_metrics.md).
 
-Edge Metrics measure for how the links perform at an overall level.
+!!! note
 
- For a summary of all the edge metrics available in Splink, check out the [metrics guide](./edge_metrics.md). These metrics require:
-
- - a probability threshold threshold to be chosen
- - a "ground truth" to compare against (which can be achieved by Clerical Labelling)
-
-## Spot Checking
-
-Spot checking real examples of pairs of records is a central pillar of evaluating a linkage pipeline. Unlike the overall Edge Metrics, you do not get a clear measure of performance. It is, however, a very effective way to build up confidence in the model by looking at specific examples of outputs (including edge cases). It helps to build up an intuition for how the model works in practice, similar to the steps in [Model Evaluation](./model.md).
+    To produce Edge Metrics you will require a "ground truth" to compare your linkage results against (which can be achieved by [Clerical Labelling](./labelling.md))
 
 
-## Threshold Selection
+## Spot Checking pairs of records
 
-Threshold selection is a key part of a linkage pipeline. 
+Spot Checking real examples of record pairs is helpful for  confidence in linkage results. It is an effective way to build up an intuition for how the model works in practice and allows you to interrogate edge cases.
 
+Results of individual record pairs can be examined with the [Waterfall Chart](../../charts/waterfall_chart.ipynb).
+
+Choosing which the pairs of records to spot check can be done by either:
+
+- Looking at all combinations of comparison levels and choosing which to examine in the [Comparison Viewer Dashboard](../../charts/comparison_viewer_dashboard.ipynb).
+- Identifying records which have been [incorrectly predicted by your Splink model](../../demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb).
+
+As you are checking real examples, you will often come across cases that have not been accounted for by your model which you believe signify a match (e.g. a fuzzy match for names). We reccomend using this feedback to help iterate on your 
+
+## Choosing a Threshold
+
+Threshold selection is a key decision point within a linkage pipeline. One of the major benefits of probabilistic linkage versus a deterministic (i.e. rules-based) approach is the ability to choose the amount of evidence required for two records to be considered a match.
+
+When you have decided your the metrics that are important for your use case, you can use the [confusion matrix](../../charts/confusion_matrix_from_labels_table.ipynb) and [accuracy chart](../../charts/accuracy_chart_from_labels_table.ipynb) to get a first estimate for what your threshold should be.
+
+Once you have an initial threshold, you can use [Comparison Viewer Dashboard](../../charts/comparison_viewer_dashboard.ipynb) to look at records on either side of your threshold to check whether the threshold makes intuitive sense.
+
+From here, we recommend an iterative process of tweaking your threshold based on your spot checking then looking at the impact that this has on your overall edge metrics. Other tools that can be useful during this iterative process include the [Precision-Recall Chart](../../charts/precision_recall_chart_from_labels_table.ipynb), the [ROC Chart](../../charts/roc_chart_from_labels_table.ipynb) as well as [spot checking where the model has gone wrong](../../demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb). 
+
+
+
+
+## In Summary
+
+Evaluating the edges (links) of a linkage model depends on your use case. Defining what "good" looks like is a key step, which then allows you to choose a relevant metric (or metrics) for measuring success. 
+
+
+
+In general, the links between pairs of records are not the final output of linkage pipeline. Most use-cases use these links to group records together into clusters. In this instance, evaluating the links themselves is not sufficient, you have to [evaluate the resulting clusters as well](./clusters.md).

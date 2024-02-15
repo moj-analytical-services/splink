@@ -7,31 +7,32 @@ This guide is intended to be a reference guide for Edge Metrics used throughout 
 
 Any Edge (Link) within a Splink model will fall into one of four categories:
 
-#### True Positive
+### True Positive
 
-A True Positive is a case where a Splink model correctly identifies a match between two records.
+A True Positive is a case where a Splink model correctly predicts a match between two records.
 
-#### True Negative
+### True Negative
 
-A True Negative is a case where a Splink model correctly identifies a non-match between two records.
+A True Negative is a case where a Splink model correctly predicts a non-match between two records.
 
-#### False Positive
+### False Positive
 
-A False Positive is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
+A False Positive, or Type I Error, is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
 
-Also referred to as a Type I Error.
+### False Negative
 
-#### False Negative
-
-A False Negative is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
-
-Also referred to as a Type II Error
+A False Negative, or Type II Error, is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
 
 ### Confusion Matrix
 These can be summarised in a Confusion Matrix
 
 ![](./image/confusion_matrix.drawio.png){:style="width:600px"}
+
 In a perfect model there would be no False Positives or False Negatives (i.e. FP = 0 and FN = 0).
+
+??? info "Confusion Matrix in Splink:"
+
+    - [confusion_matrix_from_labels_table](../../charts/confusion_matrix_from_labels_table.ipynb)
 
 ## Metrics for Linkage
 
@@ -45,6 +46,12 @@ $$\textsf{Accuracy} = \frac{\textsf{True Positives}+\textsf{True Negatives}}{\te
 
 This measures the proportion of correct classifications (of any kind). This may be useful for balanced data but high accuracy can be achieved by simply assuming the majority class for highly imbalanced data (e.g. assuming non-matches).
 
+??? info "Accuracy in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+
 <hr>
 
 ![](./image/confusion_matrix_extra.drawio.png)
@@ -56,11 +63,26 @@ The True Positve Rate, or Recall, is the proportion of matches that are correctl
 
 $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
+??? info "Recall in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - [precision_recall_chart_from_labels_table](../../charts/precision_recall_chart_from_labels_table.ipynb)
+    - [estimate_probability_two_random_records_match](https://moj-analytical-services.github.io/splink/linker.html?h=recall#splink.linker.Linker.estimate_probability_two_random_records_match)()
+
 ### True Negative Rate (Specificity)
 
 The True Negative Rate, or Specificity, is the proportion of non-matches that are correctly predicted by Splink.
 
 $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
+
+??? info "Accuracy in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+
 
 ### Positive Predictive Value (Precision)
 
@@ -68,11 +90,24 @@ The Positive Predictive Value, or Precision, is the proportion of predicted matc
 
 $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
+??? info "Precision in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - [precision_recall_chart_from_labels_table](../../charts/precision_recall_chart_from_labels_table.ipynb)
+
 ### Negative Predictive Value
 
 The Negative Predictive Value is the proportion of predicted non-matches which are true non-matches.
 
 $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{All Predicted Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
+
+??? info "Negative Predicitive Value in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
 
 
 !!! warning 
@@ -91,7 +126,7 @@ Any comparison of two records has a number of possible outcomes (True Positives,
 
 ### F Score
 
-The F-Score is a weighted harmonic mean of Precision (PPV) and Recall (TPR). For a a general weight $\beta$:
+The F-Score is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
 
 $$F_{\beta} = \frac{(1 + \beta^2) \cdot \textsf{Precision} \cdot \textsf{Recall}}{\beta^2 \cdot \textsf{Precision} + \textsf{Recall}}$$
 
@@ -102,6 +137,13 @@ For example, when Precision and Recall are equally weighted ($\beta = 1$), we ge
 $$F_{1} = 2\left[\frac{1}{\textsf{Precision}}+\frac{1}{\textsf{Recall}}\right]^{-1} = \frac{2 \cdot \textsf{Precision} \cdot \textsf{Recall}}{\textsf{Precision} + \textsf{Recall}}$$
 
 Other popular versions of the F score are $F_{2}$ (Recall twice as important as Precision) and $F_{0.5}$ (Precision twice as important as Recall)
+
+??? info "F-Score in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+
 
 !!! warning
 
@@ -115,13 +157,25 @@ $$ 4\left[\frac{1}{\textsf{Recall}}+\frac{1}{\textsf{Specificity}}+\frac{1}{\tex
 
 This addresses one of the issues with the F-Score as it considers how well the model predicts non-matching records as well as matching records.
 
-Note here that all metrics are given equal weighting.
+Note: all metrics are given equal weighting.
 
-### Matthews Correlation Coefficient (MCC)
+??? info "P4 in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+
+### Matthews Correlation Coefficient 
 
 The Matthews Correlation Coefficient ($\phi$) is a measure of how correlation between predictions and actual observations.
 
 $$ \phi = \sqrt{\textsf{Recall} \cdot \textsf{Specificity} \cdot \textsf{Precision} \cdot \textsf{Negative Predictive Value}} - \sqrt{(1 - \textsf{Recall})(1 - \textsf{Specificity})(1 - \textsf{Precision})(1 - \textsf{Negative Predictive Value})} $$
+
+??? info "Matthews Correlation Coefficient ($\phi$) in Splink:"
+
+    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
+    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
 
 !!! note
 

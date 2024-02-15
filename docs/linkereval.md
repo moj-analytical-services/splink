@@ -1,10 +1,10 @@
 ---
 tags:
   - API
-  - QA
+  - Evaluation
   - Labels
 ---
-# Documentation for `Linker` object methods related to QA
+# Documentation for `Linker` object methods related to Evaluation
 
 
 ::: splink.linker.Linker
