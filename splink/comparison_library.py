@@ -513,7 +513,6 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         if self.invalid_dates_as_null:
             null_col = self.datetime_parse_function(self.datetime_format)
         else:
-
             null_col = col
 
         return [
