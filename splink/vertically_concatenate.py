@@ -34,8 +34,7 @@ def vertically_concatenate_sql(linker: Linker) -> str:
     salting_reqiured = False
 
     source_dataset_col_req = (
-        linker._settings_obj.column_info_settings.source_dataset_column_name
-        is not None
+        linker._settings_obj.column_info_settings.source_dataset_column_name is not None
     )
 
     salting_reqiured = linker._settings_obj.salting_required
