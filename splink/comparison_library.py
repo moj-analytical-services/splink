@@ -458,39 +458,39 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
-class DatediffAtThresholds(ComparisonCreator):
+class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
         *,
-        date_metrics: Union[str, List[str]],
-        date_thresholds: Union[int, List[int]],
-        cast_strings_to_dates: bool = False,
-        date_format: str = None,
+        metrics: Union[str, List[str]],
+        thresholds: Union[int, List[int]],
+        cast_strings_to_datetimes: bool = False,
+        datetime_format: str = None,
         term_frequency_adjustments=False,
         invalid_dates_as_null=True,
     ):
-        date_metrics_as_iterable = ensure_is_iterable(date_metrics)
+        time_metrics_as_iterable = ensure_is_iterable(metrics)
         # unpack it to a list so we can repeat iteration if needed
-        self.date_metrics = [*date_metrics_as_iterable]
+        self.time_metrics = [*time_metrics_as_iterable]
 
-        date_thresholds_as_iterable = ensure_is_iterable(date_thresholds)
-        self.date_thresholds = [*date_thresholds_as_iterable]
+        time_thresholds_as_iterable = ensure_is_iterable(thresholds)
+        self.time_thresholds = [*time_thresholds_as_iterable]
 
-        num_metrics = len(self.date_metrics)
-        num_thresholds = len(self.date_thresholds)
+        num_metrics = len(self.time_metrics)
+        num_thresholds = len(self.time_thresholds)
         if num_thresholds == 0:
-            raise ValueError("`date_thresholds` must have at least one entry")
+            raise ValueError("`time_thresholds` must have at least one entry")
         if num_metrics == 0:
-            raise ValueError("`date_metrics` must have at least one entry")
+            raise ValueError("`time_metrics` must have at least one entry")
         if num_metrics != num_thresholds:
             raise ValueError(
-                "`date_thresholds` and `date_metrics` must have "
+                "`time_thresholds` and `time_metrics` must have "
                 "the same number of entries"
             )
 
-        self.cast_strings_to_dates = cast_strings_to_dates
-        self.date_format = date_format
+        self.cast_strings_to_dates = cast_strings_to_datetimes
+        self.datetime_format = datetime_format
 
         self.term_frequency_adjustments = term_frequency_adjustments
 
@@ -498,15 +498,19 @@ class DatediffAtThresholds(ComparisonCreator):
 
         super().__init__(col_name)
 
+    @property
+    def datetime_parse_function(self):
+        return self.col_expression.try_parse_timestamp
+
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         col = self.col_expression
         if self.invalid_dates_as_null:
-            null_col = col.try_parse_date(self.date_format)
+            null_col = self.datetime_parse_function(self.datetime_format)
         else:
             null_col = col
 
         if self.cast_strings_to_dates:
-            date_diff_col = col.try_parse_date(self.date_format)
+            date_diff_col = self.datetime_parse_function(self.datetime_format)
         else:
             date_diff_col = col
 
@@ -517,13 +521,13 @@ class DatediffAtThresholds(ComparisonCreator):
                 term_frequency_adjustments=self.term_frequency_adjustments,
             ),
             *[
-                cll.DatediffLevel(
+                cll.AbsoluteTimeDifferenceLevel(
                     date_diff_col,
-                    date_threshold=date_threshold,
-                    date_metric=date_metric,
+                    threshold=time_threshold,
+                    metric=time_metric,
                 )
-                for (date_threshold, date_metric) in zip(
-                    self.date_thresholds, self.date_metrics
+                for (time_threshold, time_metric) in zip(
+                    self.time_thresholds, self.time_metrics
                 )
             ],
             cll.ElseLevel(),
@@ -532,14 +536,20 @@ class DatediffAtThresholds(ComparisonCreator):
     def create_description(self) -> str:
         return (
             f"Exact match '{self.col_expression.label}' vs. "
-            f"date difference at thresholds "
-            f"{self.date_thresholds} "
-            f"with metrics {self.date_metrics} vs. "
+            f"abs time difference at thresholds "
+            f"{self.time_thresholds} "
+            f"with metrics {self.time_metrics} vs. "
             "anything else"
         )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
+
+
+class AbsoluteDateDifferenceAtThresholds(AbsoluteTimeDifferenceAtThresholds):
+    @property
+    def datetime_parse_function(self):
+        return self.col_expression.try_parse_date
 
 
 class ArrayIntersectAtSizes(ComparisonCreator):

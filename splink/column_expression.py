@@ -192,6 +192,24 @@ class ColumnExpression:
 
         return clone
 
+    def _try_parse_timestamp_dialected(
+        self,
+        name: str,
+        dialect: SplinkDialect,
+        timestamp_format: str = None,
+    ):
+        return dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
+
+    def try_parse_timestamp(self, timestamp_format: str = None):
+        clone = self._clone()
+        op = partial(
+            clone._try_parse_timestamp_dialected,
+            timestamp_format=timestamp_format,
+        )
+        clone.operations.append(op)
+
+        return clone
+
     @property
     def name(self) -> str:
         sql_expression = self.parse_input_string(self.sql_dialect)

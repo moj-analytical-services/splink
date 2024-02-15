@@ -40,7 +40,9 @@ class ComparisonLevelTestSpec:
             return self.comparison_level_or_class
 
     def get_sql(self, sqlglot_name):
-        sql = self.comparison_level_creator.get_comparison_level("duckdb").sql_condition
+        sql = self.comparison_level_creator.get_comparison_level(
+            sqlglot_name
+        ).sql_condition
 
         return f"select {sql} as in_level from __splink__test_table"
 
@@ -77,7 +79,7 @@ class ComparisonTestSpec:
     @property
     def comparison_creator(self) -> ComparisonCreator:
         if self.has_class_not_instance:
-            return self.comparison_level_or_class(**self.keyword_arg_overrides)
+            return self.comparison_level_or_class(**self.keyword_args_combined)
         else:
             return self.comparison_level_or_class
 
@@ -138,9 +140,10 @@ def run_tests_with_args(
         else:  # Assuming it's ComparisonLevelTestSpec or similar
             expected_result = test.expected_in_level
 
-        assert (
-            actual_value == expected_result
-        ), f"Failed test: values={json.dumps(test.values)}, sql={sql}"
+        assert actual_value == expected_result, (
+            f"Failed test: actual_value={actual_value} expected_value={expected_result}"
+            f" values={json.dumps(test.values)}, sql={sql}"
+        )
 
 
 class LiteralTestValues:

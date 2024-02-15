@@ -929,48 +929,23 @@ class PostgresAPI(DatabaseAPI):
         """
         self._run_sql_execution(sql)
 
-    def _create_datediff_function(self):
+    def _create_try_cast_timestamp_function(self):
+        # postgres to_timestamp will give an error if the timestamp can't be parsed
+        # to be consistent with other backends we instead create a version
+        # which instead returns NULL, allowing us more flexibility
         sql = """
-        CREATE OR REPLACE FUNCTION datediff(x date, y date)
-        RETURNS integer AS $$
-        SELECT x - y;
-        $$ LANGUAGE SQL IMMUTABLE;
+        CREATE OR REPLACE FUNCTION try_cast_timestamp(timestamp_str text, format text)
+        RETURNS timestamp AS $func$
+        BEGIN
+            BEGIN
+                RETURN to_timestamp(timestamp_str, format);
+            EXCEPTION WHEN OTHERS THEN
+                RETURN NULL;
+            END;
+        END
+        $func$ LANGUAGE plpgsql IMMUTABLE;
         """
         self._run_sql_execution(sql)
-
-        sql_cast = """
-        CREATE OR REPLACE FUNCTION datediff(x {dateish_type}, y {dateish_type})
-        RETURNS integer AS $$
-        SELECT datediff(DATE(x), DATE(y));
-        $$ LANGUAGE SQL IMMUTABLE;
-        """
-        for dateish_type in ("timestamp", "timestamp with time zone"):
-            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
-
-    def _create_months_between_function(self):
-        # number of average-length (per year) months between two dates
-        # logic could be improved/made consistent with other backends
-        # but this is reasonable for now
-        # 30.4375 days
-        ave_length_month = 365.25 / 12
-        sql = f"""
-        CREATE OR REPLACE FUNCTION ave_months_between(x date, y date)
-        RETURNS float8 AS $$
-        SELECT (datediff(x, y)/{ave_length_month})::float8;
-        $$ LANGUAGE SQL IMMUTABLE;
-        """
-        self._run_sql_execution(sql)
-
-        sql_cast = """
-        CREATE OR REPLACE FUNCTION ave_months_between(
-            x {dateish_type}, y {dateish_type}
-        )
-        RETURNS integer AS $$
-        SELECT (ave_months_between(DATE(x), DATE(y)))::int;
-        $$ LANGUAGE SQL IMMUTABLE;
-        """
-        for dateish_type in ("timestamp", "timestamp with time zone"):
-            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
 
     def _create_array_intersect_function(self):
         sql = """
@@ -987,9 +962,7 @@ class PostgresAPI(DatabaseAPI):
         self._create_log2_function()
         # need for date-casting
         self._create_try_cast_date_function()
-        # need for datediff levels
-        self._create_datediff_function()
-        self._create_months_between_function()
+        self._create_try_cast_timestamp_function()
         # need for array_intersect levels
         self._create_array_intersect_function()
         # extension of round to handle doubles - used in unlinkables
