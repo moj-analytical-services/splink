@@ -103,7 +103,6 @@ from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
-from .settings import Settings
 from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
@@ -143,7 +142,7 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict | Path,
+        settings: SettingsCreator | dict | Path | str,
         database_api,  # TODO: can't annotate atm due to circular imports
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
@@ -208,24 +207,31 @@ class Linker:
         # TODO: temp hack for compat
         self._intermediate_table_cache: dict = self.db_api._intermediate_table_cache
 
-        if not isinstance(settings_dict, (dict, type(None))):
-            # Run if you've entered a filepath
-            # feed it a blank settings dictionary
-            self._setup_settings_objs(None)
-            self.load_settings(settings_dict)
-
-            # TODO: deal with instantiating comparison levels in this path
+        # Turn into a creator
+        if not isinstance(settings, SettingsCreator):
+            settings_creator = SettingsCreator.from_path_or_dict(settings)
         else:
-            # TODO: need to figure out how this flows with validation
-            # for now we instantiate all the correct types before the validator sees it
-            settings_dict = deepcopy(settings_dict)
-            # self._validate_settings_components(settings_dict)
-            self._setup_settings_objs(settings_dict)
+            settings_creator = settings
+
+        # Deal with uuid
+        if settings_creator.linker_uid is None:
+            settings_creator.linker_uid = ascii_uid(8)
+
+        # Do we trust the dialect set in the settings dict
+        # or overwrite it with the db api dialect?
+        # Maybe overwrite it here and incompatibilities have to be dealt with
+        # by comparisons/ blocking rules etc??
+        self._settings_obj = settings_creator.get_settings(
+            database_api.sql_dialect.name
+        )
 
         # logic from DuckDBLinker.__init__ - TODO: genericise
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
+
+        # TODO: Add test of what happens if the db_api is for a different backend
+        # to the sql_dialect set in the settings dict
         input_tables = ensure_is_list(input_table_or_tables)
         input_tables = self.db_api.process_input_tables(input_tables)
 
@@ -309,35 +315,16 @@ class Linker:
 
     @property
     def _source_dataset_column_already_exists(self):
-        if self._settings_obj_ is None:
-            return False
         input_cols = [c.unquote().name for c in self._input_columns()]
         return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _cache_uid(self):
-        if self._settings_dict:
-            return self._settings_obj._cache_uid
-        else:
-            return self._cache_uid_no_settings
+        return self._settings_obj._cache_uid
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if self._settings_dict:
-            self._settings_obj._cache_uid = value
-        else:
-            self._cache_uid_no_settings = value
-
-    @property
-    def _settings_obj(self) -> Settings:
-        if self._settings_obj_ is None:
-            raise ValueError(
-                "You did not provide a settings dictionary when you "
-                "created the linker.  To continue, you need to provide a settings "
-                "dictionary using the `load_settings()` method on your linker "
-                "object. i.e. linker.load_settings(settings_dict)"
-            )
-        return self._settings_obj_
+        self._settings_obj._cache_uid = value
 
     @property
     def _input_tablename_l(self):
@@ -446,51 +433,13 @@ class Linker:
             input_tables, input_table_aliases, overwrite
         )
 
-    def _setup_settings_objs(self, settings_dict):
-        # Setup the linker class's required settings
-        self._settings_dict = copy(settings_dict)
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dialect_str = self._sql_dialect
-        elif settings_dict is None:
-            settings_dialect_str = self._sql_dialect
-        else:
-            settings_dialect_str = settings_dict["sql_dialect"]
-            del settings_dict["sql_dialect"]
-
-        if settings_dict is None:
-            self._cache_uid_no_settings = ascii_uid(8)
-        else:
-            if (uid := settings_dict.get("linker_uid")) is None:
-                uid = ascii_uid(8)
-            settings_dict["linker_uid"] = uid
-
-        if settings_dict is None:
-            self._settings_obj_ = None
-        else:
-            self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
-                settings_dialect_str
-            )
-
     def _check_for_valid_settings(self):
-        if (
-            # no settings to check
-            self._settings_obj_ is None
-            or
-            # raw tables don't yet exist in db
-            not hasattr(self, "_input_tables_dict")
-        ):
-            return False
-        else:
-            return True
+        # raw tables don't yet exist in db
+        return hasattr(self, "_input_tables_dict")
 
     def _validate_settings_components(self, settings_dict):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
-        if settings_dict is None:
-            return
 
         log_comparison_errors(
             # null if not in dict - check using value is ignored
@@ -843,8 +792,8 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_settings = deepcopy(self._settings_obj_)
-        new_linker._settings_obj_ = new_settings
+        new_settings = deepcopy(self._settings_obj)
+        new_linker._settings_obj = new_settings
         return new_linker
 
     def _get_input_tf_dict(self, df_dict):
@@ -881,13 +830,12 @@ class Linker:
         for df in self._input_tables_dict.values():
             df.validate()
 
-        if self._settings_obj_ is not None:
-            if self._settings_obj._link_type == "dedupe_only":
-                if len(self._input_tables_dict) > 1:
-                    raise ValueError(
-                        'If link_type = "dedupe only" then input tables must contain '
-                        "only a single input table",
-                    )
+        if self._settings_obj._link_type == "dedupe_only":
+            if len(self._input_tables_dict) > 1:
+                raise ValueError(
+                    'If link_type = "dedupe only" then input tables must contain '
+                    "only a single input table",
+                )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
         recip_prop_matches_estimates = []
@@ -1002,110 +950,6 @@ class Linker:
                 f" Its current value is {rmc}. "
                 "Please re-run your linkage with it set to True."
             )
-
-    def load_settings(
-        self,
-        settings_dict: dict | str | Path,
-        validate_settings: str = True,
-    ):
-        """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation. This can either be in the form
-        of a settings dictionary or a filepath to a json file containing a
-        valid settings dictionary.
-
-        Examples:
-            ```py
-            linker = DuckDBLinker(df)
-            linker.profile_columns(["first_name", "surname"])
-            linker.load_settings(settings_dict, validate_settings=True)
-            ```
-
-        Args:
-            settings_dict (dict | str | Path): A Splink settings dictionary or
-                the path to your settings json file.
-            validate_settings (bool, optional): When True, check your settings
-                dictionary for any potential errors that may cause splink to fail.
-        """
-
-        if not isinstance(settings_dict, dict):
-            p = Path(settings_dict)
-            settings_dict = json.loads(p.read_text())
-
-        # Store the cache ID so it can be reloaded after cache invalidation
-        cache_id = self._cache_uid
-        # So we don't run into any issues with generated tables having
-        # invalid columns as settings have been tweaked, invalidate
-        # the cache and allow these tables to be recomputed.
-
-        # This is less efficient, but triggers infrequently and ensures we don't
-        # run into issues where the defaults used conflict with the actual values
-        # supplied in settings.
-
-        # This is particularly relevant with `source_dataset`, which appears within
-        # concat_with_tf.
-        self.invalidate_cache()
-
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
-        if "sql_dialect" in settings_dict:
-            sql_dialect_str = settings_dict["sql_dialect"]
-            del settings_dict["sql_dialect"]
-        else:
-            sql_dialect_str = self._sql_dialect
-        # TODO: remove this once we have sorted spec
-        for br in settings_dict["blocking_rules_to_generate_predictions"]:
-            if isinstance(br, dict):
-                if "sql_dialect" in br:
-                    del br["sql_dialect"]
-
-        self._settings_dict = settings_dict
-        self._settings_obj_ = SettingsCreator(**settings_dict).get_settings(
-            sql_dialect_str
-        )
-        self._validate_input_dfs()
-        self._validate_settings(validate_settings)
-
-    def load_model(self, model_path: Path):
-        """
-        Load a pre-defined model from a json file into the linker.
-        This is intended to be used with the output of
-        `save_model_to_json()`.
-
-        Examples:
-            ```py
-            linker.load_model("my_settings.json")
-            ```
-
-        Args:
-            model_path (Path): A path to your model settings json file.
-        """
-
-        return self.load_settings(model_path)
-
-    def load_settings_from_json(self, in_path: str | Path):
-        """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or `load_model` when loading
-         a pre-trained model.*
-
-        Load settings from a `.json` file.
-        This `.json` file would usually be the output of
-        `linker.save_model_to_json()`
-        Examples:
-            ```py
-            linker.load_settings_from_json("my_settings.json")
-            ```
-        Args:
-            in_path (str): Path to settings json file
-        """
-        self.load_settings(in_path)
-
-        warnings.warn(
-            "`load_settings_from_json` is deprecated. We advise you use "
-            "`linker.load_settings()` when loading in your settings or a previously "
-            "trained model.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
