@@ -221,9 +221,6 @@ def expectation_maximisation(
     training_settings = settings_obj.training_settings
     linker = em_training_session._original_linker
     comparisons = settings_obj.comparisons
-    probability_two_random_records_match = (
-        settings_obj._probability_two_random_records_match
-    )
 
     max_iterations = training_settings.max_iterations
     em_convergence = training_settings.em_convergence
@@ -237,6 +234,9 @@ def expectation_maximisation(
         )
 
     for i in range(1, max_iterations + 1):
+        probability_two_random_records_match = (
+            settings_obj._probability_two_random_records_match
+        )
         start_time = time.time()
 
         # Expectation step
