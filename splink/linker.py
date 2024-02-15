@@ -207,42 +207,31 @@ class Linker:
         # TODO: temp hack for compat
         self._intermediate_table_cache: dict = self.db_api._intermediate_table_cache
 
-        if isinstance(settings, SettingsCreator):
-            settings_dict = settings._as_creator_dict()
-            self._setup_settings_objs(settings_dict)
-        elif isinstance(settings, dict):
-            # TODO: need to figure out how this flows with validation
-            # for now we instantiate all the correct types before the validator sees it
-            settings_dict = deepcopy(settings)
-            # self._validate_settings_components(settings)
-            self._setup_settings_objs(settings_dict)
-
-            # TODO: deal with instantiating comparison levels in this path
-        elif isinstance(settings, (str, Path)):
-            settings_path = Path(settings)
-            if settings_path.is_file():
-
-                settings_dict = json.loads(settings_path.read_text())
-
-                # TODO: remove this once we have sorted spec
-                for br in settings_dict["blocking_rules_to_generate_predictions"]:
-                    if isinstance(br, dict):
-                        if "sql_dialect" in br:
-                            del br["sql_dialect"]
-
-                self._setup_settings_objs(settings_dict)
-
-            else:
-                raise ValueError(
-                    f"Path {settings_path} does not point to a valid file."
-                )
+        # Turn into a creator
+        if not isinstance(settings, SettingsCreator):
+            settings_creator = SettingsCreator.from_path_or_dict(settings)
         else:
-            raise ValueError("You must provide settings")
+            settings_creator = settings
+
+        # Deal with uuid
+        if settings_creator.linker_uid is None:
+            settings_creator.linker_uid = ascii_uid(8)
+
+        # Do we trust the dialect set in the settings dict
+        # or overwrite it with the db api dialect?
+        # Maybe overwrite it here and incompatibilities have to be dealt with
+        # by comparisons/ blocking rules etc??
+        self._settings_obj = settings_creator.get_settings(
+            database_api.sql_dialect.name
+        )
 
         # logic from DuckDBLinker.__init__ - TODO: genericise
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
+
+        # TODO: Add test of what happens if the db_api is for a different backend
+        # to the sql_dialect set in the settings dict
         input_tables = ensure_is_list(input_table_or_tables)
         input_tables = self.db_api.process_input_tables(input_tables)
 
@@ -442,28 +431,6 @@ class Linker:
 
         return self.db_api.register_multiple_tables(
             input_tables, input_table_aliases, overwrite
-        )
-
-    def _setup_settings_objs(self, settings_dict):
-        # Setup the linker class's required settings
-        self._settings_dict = copy(settings_dict)
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        # TODO: Add test of what happens if the db_api is for a different backend
-        # to the sql_dialect set in the settings dict
-        if settings_dict.get("sql_dialect") is None:
-            settings_dialect_str = self._sql_dialect
-
-        else:
-            settings_dialect_str = settings_dict["sql_dialect"]
-            del settings_dict["sql_dialect"]
-
-        if settings_dict.get("linker_uid") is None:
-            settings_dict["linker_uid"] = ascii_uid(8)
-
-        self._settings_obj = SettingsCreator(**settings_dict).get_settings(
-            settings_dialect_str
         )
 
     def _check_for_valid_settings(self):
