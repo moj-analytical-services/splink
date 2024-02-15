@@ -1,7 +1,7 @@
 This guide is intended to be a reference guide for Edge Metrics used throughout Splink. It will build up from basic principles into more complex metrics.
 
 !!! note
-    All of these metrics are dependent on having a "ground truth" to compare against. This is generally provided by **clerical labelling** (i.e. labels created by a human). For more on how to generate this ground truth (and the impact that can have on Edge Metrics), check out the [Clerical Labelling Topic Guide](./labelling.md).
+    All of these metrics are dependent on having a "ground truth" to compare against. This is generally provided by **Clerical Labelling** (i.e. labels created by a human). For more on how to generate this ground truth (and the impact that can have on Edge Metrics), check out the [Clerical Labelling Topic Guide](./labelling.md).
 
 ## The Basics
 
@@ -9,19 +9,29 @@ Any Edge (Link) within a Splink model will fall into one of four categories:
 
 ### True Positive
 
+Also known as: True Link
+
 A True Positive is a case where a Splink model correctly predicts a match between two records.
 
 ### True Negative
+
+Also known as: True Non-link
 
 A True Negative is a case where a Splink model correctly predicts a non-match between two records.
 
 ### False Positive
 
-A False Positive, or Type I Error, is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
+Also known as: False Link, Type I Error
+
+A False Positive is a case where a Splink model incorrectly predicts a match between two records, when they are actually a non-match.
+
 
 ### False Negative
 
-A False Negative, or Type II Error, is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
+Also known as: False Non-link, Missed Link, Type II Error
+
+A False Negative is a case where a Splink model incorrectly predicts a non-match between two records, when they are actually a match.
+
 
 ### Confusion Matrix
 These can be summarised in a Confusion Matrix
@@ -59,7 +69,9 @@ This measures the proportion of correct classifications (of any kind). This may 
 
 ### True Positive Rate (Recall)
 
-The True Positve Rate, or Recall, is the proportion of matches that are correctly predicted by Splink.
+Also known as: Sensitivity
+
+The True Positve Rate (Recall) is the proportion of matches that are correctly predicted by Splink.
 
 $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
@@ -73,11 +85,13 @@ $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \fr
 
 ### True Negative Rate (Specificity)
 
-The True Negative Rate, or Specificity, is the proportion of non-matches that are correctly predicted by Splink.
+Also known as: Selectivity
+
+The True Negative Rate (Specificity) is the proportion of non-matches that are correctly predicted by Splink.
 
 $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
 
-??? info "Accuracy in Splink:"
+??? info "Specificity in Splink:"
 
     - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
     - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
@@ -86,7 +100,7 @@ $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} 
 
 ### Positive Predictive Value (Precision)
 
-The Positive Predictive Value, or Precision, is the proportion of predicted matches which are true matches.
+The Positive Predictive Value (Precision), is the proportion of predicted matches which are true matches.
 
 $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
@@ -159,7 +173,7 @@ This addresses one of the issues with the F-Score as it considers how well the m
 
 Note: all metrics are given equal weighting.
 
-??? info "P4 in Splink:"
+??? info "$P_{4}$ in Splink:"
 
     - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
     - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
