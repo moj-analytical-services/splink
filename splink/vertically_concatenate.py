@@ -33,16 +33,11 @@ def vertically_concatenate_sql(linker: Linker) -> str:
 
     salting_reqiured = False
 
-    # For data profiling, we need to vertically concat
-    # but user may not have provided a settings dict yet
-    if linker._settings_obj_ is None:
-        source_dataset_col_req = True
-    else:
-        source_dataset_col_req = (
-            linker._settings_obj._source_dataset_column_name_is_required
-        )
+    source_dataset_col_req = (
+        linker._settings_obj._source_dataset_column_name_is_required
+    )
 
-        salting_reqiured = linker._settings_obj.salting_required
+    salting_reqiured = linker._settings_obj.salting_required
 
     # see https://github.com/duckdb/duckdb/discussions/9710
     # in duckdb to parallelise we need salting

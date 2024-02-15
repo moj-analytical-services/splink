@@ -23,63 +23,6 @@ def test_log2(pg_engine):
 
 
 @mark_with_dialects_including("postgres")
-def test_datediff(pg_engine):
-    db_api = PostgresAPI(engine=pg_engine)
-    df = pd.DataFrame(
-        [
-            {"date_l": "2023-05-23", "date_r": "2023-05-24", "expected": -1},
-            {"date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 1},
-            {"date_l": "2023-05-23", "date_r": "2022-05-23", "expected": 365},
-            # 365*3 + 366
-            {"date_l": "2023-07-22", "date_r": "2019-07-22", "expected": 1461},
-        ]
-    )
-    fmt = "YYYY-MM-DD"
-    expected_datediff_vals = df["expected"]
-    db_api.register_table(df, "datediff_vals")
-    sql = f"""
-    SELECT datediff(
-        to_date("date_l", '{fmt}'), to_date("date_r", '{fmt}')
-    ) AS datediffs FROM datediff_vals"""
-    frame = db_api.execute_sql_against_backend(
-        sql, "dummy_name", "test_dd_table"
-    ).as_pandas_dataframe()
-
-    for dd_result, expected in zip(frame["datediffs"], expected_datediff_vals):
-        assert dd_result == expected
-
-
-@mark_with_dialects_including("postgres")
-def test_months_between(pg_engine):
-    # NB only testing floor of this function, as that is what we have in datediff
-    db_api = PostgresAPI(engine=pg_engine)
-    df = pd.DataFrame(
-        [
-            {"date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 0},
-            {"date_l": "2023-05-24", "date_r": "2023-04-25", "expected": 0},
-            {"date_l": "2023-05-24", "date_r": "2023-02-25", "expected": 2},
-            {"date_l": "2023-05-24", "date_r": "2022-05-23", "expected": 12},
-            {"date_l": "1995-09-30", "date_r": "1996-03-25", "expected": -6},
-        ]
-    )
-    fmt = "YYYY-MM-DD"
-    expected_monthdiff_vals = df["expected"]
-    db_api.register_table(df, "monthdiff_vals")
-    sql = f"""
-    SELECT floor(
-        ave_months_between(
-            to_date("date_l", '{fmt}'), to_date("date_r", '{fmt}')
-        )
-    ) AS monthdiffs FROM monthdiff_vals"""
-    frame = db_api.execute_sql_against_backend(
-        sql, "dummy_name", "test_md_table"
-    ).as_pandas_dataframe()
-
-    for md_result, expected in zip(frame["monthdiffs"], expected_monthdiff_vals):
-        assert md_result == expected
-
-
-@mark_with_dialects_including("postgres")
 def test_array_intersect(pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     df = pd.DataFrame(

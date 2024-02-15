@@ -155,11 +155,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     path = os.path.join(tmp_path, "model.json")
     linker.save_model_to_json(path)
 
-    linker_2 = Linker(df_spark, settings_dict=None, database_api=spark_api)
-    linker_2.load_model(path)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
-    Linker(df_spark, settings_dict=path, database_api=spark_api)
+    Linker(df_spark, settings=path, database_api=spark_api)
 
 
 def test_link_only(spark, df_spark, spark_api):

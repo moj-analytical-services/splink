@@ -36,19 +36,9 @@ def test_cache_id(tmp_path):
 
     db_api = DuckDBAPI()
 
-    linker_2 = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
-    linker_2.load_model(path)
+    linker_2 = Linker(df, path, database_api=db_api)
 
     assert linker_2._settings_obj._cache_uid == prior
-
-    # Test initialising settings
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
-    prior = linker._cache_uid
-
-    linker.load_settings(get_settings_dict())
-    assert prior == linker._cache_uid
 
     # Test uid from settings
     random_uid = "my_random_uid"

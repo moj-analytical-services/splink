@@ -127,27 +127,27 @@ def test_date_comparison_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datediff_thresholds=[1, 2], datediff_metrics=["month"]
+            "date", datetime_thresholds=[1, 2], datetime_metrics=["month"]
         ).get_comparison(dialect)
     # Check metric and threshold are the correct way around
     with pytest.raises(TypeError):
         ctl.DateComparison(
-            "date", datediff_thresholds=["month"], datediff_metrics=[1]
+            "date", datetime_thresholds=["month"], datetime_metrics=[1]
         ).get_comparison(dialect)
     # Invalid metric
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datediff_thresholds=[1], datediff_metrics=["dy"]
+            "date", datetime_thresholds=[1], datetime_metrics=["dy"]
         ).get_comparison(dialect)
     # Threshold len == 0
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datediff_thresholds=[], datediff_metrics=["day"]
+            "date", datetime_thresholds=[], datetime_metrics=["day"]
         ).get_comparison(dialect)
     # Metric len == 0
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datediff_thresholds=[1], datediff_metrics=[]
+            "date", datetime_thresholds=[1], datetime_metrics=[]
         ).get_comparison(dialect)
 
 

@@ -112,6 +112,14 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+        return self._try_parse_timestamp_raw(name, timestamp_format)
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'try_parse_timestamp' function"
+        )
+
     @final
     def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
         return self._wrap_in_nullif(self._regex_extract_raw)(
@@ -160,10 +168,19 @@ class DuckDBDialect(SplinkDialect):
     def default_date_format(self):
         return "%Y-%m-%d"
 
+    @property
+    def default_timestamp_format(self):
+        return "%Y-%m-%dT%H:%M:%S%Z"
+
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""try_strptime({name}, '{timestamp_format}')"""
 
     # TODO: this is only needed for duckdb < 0.9.0.
     # should we just ditch support for that? (only for cll - engine should still work)
@@ -248,39 +265,19 @@ class SparkDialect(SplinkDialect):
     def default_date_format(self):
         return "yyyy-MM-dd"
 
-    def date_diff(self, clc: "ComparisonLevelCreator"):
-        # need custom solution as sqlglot gets confused by 'metric', as in Spark
-        # datediff _only_ works in days
-        clc.col_expression.sql_dialect = self
-        col = clc.col_expression
-        datediff_args = f"{col.name_l}, {col.name_r}"
-
-        if clc.date_metric == "day":
-            date_f = f"""
-                abs(
-                    datediff(
-                        {datediff_args}
-                    )
-                )
-            """
-        elif clc.date_metric in ["month", "year"]:
-            date_f = f"""
-                floor(abs(
-                    months_between(
-                        {datediff_args}
-                    )"""
-            if clc.date_metric == "year":
-                date_f += " / 12))"
-            else:
-                date_f += "))"
-        return f"""
-            {date_f} <= {clc.date_threshold}
-        """
+    @property
+    def default_timestamp_format(self):
+        return "yyyy-MM-dd\\'T\\'HH:mm:ssXXX"
 
     def _try_parse_date_raw(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""to_timestamp({name}, '{timestamp_format}')"""
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
@@ -375,36 +372,17 @@ class PostgresDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
-    def date_diff(self, clc: "ComparisonLevelCreator"):
-        """Note some of these functions are not native postgres functions and
-        instead are UDFs which are automatically registered by Splink
-        """
-
+    def absolute_time_difference(self, clc: "ComparisonLevelCreator"):
+        # need custom solution as sqlglot gets confused by 'metric', as in Spark
+        # datediff _only_ works in days
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
-        datediff_args = f"{col.name_l}, {col.name_r}"
 
-        if clc.date_metric == "day":
-            date_f = f"""
-                abs(
-                    datediff(
-                        {datediff_args}
-                    )
-                )
-            """
-        elif clc.date_metric in ["month", "year"]:
-            date_f = f"""
-                floor(abs(
-                    ave_months_between(
-                        {datediff_args}
-                    )"""
-            if clc.date_metric == "year":
-                date_f += " / 12))"
-            else:
-                date_f += "))"
-        return f"""
-            {date_f} <= {clc.date_threshold}
-        """
+        return (
+            f"ABS(EXTRACT(EPOCH FROM CAST({col.name_l} AS TIMESTAMP)) "
+            f"- EXTRACT(EPOCH FROM CAST({col.name_r} AS TIMESTAMP)) )"
+            f"<= {clc.time_threshold_seconds}"
+        )
 
     def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
         # full match - wrap pattern in parentheses so first group is whole expression
@@ -422,10 +400,19 @@ class PostgresDialect(SplinkDialect):
     def default_date_format(self):
         return "YYYY-MM-DD"
 
+    @property
+    def default_timestamp_format(self):
+        return "YYYY-MM-DDTHH24:MI:SS"
+
     def try_parse_date(self, name: str, date_format: str = None):
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_cast_date({name}, '{date_format}')"""
+
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""try_cast_timestamp({name}, '{timestamp_format}')"""
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         clc.col_expression.sql_dialect = self
