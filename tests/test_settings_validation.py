@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pandas as pd
 import pytest
@@ -284,6 +285,7 @@ def test_settings_validation_logs(caplog):
 def test_comparison_validation():
     import splink.comparison_level_library as cll
     import splink.comparison_library as cl
+    from splink.exceptions import InvalidDialect
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
@@ -319,6 +321,18 @@ def test_comparison_validation():
         }
     )
 
+    # a comparison containing another comparison
+    settings["comparisons"].append(
+        {
+            "comparison_levels": [
+                cll.NullLevel("test"),
+                # Invalid Spark cll
+                cl.ExactMatch("test"),
+                cll.ElseLevel(),
+            ]
+        }
+    )
+
     log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
 
     # Init the error logger. This is normally handled in
@@ -339,8 +353,17 @@ def test_comparison_validation():
         (TypeError, "is a comparison level"),
         (TypeError, "is of an invalid data type."),
         (SyntaxError, "missing the required `comparison_levels`"),
+        (InvalidDialect, "within its comparison levels - spark."),
+        (InvalidDialect, re.compile(r".*(presto.*spark|spark.*presto).*")),
         (TypeError, "contains the following invalid levels"),
     )
+
     for n, (e, txt) in enumerate(expected_errors):
-        with pytest.raises(e, match=txt):
-            raise errors[n]
+        if isinstance(txt, re.Pattern):
+            # If txt is a compiled regular expression, use re.search
+            with pytest.raises(e) as exc_info:
+                raise errors[n]
+            assert txt.search(str(exc_info.value)), f"Regex did not match for error {n}"
+        else:
+            with pytest.raises(e, match=txt):
+                raise errors[n]

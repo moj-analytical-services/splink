@@ -114,7 +114,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
             as match_probability,
-        row_count,
+        cast(row_count as float8) as row_count,
         cast(P as float8) as p,
         cast(N as float8) as n,
         cast(TP as float8) as tp,
