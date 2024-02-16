@@ -1310,10 +1310,6 @@ class Linker:
                     self._settings_obj._get_comparison_by_output_column_name(n)
                     if isinstance(n, str)
                     else n
-                )(
-                    self._settings_obj._get_comparison_by_output_column_name(n)
-                    if isinstance(n, str)
-                    else n
                 )
                 for n in comparisons_to_deactivate
             ]
