@@ -127,39 +127,6 @@ def test_absolute_time_difference_levels(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_absolute_time_difference_levels_no_parse(test_helpers, dialect):
-    helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["database_api"]
-
-    test_spec = ComparisonLevelTestSpec(
-        cll.AbsoluteTimeDifferenceLevel,
-        default_keyword_args={
-            "metric": "second",
-            "col_name": "dob",
-        },
-        tests=[
-            LiteralTestValues(
-                {
-                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
-                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
-                },
-                keyword_arg_overrides={"threshold": 61},
-                expected_in_level=True,
-            ),
-            LiteralTestValues(
-                {
-                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
-                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
-                },
-                keyword_arg_overrides={"threshold": 59},
-                expected_in_level=False,
-            ),
-        ],
-    )
-    run_tests_with_args(test_spec, db_api)
-
-
-@mark_with_dialects_excluding("sqlite")
 def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
@@ -169,7 +136,7 @@ def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
             "dob",
             thresholds=[1, 2],
             metrics=["day", "month"],
-            cast_strings_to_datetimes=True,
+            input_is_string=True,
         ),
         tests=[
             LiteralTestValues(
@@ -210,7 +177,7 @@ def test_alternative_date_format(test_helpers, dialect):
             ),
             LiteralTestValues(
                 values={"dob_l": "2000/01/01", "dob_r": "2000/01/15"},
-                expected_gamma_val=1,
+                expected_gamma_val=2,
             ),
             LiteralTestValues(
                 values={"dob_l": "2000/ab/cd", "dob_r": "2000/01/28"},

@@ -4,6 +4,7 @@ from . import comparison_level_library as cll
 from .column_expression import ColumnExpression
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
+from .comparison_level_library import DateMetricType
 from .misc import ensure_is_iterable
 
 _fuzzy_levels = {
@@ -40,8 +41,8 @@ class DateComparison(ComparisonCreator):
         include_exact_match_level: bool = True,
         input_is_string: bool = True,
         separate_1st_january: bool = False,
-        datetime_thresholds: Union[int, List[int]],
-        datetime_metrics: Union[str, List[str]],
+        datetime_thresholds: Union[int, float, List[Union[int, float]]],
+        datetime_metrics: Union[DateMetricType, List[DateMetricType]],
     ):
 
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)

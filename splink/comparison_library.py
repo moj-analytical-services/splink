@@ -508,6 +508,10 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
     def datetime_parse_function(self):
         return self.col_expression.try_parse_timestamp
 
+    @property
+    def cll_class(self):
+        return cll.AbsoluteTimeDifferenceLevel
+
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         col = self.col_expression
         if self.invalid_dates_as_null:
@@ -522,7 +526,7 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
                 term_frequency_adjustments=self.term_frequency_adjustments,
             ),
             *[
-                cll.AbsoluteTimeDifferenceLevel(
+                self.cll_class(
                     col,
                     input_is_string=self.input_is_string,
                     threshold=time_threshold,
@@ -552,6 +556,10 @@ class AbsoluteDateDifferenceAtThresholds(AbsoluteTimeDifferenceAtThresholds):
     @property
     def datetime_parse_function(self):
         return self.col_expression.try_parse_date
+
+    @property
+    def cll_class(self):
+        return cll.AbsoluteDateDifferenceLevel
 
 
 class ArrayIntersectAtSizes(ComparisonCreator):

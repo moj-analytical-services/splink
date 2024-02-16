@@ -538,7 +538,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
         Args:
             col_name (str): The name of the input column containing the dates to compare
-            input_is_string (bool): Indicates if the input dates are in
+            input_is_string (bool): Indicates if the input date/times are in
                 string format, requiring parsing according to `datetime_format`.
             threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
