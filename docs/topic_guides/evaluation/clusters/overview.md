@@ -32,18 +32,3 @@ Whatever the starting point, this topic guide is designed to help users develop 
 * Instructions on how to compute graph metrics with Splink
 
 This topic guide is a work is work in progress and will be updated as new functionality and metrics are released.
-
-<hr>
-<br>
-
-## Linked data as graphs <-- to go somewhere upstream
-
-For clarity, let us first define what we mean by a graph. A graph is a collection of points (nodes) connected by lines (edges).
-
-[Include picture here]
-
-In data linking, we refer to these collections of nodes as clusters, within which the nodes represent the entity to be linked (e.g. person or journey) and the edges represent a potential match.
-
-[Include picture here]
-
-Edges come with an associate Splink score (the probability of two records being a match). This makes graphs (clusters) produced by Splink so called weighted graphs, as each edge has a weight (Splink score).
