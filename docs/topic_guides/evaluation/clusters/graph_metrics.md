@@ -82,7 +82,7 @@ Therefore it's important to consider a range of sizes when evaluating density to
 
 A high cluster centralisation (closer to 1) indicates that a few nodes are home to significantly more connections compared to the rest of the nodes in a cluster. This can help identify clusters containing nodes with a lower number of connections (low node degree) relative to what is possible for that cluster. 
 
-Low centralisation suggests that edges are more evenly distributed amongst nodes in a cluster. Low centralisation can be good if all nodes within a clusters enjoy many connections. However low centralisation could also indicate that all nodes are not as highly connected as they could be. To check for this, look at low centralisation in conjunction with low node degree.
+Low centralisation suggests that edges are more evenly distributed amongst nodes in a cluster. Low centralisation can be good if all nodes within a clusters enjoy many connections. However low centralisation could also indicate that all nodes are not as highly connected as they could be. To check for this, you can look at low centralisation in conjunction with low [node degree]() or [low density]().
 
 [maybe include a picture to help aid understanding]
 
