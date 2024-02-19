@@ -42,7 +42,7 @@ In a perfect model there would be no False Positives or False Negatives (i.e. FP
 
 ??? info "Confusion Matrix in Splink:"
 
-    - [confusion_matrix_from_labels_table](../../charts/confusion_matrix_from_labels_table.ipynb)
+   For a more in-depth guide on how the Splink confusion matrix works, see: [confusion_matrix_from_labels_table](../../charts/confusion_matrix_from_labels_table.ipynb)
 
 ## Metrics for Linkage
 
