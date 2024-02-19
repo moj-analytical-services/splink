@@ -80,6 +80,12 @@ class TrainingSettings:
         return naive_dict
 
 
+@dataclass
+class CoreModelSettings:
+    comparisons: List[Comparison]
+    probability_two_random_records_match: float
+
+
 class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
@@ -131,17 +137,18 @@ class Settings:
             sql_dialect=sql_dialect,
         )
 
-        # TODO: streamline this logic
-        self.comparisons: list[Comparison] = []
+        comps = []
         for comparison in comparisons:
             # TODO: not sure we need backref ultimately
             comparison._settings_obj = self
             comparison.column_info_settings = self.column_info_settings
-            self.comparisons.append(comparison)
+            comps.append(comparison)
 
-        self._probability_two_random_records_match = (
-            probability_two_random_records_match
+        self.core_model_settings = CoreModelSettings(
+            comparisons=comps,
+            probability_two_random_records_match=probability_two_random_records_match,
         )
+
         self.training_settings = TrainingSettings(
             em_convergence=em_convergence,
             max_iterations=max_iterations,
@@ -188,6 +195,24 @@ class Settings:
                     "\nIf the column does not contain null values, or you know what "
                     "you're doing, you can ignore this warning"
                 )
+
+    # TODO: unpick these four
+    @property
+    def comparisons(self) -> List[Comparison]:
+        return self.core_model_settings.comparisons
+
+    @property
+    def _probability_two_random_records_match(self) -> float:
+        return self.core_model_settings.probability_two_random_records_match
+
+    # TODO: especially factor these out
+    @comparisons.setter
+    def comparisons(self, value) -> None:
+        self.core_model_settings.comparisons = value
+
+    @_probability_two_random_records_match.setter
+    def _probability_two_random_records_match(self, value) -> None:
+        self.core_model_settings.probability_two_random_records_match = value
 
     @property
     def _additional_column_names_to_retain(self) -> List[str]:
