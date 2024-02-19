@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx
@@ -361,3 +363,35 @@ def test_is_bridge(dialect, test_helpers):
                 f"Expected is_bridge {expected_is_bridge} for edge {node_l}, {node_r}, "
                 f"but found is_bridge: {calculated_is_bridge}"
             )
+
+
+unpatched_import = __import__
+def mock_no_igraph_installed(name, *args):
+    if name == "igraph":
+        raise ModuleNotFoundError("Mocking missing 'igraph' in test")
+    return unpatched_import(name, *args)
+
+def test_edges_without_igraph():
+    settings = {
+        "probability_two_random_records_match": 0.01,
+        "link_type": "dedupe_only",
+        "comparisons": [
+            exact_match("first_name"),
+            exact_match("surname"),
+            exact_match("dob"),
+        ],
+    }
+    linker = DuckDBLinker(df_1, settings)
+
+    df_predict = linker.predict()
+    df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
+
+    # pretend we don't have igraph installed
+    with patch("builtins.__import__", side_effect=mock_no_igraph_installed):
+        graph_metrics = linker._compute_graph_metrics(
+            df_predict, df_clustered, threshold_match_probability=0.9
+        )
+    df_edge_metrics = graph_metrics.edges.as_pandas_dataframe()
+    assert "composite_unique_id_l" in df_edge_metrics.columns
+    assert "composite_unique_id_r" in df_edge_metrics.columns
+    assert "is_bridge" not in df_edge_metrics.columns
