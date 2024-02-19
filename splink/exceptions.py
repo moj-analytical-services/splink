@@ -18,6 +18,10 @@ class EMTrainingException(SplinkException):
     pass
 
 
+class MissingDependencyException(Exception):
+    pass
+
+
 class ComparisonSettingsException(SplinkException):
     def __init__(self, message=""):
         # Add the default message to the beginning of the provided message
