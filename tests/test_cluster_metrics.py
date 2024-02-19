@@ -366,10 +366,13 @@ def test_is_bridge(dialect, test_helpers):
 
 
 unpatched_import = __import__
+
+
 def mock_no_igraph_installed(name, *args):
     if name == "igraph":
         raise ModuleNotFoundError("Mocking missing 'igraph' in test")
     return unpatched_import(name, *args)
+
 
 def test_edges_without_igraph():
     settings = {

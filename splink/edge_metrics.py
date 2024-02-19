@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from .cluster_metrics import (
+    _basic_edge_metrics_sql,
     _bridges_from_igraph_sql,
     _edges_for_igraph_sql,
     _full_bridges_sql,
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 logger = logging.getLogger(__name__)
+
 
 def compute_edge_metrics(
     linker: Linker,
@@ -55,19 +57,12 @@ def compute_basic_edge_metrics(
 
     truncated_edges_table_name = sql_info["output_table_name"]
     uid_cols = linker._settings_obj._unique_id_input_columns
+
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
-
-    # dummy sql that returns the edges without any metrics, as there are none
-    # that we can currently compute without igraph
-    sql_info = {
-        "sql": (
-            f"SELECT {composite_uid_edges_l} AS composite_unique_id_l, "
-            f"{composite_uid_edges_r} AS composite_unique_id_r "
-            f"FROM {truncated_edges_table_name}"
-        ),
-        "output_table_name": "__splink__graph_metrics_edges",
-    }
+    sql_info = _basic_edge_metrics_sql(
+        composite_uid_edges_l, composite_uid_edges_r, truncated_edges_table_name
+    )
     linker._enqueue_sql(**sql_info)
 
     df_truncated_edges = linker._execute_sql_pipeline()
