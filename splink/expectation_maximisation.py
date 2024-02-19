@@ -146,7 +146,7 @@ def compute_proportions_for_new_parameters_pandas(m_u_df):
     return data.to_dict("records")
 
 
-def compute_proportions_for_new_parameters(m_u_df):
+def compute_proportions_for_new_parameters(m_u_df) -> List[dict]:
     # Execute with duckdb if installed, otherwise default to pandas
     try:
         import duckdb
@@ -158,11 +158,15 @@ def compute_proportions_for_new_parameters(m_u_df):
 
 
 def populate_m_u_from_lookup(
-    em_training_session, comparison_level: ComparisonLevel, m_u_records_lookup
-):
+    fix_m_probabilities: bool,
+    fix_u_probabilities: bool,
+    comparison_level: ComparisonLevel,
+    m_u_records_lookup,
+) -> None:
     cl = comparison_level
     c = comparison_level.comparison
-    if not em_training_session._training_fix_m_probabilities:
+    # em_training_session._training_fix_m_probabilities
+    if not fix_m_probabilities:
         try:
             m_probability = m_u_records_lookup[c.output_column_name][
                 cl._comparison_vector_value
@@ -172,7 +176,7 @@ def populate_m_u_from_lookup(
             m_probability = LEVEL_NOT_OBSERVED_TEXT
         cl.m_probability = m_probability
 
-    if not em_training_session._training_fix_u_probabilities:
+    if not fix_u_probabilities:
         try:
             u_probability = m_u_records_lookup[c.output_column_name][
                 cl._comparison_vector_value
@@ -184,7 +188,9 @@ def populate_m_u_from_lookup(
         cl.u_probability = u_probability
 
 
-def maximisation_step(em_training_session: EMTrainingSession, param_records):
+def maximisation_step(
+    em_training_session: EMTrainingSession, param_records: List[dict]
+) -> None:
     settings_obj = em_training_session._settings_obj
 
     m_u_records = []
@@ -202,7 +208,12 @@ def maximisation_step(em_training_session: EMTrainingSession, param_records):
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:
         for cl in cc._comparison_levels_excluding_null:
-            populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
+            populate_m_u_from_lookup(
+                em_training_session._training_fix_m_probabilities,
+                em_training_session._training_fix_u_probabilities,
+                cl,
+                m_u_records_lookup,
+            )
 
     em_training_session._add_iteration()
 
