@@ -422,10 +422,6 @@ class ComparisonLevel:
         if self._is_else_level:
             return True
         dialect = self.sql_dialect
-        # TODO: really self._sql_dialect_ should always be set, something gets
-        # messed up during the deepcopy()ing of a Comparison
-        if dialect is None:
-            dialect = "spark"
         try:
             sqlglot.parse_one(sql, read=dialect)
         except sqlglot.ParseError as e:
