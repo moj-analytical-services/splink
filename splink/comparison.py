@@ -72,19 +72,7 @@ class Comparison:
         # otherwise turn the dictionaries into ComparisonLevel
 
         for cl in comparison_levels:
-            if isinstance(cl, ComparisonLevel):
-                cl.comparison = self
-            else:
-                # cl is a dict
-                # TODO: remove support for this
-                cl = ComparisonLevel(
-                    **cl,
-                    comparison=self,
-                    sqlglot_dialect_name=None
-                    if settings_obj is None
-                    else settings_obj._sql_dialect,
-                )
-
+            cl.comparison = self
             self.comparison_levels.append(cl)
 
         self._settings_obj: Optional[Settings] = settings_obj
