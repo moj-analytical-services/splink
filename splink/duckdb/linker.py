@@ -222,7 +222,7 @@ class DuckDBLinker(Linker):
         return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
-        self._con.execute(final_sql)
+        self._con.sql(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
