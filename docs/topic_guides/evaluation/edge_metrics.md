@@ -69,7 +69,7 @@ This measures the proportion of correct classifications (of any kind). This may 
 
 ### True Positive Rate (Recall)
 
-Also known as: Sensitivity
+Also known as: **Sensitivity**
 
 The True Positve Rate (Recall) is the proportion of matches that are correctly predicted by Splink.
 
@@ -85,7 +85,7 @@ $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \fr
 
 ### True Negative Rate (Specificity)
 
-Also known as: Selectivity
+Also known as: **Selectivity**
 
 The True Negative Rate (Specificity) is the proportion of non-matches that are correctly predicted by Splink.
 
@@ -140,7 +140,7 @@ Any comparison of two records has a number of possible outcomes (True Positives,
 
 ### F Score
 
-The F-Score is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
+The [F-Score](https://en.wikipedia.org/wiki/F-score) is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
 
 $$F_{\beta} = \frac{(1 + \beta^2) \cdot \textsf{Precision} \cdot \textsf{Recall}}{\beta^2 \cdot \textsf{Precision} + \textsf{Recall}}$$
 
@@ -165,7 +165,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 
 ### P4 Score
 
-$P_{4}$ is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
+The [$P_{4}$ Score](https://en.wikipedia.org/wiki/P4-metric) is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
 
 $$ 4\left[\frac{1}{\textsf{Recall}}+\frac{1}{\textsf{Specificity}}+\frac{1}{\textsf{Precision}}+\frac{1}{\textsf{Negative Predictive Value}}\right]^{-1} $$
 
@@ -181,7 +181,7 @@ Note: all metrics are given equal weighting.
 
 ### Matthews Correlation Coefficient 
 
-The Matthews Correlation Coefficient ($\phi$) is a measure of how correlation between predictions and actual observations.
+The [Matthews Correlation Coefficient ($\phi$)](https://en.wikipedia.org/wiki/Phi_coefficient) is a measure of how correlation between predictions and actual observations.
 
 $$ \phi = \sqrt{\textsf{Recall} \cdot \textsf{Specificity} \cdot \textsf{Precision} \cdot \textsf{Negative Predictive Value}} - \sqrt{(1 - \textsf{Recall})(1 - \textsf{Specificity})(1 - \textsf{Precision})(1 - \textsf{Negative Predictive Value})} $$
 
