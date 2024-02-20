@@ -130,7 +130,7 @@ $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{Al
 
     **“Predicts cancer with 100% Precision”** - is true of a “model” that correctly identifies one known cancer patient, but misdiagnoses everyone else as cancer-free.
 
-    **“AI judge’s verdicts have Recall of 100%”** - is true for a power-mad AI judge that declares everyone guilty, which would be stoically described by civil servants as “sub-optimal”.
+    **“AI judge’s verdicts have Recall of 100%”** - is true for a power-mad AI judge that declares everyone guilty, regardless of any evidence to the contrary.
 
 ## Composite Metrics for Linkage
 
