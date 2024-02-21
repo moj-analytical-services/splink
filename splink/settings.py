@@ -139,8 +139,6 @@ class Settings:
 
         comps = []
         for comparison in comparisons:
-            # TODO: not sure we need backref ultimately
-            comparison._settings_obj = self
             comparison.column_info_settings = self.column_info_settings
             comps.append(comparison)
 

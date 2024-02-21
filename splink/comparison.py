@@ -66,10 +66,6 @@ class Comparison:
 
         self.comparison_levels: list[ComparisonLevel] = []
 
-        # If comparison_levels are already of type ComparisonLevel, register
-        # the settings object on them
-        # otherwise turn the dictionaries into ComparisonLevel
-
         for cl in comparison_levels:
             cl.comparison = self
             self.comparison_levels.append(cl)
