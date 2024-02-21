@@ -54,6 +54,8 @@ class EMTrainingSession:
         self._settings_obj._retain_intermediate_calculation_columns = False
         self._settings_obj.training_settings.training_mode = True
 
+        self.core_model_settings = self._settings_obj.core_model_settings
+
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
@@ -116,6 +118,10 @@ class EMTrainingSession:
 
         self._core_model_settings_history: list[CoreModelSettings] = []
 
+        # this should be fixed:
+        self.columns_to_select_for_comparison_vector_values = (
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         # Add iteration 0 i.e. the starting parameters
         self._add_iteration()
 
@@ -171,7 +177,7 @@ class EMTrainingSession:
             input_dataframes = [nodes_with_tf]
 
         sql = compute_comparison_vector_values_sql(
-            self._settings_obj._columns_to_select_for_comparison_vector_values
+            self.columns_to_select_for_comparison_vector_values
         )
         self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self._training_linker._execute_sql_pipeline(input_dataframes)
@@ -205,7 +211,7 @@ class EMTrainingSession:
         training_desc = f"EM, blocked on: {rule}"
 
         # Add m and u values to original settings
-        for cc in self._settings_obj.comparisons:
+        for cc in self.core_model_settings.comparisons:
             orig_cc = self._original_settings_obj._get_comparison_by_output_column_name(
                 cc.output_column_name
             )
@@ -247,9 +253,7 @@ class EMTrainingSession:
         self._original_linker._em_training_sessions.append(self)
 
     def _add_iteration(self):
-        self._core_model_settings_history.append(
-            deepcopy(self._settings_obj.core_model_settings)
-        )
+        self._core_model_settings_history.append(deepcopy(self.core_model_settings))
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
@@ -298,7 +302,7 @@ class EMTrainingSession:
                 # TODO: why lambda from _settings_obj not history?
                 r[
                     "probability_two_random_records_match"
-                ] = self._settings_obj._probability_two_random_records_match
+                ] = self.core_model_settings.probability_two_random_records_match
 
             output_records.extend(records)
         return output_records
