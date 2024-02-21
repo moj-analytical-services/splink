@@ -95,7 +95,7 @@ class EMTrainingSession:
                 blocking_rule_for_training.blocking_rule_sql,
                 self._settings_obj._sql_dialect,
             )
-            for cc in self._settings_obj.comparisons:
+            for cc in self.core_model_settings.comparisons:
                 cc_cols = cc._input_columns_used_by_case_statement
                 cc_cols = [c.input_name for c in cc_cols]
                 if set(br_cols).intersection(cc_cols):
@@ -109,11 +109,11 @@ class EMTrainingSession:
 
         filtered_ccs = [
             cc
-            for cc in self._settings_obj.comparisons
+            for cc in self.core_model_settings.comparisons
             if cc.output_column_name not in cc_names_to_deactivate
         ]
 
-        self._settings_obj.comparisons = filtered_ccs
+        self.core_model_settings.comparisons = filtered_ccs
         self._comparisons_that_can_be_estimated = filtered_ccs
 
         self._core_model_settings_history: list[CoreModelSettings] = []
