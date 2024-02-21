@@ -85,6 +85,49 @@ class CoreModelSettings:
     comparisons: List[Comparison]
     probability_two_random_records_match: float
 
+    @property
+    def parameters_as_detailed_records(self):
+        output = []
+        rr_match = self.probability_two_random_records_match
+        for i, cc in enumerate(self.comparisons):
+            records = cc._as_detailed_records
+            for r in records:
+                r["probability_two_random_records_match"] = rr_match
+                r["comparison_sort_order"] = i
+            output.extend(records)
+
+        prior_description = (
+            "The probability that two random records drawn at random match is "
+            f"{rr_match:.3f} or one in "
+            f" {1/rr_match:,.1f} records."
+            "This is equivalent to a starting match weight of "
+            f"{prob_to_match_weight(rr_match):.3f}."
+        )
+
+        # Finally add a record for probability_two_random_records_match
+        prop_record = {
+            "comparison_name": "probability_two_random_records_match",
+            "sql_condition": None,
+            "label_for_charts": "",
+            "m_probability": None,
+            "u_probability": None,
+            "m_probability_description": None,
+            "u_probability_description": None,
+            "has_tf_adjustments": False,
+            "tf_adjustment_column": None,
+            "tf_adjustment_weight": None,
+            "is_null_level": False,
+            "bayes_factor": prob_to_bayes_factor(rr_match),
+            "log2_bayes_factor": prob_to_match_weight(rr_match),
+            "comparison_vector_value": 0,
+            "max_comparison_vector_value": 0,
+            "bayes_factor_description": prior_description,
+            "probability_two_random_records_match": rr_match,
+            "comparison_sort_order": -1,
+        }
+        output.insert(0, prop_record)
+        return output
+
 
 class Settings:
     """The settings object contains the configuration and parameters of the data
@@ -446,54 +489,10 @@ class Settings:
 
         return comparison_levels_corresponding_to_blocking_rule
 
+    # TODO: we can probably unhook this
     @property
     def _parameters_as_detailed_records(self):
-        output = []
-        for i, cc in enumerate(self.comparisons):
-            records = cc._as_detailed_records
-            for r in records:
-                r[
-                    "probability_two_random_records_match"
-                ] = self._probability_two_random_records_match
-                r["comparison_sort_order"] = i
-            output.extend(records)
-
-        prior_description = (
-            "The probability that two random records drawn at random match is "
-            f"{self._probability_two_random_records_match:.3f} or one in "
-            f" {1/self._probability_two_random_records_match:,.1f} records."
-            "This is equivalent to a starting match weight of "
-            f"{prob_to_match_weight(self._probability_two_random_records_match):.3f}."
-        )
-
-        # Finally add a record for probability_two_random_records_match
-        rr_match = self._probability_two_random_records_match
-        prop_record = {
-            "comparison_name": "probability_two_random_records_match",
-            "sql_condition": None,
-            "label_for_charts": "",
-            "m_probability": None,
-            "u_probability": None,
-            "m_probability_description": None,
-            "u_probability_description": None,
-            "has_tf_adjustments": False,
-            "tf_adjustment_column": None,
-            "tf_adjustment_weight": None,
-            "is_null_level": False,
-            "bayes_factor": prob_to_bayes_factor(
-                self._probability_two_random_records_match
-            ),
-            "log2_bayes_factor": prob_to_match_weight(
-                self._probability_two_random_records_match
-            ),
-            "comparison_vector_value": 0,
-            "max_comparison_vector_value": 0,
-            "bayes_factor_description": prior_description,
-            "probability_two_random_records_match": rr_match,
-            "comparison_sort_order": -1,
-        }
-        output.insert(0, prop_record)
-        return output
+        return self.core_model_settings.parameters_as_detailed_records
 
     @property
     def _parameter_estimates_as_records(self):

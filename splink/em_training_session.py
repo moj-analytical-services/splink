@@ -18,6 +18,7 @@ from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
+from .settings import CoreModelSettings
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,7 @@ class EMTrainingSession:
         self._settings_obj.comparisons = filtered_ccs
         self._comparisons_that_can_be_estimated = filtered_ccs
 
-        self._settings_obj_history = []
+        self._core_model_settings_history: list[CoreModelSettings] = []
 
         # Add iteration 0 i.e. the starting parameters
         self._add_iteration()
@@ -244,7 +245,9 @@ class EMTrainingSession:
         self._original_linker._em_training_sessions.append(self)
 
     def _add_iteration(self):
-        self._settings_obj_history.append(deepcopy(self._settings_obj))
+        self._core_model_settings_history.append(
+            deepcopy(self._settings_obj.core_model_settings)
+        )
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
@@ -283,11 +286,14 @@ class EMTrainingSession:
     def _iteration_history_records(self):
         output_records = []
 
-        for iteration, settings_obj in enumerate(self._settings_obj_history):
-            records = settings_obj._parameters_as_detailed_records
+        for iteration, core_model_settings in enumerate(
+            self._core_model_settings_history
+        ):
+            records = core_model_settings.parameters_as_detailed_records
 
             for r in records:
                 r["iteration"] = iteration
+                # TODO: why lambda from _settings_obj not history?
                 r[
                     "probability_two_random_records_match"
                 ] = self._settings_obj._probability_two_random_records_match
@@ -298,8 +304,8 @@ class EMTrainingSession:
     @property
     def _lambda_history_records(self):
         output_records = []
-        for i, s in enumerate(self._settings_obj_history):
-            lam = s._probability_two_random_records_match
+        for i, s in enumerate(self._core_model_settings_history):
+            lam = s.probability_two_random_records_match
             r = {
                 "probability_two_random_records_match": lam,
                 "probability_two_random_records_match_reciprocal": 1 / lam,
@@ -347,8 +353,8 @@ class EMTrainingSession:
         return message
 
     def _max_change_in_parameters_comparison_levels(self):
-        previous_iteration = self._settings_obj_history[-2]
-        this_iteration = self._settings_obj_history[-1]
+        previous_iteration = self._core_model_settings_history[-2]
+        this_iteration = self._core_model_settings_history[-1]
         max_change = -0.1
 
         max_change_levels = {
@@ -385,8 +391,8 @@ class EMTrainingSession:
                     max_change_levels["max_abs_change_value"] = abs(change_value)
 
         change_probability_two_random_records_match = (
-            this_iteration._probability_two_random_records_match
-            - previous_iteration._probability_two_random_records_match
+            this_iteration.probability_two_random_records_match
+            - previous_iteration.probability_two_random_records_match
         )
 
         if abs(change_probability_two_random_records_match) > max_change:
