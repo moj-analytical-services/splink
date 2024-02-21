@@ -144,7 +144,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     else:
         sample_dataframe = [df_sample]
 
-    sql = compute_comparison_vector_values_sql(settings_obj)
+    sql = compute_comparison_vector_values_sql(
+        settings_obj._columns_to_select_for_comparison_vector_values
+    )
 
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 

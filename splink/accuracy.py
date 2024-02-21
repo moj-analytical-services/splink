@@ -229,7 +229,8 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
     sql = {
         "sql": compute_comparison_vector_values_sql(
-            linker._settings_obj, include_clerical_match_score=True
+            linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            include_clerical_match_score=True,
         ),
         "output_table_name": "__splink__df_comparison_vectors",
     }

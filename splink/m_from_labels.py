@@ -22,7 +22,9 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values_sql(linker._settings_obj)
+    sql = compute_comparison_vector_values_sql(
+        linker._settings_obj._columns_to_select_for_comparison_vector_values
+    )
 
     linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 

@@ -1426,7 +1426,9 @@ class Linker:
             df_blocked = self._execute_sql_pipeline(input_dataframes)
             input_dataframes.append(df_blocked)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
@@ -1548,7 +1550,9 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
@@ -1633,7 +1637,9 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
@@ -1690,7 +1696,9 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 

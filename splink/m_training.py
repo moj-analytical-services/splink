@@ -40,7 +40,9 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     for sql in sqls:
         training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values_sql(settings_obj)
+    sql = compute_comparison_vector_values_sql(
+        settings_obj._columns_to_select_for_comparison_vector_values
+    )
 
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
