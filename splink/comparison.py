@@ -134,10 +134,6 @@ class Comparison:
         return self.column_info_settings.comparison_vector_value_column_prefix
 
     @property
-    def _retain_intermediate_calculation_columns(self):
-        return self._settings_obj._retain_intermediate_calculation_columns
-
-    @property
     def _bf_column_name(self):
         bf_prefix = self.column_info_settings.bayes_factor_column_prefix
         return f"{bf_prefix}{self.output_column_name}".replace(" ", "_")
@@ -204,7 +200,6 @@ class Comparison:
 
         return cols
 
-    @property
     def _columns_to_select_for_blocking(self):
         cols = []
         for cl in self.comparison_levels:
@@ -212,15 +207,14 @@ class Comparison:
 
         return dedupe_preserving_order(cols)
 
-    @property
-    def _columns_to_select_for_comparison_vector_values(self):
+    def _columns_to_select_for_comparison_vector_values(self, retain_matching_columns):
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
         for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+            if retain_matching_columns:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._case_statement)
@@ -232,24 +226,22 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    @property
-    def _columns_to_select_for_bayes_factor_parts(self):
+    def _columns_to_select_for_bayes_factor_parts(
+        self, retain_matching_columns, retain_intermediate_calculation_columns
+    ):
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
         for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+            if retain_matching_columns:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._gamma_column_name)
 
         for cl in self.comparison_levels:
-            if (
-                cl._has_tf_adjustments
-                and self._settings_obj._retain_intermediate_calculation_columns
-            ):
+            if cl._has_tf_adjustments and retain_intermediate_calculation_columns:
                 col = cl._tf_adjustment_input_column
                 output_cols.extend(col.tf_name_l_r)
 
@@ -270,33 +262,31 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    @property
-    def _columns_to_select_for_predict(self):
+    def _columns_to_select_for_predict(
+        self, retain_matching_columns, retain_intermediate_calculation_columns
+    ):
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
         for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+            if retain_matching_columns:
                 output_cols.extend(col.names_l_r)
 
         if (
             self._settings_obj.training_settings.training_mode
-            or self._settings_obj._retain_matching_columns
+            or retain_matching_columns
         ):
             output_cols.append(self._gamma_column_name)
 
         for cl in self.comparison_levels:
-            if (
-                cl._has_tf_adjustments
-                and self._settings_obj._retain_intermediate_calculation_columns
-            ):
+            if cl._has_tf_adjustments and retain_intermediate_calculation_columns:
                 col = cl._tf_adjustment_input_column
                 output_cols.extend(col.tf_name_l_r)
 
         for _col in input_cols:
-            if self._settings_obj._retain_intermediate_calculation_columns:
+            if retain_intermediate_calculation_columns:
                 output_cols.extend(self._match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)

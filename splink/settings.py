@@ -302,7 +302,7 @@ class Settings:
             cols.append(uid_col.r_name_as_r)
 
         for cc in self.comparisons:
-            cols.extend(cc._columns_to_select_for_blocking)
+            cols.extend(cc._columns_to_select_for_blocking())
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r)
@@ -318,7 +318,11 @@ class Settings:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
-            cols.extend(cc._columns_to_select_for_comparison_vector_values)
+            cols.extend(
+                cc._columns_to_select_for_comparison_vector_values(
+                    self._retain_matching_columns
+                )
+            )
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
@@ -338,7 +342,12 @@ class Settings:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
-            cols.extend(cc._columns_to_select_for_bayes_factor_parts)
+            cols.extend(
+                cc._columns_to_select_for_bayes_factor_parts(
+                    self._retain_matching_columns,
+                    self._retain_intermediate_calculation_columns,
+                )
+            )
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
@@ -358,7 +367,12 @@ class Settings:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
-            cols.extend(cc._columns_to_select_for_predict)
+            cols.extend(
+                cc._columns_to_select_for_predict(
+                    self._retain_matching_columns,
+                    self._retain_intermediate_calculation_columns,
+                )
+            )
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
