@@ -117,7 +117,7 @@ def compute_proportions_for_new_parameters_sql(table_name):
     return sql
 
 
-def compute_proportions_for_new_parameters_pandas(m_u_df):
+def compute_proportions_for_new_parameters_pandas(m_u_df: pd.DataFrame) -> List[dict]:
     data = m_u_df.copy()
     m_prob = "m_probability"
     u_prob = "u_probability"
@@ -146,7 +146,7 @@ def compute_proportions_for_new_parameters_pandas(m_u_df):
     return data.to_dict("records")
 
 
-def compute_proportions_for_new_parameters(m_u_df) -> List[dict]:
+def compute_proportions_for_new_parameters(m_u_df: pd.DataFrame) -> List[dict]:
     # Execute with duckdb if installed, otherwise default to pandas
     try:
         import duckdb
