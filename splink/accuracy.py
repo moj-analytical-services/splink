@@ -326,10 +326,10 @@ def _predict_from_label_column_sql(linker, label_colname):
 
     # Need the label colname to be in additional columns to retain
 
-    add_cols = settings._additional_columns_to_retain_list
+    add_cols = settings._additional_column_names_to_retain
 
     if label_colname not in add_cols:
-        settings._additional_columns_to_retain_list.append(label_colname)
+        settings._additional_column_names_to_retain.append(label_colname)
 
     # Now we want to create predictions
     df_predict = linker.predict()

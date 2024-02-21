@@ -305,7 +305,9 @@ class Linker:
 
         remove_columns = []
         if not include_unique_id_col_names:
-            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+            remove_columns.extend(
+                self._settings_obj.column_info_settings.unique_id_input_columns
+            )
         if not include_additional_columns_to_retain:
             remove_columns.extend(self._settings_obj._additional_columns_to_retain)
 
@@ -317,7 +319,10 @@ class Linker:
     @property
     def _source_dataset_column_already_exists(self):
         input_cols = [c.unquote().name for c in self._input_columns()]
-        return self._settings_obj._source_dataset_column_name in input_cols
+        return (
+            self._settings_obj.column_info_settings.source_dataset_column_name
+            in input_cols
+        )
 
     @property
     def _cache_uid(self):
@@ -989,7 +994,11 @@ class Linker:
             SplinkDataFrame: The resultant table as a splink data frame
         """
 
-        input_col = InputColumn(column_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            column_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
@@ -1667,7 +1676,7 @@ class Linker:
         self._self_link_mode = True
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
@@ -1789,7 +1798,7 @@ class Linker:
         | s1-__-10003         | s1-__-10003 | 2           |
         ...
         """
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
@@ -3461,7 +3470,11 @@ class Linker:
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            col_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._cache_uid}"
         splink_dataframe = self.register_table(
