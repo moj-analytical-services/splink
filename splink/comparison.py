@@ -8,7 +8,7 @@ from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .settings import ColumnInfoSettings, Settings
+    from .settings import ColumnInfoSettings
 
 
 class Comparison:
@@ -61,7 +61,6 @@ class Comparison:
         sqlglot_dialect_name: str,
         output_column_name: str = None,
         comparison_description: str = None,
-        settings_obj: Settings = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
 
@@ -75,7 +74,6 @@ class Comparison:
             cl.comparison = self
             self.comparison_levels.append(cl)
 
-        self._settings_obj: Optional[Settings] = settings_obj
         self.column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
         self.sqlglot_dialect_name = sqlglot_dialect_name
@@ -116,7 +114,6 @@ class Comparison:
         cc = Comparison(
             **comparison_dict,
             sqlglot_dialect_name=self.sqlglot_dialect_name,
-            settings_obj=self._settings_obj,
             column_info_settings=self.column_info_settings,
         )
         return cc
@@ -263,7 +260,10 @@ class Comparison:
         return dedupe_preserving_order(output_cols)
 
     def _columns_to_select_for_predict(
-        self, retain_matching_columns, retain_intermediate_calculation_columns
+        self,
+        retain_matching_columns,
+        retain_intermediate_calculation_columns,
+        training_mode,
     ):
         input_cols = []
         for cl in self.comparison_levels:
@@ -274,10 +274,7 @@ class Comparison:
             if retain_matching_columns:
                 output_cols.extend(col.names_l_r)
 
-        if (
-            self._settings_obj.training_settings.training_mode
-            or retain_matching_columns
-        ):
+        if training_mode or retain_matching_columns:
             output_cols.append(self._gamma_column_name)
 
         for cl in self.comparison_levels:

@@ -371,6 +371,7 @@ class Settings:
                 cc._columns_to_select_for_predict(
                     self._retain_matching_columns,
                     self._retain_intermediate_calculation_columns,
+                    self.training_settings.training_mode,
                 )
             )
 
