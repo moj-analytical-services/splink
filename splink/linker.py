@@ -878,7 +878,7 @@ class Linker:
                 # maybe they are different copies with different values?
                 reverse_level = reverse_level_info["level"]
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level_info["output_column_name"]
+                    reverse_level_info["comparison"].output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
