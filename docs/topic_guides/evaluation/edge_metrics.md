@@ -165,7 +165,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 
 ### P4 Score
 
-The [$P_{4}$ Score](https://en.wikipedia.org/wiki/P4-metric) is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
+The [$P_{4}$ Score](https://en.wikipedia.org/wiki/P4-metric) is the harmonic mean of the 4 metrics that can be directly derived from the confusion matrix:
 
 $$ 4\left[\frac{1}{\textsf{Recall}}+\frac{1}{\textsf{Specificity}}+\frac{1}{\textsf{Precision}}+\frac{1}{\textsf{Negative Predictive Value}}\right]^{-1} $$
 
