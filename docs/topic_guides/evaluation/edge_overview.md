@@ -6,7 +6,7 @@ There are several strategies for checking whether the links created in your pipe
 
 ## Consider the Edge Metrics
 
-Edge Metrics measure for how links perform at an overall level.
+Edge Metrics measure how links perform at an overall level.
 
 First, consider how you would like your model to perform. What is important for your use case? Do you want to ensure that you capture all possible matches? Or do you want to minimise the number of incorrectly predicted matches? Perhaps a combination of both?
 
