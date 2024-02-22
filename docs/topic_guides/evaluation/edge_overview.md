@@ -8,7 +8,7 @@ There are several strategies for checking whether the links created in your pipe
 
 Edge Metrics measure how links perform at an overall level.
 
-First, consider how you would like your model to perform. What is important for your use case? Do you want to ensure that you capture all possible matches? Or do you want to minimise the number of incorrectly predicted matches? Perhaps a combination of both?
+First, consider how you would like your model to perform. What is important for your use case? Do you want to ensure that you capture all possible matches (i.e. high recall)? Or do you want to minimise the number of incorrectly predicted matches (i.e. high precision)? Perhaps a combination of both?
 
 For a summary of all the edge metrics available in Splink, check out the [Edge Metrics guide](./edge_metrics.md).
 
