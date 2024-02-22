@@ -72,9 +72,7 @@ from .connected_components import (
 )
 from .edge_metrics import compute_edge_metrics
 
-# NOQA:I001
-# TODO: circular - restore
-# from .database_api import DatabaseAPI
+from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -144,7 +142,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings: SettingsCreator | dict | Path | str,
-        database_api,  # TODO: can't annotate atm due to circular imports
+        database_api: DatabaseAPI,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
@@ -225,11 +223,6 @@ class Linker:
         self._settings_obj = settings_creator.get_settings(
             database_api.sql_dialect.name
         )
-
-        # logic from DuckDBLinker.__init__ - TODO: genericise
-        # If user has provided pandas dataframes, need to register
-        # them with the database, using user-provided aliases
-        # if provided or a created alias if not
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
