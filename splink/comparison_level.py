@@ -226,16 +226,6 @@ class ComparisonLevel:
     def m_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-        if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison.output_column_name
-            cl_n = self.label_for_charts
-            if not self._m_warning_sent:
-                logger.warning(
-                    "WARNING:\n"
-                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                    "unable to train m value\n"
-                )
-                self._m_warning_sent = True
 
         self._m_probability = value
 
@@ -254,16 +244,6 @@ class ComparisonLevel:
     def u_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
-        if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison.output_column_name
-            cl_n = self.label_for_charts
-            if not self._u_warning_sent:
-                logger.warning(
-                    "WARNING:\n"
-                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                    "unable to train u value\n"
-                )
-                self._u_warning_sent = True
         self._u_probability = value
 
     @property

@@ -165,7 +165,7 @@ def populate_m_u_from_lookup(
 ) -> None:
     cl = comparison_level
     c = comparison_level.comparison
-    # em_training_session._training_fix_m_probabilities
+
     if not fix_m_probabilities:
         try:
             m_probability = m_u_records_lookup[c.output_column_name][
@@ -174,6 +174,15 @@ def populate_m_u_from_lookup(
 
         except KeyError:
             m_probability = LEVEL_NOT_OBSERVED_TEXT
+            cc_n = c.output_column_name
+            cl_n = cl.label_for_charts
+            if not cl._m_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train m value\n"
+                )
+                cl._m_warning_sent = True
         cl.m_probability = m_probability
 
     if not fix_u_probabilities:
@@ -184,6 +193,16 @@ def populate_m_u_from_lookup(
 
         except KeyError:
             u_probability = LEVEL_NOT_OBSERVED_TEXT
+
+            cc_n = c.output_column_name
+            cl_n = cl.label_for_charts
+            if not cl._u_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train u value\n"
+                )
+                cl._u_warning_sent = True
 
         cl.u_probability = u_probability
 
