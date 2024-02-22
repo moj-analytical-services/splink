@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional
 
 from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
@@ -99,24 +98,6 @@ class Comparison:
             level.default_u_probability = default_u_values[
                 level._comparison_vector_value
             ]
-
-    def __deepcopy__(self, memo):
-        """When we do EM training, we need a copy of the Comparison which is independent
-        of the original e.g. modifying the copy will not affect the original.
-        This method implements ensures the Comparison can be deepcopied.
-        """
-        # want comparison levels to always be ComparisonLevel, not dict
-        comparison_dict = deepcopy(self.as_dict())
-        comparison_dict["comparison_levels"] = [
-            ComparisonLevel(**cl_dict, sqlglot_dialect_name=self.sqlglot_dialect_name)
-            for cl_dict in comparison_dict["comparison_levels"]
-        ]
-        cc = Comparison(
-            **comparison_dict,
-            sqlglot_dialect_name=self.sqlglot_dialect_name,
-            column_info_settings=self.column_info_settings,
-        )
-        return cc
 
     @property
     def _num_levels(self):
