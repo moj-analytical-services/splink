@@ -5,7 +5,6 @@ import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
 import sqlglot
 from sqlglot.expressions import Identifier
@@ -22,10 +21,6 @@ from .misc import (
 )
 from .parse_sql import get_columns_used_from_sql
 from .sql_transform import sqlglot_tree_signature
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +143,7 @@ class ComparisonLevel:
         tf_minimum_u_value: float = 0.0,
         m_probability: float = None,
         u_probability: float = None,
-        comparison: Comparison = None,
     ):
-        self.comparison: Comparison = comparison
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
         self._sql_condition = sql_condition
@@ -163,6 +156,8 @@ class ComparisonLevel:
 
         self._m_probability = m_probability
         self._u_probability = u_probability
+        self.default_m_probability = None
+        self.default_u_probability = None
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
@@ -206,36 +201,19 @@ class ComparisonLevel:
             return input_column.unquote().name
 
     @property
-    def _has_comparison(self):
-        from .comparison import Comparison
-
-        return isinstance(self.comparison, Comparison)
-
-    @property
     def m_probability(self):
         if self.is_null_level:
             return None
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._m_probability is None and self._has_comparison:
-            vals = _default_m_values(self.comparison._num_levels)
-            return vals[self._comparison_vector_value]
+        if self._m_probability is None and self.default_m_probability is not None:
+            return self.default_m_probability
         return self._m_probability
 
     @m_probability.setter
     def m_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-        if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison.output_column_name
-            cl_n = self.label_for_charts
-            if not self._m_warning_sent:
-                logger.warning(
-                    "WARNING:\n"
-                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                    "unable to train m value\n"
-                )
-                self._m_warning_sent = True
 
         self._m_probability = value
 
@@ -245,25 +223,14 @@ class ComparisonLevel:
             return None
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._u_probability is None:
-            vals = _default_u_values(self.comparison._num_levels)
-            return vals[self._comparison_vector_value]
+        if self._u_probability is None and self.default_m_probability is not None:
+            return self.default_u_probability
         return self._u_probability
 
     @u_probability.setter
     def u_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
-        if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison.output_column_name
-            cl_n = self.label_for_charts
-            if not self._u_warning_sent:
-                logger.warning(
-                    "WARNING:\n"
-                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                    "unable to train u value\n"
-                )
-                self._u_warning_sent = True
         self._u_probability = value
 
     @property
@@ -392,11 +359,12 @@ class ComparisonLevel:
     def label_for_charts(self):
         return self._label_for_charts or str(self._comparison_vector_value)
 
-    @property
-    def _label_for_charts_no_duplicates(self):
-        if self._has_comparison:
+    def _label_for_charts_no_duplicates(
+        self, comparison_levels: list[ComparisonLevel] = None
+    ):
+        if comparison_levels is not None:
             labels = []
-            for cl in self.comparison.comparison_levels:
+            for cl in comparison_levels:
                 labels.append(cl.label_for_charts)
 
         if len(labels) == len(set(labels)):
@@ -517,14 +485,13 @@ class ComparisonLevel:
             cols.append(col)
         return cols
 
-    @property
-    def _u_probability_corresponding_to_exact_match(self):
-        levels = self.comparison.comparison_levels
-
+    def _u_probability_corresponding_to_exact_match(
+        self, comparison_levels: list[ComparisonLevel]
+    ):
         # Find a level with a single exact match colname
         # which is equal to the tf adjustment input colname
 
-        for level in levels:
+        for level in comparison_levels:
             if not level._is_exact_match:
                 continue
             colnames = level._exact_match_colnames
@@ -539,21 +506,20 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    @property
-    def _bayes_factor_sql(self):
+    def _bayes_factor_sql(self, gamma_column_name: str):
         bayes_factor = (
             self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
         )
         sql = f"""
         WHEN
-        {self.comparison._gamma_column_name} = {self._comparison_vector_value}
+        {gamma_column_name} = {self._comparison_vector_value}
         THEN cast({bayes_factor} as float8)
         """
         return dedent(sql)
 
-    @property
-    def _tf_adjustment_sql(self):
-        gamma_column_name = self.comparison._gamma_column_name
+    def _tf_adjustment_sql(
+        self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
+    ):
         gamma_colname_value_is_this_level = (
             f"{gamma_column_name} = {self._comparison_vector_value}"
         )
@@ -574,7 +540,9 @@ class ComparisonLevel:
             coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
-            u_prob_exact_match = self._u_probability_corresponding_to_exact_match
+            u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
+                comparison_levels
+            )
 
             # Using coalesce protects against one of the tf adjustments being null
             # Which would happen if the user provided their own tf adjustment table
@@ -648,12 +616,15 @@ class ComparisonLevel:
         comp_dict["comparison_vector_value"] = self._comparison_vector_value
         return comp_dict
 
-    @property
-    def _as_detailed_record(self):
+    def _as_detailed_record(
+        self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
+    ):
         "A detailed representation of this level to describe it in charting outputs"
         output = {}
         output["sql_condition"] = self.sql_condition
-        output["label_for_charts"] = self._label_for_charts_no_duplicates
+        output["label_for_charts"] = self._label_for_charts_no_duplicates(
+            comparison_levels
+        )
 
         output["m_probability"] = self.m_probability
         output["u_probability"] = self.u_probability
@@ -672,16 +643,17 @@ class ComparisonLevel:
         output["bayes_factor"] = self._bayes_factor
         output["log2_bayes_factor"] = self._log2_bayes_factor
         output["comparison_vector_value"] = self._comparison_vector_value
-        output["max_comparison_vector_value"] = self.comparison._num_levels - 1
+        output["max_comparison_vector_value"] = comparison_num_levels - 1
         output["bayes_factor_description"] = self._bayes_factor_description
 
         return output
 
-    @property
-    def _parameter_estimates_as_records(self):
+    def _parameter_estimates_as_records(
+        self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
+    ):
         output_records = []
 
-        cl_record = self._as_detailed_record
+        cl_record = self._as_detailed_record(comparison_num_levels, comparison_levels)
         trained_values = self._trained_u_probabilities + self._trained_m_probabilities
         for trained_value in trained_values:
             record = {}

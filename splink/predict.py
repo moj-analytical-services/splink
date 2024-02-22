@@ -100,7 +100,9 @@ def predict_from_agreement_pattern_counts_sqls(
     select_cols = []
 
     for cc in comparisons:
-        cc_sqls = [cl._bayes_factor_sql for cl in cc.comparison_levels]
+        cc_sqls = [
+            cl._bayes_factor_sql(cc._gamma_column_name) for cl in cc.comparison_levels
+        ]
         sql = " ".join(cc_sqls)
         sql = f"CASE {sql} END as {cc._bf_column_name}"
         select_cols.append(cc._gamma_column_name)

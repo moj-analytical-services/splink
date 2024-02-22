@@ -179,7 +179,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     for c in original_settings_obj.comparisons:
         for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
-                cl, m_u_records_lookup, "estimate u by random sampling"
+                cl,
+                m_u_records_lookup,
+                c.output_column_name,
+                "estimate u by random sampling",
             )
 
     logger.info("\nEstimated u probabilities using random sampling")

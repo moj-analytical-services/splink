@@ -68,9 +68,11 @@ class EMTrainingSession:
         )
 
         if comparison_levels_to_reverse_blocking_rule:
+            # TODO: atm this branch probably makes no sense. What would user pass?
             self._comparison_levels_to_reverse_blocking_rule = (
                 comparison_levels_to_reverse_blocking_rule
             )
+            raise ValueError("This path is broken for now.")
         else:
             self._comparison_levels_to_reverse_blocking_rule = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 blocking_rule_for_training.blocking_rule_sql
@@ -263,19 +265,17 @@ class EMTrainingSession:
 
         logger.log(15, f"Original prob two random records match: {orig_prop_m:.3f}")
 
-        comp_levels = self._comparison_levels_to_reverse_blocking_rule
-        if not comp_levels:
-            comp_levels = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                self._blocking_rule_for_training.blocking_rule_sql
-            )
+        comp_level_infos = self._comparison_levels_to_reverse_blocking_rule
 
-        for cl in comp_levels:
+        for comp_level_info in comp_level_infos:
+            cl = comp_level_info["level"]
+            comparison = comp_level_info["comparison"]
             adj_bayes_factor = cl._bayes_factor * adj_bayes_factor
 
             logger.log(
                 15,
                 f"Increasing prob two random records match using "
-                f"{cl.comparison.output_column_name} - {cl.label_for_charts}"
+                f"{comparison.output_column_name} - {cl.label_for_charts}"
                 f" using bayes factor {cl._bayes_factor:,.3f}",
             )
 
@@ -346,7 +346,7 @@ class EMTrainingSession:
         else:
             cl = max_change_dict["current_comparison_level"]
             m_u = max_change_dict["max_change_type"]
-            cc_name = cl.comparison.output_column_name
+            cc_name = max_change_dict["output_column_name"]
 
             cl_label = cl.label_for_charts
             level_text = f"{cc_name}, level `{cl_label}`"
@@ -395,6 +395,7 @@ class EMTrainingSession:
                     max_change_levels["max_change_type"] = change_type
                     max_change_levels["max_change_value"] = change_value
                     max_change_levels["max_abs_change_value"] = abs(change_value)
+                    max_change_levels["output_column_name"] = this_cc.output_column_name
 
         change_probability_two_random_records_match = (
             this_iteration.probability_two_random_records_match

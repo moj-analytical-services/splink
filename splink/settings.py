@@ -8,6 +8,7 @@ from typing import List
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
+from .comparison_level import ComparisonLevel
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight
 from .parse_sql import get_columns_used_from_sql
@@ -439,7 +440,7 @@ class Settings:
 
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
         self, blocking_rule
-    ):
+    ) -> dict[str, Comparison | ComparisonLevel]:
         """
         If we block on (say) first name and surname, then all blocked comparisons are
         guaranteed to have a match on first name and surname
@@ -471,21 +472,24 @@ class Settings:
         for cc in ccs:
             for cl in cc.comparison_levels:
                 if cl._is_exact_match:
-                    exact_comparison_levels.append(cl)
+                    exact_comparison_levels.append({"level": cl, "comparison": cc})
 
         # Where exact match on multiple columns exists, use that instead of individual
         # exact match columns
         # So for example, if we have a param estimate for exact match on first name AND
         # surname, prefer that
         # over individual estimtes for exact match first name and surname.
-        exact_comparison_levels.sort(key=lambda x: -len(x._exact_match_colnames))
+        exact_comparison_levels.sort(
+            key=lambda x: -len(x["level"]._exact_match_colnames)
+        )
 
         comparison_levels_corresponding_to_blocking_rule = []
-        for cl in exact_comparison_levels:
+        for level_info in exact_comparison_levels:
+            cl = level_info["level"]
             exact_cols = set(cl._exact_match_colnames)
             if exact_cols.issubset(blocking_exact_match_columns):
                 blocking_exact_match_columns = blocking_exact_match_columns - exact_cols
-                comparison_levels_corresponding_to_blocking_rule.append(cl)
+                comparison_levels_corresponding_to_blocking_rule.append(level_info)
 
         return comparison_levels_corresponding_to_blocking_rule
 
