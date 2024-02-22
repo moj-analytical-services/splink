@@ -239,7 +239,10 @@ class Comparison:
                 output_cols.extend(col.tf_name_l_r)
 
         # Bayes factor case when statement
-        sqls = [cl._bayes_factor_sql for cl in self.comparison_levels]
+        sqls = [
+            cl._bayes_factor_sql(self._gamma_column_name)
+            for cl in self.comparison_levels
+        ]
         sql = " ".join(sqls)
         sql = f"CASE {sql} END as {self._bf_column_name} "
         output_cols.append(sql)
@@ -247,7 +250,10 @@ class Comparison:
         # tf adjustment case when statement
 
         if self._has_tf_adjustments:
-            sqls = [cl._tf_adjustment_sql for cl in self.comparison_levels]
+            sqls = [
+                cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
+                for cl in self.comparison_levels
+            ]
             sql = " ".join(sqls)
             sql = f"CASE {sql} END as {self._bf_tf_adj_column_name} "
             output_cols.append(sql)
@@ -372,7 +378,10 @@ class Comparison:
         for cl in self.comparison_levels:
             record = {}
             record["comparison_name"] = self.output_column_name
-            record = {**record, **cl._as_detailed_record}
+            record = {
+                **record,
+                **cl._as_detailed_record(self._num_levels, self.comparison_levels),
+            }
             records.append(record)
         return records
 
@@ -380,7 +389,9 @@ class Comparison:
     def _parameter_estimates_as_records(self):
         records = []
         for cl in self.comparison_levels:
-            new_records = cl._parameter_estimates_as_records
+            new_records = cl._parameter_estimates_as_records(
+                self._num_levels, self.comparison_levels
+            )
             for r in new_records:
                 r["comparison_name"] = self.output_column_name
             records.extend(new_records)
