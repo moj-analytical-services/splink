@@ -71,7 +71,7 @@ This measures the proportion of correct classifications (of any kind). This may 
 
 Also known as: **Sensitivity**
 
-The True Positve Rate (Recall) is the proportion of matches that are correctly predicted by Splink.
+The True Positive Rate (Recall) is the proportion of matches that are correctly predicted by Splink.
 
 $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
