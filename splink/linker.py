@@ -860,7 +860,7 @@ class Linker:
                 em_training_session._settings_obj._probability_two_random_records_match
             )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
-            reverse_levels = (
+            reverse_level_infos = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
             )
 
@@ -872,10 +872,13 @@ class Linker:
                 f"{training_lambda:,.3f}",
             )
 
-            for reverse_level in reverse_levels:
+            for reverse_level_info in reverse_level_infos:
                 # Get comparison level on current settings obj
+                # TODO: do we need this dance? We already have the level + comparison
+                # maybe they are different copies with different values?
+                reverse_level = reverse_level_info["level"]
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level.comparison.output_column_name
+                    reverse_level_info["output_column_name"]
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(

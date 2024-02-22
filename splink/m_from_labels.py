@@ -54,7 +54,10 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     for cc in linker._settings_obj.comparisons:
         for cl in cc._comparison_levels_excluding_null:
             append_m_probability_to_comparison_level_trained_probabilities(
-                cl, m_u_records_lookup, "estimate m from pairwise labels"
+                cl,
+                m_u_records_lookup,
+                cc.output_column_name,
+                "estimate m from pairwise labels",
             )
 
     linker._populate_m_u_from_trained_values()

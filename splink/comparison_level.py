@@ -5,7 +5,6 @@ import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
 import sqlglot
 from sqlglot.expressions import Identifier
@@ -22,10 +21,6 @@ from .misc import (
 )
 from .parse_sql import get_columns_used_from_sql
 from .sql_transform import sqlglot_tree_signature
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +143,7 @@ class ComparisonLevel:
         tf_minimum_u_value: float = 0.0,
         m_probability: float = None,
         u_probability: float = None,
-        comparison: Comparison = None,
     ):
-        self.comparison: Comparison = comparison
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
         self._sql_condition = sql_condition
@@ -163,6 +156,8 @@ class ComparisonLevel:
 
         self._m_probability = m_probability
         self._u_probability = u_probability
+        self.default_m_probability = None
+        self.default_u_probability = None
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
@@ -206,20 +201,13 @@ class ComparisonLevel:
             return input_column.unquote().name
 
     @property
-    def _has_comparison(self):
-        from .comparison import Comparison
-
-        return isinstance(self.comparison, Comparison)
-
-    @property
     def m_probability(self):
         if self.is_null_level:
             return None
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._m_probability is None and self._has_comparison:
-            vals = _default_m_values(self.comparison._num_levels)
-            return vals[self._comparison_vector_value]
+        if self._m_probability is None and self.default_m_probability is not None:
+            return self.default_m_probability
         return self._m_probability
 
     @m_probability.setter
@@ -235,9 +223,8 @@ class ComparisonLevel:
             return None
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._u_probability is None:
-            vals = _default_u_values(self.comparison._num_levels)
-            return vals[self._comparison_vector_value]
+        if self._u_probability is None and self.default_m_probability is not None:
+            return self.default_u_probability
         return self._u_probability
 
     @u_probability.setter
@@ -372,8 +359,10 @@ class ComparisonLevel:
     def label_for_charts(self):
         return self._label_for_charts or str(self._comparison_vector_value)
 
-    def _label_for_charts_no_duplicates(self, comparison_levels: list[ComparisonLevel]):
-        if self._has_comparison:
+    def _label_for_charts_no_duplicates(
+        self, comparison_levels: list[ComparisonLevel] = None
+    ):
+        if comparison_levels is not None:
             labels = []
             for cl in comparison_levels:
                 labels.append(cl.label_for_charts)

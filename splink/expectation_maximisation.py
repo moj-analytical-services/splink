@@ -161,20 +161,20 @@ def populate_m_u_from_lookup(
     fix_m_probabilities: bool,
     fix_u_probabilities: bool,
     comparison_level: ComparisonLevel,
+    output_column_name: str,
     m_u_records_lookup,
 ) -> None:
     cl = comparison_level
-    c = comparison_level.comparison
 
     if not fix_m_probabilities:
         try:
-            m_probability = m_u_records_lookup[c.output_column_name][
+            m_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
             ]["m_probability"]
 
         except KeyError:
             m_probability = LEVEL_NOT_OBSERVED_TEXT
-            cc_n = c.output_column_name
+            cc_n = output_column_name
             cl_n = cl.label_for_charts
             if not cl._m_warning_sent:
                 logger.warning(
@@ -187,14 +187,14 @@ def populate_m_u_from_lookup(
 
     if not fix_u_probabilities:
         try:
-            u_probability = m_u_records_lookup[c.output_column_name][
+            u_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
             ]["u_probability"]
 
         except KeyError:
             u_probability = LEVEL_NOT_OBSERVED_TEXT
 
-            cc_n = c.output_column_name
+            cc_n = output_column_name
             cl_n = cl.label_for_charts
             if not cl._u_warning_sent:
                 logger.warning(
@@ -231,6 +231,7 @@ def maximisation_step(
                 em_training_session._training_fix_m_probabilities,
                 em_training_session._training_fix_u_probabilities,
                 cl,
+                cc.output_column_name,
                 m_u_records_lookup,
             )
 

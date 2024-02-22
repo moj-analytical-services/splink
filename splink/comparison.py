@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional
 
-from .comparison_level import ComparisonLevel
+from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -64,11 +64,7 @@ class Comparison:
         column_info_settings: ColumnInfoSettings = None,
     ):
 
-        self.comparison_levels: list[ComparisonLevel] = []
-
-        for cl in comparison_levels:
-            cl.comparison = self
-            self.comparison_levels.append(cl)
+        self.comparison_levels: list[ComparisonLevel] = comparison_levels
 
         self.column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
@@ -84,6 +80,8 @@ class Comparison:
         num_levels = self._num_levels
         counter = num_levels - 1
 
+        default_m_values = _default_m_values(num_levels)
+        default_u_values = _default_u_values(num_levels)
         for level in self.comparison_levels:
             if level.is_null_level:
                 level._comparison_vector_value = -1
@@ -95,6 +93,12 @@ class Comparison:
                 else:
                     level._max_level = False
                 counter -= 1
+            level.default_m_probability = default_m_values[
+                level._comparison_vector_value
+            ]
+            level.default_u_probability = default_u_values[
+                level._comparison_vector_value
+            ]
 
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the Comparison which is independent
