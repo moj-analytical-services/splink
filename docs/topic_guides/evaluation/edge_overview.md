@@ -2,7 +2,7 @@
 
 Once you have a trained model, you use it to generate edges (links) between entities (nodes). These edges will have a Match Weight and corresponding Probability.
 
-There are several strategies for checking whether the links in created in your pipeline perform as you want/expect.
+There are several strategies for checking whether the links created in your pipeline perform as you want/expect.
 
 ## Consider the Edge Metrics
 
