@@ -165,8 +165,8 @@ nav:
       - Evaluation:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
-        - Edges (Links):
-          - Overview: "topic_guides/evaluation/edges.md"
+        - Edges (Links): 
+          - Overview: "topic_guides/evaluation/edge_overview.md"
           - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
           - Clerical Labelling: "topic_guides/evaluation/labelling.md"
         - Clusters: "topic_guides/evaluation/clusters.md"

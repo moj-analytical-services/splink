@@ -40,9 +40,9 @@ These can be summarised in a Confusion Matrix
 
 In a perfect model there would be no False Positives or False Negatives (i.e. FP = 0 and FN = 0).
 
-??? info "Confusion Matrix in Splink:"
+??? info "Confusion Matrix in Splink"
 
-    - [confusion_matrix_from_labels_table](../../charts/confusion_matrix_from_labels_table.ipynb)
+    For a more in-depth guide on how to use the Splink Confusion Matrix, check out the `confusion_matrix_from_labels_table` [API documentation](../../linker.md#splink.linker.Linker.confusion_matrix_from_labels_table) and [Chart Gallery](../../charts/confusion_matrix_from_labels_table.ipynb).
 
 ## Metrics for Linkage
 
@@ -56,11 +56,11 @@ $$\textsf{Accuracy} = \frac{\textsf{True Positives}+\textsf{True Negatives}}{\te
 
 This measures the proportion of correct classifications (of any kind). This may be useful for balanced data but high accuracy can be achieved by simply assuming the majority class for highly imbalanced data (e.g. assuming non-matches).
 
-??? info "Accuracy in Splink:"
+??? info "Accuracy in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - Accuracy is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Accuracy can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 <hr>
 
@@ -69,33 +69,33 @@ This measures the proportion of correct classifications (of any kind). This may 
 
 ### True Positive Rate (Recall)
 
-Also known as: Sensitivity
+Also known as: **Sensitivity**
 
 The True Positve Rate (Recall) is the proportion of matches that are correctly predicted by Splink.
 
 $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
-??? info "Recall in Splink:"
+??? info "Recall in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
-    - [precision_recall_chart_from_labels_table](../../charts/precision_recall_chart_from_labels_table.ipynb)
-    - [estimate_probability_two_random_records_match](https://moj-analytical-services.github.io/splink/linker.html?h=recall#splink.linker.Linker.estimate_probability_two_random_records_match)()
+    - Recall is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Recall can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
+    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documantation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
+    - Recall is used to as part of estimating the probablility thay two random records match. This value is then used as a baseline to which all addtional evidence from features in your model is added to produce a final Splink score. For further information, checkout the [estimate_probability_two_random_records_match](https://moj-analytical-services.github.io/splink/linker.html?h=recall#splink.linker.Linker.estimate_probability_two_random_records_match) API Documentation and the Model Training Topic Guide (Coming soon).
 
 ### True Negative Rate (Specificity)
 
-Also known as: Selectivity
+Also known as: **Selectivity**
 
 The True Negative Rate (Specificity) is the proportion of non-matches that are correctly predicted by Splink.
 
 $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
 
-??? info "Specificity in Splink:"
+??? info "Specificity in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - Specificity is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Specificity can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 
 ### Positive Predictive Value (Precision)
@@ -104,12 +104,12 @@ The Positive Predictive Value (Precision), is the proportion of predicted matche
 
 $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
 
-??? info "Precision in Splink:"
+??? info "Precision in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
-    - [precision_recall_chart_from_labels_table](../../charts/precision_recall_chart_from_labels_table.ipynb)
+    - Precision is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Precision can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
+    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documantation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
 
 ### Negative Predictive Value
 
@@ -117,11 +117,11 @@ The Negative Predictive Value is the proportion of predicted non-matches which a
 
 $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{All Predicted Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
 
-??? info "Negative Predicitive Value in Splink:"
+??? info "Negative Predicitive Value in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - Negative Predictive Value is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Negative Predictive Value can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 
 !!! warning 
@@ -130,7 +130,7 @@ $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{Al
 
     **“Predicts cancer with 100% Precision”** - is true of a “model” that correctly identifies one known cancer patient, but misdiagnoses everyone else as cancer-free.
 
-    **“AI judge’s verdicts have Recall of 100%”** - is true for a power-mad AI judge that declares everyone guilty, which would be stoically described by civil servants as “sub-optimal”.
+    **“AI judge’s verdicts have Recall of 100%”** - is true for a power-mad AI judge that declares everyone guilty, regardless of any evidence to the contrary.
 
 ## Composite Metrics for Linkage
 
@@ -140,7 +140,7 @@ Any comparison of two records has a number of possible outcomes (True Positives,
 
 ### F Score
 
-The F-Score is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
+The [F-Score](https://en.wikipedia.org/wiki/F-score) is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
 
 $$F_{\beta} = \frac{(1 + \beta^2) \cdot \textsf{Precision} \cdot \textsf{Recall}}{\beta^2 \cdot \textsf{Precision} + \textsf{Recall}}$$
 
@@ -152,11 +152,11 @@ $$F_{1} = 2\left[\frac{1}{\textsf{Precision}}+\frac{1}{\textsf{Recall}}\right]^{
 
 Other popular versions of the F score are $F_{2}$ (Recall twice as important as Precision) and $F_{0.5}$ (Precision twice as important as Recall)
 
-??? info "F-Score in Splink:"
+??? info "F-Score in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - F-Score is a (non-default) output of `accuracy_chart_from_labels_table`. There is the option to include $F_{1}$, $F_{0.5}$ and $F_{2}$ scores. Check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - F-Scores ($F_{1}$, $F_{0.5}$ and $F_{2}$) can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 
 !!! warning
@@ -165,7 +165,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 
 ### P4 Score
 
-$P_{4}$ is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
+The [$P_{4}$ Score](https://en.wikipedia.org/wiki/P4-metric) is the harmonic mean of the 4 metrics that can be directly derived from the confusion matric:
 
 $$ 4\left[\frac{1}{\textsf{Recall}}+\frac{1}{\textsf{Specificity}}+\frac{1}{\textsf{Precision}}+\frac{1}{\textsf{Negative Predictive Value}}\right]^{-1} $$
 
@@ -173,23 +173,24 @@ This addresses one of the issues with the F-Score as it considers how well the m
 
 Note: all metrics are given equal weighting.
 
-??? info "$P_{4}$ in Splink:"
+??? info "$P_{4}$ in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    - $P_{4}$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - $P_{4}$ can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 ### Matthews Correlation Coefficient 
 
-The Matthews Correlation Coefficient ($\phi$) is a measure of how correlation between predictions and actual observations.
+The [Matthews Correlation Coefficient ($\phi$)](https://en.wikipedia.org/wiki/Phi_coefficient) is a measure of how correlation between predictions and actual observations.
 
 $$ \phi = \sqrt{\textsf{Recall} \cdot \textsf{Specificity} \cdot \textsf{Precision} \cdot \textsf{Negative Predictive Value}} - \sqrt{(1 - \textsf{Recall})(1 - \textsf{Specificity})(1 - \textsf{Precision})(1 - \textsf{Negative Predictive Value})} $$
 
-??? info "Matthews Correlation Coefficient ($\phi$) in Splink:"
+??? info "Matthews Correlation Coefficient ($\phi$) in Splink"
 
-    - [accuracy_chart_from_labels_table](../../charts/accuracy_chart_from_labels_table.ipynb)
-    - [truth_space_table_from_labels_column](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
-    - [truth_space_table_from_labels_table](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table)
+    
+    - $\phi$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - $\phi$ can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 !!! note
 
