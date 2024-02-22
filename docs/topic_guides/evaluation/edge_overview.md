@@ -19,7 +19,7 @@ For a summary of all the edge metrics available in Splink, check out the [Edge M
 
 ## Spot Checking pairs of records
 
-Spot Checking real examples of record pairs is helpful for  confidence in linkage results. It is an effective way to build up an intuition for how the model works in practice and allows you to interrogate edge cases.
+Spot Checking real examples of record pairs is helpful for confidence in linkage results. It is an effective way to build intuition for how the model works in practice and allows you to interrogate edge cases.
 
 Results of individual record pairs can be examined with the [Waterfall Chart](../../charts/waterfall_chart.ipynb).
 
