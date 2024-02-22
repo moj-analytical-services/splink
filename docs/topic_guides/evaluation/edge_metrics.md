@@ -140,7 +140,7 @@ Any comparison of two records has a number of possible outcomes (True Positives,
 
 ### F Score
 
-The [F-Score](https://en.wikipedia.org/wiki/F-score) is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a a general weight $\beta$:
+The [F-Score](https://en.wikipedia.org/wiki/F-score) is a weighted harmonic mean of Precision (Positive Predictive Value) and Recall (True Positive Rate). For a general weight $\beta$:
 
 $$F_{\beta} = \frac{(1 + \beta^2) \cdot \textsf{Precision} \cdot \textsf{Recall}}{\beta^2 \cdot \textsf{Precision} + \textsf{Recall}}$$
 
