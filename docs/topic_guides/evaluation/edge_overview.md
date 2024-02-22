@@ -23,7 +23,7 @@ Spot Checking real examples of record pairs is helpful for confidence in linkage
 
 Results of individual record pairs can be examined with the [Waterfall Chart](../../charts/waterfall_chart.ipynb).
 
-Choosing which the pairs of records to spot check can be done by either:
+Choosing which pairs of records to spot check can be done by either:
 
 - Looking at all combinations of comparison levels and choosing which to examine in the [Comparison Viewer Dashboard](../../charts/comparison_viewer_dashboard.ipynb).
 - Identifying and examining records which have been [incorrectly predicted by your Splink model](../../demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb).
