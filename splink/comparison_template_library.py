@@ -36,13 +36,13 @@ class DateComparison(ComparisonCreator):
         self,
         col_name: Union[str, ColumnExpression],
         *,
+        datetime_thresholds: Union[int, float, List[Union[int, float]]],
+        datetime_metrics: Union[DateMetricType, List[DateMetricType]],
         datetime_format: str = None,
         invalid_dates_as_null: bool = False,
         include_exact_match_level: bool = True,
         input_is_string: bool = True,
         separate_1st_january: bool = False,
-        datetime_thresholds: Union[int, float, List[Union[int, float]]],
-        datetime_metrics: Union[DateMetricType, List[DateMetricType]],
     ):
 
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
