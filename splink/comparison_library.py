@@ -531,6 +531,7 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
                     input_is_string=self.input_is_string,
                     threshold=time_threshold,
                     metric=time_metric,
+                    datetime_format=self.datetime_format,
                 )
                 for (time_threshold, time_metric) in zip(
                     self.time_thresholds, self.time_metrics

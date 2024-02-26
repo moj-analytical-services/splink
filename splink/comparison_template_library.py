@@ -41,7 +41,7 @@ class DateComparison(ComparisonCreator):
         datetime_format: str = None,
         invalid_dates_as_null: bool = False,
         include_exact_match_level: bool = True,
-        input_is_string: bool = True,
+        input_is_string: bool = False,
         separate_1st_january: bool = False,
     ):
 
@@ -74,16 +74,9 @@ class DateComparison(ComparisonCreator):
 
     @property
     def datetime_parse_function(self):
-        return self.col_expression.try_parse_timestamp
+        return self.col_expression.try_parse_date
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-
-        if self.input_is_string:
-            col_expr_as_string = self.col_expression
-            col_expr_as_date = self.datetime_parse_function(self.datetime_format)
-        else:
-            col_expr_as_string = self.col_expression.cast_to_string()
-            col_expr_as_date = self.col_expression
 
         if self.invalid_dates_as_null:
             null_col = self.datetime_parse_function(self.datetime_format)
@@ -93,12 +86,20 @@ class DateComparison(ComparisonCreator):
         levels = [
             cll.NullLevel(null_col),
         ]
+
         if self.separate_1st_january:
+            # Ensure date in isoformat:
+            if self.input_is_string:
+                date_as_iso_string = self.datetime_parse_function(
+                    self.datetime_format
+                ).cast_to_string()
+            else:
+                date_as_iso_string = self.col_expression.cast_to_string()
+
             levels.append(
-                # TODO: surely this depends on date format
                 cll.And(
                     cll.LiteralMatchLevel(
-                        col_expr_as_string.substr(6, 5),
+                        date_as_iso_string.substr(6, 5),
                         literal_value="01-01",
                         literal_datatype="string",
                         side_of_comparison="left",
@@ -109,6 +110,11 @@ class DateComparison(ComparisonCreator):
         if self.exact_match:
             levels.append(cll.ExactMatchLevel(self.col_expression))
 
+        if self.input_is_string:
+            col_expr_as_string = self.col_expression
+        else:
+            col_expr_as_string = self.col_expression.cast_to_string()
+
         levels.append(
             cll.DamerauLevenshteinLevel(col_expr_as_string, distance_threshold=1)
         )
@@ -118,11 +124,11 @@ class DateComparison(ComparisonCreator):
                 self.datetime_thresholds, self.datetime_metrics
             ):
                 levels.append(
-                    cll.AbsoluteTimeDifferenceLevel(
-                        col_expr_as_date,
+                    cll.AbsoluteDateDifferenceLevel(
+                        self.col_expression,
                         threshold=threshold,
                         metric=metric,
-                        input_is_string=False,
+                        input_is_string=self.input_is_string,
                     )
                 )
 
