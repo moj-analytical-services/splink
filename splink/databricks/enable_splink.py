@@ -41,10 +41,10 @@ def enable_splink(spark):
             NoVersionModule.simpleString(),
             optionModule.apply(None),
             optionModule.apply(None),
-            optionModule.apply(None)
+            optionModule.apply(None),
         )
     except Exception as e:
-        logger.warn('failed to initialize for 14.x+', e)
+        logger.warn("failed to initialize for 14.x+", e)
         try:
             # This will fix the exception when running on Databricks Runtime 13.x
             lib = JavaJarId(
@@ -52,16 +52,16 @@ def enable_splink(spark):
                 ManagedLibraryId.defaultOrganization(),
                 NoVersionModule.simpleString(),
                 optionModule.apply(None),
-                optionModule.apply(None)
+                optionModule.apply(None),
             )
         except Exception as ex:
-            logger.warn('failed to initialize for 13.x', ex)
+            logger.warn("failed to initialize for 13.x", ex)
 
             # This will work for < 13.x
             lib = JavaJarId(
                 JarURI,
                 ManagedLibraryId.defaultOrganization(),
-                NoVersionModule.simpleString()
+                NoVersionModule.simpleString(),
             )
 
     libSeq = converters.asScalaBufferConverter((lib,)).asScala().toSeq()
