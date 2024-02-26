@@ -144,13 +144,23 @@ class DateComparison(ComparisonCreator):
         return levels
 
     def create_description(self) -> str:
-        comparison_desc = ""
+
+        comparison_desc = "Exact match "
+        if self.separate_1st_january:
+            comparison_desc += "(with separate 1st Jan) "
+        comparison_desc += "vs. "
+
+        if self.use_damerau_levenshtein:
+            comparison_desc += "Damerau-Levenshtein distance <= 1 vs. "
+        else:
+            comparison_desc += "Levenshtein distance <= 1 vs. "
+
+        for threshold, metric in zip(self.datetime_thresholds, self.datetime_metrics):
+            comparison_desc += f"{metric} difference <= {threshold} vs. "
+
+        comparison_desc += "anything else"
+
         return comparison_desc
-        # if self.exact_match:
-        #     comparison_desc += "Exact match "
-        #     if self.separate_1st_january:
-        #         comparison_desc += "(with separate 1st Jan) "
-        #     comparison_desc += "vs. "
 
         # if self.fuzzy_thresholds:
         #     comma_separated_thresholds_string = ", ".join(
@@ -174,9 +184,6 @@ class DateComparison(ComparisonCreator):
         #         f"dates within the following threshold{plural} "
         #         f"{datediff_separated_thresholds_string} vs. "
         #     )
-
-        # comparison_desc += "anything else"
-        # return comparison_desc
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
