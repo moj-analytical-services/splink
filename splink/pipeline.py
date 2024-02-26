@@ -91,5 +91,9 @@ class SQLPipeline:
         queued_tables = [pipe.output_table_name for pipe in self._pipeline.queue]
         return table in queued_tables
 
+    @property
+    def output_table_name(self):
+        return self.queue[-1].output_table_name
+
     def reset(self):
         self.queue = []

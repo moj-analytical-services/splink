@@ -66,10 +66,11 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
-    settings_obj._training_mode = True
+    settings_obj.training_settings.training_mode = True
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """

@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
+from .pipeline import SQLPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,9 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
+def profile_columns(
+    table_or_tables, db_api, column_expressions=None, top_n=10, bottom_n=10
+):
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 
@@ -231,40 +234,62 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
             values to display in the respective charts.
     """
 
+    tables = ensure_is_list(table_or_tables)
+
+    tables = db_api.process_input_tables(tables)
+    # TODO: is this sensible?:
+    input_aliases = [f"__splink__profile_data_{idx}" for idx, _ in enumerate(tables)]
+    splink_df_dict = db_api.register_multiple_tables(
+        tables, input_aliases, overwrite=True
+    )
+    input_dataframes = list(splink_df_dict.values())
+    input_columns = input_dataframes[0].columns_escaped
+
     if not column_expressions:
-        column_expressions = [col.name for col in linker._input_columns()]
-
-    df_concat = linker._initialise_df_concat()
-
-    input_dataframes = []
-    if df_concat:
-        input_dataframes.append(df_concat)
-
-    column_expressions_raw = ensure_is_list(column_expressions)
+        column_expressions_raw = input_columns
+    else:
+        column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
+
+    pipeline = SQLPipeline()
+
+    cols_to_select = ", ".join(input_columns)
+    template = """
+    select {cols_to_select}
+    from {table_name}
+    """
+
+    sql_df_concat = " UNION ALL".join(
+        [
+            template.format(cols_to_select=cols_to_select, table_name=table_name)
+            for table_name in input_aliases
+        ]
+    )
+
+    pipeline.enqueue_sql(sql_df_concat, "__splink__df_concat")
 
     sql = _col_or_expr_frequencies_raw_data_sql(
         column_expressions_raw, "__splink__df_concat"
     )
 
-    linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(input_dataframes)
+    pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
+    df_raw = db_api._execute_sql_pipeline(pipeline, input_dataframes)
 
     sqls = _get_df_percentiles()
     for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = linker._execute_sql_pipeline([df_raw])
+    df_percentiles = db_api._execute_sql_pipeline(pipeline, [df_raw])
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
-    linker._enqueue_sql(sql, "__splink__df_top_n")
-    df_top_n = linker._execute_sql_pipeline([df_raw])
+    pipeline.enqueue_sql(sql, "__splink__df_top_n")
+    df_top_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
-    linker._enqueue_sql(sql, "__splink__df_bottom_n")
-    df_bottom_n = linker._execute_sql_pipeline([df_raw])
+    pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
+    df_bottom_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []

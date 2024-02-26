@@ -6,9 +6,11 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
+from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -17,6 +19,10 @@ from .linker_utils import (
     _test_write_functionality,
     register_roc_data,
 )
+
+simple_settings = {
+    "link_type": "dedupe_only",
+}
 
 
 @mark_with_dialects_including("duckdb")
@@ -27,30 +33,33 @@ def test_full_example_duckdb(tmp_path):
 
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
-    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][1] = cl.JaccardAtThresholds("SUR name")
 
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+    linker = Linker(
         df,
-        connection=os.path.join(tmp_path, "duckdb.db"),
-        output_schema="splink_in_duckdb",
+        settings=settings_dict,
+        database_api=db_api,
+        # output_schema="splink_in_duckdb",
     )
-    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"SUR name"',
             'first_name || "SUR name"',
             "concat(city, first_name)",
-        ]
+        ],
     )
     linker.missingness_chart()
     linker.compute_tf_table("city")
@@ -115,11 +124,10 @@ def test_full_example_duckdb(tmp_path):
     path = os.path.join(tmp_path, "model.json")
     linker.save_model_to_json(path)
 
-    linker_2 = DuckDBLinker(df)
-    linker_2.load_model(path)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
-    DuckDBLinker(df, settings_dict=path)
+    db_api = DuckDBAPI()
+    linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
+
+    linker_2 = Linker(df, database_api=db_api, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -167,10 +175,8 @@ def test_link_only(input, source_l, source_r):
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
 
-    linker = DuckDBLinker(
-        input,
-        settings,
-    )
+    db_api = DuckDBAPI()
+    linker = Linker(input, settings, database_api=db_api)
     df_predict = linker.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -210,18 +216,22 @@ def test_link_only(input, source_l, source_r):
 def test_duckdb_load_from_file(df):
     settings = get_settings_dict()
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         df,
         settings,
+        database_api=db_api,
     )
 
     assert len(linker.predict().as_pandas_dataframe()) == 3167
 
     settings["link_type"] = "link_only"
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df, df],
         settings,
+        database_api=db_api,
         input_table_aliases=["testing1", "testing2"],
     )
 
@@ -244,14 +254,16 @@ def test_duckdb_arrow_array():
     # {"uid": 1, "a": ['james', 'john'], "b": 1},
     #     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         array_data,
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
-            "comparisons": [cl.exact_match("b")],
+            "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
+        database_api=db_api,
     )
     df = linker.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
@@ -265,12 +277,13 @@ def test_cast_error():
     data = {"id": range(0, len(forenames)), "forename": forenames}
     df = pd.DataFrame(data)
 
+    db_api = DuckDBAPI()
     with pytest.raises(InvalidInputException):
-        DuckDBLinker(df)
+        Linker(df, settings=simple_settings, database_api=db_api)
 
     # convert to pyarrow table
     df = pa.Table.from_pandas(df)
-    DuckDBLinker(df)
+    Linker(df, settings=simple_settings, database_api=db_api)
 
 
 @mark_with_dialects_including("duckdb")
@@ -288,28 +301,31 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_pattern=".*"),
-                    cll.exact_match_level("full_name", term_frequency_adjustments=True),
-                    cll.columns_reversed_level(
-                        "first_name", "surname", tf_adjustment_column="full_name"
+                    cll.NullLevel("full_name", valid_string_pattern=".*"),
+                    cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
+                    cll.ColumnsReversedLevel("first_name", "surname").configure(
+                        tf_adjustment_column="full_name"
                     ),
-                    cll.exact_match_level(
-                        "first_name", term_frequency_adjustments=True
-                    ),
-                    cll.else_level(),
+                    cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
+                    cll.ElseLevel(),
                 ],
             },
-            cl.damerau_levenshtein_at_thresholds(
-                "dob", 2, term_frequency_adjustments=True
+            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
+                term_frequency_adjustments=True
             ),
-            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.JaroWinklerAtThresholds("city", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"

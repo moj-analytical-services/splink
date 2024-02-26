@@ -1,384 +1,188 @@
-import logging
+from datetime import datetime
 
-import pandas as pd
 import pytest
 
-from splink import exceptions
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+from splink.column_expression import ColumnExpression
+from tests.decorator import mark_with_dialects_excluding, mark_with_dialects_including
+from tests.literal_utils import (
+    ComparisonLevelTestSpec,
+    ComparisonTestSpec,
+    LiteralTestValues,
+    run_tests_with_args,
+)
 
-from .decorator import mark_with_dialects_excluding
 
-
-# No SQLite - no array comparisons in library
 @mark_with_dialects_excluding("sqlite")
-def test_datediff_levels(test_helpers, dialect):
+def test_absolute_time_difference_levels_date(test_helpers, dialect):
+    # Check it's fine to pass a date into this function
     helper = test_helpers[dialect]
-    cl = helper.cl
-    cll = helper.cll
+    db_api = helper.extra_linker_args()["database_api"]
 
-    # Capture differing comparison levels to allow unique settings generation
-    df = pd.DataFrame(
-        [
-            {
-                "unique_id": 1,
-                "first_name": "Tom",
-                "dob": "2000-01-01",
-            },
-            {
-                "unique_id": 2,
-                "first_name": "Robin",
-                "dob": "2000-01-30",
-            },
-            {
-                "unique_id": 3,
-                "first_name": "Zoe",
-                "dob": "1995-09-30",
-            },
-            {
-                "unique_id": 4,
-                "first_name": "Sam",
-                "dob": "1966-07-30",
-            },
-            {
-                "unique_id": 5,
-                "first_name": "Andy",
-                "dob": "1996-03-25",
-            },
-            {
-                "unique_id": 6,
-                "first_name": "Alice",
-                "dob": "2000-03-25",
-            },
-            {
-                "unique_id": 7,
-                "first_name": "Afua",
-                "dob": "1960-01-01",
-            },
-        ]
+    col_exp = ColumnExpression("dob").try_parse_date()
+    test_spec = ComparisonLevelTestSpec(
+        cll.AbsoluteTimeDifferenceLevel,
+        default_keyword_args={
+            "metric": "day",
+            "col_name": col_exp,
+        },
+        tests=[
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 30},
+                expected_in_level=True,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 26},
+                expected_in_level=False,
+            ),
+        ],
     )
-    df = helper.convert_frame(df)
-
-    exact_match_fn = cl.exact_match("first_name")
-
-    # For testing the cll version
-    dob_diff = {
-        "output_column_name": "dob",
-        "comparison_levels": [
-            cll.null_level("dob"),
-            cll.exact_match_level("dob"),
-            cll.datediff_level(
-                date_col="dob",
-                date_threshold=30,
-                date_metric="day",
-                cast_strings_to_date=True,
-            ),
-            cll.datediff_level(
-                date_col="dob",
-                date_threshold=12,
-                date_metric="month",
-                cast_strings_to_date=True,
-            ),
-            cll.datediff_level(
-                date_col="dob",
-                date_threshold=5,
-                date_metric="year",
-                cast_strings_to_date=True,
-            ),
-            cll.datediff_level(
-                date_col="dob",
-                date_threshold=100,
-                date_metric="year",
-                cast_strings_to_date=True,
-            ),
-            cll.else_level(),
-        ],
-    }
-
-    settings_cll = {
-        "link_type": "dedupe_only",
-        "comparisons": [exact_match_fn, dob_diff],
-    }
-
-    settings_cl = {
-        "link_type": "dedupe_only",
-        "comparisons": [
-            exact_match_fn,
-            cl.datediff_at_thresholds(
-                "dob",
-                [30, 12, 5, 100],
-                ["day", "month", "year", "year"],
-                cast_strings_to_date=True,
-            ),
-        ],
-    }
-
-    # We need to put our column in datetime format for this to work
-    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
-    cl_df_e = linker.predict().as_pandas_dataframe()
-    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
-    cll_df_e = linker.predict().as_pandas_dataframe()
-
-    linker_outputs = {
-        "cl": cl_df_e,
-        "cll": cll_df_e,
-    }
-
-    # # Dict key: {size: gamma_level value}
-    size_gamma_lookup = {1: 11, 2: 6, 3: 3, 4: 1}
-
-    # Check gamma sizes are as expected
-    for gamma, gamma_lookup in size_gamma_lookup.items():
-        for linker_pred in linker_outputs.values():
-            assert sum(linker_pred["gamma_dob"] == gamma) == gamma_lookup
-
-    # Check individual IDs are assigned to the correct gamma values
-    # Dict key: {gamma_value: tuple of ID pairs}
-    gamma_lookup = {
-        4: [(1, 2)],
-        3: [(3, 5), (1, 6), (2, 6)],
-        2: [(1, 3), (2, 3), (1, 5), (2, 5), (3, 6), (5, 6)],
-    }
-
-    for gamma, id_pairs in gamma_lookup.items():
-        for left, right in id_pairs:
-            assert (
-                linker_pred.loc[
-                    (linker_pred.unique_id_l == left)
-                    & (linker_pred.unique_id_r == right)
-                ]["gamma_dob"].values[0]
-                == gamma
-            )
+    run_tests_with_args(test_spec, db_api)
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_datediff_error_logger(test_helpers, dialect):
+def test_absolute_date_difference_levels_date(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cl = helper.cl
+    db_api = helper.extra_linker_args()["database_api"]
+
+    col_exp = ColumnExpression("dob").try_parse_date()
+    test_spec = ComparisonLevelTestSpec(
+        cll.AbsoluteDateDifferenceLevel,
+        default_keyword_args={
+            "metric": "day",
+            "col_name": col_exp,
+        },
+        tests=[
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 30},
+                expected_in_level=True,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-28"},
+                keyword_arg_overrides={"threshold": 26},
+                expected_in_level=False,
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_absolute_time_difference_levels_no_parse(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonLevelTestSpec(
+        cll.AbsoluteTimeDifferenceLevel,
+        default_keyword_args={
+            "metric": "second",
+            "col_name": "dob",
+        },
+        tests=[
+            LiteralTestValues(
+                {
+                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
+                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
+                },
+                keyword_arg_overrides={"threshold": 61},
+                expected_in_level=True,
+            ),
+            LiteralTestValues(
+                {
+                    "dob_l": datetime(2023, 2, 7, 14, 45, 0),
+                    "dob_r": datetime(2023, 2, 7, 14, 46, 0),
+                },
+                keyword_arg_overrides={"threshold": 59},
+                expected_in_level=False,
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonTestSpec(
+        cl.AbsoluteDateDifferenceAtThresholds(
+            "dob",
+            thresholds=[1, 2],
+            metrics=["day", "month"],
+            cast_strings_to_datetimes=True,
+        ),
+        tests=[
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2020-01-01"},
+                expected_gamma_val=0,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-01-01", "dob_r": "2000-01-15"},
+                expected_gamma_val=1,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000-ab-cd", "dob_r": "2000-01-28"},
+                expected_gamma_val=-1,
+            ),
+        ],
+    )
+
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_alternative_date_format(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonTestSpec(
+        cl.AbsoluteDateDifferenceAtThresholds(
+            "dob",
+            thresholds=[1, 2],
+            metrics=["day", "month"],
+            cast_strings_to_datetimes=True,
+            datetime_format="%Y/%m/%d",
+        ),
+        tests=[
+            LiteralTestValues(
+                values={"dob_l": "2000/01/01", "dob_r": "2020/01/01"},
+                expected_gamma_val=0,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000/01/01", "dob_r": "2000/01/15"},
+                expected_gamma_val=1,
+            ),
+            LiteralTestValues(
+                values={"dob_l": "2000/ab/cd", "dob_r": "2000/01/28"},
+                expected_gamma_val=-1,
+            ),
+        ],
+    )
+
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_time_difference_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])
+        cl.AbsoluteDateDifferenceAtThresholds(
+            "dob", thresholds=[1], metrics=["day", "month", "year", "year"]
+        )
     # Negative threshold
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [-1], ["day"])
+        cl.AbsoluteDateDifferenceAtThresholds("dob", thresholds=[-1], metrics=["day"])
     # Invalid metric
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], ["dy"])
+        cl.AbsoluteDateDifferenceAtThresholds("dob", thresholds=[1], metrics=["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [], ["dy"])
+        cl.AbsoluteDateDifferenceAtThresholds("dob", thresholds=[], metrics=["dy"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        cl.datediff_at_thresholds("dob", [1], [])
-
-
-@mark_with_dialects_excluding("sqlite", "postgres")
-def test_datediff_with_str_casting(test_helpers, dialect, caplog):
-    caplog.set_level(logging.INFO)
-    helper = test_helpers[dialect]
-    cl = helper.cl
-    cll = helper.cll
-
-    def simple_dob_linker(
-        df,
-        dobs=[],
-        date_format_param=None,
-        invalid_dates_as_null=False,
-    ):
-        settings_cl = {
-            "link_type": "dedupe_only",
-            "comparisons": [
-                cl.exact_match("first_name"),
-                cl.datediff_at_thresholds(
-                    "dob",
-                    [30, 12, 5, 100],
-                    ["day", "month", "year", "year"],
-                    cast_strings_to_date=True,
-                    date_format=date_format_param,
-                    invalid_dates_as_null=invalid_dates_as_null,
-                ),
-            ],
-        }
-        # For testing the cll version
-        if invalid_dates_as_null:
-            null_level_regex = date_format_param
-        else:
-            null_level_regex = None
-
-        dob_diff = {
-            "output_column_name": "dob",
-            "comparison_levels": [
-                cll.null_level(
-                    "dob",
-                    valid_string_pattern=null_level_regex,
-                    invalid_dates_as_null=invalid_dates_as_null,
-                ),
-                cll.exact_match_level("dob"),
-                cll.datediff_level(
-                    date_col="dob",
-                    date_threshold=30,
-                    date_metric="day",
-                    cast_strings_to_date=True,
-                    date_format=date_format_param,
-                ),
-                cll.datediff_level(
-                    date_col="dob",
-                    date_threshold=12,
-                    date_metric="month",
-                    cast_strings_to_date=True,
-                    date_format=date_format_param,
-                ),
-                cll.datediff_level(
-                    date_col="dob",
-                    date_threshold=5,
-                    date_metric="year",
-                    cast_strings_to_date=True,
-                    date_format=date_format_param,
-                ),
-                cll.datediff_level(
-                    date_col="dob",
-                    date_threshold=100,
-                    date_metric="year",
-                    cast_strings_to_date=True,
-                    date_format=date_format_param,
-                ),
-                cll.else_level(),
-            ],
-        }
-
-        settings = {
-            "link_type": "dedupe_only",
-            "comparisons": [cl.exact_match("first_name"), dob_diff],
-        }
-        if len(dobs) == df.shape[0]:
-            df["dob"] = dobs
-
-        df = helper.convert_frame(df)
-        linker = helper.Linker(df, settings, **helper.extra_linker_args())
-        df_e1 = linker.predict().as_pandas_dataframe()
-
-        linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
-        df_e2 = linker.predict().as_pandas_dataframe()
-        return df_e1, df_e2
-
-    df = pd.DataFrame(
-        [
-            {
-                "unique_id": 1,
-                "first_name": "Tom",
-                "dob": "02-03-1993",
-            },
-            {
-                "unique_id": 2,
-                "first_name": "Robin",
-                "dob": "30-01-1992",
-            },
-        ]
-    )
-
-    if dialect in ("spark", "postgres"):
-        expected_bad_dates_error = exceptions.SplinkException
-        valid_date_formats = ["d/M/y", "d-M-y", "M/d/y", "y/M/d", "y-M-d"]
-    elif dialect == "duckdb":
-        expected_bad_dates_error = exceptions.SplinkException
-        valid_date_formats = [
-            "%d/%m/%Y",
-            "%d-%m-%Y",
-            "%m/%d/%Y",
-            "%Y/%m/%d",
-            "%Y-%m-%d",
-        ]
-
-    # first test some dates which should work
-    simple_dob_linker(
-        df,
-        dobs=["03/04/1994", "19/02/1993"],
-        date_format_param=valid_date_formats[0],
-    )
-    simple_dob_linker(
-        df,
-        dobs=["03-04-1994", "19-02-1993"],
-        date_format_param=valid_date_formats[1],
-    )
-    simple_dob_linker(
-        df,
-        dobs=["04/05/1994", "10/02/1993"],
-        date_format_param=valid_date_formats[2],
-    )
-    simple_dob_linker(
-        df,
-        dobs=["1994/05/04", "1993/05/02"],
-        date_format_param=valid_date_formats[3],
-    )
-    simple_dob_linker(
-        df,
-        dobs=["1994-05-04", "1993-05-02"],
-        date_format_param=valid_date_formats[4],
-    )
-    # test the default date formats
-    simple_dob_linker(
-        df,
-        dobs=["1994-05-04", "1993-05-02"],
-        date_format_param=None,
-    )
-
-    # now test some bad dates with DuckDB which you
-    # expect to throw error. Don't run these tests with
-    # Spark as does not throw error
-    # in response to badly formatted dates
-    if dialect == "duckdb":
-        # Then test some bad dates
-        # bad date type 1:
-        with pytest.raises(expected_bad_dates_error):
-            simple_dob_linker(
-                df,
-                dobs=["1994-05-04", "1993-14-02"],
-                date_format_param=None,
-            )
-
-        with pytest.raises(expected_bad_dates_error):
-            simple_dob_linker(
-                df,
-                dobs=["1994/05/04", "1993/14/02"],
-                date_format_param=valid_date_formats[3],
-            )
-
-        # bad date type 2:
-        with pytest.raises(expected_bad_dates_error):
-            simple_dob_linker(
-                df,
-                dobs=["03-14-1994", "19-22-1993"],
-                date_format_param=valid_date_formats[1],
-            )
-
-        # mis-match between date formats:
-        with pytest.raises(expected_bad_dates_error):
-            simple_dob_linker(
-                df,
-                dobs=["03-14-1994", "19/22/1993"],
-                date_format_param=valid_date_formats[1],
-            )
-
-        # mis-match between input dates and expected date format
-        with pytest.raises(expected_bad_dates_error):
-            simple_dob_linker(
-                df,
-                dobs=["20-04-1993", "19-02-1993"],
-                date_format_param=valid_date_formats[3],
-            )
-
-    # Test some incorrectly formatted dates with the
-    # invalid_dates_as_null parameter
-    # invalid date (month > 12)
-    simple_dob_linker(
-        df,
-        dobs=["03-14-1994", "19-12-1993"],
-        date_format_param=valid_date_formats[1],
-        invalid_dates_as_null=True,
-    )
-
-    # mis-match between input dates and expected date format
-    simple_dob_linker(
-        df,
-        dobs=["20/04/1993", "19-02-1993"],
-        date_format_param=valid_date_formats[3],
-        invalid_dates_as_null=True,
-    )
+        cl.AbsoluteDateDifferenceAtThresholds("dob", thresholds=[1], metrics=[])

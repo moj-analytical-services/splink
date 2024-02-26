@@ -20,7 +20,8 @@ def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     settings_obj = linker._settings_obj
 
     where_condition = _sql_gen_where_condition(
-        settings_obj._link_type, settings_obj._unique_id_input_columns
+        settings_obj._link_type,
+        settings_obj.column_info_settings.unique_id_input_columns,
     )
 
     sql = f"""
@@ -45,19 +46,20 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker = deepcopy(linker)
 
     settings_obj = linker._settings_obj
-    linker._settings_obj_ = settings_obj
+    linker._settings_obj = settings_obj
     linker._analyse_blocking_mode = True
 
     if blocking_rules:
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
-        linker._settings_obj_._blocking_rules_to_generate_predictions = brs_as_objs
+        linker._settings_obj._blocking_rules_to_generate_predictions = brs_as_objs
 
     # Turn tf off.  No need to apply term frequencies to perform these calcs
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     concat = linker._initialise_df_concat(materialise=True)
 
@@ -87,7 +89,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     for sql_info in sql_infos:
         linker._enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
 
-    brs_as_objs = linker._settings_obj_._blocking_rules_to_generate_predictions
+    brs_as_objs = linker._settings_obj._blocking_rules_to_generate_predictions
 
     sql = """
         select

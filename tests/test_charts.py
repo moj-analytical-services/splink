@@ -1,7 +1,8 @@
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 # ground truth:
 # true matches ALWAYS match on gender
@@ -121,12 +122,14 @@ def test_m_u_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.exact_match("tm_partial"),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.ExactMatch("tm_partial"),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
@@ -147,12 +150,14 @@ def test_parameter_estimate_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.levenshtein_at_thresholds("first_name", [1]),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.LevenshteinAtThresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
@@ -183,11 +188,13 @@ def test_parameter_estimate_charts():
         "link_type": "dedupe_only",
         "comparisons": [
             # no observations of levenshtein == 1 in this data
-            cl.levenshtein_at_thresholds("gender", [1]),
-            cl.levenshtein_at_thresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("gender", [1]),
+            cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     linker.estimate_u_using_random_sampling(1e6)
 
     linker.parameter_estimate_comparisons_chart()

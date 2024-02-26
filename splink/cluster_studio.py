@@ -108,7 +108,7 @@ def create_df_nodes(
 def _edges_sql(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
-    unique_id_cols = linker._settings_obj._unique_id_input_columns
+    unique_id_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     nodes_l_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols, "nodes_l")
     nodes_r_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols, "nodes_r")
@@ -190,11 +190,12 @@ def _get_random_cluster_ids(
 def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
 ):
+    unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
     sql = f"""
     select
         cluster_id,
         count(*) as cluster_size,
-        max({linker._settings_obj._unique_id_column_name}) as ordering
+        max({unique_id_col_name}) as ordering
     from {connected_components.physical_name}
     group by cluster_id
     having count(*)>1

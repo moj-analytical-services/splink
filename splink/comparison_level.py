@@ -13,7 +13,6 @@ from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
 from .constants import LEVEL_NOT_OBSERVED_TEXT
-from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import (
     dedupe_preserving_order,
@@ -132,35 +131,40 @@ class ComparisonLevel:
     │    ├─-- ComparisonLevel: All other
     ├─-- etc.
     ```
+
+    ComparisonLevel is a dialected object.
     """
 
     def __init__(
         self,
-        level_dict,
+        sql_condition: str,
+        # TODO: do we want dialect or just dialect name?
+        sqlglot_dialect_name: str,
+        *,
+        label_for_charts: str = None,
+        is_null_level: bool = False,
+        tf_adjustment_column: str = None,
+        tf_adjustment_weight: float = 1.0,
+        tf_minimum_u_value: float = 0.0,
+        m_probability: float = None,
+        u_probability: float = None,
         comparison: Comparison = None,
-        sql_dialect: str = None,
     ):
-        # Protected, because we don't want to modify the original dict
-        self._level_dict = level_dict
-
         self.comparison: Comparison = comparison
-        if not hasattr(self, "_sql_dialect"):
-            self._sql_dialect = sql_dialect
+        self._sqlglot_dialect_name = sqlglot_dialect_name
 
-        self._sql_condition = self._level_dict["sql_condition"]
-        self._is_null_level = self._level_dict_val_else_default("is_null_level")
-        self._tf_adjustment_weight = self._level_dict_val_else_default(
-            "tf_adjustment_weight"
-        )
+        self._sql_condition = sql_condition
+        self._is_null_level = is_null_level
+        self._label_for_charts = label_for_charts
 
-        self._tf_minimum_u_value = self._level_dict_val_else_default(
-            "tf_minimum_u_value"
-        )
+        self._tf_adjustment_column = tf_adjustment_column
+        self._tf_adjustment_weight = tf_adjustment_weight
+        self._tf_minimum_u_value = tf_minimum_u_value
 
-        # Private values controlled with getter/setter
-        self._m_probability = self._level_dict.get("m_probability")
-        self._u_probability = self._level_dict.get("u_probability")
+        self._m_probability = m_probability
+        self._u_probability = u_probability
 
+        # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
         self._comparison_vector_value: int = None
         self._max_level: bool = None
@@ -176,7 +180,8 @@ class ComparisonLevel:
 
     @property
     def sql_dialect(self):
-        return self._sql_dialect
+        # TODO: align name with attribute
+        return self._sqlglot_dialect_name
 
     @property
     def is_null_level(self) -> bool:
@@ -186,15 +191,9 @@ class ComparisonLevel:
     def sql_condition(self) -> str:
         return self._sql_condition
 
-    def _level_dict_val_else_default(self, key):
-        val = self._level_dict.get(key)
-        if not val:
-            val = default_value_from_schema(key, "comparison_level")
-        return val
-
     @property
     def _tf_adjustment_input_column(self):
-        val = self._level_dict_val_else_default("tf_adjustment_column")
+        val = self._tf_adjustment_column
         if val:
             return InputColumn(val, sql_dialect=self.sql_dialect)
         else:
@@ -228,7 +227,7 @@ class ComparisonLevel:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison._output_column_name
+            cc_n = self.comparison.output_column_name
             cl_n = self.label_for_charts
             if not self._m_warning_sent:
                 logger.warning(
@@ -256,7 +255,7 @@ class ComparisonLevel:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
-            cc_n = self.comparison._output_column_name
+            cc_n = self.comparison.output_column_name
             cl_n = self.label_for_charts
             if not self._u_warning_sent:
                 logger.warning(
@@ -391,9 +390,7 @@ class ComparisonLevel:
 
     @property
     def label_for_charts(self):
-        return self._level_dict.get(
-            "label_for_charts", str(self._comparison_vector_value)
-        )
+        return self._label_for_charts or str(self._comparison_vector_value)
 
     @property
     def _label_for_charts_no_duplicates(self):
@@ -407,7 +404,7 @@ class ComparisonLevel:
 
         # Make label unique
         cvv = str(self._comparison_vector_value)
-        label = self._level_dict["label_for_charts"]
+        label = self.label_for_charts
         return f"{cvv}. {label}"
 
     @property
@@ -417,7 +414,7 @@ class ComparisonLevel:
 
     @property
     def _has_tf_adjustments(self):
-        col = self._level_dict.get("tf_adjustment_column")
+        col = self._tf_adjustment_column
         return col is not None
 
     def _validate_sql(self):
@@ -631,7 +628,7 @@ class ComparisonLevel:
 
         output["sql_condition"] = self.sql_condition
 
-        if self._level_dict.get("label_for_charts"):
+        if self.label_for_charts:
             output["label_for_charts"] = self.label_for_charts
 
         if self._m_probability and self._m_is_trained:

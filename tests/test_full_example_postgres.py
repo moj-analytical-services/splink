@@ -1,9 +1,9 @@
 import os
 
 import pandas as pd
-import pytest
 
-from splink.postgres.linker import PostgresLinker
+from splink.database_api import PostgresAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -15,11 +15,12 @@ def test_full_example_postgres(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
 
-    linker = PostgresLinker(
+    db_api = PostgresAPI(engine=pg_engine)
+    linker = Linker(
         df,
-        engine=pg_engine,
+        settings_dict,
+        database_api=db_api,
     )
-    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."surname" = r."surname"'
@@ -103,9 +104,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path)
 
-    linker_2 = PostgresLinker(df, engine=pg_engine)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
+    Linker(df, path, database_api=db_api)
 
 
 @mark_with_dialects_including("postgres")
@@ -117,17 +116,10 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
 
     settings_dict = get_settings_dict()
 
-    linker = PostgresLinker(
+    db_api = PostgresAPI(engine=pg_engine)
+    linker = Linker(
         table_name,
-        engine=pg_engine,
-        settings_dict=settings_dict,
+        database_api=db_api,
+        settings=settings_dict,
     )
     linker.predict()
-
-
-@mark_with_dialects_including("postgres")
-def test_error_no_connection():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # get an error as we don't pass a connection
-    with pytest.raises(ValueError):
-        PostgresLinker(df)

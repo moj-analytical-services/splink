@@ -1,47 +1,31 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_template_library as ctld
-import splink.spark.comparison_template_library as ctls
-from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+import splink.comparison_template_library as ctl
+from splink.column_expression import ColumnExpression
+
+from .decorator import mark_with_dialects_excluding
+
+# TODO: we can probably restore limited postgres (+ maybe sqlite?) testing,
+# if we use the right option
+## DateComparison
 
 
-## date_comparison
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_date_comparison_run(dialect):
+    ctl.DateComparison("date").get_comparison(dialect)
 
 
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
-        pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
-    ],
-)
-def test_date_comparison_run(ctl):
-    ctl.date_comparison("date")
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_date_comparison_dl_run(dialect):
+    ctl.DateComparison(
+        "date", fuzzy_thresholds=[1], fuzzy_metric="levenshtein"
+    ).get_comparison(dialect)
 
 
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Date Comparison Levenshtein Test"),
-        pytest.param(ctls, id="Spark Date Comparison Levenshtein Test"),
-    ],
-)
-def test_date_comparison_dl_run(ctl):
-    ctl.date_comparison(
-        "date", levenshtein_thresholds=[1], damerau_levenshtein_thresholds=[]
-    )
-
-
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
-    ],
-)
-def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_datediff_levels(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
     col_name = "dob"
 
     df = pd.DataFrame(
@@ -97,19 +81,28 @@ def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
     # Generate our various settings objs
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctl.date_comparison("dob", cast_strings_to_date=True)],
+        "comparisons": [
+            ctl.DateComparison(
+                # TODO: revert to default damerau_levenshtein metric
+                ColumnExpression("dob").try_parse_date(),
+                fuzzy_metric="levenshtein",
+                fuzzy_thresholds=[2],
+            )
+        ],
     }
 
     # We need to put our column in datetime format for this to work
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker.debug_mode = True
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 8, 1: 15, 2: 5, 3: 5, 4: 1, 5: 2}
+    # 0 - else, 1 - 10 years, 2 - 1 year, 3 - 1 month, 4 - fuzzy, 5 - date match
+    size_gamma_lookup = {0: 8, 1: 15, 2: 5, 3: 3, 4: 3, 5: 2}
+    # Dam-lev version - difference between 1-months and fuzzy level
+    # size_gamma_lookup = {0: 8, 1: 15, 2: 6, 3: 5, 4: 1, 5: 2}
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
@@ -129,57 +122,46 @@ def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Datediff Error Checks"),
-        pytest.param(ctls, id="Spark Datediff Error Checks"),
-    ],
-)
-def test_date_comparison_error_logger(ctl):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_date_comparison_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        ctl.date_comparison(
-            "date", datediff_thresholds=[1, 2], datediff_metrics=["month"]
-        )
+        ctl.DateComparison(
+            "date", datetime_thresholds=[1, 2], datetime_metrics=["month"]
+        ).get_comparison(dialect)
     # Check metric and threshold are the correct way around
-    with pytest.raises(ValueError):
-        ctld.date_comparison(
-            "date", datediff_thresholds=["month"], datediff_metrics=[1]
-        )
+    with pytest.raises(TypeError):
+        ctl.DateComparison(
+            "date", datetime_thresholds=["month"], datetime_metrics=[1]
+        ).get_comparison(dialect)
     # Invalid metric
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[1], datediff_metrics=["dy"])
+        ctl.DateComparison(
+            "date", datetime_thresholds=[1], datetime_metrics=["dy"]
+        ).get_comparison(dialect)
     # Threshold len == 0
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[], datediff_metrics=["day"])
+        ctl.DateComparison(
+            "date", datetime_thresholds=[], datetime_metrics=["day"]
+        ).get_comparison(dialect)
     # Metric len == 0
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[1], datediff_metrics=[])
+        ctl.DateComparison(
+            "date", datetime_thresholds=[1], datetime_metrics=[]
+        ).get_comparison(dialect)
 
 
 ## name_comparison
 
 
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
-        pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
-    ],
-)
-def test_name_comparison_run(ctl):
-    ctl.name_comparison("first_name")
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_name_comparison_run(dialect):
+    ctl.NameComparison("first_name").get_comparison(dialect)
 
 
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Name Comparison Integration Tests"),
-        pytest.param(ctls, SparkLinker, id="Spark Name Comparison Integration Tests"),
-    ],
-)
-def test_name_comparison_levels(spark, ctl, Linker):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_name_comparison_levels(dialect, test_helpers):
+    helper = test_helpers[dialect]
     df = pd.DataFrame(
         [
             {
@@ -224,43 +206,36 @@ def test_name_comparison_levels(spark, ctl, Linker):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            ctl.name_comparison(
+            ctl.NameComparison(
                 "first_name",
                 phonetic_col_name="first_name_metaphone",
             )
         ],
     }
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 6, 1: 4, 2: 0, 3: 2, 4: 2, 5: 1}
-    # 5: exact_match
-    # 4: dmetaphone exact match
-    # 3: damerau_levenshtein <= 1
+    size_gamma_lookup = {0: 6, 1: 6, 2: 0, 3: 2, 4: 1}
+    # 4: exact_match
+    # 3: dmetaphone exact match
     # 2: jaro_winkler > 0.9
     # 1: jaro_winkler > 0.8
     # 0: else
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        assert (
-            sum(linker_output["gamma_custom_first_name_first_name_metaphone"] == gamma)
-            == expected_size
-        )
+        assert sum(linker_output["gamma_first_name"] == gamma) == expected_size
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        5: [[1, 6]],
-        4: [(2, 3), (4, 5)],
-        3: [(4, 6)],
+        4: [[1, 6]],
+        3: [(2, 3), (4, 5)],
         2: [],
-        1: [(1, 2), (2, 6)],
+        1: [(1, 2), (2, 6), (4, 6)],
         0: [(2, 4), (5, 6)],
     }
 
@@ -270,39 +245,22 @@ def test_name_comparison_levels(spark, ctl, Linker):
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
-                ]["gamma_custom_first_name_first_name_metaphone"].values[0]
+                ]["gamma_first_name"].values[0]
                 == gamma
             )
 
 
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Forename Surname Comparison Simple Run Test"),
-        pytest.param(ctls, id="Spark Forename Surname Comparison Simple Run Test"),
-    ],
-)
-def test_forename_surname_comparison_run(ctl):
-    ctl.forename_surname_comparison("first_name", "surname")
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_forename_surname_comparison_run(dialect):
+    ctl.ForenameSurnameComparison("first_name", "surname").get_comparison(dialect)
 
 
 ## forename_surname_comparison
 
 
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(
-            ctld,
-            DuckDBLinker,
-            id="DuckDB Forename Surname Comparison Integration Tests",
-        ),
-        pytest.param(
-            ctls, SparkLinker, id="Spark Forename Surname Comparison Integration Tests"
-        ),
-    ],
-)
-def test_forename_surname_comparison_levels(spark, ctl, Linker):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_forename_surname_comparison_levels(dialect, test_helpers):
+    helper = test_helpers[dialect]
     df = pd.DataFrame(
         [
             {
@@ -345,13 +303,11 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctl.forename_surname_comparison("forename", "surname")],
+        "comparisons": [ctl.ForenameSurnameComparison("forename", "surname")],
     }
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
@@ -366,7 +322,7 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        gamma_matches = linker_output.filter(like="gamma_custom") == gamma
+        gamma_matches = linker_output.filter(like="gamma_forename_surname") == gamma
         gamma_matches_size = gamma_matches.sum().values[0]
         assert gamma_matches_size == expected_size
 
@@ -388,23 +344,18 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
                 ]
-                .filter(like="gamma_custom")
+                .filter(like="gamma_forename_surname")
                 .values[0][0]
                 == gamma
             )
 
 
-# postcode_comparison
+# PostcodeComparison
 
 
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Postcode Comparison Template Test"),
-        pytest.param(ctls, SparkLinker, id="Spark Postcode Comparison Template Test"),
-    ],
-)
-def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
     col_name = "postcode"
 
     df = pd.DataFrame(
@@ -458,7 +409,7 @@ def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            ctl.postcode_comparison(
+            ctl.PostcodeComparison(
                 col_name=col_name,
                 lat_col="lat",
                 long_col="long",
@@ -467,10 +418,8 @@ def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
         ],
     }
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_output = linker.predict().as_pandas_dataframe()
 
     # Check individual IDs are assigned to the correct gamma values
@@ -486,14 +435,9 @@ def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Email Comparison Template Test"),
-        pytest.param(ctls, SparkLinker, id="Spark Email Comparison Template Test"),
-    ],
-)
-def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
     col_name = "email"
 
     df = pd.DataFrame(
@@ -517,36 +461,49 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            ctl.email_comparison(
+            ctl.EmailComparison(
                 col_name=col_name,
-                levenshtein_thresholds=[2],
-                damerau_levenshtein_thresholds=[2],
                 invalid_emails_as_null=True,
+                fuzzy_thresholds=[2],
+                fuzzy_metric="damerau_levenshtein",
                 include_domain_match_level=True,
             )
         ],
     }
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_output = linker.predict().as_pandas_dataframe()
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
+    # size_gamma_lookup = {
+    #     9: [(1, 2)],  # Exact match
+    #     8: [(1, 3), (2, 3)],  # Exact match on username, different domain
+    #     7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
+    #     6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
+    #     5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
+    #     4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
+    #     3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
+    #     2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
+    #     1: [(1, 10), (2, 10)],  # Domain-only match#
+    #     0: [(1, 11), (2, 11)],  # Everything else
+    #     -1: [(1, 12)],  # Null level- invalid email
+    # }
     size_gamma_lookup = {
-        9: [(1, 2)],  # Exact match
-        8: [(1, 3), (2, 3)],  # Exact match on username, different domain
-        7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
-        6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
-        5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
-        4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
-        3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
-        2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
+        5: [(1, 2)],  # Exact match
+        4: [(1, 3), (2, 3)],  # Exact match on username, different domain
+        3: [(1, 5), (2, 5), (1, 4), (2, 4)],  # Fuzzy match- full email (dmlev)
+        2: [
+            (1, 8),
+            (2, 8),
+            (1, 7),
+            (2, 7),
+            (1, 6),
+            (2, 6),
+        ],  # Fuzzy match- username only (dmlev)
         1: [(1, 10), (2, 10)],  # Domain-only match#
-        0: [(1, 11), (2, 11)],  # Everything else
+        0: [(1, 11), (2, 11), (1, 9), (2, 9)],  # Everything else
         -1: [(1, 12)],  # Null level- invalid email
     }
 

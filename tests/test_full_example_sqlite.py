@@ -4,12 +4,15 @@ from math import sqrt
 
 import pandas as pd
 
-from splink.sqlite.linker import SQLiteLinker
+from splink.database_api import SQLiteAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 from .linker_utils import _test_table_registration, register_roc_data
 
 
+@mark_with_dialects_including("sqlite")
 def test_full_example_sqlite(tmp_path):
     con = sqlite3.connect(":memory:")
     con.create_function("sqrt", 1, sqrt)
@@ -19,10 +22,11 @@ def test_full_example_sqlite(tmp_path):
     df.to_sql("input_df_tablename", con)
 
     settings_dict = get_settings_dict()
-    linker = SQLiteLinker(
+    db_api = SQLiteAPI(con)
+    linker = Linker(
         "input_df_tablename",
         settings_dict,
-        connection=con,
+        database_api=db_api,
         input_table_aliases="fake_data_1",
     )
 
@@ -60,6 +64,7 @@ def test_full_example_sqlite(tmp_path):
     linker.confusion_matrix_from_labels_table("labels")
 
 
+@mark_with_dialects_including("sqlite")
 def test_small_link_example_sqlite():
     con = sqlite3.connect(":memory:")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -70,20 +75,24 @@ def test_small_link_example_sqlite():
 
     df.to_sql("input_df_tablename", con)
 
-    linker = SQLiteLinker(
+    db_api = SQLiteAPI(con)
+    linker = Linker(
         ["input_df_tablename", "input_df_tablename"],
         settings_dict,
-        connection=con,
+        db_api,
         input_table_aliases=["fake_data_1", "fake_data_2"],
     )
 
     linker.predict()
 
 
+@mark_with_dialects_including("sqlite")
 def test_default_conn_sqlite(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings_dict = get_settings_dict()
-    linker = SQLiteLinker(df, settings_dict)
+
+    db_api = SQLiteAPI()
+    linker = Linker(df, settings_dict, db_api)
 
     linker.predict()

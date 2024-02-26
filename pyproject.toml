@@ -9,36 +9,36 @@ repository = "https://github.com/moj-analytical-services/splink"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<4.0.0"
+python = ">=3.8.0,<4.0.0"
 jsonschema = ">=3.2,<5.0"
 # 1.3.5 is the last version supporting py 3.7.1
-pandas = ">1.3.0"
+pandas = ">1.3.5"
 duckdb = ">=0.8.0"
 sqlglot = ">=13.0.0, <19.0.0"
 altair = "^5.0.1"
 Jinja2 = ">=3.0.3"
-phonetics = "^1.0.5"
+phonetics = ">=1.0.5"
 
 # Optional installs
-pyspark = {version="^3.2.1", optional=true}
+pyspark = {version=">=3.2.1", optional=true}
 
 awswrangler = [
-    {version = "2.18.0,<3.0.0", python = ">=3.7.1,<3.8", optional=true},
-    {version=">=3.0.0,<4.0.0", python = "^3.8", optional=true}
+    {version=">=3.0.0,<4.0.0", python = ">=3.8", optional=true}
 ]
 
 psycopg2-binary = {version=">=2.8.0", optional=true}
+
 # for graph metrics
-igraph = { version = "^0.11.2", python = ">=3.8", optional=true }
+igraph = { version = ">=0.11.2", python = ">=3.8", optional=true }
 
 [tool.poetry.group.dev]
 [tool.poetry.group.dev.dependencies]
-tabulate = "0.8.9"
-pyspark = "^3.2.1"
-# sqlalchemy >= 2.0.0 not working well with older pandas
-sqlalchemy = ">=1.4.0,<2.0.0"
+tabulate = ">=0.8.9"
+pyspark = ">=3.2.1"
+sqlalchemy = ">=1.4.0"
 # temporarily use binary version, to avoid issues with pg_config path
 psycopg2-binary = ">=2.8.0"
+igraph = ">=0.11.2"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
@@ -48,33 +48,15 @@ ruff = "0.0.257"
 [tool.poetry.group.testing]
 [tool.poetry.group.testing.dependencies]
 # pin to reduce dependencies
-pytest = "7.3"
+pytest = ">=7.3"
 pyarrow = ">=7.0.0"
-networkx = "2.5.1"
-rapidfuzz = "^2.0.3"
-igraph = { version = "^0.11.2", python = ">=3.8" }
-
-
-[tool.poetry.group.benchmarking]
-optional = true
-[tool.poetry.group.benchmarking.dependencies]
-pytest-benchmark = "^4"
-lzstring = "1.0.4"
+networkx = ">=2.5.1"
+rapidfuzz = ">=2.0.3"
 
 [tool.poetry.group.typechecking]
 optional = true
 [tool.poetry.group.typechecking.dependencies]
-mypy = { version = "1.7.0", python = ">=3.8" }
-
-[tool.poetry.group.demos]
-[tool.poetry.group.demos.dependencies]
-importlib-resources = "5.4.0"
-jupyterlab = "3.6.1"
-pyarrow = ">=7.0.0"
-ipywidgets = "8.0.4"
-nbmake = "1.3.4"
-pytest = "^7.0"
-pyspark = "^3.2.1"
+mypy = "1.7.0"
 
 [tool.poetry.extras]
 pyspark = ["pyspark"]

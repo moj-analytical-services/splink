@@ -1,7 +1,8 @@
 import pandas as pd
 
 from splink.cluster_studio import _get_lowest_density_clusters
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_density_sample():
@@ -13,7 +14,7 @@ def test_density_sample():
         "link_type": "dedupe_only",
         "unique_id_column_name": "person_id",
     }
-    linker = DuckDBLinker(df, settings)
+    linker = Linker(df, settings, database_api=DuckDBAPI())
 
     # Dummy cluster metrics table
     cluster = ["A", "B", "C", "D", "E", "F"]

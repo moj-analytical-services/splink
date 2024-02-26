@@ -1,11 +1,11 @@
 import duckdb
 import pandas as pd
 
-from splink.analyse_blocking import (
-    cumulative_comparisons_generated_by_blocking_rules,
-)
+from splink.analyse_blocking import cumulative_comparisons_generated_by_blocking_rules
 from splink.blocking import BlockingRule
-from splink.duckdb.linker import DuckDBLinker
+from splink.blocking_rule_library import CustomRule, Or, block_on
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -15,7 +15,6 @@ from .decorator import mark_with_dialects_excluding
 def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
-    brl = helper.brl
 
     df_1 = pd.DataFrame(
         [
@@ -80,7 +79,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     assert res == 1
 
-    rule = brl.block_on(["first_name", "surname"])
+    rule = block_on("first_name", "surname").get_blocking_rule(dialect)
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -104,7 +103,6 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     helper = test_helpers[dialect]
     Linker = helper.Linker
-    brl = helper.brl
 
     # resolve an issue w/ pyspark nulls
 
@@ -158,8 +156,8 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     blocking_rules = [
-        brl.exact_match_rule("first_name"),
-        brl.block_on(["first_name", "surname"]),
+        block_on("first_name").get_blocking_rule(dialect),
+        block_on("first_name", "surname").get_blocking_rule(dialect),
         "l.dob = r.dob",
     ]
 
@@ -190,9 +188,10 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     blocking_rules = [
         "l.surname = r.surname",  # 2l:2r,
-        brl.or_(
-            brl.exact_match_rule("first_name"),
-            "substr(l.dob,1,4) = substr(r.dob,1,4)",
+        Or(
+            block_on("first_name"), CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)")
+        ).get_blocking_rule(
+            dialect
         ),  # 1r:1r, 1l:2l, 1l:2r
         "l.surname = r.surname",
     ]
@@ -211,9 +210,11 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     blocking_rules = [
         "l.surname = r.surname",  # 2l:2r,
-        brl.or_(
-            brl.exact_match_rule("first_name"),
-            "substr(l.dob,1,4) = substr(r.dob,1,4)",
+        Or(
+            block_on("first_name"),
+            CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)"),
+        ).get_blocking_rule(
+            dialect
         ),  # 1l:1r, 1l:2r
         "l.surname = r.surname",
     ]
@@ -312,7 +313,9 @@ def test_analyse_blocking_fast_methodology():
         ]
     )
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "1=1",
@@ -320,7 +323,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 5 * 5
 
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name OR l.surname = r.surname",
@@ -333,7 +338,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
     settings = {"link_type": "link_and_dedupe"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_1, df_2], settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name"
@@ -341,7 +348,9 @@ def test_analyse_blocking_fast_methodology():
     assert res == 6 * 6 + 1 * 1 + 1 * 1
 
     settings = {"link_type": "link_only"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_1, df_2], settings, database_api=db_api)
 
     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         "l.first_name = r.first_name"
@@ -375,7 +384,9 @@ def test_analyse_blocking_fast_methodology():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
 
-    linker = DuckDBLinker(df, {"link_type": "dedupe_only"})
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
     for br in blocking_rules:
         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
         results[br]["count_from_efficient_fn_dedupe_only"] = c
@@ -403,7 +414,9 @@ def test_analyse_blocking_fast_methodology():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_link_only": res.iloc[0][0]}
 
-    linker = DuckDBLinker([df_l, df_r], {"link_type": "link_only"})
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_l, df_r], {"link_type": "link_only"}, database_api=db_api)
     for br in blocking_rules:
         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
         results[br]["count_from_efficient_fn_link_only"] = c
@@ -430,7 +443,7 @@ def test_blocking_rule_accepts_different_dialects():
 def test_cumulative_br_funs(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
-    brl = helper.brl
+
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
@@ -438,18 +451,20 @@ def test_cumulative_br_funs(test_helpers, dialect):
     linker.cumulative_comparisons_from_blocking_rules_records(
         [
             "l.first_name = r.first_name",
-            brl.exact_match_rule("surname"),
+            block_on("surname").get_blocking_rule(dialect),
         ]
     )
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart(
         [
             "l.first_name = r.first_name",
-            brl.exact_match_rule("surname"),
+            block_on("surname").get_blocking_rule(dialect),
         ]
     )
 
     assert (
-        linker.count_num_comparisons_from_blocking_rule(brl.exact_match_rule("surname"))
+        linker.count_num_comparisons_from_blocking_rule(
+            block_on("surname").get_blocking_rule(dialect)
+        )
         == 3167
     )

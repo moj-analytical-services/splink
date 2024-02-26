@@ -1,981 +1,629 @@
-from __future__ import annotations
+from typing import List, Union
 
-import warnings
+from sqlglot import TokenError, parse_one
 
-from .comparison_level import ComparisonLevel
+from .column_expression import ColumnExpression
+
+# import composition functions for export
+from .comparison_level_composition import And, Not, Or  # NOQA: F401
+from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
-from .input_column import InputColumn
+from .dialects import SplinkDialect
 
 
-class NullLevelBase(ComparisonLevel):
+def unsupported_splink_dialects(unsupported_dialects: List[str]):
+    def decorator(func):
+        def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
+            if splink_dialect.name in unsupported_dialects:
+                raise ValueError(
+                    f"Dialect {splink_dialect.name} is not supported "
+                    f"for {self.__class__.__name__}"
+                )
+            return func(self, splink_dialect, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def _translate_sql_string(
+    sqlglot_base_dialect_sql: str,
+    to_sqlglot_dialect: str,
+    from_sqlglot_dialect: str = None,
+) -> str:
+    tree = parse_one(sqlglot_base_dialect_sql, read=from_sqlglot_dialect)
+
+    return tree.sql(dialect=to_sqlglot_dialect)
+
+
+def validate_numeric_parameter(
+    lower_bound: Union[int, float],
+    upper_bound: Union[int, float],
+    parameter_value: Union[int, float],
+    level_name: str,
+    parameter_name: str = "distance_threshold",
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if not isinstance(parameter_value, (int, float)):
+        raise TypeError(
+            f"'{parameter_name}' must be numeric, but received type "
+            f"{type(parameter_value)}"
+        )
+    if lower_bound <= parameter_value <= upper_bound:
+        return parameter_value
+    else:
+        raise ValueError(
+            f"'{parameter_name}' must be between "
+            f"{lower_bound} and {upper_bound} for {level_name}"
+        )
+
+
+def validate_categorical_parameter(
+    allowed_values: List[str],
+    parameter_value: str,
+    level_name: str,
+    parameter_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if parameter_value in allowed_values:
+        return parameter_value
+    else:
+        comma_quote_separated_options = "', '".join(allowed_values)
+        raise ValueError(
+            f"'{parameter_name}' must be one of: " f"'{comma_quote_separated_options}'"
+        )
+
+
+class NullLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name,
+        col_name: Union[str, ColumnExpression],
         valid_string_pattern: str = None,
         invalid_dates_as_null: bool = False,
-        valid_string_regex: str = None,
-    ) -> ComparisonLevel:
-        """Represents comparisons level where one or both sides of the comparison
-        contains null values so the similarity cannot be evaluated.
-        Assumed to have a partial match weight of zero (null effect
-        on overall match weight)
-        Args:
-            col_name (str): Input column name
-            valid_string_pattern (str): pattern (regex or otherwise) that if not
-                matched will result in column being treated as a null.
-            invalid_dates_as_null (bool): If True, set all invalid dates to null.
-                The "correct" format of a date is set by valid_string_pattern.
-                Defaults to false.
+    ):
+        col_expression = ColumnExpression.instantiate_if_str(col_name)
 
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Simple null comparison level
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.null_level("name")
-                ```
-                Null comparison level including strings that do not match
-                a given regex pattern
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
-                ```
-            === ":simple-apachespark: Spark"
-                Simple null level
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.null_level("name")
-                ```
-                Null comparison level including strings that do not match
-                a given regex pattern
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
-                ```
-            === ":simple-amazonaws: Athena"
-                Simple null level
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.null_level("name")
-                ```
-                Null comparison level including strings that do not match
-                a given regex pattern
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
-                ```
-            === ":simple-sqlite: SQLite"
-                Simple null level
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.null_level("name")
-                ```
-            === ":simple-postgresql: PostgreSql"
-                Simple null level
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.null_level("name")
-                ```
-        Returns:
-            ComparisonLevel: Comparison level for null entries
-        """
-
-        # TODO: Remove this compatibility code in a future release once we drop
-        # support for "valid_string_regex". Deprecation warning added in 3.9.6
-        if valid_string_pattern is not None and valid_string_regex is not None:
-            # user supplied both
-            raise TypeError("Just use valid_string_pattern")
-        elif valid_string_pattern is not None:
-            # user is doing it correctly
-            pass
-        elif valid_string_regex is not None:
-            # user is using deprecated argument
-            warnings.warn(
-                "valid_string_regex is deprecated; use valid_string_pattern",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            valid_string_pattern = valid_string_regex
-
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        col_name_l, col_name_r = col.name_l, col.name_r
-
+        # if invalid_dates_as_null, then supplied pattern is a date format
         if invalid_dates_as_null:
-            col_name_l = self._valid_date_function(col_name_l, valid_string_pattern)
-            col_name_r = self._valid_date_function(col_name_r, valid_string_pattern)
-            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
-                      {col_name_l}=='' OR {col_name_r} ==''"""
-        elif valid_string_pattern:
-            col_name_l = self._regex_extract_function(col_name_l, valid_string_pattern)
-            col_name_r = self._regex_extract_function(col_name_r, valid_string_pattern)
-            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
-                      {col_name_l}=='' OR {col_name_r} ==''"""
-        else:
-            sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
+            col_expression = col_expression.try_parse_date(valid_string_pattern)
+        # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
+        elif valid_string_pattern is not None:
+            col_expression = col_expression.regex_extract(valid_string_pattern)
+        self.col_expression = col_expression
+        self.is_null_level = True
 
-        level_dict = {
-            "sql_condition": sql,
-            "label_for_charts": "Null",
-            "is_null_level": True,
-        }
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        null_sql = f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
+        return null_sql
+
+    def create_label_for_charts(self) -> str:
+        return f"{self.col_expression.label} is NULL"
 
 
-class ExactMatchLevelBase(ComparisonLevel):
+class ElseLevel(ComparisonLevelCreator):
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        return "ELSE"
+
+    def create_label_for_charts(self) -> str:
+        return "All other comparisons"
+
+
+class CustomLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name,
-        regex_extract: str = None,
-        set_to_lowercase: bool = False,
-        m_probability=None,
-        term_frequency_adjustments=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level where there is an exact match,
+        sql_condition: str,
+        label_for_charts: str = None,
+        base_dialect_str: str = None,
+    ):
+        """Represents a comparison level with a custom sql expression
+
+        Must be in a form suitable for use in a SQL CASE WHEN expression
+        e.g. "substr(name_l, 1, 1) = substr(name_r, 1, 1)"
+
+        Args:
+            sql_condition (str): SQL condition to assess similarity
+            label_for_charts (str, optional): A label for this level to be used in
+                charts. Default None, so that `sql_condition` is used
+            base_dialect_str (str, optional): If specified, the SQL dialect that
+                this expression will parsed as when attempting to translate to
+                other backends
+
+        """
+        self.sql_condition = sql_condition
+        self.label_for_charts = label_for_charts
+        self.base_dialect_str = base_dialect_str
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        sql_condition = self.sql_condition
+        if self.base_dialect_str is not None:
+            base_dialect = SplinkDialect.from_string(self.base_dialect_str)
+            # if we are told it is one dialect, but try to create comparison level
+            # of another, try to translate with sqlglot
+            if sql_dialect != base_dialect:
+                base_dialect_sqlglot_name = base_dialect.sqlglot_name
+
+                # as default, translate condition into our dialect
+                try:
+                    sql_condition = _translate_sql_string(
+                        sql_condition,
+                        sql_dialect.sqlglot_name,
+                        base_dialect_sqlglot_name,
+                    )
+                # if we hit a sqlglot error, assume users knows what they are doing,
+                # e.g. it is something custom / unknown to sqlglot
+                # error will just appear when they try to use it
+                except TokenError:
+                    pass
+        return sql_condition
+
+    def create_label_for_charts(self) -> str:
+        return (
+            self.label_for_charts
+            if self.label_for_charts is not None
+            else self.sql_condition
+        )
+
+
+class ExactMatchLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        term_frequency_adjustments: bool = False,
+    ):
+        """Represents a comparison level where there is an exact match
+
+        e.g. val_l = val_r
 
         Args:
             col_name (str): Input column name
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            m_probability (float, optional): Starting value for m probability
-                Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            include_colname_in_charts_label (bool, optional): If True, include col_name
-                in chart labels (e.g. linker.match_weights_chart())
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-                include_colname_in_charts_label=True
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Simple Exact match level
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.exact_match_level("name")
-                ```
-                Exact match level with term-frequency adjustments
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-                Exact match level on a substring of col_name as
-                 determined by a regular expression
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Simple Exact match level
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.exact_match_level("name")
-                ```
-                Exact match level with term-frequency adjustments
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-                Exact match level on a substring of col_name as
-                 determined by a regular expression
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-amazonaws: Athena"
-                Simple Exact match level
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.exact_match_level("name")
-                ```
-                Exact match level with term-frequency adjustments
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-                Exact match level on a substring of col_name as
-                 determined by a regular expression
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Simple Exact match level
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.exact_match_level("name")
-                ```
-                Exact match level with term-frequency adjustments
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-            === ":simple-postgresql: PostgreSql"
-                Simple Exact match level
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.exact_match_level("name")
-                ```
-                Exact match level with term-frequency adjustments
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
+
         """
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.term_frequency_adjustments = term_frequency_adjustments
+        self.is_exact_match_level = True
 
-        if include_colname_in_charts_label:
-            label_suffix = f" {col_name}"
-        elif manual_col_name_for_charts_label:
-            label_suffix = f" {manual_col_name_for_charts_label}"
-        else:
-            label_suffix = ""
+    @property
+    def term_frequency_adjustments(self):
+        return self.tf_adjustment_column is not None
 
-        col_name_l, col_name_r = col.name_l, col.name_r
-
-        if set_to_lowercase:
-            col_name_l = f"lower({col_name_l})"
-            col_name_r = f"lower({col_name_r})"
-
-        if regex_extract:
-            col_name_l = self._regex_extract_function(col_name_l, regex_extract)
-            col_name_r = self._regex_extract_function(col_name_r, regex_extract)
-
-        sql_cond = f"{col_name_l} = {col_name_r}"
-        level_dict = {
-            "sql_condition": sql_cond,
-            "label_for_charts": f"Exact match{label_suffix}",
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
+    @term_frequency_adjustments.setter
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
         if term_frequency_adjustments:
-            level_dict["tf_adjustment_column"] = col_name
+            if not self.col_expression.is_pure_column_or_column_reference:
+                raise ValueError(
+                    "The boolean term_frequency_adjustments argument"
+                    " can only be used if the column name has no "
+                    "transforms applied to it such as lower(), "
+                    "substr() etc."
+                )
+            # leave tf_minimum_u_value as None
+            # Since we know that it's a pure column reference it's fine to assign the
+            # raw unescaped value to the dict - it will be processed via `InputColumn`
+            # when the dict is read
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-
-class ElseLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level for all cases which have not been
-        considered by preceding comparison levels,
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.else_level()
-                ```
-            === ":simple-apachespark: Spark"
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.else_level()
-                ```
-            === ":simple-amazonaws: Athena"
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.else_level()
-                ```
-            === ":simple-sqlite: SQLite"
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.else_level()
-            === ":simple-postgresql: PostgreSql"
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.else_level()
-                ```
-        """
-        if isinstance(m_probability, str):
-            raise ValueError(
-                "You provided a string for the value of m probability when it should "
-                "be numeric.  Perhaps you passed a column name.  Note that you do "
-                "not need to pass a column name into the else level."
+            self.configure(
+                tf_adjustment_column=self.col_expression.raw_sql_expression,
+                tf_adjustment_weight=1.0,
             )
-        level_dict = {
-            "sql_condition": "ELSE",
-            "label_for_charts": "All other comparisons",
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-        super().__init__(level_dict)
+
+        # TODO: how to 'turn off'?? configure doesn't currently allow
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"{col.name_l} = {col.name_r}"
+
+    def create_label_for_charts(self) -> str:
+        return f"Exact match on {self.col_expression.label}"
 
 
-class DistanceFunctionLevelBase(ComparisonLevel):
+class LiteralMatchLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: str,
-        distance_function_name: str,
-        distance_threshold: int | float,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        higher_is_more_similar: bool = True,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level using a user-provided distance function,
-        where the similarity
-
-        Args:
-            col_name (str): Input column name
-            distance_function_name (str): The name of the distance function
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            higher_is_more_similar (bool): If True, a higher value of the
-                distance function indicates a higher similarity (e.g. jaro_winkler).
-                If false, a higher value indicates a lower similarity
-                (e.g. levenshtein).
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label.
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability
-                Defaults to None.
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Apply the `levenshtein` function to a comparison level
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.distance_function_level("name",
-                                            "levenshtein",
-                                            2,
-                                            False)
-                ```
-            === ":simple-apachespark: Spark"
-                Apply the `levenshtein` function to a comparison level
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.distance_function_level("name",
-                                            "levenshtein",
-                                            2,
-                                            False)
-                ```
-            === ":simple-amazonaws: Athena"
-                Apply the `levenshtein_distance` function to a comparison level
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.distance_function_level("name",
-                                            "levenshtein_distance",
-                                            2,
-                                            False)
-                ```
-            === ":simple-sqlite: SQLite"
-                Apply the `levenshtein` function to a comparison level
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.distance_function_level("name",
-                                            "levenshtein",
-                                            2,
-                                            False)
-                ```
-            === ":simple-postgresql: PostgreSql"
-                Apply the `levenshtein` function to a comparison level
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.distance_function_level("name",
-                                            "levenshtein",
-                                            2,
-                                            False)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level for a given distance function
-        """
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-
-        if higher_is_more_similar:
-            operator = ">="
-        else:
-            operator = "<="
-
-        col_name_l, col_name_r = col.name_l, col.name_r
-
-        if set_to_lowercase:
-            col_name_l = f"lower({col_name_l})"
-            col_name_r = f"lower({col_name_r})"
-
-        if regex_extract:
-            col_name_l = self._regex_extract_function(col_name_l, regex_extract)
-            col_name_r = self._regex_extract_function(col_name_r, regex_extract)
-
-        sql_cond = (
-            f"{distance_function_name}({col_name_l}, {col_name_r}) "
-            f"{operator} {distance_threshold}"
-        )
-
-        if include_colname_in_charts_label:
-            if manual_col_name_for_charts_label:
-                col_name = manual_col_name_for_charts_label
-
-            label_suffix = f" {col_name}"
-        else:
-            label_suffix = ""
-
-        chart_label = (
-            f"{distance_function_name.capitalize()}{label_suffix} {operator} "
-            f"{distance_threshold}"
-        )
-
-        level_dict = {
-            "sql_condition": sql_cond,
-            "label_for_charts": chart_label,
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-    @property
-    def _distance_level(self):
-        raise NotImplementedError("Distance function not supported in this dialect")
-
-
-class LevenshteinLevelBase(DistanceFunctionLevelBase):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: int,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level using a levenshtein distance function,
-
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.levenshtein_level("name", 1)
-                ```
-
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1 on a subtring of name column as determined by a regular
-                expression.
-                ```python
-                import splink.duckdb.comparison_level_library as cll
-                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.levenshtein_level("name", 1)
-                ```
-
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1 on a subtring of name column as determined by a regular
-                expression.
-                ```python
-                import splink.spark.comparison_level_library as cll
-                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-amazonaws: Athena"
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.levenshtein_level("name", 1)
-                ```
-
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1 on a subtring of name column as determined by a regular
-                expression.
-                ```python
-                import splink.athena.comparison_level_library as cll
-                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.levenshtein_level("name", 1)
-                ```
-            === ":simple-postgresql: PostgreSql"
-                Comparison level with levenshtein distance score less than (or equal
-                 to) 1
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.levenshtein_level("name", 1)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the
-                levenshtein similarity
-        """
-        super().__init__(
-            col_name,
-            distance_function_name=self._levenshtein_name,
-            distance_threshold=distance_threshold,
-            regex_extract=regex_extract,
-            set_to_lowercase=set_to_lowercase,
-            higher_is_more_similar=False,
-            include_colname_in_charts_label=include_colname_in_charts_label,
-            m_probability=m_probability,
-        )
-
-
-class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: int,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level using a damerau-levenshtein distance
-        function,
-
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level with damerau-levenshtein distance score less than
-                (or equal to) 1
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.damerau_levenshtein_level("name", 1)
-                ```
-
-                Comparison level with damerau-levenshtein distance score less than
-                (or equal to) 1 on a subtring of name column as determined by a regular
-                expression.
-                ```python
-                import splink.duckdb.comparison_level_library as cll
-                cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level with damerau-levenshtein distance score less than
-                (or equal to) 1
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.damerau_levenshtein_level("name", 1)
-                ```
-
-                Comparison level with damerau-levenshtein distance score less than
-                (or equal to) 1 on a subtring of name column as determined by a regular
-                expression.
-                ```python
-                import splink.spark.comparison_level_library as cll
-                cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Comparison level with damerau-levenshtein distance score less than
-                (or equal to) 1
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.damerau_levenshtein_level("name", 1)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the
-                Damerau-Levenshtein similarity
-        """
-        super().__init__(
-            col_name,
-            distance_function_name=self._damerau_levenshtein_name,
-            distance_threshold=distance_threshold,
-            regex_extract=regex_extract,
-            set_to_lowercase=set_to_lowercase,
-            higher_is_more_similar=False,
-            include_colname_in_charts_label=include_colname_in_charts_label,
-            m_probability=m_probability,
-        )
-
-
-class JaroLevelBase(DistanceFunctionLevelBase):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: float,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
+        col_name: Union[str, ColumnExpression],
+        literal_value: str,
+        literal_datatype: str,
+        side_of_comparison: str = "both",
     ):
-        """Represents a comparison using the jaro distance function
+        self.side_of_comparison = validate_categorical_parameter(
+            allowed_values=["left", "right", "both"],
+            parameter_value=side_of_comparison,
+            level_name=self.__class__.__name__,
+            parameter_name="side_of_comparison",
+        )
 
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.literal_value_undialected = literal_value
 
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level with jaro score greater than 0.9
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaro_level("name", 0.9)
-                ```
-                Comparison level with a jaro score greater than 0.9 on a substring
-                of name column as determined by a regular expression.
+        self.literal_datatype = validate_categorical_parameter(
+            allowed_values=["string", "int", "float", "date"],
+            parameter_value=literal_datatype,
+            level_name=self.__class__.__name__,
+            parameter_name="literal_datatype",
+        )
 
-                ```python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level with jaro score greater than 0.9
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.jaro_level("name", 0.9)
-                ```
-                Comparison level with a jaro score greater than 0.9 on a substring
-                of name column as determined by a regular expression.
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        dialect = sql_dialect.sqlglot_name
+        lit = self.literal_value_undialected
 
-                ```python
-                import splink.spark.comparison_level_library as cll
-                cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Comparison level with jaro score greater than 0.9
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.jaro_level("name", 0.9)
-                ```
+        if self.literal_datatype == "string":
+            dialected = parse_one(f"'{lit}'").sql(dialect)
+        elif self.literal_datatype == "date":
+            dialected = parse_one(f"cast('{lit}' as date)").sql(dialect)
+        elif self.literal_datatype == "int":
+            dialected = parse_one(f"cast({lit} as int)").sql(dialect)
+        elif self.literal_datatype == "float":
+            dialected = parse_one(f"cast({lit} as float)").sql(dialect)
 
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the
-                jaro similarity
-        """
+        if self.side_of_comparison == "left":
+            return f"{col.name_l} = {dialected}"
+        elif self.side_of_comparison == "right":
+            return f"{col.name_r} = {dialected}"
+        elif self.side_of_comparison == "both":
+            return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
 
-        super().__init__(
-            col_name,
-            self._jaro_name,
-            distance_threshold=distance_threshold,
-            regex_extract=regex_extract,
-            set_to_lowercase=set_to_lowercase,
-            higher_is_more_similar=True,
-            include_colname_in_charts_label=include_colname_in_charts_label,
-            m_probability=m_probability,
+    def create_label_for_charts(self) -> str:
+        return (
+            f"{self.col_expression.label} = {self.literal_value_undialected} "
+            f"on {self.side_of_comparison}"
         )
 
 
-class JaroWinklerLevelBase(DistanceFunctionLevelBase):
+class ColumnsReversedLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        col_name: str,
-        distance_threshold: float,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level using the jaro winkler distance function
-
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level with jaro-winkler score greater than 0.9
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaro_winkler_level("name", 0.9)
-                ```
-                Comparison level with jaro-winkler score greater than 0.9 on a
-                substring of name column as determined by a regular expression.
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level with jaro-winkler score greater than 0.9
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.jaro_winkler_level("name", 0.9)
-                ```
-                Comparison level with jaro-winkler score greater than 0.9 on a
-                substring of name column as determined by a regular expression.
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Comparison level with jaro-winkler score greater than 0.9
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.jaro_winkler_level("name", 0.9)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the
-                jaro winkler similarity
-        """
-
-        super().__init__(
-            col_name,
-            self._jaro_winkler_name,
-            distance_threshold=distance_threshold,
-            regex_extract=regex_extract,
-            set_to_lowercase=set_to_lowercase,
-            higher_is_more_similar=True,
-            include_colname_in_charts_label=include_colname_in_charts_label,
-            m_probability=m_probability,
-        )
-
-    @property
-    def _jaro_winkler_name(self):
-        raise NotImplementedError(
-            "Jaro-winkler function name not defined on base class"
-        )
-
-
-class JaccardLevelBase(DistanceFunctionLevelBase):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: int | float,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        include_colname_in_charts_label=False,
-        manual_col_name_for_charts_label=None,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level using a jaccard distance function
-
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-            manual_col_name_for_charts_label (str, optional): string to include as
-                 column name in chart label. Acts as a manual overwrite of the
-                 colname when include_colname_in_charts_label is True.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level with jaccard score greater than 0.9
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaccard_level("name", 0.9)
-                ```
-                Comparison level with jaccard score greater than 0.9 on a
-                substring of name column as determined by a regular expression.
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level with jaccard score greater than 0.9
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.jaccard_level("name", 0.9)
-                ```
-                Comparison level with jaccard score greater than 0.9 on a
-                substring of name column as determined by a regular expression.
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the jaccard similarity
-        """
-        super().__init__(
-            col_name,
-            self._jaccard_name,
-            distance_threshold=distance_threshold,
-            regex_extract=regex_extract,
-            set_to_lowercase=set_to_lowercase,
-            higher_is_more_similar=True,
-            include_colname_in_charts_label=include_colname_in_charts_label,
-            m_probability=m_probability,
-        )
-
-
-class ColumnsReversedLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        col_name_1: str,
-        col_name_2: str,
-        regex_extract: str = None,
-        set_to_lowercase=False,
-        m_probability=None,
-        tf_adjustment_column=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level where the columns are reversed.  For example,
+        col_name_1: Union[str, ColumnExpression],
+        col_name_2: Union[str, ColumnExpression],
+    ):
+        """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
 
         Args:
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
-            regex_extract (str): Regular expression pattern to evaluate a match on.
-            set_to_lowercase (bool): If True, sets all entries to lowercase.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-            tf_adjustment_column (str, optional): Column to use for term frequency
-                adjustments if an exact match is observed. Defaults to None.
+        """
+        self.col_expression_1 = ColumnExpression.instantiate_if_str(col_name_1)
+        self.col_expression_2 = ColumnExpression.instantiate_if_str(col_name_2)
 
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Comparison level on first_name and surname columns reversed
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")
-                ```
-                Comparison level on first_name and surname column reversed
-                on a substring of each column as determined by a regular expression.
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.columns_reversed_level("first_name",
-                                           "surname",
-                                           regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-apachespark: Spark"
-                Comparison level on first_name and surname columns reversed
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")
-                ```
-                Comparison level on first_name and surname column reversed
-                on a substring of each column as determined by a regular expression.
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.columns_reversed_level("first_name",
-                                           "surname",
-                                           regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-amazonaws: Athena"
-                Comparison level on first_name and surname columns reversed
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")
-                ```
-                Comparison level on first_name and surname column reversed
-                on a substring of each column as determined by a regular expression.
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.columns_reversed_level("first_name",
-                                           "surname",
-                                           regex_extract="^[A-Z]{1,4}")
-                ```
-            === ":simple-sqlite: SQLite"
-                Comparison level on first_name and surname columns reversed
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")
-                ```
-            === ":simple-postgresql: PostgreSql"
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")
-                ```
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression_1.sql_dialect = sql_dialect
+        self.col_expression_2.sql_dialect = sql_dialect
+        col_1 = self.col_expression_1
+        col_2 = self.col_expression_2
+
+        return (
+            f"{col_1.name_l} = {col_2.name_r} " f"AND {col_1.name_r} = {col_2.name_l}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col_1 = self.col_expression_1
+        col_2 = self.col_expression_2
+        return f"Match on reversed cols: {col_1.label} and {col_2.label}"
 
 
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the exact match of two
-                columns.
+class LevenshteinLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
+        """A comparison level using a sqlglot_dialect_name distance function
+
+        e.g. levenshtein(val_l, val_r) <= distance_threshold
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (int): The threshold to use to assess
+                similarity
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = distance_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        lev_fn = sql_dialect.levenshtein_function_name
+        return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Levenshtein distance of {col.label} <= {self.distance_threshold}"
+
+
+class DamerauLevenshteinLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
+        """A comparison level using a Damerau-Levenshtein distance function
+
+        e.g. damerau_levenshtein(val_l, val_r) <= distance_threshold
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (int): The threshold to use to assess
+                similarity
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = distance_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
+        return f"{dm_lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"Damerau-Levenshtein distance of {self.col_expression.label} "
+            f"<= {self.distance_threshold}"
+        )
+
+
+class JaroWinklerLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_threshold: Union[int, float],
+    ):
+        """A comparison level using a Jaro-Winkler distance function
+
+        e.g. `jaro_winkler(val_l, val_r) >= distance_threshold`
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
         """
 
-        col_1 = InputColumn(col_name_1, sql_dialect=self._sql_dialect)
-        col_2 = InputColumn(col_name_2, sql_dialect=self._sql_dialect)
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=1,
+            parameter_value=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
 
-        col_1_l, col_1_r = col_1.name_l, col_1.name_r
-        col_2_l, col_2_r = col_2.name_l, col_2.name_r
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        jw_fn = sql_dialect.jaro_winkler_function_name
+        return f"{jw_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
 
-        if set_to_lowercase:
-            col_1_l = f"lower({col_1_l})"
-            col_1_r = f"lower({col_1_r})"
-            col_2_l = f"lower({col_2_l})"
-            col_2_r = f"lower({col_2_r})"
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Jaro-Winkler distance of {col.label} >= {self.distance_threshold}"
 
-        if regex_extract:
-            col_1_l = self._regex_extract_function(col_1_l, regex_extract)
-            col_1_r = self._regex_extract_function(col_1_r, regex_extract)
-            col_2_l = self._regex_extract_function(col_2_l, regex_extract)
-            col_2_r = self._regex_extract_function(col_2_r, regex_extract)
 
-        s = f"{col_1_l} = {col_2_r} and " f"{col_1_r} = {col_2_l}"
-        level_dict = {
-            "sql_condition": s,
-            "label_for_charts": "Exact match on reversed cols",
+class JaroLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_threshold: Union[int, float],
+    ):
+        """A comparison level using a Jaro distance function
+
+        e.g. `jaro(val_l, val_r) >= distance_threshold`
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=1,
+            parameter_value=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        j_fn = sql_dialect.jaro_function_name
+        return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Jaro distance of '{col.label} >= {self.distance_threshold}'"
+
+
+class JaccardLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_threshold: Union[int, float],
+    ):
+        """A comparison level using a Jaccard distance function
+
+        e.g. `jaccard(val_l, val_r) >= distance_threshold`
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=1,
+            parameter_value=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        j_fn = sql_dialect.jaccard_function_name
+        return f"{j_fn}({col.name_l}, {col.name_r}) >= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Jaccard distance of '{col.label} >= {self.distance_threshold}'"
+
+
+class DistanceFunctionLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        distance_function_name: str,
+        distance_threshold: Union[int, float],
+        higher_is_more_similar: bool = True,
+    ):
+        """A comparison level using an arbitrary distance function
+
+        e.g. `custom_distance(val_l, val_r) >= (<=) distance_threshold`
+
+        The function given by `distance_function_name` must exist in the SQL
+        backend you use, and must take two parameters of the type in `col_name,
+        returning a numeric type
+
+        Args:
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the SQL distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            higher_is_more_similar (bool): Are higher values of the distance function
+                more similar? (e.g. True for Jaro-Winkler, False for Levenshtein)
+                Default is True
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_function_name = distance_function_name
+        self.distance_threshold = distance_threshold
+        self.higher_is_more_similar = higher_is_more_similar
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        d_fn = self.distance_function_name
+        less_or_greater_than = ">" if self.higher_is_more_similar else "<"
+        return (
+            f"{d_fn}({col.name_l}, {col.name_r}) "
+            f"{less_or_greater_than}= {self.distance_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        less_or_greater = "greater" if self.higher_is_more_similar else "less"
+        return (
+            f"`{self.distance_function_name}` distance of '{col.label} "
+            f"{less_or_greater} than {self.distance_threshold}'"
+        )
+
+
+class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        threshold: Union[int, float],
+        metric: str,
+    ):
+        """
+        Computes the absolute elapsed time between two dates (total duration).
+
+        This function computes the amount of time that has passed between two dates,
+        in contrast to functions like `date_diff` found in some SQL backends,
+        which count the number of full calendar intervals (e.g., months, years) crossed.
+
+        For instance, the difference between January 29th and March 2nd would be less
+        than two months in terms of elapsed time, unlike a `date_diff` calculation that
+        would give an answer of 2 calendar intervals crossed.
+
+        That the thresold is inclusive e.g. a level with a 10 day threshold
+        will include difference in date of 10 days.
+
+        Args:
+            col_name (str): The name of the input column containing the dates to compare
+            threshold (int): The maximum allowed difference between the two dates,
+                in units specified by `date_metric`.
+            metric (str): The unit of time to use when comparing the dates.
+                Can be 'second', 'minute', 'hour', 'day', 'month', or 'year'.
+            cast_strings_to_date (bool): If True, the function will automatically
+                convert string columns to date format before comparing.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.time_threshold_raw = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="threshold",
+        )
+        self.time_metric = validate_categorical_parameter(
+            allowed_values=["second", "minute", "hour", "day", "month", "year"],
+            parameter_value=metric,
+            level_name=self.__class__.__name__,
+            parameter_name="metric",
+        )
+
+        self.time_threshold_seconds = self.convert_time_metric_to_seconds(
+            self.time_threshold_raw, self.time_metric
+        )
+
+    def convert_time_metric_to_seconds(self, threshold: int, metric: str) -> float:
+
+        conversion_factors = {
+            "second": 1,
+            "minute": 60,
+            "hour": 60 * 60,
+            "day": 60 * 60 * 24,
+            "month": 60 * 60 * 24 * 365.25 / 12,
+            "year": 60 * 60 * 24 * 365.25,
         }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
+        return threshold * conversion_factors[metric]
 
-        if tf_adjustment_column:
-            level_dict["tf_adjustment_column"] = tf_adjustment_column
+    @unsupported_splink_dialects(["sqlite"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        """Use sqlglot to auto transpile where possible
+        Where sqlglot auto transpilation doesn't work correctly, a date_diff function
+        must be implemented in the dialect, which will be used instead
+        """
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+
+        # If the dialect has an override, use it
+        if hasattr(sql_dialect, "absolute_time_difference"):
+            return sql_dialect.absolute_time_difference(self)
+
+        sqlglot_base_dialect_sql = (
+            "abs(TIME_TO_UNIX(cast(___col____l as timestamp))"
+            " - TIME_TO_UNIX(cast(___col____r as timestamp)))"
+            f"<= {self.time_threshold_seconds}"
+        )
+
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return (
+            f"Abs difference of '{col.label} <= "
+            f"{self.time_threshold_raw} {self.time_metric}'"
+        )
 
 
-class DistanceInKMLevelBase(ComparisonLevel):
+class AbsoluteDateDifferenceLevel(AbsoluteTimeDifferenceLevel):
+    pass
+
+
+class DistanceInKMLevel(ComparisonLevelCreator):
     def __init__(
         self,
         lat_col: str,
         long_col: str,
-        km_threshold: int | float,
+        km_threshold: Union[int, float],
         not_null: bool = False,
-        m_probability=None,
-    ) -> ComparisonLevel:
+    ):
         """Use the haversine formula to transform comparisons of lat,lngs
         into distances measured in kilometers
 
@@ -988,401 +636,124 @@ class DistanceInKMLevelBase(ComparisonLevel):
                 For example: long_lat['long'] or long_lat[1]
             km_threshold (int): The total distance in kilometers to evaluate your
                 comparisons against
-            not_null (bool): If true, remove any . This is only necessary if you are not
+            not_null (bool): If true, ensure no attempt is made to compute this if
+              any inputs are null. This is only necessary if you are not
                 capturing nulls elsewhere in your comparison level.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
 
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.distance_in_km_level("lat_col",
-                                        "long_col",
-                                        km_threshold=5)
-                ```
-            === ":simple-apachespark: Spark"
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.distance_in_km_level("lat_col",
-                                        "long_col",
-                                        km_threshold=5)
-                ```
-            === ":simple-amazonaws: Athena"
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.distance_in_km_level("lat_col",
-                                        "long_col",
-                                        km_threshold=5)
-                ```
-            === ":simple-postgresql: PostgreSql"
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.distance_in_km_level("lat_col",
-                                        "long_col",
-                                        km_threshold=5)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the distance between
-                two coordinates
         """
+        self.lat_col_expression = ColumnExpression.instantiate_if_str(lat_col)
+        self.long_col_expression = ColumnExpression.instantiate_if_str(long_col)
 
-        lat = InputColumn(lat_col, sql_dialect=self._sql_dialect)
-        long = InputColumn(long_col, sql_dialect=self._sql_dialect)
-        lat_l, lat_r = lat.names_l_r
-        long_l, long_r = long.names_l_r
+        self.km_threshold = km_threshold
+        self.not_null = not_null
 
-        distance_km_sql = f"""
-        {great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} <= {km_threshold}
-        """
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.lat_col_expression.sql_dialect = sql_dialect
+        lat_col = self.lat_col_expression
 
-        if not_null:
+        self.long_col_expression.sql_dialect = sql_dialect
+        long_col = self.long_col_expression
+
+        lat_l, lat_r = lat_col.name_l, lat_col.name_r
+        long_l, long_r = long_col.name_l, long_col.name_r
+
+        distance_km_sql = (
+            f"{great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} "
+            f"<= {self.km_threshold}"
+        )
+
+        if self.not_null:
             null_sql = " AND ".join(
                 [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
             )
             distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
 
-        level_dict = {
-            "sql_condition": distance_km_sql,
-            "label_for_charts": f"Distance less than {km_threshold}km",
-        }
+        return distance_km_sql
 
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+    def create_label_for_charts(self) -> str:
+        return f"Distance less than {self.km_threshold}km"
 
 
-class PercentageDifferenceLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        col_name: str,
-        percentage_distance_threshold: float,
-        m_probability=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level based around the percentage difference between
-        two numbers.
-
-        Note: the percentage is calculated by dividing the absolute difference between
-        the values by the largest value
-
-        Args:
-            col_name (str): Input column name
-            percentage_distance_threshold (float): Percentage difference threshold for
-                the comparison level
-            m_probability (float, optional): Starting value for m probability. Defaults
-                to None.
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)
-                ```
-            === ":simple-apachespark: Spark"
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)
-                ```
-            === ":simple-amazonaws: Athena"
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)
-                ```
-            === ":simple-sqlite: SQLite"
-                ``` python
-                import splink.sqlite.comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)
-                ```
-            === ":simple-postgresql: PostgreSql"
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the percentage difference
-                between two values
-
-        """
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-
-        s = f"""(abs({col.name_l} - {col.name_r})/
-            (case
-                when {col.name_r} > {col.name_l}
-                then {col.name_r}
-                else {col.name_l}
-            end))
-            < {percentage_distance_threshold}"""
-
-        level_dict = {
-            "sql_condition": s,
-            "label_for_charts": f"< {percentage_distance_threshold:,.2%} diff",
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-
-class ArrayIntersectLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        col_name,
-        m_probability=None,
-        term_frequency_adjustments=False,
-        min_intersection=1,
-        include_colname_in_charts_label=False,
-    ) -> ComparisonLevel:
+class ArrayIntersectLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, min_intersection: int):
         """Represents a comparison level based around the size of an intersection of
         arrays
 
         Args:
             col_name (str): Input column name
-            m_probability (float, optional): Starting value for m probability. Defaults
-                to None.
-            term_frequency_adjustments (bool, optional): If True, apply term frequency
-                adjustments to the exact match level. Defaults to False.
             min_intersection (int, optional): The minimum cardinality of the
                 intersection of arrays for this comparison level. Defaults to 1
-            include_colname_in_charts_label (bool, optional): Should the charts label
-                contain the column name? Defaults to False
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.array_intersect_level("name")
-                ```
-            === ":simple-apachespark: Spark"
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.array_intersect_level("name")
-                ```
-            === ":simple-amazonaws: Athena"
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.array_intersect_level("name")
-                ```
-            === ":simple-postgresql: PostgreSql"
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.array_intersect_level("name")
-                ```
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the size of intersection
-                of arrays
-        """
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-
-        size_array_intersection = (
-            f"{self._size_array_intersect_function(col.name_l, col.name_r)}"
-        )
-        sql = f"{size_array_intersection} >= {min_intersection}"
-
-        label_prefix = (
-            f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
-        )
-        if min_intersection == 1:
-            label = f"{label_prefix} intersect"
-        else:
-            label = f"{label_prefix} intersect size >= {min_intersection}"
-
-        level_dict = {"sql_condition": sql, "label_for_charts": label}
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-        if term_frequency_adjustments:
-            level_dict["tf_adjustment_column"] = col_name
-
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-    @property
-    def _size_array_intersect_function(self):
-        raise NotImplementedError("Intersect function not defined on base class")
-
-
-class DatediffLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        date_col: str,
-        date_threshold: int,
-        date_metric: str = "day",
-        m_probability=None,
-        cast_strings_to_date=False,
-        date_format=None,
-    ) -> ComparisonLevel:
-        """Represents a comparison level based around the difference between dates
-        within a column
-
-        Arguments:
-            date_col (str): Input column name
-            date_threshold (int): The total difference in time between two given
-                dates. This is used in tandem with `date_metric` to determine .
-                If you are using `year` as your metric, then a value of 1 would
-                require that your dates lie within 1 year of one another.
-            date_metric (str): The unit of time with which to measure your
-                `date_threshold`.
-                Your metric should be one of `day`, `month` or `year`.
-                Defaults to `day`.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-            cast_strings_to_date (bool, optional): Set to true and adjust
-                date_format param when input dates are strings to enable
-                date-casting. Defaults to False.
-            date_format (str, optional): Format of input dates if date-strings
-                are given. Must be consistent across record pairs. If None
-                (the default), downstream functions for each backend assign
-                date_format to ISO 8601 format (yyyy-mm-dd).
-
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Date Difference comparison level at threshold 1 year
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.datediff_level("date",
-                                    date_threshold=1,
-                                    date_metric="year"
-                                    )
-                ```
-                Date Difference comparison with date-casting and unspecified
-                date_format (default = %Y-%m-%d)
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True
-                                    )
-                ```
-                Date Difference comparison with date-casting and specified date_format
-                ``` python
-                import splink.duckdb.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True,
-                                    date_format='%d/%m/%Y'
-                                    )
-                ```
-            === ":simple-apachespark: Spark"
-                Date Difference comparison level at threshold 1 year
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.datediff_level("date",
-                                    date_threshold=1,
-                                    date_metric="year"
-                                    )
-                ```
-                Date Difference comparison with date-casting and unspecified
-                date_format (default = %Y-%m-%d)
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True
-                                    )
-                ```
-                Date Difference comparison with date-casting and specified date_format
-                ``` python
-                import splink.spark.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True,
-                                    date_format='%d/%m/%Y'
-                                    )
-                ```
-            === ":simple-amazonaws: Athena"
-                Date Difference comparison level at threshold 1 year
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.datediff_level("date",
-                                    date_threshold=1,
-                                    date_metric="year"
-                                    )
-                ```
-                Date Difference comparison with date-casting and unspecified
-                date_format (default = %Y-%m-%d)
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True
-                                    )
-                ```
-                Date Difference comparison with date-casting and specified date_format
-                ``` python
-                import splink.athena.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True,
-                                    date_format='%d/%m/%Y'
-                                    )
-                ```
-            === ":simple-postgresql: PostgreSql"
-                Date Difference comparison level at threshold 1 year
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.datediff_level("date",
-                                    date_threshold=1,
-                                    date_metric="year"
-                                    )
-                ```
-                Date Difference comparison with date-casting and unspecified
-                date_format (default = yyyy-MM-dd)
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True
-                                    )
-                ```
-                Date Difference comparison with date-casting and specified date_format
-                ``` python
-                import splink.postgres.comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True,
-                                    date_format='dd/MM/yyyy'
-                                    )
-                ```
-        Returns:
-            ComparisonLevel: A comparison level that evaluates whether two dates fall
-                within a given interval.
         """
 
-        date = InputColumn(date_col, sql_dialect=self._sql_dialect)
-        date_l, date_r = date.names_l_r
-
-        datediff_sql = self._datediff_function(
-            date_l,
-            date_r,
-            date_threshold,
-            date_metric,
-            cast_strings_to_date,
-            date_format,
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.min_intersection = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=min_intersection,
+            level_name=self.__class__.__name__,
+            parameter_name="min_intersection",
         )
-        label = f"Within {date_threshold} {date_metric}"
-        if date_threshold > 1:
-            label += "s"
 
-        level_dict = {
-            "sql_condition": datediff_sql,
-            "label_for_charts": label,
-        }
+    @unsupported_splink_dialects(["sqlite"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        if hasattr(sql_dialect, "array_intersect"):
+            return sql_dialect.array_intersect(self)
 
-        if m_probability:
-            level_dict["m_probability"] = m_probability
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+        sqlglot_base_dialect_sql = f"""
+            ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r))
+                >= {self.min_intersection}
+                """
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
 
-    @property
-    def _datediff_function(self):
-        raise NotImplementedError("Datediff function not defined on base class")
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
+
+    def create_label_for_charts(self) -> str:
+        return f"Array intersection size >= {self.min_intersection}"
+
+
+class PercentageDifferenceLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, percentage_threshold: float):
+        """
+        Represents a comparison level where the difference between two numerical
+        values is within a specified percentage threshold.
+
+        The percentage difference is calculated as the absolute difference between the
+        two values divided by the greater of the two values.
+
+        Args:
+            col_name (str): Input column name.
+            percentage_threshold (float): The threshold percentage to use
+                to assess similarity e.g. 0.1 for 10%.
+        """
+        if not 0 <= percentage_threshold <= 1:
+            raise ValueError("percentage_threshold must be between 0 and 1")
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.percentage_threshold = percentage_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return (
+            f"(ABS({col.name_l} - {col.name_r}) / "
+            f"(CASE "
+            f"WHEN {col.name_r} > {col.name_l} THEN {col.name_r} "
+            f"ELSE {col.name_l} "
+            f"END)) < {self.percentage_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return (
+            f"Percentage difference of '{col.label}' "
+            f"within {self.percentage_threshold:,.2%}"
+        )

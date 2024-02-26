@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def row_examples(linker: Linker, example_rows_per_category=2):
     sqls = []
 
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     uid_cols_l = [uid_col.name_l for uid_col in uid_cols]
     uid_cols_r = [uid_col.name_r for uid_col in uid_cols]
     uid_col_lr_names = uid_cols_l + uid_cols_r

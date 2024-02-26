@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.linker import DuckDBLinker
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def get_data():
@@ -79,7 +80,8 @@ def test_tf_basic():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
+    db_api = DuckDBAPI(connection=":memory:")
+    linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -115,7 +117,8 @@ def test_tf_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
+    db_api = DuckDBAPI(connection=":memory:")
+    linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -151,7 +154,9 @@ def test_weight():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -200,7 +205,9 @@ def test_weightand_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(data, settings, database_api=db_api)
     df_predict = linker.predict()
     results = filter_results(df_predict)
 

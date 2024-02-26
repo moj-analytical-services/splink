@@ -2,29 +2,28 @@ from copy import deepcopy
 
 import pandas as pd
 
+import splink.comparison_library as cl
+from splink.blocking_rule_library import block_on
+
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
-def get_different_settings_dicts(exact_match):
+def get_different_settings_dicts():
     settings = get_settings_dict()
     settings_tf = deepcopy(settings, None)
     # Settings with two term frequency columns
-    settings_tf["comparisons"][1] = exact_match(
-        "surname",
+    settings_tf["comparisons"][1] = cl.ExactMatch("surname").configure(
         term_frequency_adjustments=True,
-        m_probability_exact_match=0.7,
-        m_probability_else=0.1,
+        m_probabilities=[0.7, 0.1],
     )
     settings_no_tf = deepcopy(settings, None)
     # Settings with no term frequencies
-    settings_no_tf["comparisons"][0] = exact_match(
-        "first_name",
+    settings_no_tf["comparisons"][0] = cl.ExactMatch("first_name").configure(
         term_frequency_adjustments=False,
-        m_probability_exact_match=0.7,
-        m_probability_else=0.1,
+        m_probabilities=[0.7, 0.1],
     )
     return settings_tf, settings_no_tf, settings
 
@@ -46,7 +45,7 @@ def test_tf_tables_init_works(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    for idx, s in enumerate(get_different_settings_dicts(helper.cl.exact_match)):
+    for idx, s in enumerate(get_different_settings_dicts()):
         linker = Linker(
             df,
             s,
@@ -77,7 +76,7 @@ def test_tf_tables_init_works(test_helpers, dialect):
 def test_matches_work(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
-    brl = helper.brl
+
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
@@ -85,7 +84,7 @@ def test_matches_work(test_helpers, dialect):
     # Train our model to get more reasonable outputs...
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule = brl.block_on(["first_name", "surname"])
+    blocking_rule = block_on("first_name", "surname").get_blocking_rule(dialect)
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"

@@ -1,66 +1,49 @@
 import pandas as pd
-import pytest
 
-import splink.duckdb.comparison_level_library as clld
-import splink.duckdb.comparison_library as cld
-import splink.spark.comparison_level_library as clls
-import splink.spark.comparison_library as cls
-from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
+
+from .decorator import mark_with_dialects_excluding
 
 
-@pytest.mark.parametrize(
-    ("cl"),
-    [
-        pytest.param(cld, id="DuckDB Distance in KM simple run tests"),
-        pytest.param(cls, id="Spark Distance in KM simple run tests"),
-    ],
-)
-def test_simple_run(cl):
-    cl.distance_in_km_at_thresholds(
+@mark_with_dialects_excluding()
+def test_simple_run(dialect):
+    cl.DistanceInKMAtThresholds(
         lat_col="lat", long_col="long", km_thresholds=[1, 5, 10]
-    ).as_dict()
+    ).create_comparison_dict(dialect)
     # print(
-    #    cl.distance_in_km_at_thresholds(
+    #    cl.DistanceInKMAtThresholds(
     #        lat_col="latlong[0]", long_col="latlong[1]", km_thresholds=[1, 5, 10]
     #    ).as_dict()
     # )
     # print(
-    #    cl.distance_in_km_at_thresholds(
+    #    cl.DistanceInKMAtThresholds(
     #        lat_col="ll['lat']", long_col="ll['long']", km_thresholds=[1, 5, 10]
     #    ).as_dict()
     # )
 
 
-@pytest.mark.parametrize(
-    ("cll"),
-    [
-        pytest.param(clld, id="DuckDB Distance in KM cll simple run tests"),
-        pytest.param(clls, id="Spark Distance in KM cll simple run tests"),
-    ],
-)
-def test_simple_run_cll(cll):
-    cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=1).as_dict()
-    # cll.distance_in_km_level(
+@mark_with_dialects_excluding()
+def test_simple_run_cll(dialect):
+    (
+        cll.DistanceInKMLevel(
+            lat_col="lat", long_col="long", km_threshold=1
+        ).create_level_dict(dialect)
+    )
+    # cll.DistanceInKMLevel(
     #     lat_col="latlong[0]", long_col="latlong[1]", km_threshold=0.1
     # ).as_dict()
-    # cll.distance_in_km_level(
+    # cll.DistanceInKMLevel(
     #     lat_col="ll['lat']", long_col="ll['long']", km_threshold=10
     # ).as_dict()
 
 
-@pytest.mark.parametrize(
-    ("cl", "cll", "Linker"),
-    [
-        pytest.param(
-            cld, clld, DuckDBLinker, id="DuckDB Distance in KM Integration Tests"
-        ),
-        pytest.param(
-            cls, clls, SparkLinker, id="Spark Distance in KM Integration Tests"
-        ),
-    ],
-)
-def test_km_distance_levels(spark, cl, cll, Linker):
+@mark_with_dialects_excluding()
+def test_km_distance_levels(dialect, test_helpers):
+    helper = test_helpers[dialect]
+
     df = pd.DataFrame(
         [
             {
@@ -105,7 +88,7 @@ def test_km_distance_levels(spark, cl, cll, Linker):
     settings_cl = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.distance_in_km_at_thresholds(
+            cl.DistanceInKMAtThresholds(
                 lat_col="lat", long_col="long", km_thresholds=[0.1, 1, 10, 300]
             )
         ],
@@ -121,30 +104,29 @@ def test_km_distance_levels(spark, cl, cll, Linker):
                 "label_for_charts": "Null",
                 "is_null_level": True,
             },
-            cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=0.1),
-            cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=1),
-            cll.distance_in_km_level(
+            cll.DistanceInKMLevel(lat_col="lat", long_col="long", km_threshold=0.1),
+            cll.DistanceInKMLevel(lat_col="lat", long_col="long", km_threshold=1),
+            cll.DistanceInKMLevel(
                 lat_col="lat",
                 long_col="long",
                 km_threshold=10,
             ),
-            cll.distance_in_km_level(
+            cll.DistanceInKMLevel(
                 lat_col="lat",
                 long_col="long",
                 km_threshold=300,
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
     settings_cll = {"link_type": "dedupe_only", "comparisons": [km_diff]}
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings_cl)
+    df = helper.convert_frame(df)
+
+    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
     cl_df_e = linker.predict().as_pandas_dataframe()
-    linker = Linker(df, settings_cll)
+    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
     cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
@@ -159,9 +141,11 @@ def test_km_distance_levels(spark, cl, cll, Linker):
     for gamma, gamma_lookup in size_gamma_lookup.items():
         for linker_pred in linker_outputs.values():
             gamma_column_name_options = [
-                "gamma_custom_long_lat",
+                # cl version
+                "gamma_lat_long",
+                # our custom cll version
                 "gamma_custom_lat_long",
-            ]  # lat and long switch unpredictably
+            ]
             gamma_column_name = linker_pred.columns[
                 linker_pred.columns.str.contains("|".join(gamma_column_name_options))
             ][0]
@@ -216,23 +200,23 @@ def test_haversine_level():
             {
                 "output_column_name": "lat_long",
                 "comparison_levels": [
-                    clld.null_level("lat"),  # no nulls in test data
-                    clld.distance_in_km_level(
+                    cll.NullLevel("lat"),  # no nulls in test data
+                    cll.DistanceInKMLevel(
                         km_threshold=50,
                         lat_col="lat",
                         long_col="lon",
                     ),
-                    clld.distance_in_km_level(
+                    cll.DistanceInKMLevel(
                         lat_col="lat_long['lat']",
                         long_col="lat_long['long']",
                         km_threshold=10000,
                     ),
-                    clld.distance_in_km_level(
+                    cll.DistanceInKMLevel(
                         lat_col="lat_long_arr[1]",
                         long_col="lat_long_arr[2]",
                         km_threshold=100000,
                     ),
-                    clld.else_level(),
+                    cll.ElseLevel(),
                 ],
             },
         ],
@@ -240,7 +224,9 @@ def test_haversine_level():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(df, settings, input_table_aliases="test")
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, input_table_aliases="test", database_api=db_api)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

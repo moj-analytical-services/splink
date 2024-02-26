@@ -5,9 +5,10 @@ from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.duckdb.blocking_rule_library import exact_match_rule
-from splink.duckdb.comparison_library import exact_match
-from splink.duckdb.linker import DuckDBLinker
+from splink.blocking_rule_library import block_on
+from splink.comparison_library import ExactMatch
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 
@@ -33,17 +34,19 @@ def test_scored_labels_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            exact_match_rule("dob"),
+            block_on("dob"),
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     concat_with_tf = linker._initialise_df_concat_with_tf()
     linker.register_table(df_labels, "labels")
@@ -92,17 +95,19 @@ def test_truth_space_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            exact_match_rule("dob"),
+            block_on("dob"),
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     labels_with_predictions = [
         {
@@ -181,7 +186,9 @@ def test_roc_chart_dedupe_only():
         axis=1,
     )
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(df, settings_dict, database_api=db_api)
 
     linker.register_table(df_labels, "labels")
 
@@ -210,8 +217,10 @@ def test_roc_chart_link_and_dedupe():
     df_labels = df_labels.drop(["cluster_l", "cluster_r", "merge"], axis=1)
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
-    linker = DuckDBLinker(
-        df, settings_dict, connection=":memory:", input_table_aliases="fake_data_1"
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(
+        df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api
     )
 
     linker.register_table(df_labels, "labels")
@@ -272,7 +281,9 @@ def test_prediction_errors_from_labels_table():
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.register_table(df_labels, "labels")
 
@@ -287,7 +298,9 @@ def test_prediction_errors_from_labels_table():
     assert (4, 5) in records  # fp
     assert (1, 2) not in records  # tp
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     linker.register_table(df_labels, "labels")
 
@@ -304,7 +317,9 @@ def test_prediction_errors_from_labels_table():
     assert (4, 5) in records  # fp
     assert (1, 2) not in records  # tp
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     linker.register_table(df_labels, "labels")
     linker._initialise_df_concat_with_tf()
     df_res = linker.prediction_errors_from_labels_table(
@@ -362,7 +377,9 @@ def test_prediction_errors_from_labels_column():
     }
 
     #
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     df_res = linker.prediction_errors_from_labels_column(
         "cluster"
@@ -377,7 +394,9 @@ def test_prediction_errors_from_labels_column():
     assert (1, 2) not in records  # TP
     assert (1, 5) not in records  # TN
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     df_res = linker.prediction_errors_from_labels_column(
         "cluster", include_false_positives=False
@@ -392,7 +411,9 @@ def test_prediction_errors_from_labels_column():
     assert (1, 2) not in records  # TP
     assert (1, 5) not in records  # TN
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     df_res = linker.prediction_errors_from_labels_column(
         "cluster", include_false_negatives=False
@@ -452,7 +473,9 @@ def test_truth_space_table_from_labels_column_dedupe_only():
         ],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
@@ -519,7 +542,9 @@ def test_truth_space_table_from_labels_column_link_only():
         ],
     }
 
-    linker = DuckDBLinker([df_left, df_right], settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker([df_left, df_right], settings, database_api=db_api)
 
     tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive

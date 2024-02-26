@@ -1,7 +1,9 @@
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_library as cl
+from splink.column_expression import ColumnExpression
+from splink.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 def test_distance_function_comparison():
@@ -19,15 +21,17 @@ def test_distance_function_comparison():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "forename", "hamming", [1, 2], higher_is_more_similar=False
             ),
-            cl.distance_function_at_thresholds(
+            cl.DistanceFunctionAtThresholds(
                 "surname", "hamming", [1, 2], higher_is_more_similar=False
             ),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
 
     df_pred = linker.predict().as_pandas_dataframe()
 
@@ -59,7 +63,7 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
-def test_set_to_lowercase_parameter():
+def test_set_to_lowercase():
     data = [
         {"id": 1, "forename": "John"},
         {"id": 2, "forename": "john"},
@@ -71,14 +75,16 @@ def test_set_to_lowercase_parameter():
         "unique_id_column_name": "id",
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [],
-        "comparisons": [cl.exact_match("forename", set_to_lowercase=True)],
+        "comparisons": [cl.ExactMatch(ColumnExpression("forename").lower())],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
 
     df = pd.DataFrame(data)
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
