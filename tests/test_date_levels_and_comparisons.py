@@ -350,25 +350,37 @@ def test_date_comparison_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datetime_thresholds=[1, 2], datetime_metrics=["month"]
+            "date",
+            datetime_thresholds=[1, 2],
+            datetime_metrics=["month"],
+            input_is_string=True,
         ).get_comparison(dialect)
     # Check metric and threshold are the correct way around
     with pytest.raises(TypeError):
         ctl.DateComparison(
-            "date", datetime_thresholds=["month"], datetime_metrics=[1]
+            "date",
+            datetime_thresholds=["month"],
+            datetime_metrics=[1],
+            input_is_string=True,
         ).get_comparison(dialect)
     # Invalid metric
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datetime_thresholds=[1], datetime_metrics=["dy"]
+            "date",
+            datetime_thresholds=[1],
+            datetime_metrics=["dy"],
+            input_is_string=True,
         ).get_comparison(dialect)
     # Threshold len == 0
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datetime_thresholds=[], datetime_metrics=["day"]
+            "date",
+            datetime_thresholds=[],
+            datetime_metrics=["day"],
+            input_is_string=True,
         ).get_comparison(dialect)
     # Metric len == 0
     with pytest.raises(ValueError):
         ctl.DateComparison(
-            "date", datetime_thresholds=[1], datetime_metrics=[]
+            "date", datetime_thresholds=[1], datetime_metrics=[], input_is_string=True
         ).get_comparison(dialect)
