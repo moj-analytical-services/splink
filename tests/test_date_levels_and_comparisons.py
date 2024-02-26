@@ -239,6 +239,7 @@ def test_date_comparison(test_helpers, dialect):
             datetime_metrics=["day", "month"],
             datetime_thresholds=[4, 2],
             separate_1st_january=True,
+            input_is_string=False,
         ),
         tests=[
             LiteralTestValues(

@@ -38,10 +38,10 @@ class DateComparison(ComparisonCreator):
         *,
         datetime_thresholds: Union[int, float, List[Union[int, float]]],
         datetime_metrics: Union[DateMetricType, List[DateMetricType]],
+        input_is_string: bool,
         datetime_format: str = None,
         invalid_dates_as_null: bool = False,
         include_exact_match_level: bool = True,
-        input_is_string: bool = False,
         separate_1st_january: bool = False,
         use_damerau_levenshtein: bool = True,
     ):
