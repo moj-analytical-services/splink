@@ -43,6 +43,7 @@ class DateComparison(ComparisonCreator):
         include_exact_match_level: bool = True,
         input_is_string: bool = False,
         separate_1st_january: bool = False,
+        use_damerau_levenshtein: bool = True,
     ):
 
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
@@ -69,6 +70,7 @@ class DateComparison(ComparisonCreator):
         self.exact_match = include_exact_match_level
 
         self.input_is_string = input_is_string
+        self.use_damerau_levenshtein = use_damerau_levenshtein
 
         super().__init__(col_name)
 
@@ -115,9 +117,15 @@ class DateComparison(ComparisonCreator):
         else:
             col_expr_as_string = self.col_expression.cast_to_string()
 
-        levels.append(
-            cll.DamerauLevenshteinLevel(col_expr_as_string, distance_threshold=1)
-        )
+        # postgres doesn't have damerau_levenshtein
+        if self.use_damerau_levenshtein:
+            levels.append(
+                cll.DamerauLevenshteinLevel(col_expr_as_string, distance_threshold=1)
+            )
+        else:
+            levels.append(
+                cll.LevenshteinLevel(col_expr_as_string, distance_threshold=1)
+            )
 
         if self.datetime_thresholds:
             for threshold, metric in zip(
