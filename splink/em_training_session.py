@@ -51,14 +51,16 @@ class EMTrainingSession:
         self._settings_obj = self._training_linker._settings_obj
         self._settings_obj._retain_matching_columns = False
         self._settings_obj._retain_intermediate_calculation_columns = False
-        self._settings_obj._training_mode = True
+        self._settings_obj.training_settings.training_mode = True
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
-        self._settings_obj._blocking_rule_for_training = blocking_rule_for_training
+        self._settings_obj.training_settings.blocking_rule_for_training = (
+            blocking_rule_for_training
+        )
         self._blocking_rule_for_training = blocking_rule_for_training
-        self._settings_obj._estimate_without_term_frequencies = (
+        self._settings_obj.training_settings.estimate_without_term_frequencies = (
             estimate_without_term_frequencies
         )
 

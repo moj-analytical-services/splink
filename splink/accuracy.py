@@ -114,7 +114,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
             as match_probability,
-        row_count,
+        cast(row_count as float8) as row_count,
         cast(P as float8) as p,
         cast(N as float8) as n,
         cast(TP as float8) as tp,
@@ -326,10 +326,10 @@ def _predict_from_label_column_sql(linker, label_colname):
 
     # Need the label colname to be in additional columns to retain
 
-    add_cols = settings._additional_columns_to_retain_list
+    add_cols = settings._additional_column_names_to_retain
 
     if label_colname not in add_cols:
-        settings._additional_columns_to_retain_list.append(label_colname)
+        settings._additional_column_names_to_retain.append(label_colname)
 
     # Now we want to create predictions
     df_predict = linker.predict()

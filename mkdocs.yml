@@ -44,7 +44,6 @@ plugins:
       post_date_format: long
       archive: false
   - search
-  - semiliterate
   - mknotebooks
   - tags
   - mkdocstrings:

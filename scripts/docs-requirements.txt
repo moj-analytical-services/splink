@@ -4,17 +4,13 @@ mkdocs-schema-reader
 mkdocs-material==9.5.2
 mkdocs-gen-files
 mkdocs-autorefs
-mkdocs-include-markdown-plugin
 mkdocs-material-extensions
 mkdocs-mermaid2-plugin
 mkdocs-monorepo-plugin
-mkdocs-semiliterate
 mkdocs-simple-hooks==0.1.5
-mkdocs-simple-plugin
 mkdocstrings
 mkdocstrings-python
 mkdocstrings-python-legacy
-mkdocs-semiliterate
 mkdocs-click
 jinja2==3.0.3
 mkdocs-git-revision-date-localized-plugin
