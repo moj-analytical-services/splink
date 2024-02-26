@@ -262,9 +262,7 @@ def expectation_maximisation(
     # original_core_model_settings = core_model_settings
     # comparisons = core_model_settings.comparisons
 
-    # TODO: let's kill this linker ultimately
-    linker = em_training_session._original_linker
-    db_api = linker.db_api
+    db_api = em_training_session.db_api
 
     fix_m_probabilities = em_training_session._training_fix_m_probabilities
     fix_u_probabilities = em_training_session._training_fix_u_probabilities

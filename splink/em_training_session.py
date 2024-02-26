@@ -48,6 +48,8 @@ class EMTrainingSession:
         self._original_settings_obj = linker._settings_obj
         self._original_linker = linker
         self._training_linker = deepcopy(linker)
+        # TODO: eventually just pass this + relevant settings:
+        self.db_api = linker.db_api
 
         self._settings_obj = self._training_linker._settings_obj
         self._settings_obj._retain_matching_columns = False
