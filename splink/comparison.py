@@ -206,7 +206,7 @@ class Comparison:
 
     def _columns_to_select_for_bayes_factor_parts(
         self, retain_matching_columns, retain_intermediate_calculation_columns
-    ):
+    ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -251,7 +251,7 @@ class Comparison:
         retain_matching_columns,
         retain_intermediate_calculation_columns,
         training_mode,
-    ):
+    ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)

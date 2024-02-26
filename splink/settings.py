@@ -331,7 +331,6 @@ class Settings:
         cols_used = []
         for uid_col in self.column_info_settings.unique_id_input_columns:
             cols_used.append(uid_col.name)
-            cols_used.append(uid_col.name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
             cols = [c.name for c in cols]
@@ -344,8 +343,7 @@ class Settings:
         cols = []
 
         for uid_col in self.column_info_settings.unique_id_input_columns:
-            cols.append(uid_col.l_name_as_l)
-            cols.append(uid_col.r_name_as_r)
+            cols.extend(uid_col.l_r_names_as_l_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_blocking())
@@ -360,8 +358,7 @@ class Settings:
         cols = []
 
         for uid_col in self.column_info_settings.unique_id_input_columns:
-            cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r)
+            cols.extend(uid_col.names_l_r)
 
         for cc in self.comparisons:
             cols.extend(
@@ -380,12 +377,11 @@ class Settings:
         return cols
 
     @property
-    def _columns_to_select_for_bayes_factor_parts(self):
+    def _columns_to_select_for_bayes_factor_parts(self) -> List[str]:
         cols = []
 
         for uid_col in self.column_info_settings.unique_id_input_columns:
-            cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r)
+            cols.extend(uid_col.names_l_r)
 
         for cc in self.comparisons:
             cols.extend(
@@ -405,7 +401,7 @@ class Settings:
         return cols
 
     @property
-    def _columns_to_select_for_predict(self):
+    def _columns_to_select_for_predict(self) -> List[str]:
         cols = []
 
         for uid_col in self.column_info_settings.unique_id_input_columns:
