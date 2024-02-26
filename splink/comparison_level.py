@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import re
+from copy import copy
 from statistics import median
 from textwrap import dedent
 
@@ -172,6 +173,10 @@ class ComparisonLevel:
         self._u_warning_sent = False
 
         self._validate()
+
+    def copy(self):
+        # define a simple copy method to make copying easy/customisable
+        return copy(self)
 
     @property
     def sql_dialect(self):

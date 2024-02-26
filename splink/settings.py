@@ -86,6 +86,10 @@ class CoreModelSettings:
     comparisons: List[Comparison]
     probability_two_random_records_match: float
 
+    def copy(self):
+        """Returns a deepcopy of CoreModelSettings"""
+        return deepcopy(self)
+
     @property
     def parameters_as_detailed_records(self):
         output = []

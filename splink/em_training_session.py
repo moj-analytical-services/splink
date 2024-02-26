@@ -54,7 +54,7 @@ class EMTrainingSession:
         self._settings_obj._retain_intermediate_calculation_columns = False
         self._settings_obj.training_settings.training_mode = True
 
-        self.core_model_settings = self._settings_obj.core_model_settings
+        core_model_settings = self._settings_obj.core_model_settings
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
@@ -97,7 +97,7 @@ class EMTrainingSession:
                 blocking_rule_for_training.blocking_rule_sql,
                 self._settings_obj._sql_dialect,
             )
-            for cc in self.core_model_settings.comparisons:
+            for cc in core_model_settings.comparisons:
                 cc_cols = cc._input_columns_used_by_case_statement
                 cc_cols = [c.input_name for c in cc_cols]
                 if set(br_cols).intersection(cc_cols):
@@ -111,11 +111,11 @@ class EMTrainingSession:
 
         filtered_ccs = [
             cc
-            for cc in self.core_model_settings.comparisons
+            for cc in core_model_settings.comparisons
             if cc.output_column_name not in cc_names_to_deactivate
         ]
 
-        self.core_model_settings.comparisons = filtered_ccs
+        core_model_settings.comparisons = filtered_ccs
         self._comparisons_that_can_be_estimated = filtered_ccs
 
         self._core_model_settings_history: list[CoreModelSettings] = []
@@ -124,8 +124,10 @@ class EMTrainingSession:
         self.columns_to_select_for_comparison_vector_values = (
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
+        # TODO: not sure if we need to attach directly?
+        self.core_model_settings = core_model_settings
         # Add iteration 0 i.e. the starting parameters
-        self._add_iteration()
+        self._add_iteration(core_model_settings)
 
     def _training_log_message(self):
         not_estimated = [
@@ -207,7 +209,8 @@ class EMTrainingSession:
         # Compute the new params, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters
         # in the original (main) setting object
-        expectation_maximisation(self, cvv)
+        new_core_model_settings = expectation_maximisation(self, cvv)
+        self.core_model_settings = new_core_model_settings
 
         rule = self._blocking_rule_for_training.blocking_rule_sql
         training_desc = f"EM, blocked on: {rule}"
@@ -254,8 +257,8 @@ class EMTrainingSession:
 
         self._original_linker._em_training_sessions.append(self)
 
-    def _add_iteration(self):
-        self._core_model_settings_history.append(deepcopy(self.core_model_settings))
+    def _add_iteration(self, core_model_settings):
+        self._core_model_settings_history.append(deepcopy(core_model_settings))
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
