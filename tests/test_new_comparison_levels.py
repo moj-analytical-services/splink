@@ -251,7 +251,7 @@ comparison_name_ctl = ctl.NameComparison(
     fuzzy_metric="levenshtein",
     fuzzy_thresholds=[1, 2],
 )
-# TODO: restore mix of fuzzy + date levels when postgres can handle it
+
 comparison_dob_ctl = ctl.DateComparison(
     ColumnExpression("dob"),
     datetime_metrics=["day", "month", "year"],
