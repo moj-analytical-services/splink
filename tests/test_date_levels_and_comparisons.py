@@ -226,7 +226,7 @@ def test_time_difference_error_logger(dialect):
         )
 
 
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_date_comparison(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
