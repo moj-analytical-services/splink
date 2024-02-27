@@ -69,7 +69,8 @@
                                                     "truth_threshold"
                                                 ],
                                                 "nearest": true,
-                                                "on": "mouseover"
+                                                "on": "mouseover",
+                                                "toggle": false
                                             },
                                             "value": null
                                         }
@@ -112,7 +113,8 @@
                                                     "match_probability"
                                                 ],
                                                 "nearest": true,
-                                                "on": "mouseover"
+                                                "on": "mouseover",
+                                                "toggle": false
                                             }
                                         }
                                     ]
@@ -567,7 +569,8 @@
                                             "truth_threshold"
                                         ],
                                         "nearest": true,
-                                        "on": "mouseover"
+                                        "on": "mouseover",
+                                        "toggle": false
                                     },
                                     "value": null
                                 }
