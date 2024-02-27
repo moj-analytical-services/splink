@@ -22,32 +22,32 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 
 ### Versioning Guidance
 
-**Establish Minimum Supported Versions**
+#### Establish Minimum Supported Versions
 
 * **Align with Python Versions**: Select the minimum required versions for dependencies based on the earliest version of Python we plan to support. This approach is aligned with our policy on [**Sunsetting End-of-Life Python Versions**](#sunsetting-end-of-life-python-versions), ensuring Splink remains compatible across a broad spectrum of environments.
-* **Document Reasons**:  Where appropriate, clearly document why specific versions are chosen as minimums, including any critical features or bug fixes that dictate these choices. We should look to do this in pull requests implementing the change and/or as comments in [`pyproject.toml`](https://github.com/moj-analytical-services/splink/blob/9499e4ee93e6157fcc6f228b60592a7cf97bb6a0/pyproject.toml#L143). Doing so allows us to easily track versioning decisions.
+* **Document Reasons**:  Where appropriate, clearly document why specific versions are chosen as minimums, including any critical features or bug fixes that dictate these choices. We should look to do this in pull requests implementing the change and as comments in [`pyproject.toml`](https://github.com/moj-analytical-services/splink/blob/9499e4ee93e6157fcc6f228b60592a7cf97bb6a0/pyproject.toml#L143). Doing so allows us to easily track versioning decisions.
 
-**Prefer Open Version Constraints**
+#### Prefer Open Version Constraints
 
 * **Use Open Upper Bounds**: Wherever feasible, avoid setting an upper version limit for a dependency. This reduces compatibility conflicts with external packages and allows the user to decide their versioning strategy at the application level.
-* **Monitor Compatibility**: Actively monitor the development of our core dependencies to anticipate significant updates (such as new major versions) that might necessitate code changes. Within Splink, this is particularly relevant for both Sqlglot and :simple-duckdb:, that (semi)frequently release new, breaking changes.
+* **Monitor Compatibility**: Actively monitor the development of our core dependencies to anticipate significant updates (such as new major versions) that might necessitate code changes. Within Splink, this is particularly relevant for both SQLGlot and :simple-duckdb: DuckDB, that (semi)frequently release new, breaking changes.
 
-**Compatibility Checks**
+#### Compatibility Checks
 
 * **Automated Testing**: Use Continuous Integration (CI) to help test the latest python and package versions. This helps identify compatibility issues early.
 * **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatability check for supported versions of python.
 
-**Handling Breaking Changes**
+#### Handling Breaking Changes
 
 * **Temporary Version Pinning for Major Changes**: In cases where a dependency introduces breaking changes that we cannot immediately accommodate, we should look to temporarily pin to a specific version or version range until we have an opportunity to update Splink.
-* **Adaptive Code Changes**: When feasible, adapt code to be compatible with new major versions of dependencies. This may include conditional logic to handle differences across versions. An example of this can be found within [`input_column.py`](https://github.com/moj-analytical-services/splink/blob/d15c7adb8776260445615f7934c86e819b998c99/splink/input_column.py#L338), where we adjust how column identifiers are extracted from sqlglot based on its version.
+* **Adaptive Code Changes**: When feasible, adapt code to be compatible with new major versions of dependencies. This may include conditional logic to handle differences across versions. An example of this can be found within [`input_column.py`](https://github.com/moj-analytical-services/splink/blob/d15c7adb8776260445615f7934c86e819b998c99/splink/input_column.py#L338), where we adjust how column identifiers are extracted from SQLGlot based on its version.
 
-**Documentation and Communication**
+#### Documentation and Communication
 
 * **Clear Documentation**: Clearly log installation instructions within the [Getting Started](https://moj-analytical-services.github.io/splink/getting_started.html#install) section of our documentation. This should cover not only standard installation procedures but also specialised instructions, for instance, installing a [:simple-duckdb:-less version of Splink](https://github.com/moj-analytical-services/splink/pull/1244), for locked down environments.
 * **Log Dependency Changes in the Changelog**: Where dependencies are adjusted, ensure that changes are logged within [`CHANGELOG.md`](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md). This can help simplify debugging and creates a guide that can be easily referenced.
 
-**User Support and Feedback**
+#### User Support and Feedback
 
 * **Issue Tracking**: Actively track and address issues related to dependency compatibility. Where users are having issues, have them report their package versions through either `pip freeze` or `pip-chill`, so we can more easily identify what may have caused the problem.
 * **Feedback Loops**: Encourage feedback from users regarding compatibility and dependency issues. Streamline the reporting process in our issues log.
