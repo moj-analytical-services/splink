@@ -295,6 +295,46 @@ def confusion_matrix_chart(records, match_weight_range=[-15, 15], as_dict=False)
 
     return altair_or_json(chart, as_dict=as_dict)
 
+def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
+    chart_path = "threshold_selection_tool.json"
+    chart = load_chart_definition(chart_path)
+
+    # Remove extremes with low precision and recall
+    records = [d for d in records if d["precision"] > 0.5 and d["recall"] > 0.5]
+
+    # User-specified metrics to include
+    metrics = ["precision", "recall", *add_metrics]
+    
+    chart["hconcat"][1]["transform"][0]["fold"] = metrics
+    chart["hconcat"][1]["transform"][1]["calculate"] = chart["hconcat"][1]["transform"][1]["calculate"].replace(
+        "__metrics__", str(metrics)
+    )
+    chart["hconcat"][1]["layer"][0]["encoding"]["color"]["sort"] = metrics
+    chart["hconcat"][1]["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
+
+    # Metric-label mapping
+    mapping = {
+        "precision": "Precision (PPV)",
+        "recall": "Recall (TPR)",
+        "specificity": "Specificity (TNR)",
+        "accuracy": "Accuracy",
+        "npv": "NPV",
+        "f1": "F1",
+        "f2": "F2",
+        "f0_5": "F0.5",
+        "p4": "P4",
+        "phi": "\u03C6 (MCC)",
+    }
+    chart["hconcat"][1]["transform"][2]["calculate"] = chart["hconcat"][1]["transform"][2]["calculate"].replace(
+        "__mapping__", str(mapping)
+    )
+    chart["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart["hconcat"][1]["layer"][0][
+        "encoding"
+    ]["color"]["legend"]["labelExpr"].replace("__mapping__", str(mapping))
+
+    chart["data"]["values"] = records
+
+    return altair_or_json(chart, as_dict=as_dict)
 
 def match_weights_histogram(records, width=500, height=250, as_dict=False):
     chart_path = "match_weight_histogram.json"
