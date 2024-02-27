@@ -19,7 +19,6 @@ When making changes to Splink, there are a number of common operations that deve
 * [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
 * [Releasing a new package version](./changing_splink/releases.md) - to walk-through the release process for new versions of Splink. This generally happens every 2 weeks, or in the case of an urgent bug fix.
 * [Contributing to the Splink Blog](./changing_splink/blog_posts.md) - to walk through the process of adding a post to the Splink blog.
-* [Managing Splink's Dependencies](.changing_splink/dependency_management.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.
 
 ## How Splink works
 
@@ -32,3 +31,4 @@ Splink is quite a large, complex codebase. The guides in this section lay out so
 * [Charts](./charts/understanding_and_editing_charts.md) - demonstrates how charts are built in Splink, including how to add new charts and edit existing charts.
 * [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
 * [Settings Validation](./settings_validation/settings_validation_overview.md) - summarises how to use and expand the existing settings schema and validation functions.
+* [Managing Splink's Dependencies](./dependency_management.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.
