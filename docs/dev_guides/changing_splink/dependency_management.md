@@ -29,7 +29,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 
 **Prefer Open Version Constraints**
 
-* **Use Open Upper Bounds**: Wherever feasible, avoid setting an upper version limit for a dependency. This reduces compatability conflicts with external packages and allows the user to decide their versioning strategy at the application level.
+* **Use Open Upper Bounds**: Wherever feasible, avoid setting an upper version limit for a dependency. This reduces compatibility conflicts with external packages and allows the user to decide their versioning strategy at the application level.
 * **Monitor Compatibility**: Actively monitor the development of our core dependencies to anticipate significant updates (such as new major versions) that might necessitate code changes. Within Splink, this is particularly relevant for both Sqlglot and :simple-duckdb:, that (semi)frequently release new, breaking changes.
 
 **Compatibility Checks**
