@@ -80,9 +80,9 @@ class Comparison:
                 cl = ComparisonLevel(
                     **cl,
                     comparison=self,
-                    sqlglot_dialect_name=(
-                        None if settings_obj is None else settings_obj._sql_dialect
-                    ),
+                    sqlglot_dialect_name=None
+                    if settings_obj is None
+                    else settings_obj._sql_dialect,
                 )
 
             self.comparison_levels.append(cl)
