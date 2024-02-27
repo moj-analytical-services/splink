@@ -80,9 +80,9 @@ class Comparison:
                 cl = ComparisonLevel(
                     **cl,
                     comparison=self,
-                    sqlglot_dialect_name=None
-                    if settings_obj is None
-                    else settings_obj._sql_dialect,
+                    sqlglot_dialect_name=(
+                        None if settings_obj is None else settings_obj._sql_dialect
+                    ),
                 )
 
             self.comparison_levels.append(cl)
@@ -143,6 +143,8 @@ class Comparison:
 
     @property
     def gamma_prefix(self):
+        if self.column_info_settings is None:
+            return "gamma_"
         return self.column_info_settings.comparison_vector_value_column_prefix
 
     @property
@@ -151,7 +153,10 @@ class Comparison:
 
     @property
     def _bf_column_name(self):
-        bf_prefix = self.column_info_settings.bayes_factor_column_prefix
+        if self.column_info_settings is None:
+            bf_prefix = "bf_"
+        else:
+            bf_prefix = self.column_info_settings.bayes_factor_column_prefix
         return f"{bf_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
