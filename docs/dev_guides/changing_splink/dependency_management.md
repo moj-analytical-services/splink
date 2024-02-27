@@ -14,11 +14,11 @@ Below is a rough summary of versioning and some complimentary guidelines detaili
 
 ### Benefits to Effective Versioning
 
-Effective versioning is crucial for ensuring Splink's compatibility across diverse devices and seamless integration with various Python versions and cloud tools. Key advantages include:
+Effective versioning is crucial for ensuring Splink's compatibility across diverse techical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
 
 * Faster dependency resolution with `poetry lock`.
 * Reduces dependency conflicts across systems.
-* And, as Robin put it, *"Make things 'just work' more easily in the 99% of cases where versions do not cause an issue"*.
+
 
 ### Versioning Guidance
 
