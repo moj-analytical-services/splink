@@ -83,10 +83,9 @@ Proposed Workflow for Sunsetting Major Python Versions:
 
 ### Python's Development Cycle:
 
-The python developers have a comprehensive summary of [python's development cycle](https://devguide.python.org/versions/) on their website.
+A comprehensive summary of Python's development cycle is available on the [Python Developer's Guide](https://devguide.python.org/versions/). This includes a chart outlining the full release cycle up to 2029:
 
-This includes the following chart, outlining their full release cycle up to 2029
-![](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/dependency_management/python_release_cycle.png)
+![](../img/dependency_management/python_release_cycle.png){width="800"}
 
 As it stands, support for Python 3.8 will officially end in October of 2024. Following an initial grace period of around six months, we will then look to phase out support.
 
