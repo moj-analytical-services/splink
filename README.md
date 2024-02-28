@@ -81,7 +81,23 @@ pip install 'splink[{backend}]'
 Should you require a version of Splink without **DuckDB**, see our section on [DuckDBLess Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation).
 
 <details>
-<summary>Click here for backend-specific installation commands</summary>
+<summary><i>Click here for backend-specific installation commands</i></summary>
+
+#### Spark
+```sh
+pip install 'splink[spark]'
+```
+
+#### Athena
+```sh
+pip install 'splink[athena]'
+```
+
+#### PostgreSQL
+```sh
+pip install 'splink[postgres]'
+```
+</details>
 
 ## Quickstart
 
