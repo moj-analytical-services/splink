@@ -216,7 +216,6 @@ def maximisation_step(
     core_model_settings: CoreModelSettings,
     param_records: List[dict],
 ) -> CoreModelSettings:
-    # settings_obj = em_training_session._settings_obj
     core_model_settings = core_model_settings.copy()
 
     m_u_records = []
@@ -248,21 +247,23 @@ def maximisation_step(
 def expectation_maximisation(
     em_training_session: EMTrainingSession,
     df_comparison_vector_values: SplinkDataFrame,
-):
+) -> List[CoreModelSettings]:
     """In the expectation step, we use the current model parameters to estimate
     the probability of match for each pairwise record comparison
 
     In the maximisation step, we use these predicted probabilities to re-compute
     the parameters of the model
     """
+    db_api = em_training_session.db_api
 
     settings_obj = em_training_session._settings_obj
+
     training_settings = settings_obj.training_settings
     core_model_settings = settings_obj.core_model_settings
-    # original_core_model_settings = core_model_settings
-    # comparisons = core_model_settings.comparisons
-
-    db_api = em_training_session.db_api
+    core_model_settings_history = [core_model_settings.copy()]
+    unique_id_input_columns = settings_obj.column_info_settings.unique_id_input_columns
+    sql_dialect = settings_obj._sql_dialect
+    sql_infinity_expression = db_api.sql_dialect.infinity_expression
 
     fix_m_probabilities = em_training_session._training_fix_m_probabilities
     fix_u_probabilities = em_training_session._training_fix_u_probabilities
@@ -299,11 +300,11 @@ def expectation_maximisation(
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
-                unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
+                unique_id_input_columns=unique_id_input_columns,
                 core_model_settings=core_model_settings,
                 training_mode=True,
-                sql_dialect=settings_obj._sql_dialect,
-                sql_infinity_expression=db_api.sql_dialect.infinity_expression,
+                sql_dialect=sql_dialect,
+                sql_infinity_expression=sql_infinity_expression,
             )
 
         for sql in sqls:
@@ -334,13 +335,10 @@ def expectation_maximisation(
             core_model_settings=core_model_settings,
             param_records=param_records,
         )
-        # store a copy of current params on em_training_session
-        em_training_session._add_iteration(core_model_settings)
-        # TODO: remove this - update settings and then return:
-        settings_obj.core_model_settings = core_model_settings
+        core_model_settings_history.append(core_model_settings)
 
-        max_change_dict = (
-            em_training_session._max_change_in_parameters_comparison_levels()
+        max_change_dict = _max_change_in_parameters_comparison_levels(
+            core_model_settings_history
         )
         logger.info(f"Iteration {i}: {max_change_dict['message']}")
         end_time = time.time()
@@ -350,4 +348,89 @@ def expectation_maximisation(
             break
 
     logger.info(f"\nEM converged after {i} iterations")
-    return core_model_settings
+    return core_model_settings_history
+
+
+def _max_change_message(max_change_dict):
+    message = "Largest change in params was"
+
+    if max_change_dict["max_change_type"] == "probability_two_random_records_match":
+        message = (
+            f"{message} {max_change_dict['max_change_value']:,.3g} in "
+            "probability_two_random_records_match"
+        )
+    else:
+        cl = max_change_dict["current_comparison_level"]
+        m_u = max_change_dict["max_change_type"]
+        cc_name = max_change_dict["output_column_name"]
+
+        cl_label = cl.label_for_charts
+        level_text = f"{cc_name}, level `{cl_label}`"
+
+        message = (
+            f"{message} {max_change_dict['max_change_value']:,.3g} in "
+            f"the {m_u} of {level_text}"
+        )
+
+    return message
+
+
+def _max_change_in_parameters_comparison_levels(
+    core_model_settings_history: List[CoreModelSettings],
+):
+    previous_iteration = core_model_settings_history[-2]
+    this_iteration = core_model_settings_history[-1]
+    max_change = -0.1
+
+    max_change_levels = {
+        "previous_iteration": None,
+        "this_iteration": None,
+        "max_change_type": None,
+        "max_change_value": None,
+    }
+    comparisons = zip(previous_iteration.comparisons, this_iteration.comparisons)
+    for comparison in comparisons:
+        prev_cc = comparison[0]
+        this_cc = comparison[1]
+        z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
+        for z_cl in z_cls:
+            if z_cl[0].is_null_level:
+                continue
+            prev_cl = z_cl[0]
+            this_cl = z_cl[1]
+            change_m = this_cl.m_probability - prev_cl.m_probability
+            change_u = this_cl.u_probability - prev_cl.u_probability
+            change = max(abs(change_m), abs(change_u))
+            change_type = (
+                "m_probability" if abs(change_m) > abs(change_u) else "u_probability"
+            )
+            change_value = change_m if abs(change_m) > abs(change_u) else change_u
+            if change > max_change:
+                max_change = change
+                max_change_levels["prev_comparison_level"] = prev_cl
+                max_change_levels["current_comparison_level"] = this_cl
+                max_change_levels["max_change_type"] = change_type
+                max_change_levels["max_change_value"] = change_value
+                max_change_levels["max_abs_change_value"] = abs(change_value)
+                max_change_levels["output_column_name"] = this_cc.output_column_name
+
+    change_probability_two_random_records_match = (
+        this_iteration.probability_two_random_records_match
+        - previous_iteration.probability_two_random_records_match
+    )
+
+    if abs(change_probability_two_random_records_match) > max_change:
+        max_change = abs(change_probability_two_random_records_match)
+        max_change_levels["prev_comparison_level"] = None
+        max_change_levels["current_comparison_level"] = None
+        max_change_levels["max_change_type"] = "probability_two_random_records_match"
+        max_change_levels[
+            "max_change_value"
+        ] = change_probability_two_random_records_match
+        max_change_levels["max_abs_change_value"] = abs(
+            change_probability_two_random_records_match
+        )
+
+    max_change_levels["message"] = _max_change_message(max_change_levels)
+
+    return max_change_levels

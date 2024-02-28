@@ -853,7 +853,7 @@ class Linker:
         )
         for em_training_session in self._em_training_sessions:
             training_lambda = (
-                em_training_session._settings_obj._probability_two_random_records_match
+                em_training_session.core_model_settings.probability_two_random_records_match
             )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_level_infos = (

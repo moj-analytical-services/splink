@@ -26,7 +26,7 @@ def test_train_vs_predict(test_helpers, dialect):
         "l.surname = r.surname", fix_u_probabilities=False
     )
 
-    expected = training_session._settings_obj._probability_two_random_records_match
+    expected = training_session.core_model_settings.probability_two_random_records_match
 
     # We expect the probability_two_random_records_match to be the same as for a predict
     df = linker.predict().as_pandas_dataframe()

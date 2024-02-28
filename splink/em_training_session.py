@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .blocking import BlockingRule, block_using_rules_sqls
 from .charts import (
@@ -119,16 +119,14 @@ class EMTrainingSession:
         core_model_settings.comparisons = filtered_ccs
         self._comparisons_that_can_be_estimated = filtered_ccs
 
-        self._core_model_settings_history: list[CoreModelSettings] = []
-
         # this should be fixed:
         self.columns_to_select_for_comparison_vector_values = (
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
         # TODO: not sure if we need to attach directly?
         self.core_model_settings = core_model_settings
-        # Add iteration 0 i.e. the starting parameters
-        self._add_iteration(core_model_settings)
+        # initial params get inserted in training
+        self._core_model_settings_history: List[CoreModelSettings] = []
 
     def _training_log_message(self):
         not_estimated = [
@@ -210,8 +208,9 @@ class EMTrainingSession:
         # Compute the new params, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters
         # in the original (main) setting object
-        new_core_model_settings = expectation_maximisation(self, cvv)
-        self.core_model_settings = new_core_model_settings
+        core_model_settings_history = expectation_maximisation(self, cvv)
+        self.core_model_settings = core_model_settings_history[-1]
+        self._core_model_settings_history = core_model_settings_history
 
         rule = self._blocking_rule_for_training.blocking_rule_sql
         training_desc = f"EM, blocked on: {rule}"
@@ -257,9 +256,6 @@ class EMTrainingSession:
                         )
 
         self._original_linker._em_training_sessions.append(self)
-
-    def _add_iteration(self, core_model_settings):
-        self._core_model_settings_history.append(deepcopy(core_model_settings))
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
@@ -338,91 +334,6 @@ class EMTrainingSession:
     def m_u_values_interactive_history_chart(self):
         records = self._iteration_history_records
         return m_u_parameters_interactive_history_chart(records)
-
-    def _max_change_message(self, max_change_dict):
-        message = "Largest change in params was"
-
-        if max_change_dict["max_change_type"] == "probability_two_random_records_match":
-            message = (
-                f"{message} {max_change_dict['max_change_value']:,.3g} in "
-                "probability_two_random_records_match"
-            )
-        else:
-            cl = max_change_dict["current_comparison_level"]
-            m_u = max_change_dict["max_change_type"]
-            cc_name = max_change_dict["output_column_name"]
-
-            cl_label = cl.label_for_charts
-            level_text = f"{cc_name}, level `{cl_label}`"
-
-            message = (
-                f"{message} {max_change_dict['max_change_value']:,.3g} in "
-                f"the {m_u} of {level_text}"
-            )
-
-        return message
-
-    def _max_change_in_parameters_comparison_levels(self):
-        previous_iteration = self._core_model_settings_history[-2]
-        this_iteration = self._core_model_settings_history[-1]
-        max_change = -0.1
-
-        max_change_levels = {
-            "previous_iteration": None,
-            "this_iteration": None,
-            "max_change_type": None,
-            "max_change_value": None,
-        }
-        comparisons = zip(previous_iteration.comparisons, this_iteration.comparisons)
-        for comparison in comparisons:
-            prev_cc = comparison[0]
-            this_cc = comparison[1]
-            z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
-            for z_cl in z_cls:
-                if z_cl[0].is_null_level:
-                    continue
-                prev_cl = z_cl[0]
-                this_cl = z_cl[1]
-                change_m = this_cl.m_probability - prev_cl.m_probability
-                change_u = this_cl.u_probability - prev_cl.u_probability
-                change = max(abs(change_m), abs(change_u))
-                change_type = (
-                    "m_probability"
-                    if abs(change_m) > abs(change_u)
-                    else "u_probability"
-                )
-                change_value = change_m if abs(change_m) > abs(change_u) else change_u
-                if change > max_change:
-                    max_change = change
-                    max_change_levels["prev_comparison_level"] = prev_cl
-                    max_change_levels["current_comparison_level"] = this_cl
-                    max_change_levels["max_change_type"] = change_type
-                    max_change_levels["max_change_value"] = change_value
-                    max_change_levels["max_abs_change_value"] = abs(change_value)
-                    max_change_levels["output_column_name"] = this_cc.output_column_name
-
-        change_probability_two_random_records_match = (
-            this_iteration.probability_two_random_records_match
-            - previous_iteration.probability_two_random_records_match
-        )
-
-        if abs(change_probability_two_random_records_match) > max_change:
-            max_change = abs(change_probability_two_random_records_match)
-            max_change_levels["prev_comparison_level"] = None
-            max_change_levels["current_comparison_level"] = None
-            max_change_levels[
-                "max_change_type"
-            ] = "probability_two_random_records_match"
-            max_change_levels[
-                "max_change_value"
-            ] = change_probability_two_random_records_match
-            max_change_levels["max_abs_change_value"] = abs(
-                change_probability_two_random_records_match
-            )
-
-        max_change_levels["message"] = self._max_change_message(max_change_levels)
-
-        return max_change_levels
 
     def __repr__(self):
         deactivated_cols = ", ".join(
