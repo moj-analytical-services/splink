@@ -208,7 +208,14 @@ class EMTrainingSession:
         # Compute the new params, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters
         # in the original (main) setting object
-        core_model_settings_history = expectation_maximisation(self, cvv)
+        core_model_settings_history = expectation_maximisation(
+            self.db_api,
+            self._settings_obj,
+            fix_m_probabilities=self._training_fix_m_probabilities,
+            fix_u_probabilities=self._training_fix_u_probabilities,
+            fix_probability_two_random_records_match=self._training_fix_probability_two_random_records_match,
+            df_comparison_vector_values=cvv,
+        )
         self.core_model_settings = core_model_settings_history[-1]
         self._core_model_settings_history = core_model_settings_history
 

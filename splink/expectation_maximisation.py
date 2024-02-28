@@ -2,26 +2,22 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, List
+from typing import List
 
 import pandas as pd
 
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
+from .database_api import DatabaseAPI
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .pipeline import SQLPipeline
 from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from .settings import CoreModelSettings
+from .settings import CoreModelSettings, Settings
 from .splink_dataframe import SplinkDataFrame
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .em_training_session import EMTrainingSession
-
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +241,11 @@ def maximisation_step(
 
 
 def expectation_maximisation(
-    em_training_session: EMTrainingSession,
+    db_api: DatabaseAPI,
+    settings_obj: Settings,  # TODO: just the bits we need
+    fix_m_probabilities: bool,
+    fix_u_probabilities: bool,
+    fix_probability_two_random_records_match: bool,
     df_comparison_vector_values: SplinkDataFrame,
 ) -> List[CoreModelSettings]:
     """In the expectation step, we use the current model parameters to estimate
@@ -254,9 +254,8 @@ def expectation_maximisation(
     In the maximisation step, we use these predicted probabilities to re-compute
     the parameters of the model
     """
-    db_api = em_training_session.db_api
 
-    settings_obj = em_training_session._settings_obj
+    # settings_obj = em_training_session._settings_obj
 
     training_settings = settings_obj.training_settings
     core_model_settings = settings_obj.core_model_settings
@@ -264,12 +263,6 @@ def expectation_maximisation(
     unique_id_input_columns = settings_obj.column_info_settings.unique_id_input_columns
     sql_dialect = settings_obj._sql_dialect
     sql_infinity_expression = db_api.sql_dialect.infinity_expression
-
-    fix_m_probabilities = em_training_session._training_fix_m_probabilities
-    fix_u_probabilities = em_training_session._training_fix_u_probabilities
-    fix_probability_two_random_records_match = (
-        em_training_session._training_fix_probability_two_random_records_match
-    )
 
     max_iterations = training_settings.max_iterations
     em_convergence = training_settings.em_convergence
