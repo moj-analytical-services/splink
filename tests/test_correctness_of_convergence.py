@@ -41,7 +41,7 @@ from splink.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
 from splink.linker import Linker
-from splink.predict import predict_from_comparison_vectors_sqls
+from splink.predict import predict_from_comparison_vectors_sqls_using_settings
 
 
 def test_splink_converges_to_known_params():
@@ -102,7 +102,7 @@ def test_splink_converges_to_known_params():
         linker,
     )
 
-    sqls = predict_from_comparison_vectors_sqls(
+    sqls = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         sql_infinity_expression=linker._infinity_expression,
     )

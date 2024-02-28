@@ -376,51 +376,66 @@ class Settings:
         cols = dedupe_preserving_order(cols)
         return cols
 
-    @property
-    def _columns_to_select_for_bayes_factor_parts(self) -> List[str]:
+    @staticmethod
+    def columns_to_select_for_bayes_factor_parts(
+        unique_id_input_columns: List[InputColumn],
+        comparisons: List[Comparison],
+        retain_matching_columns: bool,
+        retain_intermediate_calculation_columns: bool,
+        additional_columns_to_retain: List[InputColumn],
+        needs_matchkey_column: bool,
+    ) -> List[str]:
         cols = []
 
-        for uid_col in self.column_info_settings.unique_id_input_columns:
+        for uid_col in unique_id_input_columns:
             cols.extend(uid_col.names_l_r)
 
-        for cc in self.comparisons:
+        for cc in comparisons:
             cols.extend(
                 cc._columns_to_select_for_bayes_factor_parts(
-                    self._retain_matching_columns,
-                    self._retain_intermediate_calculation_columns,
+                    retain_matching_columns,
+                    retain_intermediate_calculation_columns,
                 )
             )
 
-        for add_col in self._additional_columns_to_retain:
+        for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if self._needs_matchkey_column:
+        if needs_matchkey_column:
             cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols
 
-    @property
-    def _columns_to_select_for_predict(self) -> List[str]:
+    @staticmethod
+    def columns_to_select_for_predict(
+        unique_id_input_columns: List[InputColumn],
+        comparisons: List[Comparison],
+        retain_matching_columns: bool,
+        retain_intermediate_calculation_columns: bool,
+        training_mode: bool,
+        additional_columns_to_retain: List[InputColumn],
+        needs_matchkey_column: bool,
+    ) -> List[str]:
         cols = []
 
-        for uid_col in self.column_info_settings.unique_id_input_columns:
+        for uid_col in unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
-        for cc in self.comparisons:
+        for cc in comparisons:
             cols.extend(
                 cc._columns_to_select_for_predict(
-                    self._retain_matching_columns,
-                    self._retain_intermediate_calculation_columns,
-                    self.training_settings.training_mode,
+                    retain_matching_columns,
+                    retain_intermediate_calculation_columns,
+                    training_mode,
                 )
             )
 
-        for add_col in self._additional_columns_to_retain:
+        for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if self._needs_matchkey_column:
+        if needs_matchkey_column:
             cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)

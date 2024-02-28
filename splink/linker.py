@@ -100,7 +100,7 @@ from .misc import (
 from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import SQLPipeline
-from .predict import predict_from_comparison_vectors_sqls
+from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .profile_data import profile_columns
 from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
@@ -1427,7 +1427,7 @@ class Linker:
         )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             threshold_match_probability,
             threshold_match_weight,
@@ -1551,7 +1551,7 @@ class Linker:
         )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
@@ -1638,7 +1638,7 @@ class Linker:
         )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
@@ -1698,7 +1698,7 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
