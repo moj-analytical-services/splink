@@ -69,7 +69,6 @@ class ColumnInfoSettings:
 class TrainingSettings:
     em_convergence: float
     max_iterations: int
-    training_mode: bool
     blocking_rule_for_training: BlockingRule
     estimate_without_term_frequencies: bool
 
@@ -159,7 +158,6 @@ class Settings:
         em_convergence: float = 0.0001,
         max_iterations: int = 25,
         # TODO: do we need this long-term?
-        training_mode: bool = False,
         blocking_rule_for_training: BlockingRule = None,
         estimate_without_term_frequencies: bool = False,
         # other
@@ -200,7 +198,6 @@ class Settings:
             max_iterations=max_iterations,
             # TODO: can we factor these out?
             blocking_rule_for_training=blocking_rule_for_training,
-            training_mode=training_mode,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
@@ -555,7 +552,6 @@ class Settings:
             **self._simple_dict_entries(),
             **current_settings,
         }
-        del current_settings["training_mode"]
         del current_settings["blocking_rule_for_training"]
         del current_settings["estimate_without_term_frequencies"]
         return current_settings

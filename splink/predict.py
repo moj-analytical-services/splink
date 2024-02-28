@@ -27,7 +27,7 @@ def predict_from_comparison_vectors_sqls_using_settings(
         threshold_match_weight=threshold_match_weight,
         retain_matching_columns=settings_obj._retain_matching_columns,
         retain_intermediate_calculation_columns=settings_obj._retain_intermediate_calculation_columns,
-        training_mode=settings_obj.training_settings.training_mode,
+        training_mode=False,
         additional_columns_to_retain=settings_obj._additional_columns_to_retain,
         needs_matchkey_column=settings_obj._needs_matchkey_column,
         include_clerical_match_score=include_clerical_match_score,

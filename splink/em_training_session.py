@@ -54,7 +54,6 @@ class EMTrainingSession:
         self._settings_obj = self._training_linker._settings_obj
         self._settings_obj._retain_matching_columns = False
         self._settings_obj._retain_intermediate_calculation_columns = False
-        self._settings_obj.training_settings.training_mode = True
 
         core_model_settings = self._settings_obj.core_model_settings
 
