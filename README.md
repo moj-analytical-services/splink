@@ -20,7 +20,7 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 🎓 **Unsupervised Learning:** No training data is required for model training.  
 📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.  
 
-Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
+Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
 ## What does Splink do?
 
@@ -38,7 +38,7 @@ and clusters these links to produce an estimated person ID:
 
 ## What data does Splink work best with?
 
-Before using Splink, input data should be standardized, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
+Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
 
 Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
