@@ -191,8 +191,8 @@ class Comparison:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._case_statement)
@@ -212,16 +212,17 @@ class Comparison:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._gamma_column_name)
 
-        for cl in self.comparison_levels:
-            if cl._has_tf_adjustments and retain_intermediate_calculation_columns:
-                col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r)
+        if retain_intermediate_calculation_columns:
+            for cl in self.comparison_levels:
+                if cl._has_tf_adjustments:
+                    col = cl._tf_adjustment_input_column
+                    output_cols.extend(col.tf_name_l_r)
 
         # Bayes factor case when statement
         sqls = [
@@ -257,21 +258,20 @@ class Comparison:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
-
-        if training_mode or retain_matching_columns:
+            output_cols.append(self._gamma_column_name)
+        elif training_mode:
             output_cols.append(self._gamma_column_name)
 
-        for cl in self.comparison_levels:
-            if cl._has_tf_adjustments and retain_intermediate_calculation_columns:
-                col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r)
+        if retain_intermediate_calculation_columns:
+            for cl in self.comparison_levels:
+                if cl._has_tf_adjustments:
+                    col = cl._tf_adjustment_input_column
+                    output_cols.extend(col.tf_name_l_r)
 
-        for _col in input_cols:
-            if retain_intermediate_calculation_columns:
-                output_cols.extend(self._match_weight_columns_to_multiply)
+            output_cols.extend(self._match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)
 
