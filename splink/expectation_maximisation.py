@@ -10,13 +10,14 @@ from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPI
+from .input_column import InputColumn
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .pipeline import SQLPipeline
 from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from .settings import CoreModelSettings, Settings
+from .settings import CoreModelSettings, TrainingSettings
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -242,7 +243,9 @@ def maximisation_step(
 
 def expectation_maximisation(
     db_api: DatabaseAPI,
-    settings_obj: Settings,  # TODO: just the bits we need
+    training_settings: TrainingSettings,
+    core_model_settings: CoreModelSettings,
+    unique_id_input_columns: List[InputColumn],
     fix_m_probabilities: bool,
     fix_u_probabilities: bool,
     fix_probability_two_random_records_match: bool,
@@ -254,14 +257,10 @@ def expectation_maximisation(
     In the maximisation step, we use these predicted probabilities to re-compute
     the parameters of the model
     """
-
-    # settings_obj = em_training_session._settings_obj
-
-    training_settings = settings_obj.training_settings
-    core_model_settings = settings_obj.core_model_settings
+    # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
-    unique_id_input_columns = settings_obj.column_info_settings.unique_id_input_columns
-    sql_dialect = settings_obj._sql_dialect
+
+    sql_dialect = db_api.sql_dialect.name
     sql_infinity_expression = db_api.sql_dialect.infinity_expression
 
     max_iterations = training_settings.max_iterations

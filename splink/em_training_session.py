@@ -209,8 +209,10 @@ class EMTrainingSession:
         # At this stage, we do not overwrite any of the parameters
         # in the original (main) setting object
         core_model_settings_history = expectation_maximisation(
-            self.db_api,
-            self._settings_obj,
+            db_api=self.db_api,
+            training_settings=self._settings_obj.training_settings,
+            core_model_settings=self.core_model_settings,
+            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
             fix_m_probabilities=self._training_fix_m_probabilities,
             fix_u_probabilities=self._training_fix_u_probabilities,
             fix_probability_two_random_records_match=self._training_fix_probability_two_random_records_match,
