@@ -16,7 +16,7 @@ from .parse_sql import get_columns_used_from_sql
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ColumnInfoSettings:
     bayes_factor_column_prefix: str
     term_frequency_adjustment_column_prefix: str

@@ -298,7 +298,8 @@ def expectation_maximisation(
                 sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
         else:
-            # TODO: only need core model stuff - don't care here about extra cols / retains that are user-set!
+            # TODO: only need core model stuff -
+            # don't care here about extra cols / retains that are user-set!
             sqls = predict_from_comparison_vectors_sqls(
                 settings_obj,
                 sql_infinity_expression=db_api.sql_dialect.infinity_expression,
