@@ -70,40 +70,18 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
+### Installing Splink for Specific Backends
+
+
+For projects requiring specific backends, Splink offers optional installations for **Spark**, **Athena**, and **PostgreSQL**. These can be installed by appending the backend name in brackets to the pip install command:
+```sh
+pip install 'splink[{backend}]'
+```
+
+Should you require a version of Splink without **DuckDB**, see our section on [DuckDBLess Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation).
+
 <details>
-<summary><h3>Additional installation methods</h3></summary>
-
-<br>
-
-### Backend Specific Installs
-From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your `pip install`.
-
-**Note** that **SQLite** and **DuckDB** come packaged with Splink and do not need to be optionally installed.
-
-Backends supported by optional installs:
-
-**Spark**
-```sh
-pip install 'splink[spark]'
-```
-
-**Athena**
-```sh
-pip install 'splink[athena]'
-```
-
-**PostgreSQL**
-```sh
-pip install 'splink[postgres]'
-```
-
-<br>
-
-### DuckDBLess Splink
-Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
-> [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
-
-</details>
+<summary>Click here for backend-specific installation commands</summary>
 
 ## Quickstart
 
