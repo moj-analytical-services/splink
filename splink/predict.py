@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 def predict_from_comparison_vectors_sqls_using_settings(
     settings_obj: Settings,
-    threshold_match_probability=None,
-    threshold_match_weight=None,
-    include_clerical_match_score=False,
-    sql_infinity_expression="'infinity'",
+    threshold_match_probability: float = None,
+    threshold_match_weight: float = None,
+    include_clerical_match_score: bool = False,
+    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict]:
     return predict_from_comparison_vectors_sqls(
         unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
@@ -39,15 +39,16 @@ def predict_from_comparison_vectors_sqls(
     unique_id_input_columns: List[InputColumn],
     core_model_settings: CoreModelSettings,
     sql_dialect: str,
-    threshold_match_probability=None,
-    threshold_match_weight=None,
+    threshold_match_probability: float = None,
+    threshold_match_weight: float = None,
+    # by default we keep off everything we don't necessarily need
     retain_matching_columns: bool = False,
     retain_intermediate_calculation_columns: bool = False,
     training_mode: bool = False,
     additional_columns_to_retain: List[InputColumn] = [],
     needs_matchkey_column: bool = False,
-    include_clerical_match_score=False,
-    sql_infinity_expression="'infinity'",
+    include_clerical_match_score: bool = False,
+    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict]:
     sqls = []
 

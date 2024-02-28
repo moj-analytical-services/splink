@@ -301,11 +301,7 @@ def expectation_maximisation(
             sqls = predict_from_comparison_vectors_sqls(
                 unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
                 core_model_settings=core_model_settings,
-                retain_matching_columns=False,
-                retain_intermediate_calculation_columns=False,
                 training_mode=True,
-                additional_columns_to_retain=[],
-                needs_matchkey_column=False,
                 sql_dialect=settings_obj._sql_dialect,
                 sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
