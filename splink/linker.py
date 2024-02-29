@@ -2103,6 +2103,7 @@ class Linker:
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
+        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
         return cc
 
@@ -2153,6 +2154,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
+        df_node_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -2184,9 +2188,13 @@ class Linker:
         | s1-__-10021           | s1-__-10024             | True      |
         ...
         """
-        return compute_edge_metrics(
+        df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
+        return df_edge_metrics
 
     def _compute_metrics_clusters(
         self,
@@ -2225,6 +2233,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
+        df_cluster_metrics.metadata[
+            "threshold_match_probability"
+        ] = df_node_metrics.metadata["threshold_match_probability"]
         return df_cluster_metrics
 
     # a user-facing function, which is currently 'private' (Beta functionality)
@@ -2234,7 +2245,7 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         *,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
     ) -> GraphMetricsResults:
         """
         Generates tables containing graph metrics (for nodes, edges and clusters),
@@ -2244,9 +2255,11 @@ class Linker:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or
-                above this threshold.
+            threshold_match_probability (float, optional): Filter the pairwise match
+                predictions to include only pairwise comparisons with a
+                match_probability at or above this threshold. If not provided, the value
+                will be taken from metadata on `df_clustered`. If no such metadata is
+                available, this value _must_ be provided.
 
         Returns:
             GraphMetricsResult: A data class containing SplinkDataFrames
@@ -2256,6 +2269,18 @@ class Linker:
                 attribute "clusters" for cluster metrics table
 
         """
+        if threshold_match_probability is None:
+            threshold_match_probability = df_clustered.metadata.get(
+                "threshold_match_probability", None
+            )
+            # we may not have metadata if clusters have been manually registered, or
+            # read in from a format that does not include it
+            if threshold_match_probability is None:
+                raise TypeError(
+                    "As `df_clustered` has no threshold metadata associated to it, "
+                    "to compute graph metrics you must provide "
+                    "`threshold_match_probability` manually"
+                )
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
