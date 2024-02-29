@@ -123,14 +123,12 @@ class EMTrainingSession:
         self._comparisons_that_can_be_estimated = filtered_ccs
 
         # this should be fixed:
-        self.columns_to_select_for_comparison_vector_values = (
-            Settings.columns_to_select_for_comparison_vector_values(
-                unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
-                comparisons=core_model_settings.comparisons,
-                retain_matching_columns=False,
-                additional_columns_to_retain=[],
-                needs_matchkey_column=False,
-            )
+        self.columns_to_select_for_comparison_vector_values = Settings.columns_to_select_for_comparison_vector_values(
+            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
+            comparisons=core_model_settings.comparisons,
+            retain_matching_columns=False,
+            additional_columns_to_retain=[],
+            needs_matchkey_column=False,
         )
         # TODO: not sure if we need to attach directly?
         self.core_model_settings = core_model_settings
