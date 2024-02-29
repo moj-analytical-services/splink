@@ -217,13 +217,6 @@ class Settings:
 
         self._additional_col_names_to_retain = additional_columns_to_retain
 
-    def __deepcopy__(self, memo) -> Settings:
-        """When we do EM training, we need a copy of the Settings which is independent
-        of the original e.g. modifying the copy will not affect the original.
-        This method implements ensures the Settings can be deepcopied."""
-        cc = Settings(**self._as_dict_for_copying())
-        return cc
-
     # TODO: move this to Comparison
     def _warn_if_no_null_level_in_comparisons(self):
         for c in self.comparisons:
@@ -583,17 +576,6 @@ class Settings:
         return {
             **self._simple_dict_entries(),
             **current_settings,
-        }
-
-    def _as_dict_for_copying(self):
-        return {
-            **self._simple_dict_entries(),
-            "comparisons": [deepcopy(c) for c in self.comparisons],
-            "blocking_rules_to_generate_predictions": (
-                # BlockingRules are simple, so only need a shallow copy
-                # TODO: can/should we rely on this?
-                [copy(br) for br in self._blocking_rules_to_generate_predictions]
-            ),
         }
 
     def match_weights_chart(self, as_dict=False):
