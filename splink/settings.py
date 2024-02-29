@@ -132,6 +132,12 @@ class CoreModelSettings:
         output.insert(0, prop_record)
         return output
 
+    def get_comparison_by_output_column_name(self, name) -> Comparison:
+        for cc in self.comparisons:
+            if cc.output_column_name == name:
+                return cc
+        raise ValueError(f"No comparison column with name {name}")
+
 
 class Settings:
     """The settings object contains the configuration and parameters of the data
@@ -447,11 +453,8 @@ class Settings:
         cols = dedupe_preserving_order(cols)
         return cols
 
-    def _get_comparison_by_output_column_name(self, name):
-        for cc in self.comparisons:
-            if cc.output_column_name == name:
-                return cc
-        raise ValueError(f"No comparison column with name {name}")
+    def _get_comparison_by_output_column_name(self, name) -> Comparison:
+        return self.core_model_settings.get_comparison_by_output_column_name(name)
 
     def _brs_as_objs(self, brs_as_strings) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
