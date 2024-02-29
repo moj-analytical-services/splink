@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 from pandas.testing import assert_frame_equal
-from pytest import approx
+from pytest import approx, raises
 
 from splink.duckdb.duckdb_comparison_library import (
     exact_match,
@@ -42,7 +42,7 @@ def test_size_density_dedupe():
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     df_result = linker._compute_graph_metrics(
-        df_predict, df_clustered, threshold_match_probability=0.9
+        df_predict, df_clustered
     ).clusters.as_pandas_dataframe()
     # not testing this here - it's not relevant for small clusters anyhow
     del df_result["cluster_centralisation"]
@@ -398,3 +398,89 @@ def test_edges_without_igraph():
     assert "composite_unique_id_l" in df_edge_metrics.columns
     assert "composite_unique_id_r" in df_edge_metrics.columns
     assert "is_bridge" not in df_edge_metrics.columns
+
+def test_no_threshold_provided():
+    df_e = pd.DataFrame(
+        [
+            {
+                "unique_id_l": 1,
+                "name_l": "trame",
+                "unique_id_r": 2,
+                "name_r": "scrame",
+                "match_probability": 0.99,
+            },
+        ]
+    )
+    df_c = pd.DataFrame(
+        [
+            {"cluster_id": 1, "unique_id": 1, "name": "trame"},
+            {"cluster_id": 1, "unique_id": 2, "name": "scrame"},
+        ]
+    )
+
+    settings = {"link_type": "dedupe_only"}
+    linker = DuckDBLinker(df_1, settings)
+
+    df_predict = linker.register_table(df_e, "predict")
+    df_clustered = linker.register_table(df_c, "clusters")
+
+    with raises(TypeError):
+        # no threshold_match_probability, no metadata
+        _ = linker._compute_graph_metrics(df_predict, df_clustered)
+
+
+def test_override_metadata_threshold():
+    df_e = pd.DataFrame(
+        [
+            # three edges at >= 0.9
+            # two at >= 0.95
+            make_edge_row(1, 2, 1, 0.95, None),
+            make_edge_row(2, 3, 1, 0.96, None),
+            make_edge_row(1, 3, 1, 0.92, None),
+        ]
+    )
+    df_c = pd.DataFrame([{"cluster_id": 1, "unique_id": i} for i in range(1, 3 + 1)])
+    settings = {"link_type": "dedupe_only"}
+    linker = DuckDBLinker(df_1, settings)
+    # linker.debug_mode = True
+    df_predict = linker.register_table(df_e, "predict")
+    df_clustered = linker.register_table(df_c, "clusters")
+    df_clustered.metadata["threshold_match_probability"] = 0.95
+
+    gm_results_95 = linker._compute_graph_metrics(df_predict, df_clustered)
+    gm_results_9 = linker._compute_graph_metrics(
+        df_predict, df_clustered, threshold_match_probability=0.9
+    )
+    df_expected_95 = pd.DataFrame(
+        [
+            {
+                "cluster_id": 1,
+                "n_nodes": 3,
+                "n_edges": 2.0,
+                "density": 2 / 3,
+                "cluster_centralisation": 1.0,
+            },
+        ]
+    )
+    df_expected_9 = pd.DataFrame(
+        [
+            {
+                "cluster_id": 1,
+                "n_nodes": 3,
+                "n_edges": 3.0,
+                "density": 1.0,
+                "cluster_centralisation": 0.0,
+            },
+        ]
+    )
+    assert_frame_equal(
+        gm_results_95.clusters.as_pandas_dataframe(),
+        df_expected_95,
+        check_index_type=False,
+    )
+    assert_frame_equal(
+        gm_results_9.clusters.as_pandas_dataframe(),
+        df_expected_9,
+        check_index_type=False,
+    )
+
