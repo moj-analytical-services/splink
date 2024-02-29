@@ -450,8 +450,10 @@ class Settings:
             br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
+    # TODO: is this the most logical place for this to live now it's static?
+    @staticmethod
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
-        self, blocking_rule
+        blocking_rule_sql: str, sqlglot_dialect_name: str, comparisons: List[Comparison]
     ) -> dict[str, Comparison | ComparisonLevel]:
         """
         If we block on (say) first name and surname, then all blocked comparisons are
@@ -473,15 +475,13 @@ class Settings:
         """
         blocking_exact_match_columns = set(
             get_columns_used_from_sql(
-                blocking_rule,
-                dialect=self._sql_dialect,
+                blocking_rule_sql,
+                dialect=sqlglot_dialect_name,
             )
         )
 
-        ccs = self.comparisons
-
         exact_comparison_levels = []
-        for cc in ccs:
+        for cc in comparisons:
             for cl in cc.comparison_levels:
                 if cl._is_exact_match:
                     exact_comparison_levels.append({"level": cl, "comparison": cc})
