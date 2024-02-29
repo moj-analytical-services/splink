@@ -215,6 +215,24 @@ def _full_bridges_sql(
     return sql_info
 
 
+def _basic_edge_metrics_sql(
+    composite_uid_edges_l: str,
+    composite_uid_edges_r: str,
+    truncated_edges_table_name: str,
+) -> List[Dict[str, str]]:
+    # dummy sql that returns the edges without any metrics, as there are none
+    # that we can currently compute without igraph
+    sql_info = {
+        "sql": (
+            f"SELECT {composite_uid_edges_l} AS composite_unique_id_l, "
+            f"{composite_uid_edges_r} AS composite_unique_id_r "
+            f"FROM {truncated_edges_table_name}"
+        ),
+        "output_table_name": "__splink__graph_metrics_edges",
+    }
+    return sql_info
+
+
 def _size_density_centralisation_sql(
     df_node_metrics: SplinkDataFrame,
 ) -> List[Dict[str, str]]:
