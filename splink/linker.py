@@ -2733,7 +2733,7 @@ class Linker:
         a, b = match_weight_range
         recs = [r for r in recs if a < r["truth_threshold"] < b]
         return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
-    
+
     def threshold_selection_tool_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
@@ -3058,7 +3058,7 @@ class Linker:
         a, b = match_weight_range
         recs = [r for r in recs if a < r["truth_threshold"] < b]
         return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
-    
+
     def threshold_selection_tool_from_labels_column(
         self,
         labels_column_name,
