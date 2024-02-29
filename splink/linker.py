@@ -1345,6 +1345,7 @@ class Linker:
         )
 
         em_training_session._train()
+        self._em_training_sessions.append(em_training_session)
 
         self._populate_m_u_from_trained_values()
 

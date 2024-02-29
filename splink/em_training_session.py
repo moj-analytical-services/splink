@@ -18,6 +18,7 @@ from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
+from .pipeline import SQLPipeline
 from .settings import CoreModelSettings, Settings
 
 logger = logging.getLogger(__name__)
@@ -171,19 +172,20 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
+        pipeline = SQLPipeline()
         nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
 
         sqls = block_using_rules_sqls(self._training_linker)
         for sql in sqls:
-            self._training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        # repartition after blocking only exists on the SparkLinker
+        # repartition after blocking only exists on the SparkAPI
         repartition_after_blocking = getattr(
-            self._original_linker, "repartition_after_blocking", False
+            self.db_api, "repartition_after_blocking", False
         )
 
         if repartition_after_blocking:
-            df_blocked = self._training_linker._execute_sql_pipeline([nodes_with_tf])
+            df_blocked = self.db_api._execute_sql_pipeline(pipeline, [nodes_with_tf])
             input_dataframes = [nodes_with_tf, df_blocked]
         else:
             input_dataframes = [nodes_with_tf]
@@ -191,8 +193,8 @@ class EMTrainingSession:
         sql = compute_comparison_vector_values_sql(
             self.columns_to_select_for_comparison_vector_values
         )
-        self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self._training_linker._execute_sql_pipeline(input_dataframes)
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.db_api._execute_sql_pipeline(pipeline, input_dataframes)
 
     def _train(self):
         cvv = self._comparison_vectors()
@@ -272,8 +274,6 @@ class EMTrainingSession:
                         orig_cl._add_trained_u_probability(
                             cl.u_probability, training_desc
                         )
-
-        self._original_linker._em_training_sessions.append(self)
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
