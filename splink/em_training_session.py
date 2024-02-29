@@ -52,11 +52,11 @@ class EMTrainingSession:
         self.db_api = linker.db_api
 
         self._settings_obj = self._training_linker._settings_obj
-        self._settings_obj._retain_matching_columns = False
-        self._settings_obj._retain_intermediate_calculation_columns = False
-
+        self.training_settings = self._settings_obj.training_settings
+        self.unique_id_input_columns = (
+            self._settings_obj.column_info_settings.unique_id_input_columns
+        )
         core_model_settings = self._settings_obj.core_model_settings
-        sqlglot_dialect_name = self.db_api.sql_dialect.sqlglot_name
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
@@ -65,7 +65,7 @@ class EMTrainingSession:
             blocking_rule_for_training
         )
         self._blocking_rule_for_training = blocking_rule_for_training
-        self._settings_obj.training_settings.estimate_without_term_frequencies = (
+        self.training_settings.estimate_without_term_frequencies = (
             estimate_without_term_frequencies
         )
 
@@ -77,9 +77,9 @@ class EMTrainingSession:
             raise ValueError("This path is broken for now.")
         else:
             self._comparison_levels_to_reverse_blocking_rule = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                blocking_rule_for_training.blocking_rule_sql,
-                sqlglot_dialect_name,
-                core_model_settings.comparisons,
+                blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
+                sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
+                comparisons=core_model_settings.comparisons,
             )
 
         self._settings_obj._probability_two_random_records_match = (
@@ -123,12 +123,14 @@ class EMTrainingSession:
         self._comparisons_that_can_be_estimated = filtered_ccs
 
         # this should be fixed:
-        self.columns_to_select_for_comparison_vector_values = Settings.columns_to_select_for_comparison_vector_values(
-            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
-            comparisons=core_model_settings.comparisons,
-            retain_matching_columns=False,
-            additional_columns_to_retain=[],
-            needs_matchkey_column=False,
+        self.columns_to_select_for_comparison_vector_values = (
+            Settings.columns_to_select_for_comparison_vector_values(
+                unique_id_input_columns=self.unique_id_input_columns,
+                comparisons=core_model_settings.comparisons,
+                retain_matching_columns=False,
+                additional_columns_to_retain=[],
+                needs_matchkey_column=False,
+            )
         )
         # TODO: not sure if we need to attach directly?
         self.core_model_settings = core_model_settings
@@ -217,9 +219,9 @@ class EMTrainingSession:
         # in the original (main) setting object
         core_model_settings_history = expectation_maximisation(
             db_api=self.db_api,
-            training_settings=self._settings_obj.training_settings,
+            training_settings=self.training_settings,
             core_model_settings=self.core_model_settings,
-            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
+            unique_id_input_columns=self.unique_id_input_columns,
             fix_m_probabilities=self._training_fix_m_probabilities,
             fix_u_probabilities=self._training_fix_u_probabilities,
             fix_probability_two_random_records_match=self._training_fix_probability_two_random_records_match,
@@ -315,7 +317,7 @@ class EMTrainingSession:
 
             for r in records:
                 r["iteration"] = iteration
-                # TODO: why lambda from _settings_obj not history?
+                # TODO: why lambda from current settings, not history?
                 r[
                     "probability_two_random_records_match"
                 ] = self.core_model_settings.probability_two_random_records_match
