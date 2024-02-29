@@ -399,6 +399,7 @@ def test_edges_without_igraph():
     assert "composite_unique_id_r" in df_edge_metrics.columns
     assert "is_bridge" not in df_edge_metrics.columns
 
+
 def test_no_threshold_provided():
     df_e = pd.DataFrame(
         [
@@ -483,4 +484,3 @@ def test_override_metadata_threshold():
         df_expected_9,
         check_index_type=False,
     )
-
