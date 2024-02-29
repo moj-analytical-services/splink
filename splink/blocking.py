@@ -436,7 +436,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sqls(linker: Linker):
+def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = None):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -513,10 +513,11 @@ def block_using_rules_sqls(linker: Linker):
     # property on the settings object, and avoided this logic but I wanted to be very
     # explicit about the difference between blocking for training
     # and blocking for predictions
-    if settings_obj.training_settings.blocking_rule_for_training:
-        blocking_rules = [settings_obj.training_settings.blocking_rule_for_training]
-    else:
-        blocking_rules = settings_obj._blocking_rules_to_generate_predictions
+    if blocking_rules is None:
+        if settings_obj.training_settings.blocking_rule_for_training:
+            blocking_rules = [settings_obj.training_settings.blocking_rule_for_training]
+        else:
+            blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'

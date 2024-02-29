@@ -48,11 +48,10 @@ class EMTrainingSession:
 
         self._original_settings_obj = linker._settings_obj
         self._original_linker = linker
-        self._training_linker = deepcopy(linker)
         # TODO: eventually just pass this + relevant settings:
         self.db_api = linker.db_api
 
-        self._settings_obj = self._training_linker._settings_obj
+        self._settings_obj = deepcopy(self._original_settings_obj)
         self.training_settings = self._settings_obj.training_settings
         self.unique_id_input_columns = (
             self._settings_obj.column_info_settings.unique_id_input_columns
@@ -62,9 +61,8 @@ class EMTrainingSession:
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
-        self._settings_obj.training_settings.blocking_rule_for_training = (
-            blocking_rule_for_training
-        )
+        # TODO: only need this for blocking, for now
+        # self.training_settings.blocking_rule_for_training = blocking_rule_for_training
         self._blocking_rule_for_training = blocking_rule_for_training
         self.training_settings.estimate_without_term_frequencies = (
             estimate_without_term_frequencies
@@ -175,7 +173,9 @@ class EMTrainingSession:
         pipeline = SQLPipeline()
         nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
 
-        sqls = block_using_rules_sqls(self._training_linker)
+        sqls = block_using_rules_sqls(
+            self._original_linker, [self._blocking_rule_for_training]
+        )
         for sql in sqls:
             pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
