@@ -2,13 +2,33 @@
     "config": {
         "view": {
             "continuousWidth": 300,
-            "continuousHeight": 300
+            "continuousHeight": 300,
+            "discreteHeight": {
+                "step": 150
+            },
+            "discreteWidth": {
+                "step": 150
+            }
         },
         "concat": {
-            "spacing": 50
+            "spacing": 40
         },
         "axis": {
-            "gridWidth": 0.5
+            "gridWidth": 0.5,
+            "labelFontSize": 12,
+            "titleFontSize": 16
+        },
+        "axisX": {
+            "offset": 20,
+            "format": "+",
+            "values": {
+                "expr": "[-25,-20,-15,-10,-5,0,5,10,15,20,25]"
+            },
+            "grid": false
+        },
+        "axisY": {
+            "titleFontSize": 16,
+            "title": "Match probability threshold"
         }
     },
     "title": {
@@ -17,7 +37,7 @@
         "subtitleFontSize": 14,
         "subtitleFontStyle": "italic",
         "subtitle": [
-            "Hover over either line graph to show Confusion Matrix and selected performance metrics.",
+            "Hover over either line graph to show Confusion Matrix (bottom left) and selected performance metrics (right).",
             "",
             "Click a legend value to show a specific evaluation metric. Shift + Click to show multiple metrics"
         ],
@@ -42,10 +62,10 @@
                                             "type": "quantitative",
                                             "title": null,
                                             "axis": {
-                                                "labelFontSize": 12,
-                                                "titleFontSize": 16,
-                                                "offset": 20,
                                                 "orient": "bottom"
+                                            },
+                                            "scale": {
+                                                "nice": false
                                             }
                                         },
                                         "opacity": {
@@ -84,11 +104,8 @@
                                         "y": {
                                             "field": "match_probability",
                                             "type": "quantitative",
-                                            "title": null,
+                                            "title": " ",
                                             "axis": {
-                                                "labelFontSize": 12,
-                                                "titleFontSize": 16,
-                                                "offset": 20,
                                                 "orient": "right"
                                             }
                                         },
@@ -140,11 +157,8 @@
                                         "y": {
                                             "field": "match_probability",
                                             "type": "quantitative",
+                                            "title": "Match probability threshold",
                                             "axis": {
-                                                "labelFontSize": 12,
-                                                "title": "Match probability",
-                                                "titleFontSize": 16,
-                                                "titlePadding": 10,
                                                 "orient": "left"
                                             }
                                         }
@@ -223,11 +237,9 @@
                                 "y": {
                                     "field": "match_probability",
                                     "type": "quantitative",
+                                    "title": "Match probability threshold",
                                     "axis": {
-                                        "labelFontSize": 12,
-                                        "title": "Match probability",
-                                        "titleFontSize": 16,
-                                        "titlePadding": 50,
+                                        "titlePadding": 10,
                                         "orient": "left"
                                     }
                                 },
@@ -236,17 +248,47 @@
                                     "type": "quantitative",
                                     "title": "Match weight threshold",
                                     "axis": {
-                                        "labelFontSize": 12,
-                                        "titleFontSize": 16,
-                                        "offset": 20,
                                         "orient": "top"
                                     }
                                 }
                             }
+                        },
+                        {
+                            "mark": {
+                                "type": "text",
+                                "x": 0,
+                                "y": "height",
+                                "yOffset": 10,
+                                "align": "left",
+                                "text": "Non-match",
+                                "color": "red",
+                                "fontSize": 12
+                            },
+                            "data": {
+                                "values": [
+                                    {}
+                                ]
+                            }
+                        },
+                        {
+                            "mark": {
+                                "type": "text",
+                                "x": "width",
+                                "y": 0,
+                                "yOffset": -10,
+                                "align": "right",
+                                "text": "Match",
+                                "color": "green",
+                                "fontSize": 12,
+                                "fontWeight": "bold"
+                            },
+                            "data": {
+                                "values": [
+                                    {}
+                                ]
+                            }
                         }
-                    ],
-                    "height": 300,
-                    "width": 300
+                    ]
                 },
                 {
                     "hconcat": [
@@ -394,12 +436,6 @@
                                     "sort": "-y"
                                 }
                             },
-                            "width": {
-                                "step": 150
-                            },
-                            "height": {
-                                "step": 150
-                            },
                             "resolve": {
                                 "scale": {
                                     "color": "independent"
@@ -468,7 +504,7 @@
         },
         {
             "width": 500,
-            "height": 600,
+            "height": 700,
             "description": "Accuracy chart",
             "layer": [
                 {
@@ -481,13 +517,9 @@
                             "encoding": {
                                 "x": {
                                     "field": "truth_threshold",
+                                    "title": "Match weight threshold",
                                     "axis": {
-                                        "labelFontSize": 12,
-                                        "title": "Match weight threshold",
-                                        "titleFontSize": 16,
-                                        "titlePadding": 10,
-                                        "orient": "top",
-                                        "offset": 20
+                                        "orient": "top"
                                     }
                                 },
                                 "opacity": {
@@ -502,13 +534,13 @@
                                     {
                                         "field": "truth_threshold",
                                         "format": ".3f",
-                                        "title": "Match weight",
+                                        "title": "Match weight threshold",
                                         "type": "quantitative"
                                     },
                                     {
                                         "field": "match_probability",
                                         "format": ".3%",
-                                        "title": "Match probability",
+                                        "title": "Match probability threshold",
                                         "type": "quantitative"
                                     },
                                     {
@@ -578,19 +610,14 @@
                         },
                         {
                             "mark": {
-                                "type": "line",
-                                "clip": true
+                                "type": "line"
                             },
                             "encoding": {
                                 "x": {
                                     "field": "truth_threshold",
+                                    "title": null,
                                     "axis": {
-                                        "labelFontSize": 12,
-                                        "title": null,
-                                        "titleFontSize": 16,
-                                        "titlePadding": 10,
-                                        "orient": "bottom",
-                                        "offset": 20
+                                        "orient": "bottom"
                                     }
                                 },
                                 "opacity": {
@@ -611,13 +638,15 @@
                                 "precision",
                                 "recall"
                             ],
-                            "title": "Performance Metric",
+                            "title": [
+                                "Performance",
+                                "Metric"
+                            ],
                             "legend": {
                                 "labelExpr": "__mapping__[datum.value]",
                                 "orient": "none",
-                                "legendX": 500,
-                                "legendY": 660,
-                                "direction": "horizontal",
+                                "legendX": 800,
+                                "legendY": 160,
                                 "labelFontSize": 14,
                                 "titleFontSize": 16,
                                 "titlePadding": 15,
@@ -634,9 +663,12 @@
                             "type": "quantitative",
                             "axis": {
                                 "labelFontSize": 12,
-                                "title": "Score",
+                                "title": "Performance metric score",
                                 "titleFontSize": 18,
-                                "titlePadding": 10
+                                "titlePadding": 10,
+                                "values": {
+                                    "expr": "[0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]"
+                                }
                             },
                             "scale": {
                                 "domain": [
@@ -658,14 +690,7 @@
                                 "x": {
                                     "field": "truth_threshold",
                                     "type": "quantitative",
-                                    "axis": {
-                                        "labelFontSize": 12,
-                                        "title": null,
-                                        "titleFontSize": 16,
-                                        "titlePadding": 10,
-                                        "orient": "bottom",
-                                        "offset": 20
-                                    }
+                                    "title": null
                                 }
                             }
                         },
@@ -727,8 +752,8 @@
                                 "type": "text",
                                 "fontSize": 14,
                                 "fontWeight": "bold",
-                                "y": "height",
-                                "yOffset": -20,
+                                "y": 0,
+                                "yOffset": -10,
                                 "xOffset": 20
                             },
                             "encoding": {
