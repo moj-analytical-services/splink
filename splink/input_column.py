@@ -106,7 +106,7 @@ class SqlglotColumnTreeBuilder:
 
         # If the raw string parses to a valid signature, use it
         try:
-            tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
+            tree = sqlglot.parse_one(input_str, read=sqlglot_dialect)
         except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:
@@ -123,7 +123,7 @@ class SqlglotColumnTreeBuilder:
         q_s, q_e = _get_dialect_quotes(sqlglot_dialect)
         input_str = add_quotes_to_column_name(input_str, q_s, q_e)
         try:
-            tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
+            tree = sqlglot.parse_one(input_str, read=sqlglot_dialect)
         except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:

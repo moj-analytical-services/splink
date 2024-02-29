@@ -113,7 +113,7 @@ nav:
       - 4. Estimating model parameters: "demos/tutorials/04_Estimating_model_parameters.ipynb"
       - 5. Predicting results: "demos/tutorials/05_Predicting_results.ipynb"
       - 6. Visualising predictions: "demos/tutorials/06_Visualising_predictions.ipynb"
-      - 7. Quality assurance: "demos/tutorials/07_Quality_assurance.ipynb"
+      - 7. Evaluation: "demos/tutorials/07_Evaluation.ipynb"
   - Examples:
       - Introduction: "demos/examples/examples_index.md"
       - DuckDB:
@@ -121,7 +121,7 @@ nav:
         - Linking financial transactions: "demos/examples/duckdb/transactions.ipynb"
         - Linking two tables of persons: "demos/examples/duckdb/link_only.ipynb"
         - Real time record linkage: "demos/examples/duckdb/real_time_record_linkage.ipynb"
-        - QA from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
+        - Evaluation from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
         - Estimating m probabilities from labels: "demos/examples/duckdb/pairwise_labels.ipynb"
         - Quick and dirty persons model: "demos/examples/duckdb/quick_and_dirty_persons.ipynb"
         - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
@@ -165,7 +165,10 @@ nav:
       - Evaluation:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
-        - Edges (Links): "topic_guides/evaluation/edges.md"
+        - Edges (Links): 
+          - Overview: "topic_guides/evaluation/edge_overview.md"
+          - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
+          - Clerical Labelling: "topic_guides/evaluation/labelling.md"
         - Clusters: 
           - Overview: "topic_guides/evaluation/clusters/overview.md"
           - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
@@ -187,7 +190,7 @@ nav:
             - Estimating model parameters: "linkerest.md"
             - Predicting results: "linkerpred.md"
             - Visualisation: "linkermodelviz.md"
-            - Quality Assurance: "linkerqa.md"
+            - Evaluation: "linkereval.md"
         - Comparisons Library API:
             - Comparison Template Library: "comparison_template_library.md"
             - Comparison Library: "comparison_library.md"

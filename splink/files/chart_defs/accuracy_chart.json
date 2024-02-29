@@ -222,7 +222,7 @@
             "text": {
               "field": "y_text"
             },
-            "yOffset": {
+            "y": {
               "field": "score_index",
               "type": "quantitative"
             }

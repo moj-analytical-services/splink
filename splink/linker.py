@@ -1649,9 +1649,11 @@ class Linker:
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
-                self._settings_obj._get_comparison_by_output_column_name(n)
-                if isinstance(n, str)
-                else n
+                (
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
+                )
                 for n in comparisons_to_deactivate
             ]
             if comparison_levels_to_reverse_blocking_rule is None:
@@ -2100,6 +2102,7 @@ class Linker:
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
+        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
         return cc
 
@@ -2150,6 +2153,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
+        df_node_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -2181,9 +2187,13 @@ class Linker:
         | s1-__-10021           | s1-__-10024             | True      |
         ...
         """
-        return compute_edge_metrics(
+        df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
+        return df_edge_metrics
 
     def _compute_metrics_clusters(
         self,
@@ -2222,6 +2232,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
+        df_cluster_metrics.metadata[
+            "threshold_match_probability"
+        ] = df_node_metrics.metadata["threshold_match_probability"]
         return df_cluster_metrics
 
     # a user-facing function, which is currently 'private' (Beta functionality)
@@ -2231,7 +2244,7 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         *,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
     ) -> GraphMetricsResults:
         """
         Generates tables containing graph metrics (for nodes, edges and clusters),
@@ -2241,9 +2254,11 @@ class Linker:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or
-                above this threshold.
+            threshold_match_probability (float, optional): Filter the pairwise match
+                predictions to include only pairwise comparisons with a
+                match_probability at or above this threshold. If not provided, the value
+                will be taken from metadata on `df_clustered`. If no such metadata is
+                available, this value _must_ be provided.
 
         Returns:
             GraphMetricsResult: A data class containing SplinkDataFrames
@@ -2253,6 +2268,18 @@ class Linker:
                 attribute "clusters" for cluster metrics table
 
         """
+        if threshold_match_probability is None:
+            threshold_match_probability = df_clustered.metadata.get(
+                "threshold_match_probability", None
+            )
+            # we may not have metadata if clusters have been manually registered, or
+            # read in from a format that does not include it
+            if threshold_match_probability is None:
+                raise TypeError(
+                    "As `df_clustered` has no threshold metadata associated to it, "
+                    "to compute graph metrics you must provide "
+                    "`threshold_match_probability` manually"
+                )
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
@@ -3030,7 +3057,9 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: list[dict], filter_nulls=True):
+    def waterfall_chart(
+        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+    ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -3050,6 +3079,9 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+            remove_sensitive_data (bool, optional): When True, The waterfall chart will
+                contain match weights only, and all of the (potentially sensitive) data
+                from the input tables will be removed prior to the chart being created.
 
 
         Returns:
@@ -3058,7 +3090,9 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(records, self._settings_obj, filter_nulls)
+        return waterfall_chart(
+            records, self._settings_obj, filter_nulls, remove_sensitive_data
+        )
 
     def unlinkables_chart(
         self,
