@@ -10,7 +10,7 @@ If, after some investigation, you still can't make sense of some of the match we
 
 !!! info ""
 
-    Remember that $Match Weight = \log_2 \frac{m}{u}$
+    Remember that $\textsf{Match Weight} = \log_2 \frac{m}{u}$
 
 
 ## Look at the model training
