@@ -196,8 +196,9 @@ class EMTrainingSession:
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self.db_api._execute_sql_pipeline(pipeline, input_dataframes)
 
-    def _train(self):
-        cvv = self._comparison_vectors()
+    def _train(self, cvv=None):
+        if cvv is None:
+            cvv = self._comparison_vectors()
 
         # check that the blocking rule actually generates _some_ record pairs,
         # if not give the user a helpful message
