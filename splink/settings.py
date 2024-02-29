@@ -352,22 +352,38 @@ class Settings:
 
     @property
     def _columns_to_select_for_comparison_vector_values(self) -> List[str]:
+        return self.columns_to_select_for_comparison_vector_values(
+            unique_id_input_columns=self.column_info_settings.unique_id_input_columns,
+            comparisons=self.core_model_settings.comparisons,
+            retain_matching_columns=self._retain_matching_columns,
+            additional_columns_to_retain=self._additional_columns_to_retain,
+            needs_matchkey_column=self._needs_matchkey_column,
+        )
+
+    @staticmethod
+    def columns_to_select_for_comparison_vector_values(
+        unique_id_input_columns: List[InputColumn],
+        comparisons: List[Comparison],
+        retain_matching_columns: bool,
+        additional_columns_to_retain: List[InputColumn],
+        needs_matchkey_column: bool,
+    ) -> List[str]:
         cols = []
 
-        for uid_col in self.column_info_settings.unique_id_input_columns:
+        for uid_col in unique_id_input_columns:
             cols.extend(uid_col.names_l_r)
 
-        for cc in self.comparisons:
+        for cc in comparisons:
             cols.extend(
                 cc._columns_to_select_for_comparison_vector_values(
-                    self._retain_matching_columns
+                    retain_matching_columns
                 )
             )
 
-        for add_col in self._additional_columns_to_retain:
+        for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if self._needs_matchkey_column:
+        if needs_matchkey_column:
             cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
