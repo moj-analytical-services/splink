@@ -55,7 +55,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_metrics import (
+from .graph_metrics import (
     GraphMetricsResults,
     _node_degree_sql,
     _size_density_centralisation_sql,
@@ -2153,9 +2153,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -2190,9 +2190,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -2213,7 +2213,7 @@ class Linker:
         * cluster_centralisation (average absolute deviation from maximum node_degree
             normalised wrt maximum possible value)
 
-        Output table has a single row per cluster, along with the cluster_metrics
+        Output table has a single row per cluster, along with the cluster metrics
         listed above
         |--------------------------------------------------------------------|
         | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
@@ -2232,9 +2232,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     # a user-facing function, which is currently 'private' (Beta functionality)
