@@ -90,7 +90,8 @@ def test_splink_converges_to_known_params():
     cvv_table = db_api.register_table(df, cvv_hashed_tablename)
     cvv_table.templated_name = "__splink__df_comparison_vectors"
 
-    em_training_session._train(cvv_table)
+    core_model_settings = em_training_session._train(cvv_table)
+    linker._settings_obj.core_model_settings = core_model_settings
     linker._em_training_sessions.append(em_training_session)
 
     linker._populate_m_u_from_trained_values()

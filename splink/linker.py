@@ -1344,7 +1344,9 @@ class Linker:
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
-        em_training_session._train()
+        core_model_settings = em_training_session._train()
+        # overwrite with the newly trained values in our linker settings
+        self._settings_obj.core_model_settings = core_model_settings
         self._em_training_sessions.append(em_training_session)
 
         self._populate_m_u_from_trained_values()

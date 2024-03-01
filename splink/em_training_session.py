@@ -57,12 +57,11 @@ class EMTrainingSession:
             self._settings_obj.column_info_settings.unique_id_input_columns
         )
         core_model_settings = self._settings_obj.core_model_settings
+        self.original_core_model_settings = core_model_settings.copy()
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
-        # TODO: only need this for blocking, for now
-        # self.training_settings.blocking_rule_for_training = blocking_rule_for_training
         self._blocking_rule_for_training = blocking_rule_for_training
         self.training_settings.estimate_without_term_frequencies = (
             estimate_without_term_frequencies
@@ -81,7 +80,7 @@ class EMTrainingSession:
                 comparisons=core_model_settings.comparisons,
             )
 
-        self._settings_obj._probability_two_random_records_match = (
+        core_model_settings.probability_two_random_records_match = (
             self._blocking_adjusted_probability_two_random_records_match
         )
 
@@ -98,7 +97,7 @@ class EMTrainingSession:
             comparisons_to_deactivate = []
             br_cols = get_columns_used_from_sql(
                 blocking_rule_for_training.blocking_rule_sql,
-                self._settings_obj._sql_dialect,
+                self.db_api.sql_dialect.sqlglot_name,
             )
             for cc in core_model_settings.comparisons:
                 cc_cols = cc._input_columns_used_by_case_statement
@@ -196,7 +195,7 @@ class EMTrainingSession:
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self.db_api._execute_sql_pipeline(pipeline, input_dataframes)
 
-    def _train(self, cvv=None):
+    def _train(self, cvv=None) -> CoreModelSettings:
         if cvv is None:
             cvv = self._comparison_vectors()
 
@@ -236,9 +235,12 @@ class EMTrainingSession:
         rule = self._blocking_rule_for_training.blocking_rule_sql
         training_desc = f"EM, blocked on: {rule}"
 
+        # we have a copy of the original core model settings - this is what we
+        # add trained values too, and return.
+        original_core_model_settings = self.original_core_model_settings
         # Add m and u values to original settings
         for cc in self.core_model_settings.comparisons:
-            orig_cc = self._original_settings_obj._get_comparison_by_output_column_name(
+            orig_cc = original_core_model_settings.get_comparison_by_output_column_name(
                 cc.output_column_name
             )
             for cl in cc._comparison_levels_excluding_null:
@@ -275,10 +277,13 @@ class EMTrainingSession:
                         orig_cl._add_trained_u_probability(
                             cl.u_probability, training_desc
                         )
+        return original_core_model_settings
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
-        orig_prop_m = self._original_settings_obj._probability_two_random_records_match
+        orig_prop_m = (
+            self.original_core_model_settings.probability_two_random_records_match
+        )
 
         adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
 
