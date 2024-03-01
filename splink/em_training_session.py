@@ -83,11 +83,16 @@ class EMTrainingSession:
             self._blocking_adjusted_probability_two_random_records_match
         )
 
-        self._training_fix_u_probabilities = fix_u_probabilities
-        self._training_fix_m_probabilities = fix_m_probabilities
-        self._training_fix_probability_two_random_records_match = (
-            fix_probability_two_random_records_match
-        )
+        # batch together fixed probabilities rather than keep hold of the bools
+        self.training_fixed_probabilities: set = {
+            probability_type
+            for (probability_type, fixed) in [
+                ("m", fix_m_probabilities),
+                ("u", fix_u_probabilities),
+                ("lambda", fix_probability_two_random_records_match),
+            ]
+            if fixed
+        }
 
         # Remove comparison columns which are either 'used up' by the blocking rules
         # or alternatively, if the user has manually provided a list to remove,
@@ -145,11 +150,11 @@ class EMTrainingSession:
         ]
         estimated = "".join([f"\n    - {cc}" for cc in estimated])
 
-        if self._training_fix_m_probabilities and self._training_fix_u_probabilities:
+        if {"m", "u"}.issubset(self.training_fixed_probabilities):
             raise ValueError("Can't train model if you fix both m and u probabilites")
-        elif self._training_fix_u_probabilities:
+        elif "u" in self.training_fixed_probabilities:
             mu = "m probabilities"
-        elif self._training_fix_m_probabilities:
+        elif "m" in self.training_fixed_probabilities:
             mu = "u probabilities"
         else:
             mu = "m and u probabilities"
@@ -224,9 +229,7 @@ class EMTrainingSession:
             estimate_without_term_frequencies=self.estimate_without_term_frequencies,
             core_model_settings=self.core_model_settings,
             unique_id_input_columns=self.unique_id_input_columns,
-            fix_m_probabilities=self._training_fix_m_probabilities,
-            fix_u_probabilities=self._training_fix_u_probabilities,
-            fix_probability_two_random_records_match=self._training_fix_probability_two_random_records_match,
+            training_fixed_probabilities=self.training_fixed_probabilities,
             df_comparison_vector_values=cvv,
         )
         self.core_model_settings = core_model_settings_history[-1]
@@ -248,7 +251,7 @@ class EMTrainingSession:
                     cl._comparison_vector_value
                 )
 
-                if not self._training_fix_m_probabilities:
+                if "m" not in self.training_fixed_probabilities:
                     not_observed = LEVEL_NOT_OBSERVED_TEXT
                     if cl._m_probability == not_observed:
                         orig_cl._add_trained_m_probability(not_observed, training_desc)
@@ -263,7 +266,7 @@ class EMTrainingSession:
                             cl.m_probability, training_desc
                         )
 
-                if not self._training_fix_u_probabilities:
+                if "u" not in self.training_fixed_probabilities:
                     not_observed = LEVEL_NOT_OBSERVED_TEXT
                     if cl._u_probability == not_observed:
                         orig_cl._add_trained_u_probability(not_observed, training_desc)

@@ -157,15 +157,14 @@ def compute_proportions_for_new_parameters(m_u_df: pd.DataFrame) -> List[dict]:
 
 
 def populate_m_u_from_lookup(
-    fix_m_probabilities: bool,
-    fix_u_probabilities: bool,
+    training_fixed_probabilities: set[str],
     comparison_level: ComparisonLevel,
     output_column_name: str,
     m_u_records_lookup,
 ) -> None:
     cl = comparison_level
 
-    if not fix_m_probabilities:
+    if "m" not in training_fixed_probabilities:
         try:
             m_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
@@ -184,7 +183,7 @@ def populate_m_u_from_lookup(
                 cl._m_warning_sent = True
         cl.m_probability = m_probability
 
-    if not fix_u_probabilities:
+    if "u" not in training_fixed_probabilities:
         try:
             u_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
@@ -207,9 +206,7 @@ def populate_m_u_from_lookup(
 
 
 def maximisation_step(
-    fix_m_probabilities: bool,
-    fix_u_probabilities: bool,
-    fix_probability_two_random_records_match: bool,
+    training_fixed_probabilities: set[str],
     core_model_settings: CoreModelSettings,
     param_records: List[dict],
 ) -> CoreModelSettings:
@@ -222,7 +219,7 @@ def maximisation_step(
         else:
             m_u_records.append(r)
 
-    if not fix_probability_two_random_records_match:
+    if "lambda" not in training_fixed_probabilities:
         core_model_settings.probability_two_random_records_match = prop_record[
             "m_probability"
         ]
@@ -231,8 +228,7 @@ def maximisation_step(
     for cc in core_model_settings.comparisons:
         for cl in cc._comparison_levels_excluding_null:
             populate_m_u_from_lookup(
-                fix_m_probabilities,
-                fix_u_probabilities,
+                training_fixed_probabilities,
                 cl,
                 cc.output_column_name,
                 m_u_records_lookup,
@@ -247,9 +243,7 @@ def expectation_maximisation(
     estimate_without_term_frequencies: bool,
     core_model_settings: CoreModelSettings,
     unique_id_input_columns: List[InputColumn],
-    fix_m_probabilities: bool,
-    fix_u_probabilities: bool,
-    fix_probability_two_random_records_match: bool,
+    training_fixed_probabilities: set[str],
     df_comparison_vector_values: SplinkDataFrame,
 ) -> List[CoreModelSettings]:
     """In the expectation step, we use the current model parameters to estimate
@@ -322,9 +316,7 @@ def expectation_maximisation(
         df_params.drop_table_from_database_and_remove_from_cache()
 
         core_model_settings = maximisation_step(
-            fix_m_probabilities=fix_m_probabilities,
-            fix_u_probabilities=fix_u_probabilities,
-            fix_probability_two_random_records_match=fix_probability_two_random_records_match,
+            training_fixed_probabilities=training_fixed_probabilities,
             core_model_settings=core_model_settings,
             param_records=param_records,
         )
