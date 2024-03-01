@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import List
 
@@ -69,14 +69,10 @@ class ColumnInfoSettings:
 class TrainingSettings:
     em_convergence: float
     max_iterations: int
-    blocking_rule_for_training: BlockingRule
     estimate_without_term_frequencies: bool
 
     def as_dict(self) -> dict:
-        # TODO: we can remove estimate_without_term_frequencies if we want
         naive_dict = asdict(self)
-        if br := self.blocking_rule_for_training:
-            naive_dict["blocking_rule_for_training"] = copy(br)
         return naive_dict
 
 
@@ -164,7 +160,6 @@ class Settings:
         em_convergence: float = 0.0001,
         max_iterations: int = 25,
         # TODO: do we need this long-term?
-        blocking_rule_for_training: BlockingRule = None,
         estimate_without_term_frequencies: bool = False,
         # other
         sql_dialect: str = None,
@@ -202,8 +197,6 @@ class Settings:
         self.training_settings = TrainingSettings(
             em_convergence=em_convergence,
             max_iterations=max_iterations,
-            # TODO: can we factor these out?
-            blocking_rule_for_training=blocking_rule_for_training,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
@@ -564,7 +557,6 @@ class Settings:
             **self._simple_dict_entries(),
             **current_settings,
         }
-        del current_settings["blocking_rule_for_training"]
         del current_settings["estimate_without_term_frequencies"]
         return current_settings
 

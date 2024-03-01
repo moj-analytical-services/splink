@@ -514,10 +514,7 @@ def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = 
     # explicit about the difference between blocking for training
     # and blocking for predictions
     if blocking_rules is None:
-        if settings_obj.training_settings.blocking_rule_for_training:
-            blocking_rules = [settings_obj.training_settings.blocking_rule_for_training]
-        else:
-            blocking_rules = settings_obj._blocking_rules_to_generate_predictions
+        blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
