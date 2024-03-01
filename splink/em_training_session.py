@@ -13,12 +13,14 @@ from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
+from .database_api import DatabaseAPI
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
+from .input_column import InputColumn
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
 from .pipeline import SQLPipeline
-from .settings import CoreModelSettings, Settings
+from .settings import CoreModelSettings, Settings, TrainingSettings
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +36,13 @@ class EMTrainingSession:
 
     def __init__(
         self,
+        # TODO: remove linker arg once we unpick the two places we use it
         linker: Linker,
+        db_api: DatabaseAPI,
         blocking_rule_for_training: BlockingRule,
+        core_model_settings: CoreModelSettings,
+        training_settings: TrainingSettings,
+        unique_id_input_columns: List[InputColumn],
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
@@ -45,16 +52,12 @@ class EMTrainingSession:
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
-        settings_obj = linker._settings_obj
         self._original_linker = linker
-        # TODO: eventually just pass this + relevant settings:
-        self.db_api = linker.db_api
+        self.db_api = db_api
 
-        self.training_settings = settings_obj.training_settings
-        self.unique_id_input_columns = (
-            settings_obj.column_info_settings.unique_id_input_columns
-        )
-        core_model_settings = settings_obj.core_model_settings
+        self.training_settings = training_settings
+        self.unique_id_input_columns = unique_id_input_columns
+
         self.original_core_model_settings = core_model_settings.copy()
 
         if not isinstance(blocking_rule_for_training, BlockingRule):

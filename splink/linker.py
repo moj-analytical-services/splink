@@ -1335,7 +1335,11 @@ class Linker:
 
         em_training_session = EMTrainingSession(
             self,
-            blocking_rule,
+            db_api=self.db_api,
+            blocking_rule_for_training=blocking_rule,
+            core_model_settings=self._settings_obj.core_model_settings,
+            training_settings=self._settings_obj.training_settings,
+            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501

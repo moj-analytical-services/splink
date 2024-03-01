@@ -68,9 +68,15 @@ def test_splink_converges_to_known_params():
 
     linker = Linker(df, settings, database_api=db_api)
 
+    settings_obj = linker._settings_obj
+
     em_training_session = EMTrainingSession(
         linker,
-        "1=1",
+        db_api=db_api,
+        blocking_rule_for_training="1=1",
+        core_model_settings=settings_obj.core_model_settings,
+        training_settings=settings_obj.training_settings,
+        unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
         fix_u_probabilities=False,
         fix_m_probabilities=False,
         fix_probability_two_random_records_match=False,
