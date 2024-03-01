@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
 from .blocking import BlockingRule, block_using_rules_sqls
@@ -46,17 +45,16 @@ class EMTrainingSession:
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
-        self._original_settings_obj = linker._settings_obj
+        settings_obj = linker._settings_obj
         self._original_linker = linker
         # TODO: eventually just pass this + relevant settings:
         self.db_api = linker.db_api
 
-        self._settings_obj = deepcopy(self._original_settings_obj)
-        self.training_settings = self._settings_obj.training_settings
+        self.training_settings = settings_obj.training_settings
         self.unique_id_input_columns = (
-            self._settings_obj.column_info_settings.unique_id_input_columns
+            settings_obj.column_info_settings.unique_id_input_columns
         )
-        core_model_settings = self._settings_obj.core_model_settings
+        core_model_settings = settings_obj.core_model_settings
         self.original_core_model_settings = core_model_settings.copy()
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
