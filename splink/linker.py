@@ -55,11 +55,6 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .graph_metrics import (
-    GraphMetricsResults,
-    _node_degree_sql,
-    _size_density_centralisation_sql,
-)
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -79,6 +74,11 @@ from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
+from .graph_metrics import (
+    GraphMetricsResults,
+    _node_degree_sql,
+    _size_density_centralisation_sql,
+)
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,

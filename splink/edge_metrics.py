@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from .exceptions import MissingDependencyException
 from .graph_metrics import (
     _basic_edge_metrics_sql,
     _bridges_from_igraph_sql,
@@ -11,7 +12,6 @@ from .graph_metrics import (
     _node_mapping_table_sql,
     _truncated_edges_sql,
 )
-from .exceptions import MissingDependencyException
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
