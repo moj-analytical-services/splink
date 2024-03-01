@@ -79,10 +79,6 @@ class EMTrainingSession:
                 comparisons=core_model_settings.comparisons,
             )
 
-        core_model_settings.probability_two_random_records_match = (
-            self._blocking_adjusted_probability_two_random_records_match
-        )
-
         # batch together fixed probabilities rather than keep hold of the bools
         self.training_fixed_probabilities: set = {
             probability_type
@@ -122,7 +118,9 @@ class EMTrainingSession:
         ]
 
         core_model_settings.comparisons = filtered_ccs
-        self._comparisons_that_can_be_estimated = filtered_ccs
+        core_model_settings.probability_two_random_records_match = (
+            self._blocking_adjusted_probability_two_random_records_match
+        )
 
         # this should be fixed:
         self.columns_to_select_for_comparison_vector_values = (
@@ -134,7 +132,6 @@ class EMTrainingSession:
                 needs_matchkey_column=False,
             )
         )
-        # TODO: not sure if we need to attach directly?
         self.core_model_settings = core_model_settings
         # initial params get inserted in training
         self._core_model_settings_history: List[CoreModelSettings] = []
@@ -146,7 +143,7 @@ class EMTrainingSession:
         not_estimated = "".join([f"\n    - {cc}" for cc in not_estimated])
 
         estimated = [
-            cc.output_column_name for cc in self._comparisons_that_can_be_estimated
+            cc.output_column_name for cc in self.core_model_settings.comparisons
         ]
         estimated = "".join([f"\n    - {cc}" for cc in estimated])
 

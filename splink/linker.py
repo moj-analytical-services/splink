@@ -1306,6 +1306,7 @@ class Linker:
             blocking_rule = blocking_rule.create_blocking_rule_dict(self._sql_dialect)
         blocking_rule = blocking_rule_to_obj(blocking_rule)
         if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
+            # TODO: seems a mismatch between message and type re: SaltedBlockingRule
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
                 "salted or exploding blocking rules"
