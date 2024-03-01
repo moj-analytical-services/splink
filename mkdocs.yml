@@ -166,7 +166,7 @@ nav:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
         - Edges (Links):
-          - Overview: "topic_guides/evaluation/edges.md"
+          - Overview: "topic_guides/evaluation/edge_overview.md"
           - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
           - Clerical Labelling: "topic_guides/evaluation/labelling.md"
         - Clusters: "topic_guides/evaluation/clusters.md"
@@ -238,7 +238,6 @@ nav:
       - Contributing to Splink:
         - Contributor Guide: "CONTRIBUTING.md"
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
-        - Splink Dependency Management: "dev_guides/changing_splink/dependency_management.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
@@ -260,6 +259,7 @@ nav:
         - Settings Validation:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
+        - Splink Dependency Management: "dev_guides/dependency_management.md"
   - Blog:
     - blog/index.md
 extra_css:
