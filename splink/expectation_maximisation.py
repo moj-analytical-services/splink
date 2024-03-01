@@ -244,6 +244,7 @@ def maximisation_step(
 def expectation_maximisation(
     db_api: DatabaseAPI,
     training_settings: TrainingSettings,
+    estimate_without_term_frequencies: bool,
     core_model_settings: CoreModelSettings,
     unique_id_input_columns: List[InputColumn],
     fix_m_probabilities: bool,
@@ -270,7 +271,7 @@ def expectation_maximisation(
     # pipeline to execute the SQL we need to
     pipeline = SQLPipeline()
 
-    if training_settings.estimate_without_term_frequencies:
+    if estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(core_model_settings.comparisons)
         pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
         agreement_pattern_counts = db_api._execute_sql_pipeline(
@@ -284,7 +285,7 @@ def expectation_maximisation(
         start_time = time.time()
 
         # Expectation step
-        if training_settings.estimate_without_term_frequencies:
+        if estimate_without_term_frequencies:
             sqls = predict_from_agreement_pattern_counts_sqls(
                 core_model_settings.comparisons,
                 probability_two_random_records_match,
@@ -303,11 +304,11 @@ def expectation_maximisation(
             pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_new_parameters_sql(
-            training_settings.estimate_without_term_frequencies,
+            estimate_without_term_frequencies,
             core_model_settings.comparisons,
         )
         pipeline.enqueue_sql(sql, "__splink__m_u_counts")
-        if training_settings.estimate_without_term_frequencies:
+        if estimate_without_term_frequencies:
             df_params = db_api._execute_sql_pipeline(
                 pipeline, [agreement_pattern_counts]
             )

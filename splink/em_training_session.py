@@ -61,9 +61,7 @@ class EMTrainingSession:
             blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
 
         self._blocking_rule_for_training = blocking_rule_for_training
-        self.training_settings.estimate_without_term_frequencies = (
-            estimate_without_term_frequencies
-        )
+        self.estimate_without_term_frequencies = estimate_without_term_frequencies
 
         if comparison_levels_to_reverse_blocking_rule:
             # TODO: atm this branch probably makes no sense. What would user pass?
@@ -220,6 +218,7 @@ class EMTrainingSession:
         core_model_settings_history = expectation_maximisation(
             db_api=self.db_api,
             training_settings=self.training_settings,
+            estimate_without_term_frequencies=self.estimate_without_term_frequencies,
             core_model_settings=self.core_model_settings,
             unique_id_input_columns=self.unique_id_input_columns,
             fix_m_probabilities=self._training_fix_m_probabilities,

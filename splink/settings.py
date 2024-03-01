@@ -65,11 +65,10 @@ class ColumnInfoSettings:
         return asdict(self)
 
 
-@dataclass
+@dataclass(frozen=True)
 class TrainingSettings:
     em_convergence: float
     max_iterations: int
-    estimate_without_term_frequencies: bool
 
     def as_dict(self) -> dict:
         naive_dict = asdict(self)
@@ -159,8 +158,6 @@ class Settings:
         # TrainingSettings
         em_convergence: float = 0.0001,
         max_iterations: int = 25,
-        # TODO: do we need this long-term?
-        estimate_without_term_frequencies: bool = False,
         # other
         sql_dialect: str = None,
         linker_uid: str = None,
@@ -197,7 +194,6 @@ class Settings:
         self.training_settings = TrainingSettings(
             em_convergence=em_convergence,
             max_iterations=max_iterations,
-            estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
         self._retain_matching_columns = retain_matching_columns
@@ -557,7 +553,6 @@ class Settings:
             **self._simple_dict_entries(),
             **current_settings,
         }
-        del current_settings["estimate_without_term_frequencies"]
         return current_settings
 
     def _as_completed_dict(self):

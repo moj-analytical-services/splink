@@ -35,8 +35,8 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(
-        linker._settings_obj.training_settings.estimate_without_term_frequencies,
-        linker._settings_obj.comparisons,
+        estimate_without_term_frequencies=False,
+        comparisons=linker._settings_obj.comparisons,
     )
     linker._enqueue_sql(sql, "__splink__m_u_counts")
 
