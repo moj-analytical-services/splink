@@ -202,7 +202,7 @@
                    "default": false
                 },
                 "disable_tf_inflation":{
-                    "title": "If true, do not inflate TF adjustment for inexact matches"
+                    "title": "If true, do not inflate TF adjustment for inexact matches",
                     "type": "boolean",
                     "default": false
                 }
