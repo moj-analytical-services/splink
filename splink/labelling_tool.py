@@ -28,7 +28,7 @@ def generate_labelling_tool_comparisons(
     source_dataset_condition = ""
 
     if source_dataset is not None:
-        sds_col = settings._source_dataset_column_name
+        sds_col = settings.column_info_settings.source_dataset_column_name
         source_dataset_condition = f"""
           and {sds_col} = '{source_dataset}'
         """
@@ -36,7 +36,7 @@ def generate_labelling_tool_comparisons(
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    where {settings._unique_id_column_name} = '{unique_id}'
+    where {settings.column_info_settings.unique_id_column_name} = '{unique_id}'
     {source_dataset_condition}
     """
 

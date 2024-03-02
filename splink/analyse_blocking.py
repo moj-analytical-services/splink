@@ -20,7 +20,8 @@ def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     settings_obj = linker._settings_obj
 
     where_condition = _sql_gen_where_condition(
-        settings_obj._link_type, settings_obj._unique_id_input_columns
+        settings_obj._link_type,
+        settings_obj.column_info_settings.unique_id_input_columns,
     )
 
     sql = f"""

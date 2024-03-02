@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from copy import copy, deepcopy
+from dataclasses import asdict, dataclass
 from typing import List
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
@@ -14,6 +15,71 @@ from .parse_sql import get_columns_used_from_sql
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ColumnInfoSettings:
+    bayes_factor_column_prefix: str
+    term_frequency_adjustment_column_prefix: str
+    comparison_vector_value_column_prefix: str
+    unique_id_column_name: str
+    _source_dataset_column_name: str
+    _source_dataset_column_name_is_required: str
+    sql_dialect: str
+
+    @property
+    def source_dataset_column_name(self):
+        if self._source_dataset_column_name_is_required:
+            return self._source_dataset_column_name
+        else:
+            return None
+
+    @property
+    def unique_id_input_columns(self) -> list[InputColumn]:
+        cols = []
+
+        if source_dataset_column_name := (self.source_dataset_column_name):
+            col = InputColumn(
+                source_dataset_column_name,
+                column_info_settings=self,
+                sql_dialect=self.sql_dialect,
+            )
+            cols.append(col)
+
+        col = InputColumn(
+            self.unique_id_column_name,
+            column_info_settings=self,
+            sql_dialect=self.sql_dialect,
+        )
+        cols.append(col)
+
+        return cols
+
+    def as_dict(self) -> dict:
+        full_dict = self._as_full_dict()
+        full_dict["source_dataset_column_name"] = self._source_dataset_column_name
+        del full_dict["_source_dataset_column_name"]
+        del full_dict["_source_dataset_column_name_is_required"]
+        return full_dict
+
+    def _as_full_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class TrainingSettings:
+    em_convergence: float
+    max_iterations: int
+    training_mode: bool
+    blocking_rule_for_training: BlockingRule
+    estimate_without_term_frequencies: bool
+
+    def as_dict(self) -> dict:
+        # TODO: we can remove estimate_without_term_frequencies if we want
+        naive_dict = asdict(self)
+        if br := self.blocking_rule_for_training:
+            naive_dict["blocking_rule_for_training"] = copy(br)
+        return naive_dict
+
+
 class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
@@ -21,47 +87,69 @@ class Settings:
     def __init__(
         self,
         link_type: str,
+        *,
         # TODO: make everything compulsory at this level?
         comparisons: List[Comparison] = [],
         blocking_rules_to_generate_predictions: List[BlockingRule] = [],
         probability_two_random_records_match: float = 0.0001,
-        em_convergence: float = 0.0001,
-        max_iterations: int = 25,
         retain_matching_columns: bool = True,
         retain_intermediate_calculation_columns: bool = False,
         additional_columns_to_retain: List[str] = [],
+        # ColumnInfoSettings
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
         bayes_factor_column_prefix: str = "bf_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
-        sql_dialect: str = None,
-        linker_uid: str = None,
+        # TrainingSettings
+        em_convergence: float = 0.0001,
+        max_iterations: int = 25,
         # TODO: do we need this long-term?
         training_mode: bool = False,
         blocking_rule_for_training: BlockingRule = None,
+        estimate_without_term_frequencies: bool = False,
+        # other
+        sql_dialect: str = None,
+        linker_uid: str = None,
     ):
         # TODO: hook up validation here
         # Validate against schema before processing
         # validate_settings_against_schema(settings_dict)
 
-        # TODO: Probably want a 'dialected' version, and the Creator-type non-dialected
         self._sql_dialect = sql_dialect
+        self._link_type = link_type
+
+        self.column_info_settings = ColumnInfoSettings(
+            comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
+            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
+            unique_id_column_name=unique_id_column_name,
+            _source_dataset_column_name=source_dataset_column_name,
+            # TODO: if we want this to keep in-sync with link type, can put logic in
+            # link_type setter
+            _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
+            sql_dialect=sql_dialect,
+        )
 
         # TODO: streamline this logic
         self.comparisons: list[Comparison] = []
         for comparison in comparisons:
             # TODO: not sure we need backref ultimately
             comparison._settings_obj = self
+            comparison.column_info_settings = self.column_info_settings
             self.comparisons.append(comparison)
 
-        self._link_type = link_type
         self._probability_two_random_records_match = (
             probability_two_random_records_match
         )
-        self._em_convergence = em_convergence
-        self._max_iterations = max_iterations
-        self._unique_id_column_name = unique_id_column_name
+        self.training_settings = TrainingSettings(
+            em_convergence=em_convergence,
+            max_iterations=max_iterations,
+            # TODO: can we factor these out?
+            blocking_rule_for_training=blocking_rule_for_training,
+            training_mode=training_mode,
+            estimate_without_term_frequencies=estimate_without_term_frequencies,
+        )
 
         self._retain_matching_columns = retain_matching_columns
         self._retain_intermediate_calculation_columns = (
@@ -73,28 +161,11 @@ class Settings:
             blocking_rules_to_generate_predictions
         )
 
-        # TODO: no thanks:
-        self._source_dataset_column_name_ = source_dataset_column_name
-        self._gamma_prefix = comparison_vector_value_column_prefix
-        self._bf_prefix = bayes_factor_column_prefix
-        self._tf_prefix = term_frequency_adjustment_column_prefix
-        # TODO: can we factor these out?
-        self._blocking_rule_for_training = blocking_rule_for_training
-        self._training_mode = training_mode
-
         self._cache_uid = linker_uid
 
         self._warn_if_no_null_level_in_comparisons()
 
-        # TODO: simplify this:
-        self._additional_cols_to_retain_str = additional_columns_to_retain
-        self._additional_cols_to_retain = [
-            InputColumn(c) for c in additional_columns_to_retain
-        ]
-        # TODO: adjust this:
-        self._additional_columns_to_retain_list = (
-            self._get_additional_columns_to_retain()
-        )
+        self._additional_col_names_to_retain = additional_columns_to_retain
 
     def __deepcopy__(self, memo) -> Settings:
         """When we do EM training, we need a copy of the Settings which is independent
@@ -118,7 +189,8 @@ class Settings:
                     "you're doing, you can ignore this warning"
                 )
 
-    def _get_additional_columns_to_retain(self):
+    @property
+    def _additional_column_names_to_retain(self) -> List[str]:
         cols_to_retain = []
 
         # Add any columns used in blocking rules but not model
@@ -140,47 +212,37 @@ class Settings:
             new_cols = list(set(used_by_brs) - set(already_used))
             cols_to_retain.extend(new_cols)
 
-        cols_to_retain.extend(self._additional_cols_to_retain_str)
+        cols_to_retain.extend(self._additional_col_names_to_retain)
         return cols_to_retain
 
     @property
-    def _additional_columns_to_retain(self):
-        cols = self._additional_columns_to_retain_list
-        return [InputColumn(c, settings_obj=self) for c in cols]
-
-    @property
-    def _source_dataset_column_name_is_required(self):
-        return self._link_type not in ["dedupe_only"]
-
-    @property
-    def _source_dataset_column_name(self):
-        if self._source_dataset_column_name_is_required:
-            return self._source_dataset_column_name_
-        else:
-            return None
-
-    @property
-    def _unique_id_input_columns(self) -> list[InputColumn]:
-        cols = []
-
-        if self._source_dataset_column_name_is_required:
-            col = InputColumn(
-                self._source_dataset_column_name,
-                settings_obj=self,
+    def _additional_columns_to_retain(self) -> List[InputColumn]:
+        cols = self._additional_column_names_to_retain
+        return [
+            InputColumn(
+                c,
+                column_info_settings=self.column_info_settings,
+                sql_dialect=self._sql_dialect,
             )
-            cols.append(col)
+            for c in cols
+        ]
 
-        col = InputColumn(self._unique_id_column_name, settings_obj=self)
-        cols.append(col)
-
-        return cols
+    def _get_source_dataset_column_name_is_required(self):
+        return self._link_type not in ["dedupe_only"]
 
     @property
     def _term_frequency_columns(self) -> list[InputColumn]:
         cols = set()
         for cc in self.comparisons:
             cols.update(cc._tf_adjustment_input_col_names)
-        return [InputColumn(c, settings_obj=self) for c in list(cols)]
+        return [
+            InputColumn(
+                c,
+                column_info_settings=self.column_info_settings,
+                sql_dialect=self._sql_dialect,
+            )
+            for c in list(cols)
+        ]
 
     @property
     def _needs_matchkey_column(self) -> bool:
@@ -194,11 +256,11 @@ class Settings:
         return len(self._blocking_rules_to_generate_predictions) > 1
 
     @property
-    def _columns_used_by_comparisons(self):
+    def _columns_used_by_comparisons(self) -> List[str]:
         cols_used = []
-        if self._source_dataset_column_name_is_required:
-            cols_used.append(self._source_dataset_column_name)
-        cols_used.append(self._unique_id_column_name)
+        for uid_col in self.column_info_settings.unique_id_input_columns:
+            cols_used.append(uid_col.name)
+            cols_used.append(uid_col.name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
             cols = [c.name for c in cols]
@@ -207,10 +269,10 @@ class Settings:
         return dedupe_preserving_order(cols_used)
 
     @property
-    def _columns_to_select_for_blocking(self):
+    def _columns_to_select_for_blocking(self) -> List[str]:
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.l_name_as_l)
             cols.append(uid_col.r_name_as_r)
 
@@ -223,10 +285,10 @@ class Settings:
         return dedupe_preserving_order(cols)
 
     @property
-    def _columns_to_select_for_comparison_vector_values(self):
+    def _columns_to_select_for_comparison_vector_values(self) -> List[str]:
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -246,7 +308,7 @@ class Settings:
     def _columns_to_select_for_bayes_factor_parts(self):
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -266,7 +328,7 @@ class Settings:
     def _columns_to_select_for_predict(self):
         cols = []
 
-        for uid_col in self._unique_id_input_columns:
+        for uid_col in self.column_info_settings.unique_id_input_columns:
             cols.append(uid_col.name_l)
             cols.append(uid_col.name_r)
 
@@ -411,22 +473,18 @@ class Settings:
             "probability_two_random_records_match": (
                 self._probability_two_random_records_match
             ),
-            "em_convergence": self._em_convergence,
-            "max_iterations": self._max_iterations,
             "retain_matching_columns": self._retain_matching_columns,
             "retain_intermediate_calculation_columns": (
                 self._retain_intermediate_calculation_columns
             ),
-            "additional_columns_to_retain": self._additional_cols_to_retain_str,
-            "unique_id_column_name": self._unique_id_column_name,
-            "source_dataset_column_name": self._source_dataset_column_name,
-            "bayes_factor_column_prefix": self._bf_prefix,
-            "term_frequency_adjustment_column_prefix": self._tf_prefix,
-            "comparison_vector_value_column_prefix": self._gamma_prefix,
+            "additional_columns_to_retain": self._additional_col_names_to_retain,
             "sql_dialect": self._sql_dialect,
             "linker_uid": self._cache_uid,
+            **self.training_settings.as_dict(),
+            **self.column_info_settings.as_dict(),
         }
 
+    # TODO: once more settled, simplify the serialisation logic
     def as_dict(self):
         """Serialise the current settings (including any estimated model parameters)
         to a dictionary, enabling the settings to be saved to disk and reloaded
@@ -435,14 +493,16 @@ class Settings:
         current_settings = {
             "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
-            # TODO: unpick InputColumn recursion
-            # "additional_columns_to_retain":
-            #   [c.name() for c in self._additional_cols_to_retain],
+            "additional_columns_to_retain": self._additional_col_names_to_retain,
         }
-        return {
+        current_settings = {
             **self._simple_dict_entries(),
             **current_settings,
         }
+        del current_settings["training_mode"]
+        del current_settings["blocking_rule_for_training"]
+        del current_settings["estimate_without_term_frequencies"]
+        return current_settings
 
     def _as_completed_dict(self):
         brs = self._blocking_rules_to_generate_predictions
@@ -466,8 +526,6 @@ class Settings:
                 # TODO: can/should we rely on this?
                 [copy(br) for br in self._blocking_rules_to_generate_predictions]
             ),
-            "training_mode": self._training_mode,
-            "blocking_rule_for_training": self._blocking_rule_for_training,
         }
 
     def match_weights_chart(self, as_dict=False):

@@ -194,9 +194,10 @@ def waterfall_chart(
     records,
     settings_obj,
     filter_nulls=True,
+    remove_sensitive_data=False,
     as_dict=False,
 ):
-    data = records_to_waterfall_data(records, settings_obj)
+    data = records_to_waterfall_data(records, settings_obj, remove_sensitive_data)
     chart_path = "match_weights_waterfall.json"
     chart = load_chart_definition(chart_path)
     chart["data"]["values"] = data
