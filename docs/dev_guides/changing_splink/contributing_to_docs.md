@@ -103,5 +103,3 @@ The spellchecker uses the Python package [PySpelling](https://facelessuser.githu
 The spellchecker compares words in markdown files to a [standard dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) of words. Additional words can be recorded as acceptable spellings by adding them to `scripts/pyspelling/custom_dictionary.txt`. 
 
 Upon completion, the spellchecker will flag any spelling mistakes (words not found in either the standard or custom dictionary) in the terminal. Mistakes should be corrected or the custom dictionary updated to ensure the spellchecker runs without error.
-
- <!-- is this th standard we should be aiming for though? -->
