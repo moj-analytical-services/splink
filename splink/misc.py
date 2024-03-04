@@ -42,6 +42,8 @@ def normalise(vals):
 
 
 def ensure_is_iterable(a):
+    if isinstance(a, str):
+        return [a]
     return a if isinstance(a, Iterable) else [a]
 
 
