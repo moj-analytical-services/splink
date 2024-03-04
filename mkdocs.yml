@@ -64,7 +64,7 @@ plugins:
       repository: moj-analytical-services/splink
       branch: master
   - rss:
-      match_path: blog/posts/.* 
+      match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
   - mkdocs-simple-hooks:
@@ -165,7 +165,7 @@ nav:
       - Evaluation:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
-        - Edges (Links): 
+        - Edges (Links):
           - Overview: "topic_guides/evaluation/edge_overview.md"
           - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
           - Clerical Labelling: "topic_guides/evaluation/labelling.md"
@@ -208,7 +208,7 @@ nav:
       - Charts Gallery:
         - "charts/index.md"
         - Exploratory Analysis:
-          - completeness chart: "charts/completeness_chart.ipynb" 
+          - completeness chart: "charts/completeness_chart.ipynb"
           - missingness chart: "charts/missingness_chart.ipynb"
           - profile columns: "charts/profile_columns.ipynb"
         - Blocking:
@@ -262,6 +262,7 @@ nav:
         - Settings Validation:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
+        - Splink Dependency Management: "dev_guides/dependency_management.md"
   - Blog:
     - blog/index.md
 extra_css:
