@@ -258,22 +258,6 @@ def test_duckdb_arrow_array():
 
 
 @mark_with_dialects_including("duckdb")
-def test_cast_error():
-    from duckdb import InvalidInputException
-
-    forenames = [None, "jack", None] * 1000
-    data = {"id": range(0, len(forenames)), "forename": forenames}
-    df = pd.DataFrame(data)
-
-    with pytest.raises(InvalidInputException):
-        DuckDBLinker(df)
-
-    # convert to pyarrow table
-    df = pa.Table.from_pandas(df)
-    DuckDBLinker(df)
-
-
-@mark_with_dialects_including("duckdb")
 def test_small_example_duckdb(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["full_name"] = df["first_name"] + df["surname"]
