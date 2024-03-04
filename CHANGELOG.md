@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Bug that prevented `sqlglot <= 17.0.0` from working properly ([#1996](https://github.com/moj-analytical-services/splink/pull/1996))
+- Fixed issues relating to duckdb 0.10.1 ([#1999](https://github.com/moj-analytical-services/splink/pull/1999))
+- Update sqlglot compatibility to support latest version ([#1998](https://github.com/moj-analytical-services/splink/pull/1998))
 
 ## [3.9.12] - 2024-01-30
 
