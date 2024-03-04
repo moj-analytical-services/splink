@@ -8,6 +8,8 @@ source scripts/make_docs_locally.sh
 
 This is much faster than waiting for github actions to run if you're trying to make fiddly changes to formatting etc.
 
+Once you've finished updating Splink documentation we ask that you run our spellchecker script. Instructions on how to do this are given below.
+
 The Splink repo contains a [working `requirements.txt` for building the docs](https://github.com/moj-analytical-services/splink/blob/master/scripts/docs-requirements.txt), or a more complete version:
 
 ??? note "Requirements file"
@@ -83,3 +85,23 @@ The Splink repo contains a [working `requirements.txt` for building the docs](ht
     webencodings==0.5.1
     zipp==3.14.0
     ```
+
+## Spellchecking docs
+
+When updating Splink documentation, we ask that you run our spellchecker script before submitting a pull request. This is to help ensure quality and consistency across the documentation.
+
+To run the spellchecker on either a single markdown file or folder of markdown files, you can use the following script:
+
+```sh
+source scripts/pyspelling/spellchecker.sh <path_to_file_or_folder>
+```
+
+Omitting the file/folder path will run the spellchecker on all markdown files contained in the `docs` folder.
+
+The spellchecker uses the Python package [PySpelling](https://facelessuser.github.io/pyspelling/) and its underlying spellchecking tool Aspell. Running the above script will automatically install these packages along with any other necessary dependencies.
+
+The spellchecker compares words in markdown files to a [standard dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) of words. Additional words can be recorded as acceptable spellings by adding them to `scripts/pyspelling/custom_dictionary.txt`. 
+
+Upon completion, the spellchecker will flag any spelling mistakes (words not found in either the standard or custom dictionary) in the terminal. Mistakes should be corrected or the custom dictionary updated to ensure the spellchecker runs without error.
+
+ <!-- is this th standard we should be aiming for though? -->

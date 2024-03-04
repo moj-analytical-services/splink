@@ -240,7 +240,7 @@ nav:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
         - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
