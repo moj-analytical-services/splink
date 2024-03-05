@@ -49,18 +49,17 @@ ruff = "0.0.257"
 [tool.poetry.group.testing]
 [tool.poetry.group.testing.dependencies]
 # pin to reduce dependencies
-pytest = "7.3"
+pytest = ">=7.3"
 pyarrow = ">=7.0.0"
-networkx = "2.5.1"
-rapidfuzz = "^2.0.3"
-igraph = { version = "^0.11.2", python = ">=3.8" }
+networkx = ">=2.5.1"
+rapidfuzz = ">=2.0.3"
+igraph = { version = ">=0.11.2", python = ">=3.8" }
 
 
 [tool.poetry.group.benchmarking]
 optional = true
 [tool.poetry.group.benchmarking.dependencies]
-pytest-benchmark = "^4"
-lzstring = "1.0.4"
+pytest-benchmark = ">=4"
 
 [tool.poetry.group.typechecking]
 optional = true
