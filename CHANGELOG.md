@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.9.13] - 2024-03-04
 
 - Support for Databricks Runtime 13.x+
+- Added method for computing graph metrics
 
 ### Fixed
 
