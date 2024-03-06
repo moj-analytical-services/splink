@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Literal, Union
 
 from sqlglot import TokenError, parse_one
 
@@ -79,15 +79,10 @@ class NullLevel(ComparisonLevelCreator):
         self,
         col_name: Union[str, ColumnExpression],
         valid_string_pattern: str = None,
-        invalid_dates_as_null: bool = False,
     ):
         col_expression = ColumnExpression.instantiate_if_str(col_name)
 
-        # if invalid_dates_as_null, then supplied pattern is a date format
-        if invalid_dates_as_null:
-            col_expression = col_expression.try_parse_date(valid_string_pattern)
-        # invalid_dates_as_null == False and given a valid_string_pattern -> it's regex
-        elif valid_string_pattern is not None:
+        if valid_string_pattern is not None:
             col_expression = col_expression.regex_extract(valid_string_pattern)
         self.col_expression = col_expression
         self.is_null_level = True
@@ -514,12 +509,18 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
+DateMetricType = Literal["second", "minute", "hour", "day", "month", "year"]
+
+
 class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
+        *,
+        input_is_string: bool,
         threshold: Union[int, float],
-        metric: str,
+        metric: DateMetricType,
+        datetime_format: str = None,
     ):
         """
         Computes the absolute elapsed time between two dates (total duration).
@@ -537,12 +538,16 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
         Args:
             col_name (str): The name of the input column containing the dates to compare
+            input_is_string (bool): Indicates if the input date/times are in
+                string format, requiring parsing according to `datetime_format`.
             threshold (int): The maximum allowed difference between the two dates,
                 in units specified by `date_metric`.
             metric (str): The unit of time to use when comparing the dates.
                 Can be 'second', 'minute', 'hour', 'day', 'month', or 'year'.
-            cast_strings_to_date (bool): If True, the function will automatically
-                convert string columns to date format before comparing.
+            datetime_format (str, optional): The format string for parsing dates.
+                ISO 8601 format used if not provided.
+
+
         """
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
         self.time_threshold_raw = validate_numeric_parameter(
@@ -563,6 +568,9 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
             self.time_threshold_raw, self.time_metric
         )
 
+        self.datetime_format = datetime_format
+        self.input_is_string = input_is_string
+
     def convert_time_metric_to_seconds(self, threshold: int, metric: str) -> float:
 
         conversion_factors = {
@@ -575,6 +583,10 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         }
         return threshold * conversion_factors[metric]
 
+    @property
+    def datetime_parsed_column_expression(self):
+        return self.col_expression.try_parse_timestamp
+
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         """Use sqlglot to auto transpile where possible
@@ -583,15 +595,19 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         """
 
         self.col_expression.sql_dialect = sql_dialect
-        col = self.col_expression
+
+        if self.input_is_string:
+            self.col_expression = self.datetime_parsed_column_expression(
+                self.datetime_format
+            )
 
         # If the dialect has an override, use it
         if hasattr(sql_dialect, "absolute_time_difference"):
             return sql_dialect.absolute_time_difference(self)
 
         sqlglot_base_dialect_sql = (
-            "abs(TIME_TO_UNIX(cast(___col____l as timestamp))"
-            " - TIME_TO_UNIX(cast(___col____r as timestamp)))"
+            "abs(TIME_TO_UNIX(___col____l)"
+            " - TIME_TO_UNIX(___col____r))"
             f"<= {self.time_threshold_seconds}"
         )
 
@@ -613,7 +629,9 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
 
 
 class AbsoluteDateDifferenceLevel(AbsoluteTimeDifferenceLevel):
-    pass
+    @property
+    def datetime_parsed_column_expression(self):
+        return self.col_expression.try_parse_date
 
 
 class DistanceInKMLevel(ComparisonLevelCreator):
