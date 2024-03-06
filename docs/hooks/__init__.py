@@ -73,7 +73,7 @@ def re_route_links(markdown: str, page_title: str) -> str | None:
     return re.sub(docs_folder_regex, "", markdown)
 
 
-def on_page_markdown_hook(
+def on_page_markdown(
     markdown: str, page: Page, config: MkDocsConfig, files: Files
 ) -> str | None:
     """
