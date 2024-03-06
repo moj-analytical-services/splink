@@ -448,7 +448,7 @@ def test_override_metadata_threshold():
     )
     df_c = pd.DataFrame([{"cluster_id": 1, "unique_id": i} for i in range(1, 3 + 1)])
     settings = {"link_type": "dedupe_only"}
-    linker = Linker(df_1, settings, DuckDBAPI)
+    linker = Linker(df_1, settings, DuckDBAPI())
     # linker.debug_mode = True
     df_predict = linker.register_table(df_e, "predict")
     df_clustered = linker.register_table(df_c, "clusters")
