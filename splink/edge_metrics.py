@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
-from .cluster_metrics import (
+from .exceptions import MissingDependencyException
+from .graph_metrics import (
+    _basic_edge_metrics_sql,
     _bridges_from_igraph_sql,
     _edges_for_igraph_sql,
     _full_bridges_sql,
     _node_mapping_table_sql,
     _truncated_edges_sql,
 )
-from .exceptions import SplinkException
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -17,6 +19,8 @@ from .unique_id_concat import (
 
 if TYPE_CHECKING:
     from .linker import Linker
+
+logger = logging.getLogger(__name__)
 
 
 def compute_edge_metrics(
@@ -27,9 +31,55 @@ def compute_edge_metrics(
     threshold_match_probability: float,
 ) -> SplinkDataFrame:
     try:
+        df_edge_metrics = compute_igraph_metrics(
+            linker,
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
+    except MissingDependencyException:
+        logger.warning(
+            "To compute edge metrics you must install the `igraph` package. "
+            "Continuing without computing edge metrics."
+        )
+        df_edge_metrics = compute_basic_edge_metrics(
+            linker, df_predict, threshold_match_probability
+        )
+    return df_edge_metrics
+
+
+def compute_basic_edge_metrics(
+    linker: Linker, df_predict: SplinkDataFrame, threshold_match_probability: float
+):
+    sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
+    linker._enqueue_sql(**sql_info)
+
+    truncated_edges_table_name = sql_info["output_table_name"]
+    uid_cols = linker._settings_obj._unique_id_input_columns
+
+    composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+    composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+    sql_info = _basic_edge_metrics_sql(
+        composite_uid_edges_l, composite_uid_edges_r, truncated_edges_table_name
+    )
+    linker._enqueue_sql(**sql_info)
+
+    df_truncated_edges = linker._execute_sql_pipeline()
+    return df_truncated_edges
+
+
+def compute_igraph_metrics(
+    linker: Linker,
+    df_node_metrics: SplinkDataFrame,
+    df_predict: SplinkDataFrame,
+    df_clustered: SplinkDataFrame,
+    threshold_match_probability: float,
+) -> SplinkDataFrame:
+    try:
         import igraph as ig
     except ImportError:
-        raise SplinkException(
+        raise MissingDependencyException(
             "You need to install the 'igraph' package to compute "
             "the edge metric 'is_bridge'."
         ) from None

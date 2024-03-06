@@ -1,7 +1,10 @@
+adblock
 APIs
 backend
 backends
 Bayes
+checkpointed
+config
 Damerau
 dataframe
 dataset
@@ -27,6 +30,9 @@ linters
 missingness
 Missingness
 PyPI
+paralleism
+parallelise
+parallelises
 Performant
 performant
 pipelining
@@ -37,6 +43,7 @@ Repartition
 repartitioned
 repartitioning
 RDDs
+ROC
 runtime
 schemas
 Splink
@@ -45,4 +52,5 @@ tradeoff
 transpilation
 Transpilation
 unlinkables
+winkler
 Winkler
