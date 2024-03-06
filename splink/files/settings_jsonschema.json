@@ -196,13 +196,8 @@
                     1e-9
                   ]
                 },
-                "is_tf_inflation_reference_level": {
-                   "title": "Indicates the reference level used for TF adjustment inflation for inexact matches; use if no exact match level exists" ,
-                   "type": "boolean",
-                   "default": false
-                },
-                "disable_tf_inflation":{
-                    "title": "If true, do not inflate TF adjustment for inexact matches",
+                "disable_tf_exact_match_detection":{
+                    "title": "If true, do not seek exact match u-value for TF adjustment",
                     "type": "boolean",
                     "default": false
                 }

@@ -153,8 +153,8 @@ class ComparisonLevel:
             "tf_adjustment_weight"
         )
         
-        self._is_tf_inflation_reference_level = self._level_dict_val_else_default("is_tf_inflation_reference_level")
-        self._disable_tf_inflation = self._level_dict_val_else_default("disable_tf_inflation")
+
+        self._disable_tf_exact_match_detection = self._level_dict_val_else_default("disable_tf_exact_match_detection")
         
         self._tf_minimum_u_value = self._level_dict_val_else_default(
             "tf_minimum_u_value"
@@ -185,13 +185,10 @@ class ComparisonLevel:
     def is_null_level(self) -> bool:
         return self._is_null_level
     
-    @property
-    def is_tf_inflation_reference_level(self) -> bool:
-        return self._is_tf_inflation_reference_level
     
     @property
-    def disable_tf_inflation(self) -> bool:
-        return self._disable_tf_inflation
+    def disable_tf_exact_match_detection(self) -> bool:
+        return self._disable_tf_exact_match_detection
 
     @property
     def sql_condition(self) -> str:
@@ -540,18 +537,11 @@ class ComparisonLevel:
         levels = self.comparison.comparison_levels
 
         
-        # if tf inflation is disabled, simply return this level's u_probability 
-        if self.disable_tf_inflation:
+        # if tf exact match detection is disabled, simply return this level's u_probability 
+        if self.disable_tf_exact_match_detection:
             return self.u_probability
         
         
-        # next check for any level marked with is_tf_inflation_reference_level 
-        # which has the same tf adjustment input colname
-        for level in levels:
-            if not level.is_tf_inflation_reference_level:
-                continue
-            if level._tf_adjustment_input_column_name.lower() == self._tf_adjustment_input_column_name.lower():
-                return level.u_probability
        
         # otherwise, default to looking for an appropriate exact match level:
             
@@ -679,12 +669,10 @@ class ComparisonLevel:
         if self.is_null_level:
             output["is_null_level"] = True
 
-        if self.disable_tf_inflation:
-            output["disable_tf_inflation"] = True
+        if self.disable_tf_exact_match_detection:
+            output["disable_tf_exact_match_detection"] = True
 
-        if self.is_tf_inflation_reference_level:
-            output["is_tf_inflation_reference_level"] = True
-
+       
         return output
 
     def _as_completed_dict(self):
