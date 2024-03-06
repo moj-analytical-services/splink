@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Unreleaesed
+
+## [3.9.13] - 2024-03-04
+
+- Support for Databricks Runtime 13.x+
+
+### Fixed
+
+- Bug that prevented `sqlglot <= 17.0.0` from working properly ([#1996](https://github.com/moj-analytical-services/splink/pull/1996))
+- Fixed issues relating to duckdb 0.10.1 ([#1999](https://github.com/moj-analytical-services/splink/pull/1999))
+- Update sqlglot compatibility to support latest version ([#1998](https://github.com/moj-analytical-services/splink/pull/1998))
 
 ## [3.9.12] - 2024-01-30
 
@@ -74,7 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.12...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.13...HEAD
+[3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
 [3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
 [3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11
 [3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...3.9.10

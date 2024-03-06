@@ -1,12 +1,13 @@
-import logging
+from __future__ import annotations
 
-from .settings import Settings
+import logging
 
 logger = logging.getLogger(__name__)
 
 
 def compute_comparison_vector_values_sql(
-    settings_obj: Settings, include_clerical_match_score=False
+    columns_to_select_for_comparison_vector_values: list[str],
+    include_clerical_match_score=False,
 ) -> str:
     """Compute the comparison vectors from __splink__df_blocked, the
     dataframe of blocked pairwise record comparisons.
@@ -14,10 +15,7 @@ def compute_comparison_vector_values_sql(
     See [the fastlink paper](https://imai.fas.harvard.edu/research/files/linkage.pdf)
     for more details of what is meant by comparison vectors.
     """
-
-    select_cols = settings_obj._columns_to_select_for_comparison_vector_values
-
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = ",".join(columns_to_select_for_comparison_vector_values)
 
     if include_clerical_match_score:
         clerical_match_score = ", clerical_match_score"

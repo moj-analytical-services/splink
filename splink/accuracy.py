@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .predict import predict_from_comparison_vectors_sqls
+from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 if TYPE_CHECKING:
@@ -229,14 +229,15 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
     sql = {
         "sql": compute_comparison_vector_values_sql(
-            linker._settings_obj, include_clerical_match_score=True
+            linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            include_clerical_match_score=True,
         ),
         "output_table_name": "__splink__df_comparison_vectors",
     }
 
     sqls.append(sql)
 
-    sqls_2 = predict_from_comparison_vectors_sqls(
+    sqls_2 = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         include_clerical_match_score=True,
         sql_infinity_expression=linker._infinity_expression,

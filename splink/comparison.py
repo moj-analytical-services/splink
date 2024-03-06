@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING, List, Optional
 
-from .comparison_level import ComparisonLevel
+from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .settings import ColumnInfoSettings, Settings
+    from .settings import ColumnInfoSettings
 
 
 class Comparison:
@@ -61,33 +60,11 @@ class Comparison:
         sqlglot_dialect_name: str,
         output_column_name: str = None,
         comparison_description: str = None,
-        settings_obj: Settings = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
 
-        self.comparison_levels: list[ComparisonLevel] = []
+        self.comparison_levels: list[ComparisonLevel] = comparison_levels
 
-        # If comparison_levels are already of type ComparisonLevel, register
-        # the settings object on them
-        # otherwise turn the dictionaries into ComparisonLevel
-
-        for cl in comparison_levels:
-            if isinstance(cl, ComparisonLevel):
-                cl.comparison = self
-            else:
-                # cl is a dict
-                # TODO: remove support for this
-                cl = ComparisonLevel(
-                    **cl,
-                    comparison=self,
-                    sqlglot_dialect_name=None
-                    if settings_obj is None
-                    else settings_obj._sql_dialect,
-                )
-
-            self.comparison_levels.append(cl)
-
-        self._settings_obj: Optional[Settings] = settings_obj
         self.column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
         self.sqlglot_dialect_name = sqlglot_dialect_name
@@ -102,6 +79,8 @@ class Comparison:
         num_levels = self._num_levels
         counter = num_levels - 1
 
+        default_m_values = _default_m_values(num_levels)
+        default_u_values = _default_u_values(num_levels)
         for level in self.comparison_levels:
             if level.is_null_level:
                 level._comparison_vector_value = -1
@@ -113,25 +92,12 @@ class Comparison:
                 else:
                     level._max_level = False
                 counter -= 1
-
-    def __deepcopy__(self, memo):
-        """When we do EM training, we need a copy of the Comparison which is independent
-        of the original e.g. modifying the copy will not affect the original.
-        This method implements ensures the Comparison can be deepcopied.
-        """
-        # want comparison levels to always be ComparisonLevel, not dict
-        comparison_dict = deepcopy(self.as_dict())
-        comparison_dict["comparison_levels"] = [
-            ComparisonLevel(**cl_dict, sqlglot_dialect_name=self.sqlglot_dialect_name)
-            for cl_dict in comparison_dict["comparison_levels"]
-        ]
-        cc = Comparison(
-            **comparison_dict,
-            sqlglot_dialect_name=self.sqlglot_dialect_name,
-            settings_obj=self._settings_obj,
-            column_info_settings=self.column_info_settings,
-        )
-        return cc
+            level.default_m_probability = default_m_values[
+                level._comparison_vector_value
+            ]
+            level.default_u_probability = default_u_values[
+                level._comparison_vector_value
+            ]
 
     @property
     def _num_levels(self):
@@ -144,10 +110,6 @@ class Comparison:
     @property
     def gamma_prefix(self):
         return self.column_info_settings.comparison_vector_value_column_prefix
-
-    @property
-    def _retain_intermediate_calculation_columns(self):
-        return self._settings_obj._retain_intermediate_calculation_columns
 
     @property
     def _bf_column_name(self):
@@ -216,7 +178,6 @@ class Comparison:
 
         return cols
 
-    @property
     def _columns_to_select_for_blocking(self):
         cols = []
         for cl in self.comparison_levels:
@@ -224,15 +185,14 @@ class Comparison:
 
         return dedupe_preserving_order(cols)
 
-    @property
-    def _columns_to_select_for_comparison_vector_values(self):
+    def _columns_to_select_for_comparison_vector_values(self, retain_matching_columns):
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._case_statement)
@@ -244,29 +204,31 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    @property
-    def _columns_to_select_for_bayes_factor_parts(self):
+    def _columns_to_select_for_bayes_factor_parts(
+        self, retain_matching_columns, retain_intermediate_calculation_columns
+    ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
 
         output_cols.append(self._gamma_column_name)
 
-        for cl in self.comparison_levels:
-            if (
-                cl._has_tf_adjustments
-                and self._settings_obj._retain_intermediate_calculation_columns
-            ):
-                col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r)
+        if retain_intermediate_calculation_columns:
+            for cl in self.comparison_levels:
+                if cl._has_tf_adjustments:
+                    col = cl._tf_adjustment_input_column
+                    output_cols.extend(col.tf_name_l_r)
 
         # Bayes factor case when statement
-        sqls = [cl._bayes_factor_sql for cl in self.comparison_levels]
+        sqls = [
+            cl._bayes_factor_sql(self._gamma_column_name)
+            for cl in self.comparison_levels
+        ]
         sql = " ".join(sqls)
         sql = f"CASE {sql} END as {self._bf_column_name} "
         output_cols.append(sql)
@@ -274,7 +236,10 @@ class Comparison:
         # tf adjustment case when statement
 
         if self._has_tf_adjustments:
-            sqls = [cl._tf_adjustment_sql for cl in self.comparison_levels]
+            sqls = [
+                cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
+                for cl in self.comparison_levels
+            ]
             sql = " ".join(sqls)
             sql = f"CASE {sql} END as {self._bf_tf_adj_column_name} "
             output_cols.append(sql)
@@ -282,34 +247,31 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    @property
-    def _columns_to_select_for_predict(self):
+    def _columns_to_select_for_predict(
+        self,
+        retain_matching_columns,
+        retain_intermediate_calculation_columns,
+        training_mode,
+    ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
 
         output_cols = []
-        for col in input_cols:
-            if self._settings_obj._retain_matching_columns:
+        if retain_matching_columns:
+            for col in input_cols:
                 output_cols.extend(col.names_l_r)
-
-        if (
-            self._settings_obj.training_settings.training_mode
-            or self._settings_obj._retain_matching_columns
-        ):
+            output_cols.append(self._gamma_column_name)
+        elif training_mode:
             output_cols.append(self._gamma_column_name)
 
-        for cl in self.comparison_levels:
-            if (
-                cl._has_tf_adjustments
-                and self._settings_obj._retain_intermediate_calculation_columns
-            ):
-                col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r)
+        if retain_intermediate_calculation_columns:
+            for cl in self.comparison_levels:
+                if cl._has_tf_adjustments:
+                    col = cl._tf_adjustment_input_column
+                    output_cols.extend(col.tf_name_l_r)
 
-        for _col in input_cols:
-            if self._settings_obj._retain_intermediate_calculation_columns:
-                output_cols.extend(self._match_weight_columns_to_multiply)
+            output_cols.extend(self._match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)
 
@@ -401,7 +363,10 @@ class Comparison:
         for cl in self.comparison_levels:
             record = {}
             record["comparison_name"] = self.output_column_name
-            record = {**record, **cl._as_detailed_record}
+            record = {
+                **record,
+                **cl._as_detailed_record(self._num_levels, self.comparison_levels),
+            }
             records.append(record)
         return records
 
@@ -409,7 +374,9 @@ class Comparison:
     def _parameter_estimates_as_records(self):
         records = []
         for cl in self.comparison_levels:
-            new_records = cl._parameter_estimates_as_records
+            new_records = cl._parameter_estimates_as_records(
+                self._num_levels, self.comparison_levels
+            )
             for r in new_records:
                 r["comparison_name"] = self.output_column_name
             records.extend(new_records)

@@ -54,11 +54,6 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_metrics import (
-    GraphMetricsResults,
-    _node_degree_sql,
-    _size_density_centralisation_sql,
-)
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -72,9 +67,7 @@ from .connected_components import (
 )
 from .edge_metrics import compute_edge_metrics
 
-# NOQA:I001
-# TODO: circular - restore
-# from .database_api import DatabaseAPI
+from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -82,6 +75,11 @@ from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
+from .graph_metrics import (
+    GraphMetricsResults,
+    _node_degree_sql,
+    _size_density_centralisation_sql,
+)
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
@@ -102,7 +100,10 @@ from .misc import (
 from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import SQLPipeline
-from .predict import predict_from_comparison_vectors_sqls
+from .predict import (
+    predict_from_comparison_vectors_sqls_using_settings,
+    predict_from_comparison_vectors_sqls,
+)
 from .profile_data import profile_columns
 from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
@@ -144,7 +145,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings: SettingsCreator | dict | Path | str,
-        database_api,  # TODO: can't annotate atm due to circular imports
+        database_api: DatabaseAPI,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
@@ -225,11 +226,6 @@ class Linker:
         self._settings_obj = settings_creator.get_settings(
             database_api.sql_dialect.name
         )
-
-        # logic from DuckDBLinker.__init__ - TODO: genericise
-        # If user has provided pandas dataframes, need to register
-        # them with the database, using user-provided aliases
-        # if provided or a created alias if not
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
@@ -857,10 +853,10 @@ class Linker:
         )
         for em_training_session in self._em_training_sessions:
             training_lambda = (
-                em_training_session._settings_obj._probability_two_random_records_match
+                em_training_session.core_model_settings.probability_two_random_records_match
             )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
-            reverse_levels = (
+            reverse_level_infos = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
             )
 
@@ -872,10 +868,13 @@ class Linker:
                 f"{training_lambda:,.3f}",
             )
 
-            for reverse_level in reverse_levels:
+            for reverse_level_info in reverse_level_infos:
                 # Get comparison level on current settings obj
+                # TODO: do we need this dance? We already have the level + comparison
+                # maybe they are different copies with different values?
+                reverse_level = reverse_level_info["level"]
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level.comparison.output_column_name
+                    reverse_level_info["comparison"].output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
@@ -1307,6 +1306,7 @@ class Linker:
             blocking_rule = blocking_rule.create_blocking_rule_dict(self._sql_dialect)
         blocking_rule = blocking_rule_to_obj(blocking_rule)
         if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
+            # TODO: seems a mismatch between message and type re: SaltedBlockingRule
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
                 "salted or exploding blocking rules"
@@ -1336,7 +1336,11 @@ class Linker:
 
         em_training_session = EMTrainingSession(
             self,
-            blocking_rule,
+            db_api=self.db_api,
+            blocking_rule_for_training=blocking_rule,
+            core_model_settings=self._settings_obj.core_model_settings,
+            training_settings=self._settings_obj.training_settings,
+            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
@@ -1345,7 +1349,10 @@ class Linker:
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
-        em_training_session._train()
+        core_model_settings = em_training_session._train()
+        # overwrite with the newly trained values in our linker settings
+        self._settings_obj.core_model_settings = core_model_settings
+        self._em_training_sessions.append(em_training_session)
 
         self._populate_m_u_from_trained_values()
 
@@ -1426,10 +1433,12 @@ class Linker:
             df_blocked = self._execute_sql_pipeline(input_dataframes)
             input_dataframes.append(df_blocked)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             threshold_match_probability,
             threshold_match_weight,
@@ -1548,10 +1557,12 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
@@ -1633,10 +1644,12 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
@@ -1690,12 +1703,16 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj,
+            unique_id_input_columns=uid_cols,
+            core_model_settings=self._settings_obj.core_model_settings,
+            sql_dialect=self._sql_dialect,
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
@@ -1768,6 +1785,7 @@ class Linker:
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
+        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
         return cc
 
@@ -1818,6 +1836,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
+        df_node_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -1849,9 +1870,13 @@ class Linker:
         | s1-__-10021           | s1-__-10024             | True      |
         ...
         """
-        return compute_edge_metrics(
+        df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
+        df_edge_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
+        return df_edge_metrics
 
     def _compute_metrics_clusters(
         self,
@@ -1871,7 +1896,7 @@ class Linker:
         * cluster_centralisation (average absolute deviation from maximum node_degree
             normalised wrt maximum possible value)
 
-        Output table has a single row per cluster, along with the cluster_metrics
+        Output table has a single row per cluster, along with the cluster metrics
         listed above
         |--------------------------------------------------------------------|
         | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
@@ -1890,6 +1915,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
+        df_cluster_metrics.metadata[
+            "threshold_match_probability"
+        ] = df_node_metrics.metadata["threshold_match_probability"]
         return df_cluster_metrics
 
     # a user-facing function, which is currently 'private' (Beta functionality)
@@ -1899,7 +1927,7 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         *,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
     ) -> GraphMetricsResults:
         """
         Generates tables containing graph metrics (for nodes, edges and clusters),
@@ -1909,9 +1937,11 @@ class Linker:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or
-                above this threshold.
+            threshold_match_probability (float, optional): Filter the pairwise match
+                predictions to include only pairwise comparisons with a
+                match_probability at or above this threshold. If not provided, the value
+                will be taken from metadata on `df_clustered`. If no such metadata is
+                available, this value _must_ be provided.
 
         Returns:
             GraphMetricsResult: A data class containing SplinkDataFrames
@@ -1921,6 +1951,18 @@ class Linker:
                 attribute "clusters" for cluster metrics table
 
         """
+        if threshold_match_probability is None:
+            threshold_match_probability = df_clustered.metadata.get(
+                "threshold_match_probability", None
+            )
+            # we may not have metadata if clusters have been manually registered, or
+            # read in from a format that does not include it
+            if threshold_match_probability is None:
+                raise TypeError(
+                    "As `df_clustered` has no threshold metadata associated to it, "
+                    "to compute graph metrics you must provide "
+                    "`threshold_match_probability` manually"
+                )
         df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
