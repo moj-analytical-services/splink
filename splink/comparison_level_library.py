@@ -101,15 +101,15 @@ class NullLevelBase(ComparisonLevel):
         col_name_l, col_name_r = col.name_l, col.name_r
 
         if invalid_dates_as_null:
+            # See https://github.com/moj-analytical-services/splink/pull/1939
             col_name_l = self._valid_date_function(col_name_l, valid_string_pattern)
             col_name_r = self._valid_date_function(col_name_r, valid_string_pattern)
-            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
-                      {col_name_l}=='' OR {col_name_r} ==''"""
+            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL"""
         elif valid_string_pattern:
             col_name_l = self._regex_extract_function(col_name_l, valid_string_pattern)
             col_name_r = self._regex_extract_function(col_name_r, valid_string_pattern)
             sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
-                      {col_name_l}=='' OR {col_name_r} ==''"""
+                      {col_name_l} = '' OR {col_name_r} = '' """
         else:
             sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
 
