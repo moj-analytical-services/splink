@@ -33,7 +33,6 @@ def compute_edge_metrics(
             "You need to install the 'igraph' package to compute "
             "the edge metric 'is_bridge'."
         ) from None
-
     uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     # need composite unique ids

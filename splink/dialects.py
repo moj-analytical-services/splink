@@ -96,6 +96,12 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' needs a random_sample_sql added to its dialect"
         )
 
+    @property
+    def infinity_expression(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' needs an infinity_expression added to its dialect"
+        )
+
     @staticmethod
     def _wrap_in_nullif(func):
         def nullif_wrapped_function(*args, **kwargs):
