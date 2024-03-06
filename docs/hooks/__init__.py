@@ -4,8 +4,10 @@ import re
 from pathlib import Path
 
 from mkdocs.config.defaults import MkDocsConfig
+from mkdocs.plugins import event_priority
 from mkdocs.structure.files import Files
 from mkdocs.structure.pages import Page
+from nbconvert import MarkdownExporter
 
 INCLUDE_MARKDOWN_REGEX = (
     # opening tag and any whitespace
@@ -71,6 +73,22 @@ def re_route_links(markdown: str, page_title: str) -> str | None:
     if not re.search(docs_folder_regex, markdown):
         return
     return re.sub(docs_folder_regex, "", markdown)
+
+
+# hooks for use by mkdocs
+
+# priority last - run this after any other such hooks
+# this ensures we are overwriting mknotebooks config,
+# not the other way round
+@event_priority(-100)
+def on_config(config: MkDocsConfig) -> MkDocsConfig:
+    # convert ipynb to md rather than html directly
+    # this ensures we render symbols such as '<' correctly
+    # in codeblocks, instead of '%lt;'
+    md_exporter = MarkdownExporter(config=config)
+    # overwrite mknotebooks config option
+    config["notebook_exporter"] = md_exporter
+    return config
 
 
 def on_page_markdown(
