@@ -40,8 +40,9 @@ import splink.comparison_library as cl
 from splink.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
+from splink.exceptions import SplinkException
 from splink.linker import Linker
-from splink.predict import predict_from_comparison_vectors_sqls
+from splink.predict import predict_from_comparison_vectors_sqls_using_settings
 
 
 def test_splink_converges_to_known_params():
@@ -67,9 +68,15 @@ def test_splink_converges_to_known_params():
 
     linker = Linker(df, settings, database_api=db_api)
 
+    settings_obj = linker._settings_obj
+
     em_training_session = EMTrainingSession(
         linker,
-        "1=1",
+        db_api=db_api,
+        blocking_rule_for_training="1=1",
+        core_model_settings=settings_obj.core_model_settings,
+        training_settings=settings_obj.training_settings,
+        unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
         fix_u_probabilities=False,
         fix_m_probabilities=False,
         fix_probability_two_random_records_match=False,
@@ -81,14 +88,17 @@ def test_splink_converges_to_known_params():
     # We can then register a table with that name
     try:
         em_training_session._comparison_vectors()
-    except Exception as e:
+    except SplinkException as e:
         pattern = r"__splink__df_comparison_vectors_[a-f0-9]{9}"
 
         cvv_hashed_tablename = re.search(pattern, str(e)).group()
 
-    linker.register_table(df, cvv_hashed_tablename)
+    cvv_table = db_api.register_table(df, cvv_hashed_tablename)
+    cvv_table.templated_name = "__splink__df_comparison_vectors"
 
-    em_training_session._train()
+    core_model_settings = em_training_session._train(cvv_table)
+    linker._settings_obj.core_model_settings = core_model_settings
+    linker._em_training_sessions.append(em_training_session)
 
     linker._populate_m_u_from_trained_values()
 
@@ -102,7 +112,7 @@ def test_splink_converges_to_known_params():
         linker,
     )
 
-    sqls = predict_from_comparison_vectors_sqls(
+    sqls = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         sql_infinity_expression=linker._infinity_expression,
     )
