@@ -536,7 +536,6 @@ class ComparisonLevel:
     def _u_probability_corresponding_to_exact_match(self):
         levels = self.comparison.comparison_levels
 
-        # if tf exact match detection is disabled, simply return this level's u_probability
         if self.disable_tf_exact_match_detection:
             return self.u_probability
 
