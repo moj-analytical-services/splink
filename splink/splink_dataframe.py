@@ -21,7 +21,11 @@ class SplinkDataFrame:
     """
 
     def __init__(
-        self, templated_name: str, physical_name: str, database_api: DatabaseAPI
+        self,
+        templated_name: str,
+        physical_name: str,
+        database_api: DatabaseAPI,
+        metadata: dict = None,
     ):
         self.templated_name = templated_name
         self.physical_name = physical_name
@@ -29,6 +33,7 @@ class SplinkDataFrame:
         self._target_schema = "splink"
         self.created_by_splink = False
         self.sql_used_to_create = None
+        self.metadata = metadata or {}
 
     @property
     def columns(self) -> list[InputColumn]:
