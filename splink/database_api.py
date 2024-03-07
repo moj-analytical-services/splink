@@ -191,16 +191,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline._generate_pipeline(input_dataframes)
             output_tablename_templated = pipeline.output_table_name
 
-            try:
-                splink_dataframe = self._sql_to_splink_dataframe(
-                    sql_gen,
-                    output_tablename_templated,
-                    use_cache,
-                )
-            except Exception as e:
-                raise e
-            finally:
-                pipeline.reset()
+            splink_dataframe = self._sql_to_splink_dataframe(
+                sql_gen,
+                output_tablename_templated,
+                use_cache,
+            )
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
@@ -222,7 +217,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 print(f"Step ran in: {run_time}")  # noqa: T201
 
         # if there is an error the pipeline will not reset, leaving caller to handle
-        # pipeline.reset()
+        pipeline.reset()
         return splink_dataframe
 
     @final
