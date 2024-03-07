@@ -57,10 +57,10 @@ The $m$ probability is largely a measure of data quality - if DOB is poorly coll
 The $u$ probability is the probability of a given observation *given the records are **not** a match*. Or, as a formula:
 
 $$
-m = Pr(\textsf{Observation | Records do not match})
+u = Pr(\textsf{Observation | Records do not match})
 $$
 
-For example, consider the the $u$ probability of a match on Surname. For two records that are a match, what is the probability that:
+For example, consider the the $u$ probability of a match on Surname. For two records that are not a match, what is the probability that:
 
 - **Surname is the same**:
   - Depending on the surname, <1%? $\Longrightarrow m \approx 0.005$
