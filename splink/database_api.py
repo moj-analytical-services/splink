@@ -87,6 +87,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         output_df = self._cleanup_for_execute_sql(
             spark_df, templated_name, physical_name
         )
+        self._intermediate_table_cache.executed_queries.append(output_df)
         return output_df
 
     def _sql_to_splink_dataframe(
@@ -141,8 +142,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 output_tablename_templated,
             )
 
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
-
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
                 from IPython.display import display
@@ -155,7 +154,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             splink_dataframe = self.execute_sql_against_backend(
                 sql, output_tablename_templated, table_name_hash
             )
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
 
         splink_dataframe.created_by_splink = True
         splink_dataframe.sql_used_to_create = sql
