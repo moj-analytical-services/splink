@@ -104,15 +104,44 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
-        # TODO: caching
+        if use_cache:
+            # Certain tables are put in the cache using their templated_name
+            # An example is __splink__df_concat_with_tf
+            # These tables are put in the cache when they are first calculated
+            # e.g. with _initialise_df_concat_with_tf()
+            # But they can also be put in the cache manually using
+            # e.g. register_table_input_nodes_concat_with_tf()
 
-        if self.debug_mode:  # TODO: i guess this makes sense on the dbapi? but think.
+            # Look for these 'named' tables in the cache prior
+            # to looking for the hashed version
+
+            if output_tablename_templated in self._intermediate_table_cache:
+                return self._intermediate_table_cache.get_with_logging(
+                    output_tablename_templated
+                )
+
+            if table_name_hash in self._intermediate_table_cache:
+                return self._intermediate_table_cache.get_with_logging(table_name_hash)
+
+            # If not in cache, fall back on checking the database
+            if self.table_exists_in_database(table_name_hash):
+                logger.debug(
+                    f"Found cache for {output_tablename_templated} "
+                    f"in database using table name with physical name {table_name_hash}"
+                )
+                return self._table_to_splink_dataframe(
+                    output_tablename_templated, table_name_hash
+                )
+
+        if self.debug_mode:
             print(sql)  # noqa: T201
             splink_dataframe = self.execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
             )
+
+            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
 
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
@@ -126,9 +155,14 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             splink_dataframe = self.execute_sql_against_backend(
                 sql, output_tablename_templated, table_name_hash
             )
+            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
 
         splink_dataframe.created_by_splink = True
         splink_dataframe.sql_used_to_create = sql
+
+        physical_name = splink_dataframe.physical_name
+
+        self._intermediate_table_cache[physical_name] = splink_dataframe
 
         return splink_dataframe
 
@@ -148,12 +182,16 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline._generate_pipeline(input_dataframes)
             output_tablename_templated = pipeline.output_table_name
 
-            # TODO: check cache
-            splink_dataframe = self._sql_to_splink_dataframe(
-                sql_gen,
-                output_tablename_templated,
-                use_cache,
-            )
+            try:
+                splink_dataframe = self._sql_to_splink_dataframe(
+                    sql_gen,
+                    output_tablename_templated,
+                    use_cache,
+                )
+            except Exception as e:
+                raise e
+            finally:
+                pipeline.reset()
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
@@ -175,7 +213,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 print(f"Step ran in: {run_time}")  # noqa: T201
 
         # if there is an error the pipeline will not reset, leaving caller to handle
-        pipeline.reset()
+        # pipeline.reset()
         return splink_dataframe
 
     @final
