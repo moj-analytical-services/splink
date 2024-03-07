@@ -63,9 +63,9 @@ $$
 For example, consider the the $u$ probability of a match on Surname. For two records that are not a match, what is the probability that:
 
 - **Surname is the same**:
-  - Depending on the surname, <1%? $\Longrightarrow m \approx 0.005$
+  - Depending on the surname, <1%? $\Longrightarrow u \approx 0.005$
 - **Surname is different**:
-  - Almost 100% $\Longrightarrow m \approx 0.995$
+  - Almost 100% $\Longrightarrow u \approx 0.995$
 
 The $u$ probability is a measure of coincidence. As there are so many possible surnames, the chance of sharing the same surname with a randomly-selected person is small.
 
