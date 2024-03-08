@@ -20,7 +20,7 @@ class SparkDataFrame(SplinkDataFrame):
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
-        spark_df = self.db_api.spark.sql(sql)
+        spark_df = self.db_api._run_sql_execution(sql)
 
         col_strings = list(spark_df.columns)
         return [InputColumn(c, sql_dialect="spark") for c in col_strings]
@@ -33,7 +33,7 @@ class SparkDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api.spark.sql(sql).toPandas().to_dict(orient="records")
+        return self.db_api._run_sql_execution(sql).toPandas().to_dict(orient="records")
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":
@@ -47,7 +47,7 @@ class SparkDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api.spark.sql(sql).toPandas()
+        return self.db_api._run_sql_execution(sql).toPandas()
 
     def as_spark_dataframe(self):
         return self.db_api.spark.table(self.physical_name)

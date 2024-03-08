@@ -118,7 +118,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 f"Found cache for {output_tablename_templated} "
                 f"in database using table name with physical name {table_name_hash}"
             )
-            return self._table_to_splink_dataframe(
+            return self.table_to_splink_dataframe(
                 output_tablename_templated, table_name_hash
             )
         return None

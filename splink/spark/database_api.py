@@ -88,7 +88,7 @@ class SparkAPI(DatabaseAPI):
         return SparkDataFrame(templated_name, physical_name, self)
 
     def table_exists_in_database(self, table_name):
-        query_result = self.spark.sql(
+        query_result = self._run_sql_execution(
             f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
@@ -131,7 +131,7 @@ class SparkAPI(DatabaseAPI):
         return self.spark.sql(final_sql)
 
     def _delete_table_from_database(self, name):
-        self.spark.sql(f"drop table {name}")
+        self._run_sql_execution(f"drop table {name}")
 
     @property
     def accepted_df_dtypes(self):
