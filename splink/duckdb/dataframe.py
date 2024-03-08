@@ -35,14 +35,14 @@ class DuckDBDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api._con.query(sql).to_df().to_dict(orient="records")
+        return self.db_api._run_sql_execution(sql).to_df().to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api._con.query(sql).to_df()
+        return self.db_api._run_sql_execution(sql).to_df()
 
     def to_parquet(self, filepath, overwrite=False):
         if not overwrite:
@@ -61,7 +61,7 @@ class DuckDBDataFrame(SplinkDataFrame):
             os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (FORMAT PARQUET);"
-        self.db_api._con.query(sql)
+        self.db_api._run_sql_execution(sql)
 
     def to_csv(self, filepath, overwrite=False):
         if not overwrite:
@@ -80,4 +80,4 @@ class DuckDBDataFrame(SplinkDataFrame):
             os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (HEADER, DELIMITER ',');"
-        self.db_api._con.query(sql)
+        self.db_api._run_sql_execution(sql)

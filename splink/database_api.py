@@ -3,7 +3,7 @@ import logging
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, TypeVar, final
+from typing import Dict, Generic, List, TypeVar, Union, final
 
 import sqlglot
 
