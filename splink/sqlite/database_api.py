@@ -93,7 +93,7 @@ class SQLiteAPI(DatabaseAPI):
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
-        rec = self.con.execute(sql).fetchone()
+        rec = self._run_sql_execution(sql).fetchone()
         if not rec:
             return False
         else:
