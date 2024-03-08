@@ -38,7 +38,7 @@ class SparkDataFrame(SplinkDataFrame):
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":
             self._check_drop_table_created_by_splink(force_non_splink_table)
-            self.db_api._delete_table_from_database(self.physical_name)
+            self.db_api.delete_table_from_database(self.physical_name)
         else:
             pass
 

@@ -123,7 +123,7 @@ def run_tests_with_args(
 
         table_as_dict = test.vals_for_df
         if db_api.table_exists_in_database("__splink__test_table"):
-            db_api._delete_table_from_database("__splink__test_table")
+            db_api.delete_table_from_database("__splink__test_table")
 
         db_api._table_registration(table_as_dict, "__splink__test_table")
 

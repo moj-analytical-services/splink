@@ -92,7 +92,7 @@ class SplinkDataFrame:
 
         """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
-        self.db_api._remove_splinkdataframe_from_cache(self)
+        self.db_api.remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
         """Return the dataframe as a list of record dictionaries.

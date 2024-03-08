@@ -237,7 +237,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 if not overwrite:
                     existing_tables.append(alias)
                 else:
-                    self._delete_table_from_database(alias)
+                    self.delete_table_from_database(alias)
 
         if existing_tables:
             existing_tables_str = ", ".join(existing_tables)
@@ -264,7 +264,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         # returns sql
         # sensible default:
-        self._delete_table_from_database(physical_name)
+        self.delete_table_from_database(physical_name)
         sql = f"CREATE TABLE {physical_name} AS {sql}"
         return sql
 
@@ -279,7 +279,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def _run_sql_execution(self, final_sql: str) -> TablishType:
         pass
 
-    def _delete_table_from_database(self, name: str):
+    def delete_table_from_database(self, name: str):
         # sensible default:
         drop_sql = f"DROP TABLE IF EXISTS {name}"
         self._run_sql_execution(drop_sql)
@@ -317,7 +317,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     # should probably also be responsible for cache
     # TODO: stick this in a cache-api that lives on this
 
-    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
+    def remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
         keys_to_delete = set()
         for key, df in self._intermediate_table_cache.items():
             if df.physical_name == splink_dataframe.physical_name:

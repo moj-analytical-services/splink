@@ -317,7 +317,7 @@ class AthenaLinker(Linker):
         self.ctas_query_info.update({alias: ctas_metadata})
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-        self._delete_table_from_database(physical_name)
+        self.delete_table_from_database(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
@@ -347,7 +347,7 @@ class AthenaLinker(Linker):
                     "Please use the 'overwrite' argument if you wish to overwrite"
                 )
             else:
-                self._delete_table_from_database(table_name)
+                self.delete_table_from_database(table_name)
 
         self._table_registration(input, table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
@@ -425,7 +425,7 @@ class AthenaLinker(Linker):
 
         self.ctas_query_info.pop(physical_name)
 
-    def _delete_table_from_database(self, name):
+    def delete_table_from_database(self, name):
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)

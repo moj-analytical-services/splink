@@ -130,7 +130,7 @@ class SparkAPI(DatabaseAPI):
     def _run_sql_execution(self, final_sql: str) -> spark_df:
         return self.spark.sql(final_sql)
 
-    def _delete_table_from_database(self, name):
+    def delete_table_from_database(self, name):
         self._run_sql_execution(f"drop table {name}")
 
     @property
