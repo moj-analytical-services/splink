@@ -583,39 +583,6 @@ class Linker:
             self._pipeline.reset()
         return dataframe
 
-    def _execute_sql_against_backend(
-        self, sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """Execute a single sql SELECT statement, returning a SplinkDataFrame.
-
-        Subclasses should implement this, using _log_and_run_sql_execution() within
-        their implementation, maybe doing some SQL translation or other prep/cleanup
-        work before/after.
-        """
-        return self.db_api.execute_sql_against_backend(
-            sql, templated_name, physical_name
-        )
-
-    def _run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """**Actually** execute the sql against the backend database.
-
-        This is intended to be implemented by a subclass, but not actually called
-        directly. Instead, call _log_and_run_sql_execution, and that will call
-        this method.
-
-        This could return something, or not. It's up to the Linker subclass to decide.
-        """
-        return self.db_api.run_sql_execution(final_sql, templated_name, physical_name)
-
-    def _log_and_run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        return self.db_api.log_and_run_sql_execution(
-            final_sql, templated_name, physical_name
-        )
-
     def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the
@@ -716,13 +683,6 @@ class Linker:
         new_linker._settings_obj = new_settings
         return new_linker
 
-    def _get_input_tf_dict(self, df_dict):
-        d = {}
-        for df_name, df_value in df_dict.items():
-            renamed = colname_to_tf_tablename(df_name)
-            d[renamed] = self._table_to_splink_dataframe(renamed, df_value)
-        return d
-
     def _predict_warning(self):
         if not self._settings_obj._is_fully_trained:
             msg = (
@@ -737,9 +697,6 @@ class Linker:
             warn_message = "\n".join([msg] + messages)
 
             logger.warning(warn_message)
-
-    def _table_exists_in_database(self, table_name):
-        return self.db_api.table_exists_in_database(table_name)
 
     def _validate_input_dfs(self):
         if not hasattr(self, "_input_tables_dict"):
