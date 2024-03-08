@@ -42,7 +42,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._cache_uid: str = str(random.choice(range(10000)))
 
     @final
-    def log_and_run_sql_execution(
+    def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> TablishType:
         """
@@ -84,7 +84,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Returns a SplinkDataFrame which also uses templated_name
         """
         sql = self._setup_for_execute_sql(sql, physical_name)
-        spark_df = self.log_and_run_sql_execution(sql, templated_name, physical_name)
+        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         output_df = self._cleanup_for_execute_sql(
             spark_df, templated_name, physical_name
         )
@@ -124,7 +124,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return None
 
     @final
-    def _sql_to_splink_dataframe(
+    def sql_to_splink_dataframe_checking_cache(
         self,
         sql,
         output_tablename_templated,
@@ -176,7 +176,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def _execute_sql_pipeline(
+    def execute_sql_pipeline(
         self,
         pipeline,
         input_dataframes: List[SplinkDataFrame] = [],
@@ -192,7 +192,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline.generate_pipeline(input_dataframes)
             output_tablename_templated = pipeline.output_table_name
 
-            splink_dataframe = self._sql_to_splink_dataframe(
+            splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
                 sql_gen,
                 output_tablename_templated,
                 use_cache,
@@ -209,7 +209,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                     f"--------Creating table: {output_tablename}--------"
                 )
 
-                splink_dataframe = self._sql_to_splink_dataframe(
+                splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
                     sql,
                     output_tablename,
                     use_cache=False,

@@ -273,23 +273,23 @@ def profile_columns(
     )
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = db_api._execute_sql_pipeline(pipeline, input_dataframes)
+    df_raw = db_api.execute_sql_pipeline(pipeline, input_dataframes)
 
     sqls = _get_df_percentiles()
     for sql in sqls:
         pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    df_percentiles = db_api.execute_sql_pipeline(pipeline, [df_raw])
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     pipeline.enqueue_sql(sql, "__splink__df_top_n")
-    df_top_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    df_top_n = db_api.execute_sql_pipeline(pipeline, [df_raw])
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
     pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
-    df_bottom_n = db_api._execute_sql_pipeline(pipeline, [df_raw])
+    df_bottom_n = db_api.execute_sql_pipeline(pipeline, [df_raw])
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []

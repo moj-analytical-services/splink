@@ -185,7 +185,7 @@ class EMTrainingSession:
         )
 
         if repartition_after_blocking:
-            df_blocked = self.db_api._execute_sql_pipeline(pipeline, [nodes_with_tf])
+            df_blocked = self.db_api.execute_sql_pipeline(pipeline, [nodes_with_tf])
             input_dataframes = [nodes_with_tf, df_blocked]
         else:
             input_dataframes = [nodes_with_tf]
@@ -194,7 +194,7 @@ class EMTrainingSession:
             self.columns_to_select_for_comparison_vector_values
         )
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.db_api._execute_sql_pipeline(pipeline, input_dataframes)
+        return self.db_api.execute_sql_pipeline(pipeline, input_dataframes)
 
     def _train(self, cvv=None) -> CoreModelSettings:
         if cvv is None:

@@ -268,7 +268,7 @@ def expectation_maximisation(
     if estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(core_model_settings.comparisons)
         pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
-        agreement_pattern_counts = db_api._execute_sql_pipeline(
+        agreement_pattern_counts = db_api.execute_sql_pipeline(
             pipeline=pipeline, input_dataframes=[df_comparison_vector_values]
         )
 
@@ -303,11 +303,11 @@ def expectation_maximisation(
         )
         pipeline.enqueue_sql(sql, "__splink__m_u_counts")
         if estimate_without_term_frequencies:
-            df_params = db_api._execute_sql_pipeline(
+            df_params = db_api.execute_sql_pipeline(
                 pipeline, [agreement_pattern_counts]
             )
         else:
-            df_params = db_api._execute_sql_pipeline(
+            df_params = db_api.execute_sql_pipeline(
                 pipeline, [df_comparison_vector_values]
             )
         param_records = df_params.as_pandas_dataframe()

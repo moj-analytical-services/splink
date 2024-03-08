@@ -572,7 +572,7 @@ class Linker:
                 pipeline
         """
         try:
-            dataframe = self.db_api._execute_sql_pipeline(
+            dataframe = self.db_api.execute_sql_pipeline(
                 self._pipeline,
                 input_dataframes,
                 use_cache,
@@ -666,7 +666,7 @@ class Linker:
 
         Return a SplinkDataFrame representing the results of the SQL
         """
-        return self.db_api._sql_to_splink_dataframe(
+        return self.db_api.sql_to_splink_dataframe_checking_cache(
             sql,
             output_tablename_templated,
             use_cache=use_cache,
