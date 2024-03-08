@@ -72,6 +72,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             ) from e
 
     # TODO: rename this?
+    @final
     def execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
@@ -188,7 +189,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
 
         if not self.debug_mode:
-            sql_gen = pipeline._generate_pipeline(input_dataframes)
+            sql_gen = pipeline.generate_pipeline(input_dataframes)
             output_tablename_templated = pipeline.output_table_name
 
             splink_dataframe = self._sql_to_splink_dataframe(
@@ -199,7 +200,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for task in pipeline._generate_pipeline_parts(input_dataframes):
+            for task in pipeline.generate_pipeline_parts(input_dataframes):
                 start_time = time.time()
                 output_tablename = task.output_table_name
                 sql = task.sql
