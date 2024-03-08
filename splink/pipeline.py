@@ -9,9 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class SQLTask:
-    def __init__(
-        self, sql, output_table_name
-    ):
+    def __init__(self, sql, output_table_name):
         self.sql = sql
         self.output_table_name = output_table_name
 
@@ -52,9 +50,7 @@ class SQLPipeline:
         for df in input_dataframes:
             if not df.physical_and_template_names_equal:
                 sql = f"select * from {df.physical_name}"
-                task = SQLTask(
-                    sql, df.templated_name
-                )
+                task = SQLTask(sql, df.templated_name)
                 parts.insert(0, task)
         return parts
 
