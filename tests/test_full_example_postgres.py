@@ -2,8 +2,8 @@ import os
 
 import pandas as pd
 
-from splink.database_api import PostgresAPI
 from splink.linker import Linker
+from splink.postgres.database_api import PostgresAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including

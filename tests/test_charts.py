@@ -1,7 +1,7 @@
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 # ground truth:

@@ -4,7 +4,7 @@ import pytest
 from splink.analyse_blocking import (
     number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
 )
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.misc import calculate_cartesian
 from splink.vertically_concatenate import vertically_concatenate_sql

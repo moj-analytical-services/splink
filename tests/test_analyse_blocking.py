@@ -4,7 +4,7 @@ import pandas as pd
 from splink.analyse_blocking import cumulative_comparisons_generated_by_blocking_rules
 from splink.blocking import BlockingRule
 from splink.blocking_rule_library import CustomRule, Or, block_on
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 from .basic_settings import get_settings_dict

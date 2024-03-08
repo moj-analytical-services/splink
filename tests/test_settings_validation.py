@@ -7,7 +7,7 @@ import pytest
 from splink.blocking_rule_library import block_on
 from splink.comparison import Comparison
 from splink.comparison_library import LevenshteinAtThresholds
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.exceptions import ErrorLogger
 from splink.linker import Linker
 from splink.settings_validation.log_invalid_columns import (

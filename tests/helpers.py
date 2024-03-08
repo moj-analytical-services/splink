@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import INTEGER, TEXT
 
-from splink.database_api import DuckDBAPI, PostgresAPI, SparkAPI, SQLiteAPI
+from splink.duckdb.database_api import DuckDBAPI, PostgresAPI, SparkAPI, SQLiteAPI
 from splink.linker import Linker
 
 

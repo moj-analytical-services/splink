@@ -7,9 +7,9 @@ from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink.database_api import SparkAPI
 from splink.linker import Linker
 from splink.profile_data import profile_columns
+from splink.spark.database_api import SparkAPI
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
