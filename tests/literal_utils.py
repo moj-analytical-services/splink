@@ -96,7 +96,7 @@ class ComparisonTestSpec:
 
 
 def execute_sql_for_test(sql, db_api):
-    return db_api.execute_sql_against_backend(
+    return db_api._make_table_from_sql(
         sql, "__splink__test", "__splink__test"
     ).as_pandas_dataframe()
 

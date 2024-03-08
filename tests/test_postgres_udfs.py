@@ -14,8 +14,8 @@ def test_log2(pg_engine):
     expected_log2_vals = [1, 3, -1, 0]
     db_api.register_table(df, "log_values")
     sql = """SELECT log2("x") AS logs FROM log_values"""
-    frame = db_api.execute_sql_against_backend(
-        sql, "dummy_name", "test_log_table"
+    frame = db_api.sql_to_splink_dataframe_checking_cache(
+        sql, "test_log_table"
     ).as_pandas_dataframe()
 
     for log_result, expected in zip(frame["logs"], expected_log2_vals):
@@ -44,8 +44,8 @@ def test_array_intersect(pg_engine):
         dtype={"arr_l": postgresql.ARRAY(INTEGER), "arr_r": postgresql.ARRAY(INTEGER)},
     )
     sql = "SELECT array_intersect(arr_l, arr_r) AS intersects FROM intersect_vals"
-    frame = db_api.execute_sql_against_backend(
-        sql, "dummy_name", "test_intersect_table"
+    frame = db_api.sql_to_splink_dataframe_checking_cache(
+        sql, "test_intersect_table"
     ).as_pandas_dataframe()
 
     for int_result, expected in zip(frame["intersects"], expected_intersect_vals):

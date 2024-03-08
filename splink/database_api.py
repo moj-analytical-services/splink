@@ -73,7 +73,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     # TODO: rename this?
     @final
-    def execute_sql_against_backend(
+    def _make_table_from_sql(
         self, sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         """
@@ -130,7 +130,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         output_tablename_templated,
         use_cache=True,
     ) -> SplinkDataFrame:
-        # differences from execute_sql_against_backend:
+        # differences from _make_table_from_sql:
         # this _calculates_ physical name, and
         # handles debug_mode
         # TODO: also maybe caching? but maybe that is even lower down
@@ -148,7 +148,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         if self.debug_mode:
             print(sql)  # noqa: T201
-            splink_dataframe = self.execute_sql_against_backend(
+            splink_dataframe = self._make_table_from_sql(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
@@ -163,7 +163,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 print(df_pd)  # noqa: T201
 
         else:
-            splink_dataframe = self.execute_sql_against_backend(
+            splink_dataframe = self._make_table_from_sql(
                 sql, output_tablename_templated, table_name_hash
             )
 
