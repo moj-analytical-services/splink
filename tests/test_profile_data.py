@@ -29,7 +29,7 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
 
-    return db_api.execute_sql_pipeline(pipeline, []).as_pandas_dataframe()
+    return db_api.execute_sql_pipeline(pipeline).as_pandas_dataframe()
 
 
 @mark_with_dialects_including("duckdb")
