@@ -40,9 +40,9 @@ Two of our latest additions are:
 
 When evaluating any classification model, a confusion matrix is a useful tool for summarizing performance by representing counts of true positive, true negative, false positive, and false negative predictions.
 
-Splink now has its own [confusion matrix chart](../../charts/confusion_matrix_from_labels_table.ipynb) to show how model performance changes with a given match weight threshold. 
+Splink now has its own [confusion matrix chart](../../charts/threshold_selection_tool_from_labels_table.ipynb) to show how model performance changes with a given match weight threshold. 
 
-[![](./img/confusion_matrix.png){ width="400" }](../../charts/confusion_matrix_from_labels_table.ipynb)
+[![](./img/confusion_matrix.png){ width="400" }](../../charts/threshold_selection_tool_from_labels_table.ipynb)
 
 Note, labelled data is required to generate this chart.
 
