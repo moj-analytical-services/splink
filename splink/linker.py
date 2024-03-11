@@ -3086,7 +3086,7 @@ class Linker:
 
     def threshold_selection_tool_from_labels_column(
         self,
-        labels_column_name,
+        labels_column_name: str,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list = [],
