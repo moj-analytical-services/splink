@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleaesed
 
+- Added method for computing graph metrics ([#2027](https://github.com/moj-analytical-services/splink/pull/2027))
+
 ## [3.9.13] - 2024-03-04
 
 - Support for Databricks Runtime 13.x+

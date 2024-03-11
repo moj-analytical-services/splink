@@ -18,6 +18,7 @@ tags:
         - confusion_matrix_from_labels_table
         - count_num_comparisons_from_blocking_rule
         - count_num_comparisons_from_blocking_rules_for_prediction
+        - compute_graph_metrics
         - compute_tf_table
         - cumulative_comparisons_from_blocking_rules_records
         - cumulative_num_comparisons_from_blocking_rules_chart
