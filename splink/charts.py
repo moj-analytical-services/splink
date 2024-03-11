@@ -284,6 +284,7 @@ def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]
 
     return altair_or_json(chart, as_dict=as_dict)
 
+
 def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
     chart_path = "threshold_selection_tool.json"
     chart = load_chart_definition(chart_path)
