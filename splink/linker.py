@@ -2761,7 +2761,7 @@ class Linker:
 
     def threshold_selection_tool_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
+        labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list = [],
