@@ -25,6 +25,8 @@ def _ensure_is_comparison_level_creator(
 
 
 class _Merge(ComparisonLevelCreator):
+    _clause: str = ""
+
     @final
     def __init__(self, *comparison_levels: Union[ComparisonLevelCreator, dict]):
         num_levels = len(comparison_levels)
