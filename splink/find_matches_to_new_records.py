@@ -22,14 +22,14 @@ def add_unique_id_and_source_dataset_cols_if_needed(
 
     # Add unique_id column to new records if not exists
     uid_sel_sql = ""
-    uid_col = linker._settings_obj.column_info_settings.unique_id_column_name
+    uid_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
     uid_col = InputColumn(
-        uid_col,
+        uid_col_name,
         column_info_settings=linker._settings_obj.column_info_settings,
         sql_dialect=linker._settings_obj._sql_dialect,
     )
-    uid_col = uid_col.unquote().name
-    if uid_col not in cols:
+    uid_col_name = uid_col.unquote().name
+    if uid_col_name not in cols:
         uid_sel_sql = f", 'no_id_provided' as {uid_col}"
 
     sql = f"""
