@@ -41,7 +41,7 @@ class SplinkDialect(ABC):
         classes_from_dialect_name = [
             c
             for c in cls.__subclasses__()
-            if c._dialect_name_for_factory == dialect_name
+            if getattr(c, "_dialect_name_for_factory", None) == dialect_name
         ]
         # use sequence unpacking to catch if we duplicate
         # _dialect_name_for_factory in subclasses
