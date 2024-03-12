@@ -1,5 +1,28 @@
 {
     "link_type": "dedupe_only",
+    "probability_two_random_records_match": 0.0033319033319033323,
+    "retain_matching_columns": true,
+    "retain_intermediate_calculation_columns": true,
+    "additional_columns_to_retain": [],
+    "sql_dialect": "duckdb",
+    "linker_uid": "ne8w0a2c",
+    "em_convergence": 0.0001,
+    "max_iterations": 25,
+    "bayes_factor_column_prefix": "bf_",
+    "term_frequency_adjustment_column_prefix": "tf_",
+    "comparison_vector_value_column_prefix": "gamma_",
+    "unique_id_column_name": "unique_id",
+    "source_dataset_column_name": "source_dataset",
+    "blocking_rules_to_generate_predictions": [
+        {
+            "blocking_rule": "l.\"first_name\" = r.\"first_name\"",
+            "sql_dialect": "duckdb"
+        },
+        {
+            "blocking_rule": "l.\"surname\" = r.\"surname\"",
+            "sql_dialect": "duckdb"
+        }
+    ],
     "comparisons": [
         {
             "output_column_name": "first_name",
@@ -160,20 +183,5 @@
             ],
             "comparison_description": "jaro_winkler at threshold 0.88 vs. anything else"
         }
-    ],
-    "blocking_rules_to_generate_predictions": [
-        {
-            "blocking_rule": "l.\"first_name\" = r.\"first_name\"",
-            "sql_dialect": "duckdb"
-        },
-        {
-            "blocking_rule": "l.\"surname\" = r.\"surname\"",
-            "sql_dialect": "duckdb"
-        }
-    ],
-    "retain_matching_columns": true,
-    "retain_intermediate_calculation_columns": true,
-    "sql_dialect": "duckdb",
-    "linker_uid": "6k4mkpxq",
-    "probability_two_random_records_match": 0.0033319033319033323
+    ]
 }
