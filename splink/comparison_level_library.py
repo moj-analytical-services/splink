@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Literal, Union
 
 from sqlglot import TokenError, parse_one
@@ -637,8 +639,8 @@ class AbsoluteDateDifferenceLevel(AbsoluteTimeDifferenceLevel):
 class DistanceInKMLevel(ComparisonLevelCreator):
     def __init__(
         self,
-        lat_col: str,
-        long_col: str,
+        lat_col: str | ColumnExpression,
+        long_col: str | ColumnExpression,
         km_threshold: Union[int, float],
         not_null: bool = False,
     ):
@@ -693,7 +695,7 @@ class DistanceInKMLevel(ComparisonLevelCreator):
 
 
 class ArrayIntersectLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, min_intersection: int):
+    def __init__(self, col_name: str | ColumnExpression, min_intersection: int):
         """Represents a comparison level based around the size of an intersection of
         arrays
 
