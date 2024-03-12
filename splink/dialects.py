@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Type, final
 
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
@@ -7,11 +9,11 @@ if TYPE_CHECKING:
 
 class SplinkDialect(ABC):
     # Stores instances of each subclass of SplinkDialect.
-    _dialect_instances = {}
+    _dialect_instances: dict[Type[SplinkDialect], SplinkDialect] = {}
     # string defined by subclasses to be used in factory method from_string
     # give a dummy default value so that subclasses that fail to do this
     # don't ruin functionality for existing subclasses
-    _dialect_name_for_factory = None
+    _dialect_name_for_factory: str
 
     # Register a subclass of SplinkDialect on its creation.
     # Whenever that subclass is called again, use the previous instance.
