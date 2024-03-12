@@ -56,7 +56,7 @@ def compute_basic_edge_metrics(
     linker._enqueue_sql(**sql_info)
 
     truncated_edges_table_name = sql_info["output_table_name"]
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
@@ -83,7 +83,7 @@ def compute_igraph_metrics(
             "You need to install the 'igraph' package to compute "
             "the edge metric 'is_bridge'."
         ) from None
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     # need composite unique ids
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")

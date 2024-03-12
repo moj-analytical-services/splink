@@ -1,23 +1,34 @@
 import pandas as pd
 import pytest
 
+import splink.comparison_level_library as cll
 from splink.input_column import _get_dialect_quotes
 
 from .decorator import mark_with_dialects_excluding
 
 
-def binary_composition_internals(clause, c_fun, cll, q):
+def binary_composition_internals(clause, c_fun, dialect, q):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
+    level = c_fun(
+        cll.ExactMatchLevel(
+            "tom",
+            # include_colname_in_charts_label=True
+        )
+    ).get_comparison_level(dialect)
     assert level.sql_condition == f"({q}tom_l{q} = {q}tom_r{q})"
-    assert level.label_for_charts == "(Exact match tom)"
+    assert level.label_for_charts == "(Exact match on tom)"
 
     # Two null levels composed
-    level = c_fun(
-        cll.null_level("first_name"),
-        cll.null_level("surname"),
-        label_for_charts="This is a test",
+    level = (
+        c_fun(
+            cll.NullLevel("first_name"),
+            cll.NullLevel("surname"),
+        )
+        .configure(
+            label_for_charts="This is a test",
+        )
+        .get_comparison_level(dialect)
     )
 
     null_sql = (
@@ -31,25 +42,36 @@ def binary_composition_internals(clause, c_fun, cll, q):
     assert level.is_null_level is True
 
     # Exact match and null level composition
-    level = c_fun(
-        cll.exact_match_level("first_name", include_colname_in_charts_label=True),
-        cll.null_level("first_name"),
-        m_probability=0.5,
+    level = (
+        c_fun(
+            cll.ExactMatchLevel(
+                "first_name",
+                # include_colname_in_charts_label=True
+            ),
+            cll.NullLevel("first_name"),
+        )
+        .configure(m_probability=0.5)
+        .get_comparison_level(dialect)
     )
     assert (
         level.sql_condition == f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} "
         f"({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL)"
     )
     # Default label
-    assert level.label_for_charts == f"(Exact match first_name) {clause} (Null)"
+    assert level.label_for_charts == (
+        "(Exact match on first_name) " f"{clause} " "(first_name is NULL)"
+    )
     # should default to False
     assert level.is_null_level is False
     assert level._m_probability == 0.5
 
-    # cll.not_(or_(...)) composition
-    level = cll.not_(
-        c_fun(cll.exact_match_level("first_name"), cll.exact_match_level("surname")),
-        m_probability=0.5,
+    # cll.Not(or_(...)) composition
+    level = (
+        cll.Not(
+            c_fun(cll.ExactMatchLevel("first_name"), cll.ExactMatchLevel("surname"))
+        )
+        .configure(m_probability=0.5)
+        .get_comparison_level(dialect)
     )
 
     exact_match_sql = f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} ({q}surname_l{q} = {q}surname_r{q})"  # noqa: E501
@@ -60,73 +82,79 @@ def binary_composition_internals(clause, c_fun, cll, q):
 
 
 @mark_with_dialects_excluding()
-def test_binary_composition_internals_OR(test_helpers, dialect):
-    cll = test_helpers[dialect].cll
+def test_binary_composition_internals_OR(dialect):
     quo, _ = _get_dialect_quotes(dialect)
-    binary_composition_internals("OR", cll.or_, cll, quo)
+    binary_composition_internals("OR", cll.Or, dialect, quo)
 
 
 @mark_with_dialects_excluding()
-def test_binary_composition_internals_AND(test_helpers, dialect):
-    cll = test_helpers[dialect].cll
+def test_binary_composition_internals_AND(dialect):
     quo, _ = _get_dialect_quotes(dialect)
-    binary_composition_internals("AND", cll.and_, cll, quo)
+    binary_composition_internals("AND", cll.And, dialect, quo)
 
 
 def test_not():
-    import splink.duckdb.duckdb_comparison_level_library as cll
-
-    level = cll.not_(cll.null_level("first_name"))
+    level = cll.Not(cll.NullLevel("first_name")).get_comparison_level("duckdb")
     assert level.is_null_level is False
 
     # Integration test for a simple dictionary cl
     dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
-    cll.not_(dob_jan_first)
+    cll.Not(dob_jan_first)
 
     with pytest.raises(TypeError):
-        cll.not_()
+        cll.Not()
 
 
 @mark_with_dialects_excluding()
-def test_null_level_composition(test_helpers, dialect):
-    helper = test_helpers[dialect]
-    cll = helper.cll
+def test_null_level_composition(dialect):
+    c = (
+        cll.And(cll.NullLevel("first_name"), cll.NullLevel("surname")).configure(
+            is_null_level=True
+        )
+    ).get_comparison_level(dialect)
+    assert c.is_null_level
 
-    c = cll.and_(
-        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+    c = (
+        cll.And(
+            cll.NullLevel("first_name"),
+            cll.ExactMatchLevel("surname"),
+        )
+        .configure(is_null_level=True)
+        .get_comparison_level(dialect)
     )
     assert c.is_null_level
 
-    c = cll.and_(
-        cll.null_level("first_name"),
-        cll.exact_match_level("surname"),
-        is_null_level=True,
+    c = cll.And(
+        cll.NullLevel("first_name"), cll.NullLevel("surname")
+    ).get_comparison_level(dialect)
+    assert c.is_null_level
+
+    c = (
+        cll.Or(cll.NullLevel("first_name"), cll.NullLevel("surname"))
+        .configure(is_null_level=True)
+        .get_comparison_level(dialect)
     )
     assert c.is_null_level
 
-    c = cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
-    assert c.is_null_level
-
-    c = cll.or_(
-        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+    c = (
+        cll.Or(
+            cll.NullLevel("first_name"),
+            cll.ExactMatchLevel("surname"),
+        )
+        .configure(is_null_level=True)
+        .get_comparison_level(dialect)
     )
     assert c.is_null_level
 
-    c = cll.or_(
-        cll.null_level("first_name"),
-        cll.exact_match_level("surname"),
-        is_null_level=True,
-    )
-    assert c.is_null_level
-
-    c = cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+    c = cll.Or(
+        cll.NullLevel("first_name"), cll.NullLevel("surname")
+    ).get_comparison_level(dialect)
     assert c.is_null_level
 
 
 @mark_with_dialects_excluding()
 def test_composition_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     # Check our compositions give expected outputs
     df = pd.DataFrame(
@@ -140,11 +168,9 @@ def test_composition_outputs(test_helpers, dialect):
     )
 
     # For testing the cll version
-    dbl_null = cll.or_(cll.null_level("forename"), cll.null_level("surname"))
-    both = cll.and_(cll.exact_match_level("forename"), cll.exact_match_level("surname"))
-    either = cll.or_(
-        cll.exact_match_level("forename"), cll.exact_match_level("surname")
-    )
+    dbl_null = cll.Or(cll.NullLevel("forename"), cll.NullLevel("surname"))
+    both = cll.And(cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname"))
+    either = cll.Or(cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname"))
 
     full_name = {
         "output_column_name": "full_name",
@@ -152,8 +178,8 @@ def test_composition_outputs(test_helpers, dialect):
             dbl_null,
             both,
             either,
-            cll.not_(both),  # acts as an "else" level
-            cll.else_level(),
+            cll.Not(both),  # acts as an "else" level
+            cll.ElseLevel(),
         ],
     }
 

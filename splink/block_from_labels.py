@@ -30,9 +30,11 @@ def block_from_labels(
 
     df = linker._table_to_splink_dataframe(labels_table_name, labels_table_name)
 
-    unique_id_col = linker._settings_obj._unique_id_column_name
+    unique_id_col = linker._settings_obj.column_info_settings.unique_id_column_name
 
-    source_dataset_col = linker._settings_obj._source_dataset_column_name
+    source_dataset_col = (
+        linker._settings_obj.column_info_settings.source_dataset_column_name
+    )
 
     sql = lower_id_to_left_hand_side(df, source_dataset_col, unique_id_col)
 
@@ -47,7 +49,7 @@ def block_from_labels(
     columns_to_select = linker._settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
 
-    if linker._settings_obj._source_dataset_column_name_is_required:
+    if source_dataset_col:
         join_condition_l = f"""
         l.{source_dataset_col} = df_labels.{source_dataset_col}_l and
         l.{unique_id_col} = df_labels.{unique_id_col}_l

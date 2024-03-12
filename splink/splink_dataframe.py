@@ -4,11 +4,13 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .input_column import InputColumn
+
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from .database_api import DatabaseAPI
 
 
 class SplinkDataFrame:
@@ -22,19 +24,19 @@ class SplinkDataFrame:
         self,
         templated_name: str,
         physical_name: str,
-        linker: Linker,
+        database_api: DatabaseAPI,
         metadata: dict = None,
     ):
         self.templated_name = templated_name
         self.physical_name = physical_name
-        self.linker = linker
+        self.db_api = database_api
         self._target_schema = "splink"
         self.created_by_splink = False
         self.sql_used_to_create = None
         self.metadata = metadata or {}
 
     @property
-    def columns(self):
+    def columns(self) -> list[InputColumn]:
         pass
 
     @property
@@ -70,7 +72,7 @@ class SplinkDataFrame:
 
     def drop_table_from_database_and_remove_from_cache(
         self, force_non_splink_table=False
-    ):
+    ) -> None:
         """Drops the table from the underlying database, and removes it
         from the (linker) cache.
 
@@ -90,7 +92,7 @@ class SplinkDataFrame:
 
         """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
-        self.linker._remove_splinkdataframe_from_cache(self)
+        self.db_api._remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
         """Return the dataframe as a list of record dictionaries.

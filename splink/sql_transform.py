@@ -100,3 +100,45 @@ def remove_quotes_from_identifiers(tree) -> exp.Expression:
     for identifier in tree.find_all(exp.Identifier):
         identifier.args["quoted"] = False
     return tree
+
+
+def add_suffix_to_all_column_identifiers(
+    sql_str: str, suffix: str, sqlglot_dialect: str
+) -> str:
+    """
+    Adds a suffix to all column identifiers in the given SQL string.
+
+    Args:
+        sql_str (str): The SQL string to transform.
+        suffix (str): The suffix to add to each column identifier.
+        sqlglot_dialect (str): The SQL dialect used by sqlglot.
+
+    Returns:
+        str: The transformed SQL string.
+
+    Examples:
+        >>> sql_str = "lower(first_name)"
+        >>> add_suffix_to_all_column_identifiers(sql_str, "l", "duckdb")
+        'lower(first_name_l)'
+
+        >>> sql_str = "concat(first_name, surname)"
+        >>> add_suffix_to_all_column_identifiers(sql_str, "_r", "duckdb")
+        'concat(first_name_r, surname_r)'
+    """
+    tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
+
+    for col in tree.find_all(exp.Column):
+        identifier = col.find(exp.Identifier)
+        identifier.args["this"] = identifier.args["this"] + suffix
+
+    return tree.sql(dialect=sqlglot_dialect)
+
+
+# TODO: can we get rid of add_quotes_and_table_prefix and use this everywhere instead
+def add_table_to_all_column_identifiers(
+    sql_str: str, table_name: str, sqlglot_dialect: str
+):
+    tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
+    for col in tree.find_all(exp.Column):
+        col.args["table"] = table_name
+    return tree.sql(dialect=sqlglot_dialect)
