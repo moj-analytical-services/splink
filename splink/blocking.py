@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def blocking_rule_to_obj(br) -> BlockingRule:
+def blocking_rule_to_obj(br: BlockingRule | dict | str) -> BlockingRule:
     if isinstance(br, BlockingRule):
         return br
     elif isinstance(br, dict):

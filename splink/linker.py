@@ -7,7 +7,7 @@ import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 
 from splink.input_column import InputColumn
@@ -39,6 +39,7 @@ from .blocking import (
     materialise_exploded_id_tables,
 )
 from .blocking_rule_creator import BlockingRuleCreator
+from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
     completeness_chart,
@@ -204,7 +205,9 @@ class Linker:
         self.db_api = database_api
 
         # TODO: temp hack for compat
-        self._intermediate_table_cache: dict = self.db_api._intermediate_table_cache
+        self._intermediate_table_cache: CacheDictWithLogging = (
+            self.db_api._intermediate_table_cache
+        )
 
         # Turn into a creator
         if not isinstance(settings, SettingsCreator):
@@ -236,7 +239,7 @@ class Linker:
 
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
-        self._em_training_sessions = []
+        self._em_training_sessions: list[EMTrainingSession] = []
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -1176,9 +1179,14 @@ class Linker:
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
         if isinstance(blocking_rule, BlockingRuleCreator):
-            blocking_rule = blocking_rule.create_blocking_rule_dict(self._sql_dialect)
-        blocking_rule = blocking_rule_to_obj(blocking_rule)
-        if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
+            blocking_rule_str_or_dict: str | dict = (
+                blocking_rule.create_blocking_rule_dict(self._sql_dialect)
+            )
+        else:
+            # we have a str
+            blocking_rule_str_or_dict = blocking_rule
+        blocking_rule_obj = blocking_rule_to_obj(blocking_rule_str_or_dict)
+        if type(blocking_rule_obj) not in (BlockingRule, SaltedBlockingRule):
             # TODO: seems a mismatch between message and type re: SaltedBlockingRule
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
@@ -1210,7 +1218,7 @@ class Linker:
         em_training_session = EMTrainingSession(
             self,
             db_api=self.db_api,
-            blocking_rule_for_training=blocking_rule,
+            blocking_rule_for_training=blocking_rule_obj,
             core_model_settings=self._settings_obj.core_model_settings,
             training_settings=self._settings_obj.training_settings,
             unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
@@ -1608,7 +1616,7 @@ class Linker:
     def cluster_pairwise_predictions_at_threshold(
         self,
         df_predict: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: Optional[float] = None,
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
