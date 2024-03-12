@@ -42,7 +42,7 @@ def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
 
 def df_clusters_as_records(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
-):
+) -> list[dict]:
     """Retrieves distinct clusters which exist in df_clustered_nodes based on
     list of cluster IDs provided and converts them to a record dictionary.
 
@@ -86,7 +86,7 @@ def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
 
 def create_df_nodes(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
-):
+) -> SplinkDataFrame:
     """Retrieves nodes from df_clustered_nodes for list of cluster IDs provided.
 
     Args:
@@ -150,7 +150,7 @@ def df_edges_as_records(
 
 def _get_random_cluster_ids(
     linker: "Linker", connected_components: SplinkDataFrame, sample_size: int, seed=None
-):
+) -> list[str]:
     sql = f"""
     select count(distinct cluster_id) as count
     from {connected_components.physical_name}
@@ -189,7 +189,7 @@ def _get_random_cluster_ids(
 
 def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
-):
+) -> list[dict]:
     unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
     sql = f"""
     select
@@ -233,7 +233,7 @@ def _get_lowest_density_clusters(
     df_cluster_metrics: SplinkDataFrame,
     rows_per_partition: int,
     min_nodes: int,
-):
+) -> list[dict]:
     """Returns lowest density clusters of different sizes by
     performing stratified sampling.
 
@@ -285,7 +285,7 @@ def render_splink_cluster_studio_html(
     sampling_method="random",
     sample_size=10,
     sample_seed=None,
-    cluster_ids: list = None,
+    cluster_ids: list[str] = None,
     cluster_names: list = None,
     overwrite: bool = False,
     _df_cluster_metrics: SplinkDataFrame = None,
@@ -303,14 +303,18 @@ def render_splink_cluster_studio_html(
                 linker, df_clustered_nodes, sample_size, sample_seed
             )
         if sampling_method == "by_cluster_size":
-            cluster_ids = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)
-            if len(cluster_ids) > sample_size:
-                cluster_ids = random.sample(cluster_ids, k=sample_size)
+            cluster_id_infos = _get_cluster_id_of_each_size(
+                linker,
+                df_clustered_nodes,
+                rows_per_partition=1
+            )
+            if len(cluster_id_infos) > sample_size:
+                cluster_id_infos = random.sample(cluster_id_infos, k=sample_size)
             cluster_names = [
                 f"Cluster ID: {c['cluster_id']}, size:  {c['cluster_size']}"
-                for c in cluster_ids
+                for c in cluster_id_infos
             ]
-            cluster_ids = [c["cluster_id"] for c in cluster_ids]
+            cluster_ids = [c["cluster_id"] for c in cluster_id_infos]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
         if sampling_method == "lowest_density_clusters_by_size":
             if _df_cluster_metrics is None:
@@ -321,17 +325,17 @@ def render_splink_cluster_studio_html(
                 )
             # Using sensible default for min_nodes. Might become option
             # for users in future
-            cluster_ids = _get_lowest_density_clusters(
+            cluster_id_infos = _get_lowest_density_clusters(
                 linker, _df_cluster_metrics, rows_per_partition=1, min_nodes=3
             )
-            if len(cluster_ids) > sample_size:
-                cluster_ids = random.sample(cluster_ids, k=sample_size)
+            if len(cluster_id_infos) > sample_size:
+                cluster_id_infos = random.sample(cluster_id_infos, k=sample_size)
             cluster_names = [
                 f"""Cluster ID: {c['cluster_id']}, density (4dp): {c['density_4dp']},
                 size: {c['cluster_size']}"""
-                for c in cluster_ids
+                for c in cluster_id_infos
             ]
-            cluster_ids = [c["cluster_id"] for c in cluster_ids]
+            cluster_ids = [c["cluster_id"] for c in cluster_id_infos]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
