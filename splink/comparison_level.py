@@ -6,6 +6,7 @@ import re
 from copy import copy
 from statistics import median
 from textwrap import dedent
+from typing import Any
 
 import sqlglot
 from sqlglot.expressions import Identifier
@@ -625,7 +626,7 @@ class ComparisonLevel:
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
     ):
         "A detailed representation of this level to describe it in charting outputs"
-        output = {}
+        output: dict[str, Any] = {}
         output["sql_condition"] = self.sql_condition
         output["label_for_charts"] = self._label_for_charts_no_duplicates(
             comparison_levels
