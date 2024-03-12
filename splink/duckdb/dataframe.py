@@ -9,7 +9,7 @@ from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from ..database_api import DuckDBAPI
+    from .database_api import DuckDBAPI
 
 
 class DuckDBDataFrame(SplinkDataFrame):
