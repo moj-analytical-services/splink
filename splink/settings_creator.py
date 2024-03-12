@@ -131,14 +131,17 @@ class SettingsCreator:
                         if "sql_dialect" in br:
                             del br["sql_dialect"]
             else:
-                raise ValueError(f"Path {settings_path} does not point to a valid file.")
+                raise ValueError(
+                    f"Path {settings_path} does not point to a valid file."
+                )
 
         elif isinstance(path_or_dict, dict):
             settings_dict = deepcopy(path_or_dict)
         else:
             raise TypeError(
                 f"Argument {path_or_dict=} must be of type `pathlib.Path`, "
-                f"`str`, or `dict`.  Found type {type(path_or_dict)}")
+                f"`str`, or `dict`.  Found type {type(path_or_dict)}"
+            )
 
         # TODO: need to figure out how this flows with validation
         # for now we instantiate all the correct types before the validator sees it
