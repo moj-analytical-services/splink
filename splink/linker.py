@@ -1793,9 +1793,7 @@ class Linker:
         ] = df_node_metrics.metadata["threshold_match_probability"]
         return df_cluster_metrics
 
-    # a user-facing function, which is currently 'private' (Beta functionality)
-    # while functionality is developed, as breaking changes may occur
-    def _compute_graph_metrics(
+    def compute_graph_metrics(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,

@@ -42,7 +42,7 @@ def test_size_density_dedupe():
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
-    df_result = linker._compute_graph_metrics(
+    df_result = linker.compute_graph_metrics(
         df_predict, df_clustered
     ).clusters.as_pandas_dataframe()
     # not testing this here - it's not relevant for small clusters anyhow
@@ -80,7 +80,7 @@ def test_size_density_link():
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     df_result = (
-        linker._compute_graph_metrics(
+        linker.compute_graph_metrics(
             df_predict, df_clustered, threshold_match_probability=0.99
         )
         .clusters.as_pandas_dataframe()
@@ -233,7 +233,7 @@ def test_metrics(dialect, test_helpers):
     df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
     df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
 
-    cm = linker._compute_graph_metrics(
+    cm = linker.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
     )
     df_cm = cm.clusters.as_pandas_dataframe()
@@ -346,7 +346,7 @@ def test_is_bridge(dialect, test_helpers):
     df_clustered = linker.register_table(helper.convert_frame(df_c), "br_clusters")
 
     # linker.debug_mode = True
-    cm = linker._compute_graph_metrics(
+    cm = linker.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
     )
     df_em = cm.edges.as_pandas_dataframe()
@@ -397,7 +397,7 @@ def test_edges_without_igraph():
 
     # pretend we don't have igraph installed
     with patch("builtins.__import__", side_effect=mock_no_igraph_installed):
-        graph_metrics = linker._compute_graph_metrics(
+        graph_metrics = linker.compute_graph_metrics(
             df_predict, df_clustered, threshold_match_probability=0.9
         )
     df_edge_metrics = graph_metrics.edges.as_pandas_dataframe()
@@ -433,7 +433,7 @@ def test_no_threshold_provided():
 
     with raises(TypeError):
         # no threshold_match_probability, no metadata
-        _ = linker._compute_graph_metrics(df_predict, df_clustered)
+        _ = linker.compute_graph_metrics(df_predict, df_clustered)
 
 
 def test_override_metadata_threshold():
@@ -454,8 +454,8 @@ def test_override_metadata_threshold():
     df_clustered = linker.register_table(df_c, "clusters")
     df_clustered.metadata["threshold_match_probability"] = 0.95
 
-    gm_results_95 = linker._compute_graph_metrics(df_predict, df_clustered)
-    gm_results_9 = linker._compute_graph_metrics(
+    gm_results_95 = linker.compute_graph_metrics(df_predict, df_clustered)
+    gm_results_9 = linker.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.9
     )
     df_expected_95 = pd.DataFrame(
