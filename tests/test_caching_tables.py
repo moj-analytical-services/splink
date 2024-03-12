@@ -4,7 +4,7 @@ import sqlglot
 from sqlglot.expressions import CTE, Identifier, TableAlias
 
 from splink.comparison_library import ExactMatch, LevenshteinAtThresholds
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 

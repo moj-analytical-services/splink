@@ -5,7 +5,7 @@ from pandas.testing import assert_frame_equal
 from pytest import approx, raises
 
 from splink.comparison_library import ExactMatch
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 from .decorator import mark_with_dialects_excluding

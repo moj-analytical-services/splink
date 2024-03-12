@@ -5,7 +5,7 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.linker import Linker
 

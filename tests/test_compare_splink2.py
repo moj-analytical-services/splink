@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
 
-from splink.database_api import DuckDBAPI, SQLiteAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.sqlite.database_api import SQLiteAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including

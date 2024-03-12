@@ -1045,7 +1045,7 @@ class Linker:
 
             ```py
             from splink.linker import Linker
-            from splink.database_api import DuckDBAPI
+            from splink.duckdb.database_api import DuckDBAPI
 
             db_api = DuckDBAPI()
 

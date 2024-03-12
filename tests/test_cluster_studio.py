@@ -1,7 +1,7 @@
 import pandas as pd
 
 from splink.cluster_studio import _get_lowest_density_clusters
-from splink.database_api import DuckDBAPI
+from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 
