@@ -65,7 +65,7 @@ def validate_categorical_parameter(
     parameter_value: str,
     level_name: str,
     parameter_name: str,
-) -> Union[int, float]:
+) -> str:
     """Check if a distance threshold falls between two bounds."""
     if parameter_value in allowed_values:
         return parameter_value
