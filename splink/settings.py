@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import List
+from typing import List, TypedDict
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -14,6 +14,12 @@ from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_w
 from .parse_sql import get_columns_used_from_sql
 
 logger = logging.getLogger(__name__)
+
+
+# custom type for hinting:
+class ComparisonAndLevelDict(TypedDict):
+    level: ComparisonLevel
+    comparison: Comparison
 
 
 @dataclass(frozen=True)
@@ -232,14 +238,14 @@ class Settings:
     def comparisons(self) -> List[Comparison]:
         return self.core_model_settings.comparisons
 
-    @property
-    def _probability_two_random_records_match(self) -> float:
-        return self.core_model_settings.probability_two_random_records_match
-
-    # TODO: especially factor these out
+    # TODO: especially factor the setters
     @comparisons.setter
     def comparisons(self, value) -> None:
         self.core_model_settings.comparisons = value
+
+    @property
+    def _probability_two_random_records_match(self) -> float:
+        return self.core_model_settings.probability_two_random_records_match
 
     @_probability_two_random_records_match.setter
     def _probability_two_random_records_match(self, value) -> None:
@@ -261,8 +267,8 @@ class Settings:
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
-            already_used = self._columns_used_by_comparisons
-            already_used = [InputColumn(c) for c in already_used]
+            already_used_names = self._columns_used_by_comparisons
+            already_used = [InputColumn(c) for c in already_used_names]
             already_used = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used))
@@ -455,7 +461,7 @@ class Settings:
     @staticmethod
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
         blocking_rule_sql: str, sqlglot_dialect_name: str, comparisons: List[Comparison]
-    ) -> dict[str, Comparison | ComparisonLevel]:
+    ) -> list[ComparisonAndLevelDict]:
         """
         If we block on (say) first name and surname, then all blocked comparisons are
         guaranteed to have a match on first name and surname
@@ -481,7 +487,7 @@ class Settings:
             )
         )
 
-        exact_comparison_levels = []
+        exact_comparison_levels: list[ComparisonAndLevelDict] = []
         for cc in comparisons:
             for cl in cc.comparison_levels:
                 if cl._is_exact_match:
