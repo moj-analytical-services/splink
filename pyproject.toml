@@ -112,11 +112,8 @@ markers = [
 packages = "splink"
 # temporary exclusions
 exclude = [
-    # modules getting substantial rewrites:
-    '.*comparison_imports\.py$',
-    '.*comparison.*library\.py',
-    'comparison_level_composition',
     # modules with large number of errors
+    '.*comparison.*library\.py',
     '.*linker\.py',
 ]
 # for now at least allow implicit optionals
