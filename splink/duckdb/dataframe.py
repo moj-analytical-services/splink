@@ -35,7 +35,11 @@ class DuckDBDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api._execute_sql_against_backend(sql).to_df().to_dict(orient="records")
+        return (
+            self.db_api._execute_sql_against_backend(sql)
+            .to_df()
+            .to_dict(orient="records")
+        )
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"

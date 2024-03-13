@@ -63,7 +63,9 @@ class DuckDBAPI(DatabaseAPI):
 
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
-        self._execute_sql_against_backend(f"CREATE TABLE {table_name} AS SELECT * FROM input")
+        self._execute_sql_against_backend(
+            f"CREATE TABLE {table_name} AS SELECT * FROM input"
+        )
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -122,7 +124,9 @@ class DuckDBAPI(DatabaseAPI):
         if delete_intermediate_tables:
             self._delete_tables_created_by_splink_from_db()
         with TemporaryDirectory() as tmpdir:
-            self._execute_sql_against_backend(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
+            self._execute_sql_against_backend(
+                f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);"
+            )
             new_con = duckdb.connect(database=output_path)
             new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()

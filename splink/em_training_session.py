@@ -185,7 +185,9 @@ class EMTrainingSession:
         )
 
         if repartition_after_blocking:
-            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(pipeline, [nodes_with_tf])
+            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(
+                pipeline, [nodes_with_tf]
+            )
             input_dataframes = [nodes_with_tf, df_blocked]
         else:
             input_dataframes = [nodes_with_tf]

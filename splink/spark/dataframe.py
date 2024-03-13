@@ -33,7 +33,11 @@ class SparkDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.db_api._execute_sql_against_backend(sql).toPandas().to_dict(orient="records")
+        return (
+            self.db_api._execute_sql_against_backend(sql)
+            .toPandas()
+            .to_dict(orient="records")
+        )
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":
