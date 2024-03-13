@@ -20,7 +20,12 @@ from .input_column import InputColumn
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
 from .pipeline import SQLPipeline
-from .settings import CoreModelSettings, Settings, TrainingSettings
+from .settings import (
+    ComparisonAndLevelDict,
+    CoreModelSettings,
+    Settings,
+    TrainingSettings,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +73,12 @@ class EMTrainingSession:
 
         if comparison_levels_to_reverse_blocking_rule:
             # TODO: atm this branch probably makes no sense. What would user pass?
-            self._comparison_levels_to_reverse_blocking_rule = (
-                comparison_levels_to_reverse_blocking_rule
-            )
+            # self._comparison_levels_to_reverse_blocking_rule = (
+            #     comparison_levels_to_reverse_blocking_rule
+            # )
             raise ValueError("This path is broken for now.")
         else:
-            self._comparison_levels_to_reverse_blocking_rule = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
+            self._comparison_levels_to_reverse_blocking_rule: list[ComparisonAndLevelDict] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
                 sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
                 comparisons=core_model_settings.comparisons,
