@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from splink.spark.database_api import SparkAPI
 
 
+# Use getarr to make the error appear at the point of use
 def __getattr__(name):
     try:
         if name == "SparkAPI":
