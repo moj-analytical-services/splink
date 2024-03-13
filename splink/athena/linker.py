@@ -316,7 +316,7 @@ class AthenaLinker(Linker):
         }
         self.ctas_query_info.update({alias: ctas_metadata})
 
-    def __make_table_from_sql(self, sql, templated_name, physical_name):
+    def __sql_to_splink_dataframe(self, sql, templated_name, physical_name):
         self.delete_table_from_database(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
         sql = sql.replace("FLOAT", "double").replace("float", "double")

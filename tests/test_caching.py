@@ -14,11 +14,11 @@ __splink__dummy_frame = pd.DataFrame(["id"])
 
 
 def make_mock_execute(db_api):
-    # creates a mock version of linker._make_table_from_sql,
+    # creates a mock version of linker._sql_to_splink_dataframe,
     # so we can count calls
     dummy_splink_df = DuckDBDataFrame("template", "__splink__dummy_frame", db_api)
     mock_execute = create_autospec(
-        db_api._make_table_from_sql, return_value=dummy_splink_df
+        db_api._sql_to_splink_dataframe, return_value=dummy_splink_df
     )
     return mock_execute
 
@@ -118,7 +118,7 @@ def test_cache_access_initialise_df_concat(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # shouldn't touch DB if we don't materialise
         linker._initialise_df_concat_with_tf(materialise=False)
@@ -149,7 +149,7 @@ def test_cache_access_compute_tf_table(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         linker.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_called()
@@ -170,7 +170,7 @@ def test_invalidate_cache(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
         mockexecute_sql_pipeline.assert_called()
@@ -215,7 +215,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = debug_mode
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
         mockexecute_sql_pipeline.assert_called()
@@ -230,7 +230,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     new_linker = Linker(df, settings, database_api=db_api)
     new_linker.debug_mode = debug_mode
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # new linker should recalculate df_concat_with_tf
         new_linker._initialise_df_concat_with_tf(materialise=True)
@@ -242,7 +242,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
         mockexecute_sql_pipeline.assert_not_called()
 
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # original linker should still have result cached
         linker._initialise_df_concat_with_tf(materialise=True)
@@ -259,7 +259,7 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
@@ -279,7 +279,7 @@ def test_cache_register_compute_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        db_api, "_make_table_from_sql", new=make_mock_execute(db_api)
+        db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
