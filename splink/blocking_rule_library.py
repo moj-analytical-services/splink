@@ -75,6 +75,8 @@ class CustomRule(BlockingRuleCreator):
 
 
 class _Merge(BlockingRuleCreator):
+    _clause = ""
+
     @final
     def __init__(
         self,
@@ -165,7 +167,7 @@ def block_on(
         )
 
     if len(col_names_or_exprs) == 1:
-        br = ExactMatchRule(col_names_or_exprs[0])
+        br: BlockingRuleCreator = ExactMatchRule(col_names_or_exprs[0])
     else:
         br = And(*[ExactMatchRule(c) for c in col_names_or_exprs])
 
