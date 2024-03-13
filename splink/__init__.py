@@ -1,4 +1,17 @@
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
+
+# Explicitly declare exported names to avoid 'imported but unused' linting issues
+__all__ = [
+    "block_on",
+    "splink_datasets",
+    "Linker",
+    "SettingsCreator",
+    "SQLiteAPI",
+    "SparkAPI",
+    "DuckDBAPI",
+    "PostgresAPI",
+]
+
 
 from splink.blocking_rule_library import block_on
 from splink.datasets import splink_datasets
