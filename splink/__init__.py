@@ -1,10 +1,23 @@
+from typing import TYPE_CHECKING, Type
+
 from splink.blocking_rule_library import block_on
+from splink.database_api import DatabaseAPI
 from splink.datasets import splink_datasets
 from splink.linker import Linker
 from splink.settings_creator import SettingsCreator
 from splink.sqlite.database_api import SQLiteAPI
 
-# try except in case backends are not installed e.g. pyspark
+# The following is a workaround for the fact that dependencies of postgres, spark
+# and duckdb may not be installed, but we don't want this to prevent import
+# of the other backends.
+
+# This enables auto-complete to be used to import the various DBAPIs
+# and ensures that typing information is retained so e.g. the arguments autocomplete
+# without importing them at runtime
+if TYPE_CHECKING:
+    from splink.duckdb.database_api import DuckDBAPI
+    from splink.postgres.database_api import PostgresAPI
+    from splink.spark.database_api import SparkAPI
 
 
 def __getattr__(name):
@@ -25,7 +38,8 @@ def __getattr__(name):
         if name in ["SparkAPI", "DuckDBAPI", "PostgresAPI"]:
             raise ImportError(
                 f"{name} cannot be imported because its dependencies are not "
-                "installed. Please `pip install` the required package."
+                "installed. Please `pip install` the required package(s) as "
+                "specified in the optional dependencies in pyproject.toml"
             ) from err
     raise AttributeError(f"module 'splink' has no attribute '{name}'") from None
 
