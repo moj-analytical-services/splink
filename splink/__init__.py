@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Type
 
 from splink.blocking_rule_library import block_on
-from splink.database_api import DatabaseAPI
 from splink.datasets import splink_datasets
 from splink.linker import Linker
 from splink.settings_creator import SettingsCreator
