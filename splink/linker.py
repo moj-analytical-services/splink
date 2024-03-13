@@ -572,7 +572,7 @@ class Linker:
                 pipeline
         """
         try:
-            dataframe = self.db_api.execute_sql_pipeline(
+            dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
                 self._pipeline,
                 input_dataframes,
                 use_cache,

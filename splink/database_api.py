@@ -176,7 +176,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def execute_sql_pipeline(
+    def sql_pipeline_to_splink_dataframe(
         self,
         pipeline,
         input_dataframes: List[SplinkDataFrame] = [],
