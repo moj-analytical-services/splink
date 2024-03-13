@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 
+from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
 from .splink_dataframe import SplinkDataFrame
@@ -262,9 +263,15 @@ class ExplodingBlockingRule(BlockingRule):
         sqlglot_dialect: str = None,
         array_columns_to_explode: list = [],
     ):
-        super().__init__(blocking_rule, sqlglot_dialect)
+        if isinstance(blocking_rule, BlockingRule):
+            blocking_rule_sql = blocking_rule.blocking_rule_sql
+        elif isinstance(blocking_rule, dict):
+            blocking_rule_sql = blocking_rule["blocking_rule_sql"]
+        else:
+            blocking_rule_sql = blocking_rule
+        super().__init__(blocking_rule_sql, sqlglot_dialect)
         self.array_columns_to_explode: List[str] = array_columns_to_explode
-        self.exploded_id_pair_table: SplinkDataFrame = None
+        self.exploded_id_pair_table: Optional[SplinkDataFrame] = None
 
     def marginal_exploded_id_pairs_table_sql(self, linker: Linker, br: BlockingRule):
         """generates a table of the marginal id pairs from the exploded blocking rule
@@ -325,7 +332,12 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_columns = (
             linker._settings_obj.column_info_settings.unique_id_input_columns
         )
-        splink_df = self.exploded_id_pair_table
+        if (splink_df := self.exploded_id_pair_table) is None:
+            raise SplinkException(
+                "Must use `materialise_exploded_id_table(linker)` "
+                "to set `exploded_id_pair_table` before calling "
+                "exclude_pairs_generated_by_this_rule_sql()."
+            )
         ids_to_compare_sql = f"select * from {splink_df.physical_name}"
 
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
