@@ -165,7 +165,7 @@ class Settings:
         em_convergence: float = 0.0001,
         max_iterations: int = 25,
         # other
-        sql_dialect: str = None,
+        sql_dialect: str,
         linker_uid: str = None,
     ):
         # TODO: hook up validation here
