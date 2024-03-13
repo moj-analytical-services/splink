@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Dict, List
 
@@ -8,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def m_u_records_to_lookup_dict(m_u_records: List[dict]) -> Dict[str, dict]:
-    lookup = {}
+    lookup: dict[str, dict] = {}
     for m_u_record in m_u_records:
         comparison_name = m_u_record["output_column_name"]
         level_value = m_u_record["comparison_vector_value"]
