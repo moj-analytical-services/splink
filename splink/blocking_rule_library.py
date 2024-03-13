@@ -93,8 +93,7 @@ class _Merge(BlockingRuleCreator):
                 f"Must provide at least one blocking rule to {type(self)}()"
             )
         blocking_rule_creators = [
-            CustomRule(**br) if isinstance(br, dict) else br
-            for br in blocking_rules
+            CustomRule(**br) if isinstance(br, dict) else br for br in blocking_rules
         ]
         self.blocking_rules = blocking_rule_creators
 
