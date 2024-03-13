@@ -93,11 +93,11 @@ class SQLiteAPI(DatabaseAPI):
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
-        rec = self._run_sql_execution(sql).fetchone()
+        rec = self._execute_sql_against_backend(sql).fetchone()
         if not rec:
             return False
         else:
             return True
 
-    def _run_sql_execution(self, final_sql: str) -> sqlite3.Cursor:
+    def _execute_sql_against_backend(self, final_sql: str) -> sqlite3.Cursor:
         return self.con.execute(final_sql)

@@ -53,7 +53,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
         try:
-            return self._run_sql_execution(final_sql)
+            return self._execute_sql_against_backend(final_sql)
         except Exception as e:
             # Parse our SQL through sqlglot to pretty print
             try:
@@ -276,13 +276,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return output_df
 
     @abstractmethod
-    def _run_sql_execution(self, final_sql: str) -> TablishType:
+    def _execute_sql_against_backend(self, final_sql: str) -> TablishType:
         pass
 
     def delete_table_from_database(self, name: str):
         # sensible default:
         drop_sql = f"DROP TABLE IF EXISTS {name}"
-        self._run_sql_execution(drop_sql)
+        self._execute_sql_against_backend(drop_sql)
 
     @abstractmethod
     def _table_registration(self, input, table_name: str) -> None:

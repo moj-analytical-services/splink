@@ -26,7 +26,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
-        pragma_result = self.db_api._run_sql_execution(sql).fetchall()
+        pragma_result = self.db_api._execute_sql_against_backend(sql).fetchall()
         cols = [r["name"] for r in pragma_result]
 
         return [InputColumn(c, sql_dialect="sqlite") for c in cols]
@@ -47,7 +47,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         AND name='{self.physical_name}';
         """
 
-        res = self.db_api._run_sql_execution(sql).fetchall()
+        res = self.db_api._execute_sql_against_backend(sql).fetchall()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the sqlite db provided.\n"

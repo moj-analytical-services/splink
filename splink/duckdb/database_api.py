@@ -48,7 +48,7 @@ class DuckDBAPI(DatabaseAPI):
         self._con = con
 
         if output_schema:
-            self._run_sql_execution(
+            self._execute_sql_against_backend(
                 f"""
                     CREATE SCHEMA IF NOT EXISTS {output_schema};
                     SET schema '{output_schema}';
@@ -63,7 +63,7 @@ class DuckDBAPI(DatabaseAPI):
 
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
-        self._run_sql_execution(f"CREATE TABLE {table_name} AS SELECT * FROM input")
+        self._execute_sql_against_backend(f"CREATE TABLE {table_name} AS SELECT * FROM input")
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -85,7 +85,7 @@ class DuckDBAPI(DatabaseAPI):
             error = RuntimeError
 
         try:
-            self._run_sql_execution(sql)
+            self._execute_sql_against_backend(sql)
         except error:
             return False
         return True
@@ -93,7 +93,7 @@ class DuckDBAPI(DatabaseAPI):
     def load_from_file(self, file_path: str):
         return duckdb_load_from_file(file_path)
 
-    def _run_sql_execution(self, final_sql: str) -> duckdb.DuckDBPyRelation:
+    def _execute_sql_against_backend(self, final_sql: str) -> duckdb.DuckDBPyRelation:
         return self._con.sql(final_sql)
 
     @property
@@ -122,7 +122,7 @@ class DuckDBAPI(DatabaseAPI):
         if delete_intermediate_tables:
             self._delete_tables_created_by_splink_from_db()
         with TemporaryDirectory() as tmpdir:
-            self._run_sql_execution(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
+            self._execute_sql_against_backend(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
             new_con = duckdb.connect(database=output_path)
             new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()
