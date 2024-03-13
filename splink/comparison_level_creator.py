@@ -8,6 +8,9 @@ from .dialects import SplinkDialect
 
 
 class ComparisonLevelCreator(ABC):
+    # off by default - only a small subset should have tf adjustments
+    term_frequency_adjustments = False
+
     @abstractmethod
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         pass
