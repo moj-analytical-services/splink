@@ -40,10 +40,6 @@ These can be summarised in a Confusion Matrix
 
 In a perfect model there would be no False Positives or False Negatives (i.e. FP = 0 and FN = 0).
 
-??? info "Confusion Matrix in Splink"
-
-    For a more in-depth guide on how to use the Splink Confusion Matrix, check out the `confusion_matrix_from_labels_table` [API documentation](../../linker.md#splink.linker.Linker.confusion_matrix_from_labels_table) and [Chart Gallery](../../charts/confusion_matrix_from_labels_table.ipynb).
-
 ## Metrics for Linkage
 
 The confusion matrix shows **counts** of each link type, but we are generally more interested in **proportions**. I.e. what percentage of the time does the model get the answer right?

@@ -34,11 +34,11 @@ As you are checking real examples, you will often come across cases that have no
 
 Threshold selection is a key decision point within a linkage pipeline. One of the major benefits of probabilistic linkage versus a deterministic (i.e. rules-based) approach is the ability to choose the amount of evidence required for two records to be considered a match (i.e. a threshold). 
 
-When you have decided on the metrics that are important for your use case, you can use the [Confusion Matrix](../../charts/confusion_matrix_from_labels_table.ipynb) and [Accuracy Chart](../../charts/accuracy_chart_from_labels_table.ipynb) to get a first estimate for what your threshold should be.
+When you have decided on the metrics that are important for your use case, you can use the [Threshold Selection Tool](../../charts/threshold_selection_tool_from_labels_table.ipynb) to get a first estimate for what your threshold should be.
 
 !!! note
 
-    The Confusion Matrix and Accuracy Chart both require labelled data to act as a "ground truth" to compare your linkage results against.
+    The Threshold Selection Tool requires labelled data to act as a "ground truth" to compare your linkage results against.
 
 Once you have an initial threshold, you can use [Comparison Viewer Dashboard](../../charts/comparison_viewer_dashboard.ipynb) to look at records on either side of your threshold to check whether the threshold makes intuitive sense.
 
