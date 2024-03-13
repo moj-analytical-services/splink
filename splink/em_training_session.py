@@ -78,7 +78,9 @@ class EMTrainingSession:
             # )
             raise ValueError("This path is broken for now.")
         else:
-            self._comparison_levels_to_reverse_blocking_rule: list[ComparisonAndLevelDict] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
+            self._comparison_levels_to_reverse_blocking_rule: list[
+                ComparisonAndLevelDict
+            ] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
                 sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
                 comparisons=core_model_settings.comparisons,
