@@ -175,18 +175,17 @@ class ComparisonCreator(ABC):
     def term_frequency_adjustments(self):
         return getattr(self, "_term_frequency_adjustments", False)
 
-    @final
     @term_frequency_adjustments.setter
+    @final
     def term_frequency_adjustments(self, term_frequency_adjustments: bool):
         self._term_frequency_adjustments = term_frequency_adjustments
 
-    @final
     @property
     def m_probabilities(self):
         return getattr(self, "_m_probabilities", None)
 
-    @final
     @m_probabilities.setter
+    @final
     def m_probabilities(self, m_probabilities: List[float]):
         if m_probabilities:
             num_probs_supplied = len(m_probabilities)
@@ -199,13 +198,12 @@ class ComparisonCreator(ABC):
                 )
             self._m_probabilities = m_probabilities
 
-    @final
     @property
     def u_probabilities(self):
         return getattr(self, "_u_probabilities", None)
 
-    @final
     @u_probabilities.setter
+    @final
     def u_probabilities(self, u_probabilities: List[float]):
         if u_probabilities:
             num_probs_supplied = len(u_probabilities)

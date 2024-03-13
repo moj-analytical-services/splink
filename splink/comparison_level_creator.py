@@ -99,23 +99,21 @@ class ComparisonLevelCreator(ABC):
 
         return self
 
-    @final
     @property
     def is_null_level(self) -> bool:
         return getattr(self, "_is_null_level", False)
 
-    @final
     @is_null_level.setter
+    @final
     def is_null_level(self, is_null_level: bool):
         self._is_null_level = is_null_level
 
-    @final
     @property
     def is_exact_match_level(self) -> bool:
         return getattr(self, "_is_exact_match_level", False)
 
-    @final
     @is_exact_match_level.setter
+    @final
     def is_exact_match_level(self, is_exact_match_level: bool):
         self._is_exact_match_level = is_exact_match_level
 
