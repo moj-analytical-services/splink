@@ -6,7 +6,7 @@ import re
 from copy import copy
 from statistics import median
 from textwrap import dedent
-from typing import Any
+from typing import Any, Optional
 
 import sqlglot
 from sqlglot.expressions import Identifier
@@ -163,8 +163,8 @@ class ComparisonLevel:
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
-        self._comparison_vector_value: int = None
-        self._max_level: bool = None
+        self._comparison_vector_value: Optional[int] = None
+        self._max_level: Optional[bool] = None
 
         # Enable the level to 'know' when it's been trained
         self._trained_m_probabilities: list = []
