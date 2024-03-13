@@ -92,7 +92,11 @@ class _Merge(BlockingRuleCreator):
             raise ValueError(
                 f"Must provide at least one blocking rule to {type(self)}()"
             )
-        self.blocking_rules = blocking_rules
+        blocking_rule_creators = [
+            CustomRule(**br) if isinstance(br, dict) else br
+            for br in blocking_rules
+        ]
+        self.blocking_rules = blocking_rule_creators
 
     @property
     def salting_partitions(self):
