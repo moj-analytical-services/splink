@@ -75,6 +75,8 @@ class CustomRule(BlockingRuleCreator):
 
 
 class _Merge(BlockingRuleCreator):
+    _clause = ""
+
     @final
     def __init__(
         self,
@@ -90,7 +92,10 @@ class _Merge(BlockingRuleCreator):
             raise ValueError(
                 f"Must provide at least one blocking rule to {type(self)}()"
             )
-        self.blocking_rules = blocking_rules
+        blocking_rule_creators = [
+            CustomRule(**br) if isinstance(br, dict) else br for br in blocking_rules
+        ]
+        self.blocking_rules = blocking_rule_creators
 
     @property
     def salting_partitions(self):
@@ -165,7 +170,7 @@ def block_on(
         )
 
     if len(col_names_or_exprs) == 1:
-        br = ExactMatchRule(col_names_or_exprs[0])
+        br: BlockingRuleCreator = ExactMatchRule(col_names_or_exprs[0])
     else:
         br = And(*[ExactMatchRule(c) for c in col_names_or_exprs])
 

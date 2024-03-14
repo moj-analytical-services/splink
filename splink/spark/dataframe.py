@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 Dialect["customspark"]
 if TYPE_CHECKING:
-    from ..database_api import SparkAPI
+    from .database_api import SparkAPI
 
 
 class SparkDataFrame(SplinkDataFrame):

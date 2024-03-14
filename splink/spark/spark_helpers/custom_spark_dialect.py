@@ -1,6 +1,6 @@
 from sqlglot import exp
 from sqlglot.dialects import Dialect, Spark
-from sqlglot.generator import Generator
+from sqlglot.generator import Generator as GeneratorSqlglot
 
 
 def cast_as_double_edit(self, expression):
@@ -25,7 +25,7 @@ class CustomSpark(Spark):
             **Spark.Parser.FUNCTIONS,
         }
 
-    class Generator(Generator):
+    class Generator(GeneratorSqlglot):
         TYPE_MAPPING = {
             **Spark.Generator.TYPE_MAPPING,
         }

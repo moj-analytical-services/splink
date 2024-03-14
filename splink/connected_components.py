@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
@@ -298,7 +298,7 @@ def _cc_create_unique_id_cols(
     linker: "Linker",
     concat_with_tf: str,
     df_predict: str,
-    match_probability_threshold: float,
+    match_probability_threshold: Optional[float],
 ):
     """Create SQL to pull unique ID columns for connected components.
 
@@ -314,6 +314,7 @@ def _cc_create_unique_id_cols(
             The minimum match probability threshold for a link to be
             considered a match. This reduces the number of unique IDs created
             and connected in our algorithm.
+            Not required if in deterministic link mode.
 
     Returns:
         SplinkDataFrame: A dataframe containing two sets of unique IDs,

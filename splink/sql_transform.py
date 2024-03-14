@@ -12,12 +12,13 @@ def _add_l_or_r_to_identifier(node: exp.Expression):
     if not isinstance(node, exp.Identifier):
         return node
 
-    p = node.parent
+    if (p := node.parent) is None:
+        raise TypeError(f"Node {node} has no parent")
     if isinstance(p, (exp.Lambda, exp.Anonymous)):
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
-        parent_table = p.table
+        parent_table = p.table  # type: ignore [attr-defined]
 
     if parent_table != "":
         l_r = "_" + parent_table
@@ -34,7 +35,7 @@ def _remove_table_prefix(node):
     return node
 
 
-def move_l_r_table_prefix_to_column_suffix(blocking_rule):
+def move_l_r_table_prefix_to_column_suffix(blocking_rule) -> str:
     expression_tree = sqlglot.parse_one(blocking_rule, read=None)
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
@@ -128,7 +129,8 @@ def add_suffix_to_all_column_identifiers(
     tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
 
     for col in tree.find_all(exp.Column):
-        identifier = col.find(exp.Identifier)
+        if (identifier := col.find(exp.Identifier)) is None:
+            raise ValueError(f"Failed to find identifier for column {col}")
         identifier.args["this"] = identifier.args["this"] + suffix
 
     return tree.sql(dialect=sqlglot_dialect)

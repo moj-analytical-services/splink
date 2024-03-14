@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import re
 import string
 from copy import copy
 from functools import partial
-from typing import Union
+from typing import Callable, Union
 
 import sqlglot
 
@@ -38,7 +40,7 @@ class ColumnExpression:
 
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
         self.raw_sql_expression = sql_expression
-        self.operations = []
+        self.operations: list[Callable] = []
         if sql_dialect is not None:
             self.sql_dialect: SplinkDialect = sql_dialect
 
