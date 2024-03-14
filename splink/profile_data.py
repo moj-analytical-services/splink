@@ -237,12 +237,12 @@ def profile_columns(
     tables = ensure_is_list(table_or_tables)
 
     tables = db_api.process_input_tables(tables)
-    # TODO: is this sensible?:
-    input_aliases = [f"__splink__profile_data_{idx}" for idx, _ in enumerate(tables)]
+
     splink_df_dict = db_api.register_multiple_tables(
-        tables, input_aliases, overwrite=True
+        tables,
     )
     input_dataframes = list(splink_df_dict.values())
+    input_aliases = list(splink_df_dict.keys())
     input_columns = input_dataframes[0].columns_escaped
 
     if not column_expressions:

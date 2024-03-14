@@ -3,7 +3,7 @@ import logging
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, TypeVar, Union, final
+from typing import Dict, Generic, List, Optional, TypeVar, Union, final
 
 import sqlglot
 
@@ -14,6 +14,7 @@ from .dialects import (
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .misc import (
+    ascii_uid,
     parse_duration,
 )
 from .splink_dataframe import SplinkDataFrame
@@ -223,10 +224,23 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     @final
     def register_multiple_tables(
-        self, input_tables, input_aliases, overwrite=False
+        self,
+        input_tables,
+        input_aliases: Optional[List[str]] = None,
+        overwrite: bool = False,
     ) -> Dict[str, SplinkDataFrame]:
+
         tables_as_splink_dataframes = {}
         existing_tables = []
+
+        if not input_aliases:
+            # If any of the input_tables are strings, this means they refer
+            # to tables that already exist in the database and an alias is not needed
+            input_aliases = [
+                table if isinstance(table, str) else f"__splink__{ascii_uid(8)}"
+                for table in input_tables
+            ]
+
         for table, alias in zip(input_tables, input_aliases):
             if isinstance(table, str):
                 # already registered - this should be a table name
