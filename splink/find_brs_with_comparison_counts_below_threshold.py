@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 import string
-from typing import TYPE_CHECKING, Dict, List, Set
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set
 
 import pandas as pd
 
@@ -196,7 +198,9 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
 
 def find_blocking_rules_below_threshold_comparison_count(
-    linker: "Linker", max_comparisons_per_rule, column_expressions: List[str] = None
+    linker: "Linker",
+    max_comparisons_per_rule,
+    column_expressions: Optional[Sequence[str | InputColumn]] = None,
 ) -> pd.DataFrame:
     """
     Finds blocking rules which return a comparison count below a given threshold.
@@ -222,7 +226,7 @@ def find_blocking_rules_below_threshold_comparison_count(
         pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
     """
 
-    if not column_expressions:
+    if column_expressions is None:
         column_expressions = linker._input_columns(
             include_unique_id_col_names=False,
             include_additional_columns_to_retain=False,

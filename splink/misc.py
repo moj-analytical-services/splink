@@ -196,4 +196,6 @@ def read_resource(path: str) -> str:
     # depending on python version.
     # Also, if you use importlib.resources, then you have to add an
     # __init__.py file to every subdirectory, which is annoying.
-    return pkgutil.get_data("splink", path).decode("utf-8")
+    if (resource_data := pkgutil.get_data("splink", path)) is None:
+        raise FileNotFoundError(f"Could not locate splink resource at: {path}")
+    return resource_data.decode("utf-8")

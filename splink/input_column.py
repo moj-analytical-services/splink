@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -32,12 +32,12 @@ class SqlglotColumnTreeBuilder:
     """
 
     column_name: str
-    table: str = None
+    table: Optional[str] = None
     quoted: bool = True
-    bracket_index: int = None
-    bracket_key: str = None
-    sqlglot_dialect: str = None
-    alias: str = None
+    bracket_index: Optional[int] = None
+    bracket_key: Optional[str] = None
+    sqlglot_dialect: Optional[str] = None
+    alias: Optional[str] = None
 
     @property
     def _has_key_or_index(self):
@@ -189,7 +189,7 @@ class InputColumn:
             )
         )
 
-    def register_dialect(self, sql_dialect: str):
+    def register_dialect(self, sql_dialect: str | None):
         if self.column_info_settings is not None:
             column_info_sql_dialect = self.column_info_settings.sql_dialect
             if sql_dialect is not None:
@@ -338,9 +338,9 @@ def _get_dialect_quotes(dialect):
 def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
     try:
         # For sqlglot >= 16.0.0
-        start = dialect.IDENTIFIER_START
-        end = dialect.IDENTIFIER_END
+        start = dialect.IDENTIFIER_START  # type: ignore [attr-defined]
+        end = dialect.IDENTIFIER_END  # type: ignore [attr-defined]
     except AttributeError:
-        start = dialect.identifier_start
-        end = dialect.identifier_end
+        start = dialect.identifier_start  # type: ignore [attr-defined]
+        end = dialect.identifier_end  # type: ignore [attr-defined]
     return start, end

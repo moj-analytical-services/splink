@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Type, final
 
 if TYPE_CHECKING:
-    from .comparison_level_creator import ComparisonLevelCreator
+    from .comparison_level_library import (
+        AbsoluteTimeDifferenceLevel,
+        ArrayIntersectLevel,
+    )
 
 
 class SplinkDialect(ABC):
     # Stores instances of each subclass of SplinkDialect.
-    _dialect_instances = {}
+    _dialect_instances: dict[Type[SplinkDialect], SplinkDialect] = {}
     # string defined by subclasses to be used in factory method from_string
     # give a dummy default value so that subclasses that fail to do this
     # don't ruin functionality for existing subclasses
-    _dialect_name_for_factory = None
+    _dialect_name_for_factory: str
 
     # Register a subclass of SplinkDialect on its creation.
     # Whenever that subclass is called again, use the previous instance.
@@ -36,7 +41,7 @@ class SplinkDialect(ABC):
         classes_from_dialect_name = [
             c
             for c in cls.__subclasses__()
-            if c._dialect_name_for_factory == dialect_name
+            if getattr(c, "_dialect_name_for_factory", None) == dialect_name
         ]
         # use sequence unpacking to catch if we duplicate
         # _dialect_name_for_factory in subclasses
@@ -190,7 +195,7 @@ class DuckDBDialect(SplinkDialect):
 
     # TODO: this is only needed for duckdb < 0.9.0.
     # should we just ditch support for that? (only for cll - engine should still work)
-    def array_intersect(self, clc: "ComparisonLevelCreator"):
+    def array_intersect(self, clc: ArrayIntersectLevel):
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
         threshold = clc.min_intersection
@@ -378,7 +383,7 @@ class PostgresDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
-    def absolute_time_difference(self, clc: "ComparisonLevelCreator"):
+    def absolute_time_difference(self, clc: AbsoluteTimeDifferenceLevel):
         # need custom solution as sqlglot gets confused by 'metric', as in Spark
         # datediff _only_ works in days
         clc.col_expression.sql_dialect = self
@@ -420,7 +425,7 @@ class PostgresDialect(SplinkDialect):
             timestamp_format = self.default_timestamp_format
         return f"""try_cast_timestamp({name}, '{timestamp_format}')"""
 
-    def array_intersect(self, clc: "ComparisonLevelCreator"):
+    def array_intersect(self, clc: ArrayIntersectLevel):
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
         threshold = clc.min_intersection

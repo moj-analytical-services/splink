@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import List
+from typing import Any, List
 
 import pandas as pd
 
@@ -367,7 +367,7 @@ def _max_change_in_parameters_comparison_levels(
     this_iteration = core_model_settings_history[-1]
     max_change = -0.1
 
-    max_change_levels = {
+    max_change_levels: dict[str, Any] = {
         "previous_iteration": None,
         "this_iteration": None,
         "max_change_type": None,

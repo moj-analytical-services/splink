@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 import splink.comparison_library as cl
 from splink.duckdb.database_api import DuckDBAPI
@@ -198,3 +199,25 @@ def test_parameter_estimate_charts():
     linker.estimate_u_using_random_sampling(1e6)
 
     linker.parameter_estimate_comparisons_chart()
+
+
+def test_tf_adjustment_chart():
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("gender").configure(term_frequency_adjustments=True),
+            cl.LevenshteinAtThresholds("first_name", [1]).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.LevenshteinAtThresholds("surname", [1]),
+        ],
+    }
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, database_api=db_api)
+    linker.tf_adjustment_chart("gender")
+    linker.tf_adjustment_chart("first_name")
+
+    with pytest.raises(ValueError):
+        linker.tf_adjustment_chart("surname")

@@ -358,7 +358,7 @@ class Comparison:
         return self._all_m_are_trained and self._all_u_are_trained
 
     @property
-    def _as_detailed_records(self):
+    def _as_detailed_records(self) -> list[dict]:
         records = []
         for cl in self.comparison_levels:
             record = {}

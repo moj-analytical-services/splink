@@ -8,7 +8,7 @@ from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from ..database_api import SQLiteAPI
+    from .database_api import SQLiteAPI
 
 
 def dict_factory(cursor, row):

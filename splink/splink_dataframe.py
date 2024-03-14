@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from .database_api import DatabaseAPI
 
 
-class SplinkDataFrame:
+class SplinkDataFrame(ABC):
     """Abstraction over dataframe to handle basic operations like retrieving data and
     retrieving column names, which need different implementations depending on whether
     it's a spark dataframe, sqlite table etc.
@@ -35,7 +36,7 @@ class SplinkDataFrame:
         self.sql_used_to_create = None
         self.metadata = metadata or {}
 
-    @property
+    @abstractproperty
     def columns(self) -> list[InputColumn]:
         pass
 
@@ -44,6 +45,7 @@ class SplinkDataFrame:
         cols = self.columns
         return [c.name for c in cols]
 
+    @abstractmethod
     def validate(self):
         pass
 
