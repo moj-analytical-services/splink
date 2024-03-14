@@ -9,9 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class SQLTask:
-    def __init__(
-        self, sql, output_table_name, translates_physical_into_templated=False
-    ):
+    def __init__(self, sql, output_table_name):
         self.sql = sql
         self.output_table_name = output_table_name
 
@@ -29,7 +27,7 @@ class SQLTask:
         return list(table_names)
 
     @property
-    def _task_description(self):
+    def task_description(self):
         uses_tables = ", ".join(self._uses_tables)
         uses_tables = f" {uses_tables} "
 
@@ -47,14 +45,12 @@ class SQLPipeline:
         sql_task = SQLTask(sql, output_table_name)
         self.queue.append(sql_task)
 
-    def _generate_pipeline_parts(self, input_dataframes):
+    def generate_pipeline_parts(self, input_dataframes):
         parts = deepcopy(self.queue)
         for df in input_dataframes:
             if not df.physical_and_template_names_equal:
                 sql = f"select * from {df.physical_name}"
-                task = SQLTask(
-                    sql, df.templated_name, translates_physical_into_templated=True
-                )
+                task = SQLTask(sql, df.templated_name)
                 parts.insert(0, task)
         return parts
 
@@ -68,10 +64,10 @@ class SQLPipeline:
             )
 
             for i, part in enumerate(parts):
-                logger.log(7, f"    Pipeline part {i+1}: {part._task_description}")
+                logger.log(7, f"    Pipeline part {i+1}: {part.task_description}")
 
-    def _generate_pipeline(self, input_dataframes):
-        parts = self._generate_pipeline_parts(input_dataframes)
+    def generate_pipeline(self, input_dataframes):
+        parts = self.generate_pipeline_parts(input_dataframes)
 
         self._log_pipeline(parts, input_dataframes)
 
@@ -86,10 +82,6 @@ class SQLPipeline:
         final_sql = with_parts + last_part.sql
 
         return final_sql
-
-    def _scan_pipeline_for_tables(self, table):
-        queued_tables = [pipe.output_table_name for pipe in self._pipeline.queue]
-        return table in queued_tables
 
     @property
     def output_table_name(self):

@@ -1,10 +1,8 @@
 from __future__ import annotations  # noqa: I001
 
-import hashlib
 import json
 import logging
 import os
-import time
 import warnings
 from copy import copy, deepcopy
 from pathlib import Path
@@ -94,7 +92,6 @@ from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
     ensure_is_list,
-    parse_duration,
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
@@ -399,6 +396,15 @@ class Linker:
         else:
             return False
 
+    # convenience wrappers:
+    @property
+    def debug_mode(self):
+        return self.db_api.debug_mode
+
+    @debug_mode.setter
+    def debug_mode(self, value: bool):
+        self.db_api.debug_mode = value
+
     # TODO: rename these!
     @property
     def _sql_dialect(self):
@@ -565,78 +571,17 @@ class Linker:
             SplinkDataFrame: An abstraction representing the table created by the sql
                 pipeline
         """
-
-        if not self.debug_mode:
-            sql_gen = self._pipeline._generate_pipeline(input_dataframes)
-
-            output_tablename_templated = self._pipeline.queue[-1].output_table_name
-
-            try:
-                dataframe = self._sql_to_splink_dataframe_checking_cache(
-                    sql_gen,
-                    output_tablename_templated,
-                    use_cache,
-                )
-            except Exception as e:
-                raise e
-            finally:
-                self._pipeline.reset()
-
-            return dataframe
-        else:
-            # In debug mode, we do not pipeline the sql and print the
-            # results of each part of the pipeline
-            for task in self._pipeline._generate_pipeline_parts(input_dataframes):
-                start_time = time.time()
-                output_tablename = task.output_table_name
-                sql = task.sql
-                print("------")  # noqa: T201
-                print(  # noqa: T201
-                    f"--------Creating table: {output_tablename}--------"
-                )
-
-                dataframe = self._sql_to_splink_dataframe_checking_cache(
-                    sql,
-                    output_tablename,
-                    use_cache=False,
-                )
-                run_time = parse_duration(time.time() - start_time)
-                print(f"Step ran in: {run_time}")  # noqa: T201
+        try:
+            dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
+                self._pipeline,
+                input_dataframes,
+                use_cache,
+            )
+        except Exception as e:
+            raise e
+        finally:
             self._pipeline.reset()
-            return dataframe
-
-    def _execute_sql_against_backend(
-        self, sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """Execute a single sql SELECT statement, returning a SplinkDataFrame.
-
-        Subclasses should implement this, using _log_and_run_sql_execution() within
-        their implementation, maybe doing some SQL translation or other prep/cleanup
-        work before/after.
-        """
-        return self.db_api.execute_sql_against_backend(
-            sql, templated_name, physical_name
-        )
-
-    def _run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """**Actually** execute the sql against the backend database.
-
-        This is intended to be implemented by a subclass, but not actually called
-        directly. Instead, call _log_and_run_sql_execution, and that will call
-        this method.
-
-        This could return something, or not. It's up to the Linker subclass to decide.
-        """
-        return self.db_api.run_sql_execution(final_sql, templated_name, physical_name)
-
-    def _log_and_run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        return self.db_api.log_and_run_sql_execution(
-            final_sql, templated_name, physical_name
-        )
+        return dataframe
 
     def register_table(self, input, table_name, overwrite=False):
         """
@@ -721,73 +666,11 @@ class Linker:
 
         Return a SplinkDataFrame representing the results of the SQL
         """
-
-        to_hash = (sql + self._cache_uid).encode("utf-8")
-        hash = hashlib.sha256(to_hash).hexdigest()[:9]
-        # Ensure hash is valid sql table name
-        table_name_hash = f"{output_tablename_templated}_{hash}"
-
-        if use_cache:
-            # Certain tables are put in the cache using their templated_name
-            # An example is __splink__df_concat_with_tf
-            # These tables are put in the cache when they are first calculated
-            # e.g. with _initialise_df_concat_with_tf()
-            # But they can also be put in the cache manually using
-            # e.g. register_table_input_nodes_concat_with_tf()
-
-            # Look for these 'named' tables in the cache prior
-            # to looking for the hashed version
-
-            if output_tablename_templated in self._intermediate_table_cache:
-                return self._intermediate_table_cache.get_with_logging(
-                    output_tablename_templated
-                )
-
-            if table_name_hash in self._intermediate_table_cache:
-                return self._intermediate_table_cache.get_with_logging(table_name_hash)
-
-            # If not in cache, fall back on checking the database
-            if self._table_exists_in_database(table_name_hash):
-                logger.debug(
-                    f"Found cache for {output_tablename_templated} "
-                    f"in database using table name with physical name {table_name_hash}"
-                )
-                return self._table_to_splink_dataframe(
-                    output_tablename_templated, table_name_hash
-                )
-
-        if self.debug_mode:
-            print(sql)  # noqa: T201
-            splink_dataframe = self._execute_sql_against_backend(
-                sql,
-                output_tablename_templated,
-                output_tablename_templated,
-            )
-
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
-
-            df_pd = splink_dataframe.as_pandas_dataframe()
-            try:
-                from IPython.display import display
-
-                display(df_pd)
-            except ModuleNotFoundError:
-                print(df_pd)  # noqa: T201
-
-        else:
-            splink_dataframe = self._execute_sql_against_backend(
-                sql, output_tablename_templated, table_name_hash
-            )
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
-
-        splink_dataframe.created_by_splink = True
-        splink_dataframe.sql_used_to_create = sql
-
-        physical_name = splink_dataframe.physical_name
-
-        self._intermediate_table_cache[physical_name] = splink_dataframe
-
-        return splink_dataframe
+        return self.db_api.sql_to_splink_dataframe_checking_cache(
+            sql,
+            output_tablename_templated,
+            use_cache=use_cache,
+        )
 
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
@@ -799,13 +682,6 @@ class Linker:
         new_settings = deepcopy(self._settings_obj)
         new_linker._settings_obj = new_settings
         return new_linker
-
-    def _get_input_tf_dict(self, df_dict):
-        d = {}
-        for df_name, df_value in df_dict.items():
-            renamed = colname_to_tf_tablename(df_name)
-            d[renamed] = self._table_to_splink_dataframe(renamed, df_value)
-        return d
 
     def _predict_warning(self):
         if not self._settings_obj._is_fully_trained:
@@ -821,9 +697,6 @@ class Linker:
             warn_message = "\n".join([msg] + messages)
 
             logger.warning(warn_message)
-
-    def _table_exists_in_database(self, table_name):
-        return self.db_api.table_exists_in_database(table_name)
 
     def _validate_input_dfs(self):
         if not hasattr(self, "_input_tables_dict"):

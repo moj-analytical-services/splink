@@ -96,7 +96,7 @@ class ComparisonTestSpec:
 
 
 def execute_sql_for_test(sql, db_api):
-    return db_api.execute_sql_against_backend(
+    return db_api._sql_to_splink_dataframe(
         sql, "__splink__test", "__splink__test"
     ).as_pandas_dataframe()
 
@@ -123,7 +123,7 @@ def run_tests_with_args(
 
         table_as_dict = test.vals_for_df
         if db_api.table_exists_in_database("__splink__test_table"):
-            db_api._delete_table_from_database("__splink__test_table")
+            db_api.delete_table_from_database("__splink__test_table")
 
         db_api._table_registration(table_as_dict, "__splink__test_table")
 

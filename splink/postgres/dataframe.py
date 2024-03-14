@@ -26,7 +26,7 @@ class PostgresDataFrame(SplinkDataFrame):
         FROM information_schema.columns
         WHERE table_name = '{self.physical_name}';
         """
-        res = self.db_api._run_sql_execution(sql).mappings().all()
+        res = self.db_api._execute_sql_against_backend(sql).mappings().all()
         cols = [r["column_name"] for r in res]
 
         return [InputColumn(c, sql_dialect="postgres") for c in cols]
@@ -46,7 +46,7 @@ class PostgresDataFrame(SplinkDataFrame):
         WHERE table_name = '{self.physical_name}';
         """
 
-        res = self.db_api._run_sql_execution(sql).mappings().all()
+        res = self.db_api._execute_sql_against_backend(sql).mappings().all()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the postgres db provided.\n"
@@ -57,7 +57,7 @@ class PostgresDataFrame(SplinkDataFrame):
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
-        self.db_api._delete_table_from_database(self.physical_name)
+        self.db_api.delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
         sql = f"""
@@ -67,5 +67,5 @@ class PostgresDataFrame(SplinkDataFrame):
         if limit:
             sql += f" LIMIT {limit}"
         sql += ";"
-        res = self.db_api._run_sql_execution(sql).mappings().all()
+        res = self.db_api._execute_sql_against_backend(sql).mappings().all()
         return [dict(r) for r in res]

@@ -86,10 +86,10 @@ class PostgresAPI(DatabaseAPI):
         WHERE table_name = '{table_name}';
         """
 
-        rec = self._run_sql_execution(sql).mappings().all()
+        rec = self._execute_sql_against_backend(sql).mappings().all()
         return len(rec) > 0
 
-    def _run_sql_execution(
+    def _execute_sql_against_backend(
         self, final_sql: str, templated_name: str = None, physical_name: str = None
     ):
         with self._engine.begin() as con:
@@ -104,7 +104,7 @@ class PostgresAPI(DatabaseAPI):
         SELECT log(2.0, n::numeric)::float8;
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _extend_round_function(self):
         # extension of round to double
@@ -114,7 +114,7 @@ class PostgresAPI(DatabaseAPI):
         SELECT round(n::numeric, dp);
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _create_try_cast_date_function(self):
         # postgres to_date will give an error if the date can't be parsed
@@ -132,7 +132,7 @@ class PostgresAPI(DatabaseAPI):
         END
         $func$ LANGUAGE plpgsql IMMUTABLE;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _create_try_cast_timestamp_function(self):
         # postgres to_timestamp will give an error if the timestamp can't be parsed
@@ -150,7 +150,7 @@ class PostgresAPI(DatabaseAPI):
         END
         $func$ LANGUAGE plpgsql IMMUTABLE;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _create_array_intersect_function(self):
         sql = """
@@ -159,7 +159,7 @@ class PostgresAPI(DatabaseAPI):
         SELECT ARRAY( SELECT DISTINCT * FROM UNNEST(x) WHERE UNNEST = ANY(y) )
         $$ LANGUAGE SQL IMMUTABLE;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _register_custom_functions(self):
         # if people have issues with permissions we can allow these to be optional
@@ -177,7 +177,7 @@ class PostgresAPI(DatabaseAPI):
         sql = """
         CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
 
     def _create_splink_schema(self, other_schemas_to_search):
         other_schemas_to_search = ensure_is_list(other_schemas_to_search)
@@ -188,4 +188,4 @@ class PostgresAPI(DatabaseAPI):
         CREATE SCHEMA IF NOT EXISTS {self._db_schema};
         SET search_path TO {search_path};
         """
-        self._run_sql_execution(sql)
+        self._execute_sql_against_backend(sql)
