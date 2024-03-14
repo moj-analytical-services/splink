@@ -321,6 +321,8 @@ def profile_columns(
             )
             inner_charts.append(inner_chart)
 
+    db_api.delete_tables_created_by_splink_from_db()
+
     if inner_charts != []:
         outer_spec = deepcopy(_outer_chart_spec_freq)
         outer_spec["vconcat"] = inner_charts

@@ -339,3 +339,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
+
+    def delete_tables_created_by_splink_from_db(self):
+        for splink_df in list(self._intermediate_table_cache.values()):
+            if splink_df.created_by_splink:
+                splink_df.drop_table_from_database_and_remove_from_cache()
