@@ -55,17 +55,24 @@ class DuckDBAPI(DatabaseAPI):
                 """
             )
 
+    def delete_table_from_database(self, name: str):
+        # If the table is in fact a pandas dataframe that's been registered using
+        # duckdb con.register() then DROP TABLE will fail with
+        # Catalog Error: x is of type View
+        try:
+            drop_sql = f"DROP TABLE IF EXISTS {name}"
+            self._execute_sql_against_backend(drop_sql)
+        except duckdb.CatalogException:
+            drop_sql = f"DROP VIEW IF EXISTS {name}"
+            self._execute_sql_against_backend(drop_sql)
+
     def _table_registration(self, input, table_name) -> None:
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
-        # Registration errors will automatically
-        # occur if an invalid data type is passed as an argument
-        self._execute_sql_against_backend(
-            f"CREATE TABLE {table_name} AS SELECT * FROM input"
-        )
+        self._con.register(table_name, input)
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name

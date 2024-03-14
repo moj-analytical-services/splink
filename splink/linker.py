@@ -806,9 +806,7 @@ class Linker:
                     cl.m_probability = cl._trained_m_median
 
     def delete_tables_created_by_splink_from_db(self):
-        for splink_df in list(self._intermediate_table_cache.values()):
-            if splink_df.created_by_splink:
-                splink_df.drop_table_from_database_and_remove_from_cache()
+        self.db_api.delete_tables_created_by_splink_from_db()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
