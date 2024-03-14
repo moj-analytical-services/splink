@@ -61,11 +61,7 @@ class DuckDBAPI(DatabaseAPI):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
-        # Registration errors will automatically
-        # occur if an invalid data type is passed as an argument
-        self._execute_sql_against_backend(
-            f"CREATE TABLE {table_name} AS SELECT * FROM input"
-        )
+        self._con.register(table_name, input)
 
     def table_to_splink_dataframe(
         self, templated_name, physical_name
