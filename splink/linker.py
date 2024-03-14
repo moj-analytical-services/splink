@@ -535,6 +535,17 @@ class Linker:
 
         return nodes_with_tf
 
+    def _enqueue_df_concat_with_tf(self, pipeline: SQLPipeline):
+
+        sql = vertically_concatenate_sql(self)
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+        sqls = compute_all_term_frequencies_sqls(self)
+        for sql in sqls:
+            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        return pipeline
+
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
@@ -1283,19 +1294,23 @@ class Linker:
 
         """
 
+        pipeline = SQLPipeline()
+
         # If materialise_after_computing_term_frequencies=False and the user only
         # calls predict, it runs as a single pipeline with no materialisation
         # of anything.
 
-        # _initialise_df_concat_with_tf returns None if the table doesn't exist
-        # and only SQL is queued in this step.
-        nodes_with_tf = self._initialise_df_concat_with_tf(
-            materialise=materialise_after_computing_term_frequencies
-        )
+        self._enqueue_df_concat_with_tf(pipeline)
+
+        # In duckdb, calls to random() in a CTE pipeline cause problems:
+        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+        if self._settings_obj.salting_required:
+            materialise = True
 
         input_dataframes = []
-        if nodes_with_tf:
-            input_dataframes.append(nodes_with_tf)
+        if materialise_after_computing_term_frequencies:
+            nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            pipeline = SQLPipeline()
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
@@ -1715,9 +1730,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -1752,9 +1767,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -1794,9 +1809,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     def compute_graph_metrics(
