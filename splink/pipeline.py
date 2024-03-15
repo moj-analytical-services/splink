@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from typing import List
 
 import sqlglot
 from sqlglot.errors import ParseError
@@ -44,6 +45,10 @@ class SQLPipeline:
     def enqueue_sql(self, sql, output_table_name):
         sql_task = SQLTask(sql, output_table_name)
         self.queue.append(sql_task)
+
+    def enqueue_list_of_sqls(self, sql_list: List[dict]):
+        for sql_dict in sql_list:
+            self.enqueue_sql(sql_dict["sql"], sql_dict["output_table_name"])
 
     def generate_pipeline_parts(self, input_dataframes):
         parts = deepcopy(self.queue)

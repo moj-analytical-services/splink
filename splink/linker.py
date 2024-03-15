@@ -1305,11 +1305,12 @@ class Linker:
         # In duckdb, calls to random() in a CTE pipeline cause problems:
         # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
         if self._settings_obj.salting_required:
-            materialise = True
+            materialise_after_computing_term_frequencies = True
 
         input_dataframes = []
         if materialise_after_computing_term_frequencies:
             nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            input_dataframes.append(nodes_with_tf)
             pipeline = SQLPipeline()
 
         # If exploded blocking rules exist, we need to materialise
@@ -1317,20 +1318,21 @@ class Linker:
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
-            df_blocked = self._execute_sql_pipeline(input_dataframes)
+            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(
+                pipeline, input_dataframes
+            )
             input_dataframes.append(df_blocked)
 
         sql = compute_comparison_vector_values_sql(
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
@@ -1338,10 +1340,11 @@ class Linker:
             threshold_match_weight,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._execute_sql_pipeline(input_dataframes)
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, input_dataframes
+        )
         self._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
