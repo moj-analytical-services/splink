@@ -55,7 +55,9 @@ def _proportion_sample_size_link_only(
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
 
-    nodes_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = SQLPipeline()
+    linker._enqueue_df_concat_with_tf(pipeline)
+    nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     original_settings_obj = linker._settings_obj
 
@@ -71,14 +73,18 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
             # TODO: ComparisonLevel: manage access
             cl._tf_adjustment_column = None
 
+    pipeline = SQLPipeline()
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """
         select count(*) as count
         from __splink__df_concat_with_tf
         """
 
-        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
-        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
+        pipeline.enqueue_sql(sql, "__splink__df_concat_count")
+
+        dataframe = training_linker.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, [nodes_with_tf]
+        )
 
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
@@ -93,7 +99,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         group by source_dataset
         """
         training_linker._enqueue_sql(sql, "__splink__df_concat_count")
-        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
+        dataframe = training_linker.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, [nodes_with_tf]
+        )
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
@@ -110,13 +118,16 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     if sample_size > total_nodes:
         sample_size = total_nodes
 
+    pipeline = SQLPipeline()
     sql = f"""
     select *
     from __splink__df_concat_with_tf
     {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
-    training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
-    df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
+    pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
+    df_sample = training_linker.db_api.sql_pipeline_to_splink_dataframe(
+        pipeline, [nodes_with_tf]
+    )
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
@@ -129,9 +140,8 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql_infos = block_using_rules_sqls(training_linker)
-    for sql_info in sql_infos:
-        training_linker._enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
+    sqls = block_using_rules_sqls(training_linker)
+    pipeline.enqueue_list_of_sqls(sqls)
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(

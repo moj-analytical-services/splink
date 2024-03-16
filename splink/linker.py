@@ -976,9 +976,7 @@ class Linker:
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
         return deterministic_link_df
 
-    def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, seed: int = None, *, target_rows=None
-    ):
+    def estimate_u_using_random_sampling(self, max_pairs: int = None, seed: int = None):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -1014,24 +1012,6 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-        # TODO: Remove this compatibility code in a future release once we drop
-        # support for "target_rows". Deprecation warning added in 3.7.0
-        if max_pairs is not None and target_rows is not None:
-            # user supplied both
-            raise TypeError("Just use max_pairs")
-        elif max_pairs is not None:
-            # user is doing it correctly
-            pass
-        elif target_rows is not None:
-            # user is using deprecated argument
-            warnings.warn(
-                "target_rows is deprecated; use max_pairs",
-                SplinkDeprecated,
-                stacklevel=2,
-            )
-            max_pairs = target_rows
-        else:
-            raise TypeError("Missing argument max_pairs")
 
         estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
