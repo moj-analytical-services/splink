@@ -129,7 +129,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline, [nodes_with_tf])
 
-    if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
+    if training_linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
             {
                 "blocking_rule": "1=1",
