@@ -11,6 +11,8 @@ from pandas import concat, cut
 
 from .charts import altair_or_json, load_chart_definition
 from .input_column import InputColumn
+from .pipeline import SQLPipeline
+from .vertically_concatenate import vertically_concatenate_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -303,3 +305,14 @@ def tf_adjustment_chart(
     chart["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
 
     return altair_or_json(chart, as_dict=as_dict)
+
+
+def enqueue_df_concat_with_tf(linker: Linker, pipeline: SQLPipeline):
+
+    sql = vertically_concatenate_sql(linker)
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+    sqls = compute_all_term_frequencies_sqls(linker)
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    return pipeline

@@ -109,6 +109,7 @@ from .splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 from .splink_dataframe import SplinkDataFrame
+
 from .term_frequencies import (
     _join_tf_to_input_df_sql,
     colname_to_tf_tablename,
@@ -117,6 +118,7 @@ from .term_frequencies import (
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
     tf_adjustment_chart,
+    enqueue_df_concat_with_tf,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -535,17 +537,6 @@ class Linker:
 
         return nodes_with_tf
 
-    def _enqueue_df_concat_with_tf(self, pipeline: SQLPipeline):
-
-        sql = vertically_concatenate_sql(self)
-        pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-        sqls = compute_all_term_frequencies_sqls(self)
-        for sql in sqls:
-            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        return pipeline
-
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
@@ -960,8 +951,7 @@ class Linker:
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
-
-        self._enqueue_df_concat_with_tf(pipeline)
+        enqueue_df_concat_with_tf(self, pipeline)
         concat_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = SQLPipeline()
@@ -1286,7 +1276,7 @@ class Linker:
         # calls predict, it runs as a single pipeline with no materialisation
         # of anything.
 
-        self._enqueue_df_concat_with_tf(pipeline)
+        enqueue_df_concat_with_tf(self, pipeline)
 
         # In duckdb, calls to random() in a CTE pipeline cause problems:
         # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139

@@ -15,6 +15,8 @@ from .m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
+from .pipeline import SQLPipeline
+from .term_frequencies import enqueue_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -56,8 +58,12 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
 
     pipeline = SQLPipeline()
-    linker._enqueue_df_concat_with_tf(pipeline)
-    nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    # No need for a distinction between db_apis - it's the same db api
+    # in either the training linker or the original linker
+    db_api = linker.db_api
+
+    enqueue_df_concat_with_tf(linker, pipeline)
+    nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     original_settings_obj = linker._settings_obj
 
@@ -82,9 +88,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
 
-        dataframe = training_linker.db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, [nodes_with_tf]
-        )
+        dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline, [nodes_with_tf])
 
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
@@ -99,9 +103,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         group by source_dataset
         """
         training_linker._enqueue_sql(sql, "__splink__df_concat_count")
-        dataframe = training_linker.db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, [nodes_with_tf]
-        )
+        dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline, [nodes_with_tf])
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
@@ -125,9 +127,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
-    df_sample = training_linker.db_api.sql_pipeline_to_splink_dataframe(
-        pipeline, [nodes_with_tf]
-    )
+    df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline, [nodes_with_tf])
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
@@ -148,7 +148,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         training_linker, "repartition_after_blocking", False
     )
     if repartition_after_blocking:
-        df_blocked = training_linker._execute_sql_pipeline([df_sample])
+        df_blocked = db_api.sql_pipeline_to_splink_dataframe(pipeline, [df_sample])
         sample_dataframe = [df_blocked]
     else:
         sample_dataframe = [df_sample]
@@ -157,21 +157,21 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         settings_obj._columns_to_select_for_comparison_vector_values
     )
 
-    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+    pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, cast(0.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
 
-    training_linker._enqueue_sql(sql, "__splink__df_predict")
+    pipeline.enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(
         estimate_without_term_frequencies=False,
         comparisons=settings_obj.comparisons,
     )
-    linker._enqueue_sql(sql, "__splink__m_u_counts")
-    df_params = training_linker._execute_sql_pipeline(sample_dataframe)
+    pipeline.enqueue_sql(sql, "__splink__m_u_counts")
+    df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline, sample_dataframe)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
