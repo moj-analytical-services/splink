@@ -954,19 +954,24 @@ class Linker:
                 SplinkDataFrame allow you to access the underlying data.
         """
 
+        pipeline = SQLPipeline()
+
         # Allows clustering during a deterministic linkage.
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
 
-        concat_with_tf = self._initialise_df_concat_with_tf()
+        self._enqueue_df_concat_with_tf(pipeline)
+        concat_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        deterministic_link_df = predictions = (
+            self.db_api.sql_pipeline_to_splink_dataframe(pipeline, [concat_with_tf])
+        )
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
         return deterministic_link_df
 
@@ -1733,9 +1738,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -1770,9 +1775,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -1812,9 +1817,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     def compute_graph_metrics(
