@@ -34,11 +34,11 @@ def test_cache_tracking_works():
     cache = linker._intermediate_table_cache
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is True
 
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
     )
@@ -49,7 +49,7 @@ def test_cache_tracking_works():
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
     )
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
@@ -58,7 +58,7 @@ def test_cache_tracking_works():
     linker.invalidate_cache()
     cache.reset_executed_queries_tracker()
     cache.reset_queries_retrieved_from_cache_tracker()
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is True
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
@@ -95,7 +95,7 @@ def test_cache_used_when_registering_nodes_table():
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_table_input_nodes_concat_with_tf(splink__df_concat_with_tf)
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
@@ -146,7 +146,7 @@ def test_cache_used_when_registering_tf_tables():
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
 
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
     # Get table names generated using CTEs
     sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
@@ -168,7 +168,7 @@ def test_cache_used_when_registering_tf_tables():
     linker = Linker(df, settings, database_api=db_api)
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
     # Get table names generated using CTEs
     sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
@@ -190,7 +190,7 @@ def test_cache_used_when_registering_tf_tables():
     cache = linker._intermediate_table_cache
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.register_term_frequency_lookup(first_name_tf_table, "first_name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
     # Get table names generated using CTEs
     sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
@@ -274,7 +274,7 @@ def test_table_deletions():
     table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 
     linker.compute_tf_table("name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
     # # The database should be empty except for the original non-splink table
     linker.delete_tables_created_by_splink_from_db()
@@ -325,7 +325,7 @@ def test_table_deletions_with_preregistered():
     table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 
     linker.compute_tf_table("name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.estimate_u_using_random_sampling(max_pairs=1e4)
     # Note we shouldn't have executed a __splink__df_concat_with_tf query
 
     cache = linker._intermediate_table_cache
