@@ -1,8 +1,10 @@
 import pytest
 
-import splink.spark.blocking_rule_library as brl
-from splink.spark.linker import SparkLinker
+from splink.blocking_rule_library import block_on
+from splink.linker import Linker
 from tests.basic_settings import get_settings_dict
+
+from .decorator import mark_with_dialects_including
 
 
 def check_same_ids(df1, df2, unique_id_col="unique_id"):
@@ -24,6 +26,7 @@ def check_answer(df_1, df_2):
 
 def generate_linker_output(
     df,
+    spark_api,
     link_type="dedupe_only",
     blocking_rules=None,
 ):
@@ -34,14 +37,15 @@ def generate_linker_output(
         settings["blocking_rules_to_generate_predictions"] = blocking_rules
     settings["link_type"] = link_type
 
-    linker = SparkLinker(df, settings)
+    linker = Linker(df, settings, spark_api)
 
     df_predict = linker.predict()
     df_predict = df_predict.as_pandas_dataframe()
     return df_predict.sort_values(by=["unique_id_l", "unique_id_r"], ignore_index=True)
 
 
-def test_salting_spark(spark):
+@mark_with_dialects_including("spark")
+def test_salting_spark(spark, spark_api):
     # Test that the number of rows in salted link jobs is identical
     # to those not salted.
 
@@ -56,21 +60,26 @@ def test_salting_spark(spark):
     ]
 
     blocking_rules_salted = [
-        brl.exact_match_rule("surname", salting_partitions=3),
+        block_on("surname", salting_partitions=3),
         {"blocking_rule": "l.first_name = r.first_name", "salting_partitions": 7},
         "l.dob = r.dob",
     ]
     spark.catalog.dropTempView("__splink__df_concat_with_tf")
     df1 = generate_linker_output(
         df=df_spark,
+        spark_api=spark_api,
         blocking_rules=blocking_rules_no_salt,
     )
     spark.catalog.dropTempView("__splink__df_concat_with_tf")
+    # TODO: this should perhaps be done when we instantiate a linker?
+    spark_api._intermediate_table_cache.invalidate_cache()
 
     df_spark = spark.read.csv(
         "./tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
-    df2 = generate_linker_output(df=df_spark, blocking_rules=blocking_rules_salted)
+    df2 = generate_linker_output(
+        df=df_spark, spark_api=spark_api, blocking_rules=blocking_rules_salted
+    )
 
     check_same_ids(df1, df2)
     check_answer(df1, df2)

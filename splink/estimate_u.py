@@ -66,10 +66,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
-    settings_obj._training_mode = True
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """
@@ -143,7 +143,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     else:
         sample_dataframe = [df_sample]
 
-    sql = compute_comparison_vector_values_sql(settings_obj)
+    sql = compute_comparison_vector_values_sql(
+        settings_obj._columns_to_select_for_comparison_vector_values
+    )
 
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
@@ -154,7 +156,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
-    sql = compute_new_parameters_sql(settings_obj)
+    sql = compute_new_parameters_sql(
+        estimate_without_term_frequencies=False,
+        comparisons=settings_obj.comparisons,
+    )
     linker._enqueue_sql(sql, "__splink__m_u_counts")
     df_params = training_linker._execute_sql_pipeline(sample_dataframe)
 
@@ -173,7 +178,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     for c in original_settings_obj.comparisons:
         for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
-                cl, m_u_records_lookup, "estimate u by random sampling"
+                cl,
+                m_u_records_lookup,
+                c.output_column_name,
+                "estimate u by random sampling",
             )
 
     logger.info("\nEstimated u probabilities using random sampling")

@@ -49,7 +49,7 @@ def _comparison_records(record_as_dict, comparison: Comparison, hide_details=Fal
 
     cl = c._get_comparison_level_by_comparison_vector_value(cv_value)
 
-    waterfall_record["column_name"] = c._output_column_name
+    waterfall_record["column_name"] = c.output_column_name
     waterfall_record["label_for_charts"] = cl.label_for_charts
 
     waterfall_record["sql_condition"] = cl.sql_condition
@@ -93,7 +93,7 @@ def _comparison_records(record_as_dict, comparison: Comparison, hide_details=Fal
             waterfall_record_2["value_l"] = ""
             waterfall_record_2["value_r"] = ""
 
-        waterfall_record_2["column_name"] = "tf_" + c._output_column_name
+        waterfall_record_2["column_name"] = "tf_" + c.output_column_name
         waterfall_record_2["term_frequency_adjustment"] = True
         waterfall_record_2["bayes_factor"] = 1.0
         waterfall_record_2["log2_bayes_factor"] = math.log2(1.0)

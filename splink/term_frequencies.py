@@ -156,7 +156,7 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
     return tf_table
 
 
-def comparison_level_to_tf_chart_data(cl: dict):
+def comparison_level_to_tf_chart_data(cl: dict) -> dict:
     df = cl["df_tf"]
     df.columns = ["value", "tf"]
     df = df[df.value.notnull()]
@@ -196,8 +196,8 @@ def tf_adjustment_chart(
     linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
 ):
     # Data for chart
-    c = linker._settings_obj._get_comparison_by_output_column_name(col)
-    c = c._as_detailed_records
+    comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
+    comparison_records = comparison._as_detailed_records
 
     keys_to_retain = [
         "comparison_vector_value",
@@ -210,14 +210,14 @@ def tf_adjustment_chart(
     ]
 
     # Select levels with TF adjustments
-    c = [
+    comparison_records = [
         {k: cl[k] for k in cl.keys() if k in keys_to_retain}
-        for cl in c
+        for cl in comparison_records
         if cl["has_tf_adjustments"]
     ]
 
     # Add data ("df_tf") to each level
-    c = [
+    comparison_records = [
         dict(
             cl,
             **{
@@ -226,10 +226,10 @@ def tf_adjustment_chart(
                 ).as_pandas_dataframe()
             },
         )
-        for cl in c
+        for cl in comparison_records
     ]
 
-    c = [comparison_level_to_tf_chart_data(cl) for cl in c]
+    c = [comparison_level_to_tf_chart_data(cl) for cl in comparison_records]
     df = concat([cl["df_out"] for cl in c])
     # Filter values
     selected = False if not vals_to_include else df["value"].isin(vals_to_include)

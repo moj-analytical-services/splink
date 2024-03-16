@@ -4,10 +4,9 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx, raises
 
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-)
-from splink.duckdb.linker import DuckDBLinker
+from splink.comparison_library import ExactMatch
+from splink.duckdb.database_api import DuckDBAPI
+from splink.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 
@@ -31,12 +30,14 @@ def test_size_density_dedupe():
         "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(df_1, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df_1, settings, database_api=db_api)
 
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
@@ -61,13 +62,18 @@ def test_size_density_link():
         "probability_two_random_records_match": 0.01,
         "link_type": "link_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(
-        [df_1, df_2], settings, input_table_aliases=["df_left", "df_right"]
+    db_api = DuckDBAPI()
+
+    linker = Linker(
+        [df_1, df_2],
+        settings,
+        input_table_aliases=["df_left", "df_right"],
+        database_api=db_api,
     )
 
     df_predict = linker.predict()
@@ -379,12 +385,12 @@ def test_edges_without_igraph():
         "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
     }
-    linker = DuckDBLinker(df_1, settings)
+    linker = Linker(df_1, settings, DuckDBAPI())
 
     df_predict = linker.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
@@ -420,7 +426,7 @@ def test_no_threshold_provided():
     )
 
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    linker = Linker(df_1, settings, DuckDBAPI())
 
     df_predict = linker.register_table(df_e, "predict")
     df_clustered = linker.register_table(df_c, "clusters")
@@ -442,7 +448,7 @@ def test_override_metadata_threshold():
     )
     df_c = pd.DataFrame([{"cluster_id": 1, "unique_id": i} for i in range(1, 3 + 1)])
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    linker = Linker(df_1, settings, DuckDBAPI())
     # linker.debug_mode = True
     df_predict = linker.register_table(df_e, "predict")
     df_clustered = linker.register_table(df_c, "clusters")
