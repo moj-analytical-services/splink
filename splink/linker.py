@@ -964,6 +964,7 @@ class Linker:
         self._enqueue_df_concat_with_tf(pipeline)
         concat_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        pipeline = SQLPipeline()
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
