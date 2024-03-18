@@ -97,7 +97,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         from __splink__df_concat_with_tf
         group by source_dataset
         """
-        pipeline.enqueue_sqln(sql, "__splink__df_concat_count")
+        pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         counts_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         result = counts_dataframe.as_record_dict()
         counts_dataframe.drop_table_from_database_and_remove_from_cache()
