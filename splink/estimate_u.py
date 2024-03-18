@@ -150,8 +150,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         training_linker, "repartition_after_blocking", False
     )
     if repartition_after_blocking:
-        df_blocked = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        pipeline = CTEPipeline(input_dataframes=[df_blocked], reusable=False)
+        pipeline = pipeline.break_lineage(db_api)
 
     sql = compute_comparison_vector_values_sql(
         settings_obj._columns_to_select_for_comparison_vector_values
