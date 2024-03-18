@@ -505,6 +505,7 @@ class Linker:
         return concat_df
 
     def _initialise_df_concat_with_tf(self, materialise=True):
+        # TODO: Eliminate all uses of this
         cache = self._intermediate_table_cache
         nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
@@ -534,6 +535,33 @@ class Linker:
                 cache["__splink__df_concat_with_tf"] = nodes_with_tf
 
         return nodes_with_tf
+
+    def _enqueue_df_concat_with_tf(self, pipeline: CTEPipeline, materialise=True):
+
+        cache = self._intermediate_table_cache
+
+        if "__splink__df_concat_with_tf" in cache:
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline.append_input_dataframe(nodes_with_tf)
+            return pipeline
+
+        # In duckdb, calls to random() in a CTE pipeline cause problems:
+        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+        if self._settings_obj.salting_required:
+            materialise = True
+
+        sql = vertically_concatenate_sql(self)
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+        sqls = compute_all_term_frequencies_sqls(self)
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        if materialise:
+            nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            cache["__splink__df_concat_with_tf"] = nodes_with_tf
+            pipeline = CTEPipeline(input_dataframes=[nodes_with_tf])
+
+        return pipeline
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name

@@ -1,10 +1,11 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 import sqlglot
 from sqlglot.errors import ParseError
 from sqlglot.expressions import Table
 
+from .misc import ensure_is_iterable
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -38,15 +39,27 @@ class CTE:
             f" and has output table name: {self.output_table_name}"
         )
 
+    def __repr__(self) -> str:
+        return self.cte_description
+
 
 class CTEPipeline:
-    def __init__(self):
+    def __init__(self, input_dataframes: Optional[List[SplinkDataFrame]] = None):
         self.queue = []
-        self.input_dataframes: List[SplinkDataFrame] = []
+
+        if input_dataframes is None:
+            self.input_dataframes: List[SplinkDataFrame] = []
+        else:
+            input_dataframes = ensure_is_iterable(input_dataframes)
+            self.input_dataframes: List[SplinkDataFrame] = input_dataframes
 
     def enqueue_sql(self, sql, output_table_name):
         sql_task = CTE(sql, output_table_name)
         self.queue.append(sql_task)
+
+    def enqueue_list_of_sqls(self, sql_list: List[dict]):
+        for sql_dict in sql_list:
+            self.enqueue_sql(sql_dict["sql"], sql_dict["output_table_name"])
 
     def append_input_dataframe(self, df: SplinkDataFrame):
         self.input_dataframes.append(df)
