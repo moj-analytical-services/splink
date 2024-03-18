@@ -208,7 +208,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             splink_dataframe = self.debug_pipeline(pipeline)
             return splink_dataframe
 
-        sql_gen = pipeline.generate_cte_pipeline_sql([])
+        sql_gen = pipeline.generate_cte_pipeline_sql()
         output_tablename_templated = pipeline.output_table_name
 
         splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
