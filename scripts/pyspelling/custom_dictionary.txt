@@ -3,8 +3,13 @@ APIs
 backend
 backends
 Bayes
+cardinality
+Cartesian
 checkpointed
 config
+Conda
+CPUs
+csv
 Damerau
 dataframe
 dataset
@@ -14,11 +19,6 @@ deduplicates
 deduplication
 discoverable
 DuckDB
-cardinality
-Cartesian
-Conda
-CPUs
-csv
 Fellegi
 formatter
 Jaccard
@@ -52,5 +52,4 @@ tradeoff
 transpilation
 Transpilation
 unlinkables
-winkler
 Winkler
