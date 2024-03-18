@@ -116,7 +116,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         sample_size = total_nodes
 
     # Grab __splink__df_concat_with_tf from cache
-    df_tf = training_linker._intermediate_table_cache["__splink__df_concat_with_tf"]
+    df_tf = training_linker._intermediate_table_cache.get_with_logging(
+        "__splink__df_concat_with_tf"
+    )
     pipeline = CTEPipeline(input_dataframes=[df_tf], reusable=False)
 
     sql = f"""
