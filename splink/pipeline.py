@@ -83,7 +83,7 @@ class CTEPipeline:
             for i, part in enumerate(parts):
                 logger.log(7, f"    Pipeline part {i+1}: {part.cte_description}")
 
-    def ctes_pipeline(self):
+    def ctes_pipeline(self) -> List[CTE]:
         """Common table expressions"""
         return self._input_dataframes_as_cte() + self.queue
 

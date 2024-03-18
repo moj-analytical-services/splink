@@ -202,10 +202,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for task in pipeline.generate_pipeline_parts(input_dataframes):
+            for df in input_dataframes:
+                pipeline.append_input_dataframe(df)
+            for cte in pipeline.ctes_pipeline():
                 start_time = time.time()
-                output_tablename = task.output_table_name
-                sql = task.sql
+                output_tablename = cte.output_table_name
+                sql = cte.sql
                 print("------")  # noqa: T201
                 print(  # noqa: T201
                     f"--------Creating table: {output_tablename}--------"
