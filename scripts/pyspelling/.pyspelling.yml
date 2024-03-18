@@ -1,15 +1,20 @@
 
-
 matrix:
-- name: Markdown docs
-  sources:
-  - docs/**/*.md
-  aspell:
-    lang: en
-    d: en_GB
-    mode: markdown
-  dictionary:
-    wordlists:
-    - scripts/pyspelling/custom_dictionary.txt
-    output: scripts/dictionary.dic
-
+  - name: Markdown docs
+    sources:
+      - docs/charts/**/*.md
+    aspell:
+      lang: en
+      d: en_GB
+      mode: markdown
+    dictionary:
+      wordlists:
+        - scripts/pyspelling/custom_dictionary.txt
+      output: scripts/dictionary.dic
+    pipeline:
+      - pyspelling.filters.context:
+          # context_visible_first: true
+          delimiters:
+            # Ignore content between ::cards:: and ::/cards::
+            - open: '::cards::'
+              close: '::/cards::'
