@@ -986,7 +986,7 @@ class Linker:
         deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
-        self._deterministic_link_mode = False
+
         return deterministic_link_df
 
     def estimate_u_using_random_sampling(
