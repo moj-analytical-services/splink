@@ -86,11 +86,11 @@ class CTEPipeline:
         final_query = pipeline[-1]
 
         with_ctes = [f"{p.output_table_name} as ({p.sql})" for p in with_ctes]
-        with_ctes = ", \n".join(with_ctes)
+        with_ctes = ", \n\n".join(with_ctes)
         if with_ctes:
-            with_ctes = f"\nWITH {with_ctes} "
+            with_ctes = f"\nWITH\n\n{with_ctes} "
 
-        final_sql = with_ctes + final_query.sql
+        final_sql = with_ctes + "\n" + final_query.sql
 
         return final_sql
 
