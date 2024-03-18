@@ -104,11 +104,9 @@ class CTEPipeline:
         """Common table expressions"""
         return self._input_dataframes_as_cte() + self.queue
 
-    def generate_cte_pipeline_sql(self, input_dataframes: List[SplinkDataFrame]):
+    def generate_cte_pipeline_sql(self):
         if self._spent:
             raise ValueError("This pipeline has already been used")
-        for df in input_dataframes:
-            self.append_input_dataframe(df)
 
         pipeline = self.ctes_pipeline()
 
