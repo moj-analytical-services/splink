@@ -19,7 +19,7 @@ from .expectation_maximisation import expectation_maximisation
 from .input_column import InputColumn
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 from .settings import (
     ComparisonAndLevelDict,
     CoreModelSettings,
@@ -177,7 +177,7 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        pipeline = SQLPipeline()
+        pipeline = CTEPipeline()
         nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
 
         sqls = block_using_rules_sqls(

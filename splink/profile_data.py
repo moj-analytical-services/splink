@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +249,7 @@ def profile_columns(
         column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
 
-    pipeline = SQLPipeline()
+    pipeline = CTEPipeline()
 
     cols_to_select = ", ".join(input_columns)
     template = """

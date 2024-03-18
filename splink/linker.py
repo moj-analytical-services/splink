@@ -97,7 +97,7 @@ from .misc import (
 )
 from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 from .predict import (
     predict_from_comparison_vectors_sqls_using_settings,
     predict_from_comparison_vectors_sqls,
@@ -201,7 +201,7 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self._pipeline = SQLPipeline()
+        self._pipeline = CTEPipeline()
         self.db_api = database_api
 
         # TODO: temp hack for compat

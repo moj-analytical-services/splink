@@ -12,7 +12,7 @@ from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPI
 from .input_column import InputColumn
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
@@ -263,7 +263,7 @@ def expectation_maximisation(
     logger.info("")  # newline
 
     # pipeline to execute the SQL we need to
-    pipeline = SQLPipeline()
+    pipeline = CTEPipeline()
 
     if estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(core_model_settings.comparisons)

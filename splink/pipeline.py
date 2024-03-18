@@ -1,14 +1,16 @@
 import logging
-from copy import deepcopy
+from typing import List
 
 import sqlglot
 from sqlglot.errors import ParseError
 from sqlglot.expressions import Table
 
+from .splink_dataframe import SplinkDataFrame
+
 logger = logging.getLogger(__name__)
 
 
-class SQLTask:
+class CTE:
     def __init__(self, sql, output_table_name):
         self.sql = sql
         self.output_table_name = output_table_name
@@ -27,34 +29,36 @@ class SQLTask:
         return list(table_names)
 
     @property
-    def task_description(self):
+    def cte_description(self):
         uses_tables = ", ".join(self._uses_tables)
         uses_tables = f" {uses_tables} "
 
         return (
-            f"Task reads tables [{uses_tables}]"
+            f"CTE reads tables [{uses_tables}]"
             f" and has output table name: {self.output_table_name}"
         )
 
 
-class SQLPipeline:
+class CTEPipeline:
     def __init__(self):
         self.queue = []
+        self.input_dataframes: List[SplinkDataFrame] = []
 
     def enqueue_sql(self, sql, output_table_name):
-        sql_task = SQLTask(sql, output_table_name)
+        sql_task = CTE(sql, output_table_name)
         self.queue.append(sql_task)
 
-    def generate_pipeline_parts(self, input_dataframes):
-        parts = deepcopy(self.queue)
-        for df in input_dataframes:
-            if not df.physical_and_template_names_equal:
-                sql = f"select * from {df.physical_name}"
-                task = SQLTask(sql, df.templated_name)
-                parts.insert(0, task)
-        return parts
+    def append_input_dataframe(self, df: SplinkDataFrame):
+        self.input_dataframes.append(df)
 
-    def _log_pipeline(self, parts, input_dataframes):
+    def _input_dataframes_as_cte(self):
+        return [
+            CTE(f"\nselect * from {df.physical_name}", df.templated_name)
+            for df in self.input_dataframes
+            if not df.physical_and_template_names_equal
+        ]
+
+    def _log_pipeline(self, parts, input_dataframes: List[SplinkDataFrame]):
         if logger.isEnabledFor(7):
             inputs = ", ".join(df.physical_name for df in input_dataframes)
             logger.log(
@@ -64,22 +68,29 @@ class SQLPipeline:
             )
 
             for i, part in enumerate(parts):
-                logger.log(7, f"    Pipeline part {i+1}: {part.task_description}")
+                logger.log(7, f"    Pipeline part {i+1}: {part.cte_description}")
 
-    def generate_pipeline(self, input_dataframes):
-        parts = self.generate_pipeline_parts(input_dataframes)
+    def ctes_pipeline(self):
+        """Common table expressions"""
+        return self._input_dataframes_as_cte() + self.queue
 
-        self._log_pipeline(parts, input_dataframes)
+    def generate_cte_pipeline_sql(self, input_dataframes: List[SplinkDataFrame]):
+        for df in input_dataframes:
+            self.append_input_dataframe(df)
 
-        with_parts = parts[:-1]
-        last_part = parts[-1]
+        pipeline = self.ctes_pipeline()
 
-        with_parts = [f"{p.output_table_name} as ({p.sql})" for p in with_parts]
-        with_parts = ", \n".join(with_parts)
-        if with_parts:
-            with_parts = f"WITH {with_parts} "
+        self._log_pipeline(pipeline, input_dataframes)
 
-        final_sql = with_parts + last_part.sql
+        with_ctes = pipeline[:-1]
+        final_query = pipeline[-1]
+
+        with_ctes = [f"{p.output_table_name} as ({p.sql})" for p in with_ctes]
+        with_ctes = ", \n".join(with_ctes)
+        if with_ctes:
+            with_ctes = f"\nWITH {with_ctes} "
+
+        final_sql = with_ctes + final_query.sql
 
         return final_sql
 
@@ -89,3 +100,4 @@ class SQLPipeline:
 
     def reset(self):
         self.queue = []
+        self.input_dataframes = []

@@ -17,6 +17,7 @@ from .misc import (
     ascii_uid,
     parse_duration,
 )
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -179,7 +180,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def sql_pipeline_to_splink_dataframe(
         self,
-        pipeline,
+        pipeline: CTEPipeline,
         input_dataframes: List[SplinkDataFrame] = [],
         use_cache=True,
     ) -> SplinkDataFrame:
@@ -190,7 +191,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
 
         if not self.debug_mode:
-            sql_gen = pipeline.generate_pipeline(input_dataframes)
+            sql_gen = pipeline.generate_cte_pipeline_sql(input_dataframes)
             output_tablename_templated = pipeline.output_table_name
 
             splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
