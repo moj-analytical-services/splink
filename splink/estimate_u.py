@@ -15,6 +15,7 @@ from .m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
+from .pipeline import CTEPipeline
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -54,18 +55,22 @@ def _proportion_sample_size_link_only(
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
+    pipeline = CTEPipeline(reusable=False)
 
-    nodes_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = linker._enqueue_df_concat_with_tf(pipeline)
 
     original_settings_obj = linker._settings_obj
 
-    training_linker = deepcopy(linker)
+    training_linker: Linker = deepcopy(linker)
 
     training_linker._train_u_using_random_sample_mode = True
 
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
+
+    db_api = training_linker.db_api
+
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
             # TODO: ComparisonLevel: manage access
@@ -77,11 +82,11 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         from __splink__df_concat_with_tf
         """
 
-        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
-        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
+        pipeline.enqueue_sql(sql, "__splink__df_concat_count")
+        count_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database_and_remove_from_cache()
+        result = count_dataframe.as_record_dict()
+        count_dataframe.drop_table_from_database_and_remove_from_cache()
         total_nodes = result[0]["count"]
         sample_size = _rows_needed_for_n_pairs(max_pairs)
         proportion = sample_size / total_nodes
@@ -92,10 +97,10 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         from __splink__df_concat_with_tf
         group by source_dataset
         """
-        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
-        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
-        result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database_and_remove_from_cache()
+        pipeline.enqueue_sqln(sql, "__splink__df_concat_count")
+        counts_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        result = counts_dataframe.as_record_dict()
+        counts_dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
 
         proportion, sample_size = _proportion_sample_size_link_only(
@@ -110,13 +115,19 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     if sample_size > total_nodes:
         sample_size = total_nodes
 
+    # Grab __splink__df_concat_with_tf from cache
+    df_tf = training_linker._intermediate_table_cache["__splink__df_concat_with_tf"]
+    pipeline = CTEPipeline(input_dataframes=[df_tf], reusable=False)
+
     sql = f"""
     select *
     from __splink__df_concat_with_tf
     {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
-    training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
-    df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
+
+    pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
+    df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    pipeline = CTEPipeline(input_dataframes=[df_sample], reusable=False)
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
@@ -130,38 +141,36 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         settings_obj._blocking_rules_to_generate_predictions = []
 
     sql_infos = block_using_rules_sqls(training_linker)
-    for sql_info in sql_infos:
-        training_linker._enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
+    pipeline.enqueue_list_of_sqls(sql_infos)
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(
         training_linker, "repartition_after_blocking", False
     )
     if repartition_after_blocking:
-        df_blocked = training_linker._execute_sql_pipeline([df_sample])
-        sample_dataframe = [df_blocked]
-    else:
-        sample_dataframe = [df_sample]
+        df_blocked = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        pipeline = CTEPipeline(input_dataframes=[df_blocked], reusable=False)
 
     sql = compute_comparison_vector_values_sql(
         settings_obj._columns_to_select_for_comparison_vector_values
     )
 
-    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+    pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, cast(0.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
 
-    training_linker._enqueue_sql(sql, "__splink__df_predict")
+    pipeline.enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(
         estimate_without_term_frequencies=False,
         comparisons=settings_obj.comparisons,
     )
-    linker._enqueue_sql(sql, "__splink__m_u_counts")
-    df_params = training_linker._execute_sql_pipeline(sample_dataframe)
+
+    pipeline.enqueue_sql(sql, "__splink__m_u_counts")
+    df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)

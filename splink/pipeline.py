@@ -44,7 +44,9 @@ class CTE:
 
 
 class CTEPipeline:
-    def __init__(self, input_dataframes: Optional[List[SplinkDataFrame]] = None):
+    def __init__(
+        self, input_dataframes: Optional[List[SplinkDataFrame]] = None, reusable=True
+    ):
         self.queue: List[CTE] = []
 
         if input_dataframes is None:
@@ -52,7 +54,14 @@ class CTEPipeline:
         else:
             self.input_dataframes = ensure_is_list(input_dataframes)
 
+        # Temporary flag so in new code I make sure i don't reuse pipelines
+        # Can be removed once all sql execution uses fresh CTEPipelines
+        self._reusable = reusable
+        self._spent = False
+
     def enqueue_sql(self, sql, output_table_name):
+        if self._spent:
+            raise ValueError("This pipeline has already been used")
         sql_task = CTE(sql, output_table_name)
         self.queue.append(sql_task)
 
@@ -70,9 +79,9 @@ class CTEPipeline:
             if not df.physical_and_template_names_equal
         ]
 
-    def _log_pipeline(self, parts, input_dataframes: List[SplinkDataFrame]):
+    def _log_pipeline(self, parts):
         if logger.isEnabledFor(7):
-            inputs = ", ".join(df.physical_name for df in input_dataframes)
+            inputs = ", ".join(df.physical_name for df in self.input_dataframes)
             logger.log(
                 7,
                 f"SQL pipeline was passed inputs [{inputs}] and output "
@@ -87,12 +96,14 @@ class CTEPipeline:
         return self._input_dataframes_as_cte() + self.queue
 
     def generate_cte_pipeline_sql(self, input_dataframes: List[SplinkDataFrame]):
+        if self._spent:
+            raise ValueError("This pipeline has already been used")
         for df in input_dataframes:
             self.append_input_dataframe(df)
 
         pipeline = self.ctes_pipeline()
 
-        self._log_pipeline(pipeline, input_dataframes)
+        self._log_pipeline(pipeline)
 
         with_ctes_pipeline = pipeline[:-1]
         final_query = pipeline[-1]
