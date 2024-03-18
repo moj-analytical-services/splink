@@ -5,7 +5,7 @@ import sqlglot
 from sqlglot.errors import ParseError
 from sqlglot.expressions import Table
 
-from .misc import ensure_is_iterable
+from .misc import ensure_is_list
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -45,13 +45,12 @@ class CTE:
 
 class CTEPipeline:
     def __init__(self, input_dataframes: Optional[List[SplinkDataFrame]] = None):
-        self.queue = []
+        self.queue: List[CTE] = []
 
         if input_dataframes is None:
-            self.input_dataframes: List[SplinkDataFrame] = []
+            self.input_dataframes = []
         else:
-            input_dataframes = ensure_is_iterable(input_dataframes)
-            self.input_dataframes: List[SplinkDataFrame] = input_dataframes
+            self.input_dataframes = ensure_is_list(input_dataframes)
 
     def enqueue_sql(self, sql, output_table_name):
         sql_task = CTE(sql, output_table_name)
@@ -95,15 +94,15 @@ class CTEPipeline:
 
         self._log_pipeline(pipeline, input_dataframes)
 
-        with_ctes = pipeline[:-1]
+        with_ctes_pipeline = pipeline[:-1]
         final_query = pipeline[-1]
 
-        with_ctes = [f"{p.output_table_name} as ({p.sql})" for p in with_ctes]
-        with_ctes = ", \n\n".join(with_ctes)
-        if with_ctes:
-            with_ctes = f"\nWITH\n\n{with_ctes} "
+        with_ctes = [f"{p.output_table_name} as ({p.sql})" for p in with_ctes_pipeline]
+        with_ctes_str = ", \n\n".join(with_ctes)
+        if with_ctes_str:
+            with_ctes_str = f"\nWITH\n\n{with_ctes_str} "
 
-        final_sql = with_ctes + "\n" + final_query.sql
+        final_sql = with_ctes_str + "\n" + final_query.sql
 
         return final_sql
 
