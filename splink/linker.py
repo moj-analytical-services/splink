@@ -970,21 +970,23 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
-
+        pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
 
-        concat_with_tf = self._initialise_df_concat_with_tf()
+        pipeline = self._enqueue_df_concat_with_tf(pipeline)
+
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+        self._deterministic_link_mode = False
         return deterministic_link_df
 
     def estimate_u_using_random_sampling(
