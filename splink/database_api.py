@@ -148,13 +148,42 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             if splink_dataframe is not None:
                 return splink_dataframe
 
-        if self.debug_mode:
-            print(sql)  # noqa: T201
+        splink_dataframe = self._sql_to_splink_dataframe(
+            sql, output_tablename_templated, table_name_hash
+        )
+
+        splink_dataframe.created_by_splink = True
+        splink_dataframe.sql_used_to_create = sql
+
+        physical_name = splink_dataframe.physical_name
+
+        self._intermediate_table_cache[physical_name] = splink_dataframe
+
+        return splink_dataframe
+
+    def debug_pipeline(self, pipeline):
+
+        for cte in pipeline.ctes_pipeline():
+            start_time = time.time()
+            output_tablename = cte.output_table_name
+            sql = cte.sql
+            print("------")  # noqa: T201
+            print(f"--------Creating table: {output_tablename}--------")  # noqa: T201
+
             splink_dataframe = self._sql_to_splink_dataframe(
                 sql,
-                output_tablename_templated,
-                output_tablename_templated,
+                output_tablename,
+                output_tablename,
             )
+
+            splink_dataframe.created_by_splink = True
+            splink_dataframe.sql_used_to_create = sql
+
+            physical_name = splink_dataframe.physical_name
+
+            self._intermediate_table_cache[physical_name] = splink_dataframe
+
+            print(sql)  # noqa: T201
 
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
@@ -163,18 +192,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 display(df_pd)
             except ModuleNotFoundError:
                 print(df_pd)  # noqa: T201
-
-        else:
-            splink_dataframe = self._sql_to_splink_dataframe(
-                sql, output_tablename_templated, table_name_hash
-            )
-
-        splink_dataframe.created_by_splink = True
-        splink_dataframe.sql_used_to_create = sql
-
-        physical_name = splink_dataframe.physical_name
-
-        self._intermediate_table_cache[physical_name] = splink_dataframe
+            run_time = parse_duration(time.time() - start_time)
+            print(f"Step ran in: {run_time}")  # noqa: T201
 
         return splink_dataframe
 
@@ -189,37 +208,21 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self.debug_mode controls whether this is CTE or individual tables.
         pipeline is resest upon completion
         """
+        for df in input_dataframes:
+            pipeline.append_input_dataframe(df)
 
-        if not self.debug_mode:
-            sql_gen = pipeline.generate_cte_pipeline_sql(input_dataframes)
-            output_tablename_templated = pipeline.output_table_name
+        if self.debug_mode:
+            splink_dataframe = self.debug_pipeline(pipeline)
+            return splink_dataframe
 
-            splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
-                sql_gen,
-                output_tablename_templated,
-                use_cache,
-            )
-        else:
-            # In debug mode, we do not pipeline the sql and print the
-            # results of each part of the pipeline
-            for df in input_dataframes:
-                pipeline.append_input_dataframe(df)
-            for cte in pipeline.ctes_pipeline():
-                start_time = time.time()
-                output_tablename = cte.output_table_name
-                sql = cte.sql
-                print("------")  # noqa: T201
-                print(  # noqa: T201
-                    f"--------Creating table: {output_tablename}--------"
-                )
+        sql_gen = pipeline.generate_cte_pipeline_sql()
+        output_tablename_templated = pipeline.output_table_name
 
-                splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
-                    sql,
-                    output_tablename,
-                    use_cache=False,
-                )
-                run_time = parse_duration(time.time() - start_time)
-                print(f"Step ran in: {run_time}")  # noqa: T201
+        splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+            sql_gen,
+            output_tablename_templated,
+            use_cache,
+        )
 
         # if there is an error the pipeline will not reset, leaving caller to handle
         pipeline.reset()
