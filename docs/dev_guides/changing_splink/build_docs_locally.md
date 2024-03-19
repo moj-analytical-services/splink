@@ -6,7 +6,7 @@ You cannot skip this step, because some Splink docs Markdown is auto-generated u
 
 Once you've done that,
 to rapidly build the documentation and immediately see changes you've made you can use [this script](https://github.com/moj-analytical-services/splink/blob/master/scripts/make_docs_locally.sh)
-**outside your Splink development environment**:
+**outside your Poetry virtual environment**:
 
 ```sh
 source scripts/make_docs_locally.sh
