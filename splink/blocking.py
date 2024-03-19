@@ -10,6 +10,7 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
@@ -398,7 +399,13 @@ def materialise_exploded_id_tables(linker: Linker):
     ]
     exploded_tables = []
 
-    input_dataframe = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline(reusable=False)
+    linker._enqueue_df_concat_with_tf(pipeline)
+    input_dataframe = linker._intermediate_table_cache.get_with_logging(
+        "__splink__df_concat_with_tf"
+    )
+
+    pipeline = CTEPipeline([input_dataframe], reusable=False)
     input_colnames = {col.name for col in input_dataframe.columns}
 
     for br in exploding_blocking_rules:
@@ -412,7 +419,7 @@ def materialise_exploded_id_tables(linker: Linker):
             list(input_colnames.difference(arrays_to_explode_quoted)),
         )
 
-        linker._enqueue_sql(
+        pipeline.enqueue_sql(
             expl_sql,
             "__splink__df_concat_with_tf_unnested",
         )
@@ -422,9 +429,9 @@ def materialise_exploded_id_tables(linker: Linker):
 
         sql = br.marginal_exploded_id_pairs_table_sql(linker, br)
 
-        linker._enqueue_sql(sql, table_name)
+        pipeline.enqueue_sql(sql, table_name)
 
-        marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
+        marginal_ids_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         br.exploded_id_pair_table = marginal_ids_table
         exploded_tables.append(marginal_ids_table)
     return exploding_blocking_rules

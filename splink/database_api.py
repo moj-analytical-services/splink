@@ -190,8 +190,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         pipeline is resest upon completion
         """
 
+        for df in input_dataframes:
+            pipeline.append_input_dataframe(df)
+
         if not self.debug_mode:
-            sql_gen = pipeline.generate_cte_pipeline_sql(input_dataframes)
+
+            sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
             splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
@@ -202,8 +206,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for df in input_dataframes:
-                pipeline.append_input_dataframe(df)
             for cte in pipeline.ctes_pipeline():
                 start_time = time.time()
                 output_tablename = cte.output_table_name
