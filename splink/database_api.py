@@ -176,6 +176,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 output_tablename,
             )
 
+            splink_dataframe.created_by_splink = True
+            splink_dataframe.sql_used_to_create = sql
+
+            physical_name = splink_dataframe.physical_name
+
+            self._intermediate_table_cache[physical_name] = splink_dataframe
+
             print(sql)  # noqa: T201
 
             df_pd = splink_dataframe.as_pandas_dataframe()
