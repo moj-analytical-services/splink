@@ -6,7 +6,8 @@
 [![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
-
+> [!IMPORTANT]
+> Development has begun on Splink 4 on the `splink4_dev` branch.  We are no longer accepting new features in Splink 3. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/03/19/splink4.html)
 
 # Fast, accurate and scalable probabilistic data linkage
 
