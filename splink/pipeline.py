@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import sqlglot
 from sqlglot.errors import ParseError
@@ -9,6 +9,9 @@ from .misc import ensure_is_list
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from .database_api import DatabaseAPI
 
 
 class CTE:
@@ -68,6 +71,12 @@ class CTEPipeline:
     def enqueue_list_of_sqls(self, sql_list: List[dict]):
         for sql_dict in sql_list:
             self.enqueue_sql(sql_dict["sql"], sql_dict["output_table_name"])
+
+    def break_lineage(self, db_api: "DatabaseAPI") -> "CTEPipeline":
+        df = db_api.sql_pipeline_to_splink_dataframe(self)
+        self._spent = True
+        new_pipeline = CTEPipeline(input_dataframes=[df], reusable=self._reusable)
+        return new_pipeline
 
     def append_input_dataframe(self, df: SplinkDataFrame):
         self.input_dataframes.append(df)

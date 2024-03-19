@@ -557,6 +557,8 @@ class Linker:
         pipeline.enqueue_list_of_sqls(sqls)
 
         if materialise:
+            # Can't use break lineage here because we need nodes_with_tf
+            # so it can be explicitly set to the named cache
             nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
             cache["__splink__df_concat_with_tf"] = nodes_with_tf
             pipeline = CTEPipeline(input_dataframes=[nodes_with_tf])
@@ -1334,8 +1336,7 @@ class Linker:
 
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
-            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            pipeline.append_input_dataframe(df_blocked)
+            pipeline = pipeline.break_lineage(self.db_api)
 
         sql = compute_comparison_vector_values_sql(
             self._settings_obj._columns_to_select_for_comparison_vector_values
