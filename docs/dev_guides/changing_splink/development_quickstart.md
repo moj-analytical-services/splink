@@ -180,7 +180,7 @@ and then `poetry shell`.
 
 ### Step 5: Checking that it worked
 
-If you have installed all the dependencies, including the optional dependencies,
+If you have installed all the dependencies, including PostgreSQL,
 you should be able to run the following command without error (will take about 10 minutes):
 
 ```sh
@@ -191,7 +191,7 @@ This runs all the Splink tests across the default DuckDB and Spark backends,
 and runs some integration tests across the rest of the backends except for Athena,
 which can't run locally.
 
-If you haven't installed the optional dependencies, try this:
+If you haven't installed PostgreSQL, try this:
 
 ```sh
 pytest tests/ --ignore tests/test_full_example_athena.py --ignore tests/test_full_example_postgres.py
