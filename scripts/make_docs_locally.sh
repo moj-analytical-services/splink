@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Need to update generated content separately using poetry env:
-# python scripts/json_schema_to_md_doc.py
-# python scripts/generate_dialect_comparison_docs.py
+cd "$(dirname "$0")"
+cd ..
 
-if [[ "$VIRTUAL_ENV" != "$cwd/docs-venv" ]]; then
+set -e
+set -x
+
+if [[ "$VIRTUAL_ENV" != "$(pwd)/docs-venv" ]]; then
     if [ -n "$VIRTUAL_ENV" ]; then
         deactivate
     else    
@@ -16,14 +18,20 @@ if [[ "$VIRTUAL_ENV" != "$cwd/docs-venv" ]]; then
     pip install -r scripts/docs-requirements.txt
 fi
 
-# if you haven't run generate_dialect_comparison_docs.py, then install the splink dependencies and run
+# Need to update generated content separately using main Splink env
 if [[ ! -f "docs/includes/generated_files/comparison_level_library_dialect_table.md" ]]
 then
-    pip install poetry
-    poetry install
-    python3 scripts/generate_dialect_comparison_docs.py
-    python3 scripts/generate_dataset_docs.py
+    if [ -n "$VIRTUAL_ENV" ]; then
+        deactivate
+    else    
+        :
+    fi
+    poetry run python3 scripts/generate_dialect_comparison_docs.py
+    poetry run python3 scripts/generate_dataset_docs.py
 fi
 
+if [[ "$VIRTUAL_ENV" != "$(pwd)/docs-venv" ]]; then
+    source docs-venv/bin/activate
+fi
 # can remove verbose flag if needed
 mkdocs serve -v
