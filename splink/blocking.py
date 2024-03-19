@@ -401,14 +401,14 @@ def materialise_exploded_id_tables(linker: Linker):
 
     pipeline = CTEPipeline(reusable=False)
     linker._enqueue_df_concat_with_tf(pipeline)
-    input_dataframe = linker._intermediate_table_cache.get_with_logging(
+    nodes_with_tf = linker._intermediate_table_cache.get_with_logging(
         "__splink__df_concat_with_tf"
     )
 
-    pipeline = CTEPipeline([input_dataframe], reusable=False)
-    input_colnames = {col.name for col in input_dataframe.columns}
+    input_colnames = {col.name for col in nodes_with_tf.columns}
 
     for br in exploding_blocking_rules:
+        pipeline = CTEPipeline([nodes_with_tf], reusable=False)
         arrays_to_explode_quoted = [
             InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
             for colname in br.array_columns_to_explode
