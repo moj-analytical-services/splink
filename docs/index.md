@@ -53,7 +53,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Support
 
-To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./dev_guides/CONTRIBUTING.md).
 
 ## Use Cases
 

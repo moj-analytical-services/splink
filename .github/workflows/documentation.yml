@@ -12,6 +12,7 @@ on:
       # files that affect the docs build:
       - docs/**
       - CONTRIBUTING.md
+      - mkdocs.yml
 
   workflow_dispatch:
 

@@ -27,7 +27,7 @@ then clone your fork to your computer.
 Then, you can edit the documentation in the [docs folder](https://github.com/moj-analytical-services/splink/tree/master/docs)
 (and API documentation, which can be found as docstrings in the code itself) locally.
 To see what the docs will look like with your changes, you can
-[build the docs site locally](./docs/dev_guides/changing_splink/build_docs_locally.md).
+[build the docs site locally](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/build_docs_locally.html).
 When you are happy with your changes, commit and push them to your fork, then
 create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork).
 
@@ -46,13 +46,14 @@ In either case, we ask that you assign yourself to the relevant issue and open u
 
 You can always add further PRs to build extra functionality. Starting out with a minimum viable product and iterating makes for better software (in our opinion). It also helps get features out into the wild sooner.
 
-To get set up for development locally, see the [development quickstart](./docs/dev_guides/changing_splink/development_quickstart.md).
+To get set up for development locally, see the [development quickstart](https://moj-analytical-services.github.io/splink/dev_guides/dev_guides/changing_splink/development_quickstart.html).
 
 ## Best practices
 
 When making code changes, we recommend:
-* [Adding tests](./docs/dev_guides/changing_splink/testing.md) to ensure your code works as expected. These will be run through GitHub Actions when a PR is opened.
-* [Linting](./docs/dev_guides/changing_splink/lint_and_format.md) to ensure that code is styled consistently.
+
+- [Adding tests](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/testing.html) to ensure your code works as expected. These will be run through GitHub Actions when a PR is opened.
+- [Linting](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/lint_and_format.html) to ensure that code is styled consistently.
 
 ### Branching Strategy
 
