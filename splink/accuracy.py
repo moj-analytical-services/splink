@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
+from .pipeline import CTEPipeline
 from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
@@ -166,23 +167,19 @@ def _select_found_by_blocking_rules(linker: "Linker"):
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-    # Read from the cache or generate
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline(reusable=False)
+    pipeline = linker._enqueue_df_concat_with_tf(pipeline)
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
-
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    pipeline.enqueue_list_of_sqls(sqls)
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    df_truth_space_table = linker._execute_sql_pipeline([concat_with_tf])
+    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
