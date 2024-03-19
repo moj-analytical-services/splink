@@ -37,12 +37,9 @@ def _is_exact_match(sql_syntax_tree):
     if signature != sqlglot_tree_signature(sqlglot.parse_one("col_l = col_r")):
         return False
 
-    identifiers = []
-    for tup in sql_syntax_tree.walk():
-        subtree = tup[0]
-        if type(subtree) is Identifier:
-            identifiers.append(subtree.this[:-2])
-    if identifiers[0] == identifiers[1]:
+    identifiers = list(sql_syntax_tree.find_all(Identifier))
+    idents_truncated = [i.this[:-2] for i in identifiers]
+    if idents_truncated[0] == idents_truncated[1]:
         return True
     else:
         return False
