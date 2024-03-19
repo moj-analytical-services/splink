@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: master
+          ref: splink4_dev
       - name: Install poetry
         run: pipx install poetry
       - uses: actions/setup-python@v4
@@ -32,7 +32,3 @@ jobs:
           # feed exact file for ease
           file_pattern: 'duckdbless_requirements.txt'
           repository: ./scripts
-      - name: Update binder_branch branch so binder points to current master
-        run: |
-          git branch -f binder_branch master
-          git push origin binder_branch
