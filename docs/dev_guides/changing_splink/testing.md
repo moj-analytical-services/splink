@@ -27,11 +27,6 @@ or alternatively
 pytest tests/
 ```
 
-!!! information Note
-
-    If you do not have an AWS account, or have not set up Splink to use it, you will need to add
-    `--ignore tests/test_full_example_athena.py` to every `pytest` command you run.
-
 To run a single test file, append the filename to the `tests/` folder call, for example:
 ```sh
 pytest tests/test_u_train.py

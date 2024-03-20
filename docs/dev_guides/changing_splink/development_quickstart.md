@@ -191,7 +191,7 @@ If you have installed all the dependencies, including PostgreSQL,
 you should be able to run the following command without error (will take about 10 minutes):
 
 ```sh
-pytest tests/ --ignore tests/test_full_example_athena.py
+pytest tests/
 ```
 
 This runs all the Splink tests across the default DuckDB and Spark backends,
@@ -201,7 +201,7 @@ which can't run locally.
 If you haven't installed PostgreSQL, try this:
 
 ```sh
-pytest tests/ --ignore tests/test_full_example_athena.py --ignore tests/test_full_example_postgres.py
+pytest tests/ --ignore tests/test_full_example_postgres.py
 ```
 
 ### Step 6: Visual Studio Code (optional)

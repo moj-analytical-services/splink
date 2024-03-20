@@ -24,7 +24,7 @@ try:
     aws_connection_valid = response
     BOTO3_SESSION = boto3.Session(region_name="eu-west-1")
     aws_dependencies_available = True
-except ImportError:
+except: #noqa
     # If InvalidTable cannot be imported, we need to create a temp value
     # to prevent an ImportError
     class InvalidTable(Exception):
