@@ -67,9 +67,8 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs.hooks:on_page_markdown_hook"
+hooks:
+  - docs/hooks/__init__.py
 
 markdown_extensions:
   - abbr
