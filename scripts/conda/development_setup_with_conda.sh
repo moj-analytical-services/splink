@@ -7,8 +7,11 @@ set -x
 
 if ! command -v mamba &> /dev/null
 then
+    # Instructions found here: https://github.com/conda-forge/miniforge?tab=readme-ov-file#downloading-the-installer-as-part-of-a-ci-pipeline
     curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
-    bash Miniforge3-$(uname)-$(uname -m).sh -b
+    bash Miniforge3-$(uname)-$(uname -m).sh -b -p $HOME/miniforge_splink
+    source "${HOME}/miniforge_splink/etc/profile.d/conda.sh"
+    source "${HOME}/miniforge_splink/etc/profile.d/mamba.sh"
     mamba config --set auto_activate_base false
     rm ./Miniforge3-$(uname)-$(uname -m).sh
 fi
