@@ -103,9 +103,8 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 
 ??? tip "Running tests with docker 🐳"
 
-    Testing Splink against a specific version of Python can be useful
-    if you're using py > 3.9.10 (which is currently in use in our tests github action)
-    and need to run a secondary set of tests.
+    Testing Splink against a specific version of Python, especially newer versions not included in our GitHub Actions, is vital for identifying compatibility issues 
+    early and reviewing errors reported by users.
 
     The easiest way to do this is to create an isolated conda environment according to the
     instructions in the [development quickstart](./development_quickstart.md).
