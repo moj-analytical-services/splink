@@ -119,6 +119,7 @@ and the teardown script each time you want to stop it:
 ```
 
 Included in the docker-compose file is a [pgAdmin](https://www.pgadmin.org/) container to allow easy exploration of the database as you work, which can be accessed in-browser on the default port.
+The default username is `a@b.com` with password `b`.
 
 #### Conda environment installation
 
