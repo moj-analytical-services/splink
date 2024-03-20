@@ -53,11 +53,7 @@ def _exact_match_colname(sql_syntax_tree):
     for identifier in sql_syntax_tree.find_all(Identifier):
         identifier.args["quoted"] = False
 
-    for tup in sql_syntax_tree.walk():
-        subtree = tup[0]
-        depth = getattr(subtree, "depth", None)
-        if depth == 2:
-            cols.append(subtree.sql())
+    cols = [id.sql() for id in sql_syntax_tree.find_all(Identifier) if id.depth == 2]
 
     cols = [c[:-2] for c in cols]  # Remove _l and _r
     cols = list(set(cols))
