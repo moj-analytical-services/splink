@@ -10,7 +10,7 @@ then
     curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
     bash Miniforge3-$(uname)-$(uname -m).sh -b
     mamba config --set auto_activate_base false
-    rm ./Miniforge3-$(uname)-$(uname -p).sh
+    rm ./Miniforge3-$(uname)-$(uname -m).sh
 fi
 
 # NOTE: Unlike poetry, conda doesn't have great support for locking dependencies.
