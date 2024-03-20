@@ -35,8 +35,8 @@ From the directory where you have cloned the Splink repository, simply run:
 ./scripts/conda/development_setup_with_conda.sh
 ```
 
-Then add the `mamba` CLI to your PATH by running `~/miniforge_splink/mamba init`
-for your shell -- e.g. `~/miniforge_splink/mamba init` for Bash or `~/miniforge_splink/mamba init zsh` for zsh.
+Then add the `mamba` CLI to your PATH by running `~/miniforge_splink/bin/mamba init`
+for your shell -- e.g. `~/miniforge_splink/bin/mamba init` for Bash or `~/miniforge_splink/bin/mamba init zsh` for zsh.
 
 If you've run this successfully, you can skip to the "Step 4: Activating your environment(s)" section.
 
@@ -143,8 +143,8 @@ bash Miniforge3-$(uname)-$(uname -m).sh -b
 Miniforge is great because it defaults to the community-curated conda-forge channel, and it
 installs the `mamba` CLI by default, which is generally faster than the `conda` CLI.
 
-Before you'll be able to run the `mamba` command, you need to run `~/miniforge3/mamba init`
-for your shell -- e.g. `~/miniforge3/mamba init` for Bash or `~/miniforge3/mamba init zsh` for zsh.
+Before you'll be able to run the `mamba` command, you need to run `~/miniforge3/bin/mamba init`
+for your shell -- e.g. `~/miniforge3/bin/mamba init` for Bash or `~/miniforge3/bin/mamba init zsh` for zsh.
 
 ##### Conda packages
 
