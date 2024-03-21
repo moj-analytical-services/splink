@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import median
 from typing import Dict, Optional, Union
 
-
+from .vertically_concatenate import enqueue_df_concat_with_tf, compute_df_concat_with_tf
 from splink.input_column import InputColumn
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnsLogger,
@@ -536,35 +536,6 @@ class Linker:
 
         return nodes_with_tf
 
-    def _enqueue_df_concat_with_tf(self, pipeline: CTEPipeline, materialise=True):
-
-        cache = self._intermediate_table_cache
-
-        if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline.append_input_dataframe(nodes_with_tf)
-            return pipeline
-
-        # In duckdb, calls to random() in a CTE pipeline cause problems:
-        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
-        if self._settings_obj.salting_required:
-            materialise = True
-
-        sql = vertically_concatenate_sql(self)
-        pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-        sqls = compute_all_term_frequencies_sqls(self)
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        if materialise:
-            # Can't use break lineage here because we need nodes_with_tf
-            # so it can be explicitly set to the named cache
-            nodes_with_tf = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            cache["__splink__df_concat_with_tf"] = nodes_with_tf
-            pipeline = CTEPipeline(input_dataframes=[nodes_with_tf])
-
-        return pipeline
-
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
@@ -978,7 +949,8 @@ class Linker:
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
 
-        pipeline = self._enqueue_df_concat_with_tf(pipeline)
+        df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
+        pipeline = CTEPipeline([df_concat_with_tf], reusable=False)
 
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
@@ -1321,9 +1293,16 @@ class Linker:
         # calls predict, it runs as a single pipeline with no materialisation
         # of anything.
 
-        pipeline = self._enqueue_df_concat_with_tf(
-            pipeline, materialise=materialise_after_computing_term_frequencies
-        )
+        # In duckdb, calls to random() in a CTE pipeline cause problems:
+        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+        if (
+            materialise_after_computing_term_frequencies
+            or self._sql_dialect == "duckdb"
+        ):
+            df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
+            pipeline = CTEPipeline([df_concat_with_tf], reusable=False)
+        else:
+            pipeline = enqueue_df_concat_with_tf(self, pipeline)
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs

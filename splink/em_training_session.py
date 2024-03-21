@@ -26,6 +26,7 @@ from .settings import (
     Settings,
     TrainingSettings,
 )
+from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +179,8 @@ class EMTrainingSession:
         self._training_log_message()
 
         pipeline = CTEPipeline()
-        pipeline = self._original_linker._enqueue_df_concat_with_tf(pipeline)
+        nodes_with_tf = compute_df_concat_with_tf(self._original_linker, pipeline)
+        pipeline = CTEPipeline([nodes_with_tf], reusable=False)
 
         sqls = block_using_rules_sqls(
             self._original_linker, [self._blocking_rule_for_training]
