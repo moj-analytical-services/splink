@@ -13,6 +13,7 @@ from .misc import ensure_is_list
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
+from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
@@ -397,13 +398,12 @@ def materialise_exploded_id_tables(linker: Linker):
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
+    if len(exploding_blocking_rules) == 0:
+        return []
     exploded_tables = []
 
     pipeline = CTEPipeline(reusable=False)
-    linker._enqueue_df_concat_with_tf(pipeline)
-    nodes_with_tf = linker._intermediate_table_cache.get_with_logging(
-        "__splink__df_concat_with_tf"
-    )
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     input_colnames = {col.name for col in nodes_with_tf.columns}
 
@@ -434,6 +434,7 @@ def materialise_exploded_id_tables(linker: Linker):
         marginal_ids_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         br.exploded_id_pair_table = marginal_ids_table
         exploded_tables.append(marginal_ids_table)
+
     return exploding_blocking_rules
 
 

@@ -16,6 +16,7 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from .pipeline import CTEPipeline
+from .vertically_concatenate import compute_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -57,7 +58,8 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline(reusable=False)
 
-    pipeline = linker._enqueue_df_concat_with_tf(pipeline)
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
 
     original_settings_obj = linker._settings_obj
 

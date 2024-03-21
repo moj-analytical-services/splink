@@ -7,6 +7,7 @@ from .comparison_vector_values import compute_comparison_vector_values_sql
 from .pipeline import CTEPipeline
 from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
+from .vertically_concatenate import compute_df_concat_with_tf
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -168,7 +169,9 @@ def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
     pipeline = CTEPipeline(reusable=False)
-    pipeline = linker._enqueue_df_concat_with_tf(pipeline)
+
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
     pipeline.enqueue_list_of_sqls(sqls)
@@ -269,7 +272,8 @@ def prediction_errors_from_labels_table(
     threshold=0.5,
 ):
     pipeline = CTEPipeline(reusable=False)
-    pipeline = linker._enqueue_df_concat_with_tf(pipeline)
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
