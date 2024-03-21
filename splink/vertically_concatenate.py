@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from .database_api import DatabaseAPI
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import compute_all_term_frequencies_sqls
@@ -98,10 +97,9 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
     return pipeline
 
 
-def compute_df_concat_with_tf(
-    linker: Linker, pipeline, db_api: DatabaseAPI
-) -> SplinkDataFrame:
+def compute_df_concat_with_tf(linker: Linker, pipeline) -> SplinkDataFrame:
     cache = linker._intermediate_table_cache
+    db_api = linker.db_api
 
     if "__splink__df_concat_with_tf" in cache:
         return cache.get_with_logging("__splink__df_concat_with_tf")

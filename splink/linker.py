@@ -949,9 +949,7 @@ class Linker:
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
 
-        df_concat_with_tf = compute_df_concat_with_tf(
-            self, pipeline, self._intermediate_table_cache
-        )
+        df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf], reusable=False)
 
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
@@ -1301,7 +1299,7 @@ class Linker:
             materialise_after_computing_term_frequencies
             or self._sql_dialect == "duckdb"
         ):
-            df_concat_with_tf = compute_df_concat_with_tf(self, pipeline, self.db_api)
+            df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
             pipeline = CTEPipeline([df_concat_with_tf], reusable=False)
         else:
             pipeline = enqueue_df_concat_with_tf(self, pipeline)
