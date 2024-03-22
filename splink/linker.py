@@ -1058,8 +1058,10 @@ class Linker:
         """
 
         # Ensure this has been run on the main linker so that it can be used by
-        # training linked when it checks the cache
-        self._initialise_df_concat_with_tf()
+        # training linker when it checks the cache
+        pipeline = CTEPipeline(reusable=False)
+        compute_df_concat_with_tf(self, pipeline)
+
         estimate_m_values_from_label_column(
             self,
             self._input_tables_dict,
@@ -1179,7 +1181,9 @@ class Linker:
         """
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
-        self._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline(reusable=False)
+        compute_df_concat_with_tf(self, pipeline)
+
         if isinstance(blocking_rule, BlockingRuleCreator):
             blocking_rule_str_or_dict: str | dict = (
                 blocking_rule.create_blocking_rule_dict(self._sql_dialect)
@@ -1402,25 +1406,26 @@ class Linker:
         )
 
         cache = self._intermediate_table_cache
-        input_dfs = []
+
+        pipeline = CTEPipeline()
+
         # If our df_concat_with_tf table already exists, derive the term frequency
         # tables from df_concat_with_tf rather than computing them
         if "__splink__df_concat_with_tf" in cache:
-            concat_with_tf = cache["__splink__df_concat_with_tf"]
+            df = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline.append_input_dataframe(df)
+
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
             # This queues up our tf tables, rather materialising them
             for tf in tf_tables:
                 # if tf is a SplinkDataFrame, then the table already exists
                 if isinstance(tf, SplinkDataFrame):
-                    input_dfs.append(tf)
+                    pipeline.append_input_dataframe(tf)
                 else:
-                    self._enqueue_sql(tf["sql"], tf["output_table_name"])
+                    pipeline.enqueue_sql(tf["sql"], tf["output_table_name"])
         else:
             # This queues up our cols_with_tf and df_concat_with_tf tables.
-            concat_with_tf = self._initialise_df_concat_with_tf(materialise=False)
-
-        if concat_with_tf:
-            input_dfs.append(concat_with_tf)
+            enqueue_df_concat_with_tf(self, pipeline)
 
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
@@ -1432,35 +1437,35 @@ class Linker:
 
         sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", new_records_tablename)
-        self._enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
+        pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
-        add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
+        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
+            self, new_records_df, pipeline
+        )
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql = f"""
         select * from __splink__df_predict
         where match_weight > {match_weight_threshold}
         """
 
-        self._enqueue_sql(sql, "__splink__find_matches_predictions")
+        pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self._execute_sql_pipeline(
-            input_dataframes=input_dfs, use_cache=False
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
