@@ -100,7 +100,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         # Certain tables are put in the cache using their templated_name
         # An example is __splink__df_concat_with_tf
         # These tables are put in the cache when they are first calculated
-        # e.g. with _initialise_df_concat_with_tf()
+        # e.g. with compute_df_concat_with_tf()
         # But they can also be put in the cache manually using
         # e.g. register_table_input_nodes_concat_with_tf()
 
