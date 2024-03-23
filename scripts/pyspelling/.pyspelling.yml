@@ -2,7 +2,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/dev_guides/**/*.md
+      - docs/blog/**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -19,8 +19,8 @@ matrix:
             # ```py
             # content
             # ```
-            - open: '(?s)^( *```py)$'
-              close: '^```$'
+            - open: '(?s)( *```py)'
+              close: '```$'
             # Ignore multiline content between cards flags
             # ::cards::
             # content
@@ -36,12 +36,9 @@ matrix:
             # Ignore inline code
             - open: '`'
               close: '`'
-            # Ignore urls within markdown links
-            # - open: '\]\('
-            #   close: '\)'
+            # Ignore text for icons eg :octicons-duplicate-24:
+            - open: ':\w+-\w+-?\w*'
+              close: ':'
             # Ignore urls within html anchor tags
             - open: '<a'
               close: '</a>'
-            # Ignore text between colons
-            - open: ':'
-              close: ':'
