@@ -1584,18 +1584,19 @@ class Linker:
         self._settings_obj._blocking_rules_to_generate_predictions = [
             BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
         ]
+        pipeline = CTEPipeline(reusable=False)
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
-        nodes_with_tf = self._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline([nodes_with_tf], reusable=False)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
 
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
             unique_id_input_columns=uid_cols,
@@ -1606,11 +1607,9 @@ class Linker:
         for sql in sqls:
             output_table_name = sql["output_table_name"]
             output_table_name = output_table_name.replace("predict", "self_link")
-            self._enqueue_sql(sql["sql"], output_table_name)
+            pipeline.enqueue_sql(sql["sql"], output_table_name)
 
-        predictions = self._execute_sql_pipeline(
-            input_dataframes=[nodes_with_tf], use_cache=False
-        )
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
