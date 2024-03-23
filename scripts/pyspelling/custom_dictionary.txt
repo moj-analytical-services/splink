@@ -3,6 +3,8 @@ BRL
 CLL
 CTL
 Postgres
+https
+Validator
 outcode
 Linacre
 PySpelling
