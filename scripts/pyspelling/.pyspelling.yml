@@ -2,7 +2,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/charts/**/*.md
+      - docs/dev_guides/**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -13,8 +13,35 @@ matrix:
       output: scripts/dictionary.dic
     pipeline:
       - pyspelling.filters.context:
-          # context_visible_first: true
+          context_visible_first: true
           delimiters:
-            # Ignore content between ::cards:: and ::/cards::
-            - open: '::cards::'
-              close: '::/cards::'
+            # Ignore python code
+            # ```py
+            # content
+            # ```
+            - open: '(?s)^( *```py)$'
+              close: '^```$'
+            # Ignore multiline content between cards flags
+            # ::cards::
+            # content
+            # ::/cards::
+            - open: '(?s)^(::cards::)$'
+              close: '^::/cards::$'
+            # Ignore multiline content at top of blog posts
+            # ---
+            # content
+            # ---
+            - open: '(?s)^(---)$'
+              close: '^---$'
+            # Ignore inline code
+            - open: '`'
+              close: '`'
+            # Ignore urls within markdown links
+            # - open: '\]\('
+            #   close: '\)'
+            # Ignore urls within html anchor tags
+            - open: '<a'
+              close: '</a>'
+            # Ignore text between colons
+            - open: ':'
+              close: ':'
