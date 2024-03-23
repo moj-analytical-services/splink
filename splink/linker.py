@@ -52,6 +52,7 @@ from .charts import (
     threshold_selection_tool,
     unlinkables_chart,
     waterfall_chart,
+    _build_cluster_centralisation_chart,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
@@ -1715,9 +1716,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -1752,9 +1753,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -1794,9 +1795,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     def compute_graph_metrics(
@@ -2841,6 +2842,25 @@ class Linker:
         """
         records = completeness_data(self, input_dataset, cols)
         return completeness_chart(records)
+
+    # Currently non-public functionality, likely to be update soon with
+    # additional metrics
+    def _cluster_centralisation_chart(self, df_cluster_metrics: SplinkDataFrame):
+        """Generate histogram of cluster centralisation across all clusters
+        produced at a given threshold.
+
+        Args:
+            df_cluster_metrics (SplinkDataFrame): Dataframe containing
+            cluster-level metrics computed via `linker.compute_graph_metrics()`
+
+        """
+
+        cm_pd = df_cluster_metrics.as_pandas_dataframe()
+        cm_pd_filtered = cm_pd[["cluster_centralisation"]].dropna()
+
+        records = cm_pd_filtered.to_dict(orient="records")
+
+        return _build_cluster_centralisation_chart(records)
 
     def count_num_comparisons_from_blocking_rule(
         self,
