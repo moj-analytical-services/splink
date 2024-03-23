@@ -109,7 +109,7 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 
     A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
 
-    To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
+    To run, simply use the following docker command from within a terminal and the root folder of a Splink clone:
     ```sh
     docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
     ```

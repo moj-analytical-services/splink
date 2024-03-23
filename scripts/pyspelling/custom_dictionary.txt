@@ -5,6 +5,9 @@ CTL
 Postgres
 https
 Validator
+Deduplicating
+febrl
+dedupe
 outcode
 Linacre
 PySpelling
