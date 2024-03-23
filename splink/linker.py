@@ -1655,11 +1655,12 @@ class Linker:
         """
 
         # Feeding in df_predict forces materiailisation, if it exists in your database
-        concat_with_tf = self._initialise_df_concat_with_tf(df_predict)
+        pipeline = CTEPipeline(reusable=False)
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         edges_table = _cc_create_unique_id_cols(
             self,
-            concat_with_tf.physical_name,
+            nodes_with_tf.physical_name,
             df_predict.physical_name,
             threshold_match_probability,
         )
@@ -1668,7 +1669,7 @@ class Linker:
             self,
             edges_table,
             df_predict,
-            concat_with_tf,
+            nodes_with_tf,
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
