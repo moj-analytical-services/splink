@@ -470,3 +470,12 @@ def _phonetic_match_chart(records, as_dict=False):
     chart["datasets"]["data-phonetic"] = records
 
     return altair_or_json(chart, as_dict=as_dict)
+
+
+def _build_cluster_centralisation_chart(records, as_dict=False):
+    chart_path = "cluster_centralisation.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    return altair_or_json(chart, as_dict=as_dict)
