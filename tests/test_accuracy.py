@@ -9,6 +9,8 @@ from splink.blocking_rule_library import block_on
 from splink.comparison_library import ExactMatch
 from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict
 
@@ -48,7 +50,9 @@ def test_scored_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
+
     linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
@@ -287,7 +291,9 @@ def test_prediction_errors_from_labels_table():
 
     linker.register_table(df_labels, "labels")
 
-    linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    compute_df_concat_with_tf(linker, pipeline)
+
     df_res = linker.prediction_errors_from_labels_table("labels").as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
     records = list(df_res.to_records(index=False))
@@ -304,7 +310,9 @@ def test_prediction_errors_from_labels_table():
 
     linker.register_table(df_labels, "labels")
 
-    linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    compute_df_concat_with_tf(linker, pipeline)
+
     df_res = linker.prediction_errors_from_labels_table(
         "labels", include_false_negatives=False
     ).as_pandas_dataframe()
@@ -321,7 +329,10 @@ def test_prediction_errors_from_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
     linker.register_table(df_labels, "labels")
-    linker._initialise_df_concat_with_tf()
+
+    pipeline = CTEPipeline()
+    compute_df_concat_with_tf(linker, pipeline)
+
     df_res = linker.prediction_errors_from_labels_table(
         "labels", include_false_positives=False
     ).as_pandas_dataframe()
