@@ -6,11 +6,11 @@ To rapidly build the documentation and immediately see changes you've made you c
 source scripts/make_docs_locally.sh
 ```
 
-This is much faster than waiting for github actions to run if you're trying to make fiddly changes to formatting etc.
+This is much faster than waiting for GitHub actions to run if you're trying to make fiddly changes to formatting etc.
 
 Once you've finished updating Splink documentation we ask that you run our spellchecker script. Instructions on how to do this are given below.
 
-The Splink repo contains a [working `requirements.txt` for building the docs](https://github.com/moj-analytical-services/splink/blob/master/scripts/docs-requirements.txt), or a more complete version:
+Splink's GitHub repository contains a [working `requirements.txt` for building the docs](https://github.com/moj-analytical-services/splink/blob/master/scripts/docs-requirements.txt), or a more complete version:
 
 ??? note "Requirements file"
     ```
