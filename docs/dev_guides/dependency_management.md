@@ -14,7 +14,7 @@ Below is a rough summary of versioning and some complimentary guidelines detaili
 
 ### Benefits to Effective Versioning
 
-Effective versioning is crucial for ensuring Splink's compatibility across diverse techical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
+Effective versioning is crucial for ensuring Splink's compatibility across diverse technical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
 
 * Faster dependency resolution with `poetry lock`.
 * Reduces dependency conflicts across systems.
@@ -45,7 +45,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 #### Documentation and Communication
 
 * **Clear Documentation**: Clearly log installation instructions within the [Getting Started](https://moj-analytical-services.github.io/splink/getting_started.html#install) section of our documentation. This should cover not only standard installation procedures but also specialised instructions, for instance, installing a [:simple-duckdb:-less version of Splink](https://github.com/moj-analytical-services/splink/pull/1244), for locked down environments.
-* **Log Dependency Changes in the Changelog**: Where dependencies are adjusted, ensure that changes are logged within [`CHANGELOG.md`](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md). This can help simplify debugging and creates a guide that can be easily referenced.
+* **Log Dependency Changes in the CHANGELOG**: Where dependencies are adjusted, ensure that changes are logged within [`CHANGELOG.md`](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md). This can help simplify debugging and creates a guide that can be easily referenced.
 
 #### User Support and Feedback
 

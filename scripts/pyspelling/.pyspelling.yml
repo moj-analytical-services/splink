@@ -2,7 +2,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/blog/**/*.md
+      - docs/dev_guides/changing_splink/releases.md
     aspell:
       lang: en
       d: en_GB
@@ -42,3 +42,6 @@ matrix:
             # Ignore urls within html anchor tags
             - open: '<a'
               close: '</a>'
+          # Filter diff blocks
+          # - open: '(?s)^(```diff)'
+          #   close: '```'

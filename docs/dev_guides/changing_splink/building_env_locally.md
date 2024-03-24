@@ -44,7 +44,7 @@ Below are some useful commands to help in the maintenance and upkeep of the [pyp
   ```sh
   poetry lock
   ```
-  Note: This should be used sparingly due to our loose dependency requirements and the resulting time to solve the dependency graph. If you only need to update a single depdendency, update it using `poetry add <pkg>==<version>` instead.
+  Note: This should be used sparingly due to our loose dependency requirements and the resulting time to solve the dependency graph. If you only need to update a single dependency, update it using `poetry add <pkg>==<version>` instead.
 
 **Installing Dependencies**
 - To install project dependencies as per the lock file:
