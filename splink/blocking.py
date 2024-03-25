@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 
+from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
 from .splink_dataframe import SplinkDataFrame
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def blocking_rule_to_obj(br):
+def blocking_rule_to_obj(br: BlockingRule | dict | str) -> BlockingRule:
     if isinstance(br, BlockingRule):
         return br
     elif isinstance(br, dict):
@@ -262,9 +263,15 @@ class ExplodingBlockingRule(BlockingRule):
         sqlglot_dialect: str = None,
         array_columns_to_explode: list = [],
     ):
-        super().__init__(blocking_rule, sqlglot_dialect)
+        if isinstance(blocking_rule, BlockingRule):
+            blocking_rule_sql = blocking_rule.blocking_rule_sql
+        elif isinstance(blocking_rule, dict):
+            blocking_rule_sql = blocking_rule["blocking_rule_sql"]
+        else:
+            blocking_rule_sql = blocking_rule
+        super().__init__(blocking_rule_sql, sqlglot_dialect)
         self.array_columns_to_explode: List[str] = array_columns_to_explode
-        self.exploded_id_pair_table: SplinkDataFrame = None
+        self.exploded_id_pair_table: Optional[SplinkDataFrame] = None
 
     def marginal_exploded_id_pairs_table_sql(self, linker: Linker, br: BlockingRule):
         """generates a table of the marginal id pairs from the exploded blocking rule
@@ -273,7 +280,10 @@ class ExplodingBlockingRule(BlockingRule):
         """
 
         settings_obj = linker._settings_obj
-        unique_id_col = settings_obj._unique_id_column_name
+        unique_id_col = settings_obj.column_info_settings.unique_id_column_name
+        unique_id_input_columns = (
+            settings_obj.column_info_settings.unique_id_input_columns
+        )
 
         link_type = settings_obj._link_type
 
@@ -283,16 +293,10 @@ class ExplodingBlockingRule(BlockingRule):
         if linker._self_link_mode:
             link_type = "self_link"
 
-        where_condition = _sql_gen_where_condition(
-            link_type, settings_obj._unique_id_input_columns
-        )
+        where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
-        )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         if link_type == "two_dataset_link_only":
             where_condition = (
@@ -322,17 +326,22 @@ class ExplodingBlockingRule(BlockingRule):
         so that subsequent statements do not produce duplicate pairs
         """
 
-        unique_id_column = linker._settings_obj._unique_id_column_name
-        splink_df = self.exploded_id_pair_table
+        unique_id_column = (
+            linker._settings_obj.column_info_settings.unique_id_column_name
+        )
+        unique_id_input_columns = (
+            linker._settings_obj.column_info_settings.unique_id_input_columns
+        )
+        if (splink_df := self.exploded_id_pair_table) is None:
+            raise SplinkException(
+                "Must use `materialise_exploded_id_table(linker)` "
+                "to set `exploded_id_pair_table` before calling "
+                "exclude_pairs_generated_by_this_rule_sql()."
+            )
         ids_to_compare_sql = f"select * from {splink_df.physical_name}"
 
-        settings_obj = linker._settings_obj
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
-        )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         return f"""EXISTS (
             select 1 from ({ids_to_compare_sql}) as ids_to_compare
@@ -353,15 +362,14 @@ class ExplodingBlockingRule(BlockingRule):
                 " called."
             )
         settings_obj = linker._settings_obj
-        id_expr_l = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "l"
+        unique_id_col = settings_obj.column_info_settings.unique_id_column_name
+        unique_id_input_columns = (
+            settings_obj.column_info_settings.unique_id_input_columns
         )
-        id_expr_r = _composite_unique_id_from_nodes_sql(
-            settings_obj._unique_id_input_columns, "r"
-        )
+        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         exploded_id_pair_table = self.exploded_id_pair_table
-        unique_id_col = linker._settings_obj._unique_id_column_name
         sql = f"""
             select
                 {sql_select_expr},
@@ -440,7 +448,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sqls(linker: Linker):
+def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = None):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -462,8 +470,8 @@ def block_using_rules_sqls(linker: Linker):
         and not linker._compare_two_records_mode
     ):
         source_dataset_col = (
-            source_dataset_col
-        ) = linker._settings_obj._source_dataset_column_name
+            linker._settings_obj.column_info_settings.source_dataset_column_name
+        )
         # Need df_l to be the one with the lowest id to preeserve the property
         # that the left dataset is the one with the lowest concatenated id
 
@@ -510,16 +518,14 @@ def block_using_rules_sqls(linker: Linker):
         link_type = "self_link"
 
     where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_input_columns
+        link_type, settings_obj.column_info_settings.unique_id_input_columns
     )
 
     # We could have had a single 'blocking rule'
     # property on the settings object, and avoided this logic but I wanted to be very
     # explicit about the difference between blocking for training
     # and blocking for predictions
-    if settings_obj._blocking_rule_for_training:
-        blocking_rules = [settings_obj._blocking_rule_for_training]
-    else:
+    if blocking_rules is None:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     # Cover the case where there are no blocking rules

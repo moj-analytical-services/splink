@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 logger = logging.getLogger(__name__)
 
 
-def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
+def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> float:
     """
     We want a higher scores (lower cost) for combinations of blocking rules that allow
     as much variation in each field as possible
@@ -27,7 +27,7 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
         int: The field freedom cost.
     """
 
-    total_cost = 0
+    total_cost: float = 0
     field_names = [c for c in combination_of_brs[0].keys() if c.startswith("__fixed__")]
 
     # This lookup is somewhat arbitary but its purpose is to assign a very high

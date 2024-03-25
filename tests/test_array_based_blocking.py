@@ -2,6 +2,7 @@ import random
 
 import pandas as pd
 
+import splink.comparison_library as cl
 from tests.decorator import mark_with_dialects_including
 
 
@@ -31,7 +32,7 @@ def test_simple_example_link_only(test_helpers, dialect):
             },
             "l.gender = r.gender",
         ],
-        "comparisons": [helper.cl.array_intersect_at_sizes("postcode", [1])],
+        "comparisons": [cl.ArrayIntersectAtSizes("postcode", [1])],
     }
     ## the pairs returned by the first blocking rule are (1,6),(2,4),(2,6)
     ## the additional pairs returned by the second blocking rule are (1,4),(3,5)
@@ -105,7 +106,7 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": blocking_rules,
         "unique_id_column_name": "unique_id",
         "additional_columns_to_retain": ["cluster"],
-        "comparisons": [helper.cl.array_intersect_at_sizes("array_column_1", [1])],
+        "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
     linker = helper.Linker(input_data, settings, **helper.extra_linker_args())
     linker.debug_mode = False
@@ -152,7 +153,7 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": blocking_rules,
         "unique_id_column_name": "cluster",
         "additional_columns_to_retain": ["cluster"],
-        "comparisons": [helper.cl.array_intersect_at_sizes("array_column_1", [1])],
+        "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
     linker = helper.Linker(
         [input_data_l, input_data_r], settings, **helper.extra_linker_args()
@@ -218,15 +219,18 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
             "l.surname = r.surname",
         ],
         "comparisons": [
-            helper.cl.exact_match("first_name"),
-            helper.cl.exact_match("surname"),
-            helper.cl.exact_match("postcode"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("postcode"),
         ],
         "retain_intermediate_calculation_columns": True,
     }
 
     linker = helper.Linker(
-        [df_1, df_2, df_3], settings, input_table_aliases=["a_", "b_", "c_"]
+        [df_1, df_2, df_3],
+        settings,
+        input_table_aliases=["a_", "b_", "c_"],
+        **helper.extra_linker_args(),
     )
     returned_triples = linker.predict().as_pandas_dataframe()[
         [

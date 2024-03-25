@@ -12,12 +12,13 @@ def _add_l_or_r_to_identifier(node: exp.Expression):
     if not isinstance(node, exp.Identifier):
         return node
 
-    p = node.parent
+    if (p := node.parent) is None:
+        raise TypeError(f"Node {node} has no parent")
     if isinstance(p, (exp.Lambda, exp.Anonymous)):
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
-        parent_table = p.table
+        parent_table = p.table  # type: ignore [attr-defined]
 
     if parent_table != "":
         l_r = "_" + parent_table
@@ -34,7 +35,7 @@ def _remove_table_prefix(node):
     return node
 
 
-def move_l_r_table_prefix_to_column_suffix(blocking_rule):
+def move_l_r_table_prefix_to_column_suffix(blocking_rule) -> str:
     expression_tree = sqlglot.parse_one(blocking_rule, read=None)
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
@@ -100,3 +101,46 @@ def remove_quotes_from_identifiers(tree) -> exp.Expression:
     for identifier in tree.find_all(exp.Identifier):
         identifier.args["quoted"] = False
     return tree
+
+
+def add_suffix_to_all_column_identifiers(
+    sql_str: str, suffix: str, sqlglot_dialect: str
+) -> str:
+    """
+    Adds a suffix to all column identifiers in the given SQL string.
+
+    Args:
+        sql_str (str): The SQL string to transform.
+        suffix (str): The suffix to add to each column identifier.
+        sqlglot_dialect (str): The SQL dialect used by sqlglot.
+
+    Returns:
+        str: The transformed SQL string.
+
+    Examples:
+        >>> sql_str = "lower(first_name)"
+        >>> add_suffix_to_all_column_identifiers(sql_str, "l", "duckdb")
+        'lower(first_name_l)'
+
+        >>> sql_str = "concat(first_name, surname)"
+        >>> add_suffix_to_all_column_identifiers(sql_str, "_r", "duckdb")
+        'concat(first_name_r, surname_r)'
+    """
+    tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
+
+    for col in tree.find_all(exp.Column):
+        if (identifier := col.find(exp.Identifier)) is None:
+            raise ValueError(f"Failed to find identifier for column {col}")
+        identifier.args["this"] = identifier.args["this"] + suffix
+
+    return tree.sql(dialect=sqlglot_dialect)
+
+
+# TODO: can we get rid of add_quotes_and_table_prefix and use this everywhere instead
+def add_table_to_all_column_identifiers(
+    sql_str: str, table_name: str, sqlglot_dialect: str
+):
+    tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
+    for col in tree.find_all(exp.Column):
+        col.args["table"] = table_name
+    return tree.sql(dialect=sqlglot_dialect)

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
@@ -37,7 +37,7 @@ def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
     id column found in __splink__df_concat_with_tf.
     """
 
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     uid_concat = _composite_unique_id_from_nodes_sql(uid_cols)
 
     if generated_graph:
@@ -298,7 +298,7 @@ def _cc_create_unique_id_cols(
     linker: "Linker",
     concat_with_tf: str,
     df_predict: str,
-    match_probability_threshold: float,
+    match_probability_threshold: Optional[float],
 ):
     """Create SQL to pull unique ID columns for connected components.
 
@@ -314,6 +314,7 @@ def _cc_create_unique_id_cols(
             The minimum match probability threshold for a link to be
             considered a match. This reduces the number of unique IDs created
             and connected in our algorithm.
+            Not required if in deterministic link mode.
 
     Returns:
         SplinkDataFrame: A dataframe containing two sets of unique IDs,
@@ -330,7 +331,7 @@ def _cc_create_unique_id_cols(
             f"where match_probability >= {match_probability_threshold}"
         )
 
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
     uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
@@ -518,7 +519,7 @@ def solve_connected_components(
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
     # performing a link or dedupe job.
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     exit_query = _exit_query(
         pairwise_mode=pairwise_output,

@@ -51,7 +51,7 @@ class ErrorLogger:
     # In py3.11, this functionality is now covered by
     # https://docs.python.org/3/library/exceptions.html#ExceptionGroup
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_queue: List[str] = []  # error queue for formatted errors
         # Raw input errors. Used for debugging.
         self.raw_errors: List[Union[str, Exception]] = []

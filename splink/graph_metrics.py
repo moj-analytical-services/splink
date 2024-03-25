@@ -219,7 +219,7 @@ def _basic_edge_metrics_sql(
     composite_uid_edges_l: str,
     composite_uid_edges_r: str,
     truncated_edges_table_name: str,
-) -> List[Dict[str, str]]:
+) -> Dict[str, str]:
     # dummy sql that returns the edges without any metrics, as there are none
     # that we can currently compute without igraph
     sql_info = {
@@ -269,8 +269,8 @@ def _size_density_centralisation_sql(
         GROUP BY
             cluster_id
     """
-    sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
-    sqls.append(sql)
+    sql_info = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
+    sqls.append(sql_info)
 
     # Compute density of each cluster
     sql = """
@@ -288,8 +288,8 @@ def _size_density_centralisation_sql(
             cluster_centralisation
         FROM __splink__counts_per_cluster
     """
-    sql = {"sql": sql, "output_table_name": "__splink__graph_metrics_clusters"}
-    sqls.append(sql)
+    sql_info = {"sql": sql, "output_table_name": "__splink__graph_metrics_clusters"}
+    sqls.append(sql_info)
 
     return sqls
 

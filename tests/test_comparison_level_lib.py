@@ -1,12 +1,13 @@
 import pandas as pd
 
+import splink.comparison_level_library as cll
+
 from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
 def test_column_reversal(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "forename": "John", "surname": "Smith", "full_name": "John Smith"},
@@ -23,10 +24,10 @@ def test_column_reversal(test_helpers, dialect):
             {
                 "output_column_name": "full_name",
                 "comparison_levels": [
-                    cll.null_level("full_name"),
-                    cll.exact_match_level("full_name"),
-                    cll.columns_reversed_level("forename", "surname"),
-                    cll.else_level(),
+                    cll.NullLevel("full_name"),
+                    cll.ExactMatchLevel("full_name"),
+                    cll.ColumnsReversedLevel("forename", "surname"),
+                    cll.ElseLevel(),
                 ],
             },
         ],
@@ -50,7 +51,6 @@ def test_column_reversal(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_perc_difference(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "amount": 1.2},
@@ -68,12 +68,12 @@ def test_perc_difference(test_helpers, dialect):
             {
                 "output_column_name": "amount",
                 "comparison_levels": [
-                    cll.null_level("amount"),
-                    cll.percentage_difference_level("amount", 0.0),  # 4
-                    cll.percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
-                    cll.percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
-                    cll.percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
-                    cll.else_level(),
+                    cll.NullLevel("amount"),
+                    cll.PercentageDifferenceLevel("amount", 0.0),  # 4
+                    cll.PercentageDifferenceLevel("amount", (0.2 / 1.2) + 1e-4),  # 3
+                    cll.PercentageDifferenceLevel("amount", (0.2 / 1.0) + 1e-4),  # 2
+                    cll.PercentageDifferenceLevel("amount", (60 / 200) + 1e-4),  # 1
+                    cll.ElseLevel(),
                 ],
             },
         ],
@@ -100,7 +100,6 @@ def test_perc_difference(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "name": "harry"},
@@ -138,12 +137,12 @@ def test_levenshtein_level(test_helpers, dialect):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("name"),
-                    cll.levenshtein_level("name", 0),  # 4
-                    cll.levenshtein_level("name", 1),  # 3
-                    cll.levenshtein_level("name", 2),  # 2
-                    cll.levenshtein_level("name", 3),  # 1
-                    cll.else_level(),  # 0
+                    cll.NullLevel("name"),
+                    cll.LevenshteinLevel("name", 0),  # 4
+                    cll.LevenshteinLevel("name", 1),  # 3
+                    cll.LevenshteinLevel("name", 2),  # 2
+                    cll.LevenshteinLevel("name", 3),  # 1
+                    cll.ElseLevel(),  # 0
                 ],
             },
         ],
@@ -181,7 +180,6 @@ def test_levenshtein_level(test_helpers, dialect):
 @mark_with_dialects_excluding("postgres")
 def test_damerau_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cll = helper.cll
 
     data = [
         {"id": 1, "name": "harry"},
@@ -219,12 +217,12 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("name"),
-                    cll.damerau_levenshtein_level("name", 0),  # 4
-                    cll.damerau_levenshtein_level("name", 1),  # 3
-                    cll.damerau_levenshtein_level("name", 2),  # 2
-                    cll.damerau_levenshtein_level("name", 3),  # 1
-                    cll.else_level(),  # 0
+                    cll.NullLevel("name"),
+                    cll.DamerauLevenshteinLevel("name", 0),  # 4
+                    cll.DamerauLevenshteinLevel("name", 1),  # 3
+                    cll.DamerauLevenshteinLevel("name", 2),  # 2
+                    cll.DamerauLevenshteinLevel("name", 3),  # 1
+                    cll.ElseLevel(),  # 0
                 ],
             },
         ],
