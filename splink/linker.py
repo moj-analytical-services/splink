@@ -2689,7 +2689,7 @@ class Linker:
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
         sqls = comparison_viewer_table_sqls(self, num_example_rows)
-        pipeline.enqueue_sqls(sqls)
+        pipeline.enqueue_list_of_sqls(sqls)
 
         df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
