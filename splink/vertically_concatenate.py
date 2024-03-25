@@ -113,3 +113,41 @@ def compute_df_concat_with_tf(linker: Linker, pipeline) -> SplinkDataFrame:
     nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     cache["__splink__df_concat_with_tf"] = nodes_with_tf
     return nodes_with_tf
+
+
+def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
+    cache = linker._intermediate_table_cache
+
+    if "__splink__df_concat" in cache:
+        nodes_with_tf = cache.get_with_logging("__splink__df_concat")
+        pipeline.append_input_dataframe(nodes_with_tf)
+        return pipeline
+
+    # __splink__df_concat_with_tf is a superset of __splink__df_concat
+    # so if it exists, use it instead
+    elif "__splink__df_concat_with_tf" in cache:
+        nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+        pipeline.append_input_dataframe(nodes_with_tf)
+        return pipeline
+
+    sql = vertically_concatenate_sql(linker)
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+    return pipeline
+
+
+def compute_df_concat(linker: Linker, pipeline) -> SplinkDataFrame:
+    cache = linker._intermediate_table_cache
+    db_api = linker.db_api
+
+    if "__splink__df_concat" in cache:
+        return cache.get_with_logging("__splink__df_concat")
+    if "__splink__df_concat_with_tf" in cache:
+        return cache.get_with_logging("__splink__df_concat_with_tf")
+
+    sql = vertically_concatenate_sql(linker)
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+    nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    cache["__splink__df_concat"] = nodes_with_tf
+    return nodes_with_tf
