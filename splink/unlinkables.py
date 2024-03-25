@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .pipeline import CTEPipeline
+
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
@@ -19,6 +21,8 @@ def unlinkables_data(linker: Linker):
 
     self_link = linker._self_link()
 
+    pipeline = CTEPipeline(reusable=False)
+
     sql = f"""
         select
         round(match_weight, 2) as match_weight,
@@ -26,7 +30,7 @@ def unlinkables_data(linker: Linker):
         from {self_link.physical_name}
     """
 
-    linker._enqueue_sql(sql, "__splink__df_round_self_link")
+    pipeline.enqueue_sql(sql, "__splink__df_round_self_link")
 
     sql = """
         select
@@ -38,7 +42,7 @@ def unlinkables_data(linker: Linker):
         order by match_probability
     """
 
-    linker._enqueue_sql(sql, "__splink__df_unlinkables_proportions")
+    pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions")
 
     sql = """
         select *,
@@ -46,8 +50,8 @@ def unlinkables_data(linker: Linker):
         from __splink__df_unlinkables_proportions
         where match_probability < 1
     """
-    linker._enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
-    data = linker._execute_sql_pipeline(use_cache=False)
+    pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
+    data = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
 
     unlinkables_dict = data.as_record_dict()
     data.drop_table_from_database_and_remove_from_cache()
