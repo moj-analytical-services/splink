@@ -9,6 +9,7 @@ from jinja2 import Template
 
 from .exceptions import SplinkException
 from .misc import EverythingEncoder, read_resource
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -191,6 +192,7 @@ def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
 ) -> list[dict]:
     unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
+    pipeline = CTEPipeline(reusable=False)
     sql = f"""
     select
         cluster_id,
@@ -201,7 +203,7 @@ def _get_cluster_id_of_each_size(
     having count(*)>1
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count")
+    pipeline.enqueue_sql(sql, "__splink__cluster_count")
 
     # Assign unique row number to each row in partition
     sql = """
@@ -212,7 +214,7 @@ def _get_cluster_id_of_each_size(
     from __splink__cluster_count
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
 
     sql = f"""
     select
@@ -222,8 +224,10 @@ def _get_cluster_id_of_each_size(
     where row_num <= {rows_per_partition}
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
-    df_cluster_sample_with_size = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    df_cluster_sample_with_size = linker.db_api.sql_pipeline_to_splink_dataframe(
+        pipeline
+    )
 
     return df_cluster_sample_with_size.as_record_dict()
 
@@ -249,7 +253,7 @@ def _get_lowest_density_clusters(
         list: A list of record dictionaries containing cluster ids, densities
         and sizes of lowest density clusters.
     """
-
+    pipeline = CTEPipeline(reusable=False)
     sql = f"""
     select
         cluster_id,
@@ -260,7 +264,7 @@ def _get_lowest_density_clusters(
     where n_nodes >= {min_nodes}
     """
 
-    linker._enqueue_sql(sql, "__splink__partition_clusters_by_size")
+    pipeline.enqueue_sql(sql, "__splink__partition_clusters_by_size")
 
     sql = f"""
     select
@@ -271,8 +275,10 @@ def _get_lowest_density_clusters(
     where row_num <= {rows_per_partition}
     """
 
-    linker._enqueue_sql(sql, "__splink__lowest_density_clusters")
-    df_lowest_density_clusters = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(sql, "__splink__lowest_density_clusters")
+    df_lowest_density_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(
+        pipeline
+    )
 
     return df_lowest_density_clusters.as_record_dict()
 

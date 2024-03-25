@@ -77,7 +77,7 @@ def test_cache_only_splink_dataframes():
 
 # run test in/not in debug mode to check functionality in both - cache shouldn't care
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_access_initialise_df_concat(debug_mode):
+def test_cache_access_df_concat(debug_mode):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
