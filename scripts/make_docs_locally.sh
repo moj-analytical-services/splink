@@ -7,7 +7,7 @@
 if [[ "$VIRTUAL_ENV" != "$cwd/docs-venv" ]]; then
     if [ -n "$VIRTUAL_ENV" ]; then
         deactivate
-    else
+    else    
         :
     fi
     python3 -m venv docs-venv
