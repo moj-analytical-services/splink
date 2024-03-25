@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleaesed
 
+### Added
+
+- Ability to override detection of exact match level for tf adjustments. See [here](https://gist.github.com/RobinL/6e11c04aa1204ac3e7452eddd778ab4f) for example.
 - Added method for computing graph metrics ([#2027](https://github.com/moj-analytical-services/splink/pull/2027))
 
 ## [3.9.13] - 2024-03-04

@@ -153,6 +153,10 @@ class ComparisonLevel:
             "tf_adjustment_weight"
         )
 
+        self._disable_tf_exact_match_detection = self._level_dict_val_else_default(
+            "disable_tf_exact_match_detection"
+        )
+
         self._tf_minimum_u_value = self._level_dict_val_else_default(
             "tf_minimum_u_value"
         )
@@ -181,6 +185,10 @@ class ComparisonLevel:
     @property
     def is_null_level(self) -> bool:
         return self._is_null_level
+
+    @property
+    def disable_tf_exact_match_detection(self) -> bool:
+        return self._disable_tf_exact_match_detection
 
     @property
     def sql_condition(self) -> str:
@@ -528,6 +536,11 @@ class ComparisonLevel:
     def _u_probability_corresponding_to_exact_match(self):
         levels = self.comparison.comparison_levels
 
+        if self.disable_tf_exact_match_detection:
+            return self.u_probability
+
+        # otherwise, default to looking for an appropriate exact match level:
+
         # Find a level with a single exact match colname
         # which is equal to the tf adjustment input colname
 
@@ -539,6 +552,7 @@ class ComparisonLevel:
                 continue
             if colnames[0] == self._tf_adjustment_input_column_name.lower():
                 return level.u_probability
+
         raise ValueError(
             "Could not find an exact match level for "
             f"{self._tf_adjustment_input_column_name}."
@@ -647,6 +661,9 @@ class ComparisonLevel:
 
         if self.is_null_level:
             output["is_null_level"] = True
+
+        if self.disable_tf_exact_match_detection:
+            output["disable_tf_exact_match_detection"] = True
 
         return output
 
