@@ -604,8 +604,6 @@ class Linker:
                 "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
             )
 
-
-
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
         of the main linker e.g. setting parameters on the copy will not affect the
