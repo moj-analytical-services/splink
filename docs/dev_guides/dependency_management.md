@@ -35,7 +35,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 #### Compatibility Checks
 
 * **Automated Testing**: Use Continuous Integration (CI) to help test the latest python and package versions. This helps identify compatibility issues early.
-* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatability check for supported versions of python.
+* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatibility check for supported versions of python.
 
 #### Handling Breaking Changes
 
@@ -58,7 +58,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 
 In alignment with the Python community's practices, we are phasing out support for Python versions that have hit [end-of-life](https://devguide.python.org/versions/) and are no longer maintained by the core Python development team. This decision ensures that Splink remains secure, efficient, and up-to-date with the latest Python features and improvements.
 
-Our approach mirrors that of key package maintainers, such as the developers behind Numpy. The Numpy developers have kindly pulled together [**NEP 29**](https://scikit-hep.org/supported-python-versions), their guidelines for python version support. This outlines a recommended framework for the deprecation of outdated Python versions.
+Our approach mirrors that of key package maintainers, such as the developers behind NumPy. The NumPy developers have kindly pulled together [**NEP 29**](https://scikit-hep.org/supported-python-versions), their guidelines for python version support. This outlines a recommended framework for the deprecation of outdated Python versions.
 
 ### Benefits of Discontinuing Support for Older Python Versions:
 

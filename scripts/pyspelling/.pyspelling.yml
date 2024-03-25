@@ -2,7 +2,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/dev_guides/changing_splink/releases.md
+      - docs/dev_guides//**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -15,33 +15,27 @@ matrix:
       - pyspelling.filters.context:
           context_visible_first: true
           delimiters:
-            # Ignore python code
+            # Ignore multiline python code
             # ```py
             # content
             # ```
             - open: '(?s)( *```py)'
               close: '```$'
             # Ignore multiline content between cards flags
-            # ::cards::
-            # content
-            # ::/cards::
             - open: '(?s)^(::cards::)$'
               close: '^::/cards::$'
-            # Ignore multiline content at top of blog posts
-            # ---
-            # content
-            # ---
-            - open: '(?s)^(---)$'
-              close: '^---$'
             # Ignore inline code
             - open: '`'
               close: '`'
+            # Ignore multiline content at top of blog posts
+            - open: '(?s)^(---)$'
+              close: '^---$'
             # Ignore text for icons eg :octicons-duplicate-24:
             - open: ':\w+-\w+-?\w*'
               close: ':'
             # Ignore urls within html anchor tags
             - open: '<a'
               close: '</a>'
-          # Filter diff blocks
-          # - open: '(?s)^(```diff)'
-          #   close: '```'
+              # Filter diff blocks
+            - open: '(?s)(```diff)'
+              close: '```'

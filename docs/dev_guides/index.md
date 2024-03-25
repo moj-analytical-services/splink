@@ -25,7 +25,7 @@ When making changes to Splink, there are a number of common operations that deve
 Splink is quite a large, complex codebase. The guides in this section lay out some of the key structures and key areas within the Splink codebase. These include:
 
 * [Understanding and Debugging Splink](./debug_modes.md) - demonstrates several ways of understanding how Splink code is running under the hood. This includes Splink's debug mode and logging.
-* [Transpilation using sqlglot](./transpilation.md) - demonstrates how Splink translates SQL in order to be compatible with multiple SQL engines using the sqlglot package.
+* [Transpilation using SQLGlot](./transpilation.md) - demonstrates how Splink translates SQL in order to be compatible with multiple SQL engines using the SQLGlot package.
 * [Performance and caching](./caching.md) - demonstrates how pipelining and caching is used to make Splink run more efficiently.
 * [Comparison and Comparison Level Libraries](./comparisons/new_library_comparisons_and_levels.md) - demonstrates how `Comparison` Library and `ComparisonLevel` Library functions are structured within Splink, including how to add new functions and edit existing functions.
 * [Charts](./charts/understanding_and_editing_charts.md) - demonstrates how charts are built in Splink, including how to add new charts and edit existing charts.
