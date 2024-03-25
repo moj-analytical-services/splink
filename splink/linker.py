@@ -1657,6 +1657,7 @@ class Linker:
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
+        pipeline = CTEPipeline(reusable=False)
         sqls = _node_degree_sql(
             df_predict,
             df_clustered,
@@ -1665,11 +1666,9 @@ class Linker:
             composite_uid_clusters,
             threshold_match_probability,
         )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_node_metrics = self._execute_sql_pipeline()
+        df_node_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         df_node_metrics.metadata[
             "threshold_match_probability"
@@ -1741,15 +1740,13 @@ class Linker:
         | s1-__-10013 | 11      | 19      | 0.34545 | 0.3111                 |
         ...
         """
-
+        pipeline = CTEPipeline()
         sqls = _size_density_centralisation_sql(
             df_node_metrics,
         )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_cluster_metrics = self._execute_sql_pipeline()
+        df_cluster_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         df_cluster_metrics.metadata[
             "threshold_match_probability"
         ] = df_node_metrics.metadata["threshold_match_probability"]
