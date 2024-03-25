@@ -2836,14 +2836,17 @@ class Linker:
 
         blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
+        pipeline = CTEPipeline()
+
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
             self, blocking_rule
         )
-        self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
-        res = self._execute_sql_pipeline().as_record_dict()[0]
+        pipeline.enqueue_sql(sql, "__splink__analyse_blocking_rule")
+        res_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        res = res_df.as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
 
     def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
