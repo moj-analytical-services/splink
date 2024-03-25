@@ -4,7 +4,7 @@ Splink is a complex project with many dependencies.
 This page provides step-by-step instructions for getting set up to develop Splink.
 Once you have followed these instructions, you should be all set to start making changes.
 
-### Step 0: Unix-like operating system
+## Step 0: Unix-like operating system
 
 We highly recommend developing Splink on a Unix-like operating system, such as MacOS or Linux.
 While it is possible to develop on another operating system such as Windows, we do not provide
@@ -15,53 +15,50 @@ instructions for how to do so.
 - Open PowerShell as Administrator: Right-click the Start button, select “Windows Terminal (Admin)”, and ensure PowerShell is the selected shell.
 - Run the command `wsl --install`.
 - You can find more guidance on setting up WSL [on the Microsoft website](https://learn.microsoft.com/en-us/windows/wsl/install)
-but you don't *need* to do anything additional.
+  but you don't _need_ to do anything additional.
 - Open the Windows Terminal again (does not need to be Admin) and select the Ubuntu shell.
   Follow the rest of these instructions in that shell.
 
-### Step 1: Clone Splink
+## Step 1: Clone Splink
 
 If you haven't already, make a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) of the Splink repository.
 Clone **your fork** to whatever directory you want to work in with `git clone https://github.com/<YOUR_USERNAME>/splink.git`.
 
-### Automatic steps 2-3: Installation script
+## Step 2: Choose how to install system dependencies
 
-For convenience, we have created an automatic installation script that will install all dependencies for you.
-It will create an isolated [conda environment](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) called `splink`.
+Developing Splink requires Python, as well as Poetry (the package manager we use to install Python package dependencies).
+Running Spark or PostgreSQL on your computer to test those backends requires additional dependencies.
+Athena only runs in the AWS cloud, so to locally run the tests for that backend you will need to create an AWS account and
+configure Splink to use it.
 
-From the directory where you have cloned the Splink repository, simply run:
+There are two ways to install these system dependencies: globally on your computer, or in an isolated conda environment.
 
-```sh
-./scripts/conda/development_setup_with_conda.sh
-```
+These can be managed by either:
 
-Then add the `mamba` CLI to your PATH by running `~/miniforge_splink/bin/mamba init`
-for your shell -- e.g. `~/miniforge_splink/bin/mamba init` for Bash or `~/miniforge_splink/bin/mamba init zsh` for zsh.
+1. Installing them manually, or
+2. Using a `conda` environment
 
-If you've run this successfully, you can skip to the "Step 4: Activating your environment(s)" section.
+The decision of which approach to take is subjective.
 
-If you would prefer to manually go through the steps to have a better understanding of what you are installing, continue
-to the next section.
+If you already have Python and Poetry installed (plus Java and PostgreSQL if you want to run the
+Spark and PostgreSQL backends locally), there is probably little advantage to using `conda`.
 
-### Step 2: Non-Python-package dependencies
+On the other hand, `conda` is particular suitable if:
 
-Developing Splink requires Python, as well as Poetry (the package manager we use to install Python package dependencies). 
-Testing locally on the Spark and PostgreSQL backends requires additional dependencies.
-It is not possible to test the Athena backend locally, since that is an AWS service that only runs in the AWS cloud.
-If you want to test against Athena, you will need to create an AWS account and configure Splink to use it.
+- You're already a `conda` user, and/or
+- You're working in an environment where security policies prevent the installation of system level packages like Java
+- You don't want to do global installs of some of the requirements like Java
 
-There are two ways to install these dependencies: globally on your computer, or in an isolated conda environment.
+## Step 3, Manual install option: Install system depedencies
 
-#### Global installation
-
-##### Python
+### Python
 
 Check if Python is already installed by running `python3 --version`.
 If that outputs a version like 3.10.12, you've already got it!
 Otherwise, follow the instructions for installation on your platform
 from the [Python website](https://www.python.org/downloads/).
 
-##### Poetry
+### Poetry
 
 Run these commands to install Poetry globally.
 Note that we currently use an older version of Poetry, so the version
@@ -72,7 +69,7 @@ pip install --upgrade pip
 pip install poetry==1.4.2
 ```
 
-##### Java
+### Java
 
 The instructions to install Java globally depend on your operating system.
 Generally, some version of Java will be available from your operating system's
@@ -86,7 +83,7 @@ As an example, you could run this on Ubuntu:
 sudo apt install openjdk-11-jre-headless
 ```
 
-##### PostgreSQL (optional)
+### PostgreSQL (optional)
 
 Follow [the instructions on the PostgreSQL website](https://www.postgresql.org/download/)
 to install it on your computer.
@@ -124,6 +121,25 @@ and the teardown script each time you want to stop it:
 Included in the docker-compose file is a [pgAdmin](https://www.pgadmin.org/) container to allow easy exploration of the database as you work, which can be accessed in-browser on the default port.
 The default username is `a@b.com` with password `b`.
 
+## Step 3, Conda install option: Install system depedencies
+
+For convenience, we have created an automatic installation script that will install all dependencies for you.
+It will create an isolated [conda environment](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) called `splink`.
+
+From the directory where you have cloned the Splink repository, simply run:
+
+```sh
+./scripts/conda/development_setup_with_conda.sh
+```
+
+Then add the `mamba` CLI to your PATH by running `~/miniforge_splink/bin/mamba init`
+for your shell -- e.g. `~/miniforge_splink/bin/mamba init` for Bash or `~/miniforge_splink/bin/mamba init zsh` for zsh.
+
+If you've run this successfully, you can skip to the "Step 5: Activating your environment(s)" section.
+
+If you would prefer to manually go through the steps to have a better understanding of what you are installing, continue
+to the next section.
+
 #### Conda environment installation
 
 These instructions are the same no matter what operating system you are using.
@@ -157,10 +173,10 @@ mamba env create -n splink --file ./scripts/conda/development_environment.yaml
 
 Now run `mamba activate splink` to enter your newly created conda environment
 -- you will need to do this again each time you open a new terminal.
-Run the rest of the steps in this guide *inside* this environment.
+Run the rest of the steps in this guide _inside_ this environment.
 `mamba deactivate` leaves the environment.
 
-### Step 3: Python package dependencies
+## Step 4: Python package dependencies
 
 Splink manages the other Python packages it depends on using Poetry.
 Simply run `poetry install` in the Splink directory to install them.
@@ -171,7 +187,7 @@ To enter the virtual environment created by poetry, run `poetry shell`.
 You will need to do this again each time you open a new terminal.
 Use `exit` to leave the Poetry shell.
 
-### Step 4: Activating your environment(s)
+### Step 5: Activating your environment(s)
 
 Depending on the options you chose in this document, you now have either:
 
