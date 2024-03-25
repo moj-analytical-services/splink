@@ -208,18 +208,17 @@ def truth_space_table_from_labels_column(
     *
     from {df_predict.physical_name}
     """
+    pipeline = CTEPipeline(reusable=False)
 
-    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+    pipeline.enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    df_truth_space_table = linker._execute_sql_pipeline()
+    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -356,7 +355,7 @@ def prediction_errors_from_label_column(
 
     # _predict_from_label_column_sql will add a match key for matching on labels
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
-
+    pipeline = CTEPipeline(reusable=False)
     sql = f"""
     select
     case
@@ -371,7 +370,7 @@ def prediction_errors_from_label_column(
 
     # found_by_blocking_rules
 
-    linker._enqueue_sql(sql, "__splink__predictions_from_label_column")
+    pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column")
 
     false_positives = f"""
     (clerical_match_score < {threshold} and
@@ -401,8 +400,8 @@ def prediction_errors_from_label_column(
     where {where_condition}
     """
 
-    linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
+    pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
 
-    predictions = linker._execute_sql_pipeline()
+    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return predictions
