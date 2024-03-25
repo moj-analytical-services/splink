@@ -8,7 +8,7 @@ source scripts/make_docs_locally.sh
 
 This is much faster than waiting for GitHub actions to run if you're trying to make fiddly changes to formatting etc.
 
-Once you've finished updating Splink documentation we ask that you run our spellchecker script. Instructions on how to do this are given below.
+Once you've finished updating Splink documentation we ask that you run our spellchecker. Instructions on how to do this are given below.
 
 Splink's GitHub repository contains a [working `requirements.txt` for building the docs](https://github.com/moj-analytical-services/splink/blob/master/scripts/docs-requirements.txt), or a more complete version:
 
@@ -88,7 +88,7 @@ Splink's GitHub repository contains a [working `requirements.txt` for building t
 
 ## Spellchecking docs
 
-When updating Splink documentation, we ask that you run our spellchecker script before submitting a pull request. This is to help ensure quality and consistency across the documentation.
+When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. Please note, the spellchecker _only works on markdown files_.
 
 To run the spellchecker on either a single markdown file or folder of markdown files, you can use the following script:
 
@@ -96,10 +96,35 @@ To run the spellchecker on either a single markdown file or folder of markdown f
 source scripts/pyspelling/spellchecker.sh <path_to_file_or_folder>
 ```
 
-Omitting the file/folder path will run the spellchecker on all markdown files contained in the `docs` folder.
+Omitting the file/folder path will run the spellchecker on all markdown files contained in the `docs` folder. We recommend running the spellchecker only on files that you have created or edited. 
 
-The spellchecker uses the Python package [PySpelling](https://facelessuser.github.io/pyspelling/) and its underlying spellchecking tool Aspell. Running the above script will automatically install these packages along with any other necessary dependencies.
+The spellchecker uses the Python package [PySpelling](https://facelessuser.github.io/pyspelling/) and its underlying spellchecking tool, Aspell. Running the above script will automatically install these packages along with any other necessary dependencies.
 
-The spellchecker compares words in markdown files to a [standard dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) of words. Additional words can be recorded as acceptable spellings by adding them to `scripts/pyspelling/custom_dictionary.txt`. 
+The spellchecker compares words to a [standard dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) and a custom dictionary (`scripts/pyspelling/custom_dictionary.txt`) of words. If no spelling mistakes are found, you will see the following terminal printout:
 
-Upon completion, the spellchecker will flag any spelling mistakes (words not found in either the standard or custom dictionary) in the terminal. Mistakes should be corrected or the custom dictionary updated to ensure the spellchecker runs without error.
+```sh
+
+Spelling check passed :)
+
+```
+
+otherwise, PySpelling will printout the spelling mistakes found in each file.
+
+Correct spellings of words not found in a standard dictionary (e.g. Splink) can be recorded as such by adding them to `scripts/pyspelling/custom_dictionary.txt`. (Don't worry about adding them in alphabetical order or accidental duplication as this will be handled automatically by a GitHub Action.)
+
+Please correct any mistakes found or update the custom dictionary to ensure the spellchecker passes before putting in a pull request containing updates to the documentation.
+
+??? note
+
+    The spellchecker is configured (via pyspelling.yml) to ignore text between certain delimiters (such as those for code) to minimise catching Splink/programming-specific terms. If there are additional patterns that you think should be excepted then please let us know in your pull request.
+
+    The custom dictionary deliberately contains a few misspelled words (e.g.). These are sometimes necessary where we are explaining how Splink handles typos in data records.
+
+
+
+   
+
+ 
+
+
+
