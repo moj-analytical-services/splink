@@ -1468,32 +1468,31 @@ class Linker:
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
-        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        pipeline = CTEPipeline([df_records_left, df_records_right])
+        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
 
-        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
+        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._execute_sql_pipeline(
-            [df_records_left, df_records_right], use_cache=False
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
