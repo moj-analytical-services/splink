@@ -258,7 +258,7 @@ nav:
         - Settings Validation:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
-        - Splink Dependency Management: "dev_guides/dependency_management.md"
+        - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
   - Blog:
     - blog/index.md
 extra_css:
