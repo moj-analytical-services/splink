@@ -40,7 +40,8 @@ These can be managed by either:
 
 The decision of which approach to take is subjective.
 
-Some developers will already be using Spark and will already have `poetry` installed, but are not familiar with `conda`. For these users, there's probably little advantage to using `conda`.
+If you already have Python and Poetry installed (plus Java and PostgreSQL if you want to run the
+Spark and PostgreSQL backends locally), there is probably little advantage to using `conda`.
 
 On the other hand, `conda` is particular suitable if:
 
