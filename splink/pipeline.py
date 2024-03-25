@@ -22,11 +22,7 @@ class SQLTask:
         except ParseError:
             return ["Failure to parse SQL - tablenames not known"]
 
-        table_names = set()
-        for subtree, _parent, _key in tree.walk():
-            if type(subtree) is Table:
-                table_names.add(subtree.sql())
-        return list(table_names)
+        return list({t.sql() for t in tree.find_all(Table)})
 
     @property
     def _task_description(self):
