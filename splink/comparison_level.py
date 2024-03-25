@@ -38,8 +38,8 @@ def _is_exact_match(sql_syntax_tree):
         return False
 
     cols = [s.output_name for s in sql_syntax_tree.find_all(Column)]
-    colss_truncated = [i.this[:-2] for i in cols]
-    if colss_truncated[0] == colss_truncated[1]:
+    cols_truncated = [c[:-2] for c in cols]
+    if cols_truncated[0] == cols_truncated[1]:
         return True
     else:
         return False
