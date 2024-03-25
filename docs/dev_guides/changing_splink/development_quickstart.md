@@ -1,5 +1,3 @@
-## Development quickstart
-
 Splink is a complex project with many dependencies.
 This page provides step-by-step instructions for getting set up to develop Splink.
 Once you have followed these instructions, you should be all set to start making changes.
@@ -33,17 +31,12 @@ configure Splink to use it.
 
 There are two ways to install these system dependencies: globally on your computer, or in an isolated conda environment.
 
-These can be managed by either:
-
-1. Installing them manually, or
-2. Using a `conda` environment
-
 The decision of which approach to take is subjective.
 
 If you already have Python and Poetry installed (plus Java and PostgreSQL if you want to run the
 Spark and PostgreSQL backends locally), there is probably little advantage to using `conda`.
 
-On the other hand, `conda` is particular suitable if:
+On the other hand, `conda` is particularly suitable if:
 
 - You're already a `conda` user, and/or
 - You're working in an environment where security policies prevent the installation of system level packages like Java
@@ -123,6 +116,10 @@ The default username is `a@b.com` with password `b`.
 
 ## Step 3, Conda install option: Install system depedencies
 
+These instructions are the same no matter what operating system you are using.
+As an added benefit, these installations will be specific to the conda environment
+you create for Splink, so they will not interfere with other projects.
+
 For convenience, we have created an automatic installation script that will install all dependencies for you.
 It will create an isolated [conda environment](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) called `splink`.
 
@@ -132,21 +129,15 @@ From the directory where you have cloned the Splink repository, simply run:
 ./scripts/conda/development_setup_with_conda.sh
 ```
 
-Then add the `mamba` CLI to your PATH by running `~/miniforge_splink/bin/mamba init`
-for your shell -- e.g. `~/miniforge_splink/bin/mamba init` for Bash or `~/miniforge_splink/bin/mamba init zsh` for zsh.
+Then add the `mamba` CLI to your PATH by running `~/miniforge3/bin/mamba init`
+for your shell -- e.g. `~/miniforge3/bin/mamba init` for Bash or `~/miniforge3/bin/mamba init zsh` for zsh.
 
 If you've run this successfully, you can skip to the "Step 5: Activating your environment(s)" section.
 
 If you would prefer to manually go through the steps to have a better understanding of what you are installing, continue
 to the next section.
 
-#### Conda environment installation
-
-These instructions are the same no matter what operating system you are using.
-As an added benefit, these installations will be specific to the conda environment
-you create for Splink, so they will not interfere with other projects.
-
-##### Conda itself
+### Install Conda itself
 
 First, we need to install a conda CLI.
 Any will do, but we recommend [Miniforge](https://github.com/conda-forge/miniforge), which can be installed like so:
@@ -162,7 +153,7 @@ installs the `mamba` CLI by default, which is generally faster than the `conda` 
 Before you'll be able to run the `mamba` command, you need to run `~/miniforge3/bin/mamba init`
 for your shell -- e.g. `~/miniforge3/bin/mamba init` for Bash or `~/miniforge3/bin/mamba init zsh` for zsh.
 
-##### Conda packages
+### Install Conda packages
 
 The rest is easy, because all the other dependencies can be installed as conda packages.
 Simply run:
@@ -187,7 +178,7 @@ To enter the virtual environment created by poetry, run `poetry shell`.
 You will need to do this again each time you open a new terminal.
 Use `exit` to leave the Poetry shell.
 
-### Step 5: Activating your environment(s)
+## Step 5: Activating your environment(s)
 
 Depending on the options you chose in this document, you now have either:
 
@@ -201,7 +192,7 @@ If you **did** use conda, then each time you open a terminal to develop
 Splink, after navigating to the repository directory, run `mamba activate splink`
 and then `poetry shell`.
 
-### Step 5: Checking that it worked
+## Step 6: Checking that it worked
 
 If you have installed all the dependencies, including PostgreSQL,
 you should be able to run the following command without error (will take about 10 minutes):
@@ -220,7 +211,7 @@ If you haven't installed PostgreSQL, try this:
 pytest tests/ --ignore tests/test_full_example_postgres.py
 ```
 
-### Step 6: Visual Studio Code (optional)
+## Step 7: Visual Studio Code (optional)
 
 You're now all set to develop Splink.
 If you have a text editor/IDE you are comfortable with for working on Python packages,
