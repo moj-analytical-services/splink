@@ -485,28 +485,6 @@ class Linker:
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
-    def _initialise_df_concat(self, materialise=False):
-        cache = self._intermediate_table_cache
-        concat_df = None
-        if "__splink__df_concat" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat")
-        elif "__splink__df_concat_with_tf" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat_with_tf")
-            concat_df.templated_name = "__splink__df_concat"
-        else:
-            if materialise:
-                # Clear the pipeline if we are materialising
-                # There's no reason not to do this, since when
-                # we execute the pipeline, it'll get cleared anyway
-                self._pipeline.reset()
-            sql = vertically_concatenate_sql(self)
-            self._enqueue_sql(sql, "__splink__df_concat")
-            if materialise:
-                concat_df = self._execute_sql_pipeline()
-                cache["__splink__df_concat"] = concat_df
-
-        return concat_df
-
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
