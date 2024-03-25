@@ -8,7 +8,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import sqlglot
-from sqlglot.expressions import Identifier
+from sqlglot.expressions import Column, Identifier
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
@@ -37,9 +37,9 @@ def _is_exact_match(sql_syntax_tree):
     if signature != sqlglot_tree_signature(sqlglot.parse_one("col_l = col_r")):
         return False
 
-    identifiers = list(sql_syntax_tree.find_all(Identifier))
-    idents_truncated = [i.this[:-2] for i in identifiers]
-    if idents_truncated[0] == idents_truncated[1]:
+    cols = list(sql_syntax_tree.find_all(Column))
+    colss_truncated = [i.this[:-2] for i in cols]
+    if colss_truncated[0] == colss_truncated[1]:
         return True
     else:
         return False
