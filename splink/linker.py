@@ -204,7 +204,6 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self._pipeline = CTEPipeline()
         self.db_api = database_api
 
         # TODO: temp hack for compat
@@ -484,57 +483,6 @@ class Linker:
             input_columns=self._input_tables_dict,
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
-
-    def _table_to_splink_dataframe(
-        self, templated_name, physical_name
-    ) -> SplinkDataFrame:
-        """Create a SplinkDataframe from a table in the underlying database called
-        `physical_name`.
-
-        Associate a `templated_name` with this table, which signifies the purpose
-        or 'meaning' of this table to splink. (e.g. `__splink__df_blocked`)
-
-        Args:
-            templated_name (str): The purpose of the table to Splink
-            physical_name (str): The name of the table in the underlying databse
-        """
-        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
-
-    def _enqueue_sql(self, sql, output_table_name):
-        """Add sql to the current pipeline, but do not execute the pipeline."""
-        self._pipeline.enqueue_sql(sql, output_table_name)
-
-    def _execute_sql_pipeline(
-        self,
-        input_dataframes: list[SplinkDataFrame] = [],
-        use_cache=True,
-    ) -> SplinkDataFrame:
-        """Execute the SQL queued in the current pipeline as a single statement
-        e.g. `with a as (), b as , c as (), select ... from c`, then execute the
-        pipeline, returning the resultant table as a SplinkDataFrame
-
-        Args:
-            input_dataframes (List[SplinkDataFrame], optional): A 'starting point' of
-                SplinkDataFrames if needed. Defaults to [].
-            use_cache (bool, optional): If true, look at whether the SQL pipeline has
-                been executed before, and if so, use the existing result. Defaults to
-                True.
-
-        Returns:
-            SplinkDataFrame: An abstraction representing the table created by the sql
-                pipeline
-        """
-        try:
-            dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
-                self._pipeline,
-                input_dataframes,
-                use_cache,
-            )
-        except Exception as e:
-            raise e
-        finally:
-            self._pipeline.reset()
-        return dataframe
 
     def register_table(self, input, table_name, overwrite=False):
         """
@@ -1328,7 +1276,7 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
-        new_records_df = self._table_to_splink_dataframe(
+        new_records_df = self.db_api.table_to_splink_dataframe(
             "__splink__df_new_records", new_records_tablename
         )
 
