@@ -2,7 +2,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/dev_guides//**/*.md
+      - docs/includes/**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -36,6 +36,9 @@ matrix:
             # Ignore urls within html anchor tags
             - open: '<a'
               close: '</a>'
-              # Filter diff blocks
+            # Ignore diff blocks
             - open: '(?s)(```diff)'
               close: '```'
+            # Ignore text between $$ tags
+            - open: '(?s)(\$\$)'
+              close: '\$\$'
