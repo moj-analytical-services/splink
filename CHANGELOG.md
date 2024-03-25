@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.9.14] - 2024-03-25
 
+### Fixed
+
+- `IndexError: List index out of range` error due to API change `SQLGlot>=23.0.0`, see [here](https://github.com/moj-analytical-services/splink/pull/2079)
+
 ### Added
 
 - Ability to override detection of exact match level for tf adjustments. See [here](https://gist.github.com/RobinL/6e11c04aa1204ac3e7452eddd778ab4f) for example.
