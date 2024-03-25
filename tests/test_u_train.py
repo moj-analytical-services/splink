@@ -5,6 +5,7 @@ import pytest
 
 import splink.comparison_library as cl
 from splink.estimate_u import _proportion_sample_size_link_only
+from splink.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
 
 
@@ -86,9 +87,10 @@ def test_u_train_link_only(test_helpers, dialect):
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     WHERE source_dataset_l = source_dataset_r
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline(reusable=False)
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.execute_pipeline(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -147,9 +149,10 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline(reusable=False)
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.execute_pipeline(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -272,9 +275,9 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline(reusable=False)
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.execute_pipeline(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -304,9 +307,9 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline(reusable=False)
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.execute_pipeline(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
