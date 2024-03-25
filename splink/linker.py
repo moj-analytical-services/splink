@@ -9,7 +9,11 @@ from pathlib import Path
 from statistics import median
 from typing import Dict, Optional, Union
 
-from .vertically_concatenate import enqueue_df_concat_with_tf, compute_df_concat_with_tf
+from .vertically_concatenate import (
+    enqueue_df_concat_with_tf,
+    compute_df_concat_with_tf,
+    enqueue_df_concat,
+)
 from splink.input_column import InputColumn
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnsLogger,
@@ -112,7 +116,6 @@ from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
     _join_tf_to_input_df_sql,
     colname_to_tf_tablename,
-    compute_all_term_frequencies_sqls,
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
@@ -504,38 +507,6 @@ class Linker:
 
         return concat_df
 
-    def _initialise_df_concat_with_tf(self, materialise=True):
-        # TODO: Eliminate all uses of this
-        cache = self._intermediate_table_cache
-        nodes_with_tf = None
-        if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-
-        else:
-            # In duckdb, calls to random() in a CTE pipeline cause problems:
-            # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
-            if self._settings_obj.salting_required:
-                materialise = True
-
-            if materialise:
-                # Clear the pipeline if we are materialising
-                # There's no reason not to do this, since when
-                # we execute the pipeline, it'll get cleared anyway
-                self._pipeline.reset()
-
-            sql = vertically_concatenate_sql(self)
-            self._enqueue_sql(sql, "__splink__df_concat")
-
-            sqls = compute_all_term_frequencies_sqls(self)
-            for sql in sqls:
-                self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-            if materialise:
-                nodes_with_tf = self._execute_sql_pipeline()
-                cache["__splink__df_concat_with_tf"] = nodes_with_tf
-
-        return nodes_with_tf
-
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
@@ -883,24 +854,23 @@ class Linker:
         if tf_tablename in cache:
             tf_df = cache.get_with_logging(tf_tablename)
         elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-            self._pipeline.reset()
+
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline = CTEPipeline([nodes_with_tf], reusable=False)
             # If our df_concat_with_tf table already exists, use backwards inference to
             # find a given tf table
             colname = InputColumn(column_name)
             sql = term_frequencies_from_concat_with_tf(colname)
-            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
-            tf_df = self._execute_sql_pipeline([cache["__splink__df_concat_with_tf"]])
+            pipeline.enqueue_sql(sql, colname_to_tf_tablename(colname))
+
+            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
             self._intermediate_table_cache[tf_tablename] = tf_df
         else:
-            # Clear the pipeline if we are materialising
-            self._pipeline.reset()
-            df_concat = self._initialise_df_concat()
-            input_dfs = []
-            if df_concat:
-                input_dfs.append(df_concat)
+            pipeline = CTEPipeline(reusable=False)
+            pipeline = enqueue_df_concat(self, pipeline)
             sql = term_frequencies_for_single_column_sql(input_col)
-            self._enqueue_sql(sql, tf_tablename)
-            tf_df = self._execute_sql_pipeline(input_dfs)
+            pipeline.enqueue_sql(sql, tf_tablename)
+            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
             self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df

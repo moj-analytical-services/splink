@@ -97,7 +97,7 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
     return pipeline
 
 
-def compute_df_concat_with_tf(linker: Linker, pipeline) -> SplinkDataFrame:
+def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
     cache = linker._intermediate_table_cache
     db_api = linker.db_api
 
@@ -136,7 +136,7 @@ def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
     return pipeline
 
 
-def compute_df_concat(linker: Linker, pipeline) -> SplinkDataFrame:
+def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
     cache = linker._intermediate_table_cache
     db_api = linker.db_api
 
