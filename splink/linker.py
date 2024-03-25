@@ -585,10 +585,10 @@ class Linker:
 
         output_tablename_templated = "__splink__df_sql_query"
 
-        splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
-            sql,
-            output_tablename_templated,
-            use_cache=False,
+        pipeline = CTEPipeline(reusable=False)
+        pipeline.enqueue_sql(sql, output_tablename_templated)
+        splink_dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         if output_type in ("splink_df", "splinkdf"):
@@ -604,26 +604,7 @@ class Linker:
                 "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
             )
 
-    def _sql_to_splink_dataframe_checking_cache(
-        self,
-        sql,
-        output_tablename_templated,
-        use_cache=True,
-    ) -> SplinkDataFrame:
-        """Execute sql, or if identical sql has been run before, return cached results.
 
-        This function
-            - is used by _execute_sql_pipeline to to execute SQL
-            - or can be used directly if you have a single SQL statement that's
-              not in a pipeline
-
-        Return a SplinkDataFrame representing the results of the SQL
-        """
-        return self.db_api.sql_to_splink_dataframe_checking_cache(
-            sql,
-            output_tablename_templated,
-            use_cache=use_cache,
-        )
 
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
@@ -3005,9 +2986,10 @@ class Linker:
         sql = count_num_comparisons_from_blocking_rules_for_prediction_sql(
             self, df_predict
         )
-        match_key_analysis = self._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__match_key_analysis"
-        )
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, "__splink__match_key_analysis")
+        match_key_analysis = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         return match_key_analysis
 
     def match_weights_chart(self):

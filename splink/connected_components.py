@@ -352,10 +352,9 @@ def _cc_create_unique_id_cols(
         {uid_concat_edges} as unique_id_r
         from {concat_with_tf}
     """
-
-    return linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__df_connected_components_df"
-    )
+    pipeline = CTEPipeline(reusable=False)
+    pipeline.enqueue_sql(sql, "__splink__df_connected_components_df")
+    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _exit_query(
