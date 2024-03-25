@@ -2684,15 +2684,14 @@ class Linker:
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
-
+        pipeline = CTEPipeline([df_predict])
         sql = comparison_vector_distribution_sql(self)
-        self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
         sqls = comparison_viewer_table_sqls(self, num_example_rows)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_sqls(sqls)
 
-        df = self._execute_sql_pipeline([df_predict])
+        df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         rendered = render_splink_comparison_viewer_html(
             df.as_record_dict(),
