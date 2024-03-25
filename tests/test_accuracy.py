@@ -50,17 +50,16 @@ def test_scored_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    pipeline = CTEPipeline()
+    pipeline = CTEPipeline(reusable=False)
     concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
+    pipeline = CTEPipeline([concat_with_tf], reusable=False)
     linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    df_scores_labels = linker._execute_sql_pipeline([concat_with_tf])
+    df_scores_labels = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     df_scores_labels = df_scores_labels.as_pandas_dataframe()
     df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
@@ -139,11 +138,11 @@ def test_truth_space_table():
     labels_with_predictions = pd.DataFrame(labels_with_predictions)
 
     linker.register_table(labels_with_predictions, "__splink__labels_with_predictions")
-
+    pipeline = CTEPipeline(reusable=False)
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-    df_roc = linker._execute_sql_pipeline()
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    df_roc = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     df_roc = df_roc.as_pandas_dataframe()
 

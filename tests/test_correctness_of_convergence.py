@@ -42,6 +42,7 @@ from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
 from splink.exceptions import SplinkException
 from splink.linker import Linker
+from splink.pipeline import CTEPipeline
 from splink.predict import predict_from_comparison_vectors_sqls_using_settings
 
 
@@ -112,15 +113,14 @@ def test_splink_converges_to_known_params():
         linker,
     )
 
+    pipeline = CTEPipeline([cv], reusable=False)
     sqls = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         sql_infinity_expression=linker._infinity_expression,
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    predictions = linker._execute_sql_pipeline([cv])
+    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     predictions_df = predictions.as_pandas_dataframe()
 
     from pandas.testing import assert_series_equal
