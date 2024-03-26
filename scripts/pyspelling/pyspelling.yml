@@ -1,7 +1,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/blog/posts/2023-07-27-feature_update.md|!docs/includes/**/*.md
+      - docs/**/*.md|!docs/includes/**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -34,3 +34,5 @@ matrix:
             # Ignore inline math
             - open: '\${1,2}'
               close: '\${1,2}'
+            - open: '(?s)^(:::)'
+              close: '\$'
