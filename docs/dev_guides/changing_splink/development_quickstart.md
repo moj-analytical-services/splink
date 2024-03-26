@@ -172,7 +172,7 @@ Run the rest of the steps in this guide _inside_ this environment.
 Splink manages the other Python packages it depends on using Poetry.
 Simply run `poetry install` in the Splink directory to install them.
 You can find more options for this command (such as how to install
-optional dependencies) on the [managing dependencies page](./managing_dependencies.md).
+optional dependencies) on the [managing dependencies with Poetry page](./managing_dependencies_with_poetry.md).
 
 To enter the virtual environment created by poetry, run `poetry shell`.
 You will need to do this again each time you open a new terminal.
