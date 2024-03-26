@@ -484,6 +484,19 @@ class Linker:
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
+    def _table_to_splink_dataframe(
+        self, templated_name, physical_name
+    ) -> SplinkDataFrame:
+        """Create a SplinkDataframe from a table in the underlying database called
+        `physical_name`.
+        Associate a `templated_name` with this table, which signifies the purpose
+        or 'meaning' of this table to splink. (e.g. `__splink__df_blocked`)
+        Args:
+            templated_name (str): The purpose of the table to Splink
+            physical_name (str): The name of the table in the underlying databse
+        """
+        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
+
     def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the
