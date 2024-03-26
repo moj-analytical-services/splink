@@ -273,21 +273,24 @@ def profile_columns(
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = db_api.sql_pipeline_to_splink_dataframe(pipeline, input_dataframes)
 
+    pipeline = CTEPipeline(input_dataframes=[df_raw])
     sqls = _get_df_percentiles()
     for sql in sqls:
         pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = db_api.sql_pipeline_to_splink_dataframe(pipeline, [df_raw])
+    df_percentiles = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     percentile_rows_all = df_percentiles.as_record_dict()
 
+    pipeline = CTEPipeline(input_dataframes=[df_raw])
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     pipeline.enqueue_sql(sql, "__splink__df_top_n")
-    df_top_n = db_api.sql_pipeline_to_splink_dataframe(pipeline, [df_raw])
+    df_top_n = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     top_n_rows_all = df_top_n.as_record_dict()
 
+    pipeline = CTEPipeline(input_dataframes=[df_raw])
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
     pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
-    df_bottom_n = db_api.sql_pipeline_to_splink_dataframe(pipeline, [df_raw])
+    df_bottom_n = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []
