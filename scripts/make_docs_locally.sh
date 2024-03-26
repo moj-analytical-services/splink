@@ -28,4 +28,4 @@ if [[ "$VIRTUAL_ENV" != "$(pwd)/docs-venv" ]]; then
     source docs-venv/bin/activate
 fi
 # can remove verbose flag if needed
-mkdocs serve -v
+mkdocs serve -v --dirtyreload
