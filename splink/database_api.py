@@ -181,7 +181,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
-        input_dataframes: List[SplinkDataFrame] = [],
         use_cache=True,
     ) -> SplinkDataFrame:
         """
@@ -190,9 +189,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         pipeline is set to spent after execution ensuring it cannot be
         acidentally reused
         """
-
-        for df in input_dataframes:
-            pipeline.append_input_dataframe(df)
 
         if not self.debug_mode:
 

@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.local # the path depends on the OS
-          key: poetry-0 # increment to reset cache
+          key: poetry-1 # increment to reset cache
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -54,7 +54,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-01
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------

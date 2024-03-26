@@ -249,7 +249,7 @@ def profile_columns(
         column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
 
-    pipeline = CTEPipeline()
+    pipeline = CTEPipeline(input_dataframes)
 
     cols_to_select = ", ".join(input_columns)
     template = """
@@ -271,7 +271,7 @@ def profile_columns(
     )
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = db_api.sql_pipeline_to_splink_dataframe(pipeline, input_dataframes)
+    df_raw = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     pipeline = CTEPipeline(input_dataframes=[df_raw])
     sqls = _get_df_percentiles()
