@@ -501,6 +501,7 @@ def solve_connected_components(
 
         representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        pipeline = CTEPipeline(reusable=False)
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = representatives

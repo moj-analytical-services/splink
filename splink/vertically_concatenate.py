@@ -143,7 +143,9 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
     if "__splink__df_concat" in cache:
         return cache.get_with_logging("__splink__df_concat")
     if "__splink__df_concat_with_tf" in cache:
-        return cache.get_with_logging("__splink__df_concat_with_tf")
+        df = cache.get_with_logging("__splink__df_concat_with_tf")
+        df.templated_name = "__splink__df_concat"
+        return df
 
     sql = vertically_concatenate_sql(linker)
     pipeline.enqueue_sql(sql, "__splink__df_concat")

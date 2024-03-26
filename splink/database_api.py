@@ -187,7 +187,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
         self.debug_mode controls whether this is CTE or individual tables.
-        pipeline is resest upon completion
+        pipeline is set to spent after execution ensuring it cannot be
+        acidentally reused
         """
 
         for df in input_dataframes:
@@ -224,7 +225,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 print(f"Step ran in: {run_time}")  # noqa: T201
 
         # if there is an error the pipeline will not reset, leaving caller to handle
-        pipeline.reset()
+
         return splink_dataframe
 
     @final

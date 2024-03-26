@@ -57,13 +57,11 @@ class CTEPipeline:
         else:
             self.input_dataframes = ensure_is_list(input_dataframes)
 
-        # Temporary flag so in new code I make sure i don't reuse pipelines
-        # Can be removed once all sql execution uses fresh CTEPipelines
-        self._reusable = reusable
-        self._spent = False
+        # A flag to ensure that a pipeline cannot be reused
+        self.spent = False
 
     def enqueue_sql(self, sql, output_table_name):
-        if self._spent:
+        if self.spent:
             raise ValueError("This pipeline has already been used")
         sql_task = CTE(sql, output_table_name)
         self.queue.append(sql_task)
@@ -74,7 +72,6 @@ class CTEPipeline:
 
     def break_lineage(self, db_api: "DatabaseAPI") -> "CTEPipeline":
         df = db_api.sql_pipeline_to_splink_dataframe(self)
-        self._spent = True
         new_pipeline = CTEPipeline(input_dataframes=[df], reusable=self._reusable)
         return new_pipeline
 
@@ -105,8 +102,8 @@ class CTEPipeline:
         return self._input_dataframes_as_cte() + self.queue
 
     def generate_cte_pipeline_sql(self):
-        if self._spent:
-            raise ValueError("This pipeline has already been used")
+
+        self.spent = True
 
         pipeline = self.ctes_pipeline()
 
@@ -127,7 +124,3 @@ class CTEPipeline:
     @property
     def output_table_name(self):
         return self.ctes_pipeline()[-1].output_table_name
-
-    def reset(self):
-        self.queue = []
-        self.input_dataframes = []
