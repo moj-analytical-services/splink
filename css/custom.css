@@ -1,0 +1,12 @@
+code.language-python > span:not(:first-child) {
+  font-size: small;
+  color: rgb(113 112 112);
+}
+
+.vega-embed details,
+.vega-embed summary details,
+.vega-embed summary,
+.vega-embed summary::before,
+.vega-embed summary::after {
+  all: initial;
+}
