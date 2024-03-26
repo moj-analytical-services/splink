@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 def estimate_m_from_pairwise_labels(linker, table_name):
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
     sqls = block_from_labels(linker, table_name)
 
     pipeline.enqueue_list_of_sqls(sqls)

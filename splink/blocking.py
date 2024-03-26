@@ -402,13 +402,13 @@ def materialise_exploded_id_tables(linker: Linker):
         return []
     exploded_tables = []
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     input_colnames = {col.name for col in nodes_with_tf.columns}
 
     for br in exploding_blocking_rules:
-        pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+        pipeline = CTEPipeline([nodes_with_tf])
         arrays_to_explode_quoted = [
             InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
             for colname in br.array_columns_to_explode

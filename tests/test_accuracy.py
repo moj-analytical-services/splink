@@ -50,10 +50,10 @@ def test_scored_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
-    pipeline = CTEPipeline([concat_with_tf], reusable=False)
+    pipeline = CTEPipeline([concat_with_tf])
     linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
@@ -138,7 +138,7 @@ def test_truth_space_table():
     labels_with_predictions = pd.DataFrame(labels_with_predictions)
 
     linker.register_table(labels_with_predictions, "__splink__labels_with_predictions")
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     pipeline.enqueue_list_of_sqls(sqls)
 

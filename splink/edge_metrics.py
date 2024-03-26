@@ -53,7 +53,7 @@ def compute_edge_metrics(
 def compute_basic_edge_metrics(
     linker: Linker, df_predict: SplinkDataFrame, threshold_match_probability: float
 ):
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
     pipeline.enqueue_sql(**sql_info)
 
@@ -90,7 +90,7 @@ def compute_igraph_metrics(
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     # firstly we (arbitrarily) map node ids to 1-indexed integers with no gaps
     # this is how igraph deals with nodes
     sql_infos = _node_mapping_table_sql(df_node_metrics)
@@ -98,14 +98,14 @@ def compute_igraph_metrics(
     df_node_mappings = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we keep only edges at or above relevant threshold
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
     pipeline.enqueue_sql(**sql_info)
     df_truncated_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we map the truncated edges to the integer encoding for nodes above,
     # keeping only the list of endpoints
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql_info = _edges_for_igraph_sql(
         df_node_mappings,
         df_truncated_edges.physical_name,
@@ -127,7 +127,7 @@ def compute_igraph_metrics(
         df_bridges_pd, f"__splink__bridges_{igraph_edges_hash}"
     )
     # map our bridge edges back to the original node labelling
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql_info = _bridges_from_igraph_sql(df_node_mappings, df_bridges)
     pipeline.enqueue_sql(**sql_info)
     # and adjoin edges which are _not_ bridges, labelling them as such

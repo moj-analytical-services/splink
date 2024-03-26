@@ -21,7 +21,7 @@ def unlinkables_data(linker: Linker):
 
     self_link = linker._self_link()
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
 
     sql = f"""
         select

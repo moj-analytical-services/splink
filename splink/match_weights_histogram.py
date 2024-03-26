@@ -63,7 +63,7 @@ def histogram_data(linker, df_predict, num_bins=100):
     select min(match_weight) as min_weight, max(match_weight) as max_weight from
     __splink__df_predict
     """
-    pipeline = CTEPipeline([df_predict], reusable=False)
+    pipeline = CTEPipeline([df_predict])
     pipeline.enqueue_sql(sql, "__splink__df_min_max")
 
     df_min_max = linker.db_api.sql_pipeline_to_splink_dataframe(
@@ -75,7 +75,7 @@ def histogram_data(linker, df_predict, num_bins=100):
 
     bins, binwidth = _bins(min_weight, max_weight, num_bins)
 
-    pipeline = CTEPipeline([df_predict], reusable=False)
+    pipeline = CTEPipeline([df_predict])
     sqls = _hist_sql(binwidth)
     pipeline.enqueue_list_of_sqls(sqls)
 

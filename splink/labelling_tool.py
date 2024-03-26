@@ -23,10 +23,10 @@ def generate_labelling_tool_comparisons(
     linker: "Linker", unique_id, source_dataset, match_weight_threshold=-4
 ):
     # ensure the tf table exists
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
     settings = linker._settings_obj
 
     source_dataset_condition = ""

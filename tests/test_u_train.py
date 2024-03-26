@@ -88,7 +88,7 @@ def test_u_train_link_only(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
     self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -150,7 +150,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     """
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
     self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -275,7 +275,7 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
     self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -307,7 +307,7 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
     self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 

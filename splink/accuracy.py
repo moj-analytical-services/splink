@@ -168,10 +168,10 @@ def _select_found_by_blocking_rules(linker: "Linker"):
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
 
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
     pipeline.enqueue_list_of_sqls(sqls)
@@ -208,7 +208,7 @@ def truth_space_table_from_labels_column(
     *
     from {df_predict.physical_name}
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
 
     pipeline.enqueue_sql(sql, "__splink__labels_with_predictions")
 
@@ -270,9 +270,9 @@ def prediction_errors_from_labels_table(
     include_false_negatives=True,
     threshold=0.5,
 ):
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
@@ -355,7 +355,7 @@ def prediction_errors_from_label_column(
 
     # _predict_from_label_column_sql will add a match key for matching on labels
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql = f"""
     select
     case

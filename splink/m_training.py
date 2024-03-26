@@ -35,10 +35,10 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         BlockingRule(f"l.{label_colname} = r.{label_colname}")
     ]
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = block_using_rules_sqls(training_linker)
     pipeline.enqueue_list_of_sqls(sqls)

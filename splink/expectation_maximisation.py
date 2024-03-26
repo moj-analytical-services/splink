@@ -264,12 +264,12 @@ def expectation_maximisation(
 
     if estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(core_model_settings.comparisons)
-        pipeline = CTEPipeline([df_comparison_vector_values], reusable=False)
+        pipeline = CTEPipeline([df_comparison_vector_values])
         pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
         agreement_pattern_counts = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     for i in range(1, max_iterations + 1):
-        pipeline = CTEPipeline(reusable=False)
+        pipeline = CTEPipeline()
         probability_two_random_records_match = (
             core_model_settings.probability_two_random_records_match
         )

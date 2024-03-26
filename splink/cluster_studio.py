@@ -57,7 +57,7 @@ def df_clusters_as_records(
     dict: A record dictionary of the specified cluster IDs.
     """
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__scs_clusters")
     df_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -100,7 +100,7 @@ def create_df_nodes(
     Returns:
         A SplinkDataFrame containing the nodes for the specified cluster IDs.
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
     pipeline.enqueue_sql(sql, "__splink__scs_nodes")
     df_nodes = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -145,7 +145,7 @@ def df_edges_as_records(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
     sql = _edges_sql(linker, df_predicted_edges, df_nodes)
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__scs_edges")
     df_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -159,7 +159,7 @@ def _get_random_cluster_ids(
     select count(distinct cluster_id) as count
     from {connected_components.physical_name}
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__cluster_count")
     df_cluster_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
@@ -183,7 +183,7 @@ def _get_random_cluster_ids(
     select cluster_id from distinct_clusters
     {random_sample_sql}
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -194,7 +194,7 @@ def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
 ) -> list[dict]:
     unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql = f"""
     select
         cluster_id,
@@ -255,7 +255,7 @@ def _get_lowest_density_clusters(
         list: A list of record dictionaries containing cluster ids, densities
         and sizes of lowest density clusters.
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     sql = f"""
     select
         cluster_id,

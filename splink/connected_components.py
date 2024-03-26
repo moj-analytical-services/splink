@@ -352,7 +352,7 @@ def _cc_create_unique_id_cols(
         {uid_concat_edges} as unique_id_r
         from {concat_with_tf}
     """
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_connected_components_df")
     return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -446,7 +446,7 @@ def solve_connected_components(
     else:
         input_dfs.append(concat_with_tf)
 
-    pipeline = CTEPipeline(input_dfs, reusable=False)
+    pipeline = CTEPipeline(input_dfs)
     # Create our initial node and neighbours tables
     sql = _cc_create_nodes_table(linker, _generated_graph)
     pipeline.enqueue_sql(sql, "nodes")
@@ -455,7 +455,7 @@ def solve_connected_components(
     neighbours = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # Create our initial representatives table
-    pipeline = CTEPipeline([neighbours], reusable=False)
+    pipeline = CTEPipeline([neighbours])
     sql = _cc_generate_initial_representatives_table()
     pipeline.enqueue_sql(sql, "representatives")
     sql = _cc_update_neighbours_first_iter()
@@ -482,7 +482,7 @@ def solve_connected_components(
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
-        pipeline = CTEPipeline([neighbours], reusable=False)
+        pipeline = CTEPipeline([neighbours])
         sql = _cc_generate_representatives_loop_cond(
             prev_representatives_table.physical_name,
         )
@@ -501,7 +501,7 @@ def solve_connected_components(
 
         representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline = CTEPipeline(reusable=False)
+        pipeline = CTEPipeline()
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = representatives
@@ -537,7 +537,7 @@ def solve_connected_components(
         uid_cols=uid_cols,
         pairwise_filter=filter_pairwise_format_for_clusters,
     )
-    pipeline = CTEPipeline([representatives], reusable=False)
+    pipeline = CTEPipeline([representatives])
     pipeline.enqueue_sql(exit_query, "__splink__df_representatives")
     representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 

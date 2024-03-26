@@ -47,9 +47,7 @@ class CTE:
 
 
 class CTEPipeline:
-    def __init__(
-        self, input_dataframes: Optional[List[SplinkDataFrame]] = None, reusable=True
-    ):
+    def __init__(self, input_dataframes: Optional[List[SplinkDataFrame]] = None):
         self.queue: List[CTE] = []
 
         if input_dataframes is None:
@@ -59,7 +57,6 @@ class CTEPipeline:
 
         # A flag to ensure that a pipeline cannot be reused
         self.spent = False
-        self._reusable = reusable
 
     def enqueue_sql(self, sql, output_table_name):
         if self.spent:
@@ -73,7 +70,7 @@ class CTEPipeline:
 
     def break_lineage(self, db_api: "DatabaseAPI") -> "CTEPipeline":
         df = db_api.sql_pipeline_to_splink_dataframe(self)
-        new_pipeline = CTEPipeline(input_dataframes=[df], reusable=self._reusable)
+        new_pipeline = CTEPipeline(input_dataframes=[df])
         return new_pipeline
 
     def append_input_dataframe(self, df: SplinkDataFrame):

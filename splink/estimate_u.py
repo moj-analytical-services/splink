@@ -56,10 +56,10 @@ def _proportion_sample_size_link_only(
 
 def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
 
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     original_settings_obj = linker._settings_obj
 
@@ -121,7 +121,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     df_tf = training_linker._intermediate_table_cache.get_with_logging(
         "__splink__df_concat_with_tf"
     )
-    pipeline = CTEPipeline(input_dataframes=[df_tf], reusable=False)
+    pipeline = CTEPipeline(input_dataframes=[df_tf])
 
     sql = f"""
     select *
@@ -131,7 +131,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    pipeline = CTEPipeline(input_dataframes=[df_sample], reusable=False)
+    pipeline = CTEPipeline(input_dataframes=[df_sample])
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(

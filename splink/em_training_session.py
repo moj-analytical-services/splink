@@ -180,7 +180,7 @@ class EMTrainingSession:
 
         pipeline = CTEPipeline()
         nodes_with_tf = compute_df_concat_with_tf(self._original_linker, pipeline)
-        pipeline = CTEPipeline([nodes_with_tf], reusable=False)
+        pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(
             self._original_linker, [self._blocking_rule_for_training]

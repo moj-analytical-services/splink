@@ -46,13 +46,13 @@ def missingness_sqls(columns, input_tablename):
 def missingness_data(linker, input_tablename):
     columns = linker._input_columns()
     if input_tablename is None:
-        pipeline = CTEPipeline(reusable=False)
+        pipeline = CTEPipeline()
         splink_dataframe = compute_df_concat(linker, pipeline)
     else:
         splink_dataframe = linker._table_to_splink_dataframe(
             input_tablename, input_tablename
         )
-    pipeline = CTEPipeline([splink_dataframe], reusable=False)
+    pipeline = CTEPipeline([splink_dataframe])
     sqls = missingness_sqls(columns, splink_dataframe.physical_name)
     pipeline.enqueue_list_of_sqls(sqls)
 
@@ -65,7 +65,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
     sqls = []
 
     if input_tablename is None:
-        pipeline = CTEPipeline(reusable=False)
+        pipeline = CTEPipeline()
         df_concat = compute_df_concat(linker, pipeline)
         input_tablename = df_concat.physical_name
 
@@ -96,7 +96,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
 
     sql = " union all ".join(sqls)
 
-    pipeline = CTEPipeline(reusable=False)
+    pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_all_column_completeness")
     df = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
