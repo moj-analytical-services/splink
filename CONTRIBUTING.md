@@ -18,12 +18,12 @@ Contributions to Splink are not limited to the code. Feedback and input on our d
 
 Behind the scenes, the Splink documentation is split into 2 parts:
 
-- The [Tutorials](./docs/demos/tutorials/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/demos/examples/examples_index.md) are stored in a separate repository - [splink_demos](https://github.com/moj-analytical-services/splink_demos)
+- The [Tutorials](./docs/demos/tutorials/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/demos/examples/examples_index.md) are stored in a separate repository - [`splink_demos`](https://github.com/moj-analytical-services/splink_demos)
 - Everything else is stored in the Splink repository either in:
     - the [docs folder](https://github.com/moj-analytical-services/splink/tree/master/docs)
     - the Splink code itself. E.g. docstrings from [linker.py](https://github.com/moj-analytical-services/splink/blob/master/splink/linker.py) feed directly into the [Linker API docs](./docs/linker.md).
 
-There are some user restrictions on both the Splink and splink_demos repositories, so to make changes to either repository you will need to create a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and then create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) which one of the Splink dev team will review.
+There are some user restrictions on both the Splink and `splink_demos` repositories, so to make changes to either repository you will need to create a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and then create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) which one of the Splink dev team will review.
 
 !!! note "Shortcut"
     If you are looking through the docs and find an issue, hit the :material-file-edit: button on the top right corner of the page. This will take you to the underlying file on the Splink GitHub page.

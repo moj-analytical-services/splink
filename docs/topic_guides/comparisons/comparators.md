@@ -261,7 +261,7 @@ jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA")
 
 !!! info "At a glance" 
     **Useful for:**   
-    **Splink comparison functions:** [jaccard_level()](../../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()](../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)  
+    **Splink comparison functions:** [`jaccard_level()`](../../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [`jaccard_at_thresholds()`](../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)  
     **Returns:**  A score between 0 and 1 (higher is more similar).
 
 

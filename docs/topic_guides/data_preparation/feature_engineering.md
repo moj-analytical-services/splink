@@ -78,14 +78,14 @@ Note that the 'Exact match Postcode District' level also captures matches on sub
 
 However, performing comparisons based on substrings alone doesn't always give the best sense of whether two postcodes are close together since locations which are geographically close can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'.
 
-Fortunately, Splink includes functions [cll.distance_in_km_level()](../../comparison_level_library.md#splink.comparison_level_library.DistanceInKMLevelBase) and [cl.distance_in_km_at_thresholds()](../../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
+Fortunately, Splink includes functions [`cll.distance_in_km_level()`](../../comparison_level_library.md#splink.comparison_level_library.DistanceInKMLevelBase) and [`cl.distance_in_km_at_thresholds()`](../../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
 Users have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments. Doing so can help to improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
 
 There are a number of open source repositories of geospatial data that can be used for linkage, one example is [GeoNames](http://download.geonames.org/export/zip/).
 
-Below is an example of adding latitude and longitude columns from geonames to create a more nuanced comparison.
+Below is an example of adding latitude and longitude columns from GeoNames to create a more nuanced comparison.
 
 Read in a dataset with postcodes:
 
@@ -106,7 +106,7 @@ df.head()
     |  3 | Q2296770-4  | Q2296770  | thomas 1st chudleigh                             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8HU        |          | politician   |
     |  4 | Q2296770-5  | Q2296770  | thomas clifford, 1st baron chudleigh             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        |          | politician   |
 
-Then read in a list of GB postcodes downloaded from [geonames](http://download.geonames.org/export/zip/).
+Then read in a list of GB postcodes downloaded from [GeoNames](http://download.geonames.org/export/zip/).
 
 ```python
 import pandas as pd
@@ -119,11 +119,11 @@ postcodes.head(5)
 
     |    | country_code   | postal_code   | place_name   | admin_name1   | admin_code1   | admin_name2   |   admin_code2 | admin_name3             | admin_code3   |   latitude |   longitude |   accuracy |
     |---:|:---------------|:--------------|:-------------|:--------------|:--------------|:--------------|--------------:|:------------------------|:--------------|-----------:|------------:|-----------:|
-    |  0 | GB             | AL3 8QE       | Slip End     | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8479 |     -0.4474 |          6 |
-    |  1 | GB             | AL5 3NG       | Harpenden    | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8321 |     -0.383  |          6 |
-    |  2 | GB             | AL5 3NS       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8333 |     -0.3763 |          6 |
-    |  3 | GB             | AL5 3QF       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8342 |     -0.3851 |          6 |
-    |  4 | GB             | B10 0AB       | Birmingham   | England       | ENG           | West Midlands |           nan | Birmingham District (B) | E08000025     |    52.4706 |     -1.875  |          6 |
+    |  0 | GB             | AL3 8QE       | Slip End     | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8479 |     -0.4474 |          6 |
+    |  1 | GB             | AL5 3NG       | Harpenden    | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8321 |     -0.383  |          6 |
+    |  2 | GB             | AL5 3NS       | Hyde         | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8333 |     -0.3763 |          6 |
+    |  3 | GB             | AL5 3QF       | Hyde         | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8342 |     -0.3851 |          6 |
+    |  4 | GB             | B10 0AB       | Birmingham   | England       | ENG           | West Midlands |           NaN | Birmingham District (B) | E08000025     |    52.4706 |     -1.875  |          6 |
 
 Now combine the lat-long coordinates from the `GB_full.txt` lookup.
 
@@ -366,7 +366,7 @@ For a more detailed explanation on phonetic transformation algorithms, see the [
 
 ### Example
 
-There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the DuckDBLinker. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
+There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the `DuckDBLinker`. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
 
 ```python
 import pandas as pd
@@ -397,7 +397,7 @@ df.head()
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | ('JL', 'AL')    | ('TLR', '')      |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | ('AN', '')      | ('ATSN', 'FTSN') |
 
-Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phoneitcs](https://pypi.org/project/phonetics/)
+Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phonetics](https://pypi.org/project/phonetics/)
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
 
@@ -464,7 +464,7 @@ df.head()
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | oNah Watson   |
 
-Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
+Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forename_surname_comparison](../../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
 
 === ":simple-duckdb: DuckDB"
     ```python
