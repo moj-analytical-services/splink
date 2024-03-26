@@ -43,7 +43,7 @@ and clusters these links to produce an estimated person ID:
 
 ## What data does Splink work best with?
 
-Before using Splink, input data should be standardized, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
+Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
 
 Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
@@ -96,7 +96,7 @@ Sadly, we don't hear about the majority of our users or what they are working on
 
 🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
 
-🥇 MoJ Data and Analytical Services Directorate (DASD) Awards 2020: Innovation and Impact - Winner
+🥇 Ministry of Justice Data and Analytical Services Directorate (DASD) Awards 2020: Innovation and Impact - Winner
 
 
 ## Citation

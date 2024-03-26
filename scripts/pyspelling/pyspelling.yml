@@ -1,8 +1,7 @@
-
 matrix:
   - name: Markdown docs
     sources:
-      - docs/includes/**/*.md
+      - docs/index.md
     aspell:
       lang: en
       d: en_GB
@@ -10,35 +9,26 @@ matrix:
     dictionary:
       wordlists:
         - scripts/pyspelling/custom_dictionary.txt
-      output: scripts/dictionary.dic
+      output: scripts/pyspelling/dictionary.dic
     pipeline:
       - pyspelling.filters.context:
           context_visible_first: true
           delimiters:
-            # Ignore multiline python code
-            # ```py
-            # content
-            # ```
-            - open: '(?s)( *```py)'
-              close: '```$'
             # Ignore multiline content between cards flags
             - open: '(?s)^(::cards::)$'
-              close: '^::/cards::$'
-            # Ignore inline code
-            - open: '`'
-              close: '`'
+              close: '^(::\/cards::)$'
             # Ignore multiline content at top of blog posts
             - open: '(?s)^(---)$'
               close: '^---$'
             # Ignore text for icons eg :octicons-duplicate-24:
             - open: ':\w+-\w+-?\w*'
               close: ':'
-            # Ignore urls within html anchor tags
+            # # Ignore urls within html anchor tags
             - open: '<a'
-              close: '</a>'
-            # Ignore diff blocks
-            - open: '(?s)(```diff)'
-              close: '```'
-            # Ignore text between $$ tags
-            - open: '(?s)(\$\$)'
-              close: '\$\$'
+              close: '<\/a>'
+            # Ignore blocks of math text
+            - open: '(?s)^(\$\$)'
+              close: '(\$\$)$'
+            # Ignore inline math
+            - open: '\$'
+              close: '\$'

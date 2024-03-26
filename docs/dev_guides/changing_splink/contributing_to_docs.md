@@ -114,11 +114,11 @@ Correct spellings of words not found in a standard dictionary (e.g. Splink) can 
 
 Please correct any mistakes found or update the custom dictionary to ensure the spellchecker passes before putting in a pull request containing updates to the documentation.
 
-??? note
+!!! note
 
-    The spellchecker is configured (via pyspelling.yml) to ignore text between certain delimiters (such as those for code) to minimise catching Splink/programming-specific terms. If there are additional patterns that you think should be excepted then please let us know in your pull request.
+    The spellchecker is configured (via pyspelling.yml) to ignore text between certain delimiters to minimise picking up Splink/programming-specific terms. If there are additional patterns that you think should be excepted then please let us know in your pull request.
 
-    The custom dictionary deliberately contains a few misspelled words (e.g. “Siohban”). These are sometimes necessary where we are explaining how Splink handles typos in data records.
+    The custom dictionary deliberately contains a small number of misspelled words (e.g. “Siohban”). These are sometimes necessary where we are explaining how Splink handles typos in data records.
 
 
 

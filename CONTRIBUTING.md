@@ -18,19 +18,19 @@ Contributions to Splink are not limited to the code. Feedback and input on our d
 
 Behind the scenes, the Splink documentation is split into 2 parts:
 
-- The [Tutorials](./docs/demos/tutorials/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/demos/examples/examples_index.md) are stored in a separate repo - [splink_demos](https://github.com/moj-analytical-services/splink_demos)
-- Everything else is stored in the Splink repo either in:
+- The [Tutorials](./docs/demos/tutorials/00_Tutorial_Introduction.ipynb) and [Example Notebooks](./docs/demos/examples/examples_index.md) are stored in a separate repository - [splink_demos](https://github.com/moj-analytical-services/splink_demos)
+- Everything else is stored in the Splink repository either in:
     - the [docs folder](https://github.com/moj-analytical-services/splink/tree/master/docs)
     - the Splink code itself. E.g. docstrings from [linker.py](https://github.com/moj-analytical-services/splink/blob/master/splink/linker.py) feed directly into the [Linker API docs](./docs/linker.md).
 
-There are some user restrictions on both the splink and splink_demos repos, so to make changes to either repo you will need to create a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and then create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) which one of the Splink dev team will review.
+There are some user restrictions on both the Splink and splink_demos repositories, so to make changes to either repository you will need to create a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and then create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) which one of the Splink dev team will review.
 
 !!! note "Shortcut"
     If you are looking through the docs and find an issue, hit the :material-file-edit: button on the top right corner of the page. This will take you to the underlying file on the Splink GitHub page.
     
-    This is not supported for Tutorials or Examples as they are in a separate repo.
+    This is not supported for Tutorials or Examples as they are in a separate repository.
 
-For small changes, such as wording and typos, changes can be made directly in GitHub. However, for larger changes it may be worth cloning the relevant repo to your local machine. This way, you can [build the docs site locally](./docs/dev_guides/changing_splink/build_docs_locally.md) to check how the changes will look in the deployed doc site.
+For small changes, such as wording and typos, changes can be made directly in GitHub. However, for larger changes it may be worth cloning the relevant repository to your local machine. This way, you can [build the docs site locally](./docs/dev_guides/changing_splink/build_docs_locally.md) to check how the changes will look in the deployed doc site.
 
 We are trying to make our documentation as accessible to as many people as possible. If you find any problems with accessibility then please let us know by raising an issue, or feel free to put in a Pull Request with your suggested fixes.
 
@@ -41,11 +41,11 @@ Thanks for your interest in contributing code to Splink!
 There are a number of ways to get involved:
 
 - Start work on an [existing issue](https://github.com/moj-analytical-services/splink/issues), there should be some with a [`good first issue`](https://github.com/moj-analytical-services/splink/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) flag which are a good place to start. 
-- Tackle a problem you have identified. If you have identified a feature or bug, the first step is to [create a new issue](https://github.com/moj-analytical-services/splink/issues/new/choose) to explain what you have identified and what you plan to implement, then you are free to fork the repo and get coding!
+- Tackle a problem you have identified. If you have identified a feature or bug, the first step is to [create a new issue](https://github.com/moj-analytical-services/splink/issues/new/choose) to explain what you have identified and what you plan to implement, then you are free to fork the repository and get coding!
 
-In either case, we ask that you assign yourself to the relevant issue and open up [a draft PR](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
+In either case, we ask that you assign yourself to the relevant issue and open up [a draft pull request (PR)](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
 
-!!! note "Small PRs"
+!!! note "Small pull requests (PRs)"
     In the Splink dev team, we believe that [small Pull Requests](https://essenceofcode.com/2019/10/29/the-art-of-small-pull-requests/) make better code. They:
 
     - are more focused

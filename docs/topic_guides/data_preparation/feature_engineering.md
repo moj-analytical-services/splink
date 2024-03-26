@@ -83,7 +83,7 @@ Users have the option to include `cll.distance_in_km_level()` as additional leve
 
 ### Example
 
-There are a number of open source repositories of geospatial data that can be used for linkage, one example is [geonames](http://download.geonames.org/export/zip/).
+There are a number of open source repositories of geospatial data that can be used for linkage, one example is [GeoNames](http://download.geonames.org/export/zip/).
 
 Below is an example of adding latitude and longitude columns from geonames to create a more nuanced comparison.
 
@@ -458,7 +458,7 @@ df.head()
 
     |    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | full_name     |
     |---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:--------------|
-    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | nan           |
+    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | NaN          |
     |  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | Julia  Taylor |
     |  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | Julia  Taylor |
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
