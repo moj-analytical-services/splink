@@ -58,7 +58,7 @@ pyspelling_run="Running pyspelling spellchecker on docs"
 echo "$line_block $pyspelling_run $line_block"
 
 # Update pyspelling.yml with a new source path
-yq e ".matrix[0].sources = [\"$source_to_spellcheck\"]" -i "$pyspelling_yaml"
+yq e ".matrix[0].sources = [\"$source_to_spellcheck|!docs/includes/**/*.md\"]" -i "$pyspelling_yaml"
 
 echo $source_to_spellcheck
 pyspelling -c ./$pyspelling_yaml
