@@ -59,6 +59,7 @@ class CTEPipeline:
 
         # A flag to ensure that a pipeline cannot be reused
         self.spent = False
+        self._reusable = reusable
 
     def enqueue_sql(self, sql, output_table_name):
         if self.spent:
