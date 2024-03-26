@@ -4,7 +4,7 @@ Thanks for considering making a contribution to the [Splink Blog](../../blog/ind
 
 This blog, and the docs as a whole, are built using the fantastic [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), to understand more about how the blog works under the hood checkout out the mkdocs-material [blog documentation](https://squidfunk.github.io/mkdocs-material/blog/2022/09/12/blog-support-just-landed/).
 
-For more general guidance for contributing to Splink, check out our [Contributor Guide](../../../CONTRIBUTING.md).
+For more general guidance for contributing to Splink, check out our [Contributor Guide](../CONTRIBUTING.md).
 
 ## Adding a blog post
 
