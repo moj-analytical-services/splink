@@ -11,7 +11,7 @@ At a high level, this includes:
 
 ## Settings Schema Validation
 
-Our custom settings schema can be found within [settings_jsonschema.json](https://github.com/moj-analytical-services/splink/blob/master/splink/files/settings_jsonschema.json).
+Our custom settings schema can be found within [`settings_jsonschema.json`](https://github.com/moj-analytical-services/splink/blob/master/splink/files/settings_jsonschema.json).
 
 This is a json file, outlining the required data type, key and value(s) to be specified by the user while constructing their settings. Where values deviate from this specified schema, an error will be thrown.
 
@@ -42,7 +42,7 @@ Frequently encountered problems include:
 * Usage of invalid column names. For example, specifying a [`unique_id_column_name`](https://github.com/moj-analytical-services/splink/blob/settings_validation_docs/splink/files/settings_jsonschema.json#L61) that doesn't exist in the underlying dataframe(s). Such names satisfy the schema requirements as long as they are strings.
 * Users not updating default values in the settings schema, even when these values are inappropriate for their provided input dataframes.
 * Importing comparisons and blocking rules from incorrect sections of the codebase, or using an inappropriate data type (comparison level vs. comparison).
-* Using Splink for an invalid form of linkage. See the [following dicsussion](https://github.com/moj-analytical-services/splink/issues/1362).
+* Using Splink for an invalid form of linkage. See the [following discussion](https://github.com/moj-analytical-services/splink/issues/1362).
 
 Currently, the [settings validation](https://github.com/moj-analytical-services/splink/tree/32e66db1c8c0bed54682daf9a6fea8ef4ed79ab4/splink/settings_validation) scripts are setup in a modular fashion, to allow each to inherit the checks it needs.
 

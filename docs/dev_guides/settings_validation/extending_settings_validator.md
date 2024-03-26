@@ -49,9 +49,9 @@ Implementing warnings is straightforward and involves creating a logger instance
 
 Exceptions should be raised when you want the program to halt due to an unequivocal error.
 
-In addition to the built-in exception types, such as [SyntaxError](https://docs.python.org/3/library/exceptions.html#SyntaxError), we have several Splink-specific exceptions available for use.
+In addition to the built-in exception types, such as [`SyntaxError`](https://docs.python.org/3/library/exceptions.html#SyntaxError), we have several Splink-specific exceptions available for use.
 
-These exceptions serve to raise issues specific to Splink or to customise exception behaviour. For instance, you can specify a message prefix by modifying the constructor of an exception, as exemplified in the [ComparisonSettingsException](https://github.com/moj-analytical-services/splink/blob/f7c155c27ccf3c906c92180411b527a4cfd1111b/splink/exceptions.py#L14).
+These exceptions serve to raise issues specific to Splink or to customise exception behaviour. For instance, you can specify a message prefix by modifying the constructor of an exception, as exemplified in the [`ComparisonSettingsException`](https://github.com/moj-analytical-services/splink/blob/f7c155c27ccf3c906c92180411b527a4cfd1111b/splink/exceptions.py#L14).
 
 It's crucial to also consider how to inform the user that such behaviour is not permitted. For guidelines on crafting effective error messages, refer to [How to Write Good Error Messages](https://uxplanet.org/how-to-write-good-error-messages-858e4551cd4).
 

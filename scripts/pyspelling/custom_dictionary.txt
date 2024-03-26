@@ -72,6 +72,7 @@ miskeys
 sw
 comparator
 comparators
+textsf
 equi/-join
 Equi/-join
 SQLGlot
@@ -87,6 +88,7 @@ Dockerfile
 SQLite
 parameterises
 pre/-built
+yml
 NEP
 pytest
 venv
