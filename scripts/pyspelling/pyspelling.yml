@@ -1,7 +1,7 @@
 matrix:
   - name: Markdown docs
     sources:
-      - docs/index.md
+      - docs/blog/posts/2023-07-27-feature_update.md|!docs/includes/**/*.md
     aspell:
       lang: en
       d: en_GB
@@ -26,9 +26,11 @@ matrix:
             # # Ignore urls within html anchor tags
             - open: '<a'
               close: '<\/a>'
+            - open: '<'
+              close: '>'
             # Ignore blocks of math text
             - open: '(?s)^(\$\$)'
               close: '(\$\$)$'
             # Ignore inline math
-            - open: '\$'
-              close: '\$'
+            - open: '\${1,2}'
+              close: '\${1,2}'
