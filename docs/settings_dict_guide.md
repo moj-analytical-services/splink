@@ -18,7 +18,7 @@ You can find an [interactive settings editor here](./settingseditor/editor.md).
 
 <hr>
 
-## link_type
+## `link_type`
 
 The type of data linking task.  Required.
 
@@ -32,7 +32,7 @@ The type of data linking task.  Required.
 
 <hr>
 
-## probability_two_random_records_match
+## `probability_two_random_records_match`
 
 The probability that two records chosen at random (with no blocking) are a match.  For example, if there are a million input records and each has on average one match, then this value should be 1/1,000,000.
 
@@ -44,7 +44,7 @@ If you estimate parameters using expectation maximisation (EM), this provides an
 
 <hr>
 
-## em_convergence
+## `em_convergence`
 
 Convergence tolerance for the Expectation Maximisation algorithm
 
@@ -56,7 +56,7 @@ The algorithm will stop converging when the maximum of the change in model param
 
 <hr>
 
-## max_iterations
+## `max_iterations`
 
 The maximum number of Expectation Maximisation iterations to run (even if convergence has not been reached)
 
@@ -66,7 +66,7 @@ The maximum number of Expectation Maximisation iterations to run (even if conver
 
 <hr>
 
-## unique_id_column_name
+## `unique_id_column_name`
 
 Splink requires that the input dataset has a column that uniquely identifies each record.  `unique_id_column_name` is the name of the column in the input dataset representing this unique id
 
@@ -78,7 +78,7 @@ For linking tasks, ids must be unique within each dataset being linked, and do n
 
 <hr>
 
-## source_dataset_column_name
+## `source_dataset_column_name`
 
 The name of the column in the input dataset representing the source dataset
 
@@ -90,7 +90,7 @@ Where we are linking datasets, we can't guarantee that the unique id column is g
 
 <hr>
 
-## retain_matching_columns
+## `retain_matching_columns`
 
 If set to true, each column used by the `comparisons` SQL expressions will be retained in output datasets
 
@@ -102,7 +102,7 @@ This is helpful so that the user can inspect matches, but once the comparison ve
 
 <hr>
 
-## retain_intermediate_calculation_columns
+## `retain_intermediate_calculation_columns`
 
 Retain intermediate calculation columns, such as the Bayes factors associated with each column in `comparisons`
 
@@ -142,7 +142,7 @@ A list specifying how records should be compared for probabilistic matching.  Ea
 
     Comparison levels specify how input values should be compared.  Each level corresponds to an assessment of similarity, such as exact match, Jaro-Winkler match, one side of the match being null, etc
 
-    Each comparison level represents a branch of a SQL case expression. They are specified in order of evaluation, each with a sql_condition that represents the branch of a case expression
+    Each comparison level represents a branch of a SQL case expression. They are specified in order of evaluation, each with a `sql_condition` that represents the branch of a case expression
 
     **Example**: 
     ``` json
@@ -166,7 +166,7 @@ A list specifying how records should be compared for probabilistic matching.  Ea
 
     ??? note "Settings keys nested within each member of `comparison_levels`"
 
-        #### sql_condition
+        #### `sql_condition`
 
         A branch of a SQL case expression without WHEN and THEN e.g. 'jaro_winkler_sim(surname_l, surname_r) > 0.88'
 
@@ -239,7 +239,7 @@ A list specifying how records should be compared for probabilistic matching.  Ea
         <hr>
 
 
-## blocking_rules_to_generate_predictions
+## `blocking_rules_to_generate_predictions`
 
 A list of one or more blocking rules to apply. A Cartesian join is applied if `blocking_rules_to_generate_predictions` is empty or not supplied.
 
@@ -261,7 +261,7 @@ If empty or not supplied, all comparisons between the input dataset(s) will be g
 
 <hr>
 
-## additional_columns_to_retain
+## `additional_columns_to_retain`
 
 A list of columns not being used in the probabilistic matching comparisons that you want to include in your results.
 
@@ -273,7 +273,7 @@ By default, Splink drops columns which are not used by any comparisons.  This gi
 
 <hr>
 
-## bayes_factor_column_prefix
+## `bayes_factor_column_prefix`
 
 The prefix to use for the columns that will be created to store the Bayes factors
 
@@ -283,7 +283,7 @@ The prefix to use for the columns that will be created to store the Bayes factor
 
 <hr>
 
-## term_frequency_adjustment_column_prefix
+## `term_frequency_adjustment_column_prefix`
 
 The prefix to use for the columns that will be created to store the term frequency adjustments
 
@@ -293,7 +293,7 @@ The prefix to use for the columns that will be created to store the term frequen
 
 <hr>
 
-## comparison_vector_value_column_prefix
+## `comparison_vector_value_column_prefix`
 
 The prefix to use for the columns that will be created to store the comparison vector values
 
@@ -303,9 +303,9 @@ The prefix to use for the columns that will be created to store the comparison v
 
 <hr>
 
-## sql_dialect
+## `sql_dialect`
 
-The SQL dialect in which sql_conditions are written.  Must be a valid SQLGlot dialect
+The SQL dialect in which `sql_conditions` are written.  Must be a valid SQLGlot dialect
 
 **Default value**: `None`
 

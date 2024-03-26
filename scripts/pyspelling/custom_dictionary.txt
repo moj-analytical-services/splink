@@ -24,12 +24,14 @@ PR
 PRs
 CTL
 NumPy
+substring
 Sunsetting
 benchmarking
 sunsetting
 dmetaphone
 GeoNames
 conda
+sdt
 devon
 dev
 Gateshead

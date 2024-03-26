@@ -5,7 +5,7 @@ It can sometimes be useful to make comparisons based on substrings or parts of c
 
 The `regex_extract` option enables users to do this by supplying a regular expression pattern that defines the substring upon which to evaluate a comparison. This option gives users a convenient means of comparing data within existing columns without needing to engineer new features from source data. `regex_extract` is available to all string comparators, as well as 'exact match' and 'columns reversed' comparisons and levels. 
 
-Further regex functionality is provided by the `valid_string_pattern` option. This option allows users to define a regular expression pattern that specifies a valid string format. Any column value that does not adhere to the given pattern will be treated as a null. This can be useful for enforcing a specific data format during record comparison without needing to revisit and standardized data again. The `valid_string_pattern` argument is available to the null level and can be used with any comparison that contains a null level, e.g. [`exact_match()`](../../comparison_library.md).
+Further regex functionality is provided by the `valid_string_pattern` option. This option allows users to define a regular expression pattern that specifies a valid string format. Any column value that does not adhere to the given pattern will be treated as a null. This can be useful for enforcing a specific data format during record comparison without needing to revisit and standardised data again. The `valid_string_pattern` argument is available to the null level and can be used with any comparison that contains a null level, e.g. [`exact_match()`](../../comparison_library.md).
 
 ## Examples using `regex_extract`
 
