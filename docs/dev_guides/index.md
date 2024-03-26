@@ -30,4 +30,4 @@ Splink is quite a large, complex codebase. The guides in this section lay out so
 * [Charts](./charts/understanding_and_editing_charts.md) - demonstrates how charts are built in Splink, including how to add new charts and edit existing charts.
 * [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
 * [Settings Validation](./settings_validation/settings_validation_overview.md) - summarises how to use and expand the existing settings schema and validation functions.
-* [Managing Splink's Dependencies](./dependency_management.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.
+* [Managing Splink's Dependencies](./dependency_compatibility_policy.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.
