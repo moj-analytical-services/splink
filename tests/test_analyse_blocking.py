@@ -156,8 +156,8 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     blocking_rules = [
-        block_on("first_name"),
-        block_on("first_name", "surname"),
+        block_on("first_name").get_blocking_rule(dialect),
+        block_on("first_name", "surname").get_blocking_rule(dialect),
         "l.dob = r.dob",
     ]
 
