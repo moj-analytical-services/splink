@@ -1,5 +1,3 @@
-## Managing Splink's Dependencies
-
 This page highlights the importance of package versioning and proposes that we use a "sunsetting" strategy for updating our support python and dependency versions as they reach end-of-life.
 
 Additionally, it lays out some rough guidelines for us to follow when addresses future package conflicts and issues arises from antiquated dependency versions.

@@ -9,11 +9,10 @@ We encourage contributions from all users. Whether it be adding a feature, fixin
 
 ## Contributing to Splink
 
-Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](/CONTRIBUTING.html).
+Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](./CONTRIBUTING.md).
 
 When making changes to Splink, there are a number of common operations that developers need to perform. The guides below lay out some of these common operations, and provides scripts to automate these processes. These include:
 
-* [Building a Virtual Environment](./changing_splink/building_env_locally.md) - to replicate the conditions when Splink is installed by users.
 * [Linting and Formatting](./changing_splink/lint_and_format.md) - to ensure consistent code style and to reformat code, where possible.
 * [Testing](./changing_splink/testing.md) - to ensure all of the codebase is performing as intended.
 * [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
@@ -31,4 +30,4 @@ Splink is quite a large, complex codebase. The guides in this section lay out so
 * [Charts](./charts/understanding_and_editing_charts.md) - demonstrates how charts are built in Splink, including how to add new charts and edit existing charts.
 * [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
 * [Settings Validation](./settings_validation/settings_validation_overview.md) - summarises how to use and expand the existing settings schema and validation functions.
-* [Managing Splink's Dependencies](./dependency_management.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.
+* [Managing Splink's Dependencies](./dependency_compatibility_policy.md) - this section provides guidelines for managing our core dependencies and our strategy for phasing out Python versions that have reached their end-of-life.

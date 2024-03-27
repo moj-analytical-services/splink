@@ -175,3 +175,7 @@ cython_debug/
 
 # vscode local settings
 .vscode
+
+splink_db
+splink_db_log
+spark-warehouse
