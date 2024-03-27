@@ -59,8 +59,8 @@ When making code changes, we recommend:
 
 Typically, all pull requests (PRs) should be against `master`.
 **However, currently the Splink team is working on a major update in Splink v4. For the time being, we are using the `splink4_dev` branch to develop v4.**
-As a general rule, substantial new features should be PRed against that branch,
-while bug fixes and documentation changes should be PRed against `master`.
+As a general rule, substantial new features should be PR'd against that branch,
+while bug fixes and documentation changes should be PR'd against `master`.
 If you are unsure which category your change falls into, please ask!
 
 We believe that [small Pull Requests](https://essenceofcode.com/2019/10/29/the-art-of-small-pull-requests/) make better code. They:

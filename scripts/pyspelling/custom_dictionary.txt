@@ -30,7 +30,11 @@ benchmarking
 sunsetting
 dmetaphone
 GeoNames
+PowerShell
+CLI
+MacOS
 conda
+quickstart
 sdt
 devon
 dev
