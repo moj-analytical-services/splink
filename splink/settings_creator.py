@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Union
 
 from .blocking_rule_creator import BlockingRuleCreator
-from .blocking_rule_library import CustomRule
+from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .comparison_creator import ComparisonCreator
 from .comparison_library import CustomComparison
 from .settings import Settings
@@ -17,14 +17,6 @@ def to_comparison_creator(comparison_creator):
     if isinstance(comparison_creator, dict):
         return CustomComparison(**comparison_creator)
     return comparison_creator
-
-
-def to_blocking_rule_creator(blocking_rule_creator):
-    if isinstance(blocking_rule_creator, dict):
-        return CustomRule(**blocking_rule_creator)
-    if isinstance(blocking_rule_creator, str):
-        return CustomRule(blocking_rule_creator)
-    return blocking_rule_creator
 
 
 @dataclass
