@@ -3,7 +3,7 @@
 
 It can sometimes be useful to make comparisons based on substrings or parts of column values. For example, one approach to comparing postcodes is to consider their constituent components, e.g. area, district, etc (see [Featuring Engineering](../data_preparation/feature_engineering.md) for more details).
 
-The `regex_extract` option enables users to do this by supplying a regular expression pattern that defines the substring upon which to evaluate a comparison. This option gives users a convenient means of comparing data within existing columns without needing to engineer new features from source data. `regex_extract` is available to all string comparators, as well as 'exact match' and 'columns reversed' comparisons and levels. 
+The `regex_extract` option enables users to do this by supplying a regular expression pattern that defines the substring upon which to evaluate a comparison. This option gives users a convenient means of comparing data within existing columns without needing to engineer new features from source data. `regex_extract` is available to all string comparators, as well as 'exact match' and 'columns reversed' comparisons and levels.
 
 Further regex functionality is provided by the `valid_string_pattern` option. This option allows users to define a regular expression pattern that specifies a valid string format. Any column value that does not adhere to the given pattern will be treated as a null. This can be useful for enforcing a specific data format during record comparison without needing to revisit and standardised data again. The `valid_string_pattern` argument is available to the null level and can be used with any comparison that contains a null level, e.g. [`exact_match()`](../../comparison_library.md).
 
@@ -28,11 +28,11 @@ This gives a comparison with the following levels:
     > Similarity is assessed using the following ComparisonLevels:
     >
     >    - 'Null' with SQL rule: "postcode_l" IS NULL OR "postcode_r" IS NULL
-    >    - 'Exact match' with SQL rule: 
+    >    - 'Exact match' with SQL rule:
         regexp_extract("postcode_l", '^[A-Z]{1,2}')
-     = 
-        regexp_extract("postcode_r", '^[A-Z]{1,2}')      
-    >    - 'All other comparisons' with SQL rule: ELSE 
+     =
+        regexp_extract("postcode_r", '^[A-Z]{1,2}')
+    >    - 'All other comparisons' with SQL rule: ELSE
 
 Below is an example set of record comparisons that could have been generated using `pc_comparison`. The part of the postcode actually being compared under the hood (the area code) is indicated in bold.
 
@@ -51,7 +51,7 @@ The [postcode comparison template](comparison_templates.ipynb) provides an examp
 
 Using `regex_extract` in a Levenshtein comparison could be useful when comparing telephone numbers. For example, perhaps you only care about matches on dialling code but still want to account for potential typos in the data. (For more information on the different types of string comparators, see [String Comparators](comparators.md).)
 
-This is achieved below by using `regex_extract="^[0-9]{1,4}"` within a levenshtein comparison to restrict the comparison to only the first 3 to 4 digits of a telephone number:
+This is achieved below by using `regex_extract="^[0-9]{1,4}"` within a Levenshtein comparison to restrict the comparison to only the first 3 to 4 digits of a telephone number:
 
 === "DuckDB"
     ```python
@@ -67,21 +67,21 @@ which gives a comparison with the following levels:
     > Similarity is assessed using the following ComparisonLevels:
     >
     >    - 'Null' with SQL rule: "telephone_l" IS NULL OR "telephone_r" IS NULL
-    >    - 'Exact match' with SQL rule: 
+    >    - 'Exact match' with SQL rule:
         regexp_extract("telephone_l", '^[0-9]{1,4}')
-     = 
-        regexp_extract("telephone_r", '^[0-9]{1,4}')      
+     =
+        regexp_extract("telephone_r", '^[0-9]{1,4}')
     >    - 'Levenshtein <= 1' with SQL rule: levenshtein(
         regexp_extract("telephone_l", '^[0-9]{1,4}')
-    , 
+    ,
         regexp_extract("telephone_r", '^[0-9]{1,4}')
-    ) <= 1 
+    ) <= 1
     >    - 'Levenshtein <= 2' with SQL rule: levenshtein(
         regexp_extract("telephone_l", '^[0-9]{1,4}')
-    , 
+    ,
         regexp_extract("telephone_r", '^[0-9]{1,4}')
-    ) <= 2 
-    >    - 'All other comparisons' with SQL rule: ELSE 
+    ) <= 2
+    >    - 'All other comparisons' with SQL rule: ELSE
 
 Here is an example set of record comparisons that could have been generated using `tel_comparison`. The part of the telephone number actually being compared under the hood (the dialling code) is highlighted in bold:
 
@@ -115,18 +115,18 @@ This gives a comparison with the following levels:
     > Similarity is assessed using the following ComparisonLevels:
     >
     > - 'Null' with SQL rule: "email_l" IS NULL OR "email_r" IS NULL
-    > - 'Exact match' with SQL rule: 
+    > - 'Exact match' with SQL rule:
         regexp_extract("email_l", '^[^@]+')
-     = 
+     =
         regexp_extract("email_r", '^[^@]+')
     > - 'Jaro_winkler_similarity >= 0.9' with SQL rule: jaro_winkler_similarity(
         regexp_extract("email_l", '^[^@]+')
-    , 
+    ,
         regexp_extract("email_r", '^[^@]+')
     ) >= 0.9
     > - 'Jaro_winkler_similarity >= 0.7' with SQL rule: jaro_winkler_similarity(
         regexp_extract("email_l", '^[^@]+')
-    , 
+    ,
         regexp_extract("email_r", '^[^@]+')
     ) >= 0.7
     > - 'All other comparisons' with SQL rule: ELSE
@@ -160,13 +160,13 @@ which gives a comparison with the following levels:
     > Comparison 'Exact match vs. anything else' of "postcode".
     >
     > Similarity is assessed using the following ComparisonLevels:
-    > - 'Null' with SQL rule: 
+    > - 'Null' with SQL rule:
         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
-     IS NULL OR 
+     IS NULL OR
         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
-     IS NULL OR  
+     IS NULL OR
         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
-    =='' OR 
+    =='' OR
         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
      ==''
     > - 'Exact match' with SQL rule: "postcode_l" = "postcode_r"

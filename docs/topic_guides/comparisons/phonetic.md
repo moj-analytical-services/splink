@@ -38,7 +38,7 @@ E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic
     print(first_name_comparison.human_readable_description)
     ```
 
-> Comparison 'Exact match vs. First_Name within levenshtein threshold 1 vs. First_Name within damerau-levenshtein threshold 1 vs. First_Name within jaro_winkler thresholds 0.9, 0.8 vs. anything else' of "first_name".
+> Comparison 'Exact match vs. First_Name within Levenshtein threshold 1 vs. First_Name within Damerau-Levenshtein threshold 1 vs. First_Name within jaro_winkler thresholds 0.9, 0.8 vs. anything else' of "first_name".
 >
 > Similarity is assessed using the following ComparisonLevels:
 >
