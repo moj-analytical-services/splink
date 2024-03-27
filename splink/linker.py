@@ -3453,7 +3453,6 @@ class Linker:
                 suggestion = blocking_rule_suggestions[
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
-
                 self._settings_obj._blocking_rules_to_generate_predictions = suggestion
 
                 suggestion_str = blocking_rule_suggestions[

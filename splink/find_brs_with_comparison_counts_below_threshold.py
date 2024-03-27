@@ -10,6 +10,7 @@ from .analyse_blocking import (
     count_comparisons_from_blocking_rule_pre_filter_conditions,
 )
 from .blocking import BlockingRule
+from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule, block_on
 from .input_column import InputColumn
 
@@ -69,7 +70,7 @@ def _generate_blocking_rule(
     are provided as as string"""
 
     if len(cols_as_string) == 0:
-        br = CustomRule("1=1", linker._sql_dialect)
+        br: BlockingRuleCreator = CustomRule("1=1", linker._sql_dialect)
     else:
 
         br = block_on(*cols_as_string)
