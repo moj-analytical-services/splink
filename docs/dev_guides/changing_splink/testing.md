@@ -14,9 +14,6 @@ Splink tests can be broadly categorised into three sets:
 * **Backend-agnostic tests** - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
 * **Backend-specific tests** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
 
-!!! info
-    We currently do not have support for testing the `athena` backend, due to the complication of needing a connection to an AWS account. All other backends have testing available.
-
 ## Running tests
 
 ### Running tests locally
@@ -99,13 +96,15 @@ These all work alongside all the other pytest options, so for instance to run th
 pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 ```
 
-??? tip "Running tests with docker 🐳"
+??? tip "Running tests against a specific version of Python"
 
-    If you want to test Splink against a specific version of python, the easiest method is to utilise docker 🐳.
+    Testing Splink against a specific version of Python, especially newer versions not included in our GitHub Actions, is vital for identifying compatibility issues 
+    early and reviewing errors reported by users.
 
-    Docker allows you to more quickly and easily install a specific version of python and run the existing test library against it.
+    If you're a conda user, you can create a isolated environment according to the
+    instructions in the [development quickstart](./development_quickstart.md).
 
-    This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
+    Another method is to utilise docker 🐳.
 
     A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
 
@@ -124,6 +123,22 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
     ```sh
     docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
     ```
+
+#### Running with a pre-existing Postgres database
+
+If you have a pre-existing Postgres server you wish to use to run the tests against, you will need to specify environment variables for the credentials where they differ from default (in parentheses):
+
+* `SPLINKTEST_PG_USER` (`splinkognito`)
+* `SPLINKTEST_PG_PASSWORD` (`splink123!`)
+* `SPLINKTEST_PG_HOST` (`localhost`)
+* `SPLINKTEST_PG_PORT` (`5432`)
+* `SPLINKTEST_PG_DB` (`splink_db`) - tests will not actually run against this, but it is from a connection to this that the temporary test database + user will be created
+
+While care has been taken to ensure that tests are run using minimal permissions, and are cleaned up after, it is probably wise to run tests connected to a non-important database, in case anything goes wrong.
+In addition to the [standard privileges for Splink usage](../../topic_guides/splink_fundamentals/backends/postgres.md#permissions), in order to run the tests you will need:
+
+* `CREATE DATABASE` to create a temporary testing database
+* `CREATEROLE` to create a temporary user role with limited privileges, which will be actually used for all the SQL execution in the tests
 
 ### Tests in CI
 
