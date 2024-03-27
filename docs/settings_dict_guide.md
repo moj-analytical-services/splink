@@ -168,7 +168,7 @@ A list specifying how records should be compared for probabilistic matching.  Ea
 
         #### `sql_condition`
 
-        A branch of a SQL case expression without WHEN and THEN e.g. 'jaro_winkler_sim(surname_l, surname_r) > 0.88'
+        A branch of a SQL case expression without WHEN and THEN e.g. `jaro_winkler_sim(surname_l, surname_r) > 0.88`
 
         **Examples**: `['forename_l = forename_r', 'jaro_winkler_sim(surname_l, surname_r) > 0.88']`
 
