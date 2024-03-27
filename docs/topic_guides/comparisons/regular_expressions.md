@@ -62,7 +62,7 @@ This is achieved below by using `regex_extract="^[0-9]{1,4}"` within a Levenshte
 which gives a comparison with the following levels:
 
 ??? note "Output"
-    > Comparison 'Exact match vs. telephone within levenshtein thresholds 1, 2 vs. anything else' of "telephone".
+    > Comparison 'Exact match vs. telephone within Levenshtein thresholds 1, 2 vs. anything else' of "telephone".
     >
     > Similarity is assessed using the following ComparisonLevels:
     >
@@ -88,8 +88,8 @@ Here is an example set of record comparisons that could have been generated usin
 | person_id_l | person_id_r | telephone_l | telephone_r | comparison_level |
 |-------------|-------------|-------------|-------------|------------------|
 | 7           | 1           | **020** 5555 1234| **020** 4444 4573| exact match |
-| 5           | 3           | **0161** 999 5678| **0160** 333 6521| levenshtein distance <= 1|
-| 5           | 2           | **0161** 999 5678| **160** 221 2198| levenshtein distance <= 2|
+| 5           | 3           | **0161** 999 5678| **0160** 333 6521| Levenshtein distance <= 1|
+| 5           | 2           | **0161** 999 5678| **160** 221 2198| Levenshtein distance <= 2|
 | 4           | 1           | **0141** 777 9876| **020** 4444 4573 | else level|
 | 6           | 7           |                  | **020** 5555 1234 | null level       |
 
@@ -136,8 +136,8 @@ Here is an example set of record comparisons that could have been generated usin
 | person_id_l | person_id_r | email_l | email_r | comparison_level               |
 |-------------|-------------|---------|---------|--------------------------------|
 | 7           | 1           |         |         | exact match                    |
-| 5           | 1           |         |         | jaro-winkler similarity >= 0.9 |
-| 9           | 2           |         |         | jaro-winkler similarity >= 0.7 |
+| 5           | 1           |         |         | Jaro-Winkler similarity >= 0.9 |
+| 9           | 2           |         |         | Jaro-Winkler similarity >= 0.7 |
 | 4           | 8           |         |         | else level                     |
 | 6           | 3           |         |         | null level                     |
 
