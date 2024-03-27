@@ -196,6 +196,7 @@ linter
 linters
 missingness
 Missingness
+Miniforge
 PyPI
 paralleism
 parallelise
@@ -217,8 +218,12 @@ schemas
 Splink
 Splink's
 Sunter
+teardown
 tradeoff
+tf
 transpilation
 Transpilation
 unlinkables
 Winkler
+WSL
+zsh
