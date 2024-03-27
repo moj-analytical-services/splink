@@ -110,7 +110,7 @@ Here `regex_extract` is used to extract everything before the '@' symbol in an e
 This gives a comparison with the following levels:
 
 ??? note "Output"
-    > Comparison 'Exact match vs. Email within jaro_winkler_similarity thresholds 0.9, 0.7 vs. anything else' of "email".
+    > Comparison 'Exact match vs. Email within Jaro-Winkler similarity thresholds 0.9, 0.7 vs. anything else' of "email".
     >
     > Similarity is assessed using the following ComparisonLevels:
     >
@@ -119,13 +119,13 @@ This gives a comparison with the following levels:
         regexp_extract("email_l", '^[^@]+')
      =
         regexp_extract("email_r", '^[^@]+')
-    > - 'Jaro_winkler_similarity >= 0.9' with SQL rule: jaro_winkler_similarity(
-        regexp_extract("email_l", '^[^@]+')
+    > - 'Jaro-Winkler similarity >= 0.9' with SQL rule: `jaro_winkler_similarity(
+        regexp_extract("email_l", '^[^@]+')`
     ,
         regexp_extract("email_r", '^[^@]+')
     ) >= 0.9
-    > - 'Jaro_winkler_similarity >= 0.7' with SQL rule: jaro_winkler_similarity(
-        regexp_extract("email_l", '^[^@]+')
+    > - 'Jaro-Winkler similarity >= 0.7' with SQL rule: `jaro_winkler_similarity(
+        regexp_extract("email_l", '^[^@]+')`
     ,
         regexp_extract("email_r", '^[^@]+')
     ) >= 0.7
