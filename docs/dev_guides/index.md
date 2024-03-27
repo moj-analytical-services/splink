@@ -15,7 +15,7 @@ When making changes to Splink, there are a number of common operations that deve
 
 * [Linting and Formatting](./changing_splink/lint_and_format.md) - to ensure consistent code style and to reformat code, where possible.
 * [Testing](./changing_splink/testing.md) - to ensure all of the codebase is performing as intended.
-* [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
+* [Building the Documentation locally](./changing_splink/contributing_to_docs.md) - to test any changes to the docs site render correctly.
 * [Releasing a new package version](./changing_splink/releases.md) - to walk-through the release process for new versions of Splink. This generally happens every 2 weeks, or in the case of an urgent bug fix.
 * [Contributing to the Splink Blog](./changing_splink/blog_posts.md) - to walk through the process of adding a post to the Splink blog.
 

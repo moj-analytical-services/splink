@@ -22,4 +22,4 @@ If you are a new author, you will need to add yourself to the [.authors.yml file
 
 ## Testing your changes
 
-Once you have made a first draft, check out how the deployed blog will look by [building the docs locally](./build_docs_locally.md).
+Once you have made a first draft, check out how the deployed blog will look by [building the docs locally](./contributing_to_docs.md).
