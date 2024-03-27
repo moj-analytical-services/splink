@@ -9,6 +9,7 @@ from jinja2 import Template
 
 from .exceptions import SplinkException
 from .misc import EverythingEncoder, read_resource
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -56,9 +57,10 @@ def df_clusters_as_records(
     dict: A record dictionary of the specified cluster IDs.
     """
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
-    df_clusters = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__scs_clusters"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__scs_clusters")
+    df_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     return df_clusters.as_record_dict()
 
 
@@ -98,10 +100,11 @@ def create_df_nodes(
     Returns:
         A SplinkDataFrame containing the nodes for the specified cluster IDs.
     """
+    pipeline = CTEPipeline()
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
-    df_nodes = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__scs_nodes"
-    )
+    pipeline.enqueue_sql(sql, "__splink__scs_nodes")
+    df_nodes = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     return df_nodes
 
 
@@ -142,9 +145,10 @@ def df_edges_as_records(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
     sql = _edges_sql(linker, df_predicted_edges, df_nodes)
-    df_edges = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__scs_edges"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__scs_edges")
+    df_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     return df_edges.as_record_dict()
 
 
@@ -155,9 +159,9 @@ def _get_random_cluster_ids(
     select count(distinct cluster_id) as count
     from {connected_components.physical_name}
     """
-    df_cluster_count = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__cluster_count"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__cluster_count")
+    df_cluster_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
     df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
@@ -179,11 +183,10 @@ def _get_random_cluster_ids(
     select cluster_id from distinct_clusters
     {random_sample_sql}
     """
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
+    df_sample = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    df_sample = linker._sql_to_splink_dataframe_checking_cache(
-        sql,
-        "__splink__df_concat_with_tf_sample",
-    )
     return [r["cluster_id"] for r in df_sample.as_record_dict()]
 
 
@@ -191,6 +194,7 @@ def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
 ) -> list[dict]:
     unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
+    pipeline = CTEPipeline()
     sql = f"""
     select
         cluster_id,
@@ -201,7 +205,7 @@ def _get_cluster_id_of_each_size(
     having count(*)>1
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count")
+    pipeline.enqueue_sql(sql, "__splink__cluster_count")
 
     # Assign unique row number to each row in partition
     sql = """
@@ -212,7 +216,7 @@ def _get_cluster_id_of_each_size(
     from __splink__cluster_count
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
 
     sql = f"""
     select
@@ -222,8 +226,10 @@ def _get_cluster_id_of_each_size(
     where row_num <= {rows_per_partition}
     """
 
-    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
-    df_cluster_sample_with_size = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    df_cluster_sample_with_size = linker.db_api.sql_pipeline_to_splink_dataframe(
+        pipeline
+    )
 
     return df_cluster_sample_with_size.as_record_dict()
 
@@ -249,7 +255,7 @@ def _get_lowest_density_clusters(
         list: A list of record dictionaries containing cluster ids, densities
         and sizes of lowest density clusters.
     """
-
+    pipeline = CTEPipeline()
     sql = f"""
     select
         cluster_id,
@@ -260,7 +266,7 @@ def _get_lowest_density_clusters(
     where n_nodes >= {min_nodes}
     """
 
-    linker._enqueue_sql(sql, "__splink__partition_clusters_by_size")
+    pipeline.enqueue_sql(sql, "__splink__partition_clusters_by_size")
 
     sql = f"""
     select
@@ -271,8 +277,10 @@ def _get_lowest_density_clusters(
     where row_num <= {rows_per_partition}
     """
 
-    linker._enqueue_sql(sql, "__splink__lowest_density_clusters")
-    df_lowest_density_clusters = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(sql, "__splink__lowest_density_clusters")
+    df_lowest_density_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(
+        pipeline
+    )
 
     return df_lowest_density_clusters.as_record_dict()
 

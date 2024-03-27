@@ -48,6 +48,9 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     select_cols = []
 
+    # TODO:  By putting any existing tf tables onto the pipeline as
+    # input tables, the logic here could simpler because all
+    # tf tables could be referred to by their templated name
     for col in tf_cols:
         tbl = colname_to_tf_tablename(col)
         if tbl in linker._intermediate_table_cache:

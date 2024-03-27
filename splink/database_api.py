@@ -17,6 +17,7 @@ from .misc import (
     ascii_uid,
     parse_duration,
 )
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         # Certain tables are put in the cache using their templated_name
         # An example is __splink__df_concat_with_tf
         # These tables are put in the cache when they are first calculated
-        # e.g. with _initialise_df_concat_with_tf()
+        # e.g. with compute_df_concat_with_tf()
         # But they can also be put in the cache manually using
         # e.g. register_table_input_nodes_concat_with_tf()
 
@@ -179,18 +180,19 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def sql_pipeline_to_splink_dataframe(
         self,
-        pipeline,
-        input_dataframes: List[SplinkDataFrame] = [],
+        pipeline: CTEPipeline,
         use_cache=True,
     ) -> SplinkDataFrame:
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
         self.debug_mode controls whether this is CTE or individual tables.
-        pipeline is resest upon completion
+        pipeline is set to spent after execution ensuring it cannot be
+        acidentally reused
         """
 
         if not self.debug_mode:
-            sql_gen = pipeline.generate_pipeline(input_dataframes)
+
+            sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
             splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
@@ -201,10 +203,10 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for task in pipeline.generate_pipeline_parts(input_dataframes):
+            for cte in pipeline.ctes_pipeline():
                 start_time = time.time()
-                output_tablename = task.output_table_name
-                sql = task.sql
+                output_tablename = cte.output_table_name
+                sql = cte.sql
                 print("------")  # noqa: T201
                 print(  # noqa: T201
                     f"--------Creating table: {output_tablename}--------"
@@ -219,7 +221,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 print(f"Step ran in: {run_time}")  # noqa: T201
 
         # if there is an error the pipeline will not reset, leaving caller to handle
-        pipeline.reset()
+
         return splink_dataframe
 
     @final

@@ -12,7 +12,7 @@ from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPI
 from .input_column import InputColumn
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
@@ -262,17 +262,14 @@ def expectation_maximisation(
     em_convergence = training_settings.em_convergence
     logger.info("")  # newline
 
-    # pipeline to execute the SQL we need to
-    pipeline = SQLPipeline()
-
     if estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(core_model_settings.comparisons)
+        pipeline = CTEPipeline([df_comparison_vector_values])
         pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
-        agreement_pattern_counts = db_api.sql_pipeline_to_splink_dataframe(
-            pipeline=pipeline, input_dataframes=[df_comparison_vector_values]
-        )
+        agreement_pattern_counts = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     for i in range(1, max_iterations + 1):
+        pipeline = CTEPipeline()
         probability_two_random_records_match = (
             core_model_settings.probability_two_random_records_match
         )
@@ -303,13 +300,11 @@ def expectation_maximisation(
         )
         pipeline.enqueue_sql(sql, "__splink__m_u_counts")
         if estimate_without_term_frequencies:
-            df_params = db_api.sql_pipeline_to_splink_dataframe(
-                pipeline, [agreement_pattern_counts]
-            )
+            pipeline.append_input_dataframe(agreement_pattern_counts)
+            df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         else:
-            df_params = db_api.sql_pipeline_to_splink_dataframe(
-                pipeline, [df_comparison_vector_values]
-            )
+            pipeline.append_input_dataframe(df_comparison_vector_values)
+            df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         param_records = df_params.as_pandas_dataframe()
         param_records = compute_proportions_for_new_parameters(param_records)
 

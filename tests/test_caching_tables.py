@@ -46,6 +46,7 @@ def test_cache_tracking_works():
     cache.reset_executed_queries_tracker()
     cache.reset_queries_retrieved_from_cache_tracker()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
+
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
     )
@@ -61,7 +62,7 @@ def test_cache_tracking_works():
     linker.estimate_u_using_random_sampling(target_rows=1e4)
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is True
     assert (
-        cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
+        cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
     )
 
 

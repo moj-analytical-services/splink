@@ -7,6 +7,12 @@ import pytest
 from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.linker import Linker, SplinkDataFrame
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import (
+    compute_df_concat,
+    compute_df_concat_with_tf,
+    enqueue_df_concat_with_tf,
+)
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -51,45 +57,6 @@ def test_cache_id(tmp_path):
     assert linker_uid == random_uid
 
 
-def test_materialising_works():
-    # A quick check to ensure pipelining and materialising
-    # works as expected across our concat and tf tables.
-
-    # As these tables are all intertwined and depend on one another,
-    # we need to ensure we don't end up with any circular CTE expressions.
-
-    # The pipeline should now be reset if `materialise` is called.
-
-    settings = get_settings_dict()
-
-    # Train from label column
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, database_api=db_api)
-
-    linker._initialise_df_concat(materialise=False)
-    linker._initialise_df_concat_with_tf(materialise=True)
-
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, database_api=db_api)
-    linker._initialise_df_concat_with_tf(materialise=False)
-    linker._initialise_df_concat(materialise=True)
-    linker.compute_tf_table("first_name")
-
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, database_api=db_api)
-    linker._initialise_df_concat_with_tf(materialise=False)
-    linker.compute_tf_table("first_name")
-
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, database_api=db_api)
-    linker._initialise_df_concat_with_tf(materialise=True)
-    linker.compute_tf_table("first_name")
-
-
 def test_cache_only_splink_dataframes():
     settings = get_settings_dict()
 
@@ -110,7 +77,7 @@ def test_cache_only_splink_dataframes():
 
 # run test in/not in debug mode to check functionality in both - cache shouldn't care
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_access_initialise_df_concat(debug_mode):
+def test_cache_access_df_concat(debug_mode):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
@@ -121,22 +88,23 @@ def test_cache_access_initialise_df_concat(debug_mode):
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # shouldn't touch DB if we don't materialise
-        linker._initialise_df_concat_with_tf(materialise=False)
+        pipeline = CTEPipeline()
+        pipeline = enqueue_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
         # this should create the table in the db
-        linker._initialise_df_concat_with_tf(materialise=True)
+        compute_df_concat_with_tf(linker, pipeline)
         # NB don't specify amount of times it is called, as will depend on debug_mode
         mockexecute_sql_pipeline.assert_called()
         # reset the call counter on the mock
         mockexecute_sql_pipeline.reset_mock()
 
         # this should NOT touch the database, but instead use the cache
-        linker._initialise_df_concat_with_tf(materialise=True)
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
         # this should also use the cache - concat will just refer to concat_with_tf
-        linker._initialise_df_concat(materialise=True)
+        compute_df_concat(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
 
@@ -172,12 +140,15 @@ def test_invalidate_cache(debug_mode):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-        linker._initialise_df_concat_with_tf(materialise=True)
+
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
 
         # this should NOT touch the database, but instead use the cache
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
         # create this:
@@ -191,11 +162,13 @@ def test_invalidate_cache(debug_mode):
         linker.invalidate_cache()
 
         # now we _SHOULD_ compute afresh:
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
         # but now draw from the cache
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
         # and should compute this again:
         linker.compute_tf_table("surname")
@@ -217,12 +190,14 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
 
         # should use cache
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
     db_api = DuckDBAPI()
@@ -233,19 +208,22 @@ def test_cache_invalidates_with_new_linker(debug_mode):
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # new linker should recalculate df_concat_with_tf
-        new_linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(new_linker, pipeline)
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
 
         # but now read from the cache
-        new_linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(new_linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
         # original linker should still have result cached
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
 
@@ -265,7 +243,8 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
         # don't need function so use any frame
         linker.register_table_input_nodes_concat_with_tf(df)
         # now this should be cached, as I have manually registered
-        linker._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
 
 

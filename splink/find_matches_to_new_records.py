@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from .input_column import InputColumn
+from .pipeline import CTEPipeline
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -8,8 +9,8 @@ if TYPE_CHECKING:
 
 
 def add_unique_id_and_source_dataset_cols_if_needed(
-    linker: "Linker", new_records_df: "SplinkDataFrame"
-):
+    linker: "Linker", new_records_df: "SplinkDataFrame", pipeline: CTEPipeline
+) -> CTEPipeline:
     cols = new_records_df.columns
     cols = [c.unquote().name for c in cols]
 
@@ -36,4 +37,5 @@ def add_unique_id_and_source_dataset_cols_if_needed(
         select * {sds_sel_sql} {uid_sel_sql}
         from  __splink__df_new_records_with_tf_before_uid_fix
         """
-    linker._enqueue_sql(sql, "__splink__df_new_records_with_tf")
+    pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf")
+    return pipeline

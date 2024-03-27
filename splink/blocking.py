@@ -10,8 +10,10 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
+from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
@@ -396,12 +398,17 @@ def materialise_exploded_id_tables(linker: Linker):
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
+    if len(exploding_blocking_rules) == 0:
+        return []
     exploded_tables = []
 
-    input_dataframe = linker._initialise_df_concat_with_tf()
-    input_colnames = {col.name for col in input_dataframe.columns}
+    pipeline = CTEPipeline()
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+
+    input_colnames = {col.name for col in nodes_with_tf.columns}
 
     for br in exploding_blocking_rules:
+        pipeline = CTEPipeline([nodes_with_tf])
         arrays_to_explode_quoted = [
             InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name
             for colname in br.array_columns_to_explode
@@ -412,7 +419,7 @@ def materialise_exploded_id_tables(linker: Linker):
             list(input_colnames.difference(arrays_to_explode_quoted)),
         )
 
-        linker._enqueue_sql(
+        pipeline.enqueue_sql(
             expl_sql,
             "__splink__df_concat_with_tf_unnested",
         )
@@ -422,11 +429,12 @@ def materialise_exploded_id_tables(linker: Linker):
 
         sql = br.marginal_exploded_id_pairs_table_sql(linker, br)
 
-        linker._enqueue_sql(sql, table_name)
+        pipeline.enqueue_sql(sql, table_name)
 
-        marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
+        marginal_ids_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         br.exploded_id_pair_table = marginal_ids_table
         exploded_tables.append(marginal_ids_table)
+
     return exploding_blocking_rules
 
 

@@ -4,6 +4,8 @@ import pandas as pd
 
 import splink.comparison_library as cl
 from splink.blocking_rule_library import block_on
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -66,7 +68,9 @@ def test_tf_tables_init_works(test_helpers, dialect):
         )
 
         # Trial for if _df_concat_with_tf already exists...
-        linker._initialise_df_concat_with_tf(materialise=True)
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(linker, pipeline)
+
         linker.find_matches_to_new_records(
             [record], blocking_rules=[], match_weight_threshold=-10000
         )

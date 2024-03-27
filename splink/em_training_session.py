@@ -19,13 +19,14 @@ from .expectation_maximisation import expectation_maximisation
 from .input_column import InputColumn
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
-from .pipeline import SQLPipeline
+from .pipeline import CTEPipeline
 from .settings import (
     ComparisonAndLevelDict,
     CoreModelSettings,
     Settings,
     TrainingSettings,
 )
+from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
@@ -177,14 +178,14 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        pipeline = SQLPipeline()
-        nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline()
+        nodes_with_tf = compute_df_concat_with_tf(self._original_linker, pipeline)
+        pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(
             self._original_linker, [self._blocking_rule_for_training]
         )
-        for sql in sqls:
-            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         # repartition after blocking only exists on the SparkAPI
         repartition_after_blocking = getattr(
@@ -192,18 +193,19 @@ class EMTrainingSession:
         )
 
         if repartition_after_blocking:
-            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(
-                pipeline, [nodes_with_tf]
+            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            nodes_with_tf = (
+                self._original_linker._intermediate_table_cache.get_with_logging(
+                    "__splink__df_concat_with_tf"
+                )
             )
-            input_dataframes = [nodes_with_tf, df_blocked]
-        else:
-            input_dataframes = [nodes_with_tf]
+            pipeline = CTEPipeline([nodes_with_tf, df_blocked])
 
         sql = compute_comparison_vector_values_sql(
             self.columns_to_select_for_comparison_vector_values
         )
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.db_api.sql_pipeline_to_splink_dataframe(pipeline, input_dataframes)
+        return self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     def _train(self, cvv=None) -> CoreModelSettings:
         if cvv is None:

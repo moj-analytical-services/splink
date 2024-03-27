@@ -7,6 +7,7 @@ from splink.analyse_blocking import (
 from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.misc import calculate_cartesian
+from splink.pipeline import CTEPipeline
 from splink.vertically_concatenate import vertically_concatenate_sql
 
 
@@ -89,16 +90,20 @@ def test_calculate_cartesian_equals_total_number_of_links(
     db_api = DuckDBAPI()
 
     linker = Linker(dfs, settings, database_api=db_api)
+    pipeline = CTEPipeline()
     sql = vertically_concatenate_sql(linker)
-    linker._enqueue_sql(sql, "__splink__df_concat")
-    df_concat = linker._execute_sql_pipeline()
 
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+    df_concat = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    pipeline = CTEPipeline([df_concat])
     # calculate full number of comparisons
     full_count_sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
         linker, "1=1"
     )
-    linker._enqueue_sql(full_count_sql, "__splink__analyse_blocking_rule")
-    res = linker._execute_sql_pipeline([df_concat]).as_record_dict()[0]
+    pipeline.enqueue_sql(full_count_sql, "__splink__analyse_blocking_rule")
+    res_df = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    res = res_df.as_record_dict()[0]
 
     # compare with count from each frame
     sql = f"""
@@ -107,8 +112,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
         {group_by}
         order by count desc
     """
-    linker._enqueue_sql(sql, "__splink__cartesian_product")
-    cartesian_count = linker._execute_sql_pipeline([df_concat])
+    pipeline = CTEPipeline([df_concat])
+    pipeline.enqueue_sql(sql, "__splink__cartesian_product")
+    cartesian_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
     # check this is what we expect from input

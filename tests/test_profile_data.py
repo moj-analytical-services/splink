@@ -7,7 +7,7 @@ from pyspark.sql.types import StringType
 
 from splink.duckdb.database_api import DuckDBAPI
 from splink.misc import ensure_is_list
-from splink.pipeline import SQLPipeline
+from splink.pipeline import CTEPipeline
 from splink.profile_data import (
     _col_or_expr_frequencies_raw_data_sql,
     profile_columns,
@@ -21,7 +21,7 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
     input_alias = "__splink__profile_data"
     _splink_df = db_api.register_table(table, input_alias, overwrite=True)
 
-    pipeline = SQLPipeline()
+    pipeline = CTEPipeline()
 
     column_expressions_raw = ensure_is_list(columns_to_profile)
 

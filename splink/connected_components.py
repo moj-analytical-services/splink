@@ -13,6 +13,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Optional
 
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -351,10 +352,9 @@ def _cc_create_unique_id_cols(
         {uid_concat_edges} as unique_id_r
         from {concat_with_tf}
     """
-
-    return linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__df_connected_components_df"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__df_connected_components_df")
+    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _exit_query(
@@ -446,22 +446,25 @@ def solve_connected_components(
     else:
         input_dfs.append(concat_with_tf)
 
+    pipeline = CTEPipeline(input_dfs)
     # Create our initial node and neighbours tables
     sql = _cc_create_nodes_table(linker, _generated_graph)
-    linker._enqueue_sql(sql, "nodes")
+    pipeline.enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation()
-    linker._enqueue_sql(sql, "__splink__df_neighbours")
-    neighbours = linker._execute_sql_pipeline(input_dfs)
+    pipeline.enqueue_sql(sql, "__splink__df_neighbours")
+    neighbours = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # Create our initial representatives table
+    pipeline = CTEPipeline([neighbours])
     sql = _cc_generate_initial_representatives_table()
-    linker._enqueue_sql(sql, "representatives")
+    pipeline.enqueue_sql(sql, "representatives")
     sql = _cc_update_neighbours_first_iter()
-    linker._enqueue_sql(sql, "neighbours_first_iter")
+    pipeline.enqueue_sql(sql, "neighbours_first_iter")
     sql = _cc_update_representatives_first_iter()
     # Execute if we have no batching, otherwise add it to our batched process
-    linker._enqueue_sql(sql, "__splink__df_representatives")
-    representatives = linker._execute_sql_pipeline([neighbours])
+    pipeline.enqueue_sql(sql, "__splink__df_representatives")
+
+    representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
@@ -479,10 +482,11 @@ def solve_connected_components(
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
+        pipeline = CTEPipeline([neighbours])
         sql = _cc_generate_representatives_loop_cond(
             prev_representatives_table.physical_name,
         )
-        linker._enqueue_sql(sql, "r")
+        pipeline.enqueue_sql(sql, "r")
         # Update our rep_match column in the representatives table.
         sql = _cc_update_representatives_loop_cond(
             prev_representatives_table.physical_name
@@ -490,12 +494,14 @@ def solve_connected_components(
 
         repr_name = f"__splink__df_representatives_{iteration}"
 
-        representatives = linker._enqueue_sql(
+        representatives = pipeline.enqueue_sql(
             sql,
             repr_name,
         )
 
-        representatives = linker._execute_sql_pipeline([neighbours])
+        representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        pipeline = CTEPipeline()
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = representatives
@@ -503,9 +509,11 @@ def solve_connected_components(
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
 
-        linker._enqueue_sql(sql, "__splink__df_root_rows")
+        pipeline.enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = linker._execute_sql_pipeline(use_cache=False)
+        root_rows_df = linker.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
+        )
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
@@ -529,10 +537,8 @@ def solve_connected_components(
         uid_cols=uid_cols,
         pairwise_filter=filter_pairwise_format_for_clusters,
     )
-
-    representatives = linker._sql_to_splink_dataframe_checking_cache(
-        exit_query,
-        "__splink__df_representatives",
-    )
+    pipeline = CTEPipeline([representatives])
+    pipeline.enqueue_sql(exit_query, "__splink__df_representatives")
+    representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return representatives

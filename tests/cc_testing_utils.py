@@ -8,6 +8,8 @@ from splink.connected_components import solve_connected_components
 from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.linker import Linker
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import compute_df_concat_with_tf
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -52,7 +54,9 @@ def register_cc_df(G):
 
 
 def run_cc_implementation(linker, predict_df):
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+
+    pipeline = CTEPipeline()
+    concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     # finally, run our connected components algorithm
     cc = solve_connected_components(

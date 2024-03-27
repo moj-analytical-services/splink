@@ -4,8 +4,10 @@ from typing import TYPE_CHECKING
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
+from .pipeline import CTEPipeline
 from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
+from .vertically_concatenate import compute_df_concat_with_tf
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -166,23 +168,21 @@ def _select_found_by_blocking_rules(linker: "Linker"):
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-    # Read from the cache or generate
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
-
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    pipeline.enqueue_list_of_sqls(sqls)
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    df_truth_space_table = linker._execute_sql_pipeline([concat_with_tf])
+    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -208,18 +208,17 @@ def truth_space_table_from_labels_column(
     *
     from {df_predict.physical_name}
     """
+    pipeline = CTEPipeline()
 
-    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+    pipeline.enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    df_truth_space_table = linker._execute_sql_pipeline()
+    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -271,13 +270,13 @@ def prediction_errors_from_labels_table(
     include_false_negatives=True,
     threshold=0.5,
 ):
-    # Read from the cache or generate
-    nodes_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    pipeline.enqueue_list_of_sqls(sqls)
 
     false_positives = f"""
     (clerical_match_score < {threshold} and
@@ -310,9 +309,9 @@ def prediction_errors_from_labels_table(
     {where_condition}
     """
 
-    linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
+    pipeline.enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
 
-    return linker._execute_sql_pipeline([nodes_with_tf])
+    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _predict_from_label_column_sql(linker, label_colname):
@@ -356,7 +355,7 @@ def prediction_errors_from_label_column(
 
     # _predict_from_label_column_sql will add a match key for matching on labels
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
-
+    pipeline = CTEPipeline()
     sql = f"""
     select
     case
@@ -371,7 +370,7 @@ def prediction_errors_from_label_column(
 
     # found_by_blocking_rules
 
-    linker._enqueue_sql(sql, "__splink__predictions_from_label_column")
+    pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column")
 
     false_positives = f"""
     (clerical_match_score < {threshold} and
@@ -401,8 +400,8 @@ def prediction_errors_from_label_column(
     where {where_condition}
     """
 
-    linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
+    pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
 
-    predictions = linker._execute_sql_pipeline()
+    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return predictions
