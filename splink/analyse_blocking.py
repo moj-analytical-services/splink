@@ -8,7 +8,7 @@ import pandas as pd
 from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sqls
 from .misc import calculate_cartesian, calculate_reduction_ratio
 from .pipeline import CTEPipeline
-from .vertically_concatenate import compute_df_concat
+from .vertically_concatenate import compute_df_concat, enqueue_df_concat
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -258,3 +258,19 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     sqls.append({"sql": sql, "output_table_name": "__splink__total_of_block_counts"})
 
     return sqls
+
+
+def count_comparisons_from_blocking_rule_pre_filter_conditions(
+    linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
+):
+    pipeline = CTEPipeline()
+    pipeline = enqueue_df_concat(linker, pipeline)
+
+    sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
+        linker, blocking_rule
+    )
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    df_res = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    res = df_res.as_record_dict()[0]
+    return int(res["count_of_pairwise_comparisons_generated"])
