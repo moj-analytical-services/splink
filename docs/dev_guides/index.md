@@ -13,6 +13,7 @@ Thank you for your interest in contributing to Splink! If this is your first tim
 
 When making changes to Splink, there are a number of common operations that developers need to perform. The guides below lay out some of these common operations, and provides scripts to automate these processes. These include:
 
+* [Developer Quickstart](./changing_splink/development_quickstart.md) - to get external contributors up and running.
 * [Linting and Formatting](./changing_splink/lint_and_format.md) - to ensure consistent code style and to reformat code, where possible.
 * [Testing](./changing_splink/testing.md) - to ensure all of the codebase is performing as intended.
 * [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
