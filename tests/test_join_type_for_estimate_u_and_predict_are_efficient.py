@@ -176,7 +176,7 @@ def test_link_and_dedupe():
 
     handler.log_list.clear()
     logging.getLogger("splink").setLevel(1)
-    linker.estimate_u_using_random_sampling(target_rows=1000)
+    linker.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)

@@ -65,7 +65,7 @@ def test_simple_end_to_end(test_helpers, dialect):
 
     linker = Linker(df, settings, **helper.extra_linker_args())
 
-    linker.estimate_u_using_random_sampling(target_rows=1e3)
+    linker.estimate_u_using_random_sampling(max_pairs=1e3)
 
     blocking_rule = block_on("first_name", "surname")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
