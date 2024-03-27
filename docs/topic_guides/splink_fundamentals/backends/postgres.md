@@ -102,7 +102,7 @@ When you are finished you can remove these resources:
 
 ### Running with a pre-existing database
 
-If you have a pre-existing postgres server you wish to use to run the tests against, you will need to specify environment variables for the credentials where they differ from default (in parentheses):
+If you have a pre-existing Postgres server you wish to use to run the tests against, you will need to specify environment variables for the credentials where they differ from default (in parentheses):
 
 * `SPLINKTEST_PG_USER` (`splinkognito`)
 * `SPLINKTEST_PG_PASSWORD` (`splink123!`)
