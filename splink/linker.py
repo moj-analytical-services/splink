@@ -1074,14 +1074,10 @@ class Linker:
         pipeline = CTEPipeline()
         compute_df_concat_with_tf(self, pipeline)
 
-        if isinstance(blocking_rule, BlockingRuleCreator):
-            blocking_rule_str_or_dict: str | dict = (
-                blocking_rule.create_blocking_rule_dict(self._sql_dialect)
-            )
-        else:
-            # we have a str
-            blocking_rule_str_or_dict = blocking_rule
-        blocking_rule_obj = blocking_rule_to_obj(blocking_rule_str_or_dict)
+        blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
+            self._sql_dialect
+        )
+
         if type(blocking_rule_obj) not in (BlockingRule, SaltedBlockingRule):
             # TODO: seems a mismatch between message and type re: SaltedBlockingRule
             raise TypeError(
