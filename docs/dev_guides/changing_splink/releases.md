@@ -27,6 +27,6 @@ For example
 ![](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/releases/publish.png)
 
 
-Now your release should be published to [PyPi](https://pypi.org/project/splink/#history).
+Now your release should be published to [PyPI](https://pypi.org/project/splink/#history).
 
 

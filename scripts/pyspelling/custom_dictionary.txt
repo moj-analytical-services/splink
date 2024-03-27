@@ -73,7 +73,6 @@ PostgreSQL
 Postgres
 PowerShell
 PyPI
-PyPi
 PySpark
 PySpelling
 QE
