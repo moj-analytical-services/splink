@@ -3,7 +3,6 @@ from __future__ import annotations  # noqa: I001
 import json
 import logging
 import os
-import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
@@ -73,7 +72,7 @@ from .edge_metrics import compute_edge_metrics
 from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
-from .exceptions import SplinkDeprecated, SplinkException
+from .exceptions import SplinkException
 from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
@@ -851,9 +850,7 @@ class Linker:
 
         return deterministic_link_df
 
-    def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, seed: int = None, *, target_rows=None
-    ):
+    def estimate_u_using_random_sampling(self, max_pairs: int = None, seed: int = None):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -889,24 +886,6 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-        # TODO: Remove this compatibility code in a future release once we drop
-        # support for "target_rows". Deprecation warning added in 3.7.0
-        if max_pairs is not None and target_rows is not None:
-            # user supplied both
-            raise TypeError("Just use max_pairs")
-        elif max_pairs is not None:
-            # user is doing it correctly
-            pass
-        elif target_rows is not None:
-            # user is using deprecated argument
-            warnings.warn(
-                "target_rows is deprecated; use max_pairs",
-                SplinkDeprecated,
-                stacklevel=2,
-            )
-            max_pairs = target_rows
-        else:
-            raise TypeError("Missing argument max_pairs")
 
         estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
@@ -3150,19 +3129,6 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
-
-    def save_settings_to_json(
-        self, out_path: str | None = None, overwrite: bool = False
-    ) -> dict:
-        """
-        This function is deprecated. Use save_model_to_json() instead.
-        """
-        warnings.warn(
-            "This function is deprecated. Use save_model_to_json() instead.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
-        return self.save_model_to_json(out_path, overwrite)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall

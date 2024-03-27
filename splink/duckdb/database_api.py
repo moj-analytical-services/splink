@@ -81,21 +81,11 @@ class DuckDBAPI(DatabaseAPI):
 
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
-
-        # From duckdb 0.5.0, duckdb will raise a CatalogException
-        # which does not exist in 0.4.0 or before
-
-        # TODO: probably we can drop this compat now?
-        try:
-            from duckdb import CatalogException
-
-            error = (RuntimeError, CatalogException)
-        except ImportError:
-            error = RuntimeError
+        from duckdb import CatalogException
 
         try:
             self._execute_sql_against_backend(sql)
-        except error:
+        except CatalogException:
             return False
         return True
 
