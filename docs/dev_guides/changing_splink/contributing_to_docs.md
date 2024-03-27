@@ -28,7 +28,7 @@ Omitting the file/folder path will run the spellchecker on all markdown files co
 
 The spellchecker uses the Python package [PySpelling](https://facelessuser.github.io/pyspelling/) and its underlying spellchecking tool, Aspell. Running the above script will automatically install these packages along with any other necessary dependencies.
 
-The spellchecker compares words to a [standard dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) and a custom dictionary (`scripts/pyspelling/custom_dictionary.txt`) of words. If no spelling mistakes are found, you will see the following terminal printout:
+The spellchecker compares words to a [standard British English dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) and a custom dictionary (`scripts/pyspelling/custom_dictionary.txt`) of words. If no spelling mistakes are found, you will see the following terminal printout:
 
 ```sh
 
