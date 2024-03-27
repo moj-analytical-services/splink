@@ -434,7 +434,7 @@ Now that the dmetaphone columns have been added, they can be used within compari
 
 ## Full name
 
-When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](../comparisons/comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
+When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](../comparisons/comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a Splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
 
 For example, in the UK, “Mohammed Khan” is a relatively common full name despite neither "Mohammed" or "Khan" occurring frequently as forename or surname, respectively.
 
