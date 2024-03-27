@@ -101,7 +101,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path)
+    linker.save_model_to_json(path)
 
     Linker(df, path, database_api=db_api)
 
