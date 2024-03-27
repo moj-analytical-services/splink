@@ -43,7 +43,7 @@ psycopg2-binary = ">=2.8.0"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
-black = "22.6.0"
+black = "24.3.0"
 ruff = "0.0.257"
 
 [tool.poetry.group.testing]
