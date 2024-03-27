@@ -88,7 +88,7 @@ def test_matches_work(test_helpers, dialect):
     # Train our model to get more reasonable outputs...
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule = block_on("first_name", "surname").get_blocking_rule(dialect)
+    blocking_rule = block_on("first_name", "surname")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
