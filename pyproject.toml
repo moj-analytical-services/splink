@@ -121,3 +121,10 @@ implicit_optional = true
 # for now, ignore missing imports
 # can remove later and install stubs, where existent
 ignore_missing_imports = true
+
+# options for strict mode
+# too much to handle at once, so opt-in a little at a time
+# https://mypy.readthedocs.io/en/stable/existing_code.html#introduce-stricter-options
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
