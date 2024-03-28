@@ -57,6 +57,7 @@ from .charts import (
     threshold_selection_tool,
     unlinkables_chart,
     waterfall_chart,
+    _build_cluster_centralisation_chart,
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
@@ -2717,6 +2718,25 @@ class Linker:
         """
         records = completeness_data(self, input_dataset, cols)
         return completeness_chart(records)
+
+    # Currently non-public functionality, likely to be update soon with
+    # additional metrics
+    def _cluster_centralisation_chart(self, df_cluster_metrics: SplinkDataFrame):
+        """Generate histogram of cluster centralisation across all clusters
+        produced at a given threshold.
+
+        Args:
+            df_cluster_metrics (SplinkDataFrame): Dataframe containing
+            cluster-level metrics computed via `linker.compute_graph_metrics()`
+
+        """
+
+        cm_pd = df_cluster_metrics.as_pandas_dataframe()
+        cm_pd_filtered = cm_pd[["cluster_centralisation"]].dropna()
+
+        records = cm_pd_filtered.to_dict(orient="records")
+
+        return _build_cluster_centralisation_chart(records)
 
     def count_num_comparisons_from_blocking_rule(
         self,

@@ -1,0 +1,40 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.8.0.json",
+    "config": {
+        "view": {
+            "continuousHeight": 300,
+            "continuousWidth": 300
+        }
+    },
+    "encoding": {
+        "tooltip": [
+            {
+                "aggregate": "count",
+                "type": "quantitative"
+            }
+        ],
+        "x": {
+            "bin": true,
+            "field": "cluster_centralisation",
+            "scale": {
+                "domain": [
+                    0,
+                    1
+                ]
+            },
+            "title": "Cluster centralisation",
+            "type": "quantitative"
+        },
+        "y": {
+            "aggregate": "count",
+            "title": "Frequency",
+            "type": "quantitative"
+        }
+    },
+    "mark": {
+        "type": "bar"
+    },
+    "title": "Distribution of cluster centralisation",
+    "width": 500,
+    "data": {}
+}
