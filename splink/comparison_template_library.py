@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Union
+from typing import List, Type, Union
 
 from . import comparison_level_library as cll
 from .column_expression import ColumnExpression
@@ -11,10 +11,10 @@ from .misc import ensure_is_iterable
 
 # alternatively we could stick an inheritance layer in these, just for typing:
 _fuzzy_cll_type = (
-    type[cll.DamerauLevenshteinLevel]
-    | type[cll.JaroLevel]
-    | type[cll.JaroWinklerLevel]
-    | type[cll.LevenshteinLevel]
+    Type[cll.DamerauLevenshteinLevel]
+    | Type[cll.JaroLevel]
+    | Type[cll.JaroWinklerLevel]
+    | Type[cll.LevenshteinLevel]
 )
 _fuzzy_levels: dict[str, _fuzzy_cll_type] = {
     "damerau_levenshtein": cll.DamerauLevenshteinLevel,
