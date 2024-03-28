@@ -1,5 +1,4 @@
 import logging
-from tempfile import TemporaryDirectory
 from typing import Union
 
 import duckdb
@@ -81,21 +80,11 @@ class DuckDBAPI(DatabaseAPI):
 
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
-
-        # From duckdb 0.5.0, duckdb will raise a CatalogException
-        # which does not exist in 0.4.0 or before
-
-        # TODO: probably we can drop this compat now?
-        try:
-            from duckdb import CatalogException
-
-            error = (RuntimeError, CatalogException)
-        except ImportError:
-            error = RuntimeError
+        from duckdb import CatalogException
 
         try:
             self._execute_sql_against_backend(sql)
-        except error:
+        except CatalogException:
             return False
         return True
 
@@ -121,19 +110,3 @@ class DuckDBAPI(DatabaseAPI):
         return [
             self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
         ]
-
-    # special methods for use:
-
-    def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
-        """
-        https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
-        """
-        if delete_intermediate_tables:
-            self._delete_tables_created_by_splink_from_db()
-        with TemporaryDirectory() as tmpdir:
-            self._execute_sql_against_backend(
-                f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);"
-            )
-            new_con = duckdb.connect(database=output_path)
-            new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
-            new_con.close()
