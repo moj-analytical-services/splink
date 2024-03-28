@@ -61,7 +61,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
 
     sql_info = {
         "sql": sql,
-        "output_table_name": "__splink__labels_with_pos_neg_grouped"
+        "output_table_name": "__splink__labels_with_pos_neg_grouped",
     }
     sqls.append(sql_info)
 

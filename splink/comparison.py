@@ -112,7 +112,7 @@ class Comparison:
         if (column_info_settings := self._column_info_settings) is None:
             raise AttributeError(f"No column_info_settings set on Comparison {self}")
         return column_info_settings
-    
+
     @column_info_settings.setter
     def column_info_settings(self, column_info_settings: ColumnInfoSettings) -> None:
         self._column_info_settings = column_info_settings
