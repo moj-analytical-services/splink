@@ -429,8 +429,8 @@ class Comparison:
             )
             for cl in self.comparison_levels
         ]
-        comp_levels = "".join(comp_levels)
-        return comp_levels
+        comp_levels_str = "".join(comp_levels)
+        return comp_levels_str
 
     @property
     def _human_readable_description_succinct(self):
