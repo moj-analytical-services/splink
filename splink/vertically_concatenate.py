@@ -127,6 +127,7 @@ def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
     # so if it exists, use it instead
     elif "__splink__df_concat_with_tf" in cache:
         nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+        nodes_with_tf.templated_name = "__splink__df_concat"
         pipeline.append_input_dataframe(nodes_with_tf)
         return pipeline
 
