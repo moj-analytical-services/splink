@@ -58,4 +58,4 @@ linker.count_num_comparisons_from_blocking_rule(blocking_rule)
 It is recommended that you run this function to check how many comparisons are generated before training a model so that you do not needlessly run a training session on billions of comparisons.
 
 !!! note
-    Unlike [Prediction Rules](./predictions.md), Training Rules are treated separately for each EM training session therefore the tota number of comparisons for Model Training is simply the sum of `count_num_comparisons_from_blocking_rule` across all Blocking Rules (as opposed to the result of `cumulative_comparisons_from_blocking_rules_records`).
+    Unlike [Prediction Rules](./predictions.md), Training Rules are treated separately for each EM training session therefore the total number of comparisons for Model Training is simply the sum of `count_num_comparisons_from_blocking_rule` across all Blocking Rules (as opposed to the result of `cumulative_comparisons_from_blocking_rules_records`).

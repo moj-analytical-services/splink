@@ -70,11 +70,11 @@ See the Athena [deduplication example notebook](../../../demos/examples/athena/d
 
 SQLite is similar to DuckDB in that it is, generally, more suited to smaller datasets. SQLite is simple to setup and can be run directly in a Jupyter notebook, but is not as performant as DuckDB. SQLite has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md), with gaps in array and date comparisons. String fuzzy matching, while not native to SQLite is available via python UDFs which has some [performance implications](#additional-information-for-specific-backends). SQLite is not actively been used by the Splink team so receives minimal levels of support.
 
-### :simple-postgresql: PostgreSql
+### :simple-postgresql: PostgreSQL
 
-PostgreSql is a relatively new linker, so we have not fully tested performance or what size of datasets can processed with Splink. The Postgres backend requires a Postgres database, so it is recommend to use this backend only if you are working with a pre-existing Postgres database. Postgres has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Postgres. At this time, the Postgres backend is not being actively used by the Splink development team so receives minimal levels of support.
+PostgreSQL is a relatively new linker, so we have not fully tested performance or what size of datasets can processed with Splink. The Postgres backend requires a Postgres database, so it is recommend to use this backend only if you are working with a pre-existing Postgres database. Postgres has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Postgres. At this time, the Postgres backend is not being actively used by the Splink development team so receives minimal levels of support.
 
-More details on using Postgres as a Splink backend can be found on the [postgres page](./postgres.md).
+More details on using Postgres as a Splink backend can be found on the [Postgres page](./postgres.md).
 
 ## Using your chosen backend
 
@@ -123,7 +123,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
 
     ```
 
-=== ":simple-postgresql: PostgreSql"
+=== ":simple-postgresql: PostgreSQL"
 
     ```python
     from splink.postgres.linker import PostgresLinker
@@ -148,7 +148,7 @@ However, some are available for Splink users as python [user-defined functions (
 
 However, there are a couple of points to note:
 
-* These functions are implemented using the [rapidfuzz](https://maxbachmann.github.io/RapidFuzz/) package, which must be installed if you wish to make use of them, via e.g. `pip install rapidfuzz`. If you do not wish to do so you can disable the use of these functions when creating your linker:
+* These functions are implemented using the [RapidFuzz](https://maxbachmann.github.io/RapidFuzz/) package, which must be installed if you wish to make use of them, via e.g. `pip install rapidfuzz`. If you do not wish to do so you can disable the use of these functions when creating your linker:
 ```py
 linker = SQLiteLinker(df, settings, ..., register_udfs=False)
 ```

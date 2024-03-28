@@ -57,7 +57,7 @@ The `"link_type"` is defined as a deduplication for a single dataset.
 
 **2. Pairs of records to consider**
 
-The `"blocking_rules_to_generate_predictions"` define a subset of pairs of records for the model to be conder when making predictions. In this case, where there is a match on `"first_name"` or `"surname"`.
+The `"blocking_rules_to_generate_predictions"` define a subset of pairs of records for the model to be considered when making predictions. In this case, where there is a match on `"first_name"` or `"surname"`.
 
 ```py linenums="6"
     "blocking_rules_to_generate_predictions": [

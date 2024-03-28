@@ -8,19 +8,19 @@ hide:
 ## :material-download: Install
 Splink supports python 3.8+.
 
-To obtain the latest released version of splink you can install from PyPI using pip:
+To obtain the latest released version of Splink you can install from PyPI using pip:
 ```shell
 pip install splink
 ```
 
-or if you prefer, you can instead install splink using conda:
+or if you prefer, you can instead install Splink using conda:
 ```shell
 conda install -c conda-forge splink
 ```
 
 ??? "Backend Specific Installs"
     ### Backend Specific Installs
-    From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
+    From Splink v3.9.7, packages required by specific Splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
 
     **Note** that SQLite and DuckDB come packaged with Splink and do not need to be optionally installed.
 
@@ -36,7 +36,7 @@ conda install -c conda-forge splink
         pip install 'splink[athena]'
         ```
 
-    === ":simple-postgresql: PostgreSql"
+    === ":simple-postgresql: PostgreSQL"
         ```sh
         pip install 'splink[postgres]'
         ```
@@ -45,7 +45,7 @@ conda install -c conda-forge splink
     ### DuckDB-less Installation
     Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
 
-    To start, install the latest released version of splink from PyPI without any dependencies using:
+    To start, install the latest released version of Splink from PyPI without any dependencies using:
     ```shell
     pip install splink --no-deps
     ```
@@ -64,7 +64,7 @@ conda install -c conda-forge splink
     1. Create a file called `splink_requirements.txt`
     2. Copy and paste the contents from our [duckdbless requirements file](https://github.com/moj-analytical-services/splink/blob/master/scripts/duckdbless_requirements.txt) into your file.
 
-    Finally, run the following command within your virtual environment to install the remaining splink dependencies:
+    Finally, run the following command within your virtual environment to install the remaining Splink dependencies:
     ```shell
     pip install -r splink_requirements.txt
     ```

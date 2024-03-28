@@ -37,6 +37,6 @@ These are backend specific and are imported like `from splink.spark.comparison_l
 
 Occasionally some modifications are needed to the SQL to ensure it executes against the target backend.
 
-`sqlglot` is used for this purpose. For instance, a custom dialect is implemented in the sparklinker.
+`sqlglot` is used for this purpose. For instance, a custom dialect is implemented in the Spark linker.
 
 A transformer is implemented in the Athena linker.

@@ -2,7 +2,7 @@
 
 Thanks for considering making a contribution to the [Splink Blog](../../blog/index.md)! We are keen to use this blog as a forum all things data linking and Splink!
 
-This blog, and the docs as a whole, are built using the fantastic [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), to understand more about how the blog works under the hood checkout out the mkdocs-material [blog documentation](https://squidfunk.github.io/mkdocs-material/blog/2022/09/12/blog-support-just-landed/).
+This blog, and the docs as a whole, are built using the fantastic [MkDocs material](https://squidfunk.github.io/mkdocs-material/), to understand more about how the blog works under the hood checkout out the MkDocs material [blog documentation](https://squidfunk.github.io/mkdocs-material/blog/2022/09/12/blog-support-just-landed/).
 
 For more general guidance for contributing to Splink, check out our [Contributor Guide](../CONTRIBUTING.md).
 
@@ -22,4 +22,4 @@ If you are a new author, you will need to add yourself to the [.authors.yml file
 
 ## Testing your changes
 
-Once you have made a first draft, check out how the deployed blog will look by [building the docs locally](./build_docs_locally.md).
+Once you have made a first draft, check out how the deployed blog will look by [building the docs locally](./contributing_to_docs.md).

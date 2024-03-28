@@ -34,7 +34,7 @@ For example, consider the [`comparator_score_chart`](../../topic_guides/comparis
 - Titles (shared title)
 - Axis titles
 - Shared y-axis
-- Color scales!! 🤮 (see the Vega [color schemes](https://vega.github.io/vega/docs/schemes/) docs)
+- Colour scales!! 🤮 (see the Vega [colour schemes](https://vega.github.io/vega/docs/schemes/) docs)
   - red-green is an accessibility no-no
   - shared colour scheme for different metrics
   - unpleasant and unclear to look at
@@ -50,172 +50,170 @@ The old spec can be pasted into the [Vega Lite editor](https://vega.github.io/ed
 
 Check out the final, improved version [chart specification.](https://vega.github.io/editor/#/url/vega-lite/N4IgLglmA2CmIC5RlgDzIkAJWBDMAtrgA4DOABAPYBm5pYAThAHYDm5AxpQcbk6ZWbkCsRhA6kQAGhC5mHABaUGmAhAAm6uNJDVBYAMoQAXvAQBGAGwBfGQq7z8iANqhouAJ6wVCVyCIMANaYDLAcGDKw8pTqLKyIoFzQygm6ELDQ6pikXKE6ObjaSCDq3LgsLgAMUuYAujI5CrAimKyhUQBG0ACu8LbgHsRmIACO3XKQYPgQAG7wMnCsUVkIzN3Q0P2oqdTpmZhcPHz4KTJgg8PKscyFOpNFaxv9Hjt7KyD0TGykAPpglD9Drw8mcLpgrixbmcoEUQAYxGxONxgRABMwdLhUKjUvdYAAxfRGUyIcwAFmsFOhMGGRjU7iY5x0AHcNGAFKl6LBiIhSZV+k0IKwFBhipzuQgAMx82ygALBYrnIaYFDoHQdXCkDIsYZqTTafpRLjXeKikxmUC7DLvHLKeYfDiFc0gBhyJYuAAcNVJtX6i2WiEemzOaBFFre2Vydr0DCIIpAADoAEzUO5ghCjcbMSbTOYgLavK0HZHHf4qUFK9MQm7QDFYyTFdwdDIErNEszmROUkAvYqW-bpz5xX7-QHFkEDCsgKu3CnWeolfC4VI3Frp9SLgC0pAgdL4UBelLcnm8LllfHlzrCERAhpicVSSRSvfDA8j+QdRVAjWawy8G0oTLKK63iwFkMihHMDCaogjC9P0irDGMExQDmdp+swKyBvmz6FumQIlqcE6XAw1xQuAMJmIGMiYtiDa4E20AtoYZokp2zwFv2HwIqww4Avh44IeCJGQjW1F1gG6ybPBFGYAAIqiUzyHaLLqGyHIoOKvL8rAgrCupXKIFKh7+OeOJpuAIZqhqWrMDqGhaH0kTRMaHIsThnE2uOBSfs6wEel684Qd40EILBsC+rASwYRJTzBqq7nWm+5aIZm2aQLm2FhrhID8ScZZEUJpE1uxCXZNxvGjkcAnmdOxUUvO65TMuuCrguUwbrE9ByBwfRzuBsACNAuaih+TqPj4IAsOoXLLFE149h8Ch8KB+RuZNGEzRtWZ5v0AAk35EJgwpgGQCAAPRnXMrC4PGrBQAo3QdPGECUGdB24JdkW4Bu0BQLAl2kvG5gAOzxpU8YAFZojojXWWA9agLDW47hA9L7pgrgADpcV8PF-HxY6wNjCDYwASuIS0kVI5Dk4ofDqNjUjY7lpbE9jEN8JQjPY55RMkmDMo8+V+OVcCfMkyAtOU+o1OkwAkgAwlgACCpOydzOVjnlbMgBzDBc9IPORsT4OkhKgs40OIv8eLZMU-Tsv2wwGss8oOt6wbTP2raJvxgAnAArBbg7fNbhM61LDvkBApN0yRLta6ziDs5zGu877gfB8LI42xHTsyzT9vqM7hua1V2vJ7rqel+niDg5nUjAELuMVbnleR1TheKAn5dJxLHtp8bdfxu6NiN83Vs5+H7f547HCBD3wIV-31de7XCDg8D5vj5bodT1VtuS7PXeBB4i8ESXK-64PPvD5Y7pZy3YcH3nccF-J8-ny6fcp9fNdDxveMY8m67zxvvMWr9pZz09szRObtK4D3-rfQBW9H6TwJi-Geb9Za4DphkL+y9f4wO9qEX2wNzBoL3hgiBWCoHkHhFyJozACE-yrn-NeADTbbxASHMB1DlqQKjh3BmpdXaXyIT8FkzBAhwBLhw5B5gBY714a3aeEthGy0VirNWLD4FXwBFImR3gb6kOHmbShfDRYCNoUIp2ujxFsIMSwIxcijbIPrsDCxqjMHqOPjHN+9j3ac0kc42RJjxb1yDso7O-DTG+OwV3JaxdAkIOCYYsJSC4keK8c-Gh8S6FSxSfokJ0iMnyKyf7Ch0Sn7gOsfk2xn9RFwIcR7EpLjwm+3dFUnhMSrFxLtgk2mp8ikSPScYzJESgEP2qegvph8NHkA-gvJpvc9GjNCeM8pkzgETyoXMwRndabELEUE-WbSyluIqV0nJtT+lH0Gbgpa+CVlL1Ya0sZriSGTOBuSGZey271M7gw4gTCRmOPOZsy5kzzF-MsQCgZBT85go5hwB08cJnE0UXyWF3i8kIqEVo1W6sXkXyCai+mHTh6VGmT0mpsT5nHw7si3BaKRFbM6Ts0BuK6n4s7v46WzLyXovZfzbFtLZnwvuYiumySSXfzWVXIVbKoWYqUeK-5ajeUF0KXKwhirWWUsAQHTxOLck8qlQ05ZXsTmpKVYa8GEoaW7LhZqi1hzxDDN1W8llFKMXDwlNw513K7kLKWYKg1frAGJk7Ka25DLBniGOc0slEaRWAMdTc+lBztWPNwM861ybbWppVWY356qXU+K1dTYFoKvUKpRcWr5vtqVzhhpuTqikeoY3LcG+N0qBV1ocXAOYzBSDCh0swyN4MxVBrNSGxlhKdGDp1sOqIY6UAsENZYNVs643ZrnpTMFq7R3js3ZGrFmb9k2L5bHAdBbVlDtgCO9dE7DWJh3VyudfaGlJM+TaiWx6X1nrTe+mdn693Xu1RTI9T612nsnWmiUH6VFfv3SfGDz74OGsBmBlDEHAVQfnmfZdldANYcjThy9krQ0eow3BjdCGS0IADsh3p1HGWJroyehj2HWN0qvQRnBeDoBcaA4xpthk+MStdQsmtURRPkbTaDXDbGZMcYCSRiW64RAum6D8MjPGp1SY1ZWt12rF3Evva8hV2nvC4D0wZ19kbt0qf4+xhNccwW2d0-p2D3GnNpovbGrNkHqb8t9VZ0lldvP2d85hwzgXjMVrxWZg9uBZWRflQ4mLDm-NicNUFntqHQuJK8y1OzuX4sBaY0h1z0nTMLKGWVnTsXHPAaY5R4LAmq0n2I5lvVOW4v0eqxJhAnWiv4Z62GzT2NBttfE+vFjdWTMpca5xmbC4WuVeG+10b43d0hcEzTXN+bYEPp1nNvLimatJd7WhuT4n-2zfKz5+bhrlOtopEAA)
 
-<details><summary><b> Before-After diff</b> </summary>
+??? info "Before-After diff"
 
-```diff
-@@ -1,9 +1,8 @@
- {
--  "config": {
--    "view": {
--      "continuousWidth": 400,
--      "continuousHeight": 300
--    }
-+  "title": {
-+    "text": "Heatmaps of string comparison metrics",
-+    "anchor": "middle",
-+    "fontSize": 16
-   },
-   "hconcat": [
-     {
-@@ -18,25 +17,32 @@
-                   0,
-                   1
-                 ],
--                "range": [
--                  "red",
--                  "green"
--                ]
-+                "scheme": "greenblue"
-               },
--              "type": "quantitative"
-+              "type": "quantitative",
-+              "legend": null
-             },
-             "x": {
-               "field": "comparator",
--              "type": "ordinal"
-+              "type": "ordinal",
-+              "title": null
-             },
-             "y": {
-               "field": "strings_to_compare",
--              "type": "ordinal"
-+              "type": "ordinal",
-+              "title": "String comparison",
-+              "axis": {
-+                "titleFontSize": 14
-+              }
-             }
-           },
--          "height": 300,
--          "title": "Heatmap of Similarity Scores",
--          "width": 300
-+          "title": "Similarity",
-+          "width": {
-+            "step": 40
-+          },
-+          "height": {
-+            "step": 30
-+          }
-         },
-         {
-           "mark": {
-@@ -44,6 +50,16 @@
-             "baseline": "middle"
-           },
-           "encoding": {
-+            "size": {
-+              "field": "score",
-+              "scale": {
-+                "range": [
-+                  8,
-+                  14
-+                ]
-+              },
-+              "legend": null
-+            },
-             "text": {
-               "field": "score",
-               "format": ".2f",
-@@ -51,7 +67,10 @@
-             },
-             "x": {
-               "field": "comparator",
--              "type": "ordinal"
-+              "type": "ordinal",
-+              "axis": {
-+                "labelFontSize": 12
-+              }
-             },
-             "y": {
-               "field": "strings_to_compare",
-@@ -72,29 +91,33 @@
-             "color": {
-               "field": "score",
-               "scale": {
--                "domain": [
--                  0,
--                  5
--                ],
--                "range": [
--                  "green",
--                  "red"
--                ]
-+                "scheme": "yelloworangered",
-+                "reverse": true
-               },
--              "type": "quantitative"
-+              "type": "quantitative",
-+              "legend": null
-             },
-             "x": {
-               "field": "comparator",
--              "type": "ordinal"
-+              "type": "ordinal",
-+              "title": null,
-+              "axis": {
-+                "labelFontSize": 12
-+              }
-             },
-             "y": {
-               "field": "strings_to_compare",
--              "type": "ordinal"
-+              "type": "ordinal",
-+              "axis": null
-             }
-           },
--          "height": 300,
--          "title": "Heatmap of Distance Scores",
--          "width": 200
-+          "title": "Distance",
-+          "width": {
-+            "step": 40
-+          },
-+          "height": {
-+            "step": 30
-+          }
-         },
-         {
-           "mark": {
-@@ -102,6 +125,17 @@
-             "baseline": "middle"
-           },
-           "encoding": {
-+            "size": {
-+              "field": "score",
-+              "scale": {
-+                "range": [
-+                  8,
-+                  14
-+                ],
-+                "reverse": true
-+              },
-+              "legend": null
-+            },
-             "text": {
-               "field": "score",
-               "type": "quantitative"
-@@ -124,7 +158,9 @@
-   ],
-   "resolve": {
-     "scale": {
--      "color": "independent"
-+      "color": "independent",
-+      "y": "shared",
-+      "size": "independent"
-     }
-   },
-   "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
-```
-
-</details>
+    ```diff
+    @@ -1,9 +1,8 @@
+    {
+    -  "config": {
+    -    "view": {
+    -      "continuousWidth": 400,
+    -      "continuousHeight": 300
+    -    }
+    +  "title": {
+    +    "text": "Heatmaps of string comparison metrics",
+    +    "anchor": "middle",
+    +    "fontSize": 16
+      },
+      "hconcat": [
+        {
+    @@ -18,25 +17,32 @@
+                      0,
+                      1
+                    ],
+    -                "range": [
+    -                  "red",
+    -                  "green"
+    -                ]
+    +                "scheme": "greenblue"
+                  },
+    -              "type": "quantitative"
+    +              "type": "quantitative",
+    +              "legend": null
+                },
+                "x": {
+                  "field": "comparator",
+    -              "type": "ordinal"
+    +              "type": "ordinal",
+    +              "title": null
+                },
+                "y": {
+                  "field": "strings_to_compare",
+    -              "type": "ordinal"
+    +              "type": "ordinal",
+    +              "title": "String comparison",
+    +              "axis": {
+    +                "titleFontSize": 14
+    +              }
+                }
+              },
+    -          "height": 300,
+    -          "title": "Heatmap of Similarity Scores",
+    -          "width": 300
+    +          "title": "Similarity",
+    +          "width": {
+    +            "step": 40
+    +          },
+    +          "height": {
+    +            "step": 30
+    +          }
+            },
+            {
+              "mark": {
+    @@ -44,6 +50,16 @@
+                "baseline": "middle"
+              },
+              "encoding": {
+    +            "size": {
+    +              "field": "score",
+    +              "scale": {
+    +                "range": [
+    +                  8,
+    +                  14
+    +                ]
+    +              },
+    +              "legend": null
+    +            },
+                "text": {
+                  "field": "score",
+                  "format": ".2f",
+    @@ -51,7 +67,10 @@
+                },
+                "x": {
+                  "field": "comparator",
+    -              "type": "ordinal"
+    +              "type": "ordinal",
+    +              "axis": {
+    +                "labelFontSize": 12
+    +              }
+                },
+                "y": {
+                  "field": "strings_to_compare",
+    @@ -72,29 +91,33 @@
+                "color": {
+                  "field": "score",
+                  "scale": {
+    -                "domain": [
+    -                  0,
+    -                  5
+    -                ],
+    -                "range": [
+    -                  "green",
+    -                  "red"
+    -                ]
+    +                "scheme": "yelloworangered",
+    +                "reverse": true
+                  },
+    -              "type": "quantitative"
+    +              "type": "quantitative",
+    +              "legend": null
+                },
+                "x": {
+                  "field": "comparator",
+    -              "type": "ordinal"
+    +              "type": "ordinal",
+    +              "title": null,
+    +              "axis": {
+    +                "labelFontSize": 12
+    +              }
+                },
+                "y": {
+                  "field": "strings_to_compare",
+    -              "type": "ordinal"
+    +              "type": "ordinal",
+    +              "axis": null
+                }
+              },
+    -          "height": 300,
+    -          "title": "Heatmap of Distance Scores",
+    -          "width": 200
+    +          "title": "Distance",
+    +          "width": {
+    +            "step": 40
+    +          },
+    +          "height": {
+    +            "step": 30
+    +          }
+            },
+            {
+              "mark": {
+    @@ -102,6 +125,17 @@
+                "baseline": "middle"
+              },
+              "encoding": {
+    +            "size": {
+    +              "field": "score",
+    +              "scale": {
+    +                "range": [
+    +                  8,
+    +                  14
+    +                ],
+    +                "reverse": true
+    +              },
+    +              "legend": null
+    +            },
+                "text": {
+                  "field": "score",
+                  "type": "quantitative"
+    @@ -124,7 +158,9 @@
+      ],
+      "resolve": {
+        "scale": {
+    -      "color": "independent"
+    +      "color": "independent",
+    +      "y": "shared",
+    +      "size": "independent"
+        }
+      },
+      "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
+    ```

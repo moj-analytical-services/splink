@@ -108,7 +108,7 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 
     A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
 
-    To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
+    To run, simply use the following docker command from within a terminal and the root folder of a Splink clone:
     ```sh
     docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
     ```
@@ -142,7 +142,7 @@ In addition to the [standard privileges for Splink usage](../../topic_guides/spl
 
 ### Tests in CI
 
-Splink utilises [github actions](https://docs.github.com/en/actions) to run tests for each pull request. This consists of a few independent checks:
+Splink utilises [GitHub actions](https://docs.github.com/en/actions) to run tests for each pull request. This consists of a few independent checks:
 
 * The full test suite is run separately against several different python versions
 * The [example notebooks](../../demos/examples/examples_index.md) are checked to ensure they run without error
@@ -340,7 +340,7 @@ The key difference is the argument we pass to the decorator:
 @mark_with_dialects_excluding("sqlite")
 def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
 ```
-As above this marks the test it decorates with the appropriate custom `pytest` marks, but in this case it ensures that it will be run with tests for each dialect **excluding sqlite**. Again `dialect` is passed as a parameter, and the test will run in turn for each value of `dialect` **except for 'sqlite'**.
+As above this marks the test it decorates with the appropriate custom `pytest` marks, but in this case it ensures that it will be run with tests for each dialect **excluding `sqlite`**. Again `dialect` is passed as a parameter, and the test will run in turn for each value of `dialect` **except for `sqlite`**.
 
 ```py linenums="23" hl_lines="2"
     {
@@ -378,4 +378,4 @@ If you really do need to test features peculiar to one backend, then you can wri
 
 This ensures that the test gets marked appropriately for running when the `Spark` tests should be run, and excludes it from the set of `core` tests.
 
-Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator will _not_ paramaterise the test with the `dialect` argument. This is because usage of the _inclusive_ form is largely designed for single-dialect tests. If you wish to override this behaviour and parameterise the test you can use the argument `pass_dialect`, for example `@mark_with_dialects_including("spark", "sqlite", pass_dialect=True)`, in which case you would need to write the test in a [backend-independent manner](#backend-agnostic-testing).
+Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator will _not_ parameterise the test with the `dialect` argument. This is because usage of the _inclusive_ form is largely designed for single-dialect tests. If you wish to override this behaviour and parameterise the test you can use the argument `pass_dialect`, for example `@mark_with_dialects_including("spark", "sqlite", pass_dialect=True)`, in which case you would need to write the test in a [backend-independent manner](#backend-agnostic-testing).

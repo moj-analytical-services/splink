@@ -7,6 +7,7 @@ on:
     paths:
       - "splink/**"
       - "docs/demos/examples/**"
+      - “!docs/demos/examples/examples_index.md”
       - "pyproject.toml"
 
   workflow_dispatch:

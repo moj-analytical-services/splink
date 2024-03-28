@@ -11,9 +11,9 @@ For example, the `predict()` step:
 - Inputs `__splink__df_comparison_vectors` and outputs `__splink__df_match_weight_parts`
 - Inputs `__splink__df_match_weight_parts` and outputs `__splink__df_predict`
 
-To make this run faster, two key optimisations are implmented:
+To make this run faster, two key optimisations are implemented:
 
-- Pipelining - combining multiple `select` statements into a single statemenet using `WITH`([CTE](https://www.postgresql.org/docs/current/queries-with.html)) queries
+- Pipelining - combining multiple `select` statements into a single statement using `WITH`([CTE](https://www.postgresql.org/docs/current/queries-with.html)) queries
 - Caching: saving the results of calculations so they don't need recalculating. This is especially useful because some intermediate calculations are reused multiple times during a typical Splink session
 
 This article discusses the general implementation of caching and pipelining. The implementation needs some alterations for certain backends like Spark, which lazily evaluate SQL by default.
@@ -55,7 +55,7 @@ For example, when we run `linker.predict()`, Splink:
 - Generates the SQL tasks
 - Pipelines them into a single SQL statement
 - Hashes the statement to create a physical name for the outputs `__splink__df_predict_cbc9833`
-- Checks whether a table with physical name `__splink__df_predict_cbc9833` alredy exists in the database
+- Checks whether a table with physical name `__splink__df_predict_cbc9833` already exists in the database
 - If not, executes the SQL statement, creating table `__splink__df_predict_cbc9833` in the database.
 
 In terms of implementation, the following happens:
@@ -63,14 +63,14 @@ In terms of implementation, the following happens:
 - SQL statements are generated an put in the queue - see [here](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L982-L983)
 - Once all the tasks have been added to the queue, we call `_execute_sql_pipeline()` see [here](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L994)
 - The SQL is combined into a single pipelined statement [here](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L339)
-- We call `_sql_to_splink_dataframe()` which returns the table (from the cache if it already exists, or it executes the sql)
+- We call `_sql_to_splink_dataframe()` which returns the table (from the cache if it already exists, or it executes the SQL)
 - The table is returned as a `SplinkDataframe`, an abstraction over a table in a database. See [here](https://moj-analytical-services.github.io/splink/SplinkDataFrame.html).
 
 #### Some cached tables do not need a hash
 
 A hash is required to uniquely identify some outputs. For example, blocking is used in several places in Splink, with _different results_. For example, the `__splink__df_blocked` needed to estimate parameters is different to the `__splink__df_blocked` needed in the `predict()` step.
 
-As a result, we cannot materialise a single table called `__splink__df_blocked` in the database and reues it multiple times. This is why we append the hash of the SQL, so that we can uniquely identify the different versions of `__splink__df_blocked` which are needed in different contexts.
+As a result, we cannot materialise a single table called `__splink__df_blocked` in the database and reuse it multiple times. This is why we append the hash of the SQL, so that we can uniquely identify the different versions of `__splink__df_blocked` which are needed in different contexts.
 
 There are, however, some tables which are globally unique. They only take a single form, and if they exist in the cache they never need recomputing.
 
@@ -90,4 +90,4 @@ However, there are many intermediate outputs which are used by many different Sp
 
 Performance can therefore be improved by computing and saving these intermediate outputs to a cache, to ensure they don't need to be computed repeatedly.
 
-This is achieved by enqueueing SQL to a pipline and strategically calling `execute_sql_pipeline` to materialise results that need to cached.
+This is achieved by enqueueing SQL to a pipeline and strategically calling `execute_sql_pipeline` to materialise results that need to cached.

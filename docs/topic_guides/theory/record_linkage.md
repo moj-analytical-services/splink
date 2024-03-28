@@ -6,7 +6,7 @@
 In a perfect world, everyone (and everything) would have a **single, unique identifier**. If this were the case, linking any datasets would be a simple left join. 
 
 ???+ example 
-    Consider 2 tables of people A and B with no duplicates and each person has a unique id UID. Joining these tables in SQL would simple be:
+    Consider 2 tables of people A and B with no duplicates and each person has a unique id `UID`. Joining these tables in SQL would simple be:
 
     ```
     SELECT *
