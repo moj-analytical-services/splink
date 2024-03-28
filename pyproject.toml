@@ -131,3 +131,4 @@ warn_unused_ignores = true
 strict_equality = true
 # don't worry about warning: https://github.com/python/mypy/issues/16189
 strict_concatenate = true
+check_untyped_defs = true
