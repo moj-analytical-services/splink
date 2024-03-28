@@ -226,4 +226,3 @@ vectorised
 venv
 yml
 zsh
-hello
