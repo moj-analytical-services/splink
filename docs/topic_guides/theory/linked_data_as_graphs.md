@@ -12,7 +12,7 @@ Graphs provide a natural way to represent linked data, where the nodes of a grap
 
 ![Basic Graph - Records](../../img/clusters/basic_graph_records.drawio.png){:width="80%"}
 
-For example, when linking people together, a cluster represents the all of the records in our dataset(s) that refer to the same person. We can give this cluster a new identifier (F) to refer to this single person.
+When linking people together, a cluster represents the all of the records in our dataset(s) that refer to the same person. We can give this cluster a new identifier (F) to refer to this single person.
 
 ![Basic Person Cluster](../../img/clusters/basic_graph_cluster_person.drawio.png){:width="80%"}
 
