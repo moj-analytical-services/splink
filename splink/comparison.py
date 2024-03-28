@@ -293,13 +293,6 @@ class Comparison:
             cols.append(self._bf_tf_adj_column_name)
         return cols
 
-    @property
-    def _term_frequency_columns(self):
-        cols = set()
-        for cl in self.comparison_levels:
-            cols.add(cl.tf_adjustment_input_col_name)
-        return list(cols)
-
     def as_dict(self):
         d = {
             "output_column_name": self.output_column_name,
