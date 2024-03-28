@@ -138,6 +138,7 @@ nav:
         - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
         - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
         - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
+        - Linked data as graphs: "topic_guides/theory/linked_data_as_graphs.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
           - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
