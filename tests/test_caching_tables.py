@@ -1,7 +1,5 @@
 import duckdb
 import pandas as pd
-import sqlglot
-from sqlglot.expressions import CTE, Identifier, TableAlias
 
 from splink.comparison_library import ExactMatch, LevenshteinAtThresholds
 from splink.duckdb.database_api import DuckDBAPI
@@ -149,19 +147,8 @@ def test_cache_used_when_registering_tf_tables():
 
     linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    # Both tf tables should have been calculated
-    assert "__splink__df_tf_first_name" in cte_table_aliases_used
-    assert "__splink__df_tf_surname" in cte_table_aliases_used
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
     # Then try the same after registering surname tf table
     db_api = DuckDBAPI()
@@ -171,18 +158,8 @@ def test_cache_used_when_registering_tf_tables():
     linker.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    assert "__splink__df_tf_first_name" in cte_table_aliases_used
-    assert "__splink__df_tf_surname" not in cte_table_aliases_used
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
     # Then try the same after registering both
     db_api = DuckDBAPI()
@@ -193,18 +170,8 @@ def test_cache_used_when_registering_tf_tables():
     linker.register_term_frequency_lookup(first_name_tf_table, "first_name")
     linker.estimate_u_using_random_sampling(max_pairs=1e4)
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    assert "__splink__df_tf_first_name" not in cte_table_aliases_used
-    assert "__splink__df_tf_surname" not in cte_table_aliases_used
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
 
 def test_cache_invalidation():
