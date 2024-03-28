@@ -337,10 +337,10 @@ def _get_dialect_quotes(dialect):
 
 def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
     try:
-        # For sqlglot >= 16.0.0
-        start = dialect.IDENTIFIER_START  # type: ignore [attr-defined]
-        end = dialect.IDENTIFIER_END  # type: ignore [attr-defined]
+        start = dialect.IDENTIFIER_START
+        end = dialect.IDENTIFIER_END
     except AttributeError:
+        # For sqlglot < 16.0.0
         start = dialect.identifier_start  # type: ignore [attr-defined]
         end = dialect.identifier_end  # type: ignore [attr-defined]
     return start, end
