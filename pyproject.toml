@@ -113,7 +113,6 @@ packages = "splink"
 # temporary exclusions
 exclude = [
     # modules with large number of errors
-    '.*linker\.py',
     '/settings_validation/'
 ]
 # for now at least allow implicit optionals
