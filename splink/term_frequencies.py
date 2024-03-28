@@ -75,14 +75,14 @@ def _join_tf_to_df_concat_sql(linker: Linker) -> str:
     return sql
 
 
-def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename) -> str:
-    # If the user provides a new table e.g. when using linker.compare_two_records
-    # or linker.find_matches_to_new_records we need to join on term frequencies
-    # The easiest way to do this is to use registered tf tables
-    # if they exist or obtain tf joining to __splink__df_concat_with_tf
-    # if not
-    # If __splink__df_concat_with_tf does not exist, we fall back further
-    # to not using tf adjustments by inserting nulls into the tf columns
+def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str) -> str:
+    """
+    Joins any required tf columns onto new_tablename
+
+    This is needed e.g. when using linker.compare_two_records
+    or linker.find_matches_to_new_records in which the user provides
+    new records which need tf adjustments computed
+    """
 
     cache = linker._intermediate_table_cache
     settings_obj = linker._settings_obj
