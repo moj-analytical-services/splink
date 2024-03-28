@@ -121,6 +121,7 @@ from .term_frequencies import (
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
     tf_adjustment_chart,
+    _join_new_table_to_df_concat_with_tf_sql,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -1270,28 +1271,10 @@ class Linker:
             "__splink__df_new_records", new_records_tablename
         )
 
-        cache = self._intermediate_table_cache
-
         pipeline = CTEPipeline()
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
-        # If our df_concat_with_tf table already exists, derive the term frequency
-        # tables from df_concat_with_tf rather than computing them
-        if "__splink__df_concat_with_tf" in cache:
-            df = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline.append_input_dataframe(df)
-
-            tf_tables = compute_term_frequencies_from_concat_with_tf(self)
-            # This queues up our tf tables, rather materialising them
-            for tf in tf_tables:
-                # if tf is a SplinkDataFrame, then the table already exists
-                if isinstance(tf, SplinkDataFrame):
-                    pipeline.append_input_dataframe(tf)
-                else:
-                    pipeline.enqueue_sql(tf["sql"], tf["output_table_name"])
-        else:
-            # This queues up our cols_with_tf and df_concat_with_tf tables.
-            enqueue_df_concat_with_tf(self, pipeline)
-
+        pipeline = CTEPipeline([nodes_with_tf, new_records_df])
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
             br.add_preceding_rules(blocking_rules[:n])
@@ -1300,8 +1283,13 @@ class Linker:
 
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_df_concat_sql(self)
-        sql = sql.replace("__splink__df_concat", new_records_tablename)
+        for tf_col in self._settings_obj._term_frequency_columns:
+            tf_table = colname_to_tf_tablename(tf_col)
+            if tf_table in self._intermediate_table_cache:
+                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+                pipeline.append_input_dataframe(tf_table)
+
+        sql = _join_new_table_to_df_concat_with_tf_sql(self, "__splink__df_new_records")
         pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(

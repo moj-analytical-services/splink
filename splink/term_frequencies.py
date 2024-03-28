@@ -43,7 +43,7 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def _join_tf_to_df_concat_sql(linker: Linker):
+def _join_tf_to_df_concat_sql(linker: Linker) -> str:
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -72,6 +72,56 @@ def _join_tf_to_df_concat_sql(linker: Linker):
     {left_joins_str}
     """
 
+    return sql
+
+
+def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename) -> str:
+    # If the user provides a new table e.g. when using linker.compare_two_records
+    # or linker.find_matches_to_new_records we need to join on term frequencies
+    # The easiest way to do this is to use registered tf tables
+    # if they exist or obtain tf joining to __splink__df_concat_with_tf
+    # if not
+    # If __splink__df_concat_with_tf does not exist, we fall back further
+    # to not using tf adjustments by inserting nulls into the tf columns
+
+    cache = linker._intermediate_table_cache
+    settings_obj = linker._settings_obj
+    tf_cols = settings_obj._term_frequency_columns
+
+    select_cols = [f"{new_tablename}.*"]
+
+    for col in tf_cols:
+        tbl = colname_to_tf_tablename(col)
+        if tbl in cache:
+            select_cols.append(f"{tbl}.{col.tf_name}")
+
+    template = "left join {tbl} on " + new_tablename + ".{col} = {tbl}.{col}"
+    template_with_alias = (
+        "left join {tbl} as {_as} on " + new_tablename + ".{col} = {_as}.{col}"
+    )
+
+    left_joins = []
+    for i, col in enumerate(tf_cols):
+        tbl = colname_to_tf_tablename(col)
+        if tbl in cache:
+            sql = template.format(tbl=tbl, col=col.name)
+        else:
+            _as = f"nodes_tf__{i}"
+            sql = template_with_alias.format(
+                tbl="__splink__df_concat_with_tf", col=col.name, _as=_as
+            )
+            select_cols.append(f"{_as}.{col.tf_name}")
+        left_joins.append(sql)
+
+    select_cols_str = ", ".join(select_cols)
+    left_joins_str = "\n".join(left_joins)
+
+    sql = f"""
+    select {select_cols_str}
+    from {new_tablename}
+    {left_joins_str}
+
+    """
     return sql
 
 
