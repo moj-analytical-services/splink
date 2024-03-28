@@ -764,25 +764,9 @@ class Linker:
         )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
-        concat_tf_tables = [
-            tf_col.unquote().name
-            for tf_col in self._settings_obj._term_frequency_columns
-        ]
 
         if tf_tablename in cache:
             tf_df = cache.get_with_logging(tf_tablename)
-        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline = CTEPipeline([nodes_with_tf])
-            # If our df_concat_with_tf table already exists, use backwards inference to
-            # find a given tf table
-            colname = InputColumn(column_name)
-            sql = term_frequencies_from_concat_with_tf(colname)
-            pipeline.enqueue_sql(sql, colname_to_tf_tablename(colname))
-
-            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             pipeline = CTEPipeline()
             pipeline = enqueue_df_concat(self, pipeline)
