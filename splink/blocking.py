@@ -319,7 +319,8 @@ class ExplodingBlockingRule(BlockingRule):
         return sql
 
     def drop_materialised_id_pairs_dataframe(self):
-        self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
+        if self.exploded_id_pair_table is not None:
+            self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
         self.exploded_id_pair_table = None
 
     def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
