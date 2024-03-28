@@ -185,7 +185,8 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
     @property
     def term_frequency_adjustments(self):
-        return self.tf_adjustment_column is not None
+        # mypy doesn't know about attribute as we use magic in .configure()
+        return self.tf_adjustment_column is not None  # type: ignore [attr-defined]
 
     @term_frequency_adjustments.setter
     def term_frequency_adjustments(self, term_frequency_adjustments: bool):
