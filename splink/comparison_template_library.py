@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Union
 
 from . import comparison_level_library as cll
@@ -7,7 +9,14 @@ from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_library import DateMetricType
 from .misc import ensure_is_iterable
 
-_fuzzy_levels = {
+# alternatively we could stick an inheritance layer in these, just for typing:
+_fuzzy_cll_type = (
+    type[cll.DamerauLevenshteinLevel]
+    | type[cll.JaroLevel]
+    | type[cll.JaroWinklerLevel]
+    | type[cll.LevenshteinLevel]
+)
+_fuzzy_levels: dict[str, _fuzzy_cll_type] = {
     "damerau_levenshtein": cll.DamerauLevenshteinLevel,
     "jaro": cll.JaroLevel,
     "jaro_winkler": cll.JaroWinklerLevel,
@@ -85,7 +94,7 @@ class DateComparison(ComparisonCreator):
         else:
             null_col = self.col_expression
 
-        levels = [
+        levels: list[ComparisonLevelCreator] = [
             cll.NullLevel(null_col),
         ]
 
@@ -237,7 +246,7 @@ class NameComparison(ComparisonCreator):
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         name_col_expression = self.col_expressions["name"]
 
-        levels = [
+        levels: list[ComparisonLevelCreator] = [
             cll.NullLevel(name_col_expression),
         ]
         if self.exact_match:
@@ -343,7 +352,7 @@ class ForenameSurnameComparison(ComparisonCreator):
         forename_col_expression = self.col_expressions["forename"]
         surname_col_expression = self.col_expressions["surname"]
 
-        levels = [
+        levels: list[ComparisonLevelCreator] = [
             cll.And(
                 cll.NullLevel(forename_col_expression),
                 cll.NullLevel(surname_col_expression),
@@ -473,6 +482,11 @@ class PostcodeComparison(ComparisonCreator):
         if km_thresholds:
             km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
             self.km_thresholds = [*km_thresholds_as_iterable]
+            if lat_col is None or long_col is None:
+                raise ValueError(
+                    "If you supply `km_thresholds` you must also provide values for "
+                    "`lat_col` and `long_col`."
+                )
             cols["latitude"] = lat_col
             cols["longitude"] = long_col
         super().__init__(cols)
@@ -483,7 +497,7 @@ class PostcodeComparison(ComparisonCreator):
         district_col_expression = full_col_expression.regex_extract(self.DISTRICT_REGEX)
         area_col_expression = full_col_expression.regex_extract(self.AREA_REGEX)
 
-        levels = [
+        levels: list[ComparisonLevelCreator] = [
             # Null level accept pattern if not None, otherwise will ignore
             cll.NullLevel(
                 full_col_expression, valid_string_pattern=self.valid_postcode_regex
@@ -588,7 +602,7 @@ class EmailComparison(ComparisonCreator):
         username_col_expression = full_col_expression.regex_extract(self.USERNAME_REGEX)
         domain_col_expression = full_col_expression.regex_extract(self.DOMAIN_REGEX)
 
-        levels = [
+        levels: list[ComparisonLevelCreator] = [
             # Null level accept pattern if not None, otherwise will ignore
             cll.NullLevel(
                 full_col_expression, valid_string_pattern=self.valid_email_regex

@@ -264,9 +264,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
             return f"{col.name_r} = {dialected}"
         elif self.side_of_comparison == "both":
             return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
-        raise ValueError(
-            f"Invalid `side_of_comparison`: {self.side_of_comparison}."
-        )
+        raise ValueError(f"Invalid `side_of_comparison`: {self.side_of_comparison}.")
 
     def create_label_for_charts(self) -> str:
         return (
