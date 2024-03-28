@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union, final
+from typing import Dict, List, Optional, Union, final
 
 from .column_expression import ColumnExpression
 from .comparison import Comparison
@@ -112,7 +112,8 @@ class ComparisonCreator(ABC):
         pass
 
     @abstractmethod
-    def create_output_column_name(self) -> str:
+    def create_output_column_name(self) -> Optional[str]:
+        # should be str where possible, otherwise a default will be created
         pass
 
     @final
