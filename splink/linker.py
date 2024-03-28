@@ -117,7 +117,6 @@ from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
     colname_to_tf_tablename,
     term_frequencies_for_single_column_sql,
-    term_frequencies_from_concat_with_tf,
     tf_adjustment_chart,
     _join_new_table_to_df_concat_with_tf_sql,
 )
