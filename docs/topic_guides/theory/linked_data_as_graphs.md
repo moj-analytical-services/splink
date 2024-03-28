@@ -8,11 +8,11 @@ Then a group of interconnected nodes is referred to as a **cluster**.
 
 ![Basic Cluster](../../img/clusters/basic_graph_cluster.drawio.png){:width="80%"}
 
-Graphs provide a natural way to represent linked data, where the nodes of a graph represent records being linked and the edges represent the links between them. So, if we have 5 records (A-E) in our dataset(s), with links between them, this can be viewed as a graph.
+Graphs provide a natural way to represent linked data, where the nodes of a graph represent records being linked and the edges represent the links between them. So, if we have 5 records (A-E) in our dataset(s), with links between them, this can be represented as a graph like so:
 
 ![Basic Graph - Records](../../img/clusters/basic_graph_records.drawio.png){:width="80%"}
 
-When linking people together, a cluster represents the all of the records in our dataset(s) that refer to the same person. We can give this cluster a new identifier (F) to refer to this single person.
+When linking people together, a cluster represents the all of the records in our dataset(s) that refer to the same person. We can give this cluster a new identifier (F) as a way of referring to this single person.
 
 ![Basic Person Cluster](../../img/clusters/basic_graph_cluster_person.drawio.png){:width="80%"}
 
