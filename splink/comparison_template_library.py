@@ -10,12 +10,12 @@ from .comparison_level_library import DateMetricType
 from .misc import ensure_is_iterable
 
 # alternatively we could stick an inheritance layer in these, just for typing:
-_fuzzy_cll_type = (
-    Type[cll.DamerauLevenshteinLevel]
-    | Type[cll.JaroLevel]
-    | Type[cll.JaroWinklerLevel]
-    | Type[cll.LevenshteinLevel]
-)
+_fuzzy_cll_type = Union[
+    Type[cll.DamerauLevenshteinLevel],
+    Type[cll.JaroLevel],
+    Type[cll.JaroWinklerLevel],
+    Type[cll.LevenshteinLevel],
+]
 _fuzzy_levels: dict[str, _fuzzy_cll_type] = {
     "damerau_levenshtein": cll.DamerauLevenshteinLevel,
     "jaro": cll.JaroLevel,
