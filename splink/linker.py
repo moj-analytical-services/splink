@@ -115,9 +115,7 @@ from .splink_comparison_viewer import (
 )
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
-    _join_tf_to_df_concat_sql,
     colname_to_tf_tablename,
-    compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
     tf_adjustment_chart,
@@ -1357,6 +1355,8 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
+        cache = self._intermediate_table_cache
+
         uid = ascii_uid(8)
         df_records_left = self.register_table(
             [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
@@ -1368,23 +1368,33 @@ class Linker:
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
-        sql_join_tf = _join_tf_to_df_concat_sql(self)
-
-        sql_join_tf = sql_join_tf.replace(
-            "__splink__df_concat", "__splink__compare_two_records_left"
-        )
         pipeline = CTEPipeline([df_records_left, df_records_right])
+
+        if "__splink__df_concat_with_tf" in cache:
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline.append_input_dataframe(nodes_with_tf)
 
         for tf_col in self._settings_obj._term_frequency_columns:
             tf_table = colname_to_tf_tablename(tf_col)
-            if tf_table in self._intermediate_table_cache:
-                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+            if tf_table in cache:
+                tf_table = cache.get_with_logging(tf_table)
                 pipeline.append_input_dataframe(tf_table)
+            else:
+                if "__splink__df_concat_with_tf" not in cache:
+                    logger.warning(
+                        f"No term frequencies found for column {tf_col.name}.\n"
+                        "To apply term frequency adjustments, you need to register"
+                        " a lookup using `linker.register_term_frequency_lookup`."
+                    )
+
+        sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
+            self, "__splink__compare_two_records_left"
+        )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
-        sql_join_tf = sql_join_tf.replace(
-            "__splink__compare_two_records_left", "__splink__compare_two_records_right"
+        sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
+            self, "__splink__compare_two_records_right"
         )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")

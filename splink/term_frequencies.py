@@ -97,7 +97,7 @@ def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename) -> s
 
     template = "left join {tbl} on " + new_tablename + ".{col} = {tbl}.{col}"
     template_with_alias = (
-        "left join {tbl} as {_as} on " + new_tablename + ".{col} = {_as}.{col}"
+        "left join ({subquery}) as {_as} on " + new_tablename + ".{col} = {_as}.{col}"
     )
 
     left_joins = []
@@ -105,13 +105,18 @@ def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename) -> s
         tbl = colname_to_tf_tablename(col)
         if tbl in cache:
             sql = template.format(tbl=tbl, col=col.name)
-        else:
+            left_joins.append(sql)
+        elif "__splink__df_concat_with_tf" in cache:
+            subquery = f"""
+            select distinct {col.name}, {col.tf_name}
+            from __splink__df_concat_with_tf
+            """
             _as = f"nodes_tf__{i}"
-            sql = template_with_alias.format(
-                tbl="__splink__df_concat_with_tf", col=col.name, _as=_as
-            )
+            sql = template_with_alias.format(subquery=subquery, col=col.name, _as=_as)
             select_cols.append(f"{_as}.{col.tf_name}")
-        left_joins.append(sql)
+            left_joins.append(sql)
+        else:
+            select_cols.append(f"null as {col.tf_name}")
 
     select_cols_str = ", ".join(select_cols)
     left_joins_str = "\n".join(left_joins)
