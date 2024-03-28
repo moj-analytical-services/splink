@@ -4,9 +4,9 @@ Graph metrics quantify the characteristics of a graph. A simple example of a gra
 
 For data linking with Splink, it is useful to sort graph metrics into three categories:
 
-* [Node metrics]()
-* [Edge metrics]()
-* [Cluster metrics]()
+* [Node metrics](#purple_circle-node-metrics)
+* [Edge metrics](#link-edge-metrics)
+* [Cluster metrics](#fontawesome-solid-circle-nodes-cluster-metrics)
 
 Each of these are defined below together with examples and explanations of how they can be applied to linked data to evaluate cluster quality. The examples given are of all metrics currently available in Splink.
 
@@ -17,13 +17,17 @@ Each of these are defined below together with examples and explanations of how t
     It is also important to consider metrics within the context of their distribution and the underlying dataset. For example: a cluster density (see below) of 0.4 might seem low but could actually be above average for the dataset in question; a cluster of size 80 might be suspiciously large for one dataset but not for another.
 
 
-## ⚫️ Node metrics
+## :purple_circle: Node metrics
 
 Node metrics quantify the properties of the nodes which live within clusters.
 
-### Example: node degree
+### Node Degree
 
 Node degree is the number of edges connected to a node.
+
+For example, in the cluster below A has a node degree of 1, whereas D has a node degree of 3.
+
+![Basic Graph - Records](../../../img/clusters/basic_graph_records.drawio.png){:width="80%"}
 
 High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
 
@@ -33,11 +37,11 @@ It is important to consider [cluster size]() when looking at node degree. By def
 
 Bear in mind, that the degree of a single node in a cluster isn't necessarily representative of the overall connectedness of a cluster. This is where [cluster centralisation]() can help.
 
-## 🔗 Edge metrics
+## :link: Edge metrics
 
 Edge metrics quantify the properties of the edges within a cluster. 
 
-### Example: 'is bridge'
+### 'is bridge'
 
 An edge is classified as a 'bridge' if its removal splits a cluster into two smaller clusters.
 
@@ -49,7 +53,7 @@ Bridges can be signalers of false positives in linked data, especially when join
 
 Cluster metrics refer to the characteristics of a cluster as a whole, rather than the individual nodes and edges it contains.
 
-### Example: cluster size
+### Cluster Size
 
 Cluster size refers to the number of nodes within a cluster.
 
@@ -59,7 +63,7 @@ If you don't have an intuition of what seems reasonable, then it is worth inspec
 
 There also might be a lower bound on cluster size. For example, when linking two datasets in which you know people appear least once in each, the minimum expected size of cluster will be 2. Clusters smaller than the minimum size indicate links have been missed. This could be due to blocking rules not letting through all record comparisons of true matches.
 
-### Example: cluster density
+### Cluster Density
 
 The density of a cluster is given by the number of edges it contains divided by the maximum possible number of edges. Density ranges from 0 to 1. A density of 1 means that all nodes are connected to all other nodes in a cluster.
 
@@ -76,7 +80,7 @@ Therefore it's important to consider a range of sizes when evaluating density to
 
 <!-- With each increase in N, the number of possible edges increases. It might be 'harder' for bigger clusters to attain a higher density because blocking rules may prevent all record comparisons of nodes within a cluster. -->
 
-### Example: cluster centralisation
+### Cluster Centralisation
 
 [Cluster centralisation]("https://en.wikipedia.org/wiki/Centrality#Degree_centrality") is defined as the deviation from maximum [node degree]() normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
 
@@ -86,6 +90,6 @@ Low centralisation suggests that edges are more evenly distributed amongst nodes
 
 [maybe include a picture to help aid understanding]
 
-<br>
+<hr>
 
 A guide on [how to compute all the graph metrics mentioned above with Splink]() is given in the next chapter.
