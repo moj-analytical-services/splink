@@ -65,7 +65,7 @@ class Comparison:
 
         self.comparison_levels: list[ComparisonLevel] = comparison_levels
 
-        self.column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
+        self._column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
         self.sqlglot_dialect_name = sqlglot_dialect_name
         self.output_column_name = (
@@ -106,6 +106,16 @@ class Comparison:
     @property
     def _comparison_levels_excluding_null(self):
         return [cl for cl in self.comparison_levels if not cl.is_null_level]
+
+    @property
+    def column_info_settings(self) -> ColumnInfoSettings:
+        if (column_info_settings := self._column_info_settings) is None:
+            raise AttributeError(f"No column_info_settings set on Comparison {self}")
+        return column_info_settings
+    
+    @column_info_settings.setter
+    def column_info_settings(self, column_info_settings: ColumnInfoSettings) -> None:
+        self._column_info_settings = column_info_settings
 
     @property
     def gamma_prefix(self):
