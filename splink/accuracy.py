@@ -44,8 +44,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     order by match_weight
     """
 
-    sql = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg"}
-    sqls.append(sql)
+    sql_info = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg"}
+    sqls.append(sql_info)
 
     sql = """
     select
@@ -59,8 +59,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     order by truth_threshold
     """
 
-    sql = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg_grouped"}
-    sqls.append(sql)
+    sql_info = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg_grouped"}
+    sqls.append(sql_info)
 
     sql = """
     select
@@ -83,11 +83,11 @@ def truth_space_table_from_labels_with_predictions_sqls(
     order by  truth_threshold
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__labels_with_pos_neg_grouped_with_stats",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = """
     select
@@ -105,11 +105,11 @@ def truth_space_table_from_labels_with_predictions_sqls(
     from __splink__labels_with_pos_neg_grouped_with_stats
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__labels_with_pos_neg_grouped_with_truth_stats",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = """
     select
@@ -144,8 +144,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
-    sql = {"sql": sql, "output_table_name": "__splink__truth_space_table"}
-    sqls.append(sql)
+    sql_info = {"sql": sql, "output_table_name": "__splink__truth_space_table"}
+    sqls.append(sql_info)
     return sqls
 
 
@@ -228,7 +228,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
         linker, labels_tablename, include_clerical_match_score=True
     )
 
-    sql = {
+    sql_info = {
         "sql": compute_comparison_vector_values_sql(
             linker._settings_obj._columns_to_select_for_comparison_vector_values,
             include_clerical_match_score=True,
@@ -236,7 +236,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
         "output_table_name": "__splink__df_comparison_vectors",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sqls_2 = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
@@ -252,13 +252,13 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     from __splink__df_predict
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__labels_with_predictions",
     }
 
     # Clearer name than just df_predict
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
