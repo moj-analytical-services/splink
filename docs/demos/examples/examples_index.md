@@ -10,7 +10,7 @@ tags:
 
 # Example Notebooks
 
-This section provides a series of examples to help you get started with Splink. You can find the underlying notebooks in the [demos folder](https://github.com/moj-analytical-services/splink/tree/master/docs/demos/examples) of the Splink repository.
+This section provides a series of examples to help you get started with Splink. You can find the underlying notebooks in the [demos folder](https://github.com/moj-analytical-services/splink/tree/master/docs/demos/examples) of the Splink repo.
 
 You can try these demos live in your web browser using the following link:
 
