@@ -31,7 +31,7 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     )
     uid_col_name = uid_col.unquote().name
     if uid_col_name not in cols:
-        uid_sel_sql = f", 'no_id_provided' as {uid_col}"
+        uid_sel_sql = f", 'no_id_provided' as {uid_col.name}"
 
     sql = f"""
         select * {sds_sel_sql} {uid_sel_sql}
