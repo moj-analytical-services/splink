@@ -91,7 +91,7 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
     sql = vertically_concatenate_sql(linker)
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
-    sqls = compute_all_term_frequencies_sqls(linker)
+    sqls = compute_all_term_frequencies_sqls(linker, pipeline)
     pipeline.enqueue_list_of_sqls(sqls)
 
     return pipeline
@@ -107,7 +107,7 @@ def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDa
     sql = vertically_concatenate_sql(linker)
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
-    sqls = compute_all_term_frequencies_sqls(linker)
+    sqls = compute_all_term_frequencies_sqls(linker, pipeline)
     pipeline.enqueue_list_of_sqls(sqls)
 
     nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)

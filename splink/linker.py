@@ -1386,6 +1386,13 @@ class Linker:
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
         pipeline = CTEPipeline([df_records_left, df_records_right])
+
+        for tf_col in self._settings_obj._term_frequency_columns:
+            tf_table = colname_to_tf_tablename(tf_col)
+            if tf_table in self._intermediate_table_cache:
+                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+                pipeline.append_input_dataframe(tf_table)
+
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = sql_join_tf.replace(
