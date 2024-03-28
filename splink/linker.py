@@ -115,7 +115,7 @@ from .splink_comparison_viewer import (
 )
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
-    _join_tf_to_input_df_sql,
+    _join_tf_to_df_concat_sql,
     colname_to_tf_tablename,
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
@@ -1300,7 +1300,7 @@ class Linker:
 
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_input_df_sql(self)
+        sql = _join_tf_to_df_concat_sql(self)
         sql = sql.replace("__splink__df_concat", new_records_tablename)
         pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
@@ -1380,7 +1380,7 @@ class Linker:
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
-        sql_join_tf = _join_tf_to_input_df_sql(self)
+        sql_join_tf = _join_tf_to_df_concat_sql(self)
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
