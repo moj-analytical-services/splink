@@ -79,7 +79,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     assert res == 1
 
-    rule = block_on("first_name", "surname").get_blocking_rule(dialect)
+    rule = block_on("first_name", "surname")
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -449,22 +449,11 @@ def test_cumulative_br_funs(test_helpers, dialect):
     linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
     linker.cumulative_comparisons_from_blocking_rules_records()
     linker.cumulative_comparisons_from_blocking_rules_records(
-        [
-            "l.first_name = r.first_name",
-            block_on("surname").get_blocking_rule(dialect),
-        ]
+        ["l.first_name = r.first_name", block_on("surname")]
     )
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart(
-        [
-            "l.first_name = r.first_name",
-            block_on("surname").get_blocking_rule(dialect),
-        ]
+        ["l.first_name = r.first_name", block_on("surname")]
     )
 
-    assert (
-        linker.count_num_comparisons_from_blocking_rule(
-            block_on("surname").get_blocking_rule(dialect)
-        )
-        == 3167
-    )
+    assert linker.count_num_comparisons_from_blocking_rule(block_on("surname")) == 3167
