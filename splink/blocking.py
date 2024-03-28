@@ -159,7 +159,9 @@ class BlockingRule:
 
         rmtp = remove_table_prefix
 
-        keys_de_prefixed: list[tuple[Expression, Expression]] = [(rmtp(i), rmtp(j)) for (i, j) in keys_zipped]
+        keys_de_prefixed: list[tuple[Expression, Expression]] = [
+            (rmtp(i), rmtp(j)) for (i, j) in keys_zipped
+        ]
 
         keys_strings: list[tuple[str, str]] = [
             (i.sql(dialect=self.sqlglot_dialect), j.sql(self.sqlglot_dialect))
