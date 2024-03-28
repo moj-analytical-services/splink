@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlglot import parse_one
-from sqlglot.expressions import Column, Join
+from sqlglot.expressions import Column, Expression, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 
 from .exceptions import SplinkException
@@ -130,7 +130,7 @@ class BlockingRule:
         return sql
 
     @property
-    def _parsed_join_condition(self):
+    def _parsed_join_condition(self) -> Join:
         br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
@@ -146,27 +146,27 @@ class BlockingRule:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
         """
 
-        def remove_table_prefix(tree):
+        def remove_table_prefix(tree: Expression) -> Expression:
             for c in tree.find_all(Column):
                 del c.args["table"]
             return tree
 
-        j = self._parsed_join_condition
+        j: Join = self._parsed_join_condition
 
         source_keys, join_keys, _ = join_condition(j)
 
-        keys = zip(source_keys, join_keys)
+        keys_zipped = zip(source_keys, join_keys)
 
         rmtp = remove_table_prefix
 
-        keys = [(rmtp(i), rmtp(j)) for (i, j) in keys]
+        keys_de_prefixed: list[tuple[Expression, Expression]] = [(rmtp(i), rmtp(j)) for (i, j) in keys_zipped]
 
-        keys = [
+        keys_strings: list[tuple[str, str]] = [
             (i.sql(dialect=self.sqlglot_dialect), j.sql(self.sqlglot_dialect))
-            for (i, j) in keys
+            for (i, j) in keys_de_prefixed
         ]
 
-        return keys
+        return keys_strings
 
     @property
     def _filter_conditions(self):
