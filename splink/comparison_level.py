@@ -156,8 +156,9 @@ class ComparisonLevel:
         self._tf_adjustment_weight = tf_adjustment_weight
         self._tf_minimum_u_value = tf_minimum_u_value
 
-        self._m_probability = m_probability
-        self._u_probability = u_probability
+        # internally these can be LEVEL_NOT_OBSERVED_TEXT, so allow for this
+        self._m_probability: float | None | str = m_probability
+        self._u_probability: float | None | str = u_probability
         self.default_m_probability = None
         self.default_u_probability = None
 
@@ -594,7 +595,7 @@ class ComparisonLevel:
 
     def as_dict(self):
         "The minimal representation of this level to use as an input to Splink"
-        output = {}
+        output: dict[str, Any] = {}
 
         output["sql_condition"] = self.sql_condition
 

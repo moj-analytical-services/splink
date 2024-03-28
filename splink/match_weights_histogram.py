@@ -38,22 +38,22 @@ def _hist_sql(bin_width):
     group by {bin_width} * floor(match_weight / {bin_width})
     order by {bin_width} * floor(match_weight / {bin_width}) asc
     """
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_hist_raw",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     sql = f"""
     select *, splink_score_bin_low + cast({bin_width} as float) as splink_score_bin_high
     from __splink__df_hist_raw
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_hist",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 

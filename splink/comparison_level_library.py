@@ -185,7 +185,8 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
     @property
     def term_frequency_adjustments(self):
-        return self.tf_adjustment_column is not None
+        # mypy doesn't know about attribute as we use magic in .configure()
+        return self.tf_adjustment_column is not None  # type: ignore [attr-defined]
 
     @term_frequency_adjustments.setter
     def term_frequency_adjustments(self, term_frequency_adjustments: bool):
@@ -264,6 +265,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
             return f"{col.name_r} = {dialected}"
         elif self.side_of_comparison == "both":
             return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
+        raise ValueError(f"Invalid `side_of_comparison`: {self.side_of_comparison}.")
 
     def create_label_for_charts(self) -> str:
         return (
@@ -573,7 +575,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         self.datetime_format = datetime_format
         self.input_is_string = input_is_string
 
-    def convert_time_metric_to_seconds(self, threshold: int, metric: str) -> float:
+    def convert_time_metric_to_seconds(self, threshold: float, metric: str) -> float:
 
         conversion_factors = {
             "second": 1,

@@ -149,7 +149,7 @@ class Linker:
         settings: SettingsCreator | dict | Path | str,
         database_api: DatabaseAPI,
         set_up_basic_logging: bool = True,
-        input_table_aliases: str | list = None,
+        input_table_aliases: str | list | None = None,
         validate_settings: bool = True,
     ):
         """Initialise the linker object, which manages the data linkage process and
@@ -943,7 +943,7 @@ class Linker:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: Union[str, BlockingRuleCreator],
-        comparisons_to_deactivate: list[str | Comparison] = None,
+        comparisons_to_deactivate: list[Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
         fix_probability_two_random_records_match: bool = False,
@@ -1469,16 +1469,16 @@ class Linker:
 
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sql_infos = predict_from_comparison_vectors_sqls(
             unique_id_input_columns=uid_cols,
             core_model_settings=self._settings_obj.core_model_settings,
             sql_dialect=self._sql_dialect,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            output_table_name = sql["output_table_name"]
+        for sql_info in sql_infos:
+            output_table_name = sql_info["output_table_name"]
             output_table_name = output_table_name.replace("predict", "self_link")
-            pipeline.enqueue_sql(sql["sql"], output_table_name)
+            pipeline.enqueue_sql(sql_info["sql"], output_table_name)
 
         predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
