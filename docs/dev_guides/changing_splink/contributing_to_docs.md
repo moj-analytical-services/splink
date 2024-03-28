@@ -16,7 +16,7 @@ Once you've finished updating Splink documentation we ask that you run our spell
 
 ## Spellchecking docs
 
-When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. Please note, the spellchecker _only works on markdown files_.
+When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. Please note, the spellchecker _only works on markdown files_ and currently only works on systems which support `Homebrew` package manager. Instructions for other operating systems will be released later.
 
 To run the spellchecker on either a single markdown file or folder of markdown files, you can use the following script:
 
