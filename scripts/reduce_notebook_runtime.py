@@ -13,11 +13,11 @@ def modify_notebook(file_path):
         "febrl3.ipynb"
     )
 
-    # if file_path.endswith("febrl4.ipynb"):
-    #     # These cells need a very high max_pairs value
-    #     # otherwise you get divide by zero errors.  Easiest just to delete
-    #     data["cells"] = data["cells"][:19]
-    #     changed = True
+    if file_path.endswith("febrl4.ipynb"):
+        # These cells need a very high max_pairs value
+        # otherwise you get divide by zero errors.  Easiest just to delete
+        data["cells"] = data["cells"][:19]
+        changed = True
 
     for cell in data["cells"]:
         if cell["cell_type"] == "code":

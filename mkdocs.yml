@@ -64,12 +64,11 @@ plugins:
       repository: moj-analytical-services/splink
       branch: master
   - rss:
-      match_path: blog/posts/.* 
+      match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs.hooks:on_page_markdown_hook"
+hooks:
+  - docs/hooks/__init__.py
 
 markdown_extensions:
   - abbr
@@ -166,7 +165,7 @@ nav:
       - Evaluation:
         - Overview: "topic_guides/evaluation/overview.md"
         - Model: "topic_guides/evaluation/model.md"
-        - Edges (Links): 
+        - Edges (Links):
           - Overview: "topic_guides/evaluation/edge_overview.md"
           - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
           - Clerical Labelling: "topic_guides/evaluation/labelling.md"
@@ -206,7 +205,7 @@ nav:
       - Charts Gallery:
         - "charts/index.md"
         - Exploratory Analysis:
-          - completeness chart: "charts/completeness_chart.ipynb" 
+          - completeness chart: "charts/completeness_chart.ipynb"
           - missingness chart: "charts/missingness_chart.ipynb"
           - profile columns: "charts/profile_columns.ipynb"
         - Blocking:
@@ -227,7 +226,6 @@ nav:
           - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
         - Model Evaluation:
           - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
-          - confusion matrix from labels table: "charts/confusion_matrix_from_labels_table.ipynb"
           - precision recall chart from labels table: "charts/precision_recall_chart_from_labels_table.ipynb"
           - roc chart fromm labels table: "charts/roc_chart_from_labels_table.ipynb"
       - In-built datasets: "datasets.md"
@@ -237,11 +235,12 @@ nav:
   - Contributing:
       - "dev_guides/index.md"
       - Contributing to Splink:
-        - Contributor Guide: "CONTRIBUTING.md"
-        - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
+        - Contributor Guide: "dev_guides/CONTRIBUTING.md"
+        - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
         - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
@@ -260,6 +259,7 @@ nav:
         - Settings Validation:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
+        - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
   - Blog:
     - blog/index.md
 extra_css:

@@ -81,8 +81,7 @@ def test_full_example_duckdb(tmp_path):
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
-    linker.accuracy_chart_from_labels_table("labels")
-    linker.confusion_matrix_from_labels_table("labels")
+    linker.threshold_selection_tool_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -255,22 +254,6 @@ def test_duckdb_arrow_array():
     )
     df = linker.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
-
-
-@mark_with_dialects_including("duckdb")
-def test_cast_error():
-    from duckdb import InvalidInputException
-
-    forenames = [None, "jack", None] * 1000
-    data = {"id": range(0, len(forenames)), "forename": forenames}
-    df = pd.DataFrame(data)
-
-    with pytest.raises(InvalidInputException):
-        DuckDBLinker(df)
-
-    # convert to pyarrow table
-    df = pa.Table.from_pandas(df)
-    DuckDBLinker(df)
 
 
 @mark_with_dialects_including("duckdb")

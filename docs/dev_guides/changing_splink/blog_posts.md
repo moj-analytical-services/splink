@@ -1,10 +1,10 @@
 # Contributing to the Splink Blog
 
-Thanks for considering making a contribution to the [Splink Blog](../../blog/index.md)! We are keen to use this blog as a forum all things data linking and Splink! 
+Thanks for considering making a contribution to the [Splink Blog](../../blog/index.md)! We are keen to use this blog as a forum all things data linking and Splink!
 
-This blog, and the docs as a whole, are build using the fantastic [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), to uderstand more about how the blog works under the hood checkout out the mkdocs-material [blog documentation](https://squidfunk.github.io/mkdocs-material/blog/2022/09/12/blog-support-just-landed/).
+This blog, and the docs as a whole, are built using the fantastic [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), to understand more about how the blog works under the hood checkout out the mkdocs-material [blog documentation](https://squidfunk.github.io/mkdocs-material/blog/2022/09/12/blog-support-just-landed/).
 
-For more general guidance for contributing to Splink, check out our [Contributor Guide](../../../CONTRIBUTING.md).
+For more general guidance for contributing to Splink, check out our [Contributor Guide](../CONTRIBUTING.md).
 
 ## Adding a blog post
 
@@ -18,7 +18,7 @@ Blog posts are ordered by date, so change the name of your post markdown file to
 
 ## Adding a new author to the blogs
 
-If you are a new author, you will need to add yourself to the [.authors.yml file](https://github.com/moj-analytical-services/splink/blob/master/docs/blog/.authors.yml). 
+If you are a new author, you will need to add yourself to the [.authors.yml file](https://github.com/moj-analytical-services/splink/blob/master/docs/blog/.authors.yml).
 
 ## Testing your changes
 

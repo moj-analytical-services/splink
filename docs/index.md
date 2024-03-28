@@ -53,7 +53,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Support
 
-To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./dev_guides/CONTRIBUTING.md).
 
 ## Use Cases
 
@@ -74,8 +74,10 @@ Here is a list of some of our known users and their use cases:
 
 	- [Chilean Ministry of Health](https://www.gob.cl/en/ministries/ministry-of-health/) and [University College London](https://www.ucl.ac.uk/) have [assessed the access to immunisation programs among the migrant population](https://ijpds.org/article/view/2348)
 	- [Florida Cancer Registry](https://www.floridahealth.gov/diseases-and-conditions/cancer/cancer-registry/index.html), published a [feasibility study](https://scholar.googleusercontent.com/scholar?q=cache:sADwxy-D75IJ:scholar.google.com/+splink+florida&hl=en&as_sdt=0,5) which showed Splink was faster and more accurate than alternatives
+	- [Catalyst Cooperative](https://catalyst.coop)'s [Public Utility Data Liberation Project](https://github.com/catalyst-cooperative/pudl) links public financial and operational data from electric utilities for use by US climate advocates, policymakers, and researchers seeking to accelerate the transition away from fossil fuels.
 
 === "Academia"
+
 	- [Stanford University](https://www.stanford.edu/) investigated the impact of [receiving government assistance has on political attitudes](https://www.cambridge.org/core/journals/american-political-science-review/article/abs/does-receiving-government-assistance-shape-political-attitudes-evidence-from-agricultural-producers/39552BC5A496EAB6CB484FCA51C6AF21)
 	- [Bern University](https://arbor.bfh.ch/) researched how [Active Learning can be applied to Biomedical Record Linkage](https://ebooks.iospress.nl/doi/10.3233/SHTI230545)
 

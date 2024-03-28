@@ -1,5 +1,6 @@
 name: Bug report
 description: Create a report to help us improve
+labels: 'bug'
 body:
   - type: textarea
     attributes:
@@ -40,7 +41,7 @@ body:
     attributes:
       label: Have you tried this on the latest `master` branch?
       description: |
-        * **Python**: `pip install splink --upgrade --pre`
+        * **Python**: `pip install git+https://github.com/moj-analytical-services/splink.git@master`
 
       options:
         - label: I agree
