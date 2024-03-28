@@ -102,19 +102,19 @@
     "url": "./accuracy_chart_from_labels_table.ipynb"
     },
     {
-    "title": "`confusion matrix from labels table`",
-    "image": "./img/confusion_matrix_from_labels_table.png",
-    "url": "./confusion_matrix_from_labels_table.ipynb"
-    },
-    {
     "title": "`precision recall chart from labels table`",
     "image": "./img/precision_recall_chart_from_labels_table.png",
     "url": "./precision_recall_chart_from_labels_table.ipynb"
     },
     {
-    "title": "`roc chart fromm labels table`",
+    "title": "`roc chart from labels table`",
     "image": "./img/roc_chart_from_labels_table.png",
     "url": "./roc_chart_from_labels_table.ipynb"
+    },
+    {
+    "title": "`threshold_selection_tool from labels table`",
+    "image": "./img/threshold_selection_tool_from_labels_table.png",
+    "url": "./threshold_selection_tool_from_labels_table.ipynb"
     },
 ]
 ::/cards::
@@ -166,11 +166,6 @@
     "title": "`cluster studio dashboard`",
     "image": "./img/cluster_studio_dashboard.png",
     "url": "./cluster_studio_dashboard.ipynb"
-  },
-  {
-    "title": "`confusion matrix from labels table`",
-    "image": "./img/confusion_matrix_from_labels_table.png",
-    "url": "./confusion_matrix_from_labels_table.ipynb"
   },
   {
     "title": "`comparator score chart`",

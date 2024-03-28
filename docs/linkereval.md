@@ -13,8 +13,6 @@ tags:
       members:
         - accuracy_chart_from_labels_table
         - accuracy_chart_from_labels_column
-        - confusion_matrix_from_labels_table
-        - confusion_matrix_from_labels_column
         - precision_recall_chart_from_labels_column
         - precision_recall_chart_from_labels_table
         - prediction_errors_from_labels_column

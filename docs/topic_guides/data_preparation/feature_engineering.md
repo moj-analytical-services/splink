@@ -78,14 +78,14 @@ Note that the 'Exact match Postcode District' level also captures matches on sub
 
 However, performing comparisons based on substrings alone doesn't always give the best sense of whether two postcodes are close together since locations which are geographically close can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'.
 
-Fortunately, Splink includes functions [cll.distance_in_km_level()](../../comparison_level_library.md#splink.comparison_level_library.DistanceInKMLevelBase) and [cl.distance_in_km_at_thresholds()](../../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
+Fortunately, Splink includes functions [`cll.distance_in_km_level()`](../../comparison_level_library.md#splink.comparison_level_library.DistanceInKMLevelBase) and [`cl.distance_in_km_at_thresholds()`](../../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
 Users have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments. Doing so can help to improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
 
-There are a number of open source repositories of geospatial data that can be used for linkage, one example is [geonames](http://download.geonames.org/export/zip/).
+There are a number of open source repositories of geospatial data that can be used for linkage, one example is [GeoNames](http://download.geonames.org/export/zip/).
 
-Below is an example of adding latitude and longitude columns from geonames to create a more nuanced comparison.
+Below is an example of adding latitude and longitude columns from GeoNames to create a more nuanced comparison.
 
 Read in a dataset with postcodes:
 
@@ -106,7 +106,7 @@ df.head()
     |  3 | Q2296770-4  | Q2296770  | thomas 1st chudleigh                             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8HU        |          | politician   |
     |  4 | Q2296770-5  | Q2296770  | thomas clifford, 1st baron chudleigh             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        |          | politician   |
 
-Then read in a list of GB postcodes downloaded from [geonames](http://download.geonames.org/export/zip/).
+Then read in a list of GB postcodes downloaded from [GeoNames](http://download.geonames.org/export/zip/).
 
 ```python
 import pandas as pd
@@ -119,11 +119,11 @@ postcodes.head(5)
 
     |    | country_code   | postal_code   | place_name   | admin_name1   | admin_code1   | admin_name2   |   admin_code2 | admin_name3             | admin_code3   |   latitude |   longitude |   accuracy |
     |---:|:---------------|:--------------|:-------------|:--------------|:--------------|:--------------|--------------:|:------------------------|:--------------|-----------:|------------:|-----------:|
-    |  0 | GB             | AL3 8QE       | Slip End     | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8479 |     -0.4474 |          6 |
-    |  1 | GB             | AL5 3NG       | Harpenden    | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8321 |     -0.383  |          6 |
-    |  2 | GB             | AL5 3NS       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8333 |     -0.3763 |          6 |
-    |  3 | GB             | AL5 3QF       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8342 |     -0.3851 |          6 |
-    |  4 | GB             | B10 0AB       | Birmingham   | England       | ENG           | West Midlands |           nan | Birmingham District (B) | E08000025     |    52.4706 |     -1.875  |          6 |
+    |  0 | GB             | AL3 8QE       | Slip End     | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8479 |     -0.4474 |          6 |
+    |  1 | GB             | AL5 3NG       | Harpenden    | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8321 |     -0.383  |          6 |
+    |  2 | GB             | AL5 3NS       | Hyde         | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8333 |     -0.3763 |          6 |
+    |  3 | GB             | AL5 3QF       | Hyde         | England       | ENG           | Bedfordshire  |           NaN | Central Bedfordshire    | E06000056     |    51.8342 |     -0.3851 |          6 |
+    |  4 | GB             | B10 0AB       | Birmingham   | England       | ENG           | West Midlands |           NaN | Birmingham District (B) | E08000025     |    52.4706 |     -1.875  |          6 |
 
 Now combine the lat-long coordinates from the `GB_full.txt` lookup.
 
@@ -366,7 +366,7 @@ For a more detailed explanation on phonetic transformation algorithms, see the [
 
 ### Example
 
-There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the DuckDBLinker. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
+There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the `DuckDBLinker`. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
 
 ```python
 import pandas as pd
@@ -397,7 +397,7 @@ df.head()
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | ('JL', 'AL')    | ('TLR', '')      |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | ('AN', '')      | ('ATSN', 'FTSN') |
 
-Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phoneitcs](https://pypi.org/project/phonetics/)
+Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phonetics](https://pypi.org/project/phonetics/)
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
 
@@ -419,22 +419,22 @@ Now that the dmetaphone columns have been added, they can be used within compari
                             phonetic_col_name = "first_name_dm")
     ```
 ??? note "Output"
-    > Comparison 'Exact match vs. Names with phonetic exact match vs. First_Name within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
+    > Comparison 'Exact match vs. Names with phonetic exact match vs. First_Name within Jaro-Winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
 
     > Similarity is assessed using the following ComparisonLevels:
     >
     >   - 'Null' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
     >   - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
     >   - 'Exact match first_name_dm' with SQL rule: "first_name_dm_l" = "first_name_dm_r"
-    >   - 'Jaro_winkler_similarity >= 0.95' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.95
-    >   - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
+    >   - 'Jaro-Winkler similarity >= 0.95' with SQL rule: `jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.95`
+    >   - 'Jaro-Winkler similarity >= 0.88' with SQL rule: `jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88`
     >   - 'All other comparisons' with SQL rule: ELSE
 
 <hr>
 
 ## Full name
 
-When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](../comparisons/comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
+When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](../comparisons/comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a Splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
 
 For example, in the UK, “Mohammed Khan” is a relatively common full name despite neither "Mohammed" or "Khan" occurring frequently as forename or surname, respectively.
 
@@ -458,13 +458,13 @@ df.head()
 
     |    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | full_name     |
     |---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:--------------|
-    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | nan           |
+    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | NaN          |
     |  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | Julia  Taylor |
     |  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | Julia  Taylor |
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | oNah Watson   |
 
-Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
+Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forename_surname_comparison](../../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
 
 === ":simple-duckdb: DuckDB"
     ```python
@@ -492,7 +492,7 @@ Now that the `full_name` column has been added, it can be used within comparison
     ```
 ??? note "Output"
 
-    > Comparison 'Exact match vs. Forename and surname columns reversed vs. Surname exact match vs. Forename exact match vs. Surname within jaro-winkler threshold 0.88 vs. First_Name within jaro-winkler threshold 0.88 vs. anything else' of "surname" and "first_name".
+    > Comparison 'Exact match vs. Forename and surname columns reversed vs. Surname exact match vs. Forename exact match vs. Surname within Jaro-Winkler threshold 0.88 vs. First_Name within Jaro-Winkler threshold 0.88 vs. anything else' of "surname" and "first_name".
     >
     > Similarity is assessed using the following ComparisonLevels:
     >
@@ -501,7 +501,7 @@ Now that the `full_name` column has been added, it can be used within comparison
     >    - 'Exact match on reversed cols' with SQL rule: "first_name_l" = "surname_r" and "first_name_r" = "surname_l"
     >    - 'Exact match surname' with SQL rule: "surname_l" = "surname_r"
     >    - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
-    >    - 'Jaro_winkler_similarity surname >= 0.88' with SQL rule: jaro_winkler_similarity("surname_l", "surname_r") >= 0.88
-    >    - 'Jaro_winkler_similarity first_name >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
+    >    - 'Jaro-Winkler similarity surname >= 0.88' with SQL rule: `jaro_winkler_similarity("surname_l", "surname_r") >= 0.88`
+    >    - 'Jaro-Winkler similarity first_name >= 0.88' with SQL rule: `jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88`
     >    - 'All other comparisons' with SQL rule: ELSE
 

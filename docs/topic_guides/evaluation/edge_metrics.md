@@ -40,10 +40,6 @@ These can be summarised in a Confusion Matrix
 
 In a perfect model there would be no False Positives or False Negatives (i.e. FP = 0 and FN = 0).
 
-??? info "Confusion Matrix in Splink"
-
-    For a more in-depth guide on how to use the Splink Confusion Matrix, check out the `confusion_matrix_from_labels_table` [API documentation](../../linker.md#splink.linker.Linker.confusion_matrix_from_labels_table) and [Chart Gallery](../../charts/confusion_matrix_from_labels_table.ipynb).
-
 ## Metrics for Linkage
 
 The confusion matrix shows **counts** of each link type, but we are generally more interested in **proportions**. I.e. what percentage of the time does the model get the answer right?
@@ -80,8 +76,8 @@ $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \fr
     - Recall is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
     - Recall can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
-    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documantation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
-    - Recall is used to as part of estimating the probablility thay two random records match. This value is then used as a baseline to which all addtional evidence from features in your model is added to produce a final Splink score. For further information, checkout the [estimate_probability_two_random_records_match](https://moj-analytical-services.github.io/splink/linker.html?h=recall#splink.linker.Linker.estimate_probability_two_random_records_match) API Documentation and the Model Training Topic Guide (Coming soon).
+    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documentation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
+    - Recall is used to as part of estimating the probability that two random records match. This value is then used as a baseline to which all additional evidence from features in your model is added to produce a final Splink score. For further information, checkout the [estimate_probability_two_random_records_match](https://moj-analytical-services.github.io/splink/linker.html?h=recall#splink.linker.Linker.estimate_probability_two_random_records_match) API Documentation and the Model Training Topic Guide (Coming soon).
 
 ### True Negative Rate (Specificity)
 
@@ -109,7 +105,7 @@ $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Posi
     - Precision is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
     - Precision can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
-    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documantation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
+    - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documentation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
 
 ### Negative Predictive Value
 
@@ -117,7 +113,7 @@ The Negative Predictive Value is the proportion of predicted non-matches which a
 
 $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{All Predicted Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
 
-??? info "Negative Predicitive Value in Splink"
+??? info "Negative Predictive Value in Splink"
 
     - Negative Predictive Value is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
     - Negative Predictive Value can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)

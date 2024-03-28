@@ -1,5 +1,3 @@
-## Managing Splink's Dependencies
-
 This page highlights the importance of package versioning and proposes that we use a "sunsetting" strategy for updating our support python and dependency versions as they reach end-of-life.
 
 Additionally, it lays out some rough guidelines for us to follow when addresses future package conflicts and issues arises from antiquated dependency versions.
@@ -14,7 +12,7 @@ Below is a rough summary of versioning and some complimentary guidelines detaili
 
 ### Benefits to Effective Versioning
 
-Effective versioning is crucial for ensuring Splink's compatibility across diverse techical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
+Effective versioning is crucial for ensuring Splink's compatibility across diverse technical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
 
 * Faster dependency resolution with `poetry lock`.
 * Reduces dependency conflicts across systems.
@@ -35,7 +33,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 #### Compatibility Checks
 
 * **Automated Testing**: Use Continuous Integration (CI) to help test the latest python and package versions. This helps identify compatibility issues early.
-* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatability check for supported versions of python.
+* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatibility check for supported versions of python.
 
 #### Handling Breaking Changes
 
@@ -45,7 +43,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 #### Documentation and Communication
 
 * **Clear Documentation**: Clearly log installation instructions within the [Getting Started](https://moj-analytical-services.github.io/splink/getting_started.html#install) section of our documentation. This should cover not only standard installation procedures but also specialised instructions, for instance, installing a [:simple-duckdb:-less version of Splink](https://github.com/moj-analytical-services/splink/pull/1244), for locked down environments.
-* **Log Dependency Changes in the Changelog**: Where dependencies are adjusted, ensure that changes are logged within [`CHANGELOG.md`](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md). This can help simplify debugging and creates a guide that can be easily referenced.
+* **Log Dependency Changes in the CHANGELOG**: Where dependencies are adjusted, ensure that changes are logged within [`CHANGELOG.md`](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md). This can help simplify debugging and creates a guide that can be easily referenced.
 
 #### User Support and Feedback
 
@@ -58,7 +56,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 
 In alignment with the Python community's practices, we are phasing out support for Python versions that have hit [end-of-life](https://devguide.python.org/versions/) and are no longer maintained by the core Python development team. This decision ensures that Splink remains secure, efficient, and up-to-date with the latest Python features and improvements.
 
-Our approach mirrors that of key package maintainers, such as the developers behind Numpy. The Numpy developers have kindly pulled together [**NEP 29**](https://scikit-hep.org/supported-python-versions), their guidelines for python version support. This outlines a recommended framework for the deprecation of outdated Python versions.
+Our approach mirrors that of key package maintainers, such as the developers behind NumPy. The NumPy developers have kindly pulled together [**NEP 29**](https://scikit-hep.org/supported-python-versions), their guidelines for python version support. This outlines a recommended framework for the deprecation of outdated Python versions.
 
 ### Benefits of Discontinuing Support for Older Python Versions:
 
