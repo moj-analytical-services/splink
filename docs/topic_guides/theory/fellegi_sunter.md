@@ -245,5 +245,5 @@ $$
     * [Dependencies between match weights](https://www.robinlinacre.com/match_weight_dependencies/)
     * [m and u probability generator](https://www.robinlinacre.com/m_u_generator/)
 
-    Also, see the [academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) used as the basis for a similar implementation of Fellegi Sunter in the R [fastlink package](https://github.com/kosukeimai/fastLink).
+    Also, see the [academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) used as the basis for a similar implementation of Fellegi Sunter in the R [fastLink package](https://github.com/kosukeimai/fastLink).
 

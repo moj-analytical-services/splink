@@ -40,9 +40,9 @@ Thanks for your interest in contributing code to Splink!
 There are a number of ways to get involved:
 
 - Start work on an [existing issue](https://github.com/moj-analytical-services/splink/issues), there should be some with a [`good first issue`](https://github.com/moj-analytical-services/splink/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) flag which are a good place to start. 
-- Tackle a problem you have identified. If you have identified a feature or bug, the first step is to [create a new issue](https://github.com/moj-analytical-services/splink/issues/new/choose) to explain what you have identified and what you plan to implement, then you are free to fork the repo and get coding!
+- Tackle a problem you have identified. If you have identified a feature or bug, the first step is to [create a new issue](https://github.com/moj-analytical-services/splink/issues/new/choose) to explain what you have identified and what you plan to implement, then you are free to fork the repository and get coding!
 
-In either case, we ask that you assign yourself to the relevant issue and open up [a draft PR](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
+In either case, we ask that you assign yourself to the relevant issue and open up [a draft pull request (PR)](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
 
 You can always add further PRs to build extra functionality. Starting out with a minimum viable product and iterating makes for better software (in our opinion). It also helps get features out into the wild sooner.
 
@@ -57,10 +57,10 @@ When making code changes, we recommend:
 
 ### Branching Strategy
 
-Typically, all pull requests (PRs) should be against `master`.
+Typically, all pull requests (PRs) should target the `master` branch.
 **However, currently the Splink team is working on a major update in Splink v4. For the time being, we are using the `splink4_dev` branch to develop v4.**
-As a general rule, substantial new features should be PRed against that branch,
-while bug fixes and documentation changes should be PRed against `master`.
+As a general rule, substantial new features should be targeted at `splink4_dev`,
+while bug fixes and documentation changes should be targeted at `master`.
 If you are unsure which category your change falls into, please ask!
 
 We believe that [small Pull Requests](https://essenceofcode.com/2019/10/29/the-art-of-small-pull-requests/) make better code. They:

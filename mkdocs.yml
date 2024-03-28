@@ -238,7 +238,7 @@ nav:
         - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
         - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
         - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"

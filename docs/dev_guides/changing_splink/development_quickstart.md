@@ -8,7 +8,7 @@ We highly recommend developing Splink on a Unix-like operating system, such as M
 While it is possible to develop on another operating system such as Windows, we do not provide
 instructions for how to do so.
 
-**Luckily, Windows users can easily fulfill this requirement by installing the Windows Subsystem for Linux (WSL):**
+**Luckily, Windows users can easily fulfil this requirement by installing the Windows Subsystem for Linux (WSL):**
 
 - Open PowerShell as Administrator: Right-click the Start button, select “Windows Terminal (Admin)”, and ensure PowerShell is the selected shell.
 - Run the command `wsl --install`.
@@ -42,7 +42,7 @@ On the other hand, `conda` is particularly suitable if:
 - You're working in an environment where security policies prevent the installation of system level packages like Java
 - You don't want to do global installs of some of the requirements like Java
 
-## Step 3, Manual install option: Install system depedencies
+## Step 3, Manual install option: Install system dependencies
 
 ### Python
 
@@ -114,7 +114,7 @@ and the teardown script each time you want to stop it:
 Included in the docker-compose file is a [pgAdmin](https://www.pgadmin.org/) container to allow easy exploration of the database as you work, which can be accessed in-browser on the default port.
 The default username is `a@b.com` with password `b`.
 
-## Step 3, Conda install option: Install system depedencies
+## Step 3, Conda install option: Install system dependencies
 
 These instructions are the same no matter what operating system you are using.
 As an added benefit, these installations will be specific to the conda environment
