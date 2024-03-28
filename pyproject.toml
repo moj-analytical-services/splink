@@ -121,6 +121,3 @@ implicit_optional = true
 # for now, ignore missing imports
 # can remove later and install stubs, where existent
 ignore_missing_imports = true
-# don't follow imports to modules we don't want to typecheck yet
-# eventually restore this back to the default "normal"
-follow_imports = "silent"
