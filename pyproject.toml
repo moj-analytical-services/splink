@@ -113,7 +113,6 @@ packages = "splink"
 # temporary exclusions
 exclude = [
     # modules with large number of errors
-    '.*comparison.*library\.py',
     '.*linker\.py',
     '/settings_validation/'
 ]
