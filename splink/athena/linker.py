@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+# ignore line-too-long while commented out
 # from __future__ import annotations
 
 # import logging
