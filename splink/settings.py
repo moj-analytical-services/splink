@@ -636,12 +636,12 @@ class Settings:
         comparison_descs = [
             c._human_readable_description_succinct for c in self.comparisons
         ]
-        comparison_descs = "\n".join(comparison_descs)
+        comparison_desc_str = "\n".join(comparison_descs)
         desc = (
             "SUMMARY OF LINKING MODEL\n"
             "------------------------\n"
             "The similarity of pairwise record comparison in your model will be "
-            f"assessed as follows:\n\n{comparison_descs}"
+            f"assessed as follows:\n\n{comparison_desc_str}"
         )
         return desc
 
