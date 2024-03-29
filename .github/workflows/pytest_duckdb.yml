@@ -1,4 +1,4 @@
-name: Run tests with cache
+name: Duckdb and core tests
 on:
   pull_request:
     branches:
