@@ -285,13 +285,14 @@ class DistanceFunctionAtThresholdsBase(Comparison):
             comparison_levels.append(level)
 
         threshold_comparison_levels = distance_threshold_comparison_levels(
-            self,
-            col_name,
-            distance_function_name,
-            distance_threshold_or_thresholds,
-            regex_extract,
-            set_to_lowercase,
-            m_probability_or_probabilities_thres,
+            self=self,
+            col_name=col_name,
+            distance_function_name=distance_function_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=higher_is_more_similar,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_thres
         )
         comparison_levels = comparison_levels + threshold_comparison_levels
 
