@@ -152,7 +152,8 @@ class Linker:
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
     ):
-        """Initialise the linker object, which manages the data linkage process and
+        """
+        Initialise the linker object, which manages the data linkage process and
         holds the data linkage model.
 
         Examples:
