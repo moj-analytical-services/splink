@@ -37,9 +37,9 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root
-
+      #Needed temporarily to get faster altair charts
       - name: Install altair directly with Poetry
         run: poetry add git+https://github.com/altair-viz/altair.git
 
       - name: Run tests
-        run: poetry run pytest --durations=0 -m duckdb_only tests/
+        run: poetry run pytest --durations=0 -m "spark_only or sqlite_only" tests/
