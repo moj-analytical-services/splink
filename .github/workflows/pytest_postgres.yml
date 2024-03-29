@@ -1,9 +1,9 @@
-name: Run postgres tests with cache
+name: Postgres tests
 on:
   pull_request:
     branches:
       - master
-      - '**dev'
+      - "**dev"
     paths:
       - splink/**
       - tests/**
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ "3.8.16", "3.9.10" ]
+        python-version: ["3.8.16", "3.9.10"]
     services:
       pg_splink_ci:
         image: postgres
@@ -30,64 +30,31 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-            # map port so we can access
-            - 5432:5432
-    name: Run tests with python verion ${{ matrix.python-version }}
+          # map port so we can access
+          - 5432:5432
+    name: Run tests with Python ${{ matrix.python-version }}
     steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      #----------------------------------------------
-      #  -- save a few section by caching poetry --
-      #----------------------------------------------
-      - name: Load cached Poetry installation
-        uses: actions/cache@v2
+
+      - uses: actions/cache@v2
         with:
-          path: ~/.local  # the path depends on the OS
-          key: poetry-0  # increment to reset cache
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+
+      - uses: snok/install-poetry@v1.2
         with:
           version: 1.5.1
-          virtualenvs-create: true
           virtualenvs-in-project: true
-          installer-parallel: true
 
-      #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install library
-        run: poetry install --no-interaction
-      #----------------------------------------------
-      #              run test suite
-      #----------------------------------------------
-      - name: Run only postgres-marked tests
         run: |
-          source .venv/bin/activate
-          pytest -v --durations=0 -m postgres_only tests/
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root
 
+      - name: Run tests
+        run: poetry run pytest -v --durations=0 -m "postgres_only" tests/

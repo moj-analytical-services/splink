@@ -42,4 +42,4 @@ jobs:
         run: poetry add git+https://github.com/altair-viz/altair.git
 
       - name: Run tests
-        run: poetry run pytest --durations=0 -m "duckdb_only or core" tests/
+        run: poetry run pytest -v --durations=0 -m "duckdb_only or core" tests/
