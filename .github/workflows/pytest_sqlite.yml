@@ -1,4 +1,4 @@
-name: Spark and sqlite tests
+name: Sqlite tests
 on:
   pull_request:
     branches:
