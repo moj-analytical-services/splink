@@ -33,4 +33,4 @@ jobs:
           poetry install --no-interaction --no-root
 
       - name: Run tests
-        run: poetry run pytest -v --durations=0 -m "spark_only or sqlite_only" tests/
+        run: poetry run pytest -v --durations=0 -m "spark_only" tests/
