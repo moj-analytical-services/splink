@@ -5,41 +5,32 @@ on:
       - master
       - "**dev"
     paths:
-      - splink/**
-      - tests/**
-      - pyproject.toml
+      - "splink/**"
+      - "tests/**"
+      - "pyproject.toml"
 
 jobs:
   test:
-    runs-on: ubuntu-latest # Use latest unless a specific version is necessary
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9"] # Simplify version if specific patch is not needed
+        python-version: ["3.8", "3.9"]
     name: Run tests with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - name: Install poetry using pipx
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "poetry"
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/pypoetry
-            .venv
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
-
-      - uses: snok/install-poetry@v1.2
-        with:
-          version: 1.5.1
-
-      - name: Install dependencies
+      - name: Install dependencies and altair directly
         run: |
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root
-      #Needed temporarily to get faster altair charts
-      - name: Install altair directly with Poetry
-        run: poetry add git+https://github.com/altair-viz/altair.git
 
       - name: Run tests
         run: poetry run pytest -v --durations=0 -m "spark_only or sqlite_only" tests/
