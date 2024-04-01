@@ -292,7 +292,7 @@ class DistanceFunctionAtThresholdsBase(Comparison):
             regex_extract=regex_extract,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=higher_is_more_similar,
-            m_probability_or_probabilities_thres=m_probability_or_probabilities_thres
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_thres,
         )
         comparison_levels = comparison_levels + threshold_comparison_levels
 
