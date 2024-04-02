@@ -12,7 +12,7 @@ then
     bash Miniforge3-$(uname)-$(uname -m).sh -b -p $HOME/miniforge3
     source "${HOME}/miniforge3/etc/profile.d/conda.sh"
     source "${HOME}/miniforge3/etc/profile.d/mamba.sh"
-    mamba config --set auto_activate_base false
+    conda config --set auto_activate_base false
     rm ./Miniforge3-$(uname)-$(uname -m).sh
 fi
 
