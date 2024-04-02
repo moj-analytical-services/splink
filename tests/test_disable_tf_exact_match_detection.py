@@ -1,7 +1,8 @@
+import pandas as pd
 import pytest
 
 import splink.comparison_level_library as cll
-from splink.settings_creator import SettingsCreator
+from splink import DuckDBAPI, Linker, SettingsCreator
 
 
 def test_disable_tf_exact_match_detection():
@@ -31,6 +32,7 @@ def test_disable_tf_exact_match_detection():
     settings = SettingsCreator(
         link_type="dedupe_only", comparisons=[comparison_normal_dict]
     ).get_settings("duckdb")
+
     comparison_normal = settings.comparisons[0]
     comparison_levels_normal = comparison_normal.comparison_levels
     comparison_level_exact_match = comparison_levels_normal[1]
@@ -100,11 +102,6 @@ def test_disable_tf_exact_match_detection():
 
 
 def test_with_predict_calculation():
-    import pandas as pd
-
-    from splink import DuckDBAPI, Linker, SettingsCreator
-    from splink import comparison_level_library as cll
-    from splink import comparison_library as cl
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
