@@ -11,6 +11,8 @@ from .m_u_records_to_parameters import (
     append_m_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
+from .pipeline import CTEPipeline
+from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
@@ -26,33 +28,41 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
-            cl._level_dict["tf_adjustment_column"] = None
+            # TODO: ComparisonLevel: manage access
+            cl._tf_adjustment_column = None
 
     settings_obj._blocking_rules_to_generate_predictions = [
         BlockingRule(f"l.{label_colname} = r.{label_colname}")
     ]
 
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
+
+    pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = block_using_rules_sqls(training_linker)
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    sql = compute_comparison_vector_values_sql(
+        settings_obj._columns_to_select_for_comparison_vector_values
+    )
 
-    sql = compute_comparison_vector_values_sql(settings_obj)
-
-    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+    pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, cast(1.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
-    training_linker._enqueue_sql(sql, "__splink__df_predict")
+    pipeline.enqueue_sql(sql, "__splink__df_predict")
 
-    sql = compute_new_parameters_sql(settings_obj)
-    training_linker._enqueue_sql(sql, "__splink__m_u_counts")
+    sql = compute_new_parameters_sql(
+        estimate_without_term_frequencies=False,
+        comparisons=settings_obj.comparisons,
+    )
+    pipeline.enqueue_sql(sql, "__splink__m_u_counts")
 
-    df_params = training_linker._execute_sql_pipeline([concat_with_tf])
+    df_params = training_linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
 
@@ -65,5 +75,8 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     for cc in original_settings_object.comparisons:
         for cl in cc._comparison_levels_excluding_null:
             append_m_probability_to_comparison_level_trained_probabilities(
-                cl, m_u_records_lookup, "estimate m from label column"
+                cl,
+                m_u_records_lookup,
+                cc.output_column_name,
+                "estimate m from label column",
             )

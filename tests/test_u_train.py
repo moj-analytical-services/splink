@@ -3,7 +3,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import splink.comparison_library as cl
 from splink.estimate_u import _proportion_sample_size_link_only
+from splink.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
 
 
@@ -22,7 +24,7 @@ def test_u_train(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
     df_linker = helper.convert_frame(df)
@@ -69,7 +71,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -85,9 +87,10 @@ def test_u_train_link_only(test_helpers, dialect):
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     WHERE source_dataset_l = source_dataset_r
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -125,7 +128,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.exact_match("name")],
+        "comparisons": [cl.ExactMatch("name")],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -146,9 +149,10 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -257,7 +261,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -271,9 +275,9 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -303,9 +307,9 @@ def test_u_train_multilink(test_helpers, dialect):
     WHERE source_dataset_l = source_dataset_r
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -332,7 +336,7 @@ def test_seed_u_outputs(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("first_name", 2)],
     }
 
     linker_1 = helper.Linker(df, settings, **helper.extra_linker_args())

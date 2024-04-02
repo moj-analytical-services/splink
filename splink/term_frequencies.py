@@ -11,6 +11,7 @@ from pandas import concat, cut
 
 from .charts import altair_or_json, load_chart_definition
 from .input_column import InputColumn
+from .pipeline import CTEPipeline
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -50,10 +51,7 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     for col in tf_cols:
         tbl = colname_to_tf_tablename(col)
-        if tbl in linker._intermediate_table_cache:
-            tbl = linker._intermediate_table_cache[tbl].physical_name
-        tf_col = col.tf_name
-        select_cols.append(f"{tbl}.{tf_col}")
+        select_cols.append(f"{tbl}.{col.tf_name}")
 
     select_cols.insert(0, "__splink__df_concat.*")
     select_cols_str = ", ".join(select_cols)
@@ -63,15 +61,9 @@ def _join_tf_to_input_df_sql(linker: Linker):
     left_joins = []
     for col in tf_cols:
         tbl = colname_to_tf_tablename(col)
-        if tbl in linker._intermediate_table_cache:
-            tbl = linker._intermediate_table_cache[tbl].physical_name
         sql = templ.format(tbl=tbl, col=col.name)
         left_joins.append(sql)
 
-    # left_joins = [
-    #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name)
-    #     for col in tf_cols
-    # ]
     left_joins_str = " ".join(left_joins)
 
     sql = f"""
@@ -94,7 +86,9 @@ def term_frequencies_from_concat_with_tf(input_column):
     return sql
 
 
-def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
+def compute_all_term_frequencies_sqls(
+    linker: Linker, pipeline: CTEPipeline
+) -> list[dict]:
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -107,10 +101,14 @@ def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
         ]
 
     sqls = []
+    cache = linker._intermediate_table_cache
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if tf_table_name not in linker._intermediate_table_cache:
+        if tf_table_name in cache:
+            tf_table = cache.get_with_logging(tf_table_name)
+            pipeline.append_input_dataframe(tf_table)
+        else:
             sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {"sql": sql, "output_table_name": tf_table_name}
             sqls.append(sql)
@@ -156,7 +154,7 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
     return tf_table
 
 
-def comparison_level_to_tf_chart_data(cl: dict):
+def comparison_level_to_tf_chart_data(cl: dict) -> dict:
     df = cl["df_tf"]
     df.columns = ["value", "tf"]
     df = df[df.value.notnull()]
@@ -196,8 +194,8 @@ def tf_adjustment_chart(
     linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
 ):
     # Data for chart
-    c = linker._settings_obj._get_comparison_by_output_column_name(col)
-    c = c._as_detailed_records
+    comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
+    comparison_records = comparison._as_detailed_records
 
     keys_to_retain = [
         "comparison_vector_value",
@@ -210,14 +208,14 @@ def tf_adjustment_chart(
     ]
 
     # Select levels with TF adjustments
-    c = [
+    comparison_records = [
         {k: cl[k] for k in cl.keys() if k in keys_to_retain}
-        for cl in c
+        for cl in comparison_records
         if cl["has_tf_adjustments"]
     ]
 
     # Add data ("df_tf") to each level
-    c = [
+    comparison_records = [
         dict(
             cl,
             **{
@@ -226,10 +224,10 @@ def tf_adjustment_chart(
                 ).as_pandas_dataframe()
             },
         )
-        for cl in c
+        for cl in comparison_records
     ]
 
-    c = [comparison_level_to_tf_chart_data(cl) for cl in c]
+    c = [comparison_level_to_tf_chart_data(cl) for cl in comparison_records]
     df = concat([cl["df_out"] for cl in c])
     # Filter values
     selected = False if not vals_to_include else df["value"].isin(vals_to_include)

@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 import logging
 import string
-from typing import TYPE_CHECKING, Dict, List, Set
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set
 
 import pandas as pd
 
+from .analyse_blocking import (
+    count_comparisons_from_blocking_rule_pre_filter_conditions,
+)
 from .blocking import BlockingRule
+from .blocking_rule_creator import BlockingRuleCreator
+from .blocking_rule_library import CustomRule, block_on
 from .input_column import InputColumn
 
 if TYPE_CHECKING:
@@ -62,30 +69,13 @@ def _generate_blocking_rule(
     """Generate a Splink blocking rule given a list of column names which
     are provided as as string"""
 
-    # TODO: Refactor in Splink4
-    dialect = linker._sql_dialect
-
-    module_mapping = {
-        "presto": "splink.athena.blocking_rule_library",
-        "duckdb": "splink.duckdb.blocking_rule_library",
-        "postgres": "splink.postgres.blocking_rule_library",
-        "spark": "splink.spark.blocking_rule_library",
-        "sqlite": "splink.sqlite.blocking_rule_library",
-    }
-
-    if dialect not in module_mapping:
-        raise ValueError(f"Unsupported SQL dialect: {dialect}")
-
-    module_name = module_mapping[dialect]
-    block_on_module = __import__(module_name, fromlist=["block_on"])
-    block_on = block_on_module.block_on
-
     if len(cols_as_string) == 0:
-        return block_on("1")
+        br: BlockingRuleCreator = CustomRule("1=1", linker._sql_dialect)
+    else:
 
-    br = block_on(cols_as_string)
+        br = block_on(*cols_as_string)
 
-    return br
+    return br.get_blocking_rule(linker._sql_dialect)
 
 
 def _search_tree_for_blocking_rules_below_threshold_count(
@@ -163,8 +153,9 @@ def _search_tree_for_blocking_rules_below_threshold_count(
         return results  # All fields included, meaning we're at a leaf so exit recursion
 
     br = _generate_blocking_rule(linker, current_combination)
-    comparison_count = (
-        linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
+
+    comparison_count = count_comparisons_from_blocking_rule_pre_filter_conditions(
+        linker, br
     )
 
     already_visited.add(frozenset(current_combination))
@@ -196,7 +187,9 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
 
 def find_blocking_rules_below_threshold_comparison_count(
-    linker: "Linker", max_comparisons_per_rule, column_expressions: List[str] = None
+    linker: "Linker",
+    max_comparisons_per_rule,
+    column_expressions: Optional[Sequence[str | InputColumn]] = None,
 ) -> pd.DataFrame:
     """
     Finds blocking rules which return a comparison count below a given threshold.
@@ -222,7 +215,7 @@ def find_blocking_rules_below_threshold_comparison_count(
         pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
     """
 
-    if not column_expressions:
+    if column_expressions is None:
         column_expressions = linker._input_columns(
             include_unique_id_col_names=False,
             include_additional_columns_to_retain=False,

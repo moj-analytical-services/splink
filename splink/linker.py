@@ -1,17 +1,19 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
-import hashlib
 import json
 import logging
 import os
-import re
-import time
-import warnings
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+from typing import Dict, Optional, Union, List
 
-import sqlglot
+from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
+from .vertically_concatenate import (
+    enqueue_df_concat_with_tf,
+    compute_df_concat_with_tf,
+    enqueue_df_concat,
+)
 
 from splink.input_column import InputColumn
 from splink.settings_validation.log_invalid_columns import (
@@ -22,7 +24,7 @@ from splink.settings_validation.valid_types import (
     _validate_dialect,
     log_comparison_errors,
 )
-
+from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
@@ -30,7 +32,7 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
-    count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
+    count_comparisons_from_blocking_rule_pre_filter_conditions,
     cumulative_comparisons_generated_by_blocking_rules,
     number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
 )
@@ -41,6 +43,7 @@ from .blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from .blocking_rule_creator import BlockingRuleCreator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
@@ -67,9 +70,11 @@ from .connected_components import (
     solve_connected_components,
 )
 from .edge_metrics import compute_edge_metrics
+
+from .database_api import DatabaseAPI
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
-from .exceptions import SplinkDeprecated, SplinkException
+from .exceptions import SplinkException
 from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
@@ -83,7 +88,6 @@ from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
-from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
@@ -94,16 +98,17 @@ from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
     ensure_is_list,
-    ensure_is_tuple,
-    parse_duration,
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
-from .pipeline import SQLPipeline
-from .predict import predict_from_comparison_vectors_sqls
+from .pipeline import CTEPipeline
+from .predict import (
+    predict_from_comparison_vectors_sqls_using_settings,
+    predict_from_comparison_vectors_sqls,
+)
 from .profile_data import profile_columns
-from .settings import Settings
+from .settings_creator import SettingsCreator
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -112,7 +117,6 @@ from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
     _join_tf_to_input_df_sql,
     colname_to_tf_tablename,
-    compute_all_term_frequencies_sqls,
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
@@ -142,8 +146,8 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict | Path,
-        accepted_df_dtypes,
+        settings: SettingsCreator | dict | Path | str,
+        database_api: DatabaseAPI,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
@@ -152,48 +156,26 @@ class Linker:
         holds the data linkage model.
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                Dedupe
-                ```py
-                df = pd.read_csv("data_to_dedupe.csv")
-                linker = DuckDBLinker(df, settings_dict)
-                ```
-                Link
-                ```py
-                df_1 = pd.read_parquet("table_1/")
-                df_2 = pd.read_parquet("table_2/")
-                linker = DuckDBLinker(
-                    [df_1, df_2],
-                    settings_dict,
-                    input_table_aliases=["customers", "contact_center_callers"]
-                    )
-                ```
-                Dedupe with a pre-trained model read from a json file
-                ```py
-                df = pd.read_csv("data_to_dedupe.csv")
-                linker = DuckDBLinker(df, "model.json")
-                ```
-            === ":simple-apachespark: Spark"
-                Dedupe
-                ```py
-                df = spark.read.csv("data_to_dedupe.csv")
-                linker = SparkLinker(df, settings_dict)
-                ```
-                Link
-                ```py
-                df_1 = spark.read.parquet("table_1/")
-                df_2 = spark.read.parquet("table_2/")
-                linker = SparkLinker(
-                    [df_1, df_2],
-                    settings_dict,
-                    input_table_aliases=["customers", "contact_center_callers"]
-                    )
-                ```
-                Dedupe with a pre-trained model read from a json file
-                ```py
-                df = spark.read.csv("data_to_dedupe.csv")
-                linker = SparkLinker(df, "model.json")
-                ```
+
+            Dedupe
+            ```py
+            linker = Linker(df, settings_dict, db_api)
+            ```
+            Link
+            ```py
+            df_1 = pd.read_parquet("table_1/")
+            df_2 = pd.read_parquet("table_2/")
+            linker = Linker(
+                [df_1, df_2],
+                settings_dict,
+                input_table_aliases=["customers", "contact_center_callers"]
+                )
+            ```
+            Dedupe with a pre-trained model read from a json file
+            ```py
+            df = pd.read_csv("data_to_dedupe.csv")
+            linker = Linker(df, "model.json")
+            ```
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
@@ -223,23 +205,44 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self._pipeline = SQLPipeline()
+        self.db_api = database_api
 
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
+        # TODO: temp hack for compat
+        self._intermediate_table_cache: CacheDictWithLogging = (
+            self.db_api._intermediate_table_cache
+        )
 
-        homogenised_tables, homogenised_aliases = self._register_input_tables(
-            input_table_or_tables,
+        # Turn into a creator
+        if not isinstance(settings, SettingsCreator):
+            settings_creator = SettingsCreator.from_path_or_dict(settings)
+        else:
+            settings_creator = settings
+
+        # Deal with uuid
+        if settings_creator.linker_uid is None:
+            settings_creator.linker_uid = ascii_uid(8)
+
+        # Do we trust the dialect set in the settings dict
+        # or overwrite it with the db api dialect?
+        # Maybe overwrite it here and incompatibilities have to be dealt with
+        # by comparisons/ blocking rules etc??
+        self._settings_obj = settings_creator.get_settings(
+            database_api.sql_dialect.name
+        )
+
+        # TODO: Add test of what happens if the db_api is for a different backend
+        # to the sql_dialect set in the settings dict
+        input_tables = ensure_is_list(input_table_or_tables)
+        input_tables = self.db_api.process_input_tables(input_tables)
+
+        self._input_tables_dict = self._register_input_tables(
+            input_tables,
             input_table_aliases,
-            accepted_df_dtypes,
         )
 
-        self._input_tables_dict = self._get_input_tables_dict(
-            homogenised_tables, homogenised_aliases
-        )
-
-        self._setup_settings_objs(deepcopy(settings_dict), validate_settings)
-
-        self._em_training_sessions = []
+        self._validate_input_dfs()
+        self._validate_settings(validate_settings)
+        self._em_training_sessions: list[EMTrainingSession] = []
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -301,7 +304,9 @@ class Linker:
 
         remove_columns = []
         if not include_unique_id_col_names:
-            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+            remove_columns.extend(
+                self._settings_obj.column_info_settings.unique_id_input_columns
+            )
         if not include_additional_columns_to_retain:
             remove_columns.extend(self._settings_obj._additional_columns_to_retain)
 
@@ -312,35 +317,19 @@ class Linker:
 
     @property
     def _source_dataset_column_already_exists(self):
-        if self._settings_obj_ is None:
-            return False
         input_cols = [c.unquote().name for c in self._input_columns()]
-        return self._settings_obj._source_dataset_column_name in input_cols
+        return (
+            self._settings_obj.column_info_settings.source_dataset_column_name
+            in input_cols
+        )
 
     @property
     def _cache_uid(self):
-        if getattr(self, "_settings_dict", None):
-            return self._settings_obj._cache_uid
-        else:
-            return self._cache_uid_no_settings
+        return self._settings_obj._cache_uid
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if getattr(self, "_settings_dict", None):
-            self._settings_obj._cache_uid = value
-        else:
-            self._cache_uid_no_settings = value
-
-    @property
-    def _settings_obj(self) -> Settings:
-        if self._settings_obj_ is None:
-            raise ValueError(
-                "You did not provide a settings dictionary when you "
-                "created the linker.  To continue, you need to provide a settings "
-                "dictionary using the `load_settings()` method on your linker "
-                "object. i.e. linker.load_settings(settings_dict)"
-            )
-        return self._settings_obj_
+        self._settings_obj._cache_uid = value
 
     @property
     def _input_tablename_l(self):
@@ -413,91 +402,68 @@ class Linker:
         else:
             return False
 
+    # convenience wrappers:
+    @property
+    def debug_mode(self):
+        return self.db_api.debug_mode
+
+    @debug_mode.setter
+    def debug_mode(self, value: bool):
+        self.db_api.debug_mode = value
+
+    # TODO: rename these!
     @property
     def _sql_dialect(self):
-        if self._sql_dialect_ is None:
-            raise NotImplementedError(
-                f"No SQL dialect set on object of type {type(self)}. "
-                "Did you make sure to create a dialect-specific Linker?"
-            )
-        return self._sql_dialect_
+        return self.db_api.sql_dialect.name
+
+    @property
+    def _sql_dialect_object(self):
+        return self.db_api.sql_dialect
 
     @property
     def _infinity_expression(self):
-        raise NotImplementedError(
-            f"infinity sql expression not available for {type(self)}"
-        )
+        return self._sql_dialect_object.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
+        return self._sql_dialect_object.random_sample_sql(
+            proportion, sample_size, seed=seed, table=table, unique_id=unique_id
+        )
 
-    def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
-        # 'homogenised' means all entries are strings representing tables
-        homogenised_tables = []
-        homogenised_aliases = []
-        accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
+    def _register_input_tables(
+        self, input_tables, input_aliases
+    ) -> Dict[str, SplinkDataFrame]:
+        if input_aliases is None:
+            input_table_aliases = [
+                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
+            ]
+            overwrite = True
+        else:
+            input_table_aliases = ensure_is_list(input_aliases)
+            overwrite = False
 
-        existing_tables = []
-        for alias in input_aliases:
-            # Check if alias is a string (indicating a table name) and that it is not
-            # a file path.
-            if not isinstance(alias, str) or re.match(pattern=r".*", string=alias):
-                continue
-            exists = self._table_exists_in_database(alias)
-            if exists:
-                existing_tables.append(f"'{alias}'")
-        if existing_tables:
-            input_tables = ", ".join(existing_tables)
-            raise ValueError(
-                f"Table(s): {input_tables} already exists in database. "
-                "Please remove or rename it/them before retrying"
-            )
-
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-            if isinstance(alias, accepted_df_dtypes):
-                alias = f"__splink__input_table_{i}"
-
-            if isinstance(table, accepted_df_dtypes):
-                self._table_registration(table, alias)
-                table = alias
-
-            homogenised_tables.append(table)
-            homogenised_aliases.append(alias)
-
-        return homogenised_tables, homogenised_aliases
-
-    def _setup_settings_objs(self, settings_dict, validate_settings: bool = True):
-        # Always sets a default cache uid -> _cache_uid_no_settings
-        self._cache_uid = ascii_uid(8)
-
-        if settings_dict is None:
-            self._settings_obj_ = None
-            return
-
-        if not isinstance(settings_dict, (str, dict)):
-            raise ValueError(
-                "Invalid settings object supplied. Ensure this is either "
-                "None, a dictionary or a filepath to a settings object saved "
-                "as a json file."
-            )
-
-        self.load_settings(settings_dict, validate_settings)
+        return self.db_api.register_multiple_tables(
+            input_tables, input_table_aliases, overwrite
+        )
 
     def _check_for_valid_settings(self):
-        if (
-            # no settings to check
-            self._settings_obj_ is None
-            or
-            # raw tables don't yet exist in db
-            not hasattr(self, "_input_tables_dict")
-        ):
-            return False
-        else:
-            return True
+        # raw tables don't yet exist in db
+        return hasattr(self, "_input_tables_dict")
+
+    def _validate_settings_components(self, settings_dict):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+
+        log_comparison_errors(
+            # null if not in dict - check using value is ignored
+            settings_dict.get("comparisons", None),
+            self._sql_dialect,
+        )
 
     def _validate_settings(self, validate_settings):
+        # TODO: restore logic
+        return
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
@@ -519,192 +485,18 @@ class Linker:
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
-    def _initialise_df_concat(self, materialise=False):
-        cache = self._intermediate_table_cache
-        concat_df = None
-        if "__splink__df_concat" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat")
-        elif "__splink__df_concat_with_tf" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat_with_tf")
-            concat_df.templated_name = "__splink__df_concat"
-        else:
-            if materialise:
-                # Clear the pipeline if we are materialising
-                # There's no reason not to do this, since when
-                # we execute the pipeline, it'll get cleared anyway
-                self._pipeline.reset()
-            sql = vertically_concatenate_sql(self)
-            self._enqueue_sql(sql, "__splink__df_concat")
-            if materialise:
-                concat_df = self._execute_sql_pipeline()
-                cache["__splink__df_concat"] = concat_df
-
-        return concat_df
-
-    def _initialise_df_concat_with_tf(self, materialise=True):
-        cache = self._intermediate_table_cache
-        nodes_with_tf = None
-        if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-
-        else:
-            # In duckdb, calls to random() in a CTE pipeline cause problems:
-            # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
-            if self._settings_obj.salting_required:
-                materialise = True
-
-            if materialise:
-                # Clear the pipeline if we are materialising
-                # There's no reason not to do this, since when
-                # we execute the pipeline, it'll get cleared anyway
-                self._pipeline.reset()
-
-            sql = vertically_concatenate_sql(self)
-            self._enqueue_sql(sql, "__splink__df_concat")
-
-            sqls = compute_all_term_frequencies_sqls(self)
-            for sql in sqls:
-                self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-            if materialise:
-                nodes_with_tf = self._execute_sql_pipeline()
-                cache["__splink__df_concat_with_tf"] = nodes_with_tf
-
-        return nodes_with_tf
-
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
     ) -> SplinkDataFrame:
         """Create a SplinkDataframe from a table in the underlying database called
         `physical_name`.
-
         Associate a `templated_name` with this table, which signifies the purpose
         or 'meaning' of this table to splink. (e.g. `__splink__df_blocked`)
-
         Args:
             templated_name (str): The purpose of the table to Splink
             physical_name (str): The name of the table in the underlying databse
         """
-        raise NotImplementedError(
-            "_table_to_splink_dataframe not implemented on this linker"
-        )
-
-    def _enqueue_sql(self, sql, output_table_name):
-        """Add sql to the current pipeline, but do not execute the pipeline."""
-        self._pipeline.enqueue_sql(sql, output_table_name)
-
-    def _execute_sql_pipeline(
-        self,
-        input_dataframes: list[SplinkDataFrame] = [],
-        use_cache=True,
-    ) -> SplinkDataFrame:
-        """Execute the SQL queued in the current pipeline as a single statement
-        e.g. `with a as (), b as , c as (), select ... from c`, then execute the
-        pipeline, returning the resultant table as a SplinkDataFrame
-
-        Args:
-            input_dataframes (List[SplinkDataFrame], optional): A 'starting point' of
-                SplinkDataFrames if needed. Defaults to [].
-            use_cache (bool, optional): If true, look at whether the SQL pipeline has
-                been executed before, and if so, use the existing result. Defaults to
-                True.
-
-        Returns:
-            SplinkDataFrame: An abstraction representing the table created by the sql
-                pipeline
-        """
-
-        if not self.debug_mode:
-            sql_gen = self._pipeline._generate_pipeline(input_dataframes)
-
-            output_tablename_templated = self._pipeline.queue[-1].output_table_name
-
-            try:
-                dataframe = self._sql_to_splink_dataframe_checking_cache(
-                    sql_gen,
-                    output_tablename_templated,
-                    use_cache,
-                )
-            except Exception as e:
-                raise e
-            finally:
-                self._pipeline.reset()
-
-            return dataframe
-        else:
-            # In debug mode, we do not pipeline the sql and print the
-            # results of each part of the pipeline
-            for task in self._pipeline._generate_pipeline_parts(input_dataframes):
-                start_time = time.time()
-                output_tablename = task.output_table_name
-                sql = task.sql
-                print("------")  # noqa: T201
-                print(  # noqa: T201
-                    f"--------Creating table: {output_tablename}--------"
-                )
-
-                dataframe = self._sql_to_splink_dataframe_checking_cache(
-                    sql,
-                    output_tablename,
-                    use_cache=False,
-                )
-                run_time = parse_duration(time.time() - start_time)
-                print(f"Step ran in: {run_time}")  # noqa: T201
-            self._pipeline.reset()
-            return dataframe
-
-    def _execute_sql_against_backend(
-        self, sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """Execute a single sql SELECT statement, returning a SplinkDataFrame.
-
-        Subclasses should implement this, using _log_and_run_sql_execution() within
-        their implementation, maybe doing some SQL translation or other prep/cleanup
-        work before/after.
-        """
-        raise NotImplementedError(
-            f"_execute_sql_against_backend not implemented for {type(self)}"
-        )
-
-    def _run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """**Actually** execute the sql against the backend database.
-
-        This is intended to be implemented by a subclass, but not actually called
-        directly. Instead, call _log_and_run_sql_execution, and that will call
-        this method.
-
-        This could return something, or not. It's up to the Linker subclass to decide.
-        """
-        raise NotImplementedError(
-            f"_run_sql_execution not implemented for {type(self)}"
-        )
-
-    def _log_and_run_sql_execution(
-        self, final_sql: str, templated_name: str, physical_name: str
-    ) -> SplinkDataFrame:
-        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(final_sql))
-        try:
-            return self._run_sql_execution(final_sql, templated_name, physical_name)
-        except Exception as e:
-            # Parse our SQL through sqlglot to pretty print
-            try:
-                final_sql = sqlglot.parse_one(
-                    final_sql,
-                    read=self._sql_dialect,
-                ).sql(pretty=True)
-                # if sqlglot produces any errors, just report the raw SQL
-            except Exception:
-                pass
-
-            raise SplinkException(
-                f"Error executing the following sql for table "
-                f"`{templated_name}`({physical_name}):\n{final_sql}"
-                f"\n\nError was: {e}"
-            ) from e
+        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
 
     def register_table(self, input, table_name, overwrite=False):
         """
@@ -733,31 +525,7 @@ class Linker:
                 pipeline
         """
 
-        raise NotImplementedError(f"register_table not implemented for {type(self)}")
-
-    def _table_registration(self, input, table_name):
-        """
-        Register a table to your backend database, to be used in one of the
-        splink methods, or simply to allow querying.
-
-        Tables can be of type: dictionary, record level dictionary,
-        pandas dataframe, pyarrow table and in the spark case, a spark df.
-
-        This function is contains no overwrite functionality, so it can be used
-        where we don't want to allow for overwriting.
-
-        Args:
-            input: The data you wish to register. This can be either a dictionary,
-                pandas dataframe, pyarrow table or a spark dataframe.
-            table_name (str): The name you wish to assign to the table.
-
-        Returns:
-            None
-        """
-
-        raise NotImplementedError(
-            f"_table_registration not implemented for {type(self)}"
-        )
+        return self.db_api.register_table(input, table_name, overwrite)
 
     def query_sql(self, sql, output_type="pandas"):
         """
@@ -765,29 +533,10 @@ class Linker:
         the resulting output.
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                linker = DuckDBLinker(df, settings)
-                df_predict = linker.predict()
-                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                linker = SparkLinker(df, settings)
-                df_predict = linker.predict()
-                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
-                ```
-            === ":simple-amazonaws: Athena"
-                ```py
-                linker = AthenaLinker(df, settings)
-                df_predict = linker.predict()
-                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
-                ```
-            === ":simple-sqlite: SQLite"
-                ```py
-                linker = SQLiteLinker(df, settings)
-                df_predict = linker.predict()
-                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+            ```py
+            linker = Linker(df, settings, db_api)
+            df_predict = linker.predict()
+            linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
             ```
 
         Args:
@@ -798,10 +547,10 @@ class Linker:
 
         output_tablename_templated = "__splink__df_sql_query"
 
-        splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
-            sql,
-            output_tablename_templated,
-            use_cache=False,
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, output_tablename_templated)
+        splink_dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         if output_type in ("splink_df", "splinkdf"):
@@ -817,89 +566,6 @@ class Linker:
                 "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
             )
 
-    def _sql_to_splink_dataframe_checking_cache(
-        self,
-        sql,
-        output_tablename_templated,
-        use_cache=True,
-    ) -> SplinkDataFrame:
-        """Execute sql, or if identical sql has been run before, return cached results.
-
-        This function
-            - is used by _execute_sql_pipeline to to execute SQL
-            - or can be used directly if you have a single SQL statement that's
-              not in a pipeline
-
-        Return a SplinkDataFrame representing the results of the SQL
-        """
-
-        to_hash = (sql + self._cache_uid).encode("utf-8")
-        hash = hashlib.sha256(to_hash).hexdigest()[:9]
-        # Ensure hash is valid sql table name
-        table_name_hash = f"{output_tablename_templated}_{hash}"
-
-        if use_cache:
-            # Certain tables are put in the cache using their templated_name
-            # An example is __splink__df_concat_with_tf
-            # These tables are put in the cache when they are first calculated
-            # e.g. with _initialise_df_concat_with_tf()
-            # But they can also be put in the cache manually using
-            # e.g. register_table_input_nodes_concat_with_tf()
-
-            # Look for these 'named' tables in the cache prior
-            # to looking for the hashed version
-
-            if output_tablename_templated in self._intermediate_table_cache:
-                return self._intermediate_table_cache.get_with_logging(
-                    output_tablename_templated
-                )
-
-            if table_name_hash in self._intermediate_table_cache:
-                return self._intermediate_table_cache.get_with_logging(table_name_hash)
-
-            # If not in cache, fall back on checking the database
-            if self._table_exists_in_database(table_name_hash):
-                logger.debug(
-                    f"Found cache for {output_tablename_templated} "
-                    f"in database using table name with physical name {table_name_hash}"
-                )
-                return self._table_to_splink_dataframe(
-                    output_tablename_templated, table_name_hash
-                )
-
-        if self.debug_mode:
-            print(sql)  # noqa: T201
-            splink_dataframe = self._execute_sql_against_backend(
-                sql,
-                output_tablename_templated,
-                output_tablename_templated,
-            )
-
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
-
-            df_pd = splink_dataframe.as_pandas_dataframe()
-            try:
-                from IPython.display import display
-
-                display(df_pd)
-            except ModuleNotFoundError:
-                print(df_pd)  # noqa: T201
-
-        else:
-            splink_dataframe = self._execute_sql_against_backend(
-                sql, output_tablename_templated, table_name_hash
-            )
-            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
-
-        splink_dataframe.created_by_splink = True
-        splink_dataframe.sql_used_to_create = sql
-
-        physical_name = splink_dataframe.physical_name
-
-        self._intermediate_table_cache[physical_name] = splink_dataframe
-
-        return splink_dataframe
-
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
         of the main linker e.g. setting parameters on the copy will not affect the
@@ -907,38 +573,9 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_settings = deepcopy(self._settings_obj_)
-        new_linker._settings_obj_ = new_settings
+        new_settings = deepcopy(self._settings_obj)
+        new_linker._settings_obj = new_settings
         return new_linker
-
-    def _ensure_aliases_populated_and_is_list(
-        self, input_table_or_tables, input_table_aliases
-    ):
-        if input_table_aliases is None:
-            input_table_aliases = input_table_or_tables
-
-        input_table_aliases = ensure_is_list(input_table_aliases)
-
-        return input_table_aliases
-
-    def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
-        input_table_or_tables = ensure_is_list(input_table_or_tables)
-
-        input_table_aliases = self._ensure_aliases_populated_and_is_list(
-            input_table_or_tables, input_table_aliases
-        )
-
-        d = {}
-        for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
-            d[table_alias] = self._table_to_splink_dataframe(table_alias, table_name)
-        return d
-
-    def _get_input_tf_dict(self, df_dict):
-        d = {}
-        for df_name, df_value in df_dict.items():
-            renamed = colname_to_tf_tablename(df_name)
-            d[renamed] = self._table_to_splink_dataframe(renamed, df_value)
-        return d
 
     def _predict_warning(self):
         if not self._settings_obj._is_fully_trained:
@@ -955,11 +592,6 @@ class Linker:
 
             logger.warning(warn_message)
 
-    def _table_exists_in_database(self, table_name):
-        raise NotImplementedError(
-            f"table_exists_in_database not implemented for {type(self)}"
-        )
-
     def _validate_input_dfs(self):
         if not hasattr(self, "_input_tables_dict"):
             # This is only triggered where a user loads a settings dict from a
@@ -969,13 +601,12 @@ class Linker:
         for df in self._input_tables_dict.values():
             df.validate()
 
-        if self._settings_obj_ is not None:
-            if self._settings_obj._link_type == "dedupe_only":
-                if len(self._input_tables_dict) > 1:
-                    raise ValueError(
-                        'If link_type = "dedupe only" then input tables must contain '
-                        "only a single input table",
-                    )
+        if self._settings_obj._link_type == "dedupe_only":
+            if len(self._input_tables_dict) > 1:
+                raise ValueError(
+                    'If link_type = "dedupe only" then input tables must contain '
+                    "only a single input table",
+                )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
         recip_prop_matches_estimates = []
@@ -989,10 +620,10 @@ class Linker:
         )
         for em_training_session in self._em_training_sessions:
             training_lambda = (
-                em_training_session._settings_obj._probability_two_random_records_match
+                em_training_session.core_model_settings.probability_two_random_records_match
             )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
-            reverse_levels = (
+            reverse_level_infos = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
             )
 
@@ -1004,10 +635,13 @@ class Linker:
                 f"{training_lambda:,.3f}",
             )
 
-            for reverse_level in reverse_levels:
+            for reverse_level_info in reverse_level_infos:
                 # Get comparison level on current settings obj
+                # TODO: do we need this dance? We already have the level + comparison
+                # maybe they are different copies with different values?
+                reverse_level = reverse_level_info["level"]
                 cc = self._settings_obj._get_comparison_by_output_column_name(
-                    reverse_level.comparison._output_column_name
+                    reverse_level_info["comparison"].output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
@@ -1021,7 +655,7 @@ class Linker:
 
                 logger.log(
                     15,
-                    f"Reversing comparison level {cc._output_column_name}"
+                    f"Reversing comparison level {cc.output_column_name}"
                     f" using bayes factor {bf:,.3f}",
                 )
 
@@ -1063,9 +697,7 @@ class Linker:
                     cl.m_probability = cl._trained_m_median
 
     def delete_tables_created_by_splink_from_db(self):
-        for splink_df in list(self._intermediate_table_cache.values()):
-            if splink_df.created_by_splink:
-                splink_df.drop_table_from_database_and_remove_from_cache()
+        self.db_api.delete_tables_created_by_splink_from_db()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -1091,149 +723,6 @@ class Linker:
                 "Please re-run your linkage with it set to True."
             )
 
-    def load_settings(
-        self,
-        settings_dict: dict | str | Path,
-        validate_settings: str = True,
-    ):
-        """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation. This can either be in the form
-        of a settings dictionary or a filepath to a json file containing a
-        valid settings dictionary.
-
-        Examples:
-            ```py
-            linker = DuckDBLinker(df)
-            linker.profile_columns(["first_name", "surname"])
-            linker.load_settings(settings_dict, validate_settings=True)
-            ```
-
-        Args:
-            settings_dict (dict | str | Path): A Splink settings dictionary or
-                the path to your settings json file.
-            validate_settings (bool, optional): When True, check your settings
-                dictionary for any potential errors that may cause splink to fail.
-        """
-
-        if not isinstance(settings_dict, dict):
-            p = Path(settings_dict)
-            settings_dict = json.loads(p.read_text())
-
-        # Store the cache ID so it can be reloaded after cache invalidation
-        cache_uid = self._cache_uid
-
-        # Invalidate the cache if anything currently exists. If the settings are
-        # changing, our charts, tf tables, etc may need changing.
-        self.invalidate_cache()
-
-        self._settings_dict = settings_dict  # overwrite or add
-
-        # Get the SQL dialect from settings_dict or use the default
-        sql_dialect = settings_dict.get("sql_dialect", self._sql_dialect)
-        settings_dict["sql_dialect"] = sql_dialect
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
-
-        # Check the user's comparisons (if they exist)
-        log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
-        self._settings_obj_ = Settings(settings_dict)
-        # Check the final settings object
-        self._validate_settings(validate_settings)
-
-    def load_model(self, model_path: Path):
-        """
-        Load a pre-defined model from a json file into the linker.
-        This is intended to be used with the output of
-        `save_model_to_json()`.
-
-        Examples:
-            ```py
-            linker.load_model("my_settings.json")
-            ```
-
-        Args:
-            model_path (Path): A path to your model settings json file.
-        """
-
-        return self.load_settings(model_path)
-
-    def initialise_settings(self, settings_dict: dict):
-        """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or `load_model` when loading
-         a pre-trained model.*
-
-        Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                linker = DuckDBLinker(df)
-                linker.profile_columns(["first_name", "surname"])
-                linker.initialise_settings(settings_dict)
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                linker = SparkLinker(df)
-                linker.profile_columns(["first_name", "surname"])
-                linker.initialise_settings(settings_dict)
-                ```
-            === ":simple-amazonaws: Athena"
-                ```py
-                linker = AthenaLinker(df)
-                linker.profile_columns(["first_name", "surname"])
-                linker.initialise_settings(settings_dict)
-                ```
-            === ":simple-sqlite: SQLite"
-                ```py
-                linker = SQLiteLinker(df)
-                linker.profile_columns(["first_name", "surname"])
-                linker.initialise_settings(settings_dict)
-                ```
-        Args:
-            settings_dict (dict): A Splink settings dictionary
-        """
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
-        self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
-        self._validate_input_dfs()
-        self._validate_dialect()
-
-        warnings.warn(
-            "`initialise_settings` is deprecated. We advise you use "
-            "`linker.load_settings()` when loading in your settings or a previously "
-            "trained model.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
-
-    def load_settings_from_json(self, in_path: str | Path):
-        """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or `load_model` when loading
-         a pre-trained model.*
-
-        Load settings from a `.json` file.
-        This `.json` file would usually be the output of
-        `linker.save_model_to_json()`
-        Examples:
-            ```py
-            linker.load_settings_from_json("my_settings.json")
-            ```
-        Args:
-            in_path (str): Path to settings json file
-        """
-        self.load_settings(in_path)
-
-        warnings.warn(
-            "`load_settings_from_json` is deprecated. We advise you use "
-            "`linker.load_settings()` when loading in your settings or a previously "
-            "trained model.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
-
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
 
@@ -1242,42 +731,25 @@ class Linker:
         various models without having to recompute term frequency tables each time
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                Real time linkage
-                ```py
-                linker = DuckDBLinker(df)
-                linker.load_settings("saved_settings.json")
-                linker.compute_tf_table("surname")
-                linker.compare_two_records(record_left, record_right)
-                ```
-                Pre-computed term frequency tables
-                ```py
-                linker = DuckDBLinker(df)
-                df_first_name_tf = linker.compute_tf_table("first_name")
-                df_first_name_tf.write.parquet("folder/first_name_tf")
-                >>>
-                # On subsequent data linking job, read this table rather than recompute
-                df_first_name_tf = pd.read_parquet("folder/first_name_tf")
-                df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
-                ```
-            === ":simple-apachespark: Spark"
-                Real time linkage
-                ```py
-                linker = SparkLinker(df)
-                linker.load_settings("saved_settings.json")
-                linker.compute_tf_table("surname")
-                linker.compare_two_records(record_left, record_right)
-                ```
-                Pre-computed term frequency tables
-                ```py
-                linker = SparkLinker(df)
-                df_first_name_tf = linker.compute_tf_table("first_name")
-                df_first_name_tf.write.parquet("folder/first_name_tf")
-                >>>
-                # On subsequent data linking job, read this table rather than recompute
-                df_first_name_tf = spark.read.parquet("folder/first_name_tf")
-                df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
-                ```
+
+            Real time linkage
+            ```py
+            linker = Linker(df, db_api)
+            linker.load_settings("saved_settings.json")
+            linker.compute_tf_table("surname")
+            linker.compare_two_records(record_left, record_right)
+            ```
+            Pre-computed term frequency tables
+            ```py
+            linker = Linker(df, db_api)
+            df_first_name_tf = linker.compute_tf_table("first_name")
+            df_first_name_tf.write.parquet("folder/first_name_tf")
+            >>>
+            # On subsequent data linking job, read this table rather than recompute
+            df_first_name_tf = pd.read_parquet("folder/first_name_tf")
+            df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+            ```
+
 
         Args:
             column_name (str): The column name in the input table
@@ -1286,7 +758,11 @@ class Linker:
             SplinkDataFrame: The resultant table as a splink data frame
         """
 
-        input_col = InputColumn(column_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            column_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
@@ -1297,24 +773,23 @@ class Linker:
         if tf_tablename in cache:
             tf_df = cache.get_with_logging(tf_tablename)
         elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-            self._pipeline.reset()
+
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline = CTEPipeline([nodes_with_tf])
             # If our df_concat_with_tf table already exists, use backwards inference to
             # find a given tf table
             colname = InputColumn(column_name)
             sql = term_frequencies_from_concat_with_tf(colname)
-            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
-            tf_df = self._execute_sql_pipeline([cache["__splink__df_concat_with_tf"]])
+            pipeline.enqueue_sql(sql, colname_to_tf_tablename(colname))
+
+            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
             self._intermediate_table_cache[tf_tablename] = tf_df
         else:
-            # Clear the pipeline if we are materialising
-            self._pipeline.reset()
-            df_concat = self._initialise_df_concat()
-            input_dfs = []
-            if df_concat:
-                input_dfs.append(df_concat)
+            pipeline = CTEPipeline()
+            pipeline = enqueue_df_concat(self, pipeline)
             sql = term_frequencies_for_single_column_sql(input_col)
-            self._enqueue_sql(sql, tf_tablename)
-            tf_df = self._execute_sql_pipeline(input_dfs)
+            pipeline.enqueue_sql(sql, tf_tablename)
+            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
             self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
@@ -1331,96 +806,53 @@ class Linker:
         (false negatives).
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                from splink.duckdb.linker import DuckDBLinker
 
-                settings = {
-                    "link_type": "dedupe_only",
-                    "blocking_rules_to_generate_predictions": [
-                        "l.first_name = r.first_name",
-                        "l.surname = r.surname",
-                    ],
-                    "comparisons": []
-                }
-                >>>
-                linker = DuckDBLinker(df, settings)
-                df = linker.deterministic_link()
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                from splink.spark.linker import SparkLinker
+            ```py
+            from splink.linker import Linker
+            from splink.duckdb.database_api import DuckDBAPI
 
-                settings = {
-                    "link_type": "dedupe_only",
-                    "blocking_rules_to_generate_predictions": [
-                        "l.first_name = r.first_name",
-                        "l.surname = r.surname",
-                    ],
-                    "comparisons": []
-                }
-                >>>
-                linker = SparkLinker(df, settings)
-                df = linker.deterministic_link()
-                ```
-            === ":simple-amazonaws: Athena"
-                ```py
-                from splink.athena.linker import AthenaLinker
+            db_api = DuckDBAPI()
 
-                settings = {
-                    "link_type": "dedupe_only",
-                    "blocking_rules_to_generate_predictions": [
-                        "l.first_name = r.first_name",
-                        "l.surname = r.surname",
-                    ],
-                    "comparisons": []
-                }
-                >>>
-                linker = AthenaLinker(df, settings)
-                df = linker.deterministic_link()
-                ```
-            === ":simple-sqlite: SQLite"
-                ```py
-                from splink.sqlite.linker import SQLiteLinker
+            settings = {
+                "link_type": "dedupe_only",
+                "blocking_rules_to_generate_predictions": [
+                    "l.first_name = r.first_name",
+                    "l.surname = r.surname",
+                ],
+                "comparisons": []
+            }
+            >>>
+            linker = Linker(df, settings, db_api)
+            df = linker.deterministic_link()
+            ```
 
-                settings = {
-                    "link_type": "dedupe_only",
-                    "blocking_rules_to_generate_predictions": [
-                        "l.first_name = r.first_name",
-                        "l.surname = r.surname",
-                    ],
-                    "comparisons": []
-                }
-                >>>
-                linker = SQLiteLinker(df, settings)
-                df = linker.deterministic_link()
-                ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
-
+        pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
         self._deterministic_link_mode = True
 
-        concat_with_tf = self._initialise_df_concat_with_tf()
+        df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
+        pipeline = CTEPipeline([df_concat_with_tf])
+
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+
         return deterministic_link_df
 
-    def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, seed: int = None, *, target_rows=None
-    ):
+    def estimate_u_using_random_sampling(self, max_pairs: int = None, seed: int = None):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -1456,24 +888,6 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-        # TODO: Remove this compatibility code in a future release once we drop
-        # support for "target_rows". Deprecation warning added in 3.7.0
-        if max_pairs is not None and target_rows is not None:
-            # user supplied both
-            raise TypeError("Just use max_pairs")
-        elif max_pairs is not None:
-            # user is doing it correctly
-            pass
-        elif target_rows is not None:
-            # user is using deprecated argument
-            warnings.warn(
-                "target_rows is deprecated; use max_pairs",
-                SplinkDeprecated,
-                stacklevel=2,
-            )
-            max_pairs = target_rows
-        else:
-            raise TypeError("Missing argument max_pairs")
 
         estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
@@ -1513,8 +927,10 @@ class Linker:
         """
 
         # Ensure this has been run on the main linker so that it can be used by
-        # training linked when it checks the cache
-        self._initialise_df_concat_with_tf()
+        # training linker when it checks the cache
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(self, pipeline)
+
         estimate_m_values_from_label_column(
             self,
             self._input_tables_dict,
@@ -1526,7 +942,7 @@ class Linker:
 
     def estimate_parameters_using_expectation_maximisation(
         self,
-        blocking_rule: str,
+        blocking_rule: Union[str, BlockingRuleCreator],
         comparisons_to_deactivate: list[str | Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
@@ -1584,8 +1000,8 @@ class Linker:
             ```
 
         Args:
-            blocking_rule (BlockingRule | str): The blocking rule used to generate
-                pairwise record comparisons.
+            blocking_rule (BlockingRuleCreator | str): The blocking rule used to
+                generate pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
@@ -1634,13 +1050,15 @@ class Linker:
         """
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
-        self._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline()
+        compute_df_concat_with_tf(self, pipeline)
 
-        # Extract the blocking rule
-        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
-        # and raise error if not specfically a BlockingRule
-        blocking_rule = blocking_rule_to_obj(blocking_rule)
-        if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
+        blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
+            self._sql_dialect
+        )
+
+        if type(blocking_rule_obj) not in (BlockingRule, SaltedBlockingRule):
+            # TODO: seems a mismatch between message and type re: SaltedBlockingRule
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
                 "salted or exploding blocking rules"
@@ -1670,7 +1088,11 @@ class Linker:
 
         em_training_session = EMTrainingSession(
             self,
-            blocking_rule,
+            db_api=self.db_api,
+            blocking_rule_for_training=blocking_rule_obj,
+            core_model_settings=self._settings_obj.core_model_settings,
+            training_settings=self._settings_obj.training_settings,
+            unique_id_input_columns=self._settings_obj.column_info_settings.unique_id_input_columns,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
@@ -1679,7 +1101,10 @@ class Linker:
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
-        em_training_session._train()
+        core_model_settings = em_training_session._train()
+        # overwrite with the newly trained values in our linker settings
+        self._settings_obj.core_model_settings = core_model_settings
+        self._em_training_sessions.append(em_training_session)
 
         self._populate_m_u_from_trained_values()
 
@@ -1731,48 +1156,50 @@ class Linker:
 
         """
 
+        pipeline = CTEPipeline()
+
         # If materialise_after_computing_term_frequencies=False and the user only
         # calls predict, it runs as a single pipeline with no materialisation
         # of anything.
 
-        # _initialise_df_concat_with_tf returns None if the table doesn't exist
-        # and only SQL is queued in this step.
-        nodes_with_tf = self._initialise_df_concat_with_tf(
-            materialise=materialise_after_computing_term_frequencies
-        )
-
-        input_dataframes = []
-        if nodes_with_tf:
-            input_dataframes.append(nodes_with_tf)
+        # In duckdb, calls to random() in a CTE pipeline cause problems:
+        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+        if (
+            materialise_after_computing_term_frequencies
+            or self._sql_dialect == "duckdb"
+        ):
+            df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
+            pipeline = CTEPipeline([df_concat_with_tf])
+        else:
+            pipeline = enqueue_df_concat_with_tf(self, pipeline)
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
-            df_blocked = self._execute_sql_pipeline(input_dataframes)
-            input_dataframes.append(df_blocked)
+            pipeline = pipeline.break_lineage(self.db_api)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             threshold_match_probability,
             threshold_match_weight,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._execute_sql_pipeline(input_dataframes)
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         self._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
@@ -1839,30 +1266,31 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
-        new_records_df = self._table_to_splink_dataframe(
+        new_records_df = self.db_api.table_to_splink_dataframe(
             "__splink__df_new_records", new_records_tablename
         )
 
         cache = self._intermediate_table_cache
-        input_dfs = []
+
+        pipeline = CTEPipeline()
+
         # If our df_concat_with_tf table already exists, derive the term frequency
         # tables from df_concat_with_tf rather than computing them
         if "__splink__df_concat_with_tf" in cache:
-            concat_with_tf = cache["__splink__df_concat_with_tf"]
+            df = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline.append_input_dataframe(df)
+
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
             # This queues up our tf tables, rather materialising them
             for tf in tf_tables:
                 # if tf is a SplinkDataFrame, then the table already exists
                 if isinstance(tf, SplinkDataFrame):
-                    input_dfs.append(tf)
+                    pipeline.append_input_dataframe(tf)
                 else:
-                    self._enqueue_sql(tf["sql"], tf["output_table_name"])
+                    pipeline.enqueue_sql(tf["sql"], tf["output_table_name"])
         else:
             # This queues up our cols_with_tf and df_concat_with_tf tables.
-            concat_with_tf = self._initialise_df_concat_with_tf(materialise=False)
-
-        if concat_with_tf:
-            input_dfs.append(concat_with_tf)
+            enqueue_df_concat_with_tf(self, pipeline)
 
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
@@ -1874,33 +1302,35 @@ class Linker:
 
         sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", new_records_tablename)
-        self._enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
+        pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
-        add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
+        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
+            self, new_records_df, pipeline
+        )
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql = f"""
         select * from __splink__df_predict
         where match_weight > {match_weight_threshold}
         """
 
-        self._enqueue_sql(sql, "__splink__find_matches_predictions")
+        pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self._execute_sql_pipeline(
-            input_dataframes=input_dfs, use_cache=False
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
@@ -1955,30 +1385,38 @@ class Linker:
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
-        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        pipeline = CTEPipeline([df_records_left, df_records_right])
+
+        for tf_col in self._settings_obj._term_frequency_columns:
+            tf_table = colname_to_tf_tablename(tf_col)
+            if tf_table in self._intermediate_table_cache:
+                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+                pipeline.append_input_dataframe(tf_table)
+
+        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
 
-        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
+        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._settings_obj,
             sql_infinity_expression=self._infinity_expression,
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._execute_sql_pipeline(
-            [df_records_left, df_records_right], use_cache=False
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
@@ -2010,36 +1448,39 @@ class Linker:
         self._self_link_mode = True
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         self._settings_obj._blocking_rules_to_generate_predictions = [
             BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
         ]
+        pipeline = CTEPipeline()
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
-        nodes_with_tf = self._initialise_df_concat_with_tf()
+        pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj._columns_to_select_for_comparison_vector_values
+        )
 
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj,
+            unique_id_input_columns=uid_cols,
+            core_model_settings=self._settings_obj.core_model_settings,
+            sql_dialect=self._sql_dialect,
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
             output_table_name = sql["output_table_name"]
             output_table_name = output_table_name.replace("predict", "self_link")
-            self._enqueue_sql(sql["sql"], output_table_name)
+            pipeline.enqueue_sql(sql["sql"], output_table_name)
 
-        predictions = self._execute_sql_pipeline(
-            input_dataframes=[nodes_with_tf], use_cache=False
-        )
+        predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
@@ -2052,7 +1493,7 @@ class Linker:
     def cluster_pairwise_predictions_at_threshold(
         self,
         df_predict: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: Optional[float] = None,
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
@@ -2085,11 +1526,12 @@ class Linker:
         """
 
         # Feeding in df_predict forces materiailisation, if it exists in your database
-        concat_with_tf = self._initialise_df_concat_with_tf(df_predict)
+        pipeline = CTEPipeline()
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         edges_table = _cc_create_unique_id_cols(
             self,
-            concat_with_tf.physical_name,
+            nodes_with_tf.physical_name,
             df_predict.physical_name,
             threshold_match_probability,
         )
@@ -2098,7 +1540,7 @@ class Linker:
             self,
             edges_table,
             df_predict,
-            concat_with_tf,
+            nodes_with_tf,
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
@@ -2133,12 +1575,13 @@ class Linker:
         | s1-__-10003         | s1-__-10003 | 2           |
         ...
         """
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
         composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
+        pipeline = CTEPipeline()
         sqls = _node_degree_sql(
             df_predict,
             df_clustered,
@@ -2147,11 +1590,9 @@ class Linker:
             composite_uid_clusters,
             threshold_match_probability,
         )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_node_metrics = self._execute_sql_pipeline()
+        df_node_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         df_node_metrics.metadata[
             "threshold_match_probability"
@@ -2223,15 +1664,13 @@ class Linker:
         | s1-__-10013 | 11      | 19      | 0.34545 | 0.3111                 |
         ...
         """
-
+        pipeline = CTEPipeline()
         sqls = _size_density_centralisation_sql(
             df_node_metrics,
         )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        df_cluster_metrics = self._execute_sql_pipeline()
+        df_cluster_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
         df_cluster_metrics.metadata[
             "threshold_match_probability"
         ] = df_node_metrics.metadata["threshold_match_probability"]
@@ -2295,7 +1734,7 @@ class Linker:
         )
 
     def profile_columns(
-        self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
+        self, column_expressions: str | list[str] | None = None, top_n=10, bottom_n=10
     ):
         """
         Profiles the specified columns of the dataframe initiated with the linker.
@@ -2327,26 +1766,10 @@ class Linker:
             profiling charts.
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                linker = DuckDBLinker(df)
-                linker.profile_columns()
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                linker = SparkLinker(df)
-                linker.profile_columns()
-                ```
-            === ":simple-amazonaws: Athena"
-                ```py
-                linker = AthenaLinker(df)
-                linker.profile_columns()
-                ```
-            === ":simple-sqlite: SQLite"
-                ```py
-                linker = SQLiteLinker(df)
-                linker.profile_columns()
-                ```
+            ```py
+            linker = Linker(df, db_api)
+            linker.profile_columns()
+            ```
 
         Note:
             - The `linker` object should be an instance of the initiated linker.
@@ -2357,7 +1780,11 @@ class Linker:
         """
 
         return profile_columns(
-            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
+            self.db_api,
+            column_expressions=column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
         )
 
     def _get_labels_tablename_from_input(
@@ -2445,18 +1872,12 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                labels = pd.read_csv("my_labels.csv")
-                linker.register_table(labels, "labels")
-                linker.truth_space_table_from_labels_table("labels")
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                labels = spark.read.csv("my_labels.csv", header=True)
-                labels.createDataFrame("labels")
-                linker.truth_space_table_from_labels_table("labels")
-                ```
+            ```py
+            labels = pd.read_csv("my_labels.csv")
+            linker.register_table(labels, "labels")
+            linker.truth_space_table_from_labels_table("labels")
+            ```
+
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
@@ -2571,18 +1992,11 @@ class Linker:
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                labels = pd.read_csv("my_labels.csv")
-                linker.register_table(labels, "labels")
-                linker.precision_recall_chart_from_labels_table("labels")
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                labels = spark.read.csv("my_labels.csv", header=True)
-                labels.createDataFrame("labels")
-                linker.precision_recall_chart_from_labels_table("labels")
-                ```
+            ```py
+            labels = pd.read_csv("my_labels.csv")
+            linker.register_table(labels, "labels")
+            linker.precision_recall_chart_from_labels_table("labels")
+            ```
 
         Returns:
             altair.Chart: An altair chart
@@ -3194,15 +2608,14 @@ class Linker:
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
-
+        pipeline = CTEPipeline([df_predict])
         sql = comparison_vector_distribution_sql(self)
-        self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
+        pipeline.enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
         sqls = comparison_viewer_table_sqls(self, num_example_rows)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        pipeline.enqueue_list_of_sqls(sqls)
 
-        df = self._execute_sql_pipeline([df_predict])
+        df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         rendered = render_splink_comparison_viewer_html(
             df.as_record_dict(),
@@ -3307,7 +2720,7 @@ class Linker:
 
     def count_num_comparisons_from_blocking_rule(
         self,
-        blocking_rule: str | BlockingRule,
+        blocking_rule: str | BlockingRuleCreator,
     ) -> int:
         """Compute the number of pairwise record comparisons that would be generated by
         a blocking rule
@@ -3322,44 +2735,45 @@ class Linker:
                 to None.
 
         Examples:
+
+            ```py
+            br = block_on("name", "substr(dob,1,4)")
+            linker.count_num_comparisons_from_blocking_rule(br)
+            ```
+            > 394
+
             ```py
             br = "l.surname = r.surname"
             linker.count_num_comparisons_from_blocking_rule(br)
             ```
             > 19387
 
-            ```py
-            br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            linker.count_num_comparisons_from_blocking_rule(br)
-            ```
-            > 394
-            Alternatively, you can use the blocking rule library functions
-            ```py
-            import splink.duckdb.blocking_rule_library as brl
-            br = brl.exact_match_rule("surname")
-            linker.count_num_comparisons_from_blocking_rule(br)
-            ```
-            > 3167
-
         Returns:
             int: The number of comparisons generated by the blocking rule
         """
 
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
+        blocking_rule_str = (
+            to_blocking_rule_creator(blocking_rule)
+            .get_blocking_rule(self._sql_dialect)
+            .blocking_rule_sql
+        )
+
+        pipeline = CTEPipeline()
 
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
-            self, blocking_rule
+            self, blocking_rule_str
         )
-        self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
-        res = self._execute_sql_pipeline().as_record_dict()[0]
+        pipeline.enqueue_sql(sql, "__splink__analyse_blocking_rule")
+        res_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        res = res_df.as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
 
     def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         self,
-        blocking_rule: str,
+        blocking_rule: BlockingRuleCreator | str | dict,
     ) -> int:
         """Compute the number of pairwise record comparisons that would be generated by
         a blocking rule, prior to any filters (non equi-join conditions) being applied
@@ -3375,24 +2789,16 @@ class Linker:
             int: The number of comparisons generated by the blocking rule
         """
 
-        input_dataframes = []
-        df_concat = self._initialise_df_concat()
-
-        if df_concat:
-            input_dataframes.append(df_concat)
-
-        sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-            self, blocking_rule
+        blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
+            self._sql_dialect
         )
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        res = self._execute_sql_pipeline(input_dataframes).as_record_dict()[0]
-        return int(res["count_of_pairwise_comparisons_generated"])
+        return count_comparisons_from_blocking_rule_pre_filter_conditions(
+            self, blocking_rule_obj
+        )
 
     def cumulative_comparisons_from_blocking_rules_records(
         self,
-        blocking_rules: str | BlockingRule | list = None,
+        blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] = None,
     ):
         """Output the number of comparisons generated by each successive blocking rule.
 
@@ -3432,7 +2838,9 @@ class Linker:
                 comparisons it is forecast to generate.
         """
         if blocking_rules:
-            blocking_rules = ensure_is_list(blocking_rules)
+            blocking_rules = blocking_rule_args_to_list_of_blocking_rules(
+                blocking_rules, self._sql_dialect
+            )
 
         records = cumulative_comparisons_generated_by_blocking_rules(
             self, blocking_rules, output_chart=False
@@ -3442,7 +2850,7 @@ class Linker:
 
     def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
-        blocking_rules: str | BlockingRule | list = None,
+        blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] = None,
     ):
         """Display a chart with the cumulative number of comparisons generated by a
         selection of blocking rules.
@@ -3479,7 +2887,9 @@ class Linker:
         """
 
         if blocking_rules:
-            blocking_rules = ensure_is_list(blocking_rules)
+            blocking_rules = blocking_rule_args_to_list_of_blocking_rules(
+                blocking_rules, self._sql_dialect
+            )
 
         records = cumulative_comparisons_generated_by_blocking_rules(
             self, blocking_rules, output_chart=True
@@ -3516,9 +2926,10 @@ class Linker:
         sql = count_num_comparisons_from_blocking_rules_for_prediction_sql(
             self, df_predict
         )
-        match_key_analysis = self._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__match_key_analysis"
-        )
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, "__splink__match_key_analysis")
+        match_key_analysis = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         return match_key_analysis
 
     def match_weights_chart(self):
@@ -3550,7 +2961,7 @@ class Linker:
         output_column_name: str,
         n_most_freq: int = 10,
         n_least_freq: int = 10,
-        vals_to_include: str | list = None,
+        vals_to_include: str | list | None = None,
         as_dict: bool = False,
     ):
         """Display a chart showing the impact of term frequency adjustments on a
@@ -3576,7 +2987,7 @@ class Linker:
 
         # Comparisons with TF adjustments
         tf_comparisons = [
-            c._output_column_name
+            c.output_column_name
             for c in self._settings_obj.comparisons
             if any([cl._has_tf_adjustments for cl in c.comparison_levels])
         ]
@@ -3721,21 +3132,10 @@ class Linker:
                 json.dump(model_dict, f, indent=4)
         return model_dict
 
-    def save_settings_to_json(
-        self, out_path: str | None = None, overwrite: bool = False
-    ) -> dict:
-        """
-        This function is deprecated. Use save_model_to_json() instead.
-        """
-        warnings.warn(
-            "This function is deprecated. Use save_model_to_json() instead.",
-            SplinkDeprecated,
-            stacklevel=2,
-        )
-        return self.save_model_to_json(out_path, overwrite)
-
     def estimate_probability_two_random_records_match(
-        self, deterministic_matching_rules, recall
+        self,
+        deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
+        recall: float,
     ):
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -3758,14 +3158,11 @@ class Linker:
                 f"and no more than 1. Supplied value {recall}."
             )
 
-        # If user, by error, provides a single rule as a string
-        if isinstance(deterministic_matching_rules, str):
-            deterministic_matching_rules = [deterministic_matching_rules]
-
-        records = cumulative_comparisons_generated_by_blocking_rules(
-            self,
-            deterministic_matching_rules,
+        rules = blocking_rule_args_to_list_of_blocking_rules(
+            deterministic_matching_rules, self._sql_dialect
         )
+
+        records = cumulative_comparisons_generated_by_blocking_rules(self, rules)
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]
@@ -3877,7 +3274,11 @@ class Linker:
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
+        input_col = InputColumn(
+            col_name,
+            column_info_settings=self._settings_obj.column_info_settings,
+            sql_dialect=self._settings_obj._sql_dialect,
+        )
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._cache_uid}"
         splink_dataframe = self.register_table(
@@ -3943,15 +3344,6 @@ class Linker:
             view_in_jupyter=view_in_jupyter,
             overwrite=overwrite,
         )
-
-    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
-        keys_to_delete = set()
-        for key, df in self._intermediate_table_cache.items():
-            if df.physical_name == splink_dataframe.physical_name:
-                keys_to_delete.add(key)
-
-        for k in keys_to_delete:
-            del self._intermediate_table_cache[k]
 
     def _find_blocking_rules_below_threshold(
         self, max_comparisons_per_rule, blocking_expressions=None
@@ -4125,6 +3517,6 @@ class Linker:
     def _explode_arrays_sql(
         self, tbl_name, columns_to_explode, other_columns_to_retain
     ):
-        raise NotImplementedError(
-            f"Unnesting blocking rules are not supported for {type(self)}"
+        return self._sql_dialect_object.explode_arrays_sql(
+            tbl_name, columns_to_explode, other_columns_to_retain
         )

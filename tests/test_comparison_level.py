@@ -7,11 +7,9 @@ from .decorator import mark_with_dialects_excluding
 
 def make_comparison_level(sql_condition, dialect):
     return ComparisonLevel(
-        {
-            "sql_condition": sql_condition,
-            "label_for_charts": "nice_informative_label",
-        },
-        sql_dialect=dialect,
+        sql_condition=sql_condition,
+        label_for_charts="nice_informative_label",
+        sqlglot_dialect_name=dialect,
     )
 
 

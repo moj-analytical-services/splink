@@ -3,8 +3,9 @@ import re
 
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.comparison_library as cl
+from splink.duckdb.database_api import DuckDBAPI
+from splink.linker import Linker
 
 
 # Create a log handler that allows us to captured logged messages to a python list
@@ -105,16 +106,18 @@ def test_dedupe_only():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         df_one,
         settings,
+        database_api=db_api,
         set_up_basic_logging=False,
     )
     logging.getLogger("splink").setLevel(1)
@@ -155,22 +158,24 @@ def test_link_and_dedupe():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
 
     handler.log_list.clear()
-
+    logging.getLogger("splink").setLevel(1)
     linker.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
@@ -209,22 +214,24 @@ def test_link_only_two():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
 
     log_list.clear()
-
+    logging.getLogger("splink").setLevel(1)
     linker.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
@@ -264,22 +271,24 @@ def test_link_only_three():
             "l.surname = r.surname",
         ],
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("email"),
         ],
     }
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df_one, df_two, df_three],
         settings,
+        database_api=db_api,
         input_table_aliases=["df_one", "df_two", "df_three"],
         set_up_basic_logging=False,
     )
 
     log_list.clear()
-
+    logging.getLogger("splink").setLevel(1)
     linker.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)

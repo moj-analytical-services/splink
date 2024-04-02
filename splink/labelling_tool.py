@@ -8,7 +8,9 @@ import pandas as pd
 from jinja2 import Template
 
 from .misc import EverythingEncoder, read_resource
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
+from .vertically_concatenate import compute_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -21,14 +23,16 @@ def generate_labelling_tool_comparisons(
     linker: "Linker", unique_id, source_dataset, match_weight_threshold=-4
 ):
     # ensure the tf table exists
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+    pipeline = CTEPipeline()
+    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
+    pipeline = CTEPipeline([nodes_with_tf])
     settings = linker._settings_obj
 
     source_dataset_condition = ""
 
     if source_dataset is not None:
-        sds_col = settings._source_dataset_column_name
+        sds_col = settings.column_info_settings.source_dataset_column_name
         source_dataset_condition = f"""
           and {sds_col} = '{source_dataset}'
         """
@@ -36,12 +40,12 @@ def generate_labelling_tool_comparisons(
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    where {settings._unique_id_column_name} = '{unique_id}'
+    where {settings.column_info_settings.unique_id_column_name} = '{unique_id}'
     {source_dataset_condition}
     """
 
-    linker._enqueue_sql(sql, "__splink__df_labelling_tool_record")
-    splink_df = linker._execute_sql_pipeline([concat_with_tf])
+    pipeline.enqueue_sql(sql, "__splink__df_labelling_tool_record")
+    splink_df = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     matches = linker.find_matches_to_new_records(
         splink_df.physical_name, match_weight_threshold=match_weight_threshold

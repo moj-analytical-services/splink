@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - "**dev"
     paths:
       - "splink/**"
       - "docs/demos/examples/**"
@@ -35,14 +36,14 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.local # the path depends on the OS
-          key: poetry-0 # increment to reset cache
+          key: poetry-1 # increment to reset cache
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: '1.7.0'
+          version: "1.7.0"
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -54,7 +55,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-01
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
@@ -79,4 +80,4 @@ jobs:
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
+          python -m pytest -vv --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb

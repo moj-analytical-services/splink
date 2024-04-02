@@ -12,6 +12,7 @@ from .graph_metrics import (
     _node_mapping_table_sql,
     _truncated_edges_sql,
 )
+from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -52,20 +53,21 @@ def compute_edge_metrics(
 def compute_basic_edge_metrics(
     linker: Linker, df_predict: SplinkDataFrame, threshold_match_probability: float
 ):
+    pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
-    linker._enqueue_sql(**sql_info)
+    pipeline.enqueue_sql(**sql_info)
 
     truncated_edges_table_name = sql_info["output_table_name"]
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
     sql_info = _basic_edge_metrics_sql(
         composite_uid_edges_l, composite_uid_edges_r, truncated_edges_table_name
     )
-    linker._enqueue_sql(**sql_info)
+    pipeline.enqueue_sql(**sql_info)
 
-    df_truncated_edges = linker._execute_sql_pipeline()
+    df_truncated_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     return df_truncated_edges
 
 
@@ -83,33 +85,35 @@ def compute_igraph_metrics(
             "You need to install the 'igraph' package to compute "
             "the edge metric 'is_bridge'."
         ) from None
-    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     # need composite unique ids
     composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
     composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
 
+    pipeline = CTEPipeline()
     # firstly we (arbitrarily) map node ids to 1-indexed integers with no gaps
     # this is how igraph deals with nodes
     sql_infos = _node_mapping_table_sql(df_node_metrics)
-    for sql_info in sql_infos:
-        linker._enqueue_sql(**sql_info)
-    df_node_mappings = linker._execute_sql_pipeline()
+    pipeline.enqueue_list_of_sqls(sql_infos)
+    df_node_mappings = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we keep only edges at or above relevant threshold
+    pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
-    linker._enqueue_sql(**sql_info)
-    df_truncated_edges = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(**sql_info)
+    df_truncated_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we map the truncated edges to the integer encoding for nodes above,
     # keeping only the list of endpoints
+    pipeline = CTEPipeline()
     sql_info = _edges_for_igraph_sql(
         df_node_mappings,
         df_truncated_edges.physical_name,
         composite_uid_edges_l,
         composite_uid_edges_r,
     )
-    linker._enqueue_sql(**sql_info)
-    edges_for_igraph = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(**sql_info)
+    edges_for_igraph = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     # we will need to manually register a table, so we use the hash from this table
     igraph_edges_hash = edges_for_igraph.physical_name[-9:]
     # NB: for large data we may have to revise this and process in chunks
@@ -123,8 +127,9 @@ def compute_igraph_metrics(
         df_bridges_pd, f"__splink__bridges_{igraph_edges_hash}"
     )
     # map our bridge edges back to the original node labelling
+    pipeline = CTEPipeline()
     sql_info = _bridges_from_igraph_sql(df_node_mappings, df_bridges)
-    linker._enqueue_sql(**sql_info)
+    pipeline.enqueue_sql(**sql_info)
     # and adjoin edges which are _not_ bridges, labelling them as such
     sql_info = _full_bridges_sql(
         df_truncated_edges,
@@ -132,6 +137,6 @@ def compute_igraph_metrics(
         composite_uid_edges_l,
         composite_uid_edges_r,
     )
-    linker._enqueue_sql(**sql_info)
-    df_edge_metrics = linker._execute_sql_pipeline()
+    pipeline.enqueue_sql(**sql_info)
+    df_edge_metrics = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
     return df_edge_metrics

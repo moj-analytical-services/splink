@@ -2,32 +2,31 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import Any, List
 
 import pandas as pd
 
+from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
+from .database_api import DatabaseAPI
+from .input_column import InputColumn
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
+from .pipeline import CTEPipeline
 from .predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from .settings import Settings
+from .settings import CoreModelSettings, TrainingSettings
 from .splink_dataframe import SplinkDataFrame
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .em_training_session import EMTrainingSession
-
 
 logger = logging.getLogger(__name__)
 
 
-def count_agreement_patterns_sql(settings_obj: Settings):
+def count_agreement_patterns_sql(comparisons: List[Comparison]):
     """Count how many times each realized agreement pattern
     was observed across the blocked dataset."""
-    gamma_cols = [cc._gamma_column_name for cc in settings_obj.comparisons]
+    gamma_cols = [cc._gamma_column_name for cc in comparisons]
     gamma_cols_expr = ",".join(gamma_cols)
 
     sql = f"""
@@ -41,9 +40,11 @@ def count_agreement_patterns_sql(settings_obj: Settings):
     return sql
 
 
-def compute_new_parameters_sql(settings_obj: Settings):
+def compute_new_parameters_sql(
+    estimate_without_term_frequencies: bool, comparisons: List[Comparison]
+):
     """compute m and u counts from the results of predict"""
-    if getattr(settings_obj, "_estimate_without_term_frequencies", False):
+    if estimate_without_term_frequencies:
         agreement_pattern_count = "agreement_pattern_count"
     else:
         agreement_pattern_count = "1"
@@ -60,10 +61,10 @@ def compute_new_parameters_sql(settings_obj: Settings):
     union_sqls = [
         sql_template.format(
             gamma_column=cc._gamma_column_name,
-            output_column_name=cc._output_column_name,
+            output_column_name=cc.output_column_name,
             agreement_pattern_count=agreement_pattern_count,
         )
-        for cc in settings_obj.comparisons
+        for cc in comparisons
     ]
 
     # Probability of two random records matching
@@ -115,7 +116,7 @@ def compute_proportions_for_new_parameters_sql(table_name):
     return sql
 
 
-def compute_proportions_for_new_parameters_pandas(m_u_df):
+def compute_proportions_for_new_parameters_pandas(m_u_df: pd.DataFrame) -> List[dict]:
     data = m_u_df.copy()
     m_prob = "m_probability"
     u_prob = "u_probability"
@@ -144,7 +145,7 @@ def compute_proportions_for_new_parameters_pandas(m_u_df):
     return data.to_dict("records")
 
 
-def compute_proportions_for_new_parameters(m_u_df):
+def compute_proportions_for_new_parameters(m_u_df: pd.DataFrame) -> List[dict]:
     # Execute with duckdb if installed, otherwise default to pandas
     try:
         import duckdb
@@ -156,34 +157,60 @@ def compute_proportions_for_new_parameters(m_u_df):
 
 
 def populate_m_u_from_lookup(
-    em_training_session, comparison_level: ComparisonLevel, m_u_records_lookup
-):
+    training_fixed_probabilities: set[str],
+    comparison_level: ComparisonLevel,
+    output_column_name: str,
+    m_u_records_lookup,
+) -> None:
     cl = comparison_level
-    c = comparison_level.comparison
-    if not em_training_session._training_fix_m_probabilities:
+
+    if "m" not in training_fixed_probabilities:
         try:
-            m_probability = m_u_records_lookup[c._output_column_name][
+            m_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
             ]["m_probability"]
 
         except KeyError:
             m_probability = LEVEL_NOT_OBSERVED_TEXT
+            cc_n = output_column_name
+            cl_n = cl.label_for_charts
+            if not cl._m_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train m value\n"
+                )
+                cl._m_warning_sent = True
         cl.m_probability = m_probability
 
-    if not em_training_session._training_fix_u_probabilities:
+    if "u" not in training_fixed_probabilities:
         try:
-            u_probability = m_u_records_lookup[c._output_column_name][
+            u_probability = m_u_records_lookup[output_column_name][
                 cl._comparison_vector_value
             ]["u_probability"]
 
         except KeyError:
             u_probability = LEVEL_NOT_OBSERVED_TEXT
 
+            cc_n = output_column_name
+            cl_n = cl.label_for_charts
+            if not cl._u_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train u value\n"
+                )
+                cl._u_warning_sent = True
+
         cl.u_probability = u_probability
 
 
-def maximisation_step(em_training_session: EMTrainingSession, param_records):
-    settings_obj = em_training_session._settings_obj
+def maximisation_step(
+    training_fixed_probabilities: set[str],
+    core_model_settings: CoreModelSettings,
+    param_records: List[dict],
+) -> CoreModelSettings:
+    core_model_settings = core_model_settings.copy()
 
     m_u_records = []
     for r in param_records:
@@ -192,81 +219,198 @@ def maximisation_step(em_training_session: EMTrainingSession, param_records):
         else:
             m_u_records.append(r)
 
-    if not em_training_session._training_fix_probability_two_random_records_match:
-        settings_obj._probability_two_random_records_match = prop_record[
+    if "lambda" not in training_fixed_probabilities:
+        core_model_settings.probability_two_random_records_match = prop_record[
             "m_probability"
         ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
-    for cc in settings_obj.comparisons:
+    for cc in core_model_settings.comparisons:
         for cl in cc._comparison_levels_excluding_null:
-            populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
+            populate_m_u_from_lookup(
+                training_fixed_probabilities,
+                cl,
+                cc.output_column_name,
+                m_u_records_lookup,
+            )
 
-    em_training_session._add_iteration()
+    return core_model_settings
 
 
 def expectation_maximisation(
-    em_training_session: EMTrainingSession,
+    db_api: DatabaseAPI,
+    training_settings: TrainingSettings,
+    estimate_without_term_frequencies: bool,
+    core_model_settings: CoreModelSettings,
+    unique_id_input_columns: List[InputColumn],
+    training_fixed_probabilities: set[str],
     df_comparison_vector_values: SplinkDataFrame,
-):
+) -> List[CoreModelSettings]:
     """In the expectation step, we use the current model parameters to estimate
     the probability of match for each pairwise record comparison
 
     In the maximisation step, we use these predicted probabilities to re-compute
     the parameters of the model
     """
+    # initial values of parameters
+    core_model_settings_history = [core_model_settings.copy()]
 
-    settings_obj = em_training_session._settings_obj
-    linker = em_training_session._original_linker
+    sql_dialect = db_api.sql_dialect.name
+    sql_infinity_expression = db_api.sql_dialect.infinity_expression
 
-    max_iterations = settings_obj._max_iterations
-    em_convergece = settings_obj._em_convergence
+    max_iterations = training_settings.max_iterations
+    em_convergence = training_settings.em_convergence
     logger.info("")  # newline
 
-    if settings_obj._estimate_without_term_frequencies:
-        sql = count_agreement_patterns_sql(settings_obj)
-        linker._enqueue_sql(sql, "__splink__agreement_pattern_counts")
-        agreement_pattern_counts = linker._execute_sql_pipeline(
-            [df_comparison_vector_values]
-        )
+    if estimate_without_term_frequencies:
+        sql = count_agreement_patterns_sql(core_model_settings.comparisons)
+        pipeline = CTEPipeline([df_comparison_vector_values])
+        pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
+        agreement_pattern_counts = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     for i in range(1, max_iterations + 1):
+        pipeline = CTEPipeline()
+        probability_two_random_records_match = (
+            core_model_settings.probability_two_random_records_match
+        )
         start_time = time.time()
 
         # Expectation step
-        if settings_obj._estimate_without_term_frequencies:
+        if estimate_without_term_frequencies:
             sqls = predict_from_agreement_pattern_counts_sqls(
-                settings_obj,
-                sql_infinity_expression=linker._infinity_expression,
+                core_model_settings.comparisons,
+                probability_two_random_records_match,
+                sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
-                settings_obj,
-                sql_infinity_expression=linker._infinity_expression,
+                unique_id_input_columns=unique_id_input_columns,
+                core_model_settings=core_model_settings,
+                training_mode=True,
+                sql_dialect=sql_dialect,
+                sql_infinity_expression=sql_infinity_expression,
             )
 
         for sql in sqls:
-            linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_new_parameters_sql(settings_obj)
-        linker._enqueue_sql(sql, "__splink__m_u_counts")
-        if settings_obj._estimate_without_term_frequencies:
-            df_params = linker._execute_sql_pipeline([agreement_pattern_counts])
+        sql = compute_new_parameters_sql(
+            estimate_without_term_frequencies,
+            core_model_settings.comparisons,
+        )
+        pipeline.enqueue_sql(sql, "__splink__m_u_counts")
+        if estimate_without_term_frequencies:
+            pipeline.append_input_dataframe(agreement_pattern_counts)
+            df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         else:
-            df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
+            pipeline.append_input_dataframe(df_comparison_vector_values)
+            df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         param_records = df_params.as_pandas_dataframe()
         param_records = compute_proportions_for_new_parameters(param_records)
 
         df_params.drop_table_from_database_and_remove_from_cache()
 
-        maximisation_step(em_training_session, param_records)
-        max_change_dict = (
-            em_training_session._max_change_in_parameters_comparison_levels()
+        core_model_settings = maximisation_step(
+            training_fixed_probabilities=training_fixed_probabilities,
+            core_model_settings=core_model_settings,
+            param_records=param_records,
+        )
+        core_model_settings_history.append(core_model_settings)
+
+        max_change_dict = _max_change_in_parameters_comparison_levels(
+            core_model_settings_history
         )
         logger.info(f"Iteration {i}: {max_change_dict['message']}")
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-        if max_change_dict["max_abs_change_value"] < em_convergece:
+        if max_change_dict["max_abs_change_value"] < em_convergence:
             break
+
     logger.info(f"\nEM converged after {i} iterations")
+    return core_model_settings_history
+
+
+def _max_change_message(max_change_dict):
+    message = "Largest change in params was"
+
+    if max_change_dict["max_change_type"] == "probability_two_random_records_match":
+        message = (
+            f"{message} {max_change_dict['max_change_value']:,.3g} in "
+            "probability_two_random_records_match"
+        )
+    else:
+        cl = max_change_dict["current_comparison_level"]
+        m_u = max_change_dict["max_change_type"]
+        cc_name = max_change_dict["output_column_name"]
+
+        cl_label = cl.label_for_charts
+        level_text = f"{cc_name}, level `{cl_label}`"
+
+        message = (
+            f"{message} {max_change_dict['max_change_value']:,.3g} in "
+            f"the {m_u} of {level_text}"
+        )
+
+    return message
+
+
+def _max_change_in_parameters_comparison_levels(
+    core_model_settings_history: List[CoreModelSettings],
+):
+    previous_iteration = core_model_settings_history[-2]
+    this_iteration = core_model_settings_history[-1]
+    max_change = -0.1
+
+    max_change_levels: dict[str, Any] = {
+        "previous_iteration": None,
+        "this_iteration": None,
+        "max_change_type": None,
+        "max_change_value": None,
+    }
+    comparisons = zip(previous_iteration.comparisons, this_iteration.comparisons)
+    for comparison in comparisons:
+        prev_cc = comparison[0]
+        this_cc = comparison[1]
+        z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
+        for z_cl in z_cls:
+            if z_cl[0].is_null_level:
+                continue
+            prev_cl = z_cl[0]
+            this_cl = z_cl[1]
+            change_m = this_cl.m_probability - prev_cl.m_probability
+            change_u = this_cl.u_probability - prev_cl.u_probability
+            change = max(abs(change_m), abs(change_u))
+            change_type = (
+                "m_probability" if abs(change_m) > abs(change_u) else "u_probability"
+            )
+            change_value = change_m if abs(change_m) > abs(change_u) else change_u
+            if change > max_change:
+                max_change = change
+                max_change_levels["prev_comparison_level"] = prev_cl
+                max_change_levels["current_comparison_level"] = this_cl
+                max_change_levels["max_change_type"] = change_type
+                max_change_levels["max_change_value"] = change_value
+                max_change_levels["max_abs_change_value"] = abs(change_value)
+                max_change_levels["output_column_name"] = this_cc.output_column_name
+
+    change_probability_two_random_records_match = (
+        this_iteration.probability_two_random_records_match
+        - previous_iteration.probability_two_random_records_match
+    )
+
+    if abs(change_probability_two_random_records_match) > max_change:
+        max_change = abs(change_probability_two_random_records_match)
+        max_change_levels["prev_comparison_level"] = None
+        max_change_levels["current_comparison_level"] = None
+        max_change_levels["max_change_type"] = "probability_two_random_records_match"
+        max_change_levels[
+            "max_change_value"
+        ] = change_probability_two_random_records_match
+        max_change_levels["max_abs_change_value"] = abs(
+            change_probability_two_random_records_match
+        )
+
+    max_change_levels["message"] = _max_change_message(max_change_levels)
+
+    return max_change_levels

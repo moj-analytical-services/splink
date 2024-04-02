@@ -1,12 +1,12 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_level_library as clld
-import splink.spark.comparison_level_library as clls
-from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+import splink.comparison_level_library as cll
+from splink.column_expression import ColumnExpression
 
-df = pd.DataFrame(
+from .decorator import mark_with_dialects_excluding
+
+df_pandas = pd.DataFrame(
     [
         {
             "unique_id": 1,
@@ -48,37 +48,41 @@ df = pd.DataFrame(
 )
 
 
-def postcode_levels(cll):
+def postcode_levels():
     return {
         "output_column_name": "postcode",
         "comparison_levels": [
-            cll.exact_match_level(
-                "postcode", regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
+            cll.ExactMatchLevel(
+                ColumnExpression("postcode").regex_extract(
+                    "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
+                )
             ),
-            cll.levenshtein_level(
-                "postcode",
+            cll.LevenshteinLevel(
+                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}[0-9][A-Z0-9]?"),
                 distance_threshold=1,
-                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
             ),
-            cll.jaro_level(
-                "postcode", distance_threshold=1, regex_extract="^[A-Z]{1,2}"
+            cll.JaroLevel(
+                ColumnExpression("postcode").regex_extract("^[A-Z]{1,2}"),
+                distance_threshold=1,
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
 
-def name_levels(cll):
+def name_levels():
     return {
         "output_column_name": "name",
         "comparison_levels": [
-            cll.jaro_winkler_level(
-                "first_name", distance_threshold=1, regex_extract="^[A-Z]{1,4}"
+            cll.JaroWinklerLevel(
+                ColumnExpression("first_name").regex_extract("^[A-Z]{1,4}"),
+                distance_threshold=1,
             ),
-            cll.columns_reversed_level(
-                "first_name", "last_name", regex_extract="[A-Z]{1,3}"
+            cll.ColumnsReversedLevel(
+                ColumnExpression("first_name").regex_extract("[A-Z]{1,3}"),
+                ColumnExpression("last_name").regex_extract("[A-Z]{1,3}"),
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
@@ -95,40 +99,27 @@ record_pairs_gamma_name = {
 }
 
 
+# TODO: we can restore postgres if we translate from Jaro + JaroWinkler
+# which should be okay as these are not crucial to the test
+@mark_with_dialects_excluding("postgres", "sqlite")
 @pytest.mark.parametrize(
-    ("Linker", "df", "level_set", "record_pairs_gamma"),
+    ("level_set", "record_pairs_gamma"),
     [
         pytest.param(
-            DuckDBLinker,
-            df,
-            postcode_levels(clld),
+            postcode_levels(),
             record_pairs_gamma_postcode,
-            id="DuckDB postcode regex levels test",
+            id="name regex levels test",
         ),
         pytest.param(
-            DuckDBLinker,
-            df,
-            name_levels(clld),
+            name_levels(),
             record_pairs_gamma_name,
-            id="DuckDB name regex levels test",
-        ),
-        pytest.param(
-            SparkLinker,
-            df,
-            postcode_levels(clls),
-            record_pairs_gamma_postcode,
-            id="Spark postcode regex levels test",
-        ),
-        pytest.param(
-            SparkLinker,
-            df,
-            name_levels(clls),
-            record_pairs_gamma_name,
-            id="Spark name regex levels test",
+            id="name regex levels test",
         ),
     ],
 )
-def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
+def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
+    helper = test_helpers[dialect]
+
     # Generate settings
     settings = {
         "link_type": "dedupe_only",
@@ -137,10 +128,8 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
     comparison_name = level_set["output_column_name"]
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df_pandas)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
     linker_output = linker.predict().as_pandas_dataframe()
 
@@ -155,8 +144,10 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
             )
 
 
-def test_invalid_regex():
-    clld.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
-    clls.exact_match_level("postcode", regex_extract="^[A-Z]{1}")
-    with pytest.raises(SyntaxError):
-        clls.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
+# TODO: previously this checked validity of syntax wrt Spark dialect
+# do we still want such functionality?
+# def test_invalid_regex():
+#     cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]\\d"))
+#     cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]{1}"))
+#     with pytest.raises(SyntaxError):
+#         cll.ExactMatchLevel(ColumnExpression("postcode").regex_extract("^[A-Z]\\d"))

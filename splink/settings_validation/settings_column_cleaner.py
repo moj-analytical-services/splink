@@ -117,7 +117,9 @@ class SettingsColumnCleaner:
 
     @property
     def uid(self):
-        uid_as_tree = InputColumn(self._settings_obj._unique_id_column_name)
+        uid_as_tree = InputColumn(
+            self._settings_obj.column_info_settings.unique_id_column_name
+        )
         return clean_list_of_column_names([uid_as_tree])
 
     @property

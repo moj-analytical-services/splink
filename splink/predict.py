@@ -2,23 +2,64 @@ from __future__ import annotations
 
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
+from typing import List
 
+from .comparison import Comparison
+from .input_column import InputColumn
 from .misc import prob_to_bayes_factor, prob_to_match_weight
-from .settings import Settings
+from .settings import CoreModelSettings, Settings
 
 logger = logging.getLogger(__name__)
 
 
-def predict_from_comparison_vectors_sqls(
+def predict_from_comparison_vectors_sqls_using_settings(
     settings_obj: Settings,
-    threshold_match_probability=None,
-    threshold_match_weight=None,
-    include_clerical_match_score=False,
-    sql_infinity_expression="'infinity'",
+    threshold_match_probability: float = None,
+    threshold_match_weight: float = None,
+    include_clerical_match_score: bool = False,
+    sql_infinity_expression: str = "'infinity'",
+) -> list[dict]:
+    return predict_from_comparison_vectors_sqls(
+        unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
+        core_model_settings=settings_obj.core_model_settings,
+        sql_dialect=settings_obj._sql_dialect,
+        threshold_match_probability=threshold_match_probability,
+        threshold_match_weight=threshold_match_weight,
+        retain_matching_columns=settings_obj._retain_matching_columns,
+        retain_intermediate_calculation_columns=settings_obj._retain_intermediate_calculation_columns,
+        training_mode=False,
+        additional_columns_to_retain=settings_obj._additional_columns_to_retain,
+        needs_matchkey_column=settings_obj._needs_matchkey_column,
+        include_clerical_match_score=include_clerical_match_score,
+        sql_infinity_expression=sql_infinity_expression,
+    )
+
+
+def predict_from_comparison_vectors_sqls(
+    unique_id_input_columns: List[InputColumn],
+    core_model_settings: CoreModelSettings,
+    sql_dialect: str,
+    threshold_match_probability: float = None,
+    threshold_match_weight: float = None,
+    # by default we keep off everything we don't necessarily need
+    retain_matching_columns: bool = False,
+    retain_intermediate_calculation_columns: bool = False,
+    training_mode: bool = False,
+    additional_columns_to_retain: List[InputColumn] = [],
+    needs_matchkey_column: bool = False,
+    include_clerical_match_score: bool = False,
+    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict]:
     sqls = []
 
-    select_cols = settings_obj._columns_to_select_for_bayes_factor_parts
+    select_cols = Settings.columns_to_select_for_bayes_factor_parts(
+        unique_id_input_columns=unique_id_input_columns,
+        comparisons=core_model_settings.comparisons,
+        retain_matching_columns=retain_matching_columns,
+        retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
+        additional_columns_to_retain=additional_columns_to_retain,
+        needs_matchkey_column=needs_matchkey_column,
+    )
     select_cols_expr = ",".join(select_cols)
 
     if include_clerical_match_score:
@@ -37,13 +78,21 @@ def predict_from_comparison_vectors_sqls(
     }
     sqls.append(sql_info)
 
-    select_cols = settings_obj._columns_to_select_for_predict
+    select_cols = Settings.columns_to_select_for_predict(
+        unique_id_input_columns=unique_id_input_columns,
+        comparisons=core_model_settings.comparisons,
+        retain_matching_columns=retain_matching_columns,
+        retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
+        training_mode=training_mode,
+        additional_columns_to_retain=additional_columns_to_retain,
+        needs_matchkey_column=needs_matchkey_column,
+    )
     select_cols_expr = ",".join(select_cols)
     bf_terms = []
-    for cc in settings_obj.comparisons:
+    for cc in core_model_settings.comparisons:
         bf_terms.extend(cc._match_weight_columns_to_multiply)
 
-    prior = settings_obj._probability_two_random_records_match
+    prior = core_model_settings.probability_two_random_records_match
     bayes_factor_expr, match_prob_expr = _combine_prior_and_bfs(
         prior,
         bf_terms,
@@ -65,7 +114,7 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
-    if settings_obj._sql_dialect == "duckdb":
+    if sql_dialect == "duckdb":
         order_by_statement = "order by 1"
     else:
         order_by_statement = ""
@@ -89,15 +138,18 @@ def predict_from_comparison_vectors_sqls(
 
 
 def predict_from_agreement_pattern_counts_sqls(
-    settings_obj: Settings,
+    comparisons: List[Comparison],
+    probability_two_random_records_match: float,
     sql_infinity_expression="'infinity'",
 ) -> list[dict]:
     sqls = []
 
     select_cols = []
 
-    for cc in settings_obj.comparisons:
-        cc_sqls = [cl._bayes_factor_sql for cl in cc.comparison_levels]
+    for cc in comparisons:
+        cc_sqls = [
+            cl._bayes_factor_sql(cc._gamma_column_name) for cl in cc.comparison_levels
+        ]
         sql = " ".join(cc_sqls)
         sql = f"CASE {sql} END as {cc._bf_column_name}"
         select_cols.append(cc._gamma_column_name)
@@ -117,14 +169,14 @@ def predict_from_agreement_pattern_counts_sqls(
     sqls.append(sql_info)
 
     select_cols = []
-    for cc in settings_obj.comparisons:
+    for cc in comparisons:
         select_cols.append(cc._gamma_column_name)
         select_cols.append(cc._bf_column_name)
     select_cols.append("agreement_pattern_count")
     select_cols_expr = ",".join(select_cols)
 
-    prior = settings_obj._probability_two_random_records_match
-    bf_terms = [cc._bf_column_name for cc in settings_obj.comparisons]
+    prior = probability_two_random_records_match
+    bf_terms = [cc._bf_column_name for cc in comparisons]
     bayes_factor_expr, match_prob_expr = _combine_prior_and_bfs(
         prior,
         bf_terms,
