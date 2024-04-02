@@ -1,3 +1,5 @@
+import pytest
+
 import splink.comparison_level_library as cll
 from splink.settings_creator import SettingsCreator
 
@@ -94,4 +96,134 @@ def test_disable_tf_exact_match_detection():
     )
     assert "0.456" in exact_match._tf_adjustment_sql(
         "gamma_", comparison_levels_disabled
+    )
+
+
+def test_with_predict_calculation():
+    import pandas as pd
+
+    from splink import DuckDBAPI, Linker, SettingsCreator
+    from splink import comparison_level_library as cll
+    from splink import comparison_library as cl
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    df = df[df["unique_id"].isin([835, 836, 147, 975])]
+
+    def get_settings(disable_tf_exact_match_detection):
+
+        comparison_level = {
+            "sql_condition": 'levenshtein("surname_l", "surname_r") <= 1',
+            "label_for_charts": "Levenshtein <= 1",
+            "tf_adjustment_column": "surname",
+            "u_probability": 0.3,
+            "m_probability": 0.9,
+        }
+        if disable_tf_exact_match_detection:
+            comparison_level["disable_tf_exact_match_detection"] = True
+
+        return SettingsCreator(
+            link_type="dedupe_only",
+            comparisons=[
+                {
+                    "output_column_name": "surname",
+                    "comparison_levels": [
+                        cll.NullLevel("surname"),
+                        {
+                            "sql_condition": '"surname_l" = "surname_r"',
+                            "label_for_charts": "Exact match",
+                            "tf_adjustment_column": "surname",
+                            "u_probability": 0.1,
+                            "m_probability": 0.8,
+                        },
+                        comparison_level,
+                        cll.ElseLevel(),
+                    ],
+                    "comparison_description": "surname description",
+                }
+            ],
+            retain_intermediate_calculation_columns=True,
+        )
+
+    settings_normal = get_settings(disable_tf_exact_match_detection=False)
+    linker = Linker(df, settings_normal, DuckDBAPI())
+
+    tf_lookup = [
+        {"surname": "Taylor", "tf_surname": 0.4},
+        {"surname": "Kirk", "tf_surname": 0.2},
+    ]
+    linker.register_term_frequency_lookup(tf_lookup, "surname")
+
+    df_predict = linker.predict()
+
+    sql = f"""
+    select * from {df_predict.physical_name}
+    where unique_id_l = 835
+    and unique_id_r = 836
+    """
+    res = linker.query_sql(sql).to_dict(orient="records")[0]
+
+    # Exact match, normal tf adjustement, Kirk
+    assert res["bf_surname"] == pytest.approx(8.0)
+    # Overall BF should be m/u = 0.8/0.2 = 4
+    assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+
+    # Levenshtein match, normal tf adustments
+    sql = f"""
+    select * from {df_predict.physical_name}
+    where unique_id_l = 147
+    and unique_id_r = 975
+    """
+    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    # Levenshtein match, normal tf adustments, Taylor
+    # Splink makes the tf adjustment based on on the exact match level
+    # Lev match level has bf of 0.9/0.3
+    assert res["bf_surname"] == pytest.approx(3.0)
+    # Overall BR should be based base of 3.0
+    # TF adjustmeent is difference between:
+    #    u of exact match = 0.1
+    #    u of Taylor = 0.4
+    assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
+        3.0 * (0.1 / 0.4)
+    )
+
+    settings_disabled = get_settings(disable_tf_exact_match_detection=True)
+    linker = Linker(df, settings_disabled, DuckDBAPI())
+
+    tf_lookup = [
+        {"surname": "Taylor", "tf_surname": 0.4},
+        {"surname": "Kirk", "tf_surname": 0.2},
+    ]
+    linker.register_term_frequency_lookup(tf_lookup, "surname")
+
+    df_predict = linker.predict()
+
+    sql = f"""
+    select * from {df_predict.physical_name}
+    where unique_id_l = 835
+    and unique_id_r = 836
+    """
+    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    # Exact match, normal tf adjustement, Kirk
+    assert res["bf_surname"] == pytest.approx(8.0)
+    # Overall BF should be m/u = 0.8/0.2 = 4
+    assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+
+    sql = f"""
+    select * from {df_predict.physical_name}
+    where unique_id_l = 147
+    and unique_id_r = 975
+    """
+    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    # Levenshtein match, tf exact match detection disabled, Taylor
+    # Splink makes the tf adjustment based on on the exact match level
+    # Lev match level has bf of 0.9/0.3
+    assert res["bf_surname"] == pytest.approx(3.0)
+
+    # Overall BR should be based base of 3.0
+    # TF adjustmeent is difference between:
+    #    u of this level = 0.3
+    #    u of Taylor = 0.4
+    assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
+        3.0 * (0.3 / 0.4)
     )
