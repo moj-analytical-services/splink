@@ -23,11 +23,17 @@ Node metrics quantify the properties of the nodes which live within clusters.
 
 ### Node Degree
 
-Node degree is the number of edges connected to a node.
+##### Definition
 
-For example, in the cluster below A has a node degree of 1, whereas D has a node degree of 3.
+Node degree is the **number of edges connected to a node**.
+
+##### Example
+
+In the cluster below A has a node degree of 1, whereas D has a node degree of 3.
 
 ![Basic Graph - Records](../../../img/clusters/basic_graph_records.drawio.png){:width="80%"}
+
+##### Application in Data Linkage
 
 High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives) or be the result of a small number of false links (false positives).
 
@@ -37,17 +43,29 @@ It is important to consider [cluster size](#cluster-size) when looking at node d
 
 Bear in mind, that the degree of a single node in a cluster isn't necessarily representative of the overall connectedness of a cluster. This is where [cluster centralisation](#cluster-centralisation) can help.
 
+<hr>
+
 ## :link: Edge metrics
 
 Edge metrics quantify the properties of the edges within a cluster. 
 
 ### 'is bridge'
 
-An edge is classified as a 'bridge' if its removal splits a cluster into two smaller clusters.
+##### Definition
 
-[insert picture]
+An edge is classified as a 'bridge' if its **removal splits a cluster into two smaller clusters**.
+
+##### Example
+
+For example, the removal of the link labelled "Bridge" below would break this cluster of 9 nodes into two clusters of 5 and 4 nodes, respectively.
+
+![](../../../img/clusters/is_bridge.drawio.png){:width="70%"}
+
+##### Application in Data Linkage
 
 Bridges can be signalers of false positives in linked data, especially when joining two highly connected sub-clusters. Examining bridges can shed light on issues with the linking process leading to the formation of false positive links.
+
+<hr>
 
 ## :fontawesome-solid-circle-nodes: Cluster metrics
 
@@ -55,9 +73,17 @@ Cluster metrics refer to the characteristics of a cluster as a whole, rather tha
 
 ### Cluster Size
 
-Cluster size refers to the number of nodes within a cluster.
+##### Definition
 
-[include picture]
+Cluster size refers to the **number of nodes within a cluster**.
+
+##### Example
+
+The cluster below is of size 5.
+
+![](../../../img/clusters/cluster_size.drawio.png){:width="30%"}
+
+##### Application in Data Linkage
 
 When thinking about cluster size, it is often useful to consider the biggest clusters produced and ask yourself if the sizes seem reasonable for the dataset being linked. For example when linking people, does it make sense that an individual is appearing hundreds of times in the linked data resulting in a cluster of over 100 nodes? If the answer is no, then false positives links are probably being formed.
 
@@ -67,9 +93,17 @@ There also might be a lower bound on cluster size. For example, when linking two
 
 ### Cluster Density
 
-The density of a cluster is given by the number of edges it contains divided by the maximum possible number of edges. Density ranges from 0 to 1. A density of 1 means that all nodes are connected to all other nodes in a cluster.
+##### Definition
 
-[picture: edges vs max possible edges]
+The density of a cluster is given by the **number of edges it contains divided by the maximum possible number of edges**. Density ranges from 0 to 1. A density of 1 means that all nodes are connected to all other nodes in a cluster.
+
+##### Example
+
+The left cluster below has links between all nodes (giving a density of 1), whereas the right cluster has the minimum number of edges (4) to link 5 nodes together (giving a density of 0.4).
+
+![](../../../img/clusters/cluster_density.drawio.png){:width="80%"}
+
+##### Application in Data Linkage
 
 When evaluating clusters, a high density (closer to 1) is generally considered good as it means there are many edges in support of the records in a cluster being linked.
 
@@ -78,9 +112,16 @@ A low density could indicate links being missed. A sample of low density cluster
 
 ### Cluster Centralisation
 
+##### Definition
+
 [Cluster centralisation](https://en.wikipedia.org/wiki/Centrality#Degree_centrality) is defined as the deviation from maximum [node degree](#node-degree) normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
 
+##### Example
+
 [include picture]
+
+
+##### Application in Data Linkage
 
 A high cluster centralisation (closer to 1) indicates that a few nodes are home to significantly more connections compared to the rest of the nodes in a cluster. This can help identify clusters containing nodes with a lower number of connections (low node degree) relative to what is possible for that cluster.
 
