@@ -649,6 +649,8 @@ class ComparisonLevel:
 
         if self._has_tf_adjustments:
             output["tf_adjustment_column"] = self._tf_adjustment_input_column.input_name
+            if self._tf_minimum_u_value != 0:
+                output["tf_minimum_u_value"] = self._tf_minimum_u_value
             if self._tf_adjustment_weight != 0:
                 output["tf_adjustment_weight"] = self._tf_adjustment_weight
 
