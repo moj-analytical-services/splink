@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Activates `higher_is_more_similar` kwarg in `cl.distance_function_at_thresholds`, see [here](https://github.com/moj-analytical-services/splink/pull/2116)
+- `linker.save_model_to_json()` now correctly serialises `tf_minimum_u_value` and reloads. See [here](https://github.com/moj-analytical-services/splink/pull/2122).
 
 ## [3.9.14] - 2024-03-25
 
