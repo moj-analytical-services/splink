@@ -138,6 +138,7 @@ class ComparisonLevel:
         tf_minimum_u_value: float = 0.0,
         m_probability: float = None,
         u_probability: float = None,
+        disable_tf_exact_match_detection=False,
     ):
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
@@ -145,16 +146,10 @@ class ComparisonLevel:
         self._is_null_level = is_null_level
         self._label_for_charts = label_for_charts
 
-        self._disable_tf_exact_match_detection = self._level_dict_val_else_default(
-            "disable_tf_exact_match_detection"
-        )
-
-        self._tf_minimum_u_value = self._level_dict_val_else_default(
-            "tf_minimum_u_value"
-        )
         self._tf_adjustment_column = tf_adjustment_column
         self._tf_adjustment_weight = tf_adjustment_weight
         self._tf_minimum_u_value = tf_minimum_u_value
+        self._disable_tf_exact_match_detection = disable_tf_exact_match_detection
 
         self._m_probability = m_probability
         self._u_probability = u_probability
@@ -495,9 +490,9 @@ class ComparisonLevel:
             cols.append(col)
         return cols
 
-    @property
-    def _u_probability_corresponding_to_exact_match(self):
-        comparison_levels = self.comparison.comparison_levels
+    def _u_probability_corresponding_to_exact_match(
+        self, comparison_levels: list[ComparisonLevel]
+    ):
 
         if self.disable_tf_exact_match_detection:
             return self.u_probability
@@ -628,7 +623,7 @@ class ComparisonLevel:
         if self.is_null_level:
             output["is_null_level"] = True
 
-        if self.disable_tf_exact_match_detection:
+        if self._disable_tf_exact_match_detection:
             output["disable_tf_exact_match_detection"] = True
 
         return output
