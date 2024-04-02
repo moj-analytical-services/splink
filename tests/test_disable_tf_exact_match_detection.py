@@ -107,7 +107,7 @@ def test_with_predict_calculation():
 
     df = df[df["unique_id"].isin([835, 836, 147, 975])]
 
-    def get_settings(disable_tf_exact_match_detection):
+    def get_settings(disable_tf_exact_match_detection, tf_minimum_u_value=None):
 
         comparison_level = {
             "sql_condition": 'levenshtein("surname_l", "surname_r") <= 1',
@@ -118,6 +118,9 @@ def test_with_predict_calculation():
         }
         if disable_tf_exact_match_detection:
             comparison_level["disable_tf_exact_match_detection"] = True
+
+        if tf_minimum_u_value is not None:
+            comparison_level["tf_minimum_u_value"] = tf_minimum_u_value
 
         return SettingsCreator(
             link_type="dedupe_only",
@@ -143,6 +146,7 @@ def test_with_predict_calculation():
         )
 
     settings_normal = get_settings(disable_tf_exact_match_detection=False)
+
     linker = Linker(df, settings_normal, DuckDBAPI())
 
     tf_lookup = [
@@ -224,3 +228,52 @@ def test_with_predict_calculation():
     assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
         3.0 * (0.3 / 0.4)
     )
+
+    settings_disabled_with_min_tf = get_settings(
+        disable_tf_exact_match_detection=True, tf_minimum_u_value=0.1
+    )
+
+    linker_base = Linker(df, settings_disabled_with_min_tf, DuckDBAPI())
+    linkers = [linker_base, Linker(df, linker_base.save_model_to_json(), DuckDBAPI())]
+
+    # This ensures we're checking that serialisation and deserialisation
+    # works on the disable_tf_exact_match_detection and tf_minimum_u_value settings
+    for linker in linkers:
+
+        tf_lookup = [
+            {"surname": "Taylor", "tf_surname": 0.001},
+            {"surname": "Kirk", "tf_surname": 0.2},
+        ]
+        linker.register_term_frequency_lookup(tf_lookup, "surname")
+
+        df_predict = linker.predict()
+
+        sql = f"""
+        select * from {df_predict.physical_name}
+        where unique_id_l = 835
+        and unique_id_r = 836
+        """
+        res = linker.query_sql(sql).to_dict(orient="records")[0]
+        # Exact match, normal tf adjustement, Kirk
+        assert res["bf_surname"] == pytest.approx(8.0)
+        # Overall BF should be m/u = 0.8/0.2 = 4
+        assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+
+        sql = f"""
+        select * from {df_predict.physical_name}
+        where unique_id_l = 147
+        and unique_id_r = 975
+        """
+        res = linker.query_sql(sql).to_dict(orient="records")[0]
+        # Levenshtein match, tf exact match detection disabled, Taylor
+        # Splink makes the tf adjustment based on on the exact match level
+        # Lev match level has bf of 0.9/0.3
+        assert res["bf_surname"] == pytest.approx(3.0)
+
+        # Overall BR should be based base of 3.0
+        # TF adjustmeent is difference between:
+        #    u of this level = 0.3
+        #    u of Taylor with min tf applied = 0.1
+        assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
+            3.0 * (0.3 / 0.1)
+        )
