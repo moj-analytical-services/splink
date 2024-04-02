@@ -172,7 +172,7 @@ nav:
         - Clusters: 
           - Overview: "topic_guides/evaluation/clusters/overview.md"
           - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
-          - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.md"
+          - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
