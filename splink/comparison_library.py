@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Iterable, List, Union
+from typing import Iterable, List, Optional, Union
 
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
@@ -85,7 +85,8 @@ class CustomComparison(ComparisonCreator):
             else f"Comparison for {self._output_column_name}"
         )
 
-    def create_output_column_name(self) -> str:
+    def create_output_column_name(self) -> Optional[str]:
+        # TODO: should default logic be here? would need column-extraction logic also
         return self._output_column_name
 
 

@@ -1,12 +1,13 @@
 import math
 from copy import deepcopy
+from typing import Any, Dict
 
 from .comparison import Comparison
 from .misc import prob_to_bayes_factor
 
 
 def _prior_record(settings_obj):
-    rec = {}
+    rec: Dict[str, Any] = {}
     rec["column_name"] = "Prior"
     rec["label_for_charts"] = "Starting match weight (prior)"
     rec["sql_condition"] = None
@@ -24,7 +25,7 @@ def _prior_record(settings_obj):
 
 
 def _final_score_record(record_as_dict):
-    rec = {}
+    rec: Dict[str, Any] = {}
     rec["column_name"] = "Final score"
     rec["label_for_charts"] = "Final score"
     rec["sql_condition"] = None

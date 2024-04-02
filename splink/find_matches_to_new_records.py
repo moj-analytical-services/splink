@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from .input_column import InputColumn
@@ -11,8 +13,8 @@ if TYPE_CHECKING:
 def add_unique_id_and_source_dataset_cols_if_needed(
     linker: "Linker", new_records_df: "SplinkDataFrame", pipeline: CTEPipeline
 ) -> CTEPipeline:
-    cols = new_records_df.columns
-    cols = [c.unquote().name for c in cols]
+    input_cols: list[InputColumn] = new_records_df.columns
+    cols: list[str] = [c.unquote().name for c in input_cols]
 
     # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""

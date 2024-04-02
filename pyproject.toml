@@ -113,8 +113,6 @@ packages = "splink"
 # temporary exclusions
 exclude = [
     # modules with large number of errors
-    '.*comparison.*library\.py',
-    '.*linker\.py',
     '/settings_validation/'
 ]
 # for now at least allow implicit optionals
@@ -123,6 +121,18 @@ implicit_optional = true
 # for now, ignore missing imports
 # can remove later and install stubs, where existent
 ignore_missing_imports = true
-# don't follow imports to modules we don't want to typecheck yet
-# eventually restore this back to the default "normal"
-follow_imports = "silent"
+
+# options for strict mode
+# too much to handle at once, so opt-in a little at a time
+# https://mypy.readthedocs.io/en/stable/existing_code.html#introduce-stricter-options
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+strict_equality = true
+# don't worry about warning: https://github.com/python/mypy/issues/16189
+strict_concatenate = true
+check_untyped_defs = true
+disallow_subclassing_any = true
+# next set to enforce:
+# disallow_untyped_decorators = true
+# disallow_any_generics = true

@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from pandas import DataFrame as PandasDataFrame
+
 from ..input_column import InputColumn
 from ..splink_dataframe import SplinkDataFrame
 from .spark_helpers.custom_spark_dialect import Dialect
@@ -33,11 +35,7 @@ class SparkDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return (
-            self.db_api._execute_sql_against_backend(sql)
-            .toPandas()
-            .to_dict(orient="records")
-        )
+        return self.as_pandas_dataframe(limit=limit).to_dict(orient="records")
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":
@@ -46,7 +44,7 @@ class SparkDataFrame(SplinkDataFrame):
         else:
             pass
 
-    def as_pandas_dataframe(self, limit=None):
+    def as_pandas_dataframe(self, limit=None) -> PandasDataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
