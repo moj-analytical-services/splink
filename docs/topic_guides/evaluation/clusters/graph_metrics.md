@@ -93,3 +93,5 @@ Low centralisation suggests that edges are more evenly distributed amongst nodes
 <hr>
 
 A guide on [how to compute all the graph metrics mentioned above with Splink]() is given in the next chapter.
+
+Please note, this topic guide is a work in progress and we welcome any feedback.

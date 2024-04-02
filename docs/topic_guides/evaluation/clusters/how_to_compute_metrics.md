@@ -21,7 +21,7 @@ with arguments
 
     `threshold_match_probability` should be the same as the clustering threshold passed to `cluster_pairwise_predictions_at_threshold()`. If this information is available to Splink then it will be passed automatically, otherwise the user will have to provide it themselves and take care to ensure that threshold values align.
 
-The method generates tables containing graph metrics (for nodes, edges and clusters), and returns a data class of Splink dataframes. The individual Splink dataframes containing node, edge and cluster metrics can be accessed as follows:
+The method generates tables containing graph metrics (for nodes, edges and clusters), and returns a data class of [Splink dataframes](../../../SplinkDataFrame.md). The individual Splink dataframes containing node, edge and cluster metrics can be accessed as follows:
 
 ```
 compute_graph_metrics.nodes for node metrics
