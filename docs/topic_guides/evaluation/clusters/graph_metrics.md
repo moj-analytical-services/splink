@@ -4,9 +4,9 @@ Graph metrics quantify the characteristics of a graph. A simple example of a gra
 
 For data linking with Splink, it is useful to sort graph metrics into three categories:
 
-* [Node metrics](#purple_circle-node-metrics)
-* [Edge metrics](#link-edge-metrics)
-* [Cluster metrics](#fontawesome-solid-circle-nodes-cluster-metrics)
+* [Node metrics](#node-metrics)
+* [Edge metrics](#edge-metrics)
+* [Cluster metrics](#cluster-metrics)
 
 Each of these are defined below together with examples and explanations of how they can be applied to linked data to evaluate cluster quality. The examples cover all metrics currently available in Splink.
 
@@ -78,7 +78,7 @@ A low density could indicate links being missed. A sample of low density cluster
 
 ### Cluster Centralisation
 
-[Cluster centralisation]("https://en.wikipedia.org/wiki/Centrality#Degree_centrality") is defined as the deviation from maximum [node degree](#node-degree) normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
+[Cluster centralisation](https://en.wikipedia.org/wiki/Centrality#Degree_centrality) is defined as the deviation from maximum [node degree](#node-degree) normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
 
 [include picture]
 
@@ -88,6 +88,6 @@ Low centralisation suggests that edges are more evenly distributed amongst nodes
 
 <hr>
 
-A guide on [how to compute all the graph metrics mentioned above with Splink]() is given in the next chapter.
+A guide on [how to compute graph metrics](./how_to_compute_metrics.ipynb) mentioned above with Splink is given in the next chapter.
 
 Please note, this topic guide is a work in progress and we welcome any feedback.
