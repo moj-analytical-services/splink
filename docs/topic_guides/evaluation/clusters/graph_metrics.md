@@ -8,7 +8,7 @@ For data linking with Splink, it is useful to sort graph metrics into three cate
 * [Edge metrics](#link-edge-metrics)
 * [Cluster metrics](#fontawesome-solid-circle-nodes-cluster-metrics)
 
-Each of these are defined below together with examples and explanations of how they can be applied to linked data to evaluate cluster quality. The examples given are of all metrics currently available in Splink.
+Each of these are defined below together with examples and explanations of how they can be applied to linked data to evaluate cluster quality. The examples cover all metrics currently available in Splink.
 
 !!! note
 
@@ -31,7 +31,7 @@ For example, in the cluster below A has a node degree of 1, whereas D has a node
 
 High node degree is generally considered good as it means there are many edges in support of records in a cluster being linked. Nodes with low node degree could indicate links being missed (false negatives).
 
-However, erroneous links (false positives) could also be the reason for high node degree, so it can be useful to validate the edges of highly connected nodes.
+However, erroneous links (false positives) could also be the reason for _high_ node degree, so it can be useful to validate the edges of highly connected nodes.
 
 It is important to consider [cluster size]() when looking at node degree. By definition, larger clusters contain more nodes to form links between, allowing nodes within them to attain higher degrees compared to those in smaller clusters. Consequently, low node degree within larger clusters can carry greater significance.
 
