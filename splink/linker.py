@@ -348,9 +348,6 @@ class Linker:
             else:
                 return "__splink__df_concat_with_tf_sample"
 
-        if self._analyse_blocking_mode:
-            return "__splink__df_concat"
-
         if self._two_dataset_link_only:
             return "__splink__df_concat_with_tf_left"
 
@@ -373,9 +370,6 @@ class Linker:
             else:
                 return "__splink__df_concat_with_tf_sample"
 
-        if self._analyse_blocking_mode:
-            return "__splink__df_concat"
-
         if self._two_dataset_link_only:
             return "__splink__df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
@@ -385,14 +379,6 @@ class Linker:
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
         # concatenation of all input datasets
-        if self._find_new_matches_mode:
-            return True
-
-        if self._compare_two_records_mode:
-            return True
-
-        if self._analyse_blocking_mode:
-            return False
 
         if (
             len(self._input_tables_dict) == 2
