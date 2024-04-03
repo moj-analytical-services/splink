@@ -26,7 +26,7 @@ Unlike debug mode, logging doesn't affect the performance of Splink.
 
 ### Logging levels
 
-You can set the logging level with code like `logging.getLogger("splink").setLevel(desired_level)` although **see notes below about gotyas**.
+You can set the logging level with code like `logging.getLogger("splink").setLevel(desired_level)` although **see notes below about gotchas**.
 
 The logging levels in Splink are:
 

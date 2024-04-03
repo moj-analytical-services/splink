@@ -1,0 +1,47 @@
+matrix:
+  - name: Markdown docs
+    sources:
+      - docs/**/*.md|!docs/includes/**/*.md
+    aspell:
+      lang: en
+      d: en_GB
+      mode: markdown
+    dictionary:
+      wordlists:
+        - scripts/pyspelling/custom_dictionary.txt
+      output: scripts/pyspelling/dictionary.dic
+    pipeline:
+      - pyspelling.filters.context:
+          context_visible_first: true
+          delimiters:
+            # Ignore multiline content between cards flags
+            # ::cards::
+            #   content
+            # ::/cards::
+            - open: '(?s)^(::cards::)$'
+              close: '^(::\/cards::)$'
+            # Ignore multiline content between "---" markers at top of blog posts
+            - open: '(?s)^(---)$'
+              close: '^---$'
+            # Ignore text for icons eg :octicons-duplicate-24:
+            - open: ':\w+-\w+-?\w*'
+              close: ':'
+            # Ignore urls between html anchor tags
+            - open: '<a'
+              close: '<\/a>'
+            # Ignore text contained in markdown tags
+            - open: '<'
+              close: '>'
+            # Ignore multiline math
+            # $$ 
+            #  x + y = z
+            # $$
+            - open: '(?s)^(\$\$)'
+              close: '(\$\$)$'
+            # Ignore inline math
+            # $ x + y = z $
+            - open: '\${1,2}'
+              close: '\${1,2}'
+            # Ignore auto-generated API info which follows ":::"
+            - open: '(?s)^(:::)'
+              close: '\$'

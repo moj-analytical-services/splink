@@ -8,7 +8,7 @@ That is, when we call `df = spark.sql(sql)`, the `df` is not immediately compute
 
 Furthermore, even when an action is called, the results aren't automatically persisted by Spark to disk. This differs from other backends, which execute SQL as a `create table` statement, meaning that the result is automatically saved.
 
-This interferes with caching, because Splink assumes that when the the function [`_execute_sql_against_backend()`](https://github.com/moj-analytical-services/splink/blob/cfd29be07ba709403764215e029f395725548b0f/splink/linker.py#L370) is called, this will be evaluted greedily (immediately evaluated) AND the results will be saved to the 'database'.
+This interferes with caching, because Splink assumes that when the the function [`_execute_sql_against_backend()`](https://github.com/moj-analytical-services/splink/blob/cfd29be07ba709403764215e029f395725548b0f/splink/linker.py#L370) is called, this will be evaluated greedily (immediately evaluated) AND the results will be saved to the 'database'.
 
 Another quirk of Spark is that it chunks work up into tasks. This is relevant for two reasons:
 

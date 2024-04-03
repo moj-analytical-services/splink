@@ -60,6 +60,7 @@ class ComparisonLevelCreator(ABC):
         tf_minimum_u_value: float = None,
         is_null_level: bool = None,
         label_for_charts: str = None,
+        disable_tf_exact_match_detection: bool = None,
     ) -> "ComparisonLevelCreator":
         """
         Configure the comparison level with options which are common to all

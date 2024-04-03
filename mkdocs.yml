@@ -67,9 +67,8 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs.hooks:on_page_markdown_hook"
+hooks:
+  - docs/hooks/__init__.py
 
 markdown_extensions:
   - abbr
@@ -139,6 +138,7 @@ nav:
         - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
         - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
         - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
+        - Linked data as graphs: "topic_guides/theory/linked_data_as_graphs.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
           - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
@@ -235,11 +235,12 @@ nav:
   - Contributing:
       - "dev_guides/index.md"
       - Contributing to Splink:
-        - Contributor Guide: "CONTRIBUTING.md"
-        - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
+        - Contributor Guide: "dev_guides/CONTRIBUTING.md"
+        - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
+        - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
         - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
@@ -258,7 +259,7 @@ nav:
         - Settings Validation:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
-        - Splink Dependency Management: "dev_guides/dependency_management.md"
+        - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
   - Blog:
     - blog/index.md
 extra_css:

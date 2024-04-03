@@ -148,12 +148,12 @@ class EMTrainingSession:
         not_estimated = [
             cc.output_column_name for cc in self._comparisons_that_cannot_be_estimated
         ]
-        not_estimated = "".join([f"\n    - {cc}" for cc in not_estimated])
+        not_estimated_str = "".join([f"\n    - {cc}" for cc in not_estimated])
 
         estimated = [
             cc.output_column_name for cc in self.core_model_settings.comparisons
         ]
-        estimated = "".join([f"\n    - {cc}" for cc in estimated])
+        estimated_str = "".join([f"\n    - {cc}" for cc in estimated])
 
         if {"m", "u"}.issubset(self.training_fixed_probabilities):
             raise ValueError("Can't train model if you fix both m and u probabilites")
@@ -170,9 +170,9 @@ class EMTrainingSession:
             f"Estimating the {mu} of the model by blocking on:\n"
             f"{blocking_rule}\n\n"
             "Parameter estimates will be made for the following comparison(s):"
-            f"{estimated}\n"
+            f"{estimated_str}\n"
             "\nParameter estimates cannot be made for the following comparison(s)"
-            f" since they are used in the blocking rules: {not_estimated}"
+            f" since they are used in the blocking rules: {not_estimated_str}"
         )
 
     def _comparison_vectors(self):

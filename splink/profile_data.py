@@ -153,11 +153,11 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         # a null value.
         if isinstance(raw_expr, list):
             null_exprs = [f"{c} is null" for c in raw_expr]
-            null_exprs = " OR ".join(null_exprs)
+            null_expr_str = " OR ".join(null_exprs)
 
             col_or_expr = f"""
                 case when
-                {null_exprs} then null
+                {null_expr_str} then null
                 else
                 {col_or_expr}
                 end

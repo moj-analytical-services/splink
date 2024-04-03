@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Type
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -329,18 +329,18 @@ def _get_dialect_quotes(dialect):
     if dialect is None:
         return start, end
     try:
-        sqlglot_dialect = sqlglot.Dialect[dialect.lower()]
+        sqlglot_dialect: Type[sqlglot.Dialect] = sqlglot.Dialect[dialect.lower()]
     except KeyError:
         return start, end
     return _get_sqlglot_dialect_quotes(sqlglot_dialect)
 
 
-def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
+def _get_sqlglot_dialect_quotes(dialect: Type[sqlglot.Dialect]):
     try:
-        # For sqlglot >= 16.0.0
-        start = dialect.IDENTIFIER_START  # type: ignore [attr-defined]
-        end = dialect.IDENTIFIER_END  # type: ignore [attr-defined]
+        start = dialect.IDENTIFIER_START
+        end = dialect.IDENTIFIER_END
     except AttributeError:
+        # For sqlglot < 16.0.0
         start = dialect.identifier_start  # type: ignore [attr-defined]
         end = dialect.identifier_end  # type: ignore [attr-defined]
     return start, end
