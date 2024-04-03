@@ -107,7 +107,9 @@ The left cluster below has links between all nodes (giving a density of 1), wher
 
 When evaluating clusters, a high density (closer to 1) is generally considered good as it means there are many edges in support of the records in a cluster being linked.
 
-A low density could indicate links being missed. A sample of low density clusters can be inspected in Splink's [Cluster Studio Dashboard](../../../charts/cluster_studio_dashboard.ipynb) via the option `sampling_method = "lowest_density_clusters_by_size"`, which performs stratified sampling across different cluster sizes. When inspecting a cluster, ask yourself the question: why aren't more links being formed between record nodes?
+A low density could indicate links being missed. This could happen, for example, if blocking rules are too tight or the clustering threshold is too high.
+
+A sample of low density clusters can be inspected in Splink's [Cluster Studio Dashboard](../../../charts/cluster_studio_dashboard.ipynb) via the option `sampling_method = "lowest_density_clusters_by_size"`, which performs stratified sampling across different cluster sizes. When inspecting a cluster, ask yourself the question: why aren't more links being formed between record nodes?
 
 
 ### Cluster Centralisation
