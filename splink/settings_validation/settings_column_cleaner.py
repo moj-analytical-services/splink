@@ -113,7 +113,9 @@ class SettingsColumnCleaner:
 
     @property
     def cols_to_retain(self):
-        return clean_list_of_column_names(self._settings_obj._additional_cols_to_retain)
+        return clean_list_of_column_names(
+            self._settings_obj._additional_columns_to_retain
+        )
 
     @property
     def uid(self):
