@@ -5,8 +5,7 @@ import pandas as pd
 import pytest
 
 from splink.blocking_rule_library import block_on
-from splink.comparison import Comparison
-from splink.comparison_library import LevenshteinAtThresholds
+from splink.comparison_library import CustomComparison, LevenshteinAtThresholds
 from splink.duckdb.database_api import DuckDBAPI
 from splink.exceptions import ErrorLogger
 from splink.linker import Linker
@@ -25,8 +24,6 @@ from splink.settings_validation.valid_types import (
 )
 
 from .basic_settings import get_settings_dict
-
-pytestmark = pytest.mark.skip("Until we sort out new style of settings validation")
 
 DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 VALID_INPUT_COLUMNS = DF.columns
@@ -220,8 +217,8 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
         check_comparison_for_missing_or_invalid_sql_strings(
             sql_dialect="duckdb",
             comparisons_to_check=[
-                Comparison(**email_comparison_to_check, sqlglot_dialect_name="duckdb"),
-                Comparison(**city_comparison_to_check, sqlglot_dialect_name="duckdb"),
+                CustomComparison(**email_comparison_to_check).get_comparison("duckdb"),
+                CustomComparison(**city_comparison_to_check).get_comparison("duckdb"),
                 LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
             valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
