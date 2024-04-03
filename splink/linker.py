@@ -461,8 +461,6 @@ class Linker:
         )
 
     def _validate_settings(self, validate_settings):
-        # TODO: restore logic
-        return
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
