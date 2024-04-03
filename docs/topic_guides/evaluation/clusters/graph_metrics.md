@@ -112,14 +112,19 @@ A low density could indicate links being missed. A sample of low density cluster
 
 ### Cluster Centralisation
 
+!!! info "Work in Progress"
+
+    We are still working out where Cluster Centralisation can be best used in the context of record linkage. At this stage, we do not have clear recommendations or guidance on the best places to use it - so if you have any expertise in this area we would love to [hear from you](https://github.com/moj-analytical-services/splink/discussions)!
+
+    We will update this guidance as and when we have clearer strategies in this space.
+
 ##### Definition
 
 [Cluster centralisation](https://en.wikipedia.org/wiki/Centrality#Degree_centrality) is defined as the deviation from maximum [node degree](#node-degree) normalised with respect to the maximum possible value. In other words, cluster centralisation tells us about the concentration of edges in a cluster. Centralisation ranges from 0 to 1.
 
 ##### Example
 
-[include picture]
-
+Coming Soon
 
 ##### Application in Data Linkage
 
