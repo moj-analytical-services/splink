@@ -82,7 +82,7 @@ For some jobs, setting `repartition_after_blocking=True` when you initialise the
 
 ## Salting
 
-For very large jobs, you may find that [salting your blocking keys](https://moj-analytical-services.github.io/splink/topic_guides/salting.html) results in faster run times.
+For very large jobs, you may find that [salting your blocking keys](./salting.md) results in faster run times.
 
 ## General Spark config
 

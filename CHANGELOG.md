@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleaesed
 
+### Fixed
+
+- Activates `higher_is_more_similar` kwarg in `cl.distance_function_at_thresholds`, see [here](https://github.com/moj-analytical-services/splink/pull/2116)
+- `linker.save_model_to_json()` now correctly serialises `tf_minimum_u_value` and reloads. See [here](https://github.com/moj-analytical-services/splink/pull/2122).
+
+## [3.9.14] - 2024-03-25
+
+### Fixed
+
+- `IndexError: List index out of range` error due to API change `SQLGlot>=23.0.0`, see [here](https://github.com/moj-analytical-services/splink/pull/2079)
+
+### Added
+
+- Ability to override detection of exact match level for tf adjustments. See [here](https://gist.github.com/RobinL/6e11c04aa1204ac3e7452eddd778ab4f) for example.
 - Added method for computing graph metrics ([#2027](https://github.com/moj-analytical-services/splink/pull/2027))
 
 ## [3.9.13] - 2024-03-04
@@ -86,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.13...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.14...HEAD
+[3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14
 [3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
 [3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
 [3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11

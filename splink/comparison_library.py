@@ -49,6 +49,7 @@ class CustomComparison(ComparisonCreator):
                 "tf_adjustment_weight",
                 "tf_minimum_u_value",
                 "label_for_charts",
+                "disable_tf_exact_match_detection",
             )
             # split dict in two depending whether or not entries are 'configurables'
             configurables = {

@@ -1,0 +1,14 @@
+name: splink
+channels:
+  - conda-forge
+dependencies:
+  - python<3.11 # For compatibility with this version of Poetry
+  - pip
+  - openjdk<18 # Required for Spark; Spark 3.4 only supports older Java
+  - postgresql
+  - pip:
+      - poetry==1.4.2 # TODO: Unpin. Current poetry.lock requires older poetry.
+      # NOTE: These are the python packages to install alongside poetry, not within the
+      # poetry-created venv!
+      # See pyproject.toml and poetry.lock for the actual Splink dependencies.
+      - poetry-conda
