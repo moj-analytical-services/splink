@@ -179,3 +179,5 @@ cython_debug/
 splink_db
 splink_db_log
 spark-warehouse
+
+scripts/pyspelling/dictionary.dic
