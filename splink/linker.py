@@ -115,12 +115,10 @@ from .splink_comparison_viewer import (
 )
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
-    _join_tf_to_input_df_sql,
     colname_to_tf_tablename,
-    compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
-    term_frequencies_from_concat_with_tf,
     tf_adjustment_chart,
+    _join_new_table_to_df_concat_with_tf_sql,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -765,25 +763,9 @@ class Linker:
         )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
-        concat_tf_tables = [
-            tf_col.unquote().name
-            for tf_col in self._settings_obj._term_frequency_columns
-        ]
 
         if tf_tablename in cache:
             tf_df = cache.get_with_logging(tf_tablename)
-        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline = CTEPipeline([nodes_with_tf])
-            # If our df_concat_with_tf table already exists, use backwards inference to
-            # find a given tf table
-            colname = InputColumn(column_name)
-            sql = term_frequencies_from_concat_with_tf(colname)
-            pipeline.enqueue_sql(sql, colname_to_tf_tablename(colname))
-
-            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             pipeline = CTEPipeline()
             pipeline = enqueue_df_concat(self, pipeline)
@@ -1270,28 +1252,10 @@ class Linker:
             "__splink__df_new_records", new_records_tablename
         )
 
-        cache = self._intermediate_table_cache
-
         pipeline = CTEPipeline()
+        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
-        # If our df_concat_with_tf table already exists, derive the term frequency
-        # tables from df_concat_with_tf rather than computing them
-        if "__splink__df_concat_with_tf" in cache:
-            df = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline.append_input_dataframe(df)
-
-            tf_tables = compute_term_frequencies_from_concat_with_tf(self)
-            # This queues up our tf tables, rather materialising them
-            for tf in tf_tables:
-                # if tf is a SplinkDataFrame, then the table already exists
-                if isinstance(tf, SplinkDataFrame):
-                    pipeline.append_input_dataframe(tf)
-                else:
-                    pipeline.enqueue_sql(tf["sql"], tf["output_table_name"])
-        else:
-            # This queues up our cols_with_tf and df_concat_with_tf tables.
-            enqueue_df_concat_with_tf(self, pipeline)
-
+        pipeline = CTEPipeline([nodes_with_tf, new_records_df])
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
             br.add_preceding_rules(blocking_rules[:n])
@@ -1300,8 +1264,13 @@ class Linker:
 
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_input_df_sql(self)
-        sql = sql.replace("__splink__df_concat", new_records_tablename)
+        for tf_col in self._settings_obj._term_frequency_columns:
+            tf_table = colname_to_tf_tablename(tf_col)
+            if tf_table in self._intermediate_table_cache:
+                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+                pipeline.append_input_dataframe(tf_table)
+
+        sql = _join_new_table_to_df_concat_with_tf_sql(self, "__splink__df_new_records")
         pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(
@@ -1369,6 +1338,8 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
+        cache = self._intermediate_table_cache
+
         uid = ascii_uid(8)
         df_records_left = self.register_table(
             [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
@@ -1380,23 +1351,33 @@ class Linker:
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
-        sql_join_tf = _join_tf_to_input_df_sql(self)
-
-        sql_join_tf = sql_join_tf.replace(
-            "__splink__df_concat", "__splink__compare_two_records_left"
-        )
         pipeline = CTEPipeline([df_records_left, df_records_right])
+
+        if "__splink__df_concat_with_tf" in cache:
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            pipeline.append_input_dataframe(nodes_with_tf)
 
         for tf_col in self._settings_obj._term_frequency_columns:
             tf_table = colname_to_tf_tablename(tf_col)
-            if tf_table in self._intermediate_table_cache:
-                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+            if tf_table in cache:
+                tf_table = cache.get_with_logging(tf_table)
                 pipeline.append_input_dataframe(tf_table)
+            else:
+                if "__splink__df_concat_with_tf" not in cache:
+                    logger.warning(
+                        f"No term frequencies found for column {tf_col.name}.\n"
+                        "To apply term frequency adjustments, you need to register"
+                        " a lookup using `linker.register_term_frequency_lookup`."
+                    )
+
+        sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
+            self, "__splink__compare_two_records_left"
+        )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
-        sql_join_tf = sql_join_tf.replace(
-            "__splink__compare_two_records_left", "__splink__compare_two_records_right"
+        sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
+            self, "__splink__compare_two_records_right"
         )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")

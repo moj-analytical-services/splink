@@ -43,7 +43,7 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def _join_tf_to_input_df_sql(linker: Linker):
+def _join_tf_to_df_concat_sql(linker: Linker) -> str:
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -75,14 +75,58 @@ def _join_tf_to_input_df_sql(linker: Linker):
     return sql
 
 
-def term_frequencies_from_concat_with_tf(input_column):
-    sql = f"""
-        select
-        distinct {input_column.name},
-        {input_column.tf_name}
-        from __splink__df_concat_with_tf
+def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str) -> str:
+    """
+    Joins any required tf columns onto new_tablename
+
+    This is needed e.g. when using linker.compare_two_records
+    or linker.find_matches_to_new_records in which the user provides
+    new records which need tf adjustments computed
     """
 
+    cache = linker._intermediate_table_cache
+    settings_obj = linker._settings_obj
+    tf_cols = settings_obj._term_frequency_columns
+
+    select_cols = [f"{new_tablename}.*"]
+
+    for col in tf_cols:
+        tbl = colname_to_tf_tablename(col)
+        if tbl in cache:
+            select_cols.append(f"{tbl}.{col.tf_name}")
+
+    template = "left join {tbl} on " + new_tablename + ".{col} = {tbl}.{col}"
+    template_with_alias = (
+        "left join ({subquery}) as {_as} on " + new_tablename + ".{col} = {_as}.{col}"
+    )
+
+    left_joins = []
+    for i, col in enumerate(tf_cols):
+        tbl = colname_to_tf_tablename(col)
+        if tbl in cache:
+            sql = template.format(tbl=tbl, col=col.name)
+            left_joins.append(sql)
+        elif "__splink__df_concat_with_tf" in cache:
+            subquery = f"""
+            select distinct {col.name}, {col.tf_name}
+            from __splink__df_concat_with_tf
+            """
+            _as = f"nodes_tf__{i}"
+            sql = template_with_alias.format(subquery=subquery, col=col.name, _as=_as)
+            select_cols.append(f"{_as}.{col.tf_name}")
+            left_joins.append(sql)
+        else:
+            select_cols.append(f"null as {col.tf_name}")
+
+    select_cols_str = ", ".join(select_cols)
+    left_joins_str = "\n".join(left_joins)
+
+    sql = f"""
+    select {select_cols_str}
+    from {new_tablename}
+    {left_joins_str}
+
+    """
     return sql
 
 
@@ -113,7 +157,7 @@ def compute_all_term_frequencies_sqls(
             sql = {"sql": sql, "output_table_name": tf_table_name}
             sqls.append(sql)
 
-    sql = _join_tf_to_input_df_sql(linker)
+    sql = _join_tf_to_df_concat_sql(linker)
     sql = {
         "sql": sql,
         "output_table_name": "__splink__df_concat_with_tf",
@@ -121,37 +165,6 @@ def compute_all_term_frequencies_sqls(
     sqls.append(sql)
 
     return sqls
-
-
-def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
-    """If __splink__df_concat_with_tf already exists in your database,
-    reverse engineer the underlying tf tables.
-
-    __splink__df_concat_with_tf is a cached table and often output by
-    users to disk, for use at a later point in time. As a result, it
-    often exists in the database or is easily accessible by the user,
-    while the underlying tf tables are not.
-    """
-
-    settings_obj = linker._settings_obj
-    tf_cols = settings_obj._term_frequency_columns
-    cache = linker._intermediate_table_cache
-
-    tf_table = []
-    for tf_col in tf_cols:
-        tf_table_name = colname_to_tf_tablename(tf_col)
-
-        if tf_table_name not in cache:
-            sql = term_frequencies_from_concat_with_tf(tf_col)
-            sql = {
-                "sql": sql,
-                "output_table_name": colname_to_tf_tablename(tf_col),
-            }
-            tf_table.append(sql)
-        else:
-            tf_table.append(cache[tf_table_name])
-
-    return tf_table
 
 
 def comparison_level_to_tf_chart_data(cl: dict) -> dict:
