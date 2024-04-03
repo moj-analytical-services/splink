@@ -1,4 +1,4 @@
-name: Postgres tests
+name: Duckdb and core tests
 on:
   pull_request:
     branches:
@@ -12,20 +12,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      pg_splink_ci:
-        image: postgres
-        env:
-          POSTGRES_USER: splinkognito
-          POSTGRES_PASSWORD: splink123!
-          POSTGRES_DB: splink_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     strategy:
       matrix:
         python-version: ["3.8", "3.9"]
@@ -47,4 +33,4 @@ jobs:
           poetry install --no-interaction --no-root
 
       - name: Run tests
-        run: poetry run pytest -v --durations=0 -m "postgres_only" tests/
+        run: poetry run pytest -v --durations=0 -m "duckdb_only or core" tests/
