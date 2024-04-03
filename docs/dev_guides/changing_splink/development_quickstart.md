@@ -19,7 +19,9 @@ instructions for how to do so.
 
 ## Step 1: Clone Splink
 
-If you haven't already, make a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) of the Splink repository.
+If you haven't already, create a fork of the Splink repository.
+You can find the Splink repository [here](https://github.com/moj-analytical-services/splink),
+or [click here](https://github.com/moj-analytical-services/splink/fork) to go directly to making a fork.
 Clone **your fork** to whatever directory you want to work in with `git clone https://github.com/<YOUR_USERNAME>/splink.git`.
 
 ## Step 2: Choose how to install system dependencies
