@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Literal, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Join
@@ -489,7 +489,14 @@ def block_using_rules_sqls(
     input_tablename_l: str,
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
-    two_dataset_link_only: bool,
+    link_type: Literal[
+        "two_dataset_link_only",
+        "self_link",
+        "link_only",
+        "link_and_dedupe",
+        "dedupe_only",
+    ],
+    set_match_probability_to_one: bool = False,
 ):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -505,12 +512,6 @@ def block_using_rules_sqls(
 
     link_type = settings_obj._link_type
 
-    if linker._two_dataset_link_only:
-        link_type = "two_dataset_link_only"
-
-    if linker._self_link_mode:
-        link_type = "self_link"
-
     where_condition = _sql_gen_where_condition(
         link_type, settings_obj.column_info_settings.unique_id_input_columns
     )
@@ -524,7 +525,7 @@ def block_using_rules_sqls(
 
     # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.
-    if linker._deterministic_link_mode:
+    if set_match_probability_to_one:
         probability = ", 1.00 as match_probability"
     else:
         probability = ""

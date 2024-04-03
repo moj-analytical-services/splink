@@ -246,7 +246,6 @@ class Linker:
         self._em_training_sessions: list[EMTrainingSession] = []
 
         self._find_new_matches_mode = False
-        self._train_u_using_random_sample_mode = False
         self._compare_two_records_mode = False
         self._self_link_mode = False
         self._analyse_blocking_mode = False
@@ -1147,6 +1146,7 @@ class Linker:
         blocking_input_tablename_l = "__splink__df_concat_with_tf"
         blocking_input_tablename_r = "__splink__df_concat_with_tf"
 
+        link_type = self._settings_obj._link_type
         if (
             len(self._input_tables_dict) == 2
             and self._settings_obj._link_type == "link_only"
@@ -1159,6 +1159,7 @@ class Linker:
 
             blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
             blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+            link_type = "two_dataset_link_only"
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
@@ -1169,7 +1170,7 @@ class Linker:
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
-            two_dataset_link_only=self._two_dataset_link_only,
+            link_type=link_type,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
