@@ -124,7 +124,10 @@ from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
-from .vertically_concatenate import vertically_concatenate_sql
+from .vertically_concatenate import (
+    vertically_concatenate_sql,
+    split_df_concat_with_tf_into_two_tables_sqls,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1141,11 +1144,34 @@ class Linker:
         else:
             pipeline = enqueue_df_concat_with_tf(self, pipeline)
 
+        blocking_input_tablename_l = "__splink__df_concat_with_tf"
+        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+
+        if (
+            len(self._input_tables_dict) == 2
+            and self._settings_obj._link_type == "link_only"
+        ):
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat_with_tf",
+                self._settings_obj.column_info_settings.source_dataset_column_name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
+            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            two_dataset_link_only=self._two_dataset_link_only,
+        )
+
         pipeline.enqueue_list_of_sqls(sqls)
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)

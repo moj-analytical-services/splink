@@ -111,7 +111,15 @@ class BlockingRule:
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
 
-    def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
+    def create_blocked_pairs_sql(
+        self,
+        linker: Linker,
+        *,
+        input_tablename_l,
+        input_tablename_r,
+        where_condition,
+        probability,
+    ):
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -120,8 +128,8 @@ class BlockingRule:
             {sql_select_expr}
             , '{self.match_key}' as match_key
             {probability}
-            from {linker._input_tablename_l} as l
-            inner join {linker._input_tablename_r} as r
+            from {input_tablename_l} as l
+            inner join {input_tablename_r} as r
             on
             ({self.blocking_rule_sql})
             {where_condition}
@@ -236,7 +244,15 @@ class SaltedBlockingRule(BlockingRule):
     def _salting_condition(self, salt):
         return f"AND ceiling(l.__splink_salt * {self.salting_partitions}) = {salt + 1}"
 
-    def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
+    def create_blocked_pairs_sql(
+        self,
+        linker: Linker,
+        *,
+        input_tablename_l,
+        input_tablename_r,
+        where_condition,
+        probability,
+    ):
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -248,8 +264,8 @@ class SaltedBlockingRule(BlockingRule):
             {sql_select_expr}
             , '{self.match_key}' as match_key
             {probability}
-            from {linker._input_tablename_l} as l
-            inner join {linker._input_tablename_r} as r
+            from {input_tablename_l} as l
+            inner join {input_tablename_r} as r
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
@@ -357,7 +373,15 @@ class ExplodingBlockingRule(BlockingRule):
         )
         """
 
-    def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
+    def create_blocked_pairs_sql(
+        self,
+        linker: Linker,
+        *,
+        input_tablename_l,
+        input_tablename_r,
+        where_condition,
+        probability,
+    ):
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -381,9 +405,9 @@ class ExplodingBlockingRule(BlockingRule):
                 '{self.match_key}' as match_key
                 {probability}
             from {exploded_id_pair_table.physical_name} as pairs
-            left join {linker._input_tablename_l} as l
+            left join {input_tablename_l} as l
                 on pairs.{unique_id_col}_l={id_expr_l}
-            left join {linker._input_tablename_r} as r
+            left join {input_tablename_r} as r
                 on pairs.{unique_id_col}_r={id_expr_r}
         """
         return sql
@@ -459,7 +483,14 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = None):
+def block_using_rules_sqls(
+    linker: Linker,
+    *,
+    input_tablename_l: str,
+    input_tablename_r: str,
+    blocking_rules: List[BlockingRule],
+    two_dataset_link_only: bool,
+):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -469,54 +500,6 @@ def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = 
     """
 
     sqls = []
-
-    # For the two dataset link only, rather than a self join of
-    # __splink__df_concat_with_tf, it's much faster to split the input
-    # into two tables, and join (because then Splink doesn't have to evaluate)
-    # intra-dataset comparisons.
-    # see https://github.com/moj-analytical-services/splink/pull/1359
-    if (
-        linker._two_dataset_link_only
-        and not linker._find_new_matches_mode
-        and not linker._compare_two_records_mode
-    ):
-        source_dataset_col = (
-            linker._settings_obj.column_info_settings.source_dataset_column_name
-        )
-        # Need df_l to be the one with the lowest id to preeserve the property
-        # that the left dataset is the one with the lowest concatenated id
-
-        # This also needs to work for training u
-        if linker._train_u_using_random_sample_mode:
-            spl_switch = "_sample"
-        else:
-            spl_switch = ""
-
-        df_concat_tf = linker._intermediate_table_cache["__splink__df_concat_with_tf"]
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{spl_switch}
-        where {source_dataset_col} =
-            (select min({source_dataset_col}) from {df_concat_tf.physical_name})
-        """
-        sqls.append(
-            {
-                "sql": sql,
-                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_left",
-            }
-        )
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{spl_switch}
-        where {source_dataset_col} =
-            (select max({source_dataset_col}) from {df_concat_tf.physical_name})
-        """
-        sqls.append(
-            {
-                "sql": sql,
-                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_right",
-            }
-        )
 
     settings_obj = linker._settings_obj
 
@@ -531,13 +514,6 @@ def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = 
     where_condition = _sql_gen_where_condition(
         link_type, settings_obj.column_info_settings.unique_id_input_columns
     )
-
-    # We could have had a single 'blocking rule'
-    # property on the settings object, and avoided this logic but I wanted to be very
-    # explicit about the difference between blocking for training
-    # and blocking for predictions
-    if blocking_rules is None:
-        blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
@@ -556,7 +532,13 @@ def block_using_rules_sqls(linker: Linker, blocking_rules: List[BlockingRule] = 
     br_sqls = []
 
     for br in blocking_rules:
-        sql = br.create_blocked_pairs_sql(linker, where_condition, probability)
+        sql = br.create_blocked_pairs_sql(
+            linker,
+            input_tablename_l=input_tablename_l,
+            input_tablename_r=input_tablename_r,
+            where_condition=where_condition,
+            probability=probability,
+        )
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
