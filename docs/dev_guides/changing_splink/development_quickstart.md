@@ -19,7 +19,9 @@ instructions for how to do so.
 
 ## Step 1: Clone Splink
 
-If you haven't already, make a [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) of the Splink repository.
+If you haven't already, create a fork of the Splink repository.
+You can find the Splink repository [here](https://github.com/moj-analytical-services/splink),
+or [click here](https://github.com/moj-analytical-services/splink/fork) to go directly to making a fork.
 Clone **your fork** to whatever directory you want to work in with `git clone https://github.com/<YOUR_USERNAME>/splink.git`.
 
 ## Step 2: Choose how to install system dependencies
@@ -129,10 +131,10 @@ From the directory where you have cloned the Splink repository, simply run:
 ./scripts/conda/development_setup_with_conda.sh
 ```
 
-Then add the `mamba` CLI to your PATH by running `~/miniforge3/bin/mamba init`
-for your shell -- e.g. `~/miniforge3/bin/mamba init` for Bash or `~/miniforge3/bin/mamba init zsh` for zsh.
+If you use a shell besides bash, add the `mamba` CLI to your PATH by running `~/miniforge3/bin/mamba init <your_shell>`
+-- e.g. `~/miniforge3/bin/mamba init zsh` for zsh.
 
-If you've run this successfully, you can skip to the "Step 5: Activating your environment(s)" section.
+If you've run this successfully, restart your terminal and skip to the "Step 5: Activating your environment(s)" section.
 
 If you would prefer to manually go through the steps to have a better understanding of what you are installing, continue
 to the next section.
