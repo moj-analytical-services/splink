@@ -328,39 +328,6 @@ class Linker:
         self._settings_obj._cache_uid = value
 
     @property
-    def _input_tablename_l(self):
-
-        if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
-
-        if self._train_u_using_random_sample_mode:
-            if self._two_dataset_link_only:
-                return "__splink__df_concat_with_tf_sample_left"
-            else:
-                return "__splink__df_concat_with_tf_sample"
-
-        if self._two_dataset_link_only:
-            return "__splink__df_concat_with_tf_left"
-
-        return "__splink__df_concat_with_tf"
-
-    @property
-    def _input_tablename_r(self):
-
-        if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
-
-        if self._train_u_using_random_sample_mode:
-            if self._two_dataset_link_only:
-                return "__splink__df_concat_with_tf_sample_right"
-            else:
-                return "__splink__df_concat_with_tf_sample"
-
-        if self._two_dataset_link_only:
-            return "__splink__df_concat_with_tf_right"
-        return "__splink__df_concat_with_tf"
-
-    @property
     def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
@@ -1247,6 +1214,8 @@ class Linker:
         nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         pipeline = CTEPipeline([nodes_with_tf, new_records_df])
+        if len(blocking_rules) == 0:
+            blocking_rules = [BlockingRule("1=1")]
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
             br.add_preceding_rules(blocking_rules[:n])

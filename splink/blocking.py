@@ -510,8 +510,6 @@ def block_using_rules_sqls(
 
     settings_obj = linker._settings_obj
 
-    link_type = settings_obj._link_type
-
     where_condition = _sql_gen_where_condition(
         link_type, settings_obj.column_info_settings.unique_id_input_columns
     )
