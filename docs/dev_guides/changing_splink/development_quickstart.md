@@ -131,10 +131,10 @@ From the directory where you have cloned the Splink repository, simply run:
 ./scripts/conda/development_setup_with_conda.sh
 ```
 
-Then add the `mamba` CLI to your PATH by running `~/miniforge3/bin/mamba init`
-for your shell -- e.g. `~/miniforge3/bin/mamba init` for Bash or `~/miniforge3/bin/mamba init zsh` for zsh.
+If you use a shell besides bash, add the `mamba` CLI to your PATH by running `~/miniforge3/bin/mamba init <your_shell>`
+-- e.g. `~/miniforge3/bin/mamba init zsh` for zsh.
 
-If you've run this successfully, you can skip to the "Step 5: Activating your environment(s)" section.
+If you've run this successfully, restart your terminal and skip to the "Step 5: Activating your environment(s)" section.
 
 If you would prefer to manually go through the steps to have a better understanding of what you are installing, continue
 to the next section.
