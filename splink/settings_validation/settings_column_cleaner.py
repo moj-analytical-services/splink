@@ -90,7 +90,9 @@ def clean_user_input_columns(input_columns: dict, return_as_single_column: bool 
     """
     # For each input dataframe, grab the column names and create a dictionary
     # of the form: {table_name: [column_1, column_2, ...]}
-    input_columns = {k: clean_list_of_column_names(v.columns) for k, v in input_columns.items()}
+    input_columns = {
+        k: clean_list_of_column_names(v.columns) for k, v in input_columns.items()
+    }
 
     if return_as_single_column:
         return reduce(and_, input_columns.values())
