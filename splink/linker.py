@@ -1389,11 +1389,7 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        # Changes our sql to allow for a self link.
-        # This is used in `_sql_gen_where_condition` in blocking.py
-        # to remove any 'where' clauses when blocking (normally when blocking
-        # we want to *remove* self links!)
-        self._self_link_mode = True
+
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
         uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
@@ -1408,7 +1404,14 @@ class Linker:
 
         pipeline = CTEPipeline([nodes_with_tf])
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            blocking_rules=[BlockingRule("1=1")],
+            link_type="self_link",
+
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
@@ -1434,7 +1437,7 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._self_link_mode = False
+
 
         return predictions
 
