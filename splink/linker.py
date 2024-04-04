@@ -248,7 +248,6 @@ class Linker:
         self._find_new_matches_mode = False
         self._compare_two_records_mode = False
         self._self_link_mode = False
-        self._analyse_blocking_mode = False
         self._deterministic_link_mode = False
 
         self.debug_mode = False
@@ -1276,7 +1275,13 @@ class Linker:
             self, new_records_df, pipeline
         )
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_new_records_with_tf",
+            blocking_rules=blocking_rules,
+            link_type="two_dataset_link_only",
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
@@ -1381,7 +1386,13 @@ class Linker:
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__compare_two_records_left_with_tf",
+            input_tablename_r="__splink__compare_two_records_right_with_tf",
+            blocking_rules=[BlockingRule("1=1")],
+            link_type=self._settings_obj._link_type,
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
