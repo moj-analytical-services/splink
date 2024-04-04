@@ -245,8 +245,6 @@ class Linker:
         self._validate_settings(validate_settings)
         self._em_training_sessions: list[EMTrainingSession] = []
 
-        self._find_new_matches_mode = False
-
         self._self_link_mode = False
         self._deterministic_link_mode = False
 
@@ -332,8 +330,6 @@ class Linker:
 
     @property
     def _input_tablename_l(self):
-        if self._find_new_matches_mode:
-            return "__splink__df_concat_with_tf"
 
         if self._self_link_mode:
             return "__splink__df_concat_with_tf"
@@ -351,8 +347,6 @@ class Linker:
 
     @property
     def _input_tablename_r(self):
-        if self._find_new_matches_mode:
-            return "__splink__df_new_records_with_tf"
 
         if self._self_link_mode:
             return "__splink__df_concat_with_tf"
@@ -1254,8 +1248,6 @@ class Linker:
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
-        self._find_new_matches_mode = True
-
         for tf_col in self._settings_obj._term_frequency_columns:
             tf_table = colname_to_tf_tablename(tf_col)
             if tf_table in self._intermediate_table_cache:
@@ -1304,7 +1296,6 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._find_new_matches_mode = False
 
         return predictions
 

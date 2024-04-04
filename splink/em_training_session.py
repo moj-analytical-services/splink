@@ -183,7 +183,11 @@ class EMTrainingSession:
         pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(
-            self._original_linker, [self._blocking_rule_for_training]
+            self._original_linker,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            blocking_rules=[self._blocking_rule_for_training],
+            link_type=self._original_linker._settings_obj._link_type,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
