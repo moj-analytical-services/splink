@@ -1384,19 +1384,15 @@ class Linker:
                 themselves.
         """
 
-        original_blocking_rules = (
-            self._settings_obj._blocking_rules_to_generate_predictions
-        )
-        original_link_type = self._settings_obj._link_type
-
         # Block on uid i.e. create pairwise record comparisons where the uid matches
         uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
-        self._settings_obj._blocking_rules_to_generate_predictions = [
-            BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
-        ]
+        blocking_rule = BlockingRule(
+            f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect
+        )
+
         pipeline = CTEPipeline()
         nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
@@ -1406,7 +1402,7 @@ class Linker:
             self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
-            blocking_rules=[BlockingRule("1=1")],
+            blocking_rules=[blocking_rule],
             link_type="self_link",
         )
         pipeline.enqueue_list_of_sqls(sqls)
@@ -1429,11 +1425,6 @@ class Linker:
             pipeline.enqueue_sql(sql_info["sql"], output_table_name)
 
         predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        self._settings_obj._blocking_rules_to_generate_predictions = (
-            original_blocking_rules
-        )
-        self._settings_obj._link_type = original_link_type
 
         return predictions
 
