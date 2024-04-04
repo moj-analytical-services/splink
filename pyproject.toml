@@ -110,11 +110,6 @@ markers = [
 
 [tool.mypy]
 packages = "splink"
-# temporary exclusions
-exclude = [
-    # modules with large number of errors
-    '/settings_validation/'
-]
 # for now at least allow implicit optionals
 # to cut down on noise. Easy to fix.
 implicit_optional = true
