@@ -22,7 +22,6 @@ from splink.settings_validation.log_invalid_columns import (
 )
 from splink.settings_validation.valid_types import (
     _validate_dialect,
-    log_comparison_errors,
 )
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .accuracy import (
@@ -450,25 +449,11 @@ class Linker:
         # raw tables don't yet exist in db
         return hasattr(self, "_input_tables_dict")
 
-    def _validate_settings_components(self, settings_dict):
-        # Vaidate our settings after plugging them through
-        # `Settings(<settings>)`
-
-        log_comparison_errors(
-            # null if not in dict - check using value is ignored
-            settings_dict.get("comparisons", None),
-            self._sql_dialect,
-        )
-
     def _validate_settings(self, validate_settings):
-        # TODO: restore logic
-        return
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
             return
-
-        self._validate_input_dfs()
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(

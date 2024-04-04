@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Callable, List
 
 import sqlglot
+import sqlglot.expressions
 
 from ..comparison import Comparison
 from ..parse_sql import parse_columns_in_sql
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def validate_table_names(
-    columns_to_check: list[sqlglot.expressions],
+    columns_to_check: list[sqlglot.expressions.Column],
 ) -> InvalidColumnsLogGenerator:
     """Validate a series of table names assigned to columns extracted from
     SQL statements. We expect all columns to be assigned either a `l` or
@@ -41,7 +42,7 @@ def validate_table_names(
 
 
 def validate_column_suffixes(
-    columns_to_check: list[sqlglot.expressions],
+    columns_to_check: list[sqlglot.Expression],
 ) -> InvalidColumnsLogGenerator:
     """Validate a series of column suffixes. We expect columns to be suffixed
     with either `_l` or `_r`. Where this is missing, flag it as an error.
@@ -75,7 +76,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
     sql_strings: list[str],
     valid_input_dataframe_columns: list[str],
     additional_validation_checks: List[Callable] = [],
-) -> list[MissingColumnsLogGenerator]:
+) -> dict:
     """Evaluate whether the column(s) supplied in a series of SQL strings
     exist in our raw data.
 
@@ -115,8 +116,8 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
             sql_dialect=sql_dialect,
         )
         if missing_columns:
-            missing_columns = MissingColumnsLogGenerator(missing_columns)
-            invalid_column_tracker.append(missing_columns)
+            missing_columns_log_gen = MissingColumnsLogGenerator(missing_columns)
+            invalid_column_tracker.append(missing_columns_log_gen)
 
         # Run any additional validations checks.
         # Skipped if no additional checks are requested
@@ -141,7 +142,7 @@ def check_comparison_for_missing_or_invalid_sql_strings(
     sql_dialect: str,
     comparisons_to_check: list[Comparison],
     valid_input_dataframe_columns: list[str],
-) -> list[MissingColumnsLogGenerator]:
+) -> list:
     """Split apart the comparison levels found within a comparison
     and review the SQL contained within.
 
@@ -223,16 +224,16 @@ class InvalidColumnsLogger:
             construct_missing_column_in_comparison_level_log(invalid_comparison_levels),
         )
         # Remove anything that doesn't need validation
-        log_strings = [log_string for log_string in log_strings if log_string]
+        log_string_list = [log_string for log_string in log_strings if log_string]
 
-        if log_strings:  # if nothing needs logging, return
+        if log_string_list:  # if nothing needs logging, return
             # Initial warning for the logger
             logger.warning(
                 "SETTINGS VALIDATION: Errors were identified in your "
                 "settings dictionary. \n"
             )
 
-            for log_string in log_strings:
+            for log_string in log_string_list:
                 logger.warning(log_string)
 
             logger.warning(

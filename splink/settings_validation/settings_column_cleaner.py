@@ -22,21 +22,21 @@ def remove_suffix(c):
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list, columns_to_check: set
+    valid_input_dataframe_columns: list, columns_to_check: set[str] | str
 ) -> set[str]:
     """Identify missing columns in the input dataframe(s). This function
     does not apply any cleaning to the input column(s).
     """
     # the key to use when producing our warning logs
     if type(columns_to_check) == str:
-        columns_to_check = [columns_to_check]
+        columns_to_check = {columns_to_check}
 
     return {col for col in columns_to_check if col not in valid_input_dataframe_columns}
 
 
 def clean_and_find_columns_not_in_input_dfs(
     valid_input_dataframe_columns: list,
-    sqlglot_tree_columns_to_check: list[sqlglot.expressions],
+    sqlglot_tree_columns_to_check: list[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
     """Clean a list of sqlglot column names to remove the prefix (l.)
@@ -52,14 +52,14 @@ def clean_and_find_columns_not_in_input_dfs(
 
 
 def remove_prefix_and_suffix_from_column(
-    col_syntax_tree: sqlglot.expressions,
+    col_syntax_tree: sqlglot.Expression,
     sql_dialect: str,
 ):
     """Remove the prefix and suffix from a given sqlglot syntax tree
     and return it as a string of SQL.
 
     Args:
-        col_syntax_tree (sqlglot.expressions): _description_
+        col_syntax_tree (sqlglot.Expression): _description_
 
     Returns:
         str: A column without `l.` and/or `_l`
@@ -90,7 +90,9 @@ def clean_user_input_columns(input_columns: dict, return_as_single_column: bool 
     """
     # For each input dataframe, grab the column names and create a dictionary
     # of the form: {table_name: [column_1, column_2, ...]}
-    input_columns = {k: clean_list_of_column_names(v.columns) for k, v in input_columns}
+    input_columns = {
+        k: clean_list_of_column_names(v.columns) for k, v in input_columns.items()
+    }
 
     if return_as_single_column:
         return reduce(and_, input_columns.values())
@@ -108,12 +110,14 @@ class SettingsColumnCleaner:
         self.sql_dialect = settings_object._sql_dialect
         self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(
-            input_columns.items(), return_as_single_column=True
+            input_columns, return_as_single_column=True
         )
 
     @property
     def cols_to_retain(self):
-        return clean_list_of_column_names(self._settings_obj._additional_cols_to_retain)
+        return clean_list_of_column_names(
+            self._settings_obj._additional_columns_to_retain
+        )
 
     @property
     def uid(self):
