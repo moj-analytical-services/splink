@@ -16,7 +16,10 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from .pipeline import CTEPipeline
-from .vertically_concatenate import compute_df_concat_with_tf
+from .vertically_concatenate import (
+    compute_df_concat_with_tf,
+    split_df_concat_with_tf_into_two_tables_sqls,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -153,6 +156,12 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     ):
         input_tablename_sample_l = "__splink__df_concat_with_tf_sample_left"
         input_tablename_sample_r = "__splink__df_concat_with_tf_sample_right"
+        sqls = split_df_concat_with_tf_into_two_tables_sqls(
+            "__splink__df_concat_with_tf_sample",
+            linker._settings_obj.column_info_settings.source_dataset_column_name,
+            sample_switch=True,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
 
     sql_infos = block_using_rules_sqls(
         linker,
