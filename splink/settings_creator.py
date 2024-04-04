@@ -135,10 +135,6 @@ class SettingsCreator:
                 f"`str`, or `dict`.  Found type {type(path_or_dict)}"
             )
 
-        # TODO: need to figure out how this flows with validation
-        # for now we instantiate all the correct types before the validator sees it
-        # self._validate_settings_components(settings)
-
         # TODO: should SettingsCreator deal with the logic of sql_dialect being
         # set?
         settings_dict.pop("sql_dialect", None)
