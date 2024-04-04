@@ -246,7 +246,7 @@ class Linker:
         self._em_training_sessions: list[EMTrainingSession] = []
 
         self._find_new_matches_mode = False
-        self._compare_two_records_mode = False
+
         self._self_link_mode = False
         self._deterministic_link_mode = False
 
@@ -338,9 +338,6 @@ class Linker:
         if self._self_link_mode:
             return "__splink__df_concat_with_tf"
 
-        if self._compare_two_records_mode:
-            return "__splink__compare_two_records_left_with_tf"
-
         if self._train_u_using_random_sample_mode:
             if self._two_dataset_link_only:
                 return "__splink__df_concat_with_tf_sample_left"
@@ -359,9 +356,6 @@ class Linker:
 
         if self._self_link_mode:
             return "__splink__df_concat_with_tf"
-
-        if self._compare_two_records_mode:
-            return "__splink__compare_two_records_right_with_tf"
 
         if self._train_u_using_random_sample_mode:
             if self._two_dataset_link_only:
@@ -1339,7 +1333,6 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
         cache = self._intermediate_table_cache
@@ -1414,7 +1407,6 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._compare_two_records_mode = False
 
         return predictions
 
