@@ -1389,8 +1389,6 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-
-
         # Block on uid i.e. create pairwise record comparisons where the uid matches
         uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
@@ -1410,7 +1408,6 @@ class Linker:
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[BlockingRule("1=1")],
             link_type="self_link",
-
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1437,7 +1434,6 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-
 
         return predictions
 
