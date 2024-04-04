@@ -323,9 +323,7 @@ def _cc_create_unique_id_cols(
 
     """
     # Set probability threshold
-    if linker._deterministic_link_mode:
-        match_probability_condition = ""
-    elif match_probability_threshold is None:
+    if match_probability_threshold is None:
         raise TypeError("Parameter 'match_probability_threshold' is missing or None")
     else:
         match_probability_condition = (

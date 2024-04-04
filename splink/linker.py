@@ -246,7 +246,6 @@ class Linker:
         self._em_training_sessions: list[EMTrainingSession] = []
 
         self._self_link_mode = False
-        self._deterministic_link_mode = False
 
         self.debug_mode = False
 
@@ -779,14 +778,20 @@ class Linker:
         # Allows clustering during a deterministic linkage.
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
-        self._deterministic_link_mode = True
 
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
 
         exploding_br_with_id_tables = materialise_exploded_id_tables(self)
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            link_type=self._settings_obj._link_type,
+            set_match_probability_to_one=True,
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
