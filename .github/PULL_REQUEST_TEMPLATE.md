@@ -26,7 +26,7 @@
 - [ ] Added tests (if appropriate)
 - [ ] Updated CHANGELOG.md (if appropriate)
 - [ ] Made changes based off the latest version of Splink
-- [ ] Run the [linter](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/lint.html)
+- [ ] - [ ] Run the [linter](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/lint_and_format.html)
 - [ ] Run the [spellchecker](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/contributing_to_docs.html?h=spellch#spellchecking-docs) (if appropriate)
 
 
