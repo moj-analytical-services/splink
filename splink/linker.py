@@ -245,8 +245,6 @@ class Linker:
         self._validate_settings(validate_settings)
         self._em_training_sessions: list[EMTrainingSession] = []
 
-        self._self_link_mode = False
-
         self.debug_mode = False
 
     def _input_columns(
