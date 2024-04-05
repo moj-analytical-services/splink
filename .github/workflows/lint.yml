@@ -29,4 +29,4 @@ jobs:
           poetry install --no-interaction --no-root --only linting
 
       - name: Run Ruff formatting
-        run: poetry run ruff lint --output-format=full .
+        run: poetry run ruff check --output-format=full
