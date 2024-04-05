@@ -762,6 +762,7 @@ class Linker:
         pipeline.enqueue_list_of_sqls(sqls)
 
         deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        deterministic_link_df.metadata["is_deterministic_link"] = True
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
 
@@ -1470,7 +1471,7 @@ class Linker:
         edges_table = _cc_create_unique_id_cols(
             self,
             nodes_with_tf.physical_name,
-            df_predict.physical_name,
+            df_predict,
             threshold_match_probability,
         )
 
