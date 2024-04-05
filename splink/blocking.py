@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Literal, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Join
@@ -11,6 +11,7 @@ from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
 from .pipeline import CTEPipeline
+from .settings import LinkTypeLiteralType
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 from .vertically_concatenate import compute_df_concat_with_tf
@@ -489,13 +490,7 @@ def block_using_rules_sqls(
     input_tablename_l: str,
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
-    link_type: Literal[
-        "two_dataset_link_only",
-        "self_link",
-        "link_only",
-        "link_and_dedupe",
-        "dedupe_only",
-    ],
+    link_type: LinkTypeLiteralType,
     set_match_probability_to_one: bool = False,
 ):
     """Use the blocking rules specified in the linker's settings object to
