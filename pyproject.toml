@@ -39,11 +39,11 @@ sqlalchemy = ">=1.4.0"
 # temporarily use binary version, to avoid issues with pg_config path
 psycopg2-binary = ">=2.8.0"
 igraph = ">=0.11.2"
+ruff = "^0.3.5"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
-black = "22.6.0"
-ruff = "0.0.257"
+ruff = "^0.3.5"
 
 [tool.poetry.group.testing]
 [tool.poetry.group.testing.dependencies]
@@ -73,7 +73,7 @@ profile = "black"
 
 [tool.ruff]
 line-length = 88
-select = [
+lint.select = [
     # Pyflakes
     "F",
     # Pycodestyle
@@ -86,7 +86,7 @@ select = [
     # flake8-print
     "T20"
 ]
-ignore = [
+lint.ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "B006", # Do not use mutable data structures for argument defaults"
 ]

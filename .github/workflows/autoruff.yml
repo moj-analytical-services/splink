@@ -11,7 +11,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    name: Format and lint with Ruff using Python 3.12.1
+    name: Lint with Ruff using Python 3.12.1
     steps:
       - uses: actions/checkout@v4
 
@@ -28,14 +28,11 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root --only linting
 
-      - name: Format code with Ruff
-        run: poetry run ruff format
+      - name: Run Ruff linting
+        run: poetry run ruff --fix .
 
-      - name: Check code style with Ruff
-        run: poetry run ruff --check .
-
-      - name: Commit Ruff formatting changes if any
+      - name: Commit Ruff changes if any
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git diff-index --quiet HEAD || (git commit -am 'Apply Ruff formatting fixes' && git push -f)
+          git diff-index --quiet HEAD || (git commit -am 'Apply Ruff linting fixes' && git push -f)
