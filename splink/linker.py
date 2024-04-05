@@ -748,15 +748,15 @@ class Linker:
 
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
-
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+        link_type = self._settings_obj._link_type
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
 
         sqls = block_using_rules_sqls(
             self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
-            link_type=self._settings_obj._link_type,
+            link_type=link_type,
             set_match_probability_to_one=True,
         )
         pipeline.enqueue_list_of_sqls(sqls)
@@ -1109,7 +1109,7 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
 
         sqls = block_using_rules_sqls(
             self,

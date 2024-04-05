@@ -294,7 +294,9 @@ class ExplodingBlockingRule(BlockingRule):
         self.array_columns_to_explode: List[str] = array_columns_to_explode
         self.exploded_id_pair_table: Optional[SplinkDataFrame] = None
 
-    def marginal_exploded_id_pairs_table_sql(self, linker: Linker, br: BlockingRule):
+    def marginal_exploded_id_pairs_table_sql(
+        self, linker: Linker, br: BlockingRule, link_type: "LinkTypeLiteralType"
+    ):
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
         the preceding blocking rules
@@ -305,14 +307,6 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_columns = (
             settings_obj.column_info_settings.unique_id_input_columns
         )
-
-        link_type = settings_obj._link_type
-
-        if linker._two_dataset_link_only:
-            link_type = "two_dataset_link_only"
-
-        if linker._self_link_mode:
-            link_type = "self_link"
 
         where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
 
@@ -419,7 +413,7 @@ class ExplodingBlockingRule(BlockingRule):
         return output
 
 
-def materialise_exploded_id_tables(linker: Linker):
+def materialise_exploded_id_tables(linker: Linker, link_type: "LinkTypeLiteralType"):
     settings_obj = linker._settings_obj
 
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
@@ -455,7 +449,7 @@ def materialise_exploded_id_tables(linker: Linker):
         base_name = "__splink__marginal_exploded_ids_blocking_rule"
         table_name = f"{base_name}_mk_{br.match_key}"
 
-        sql = br.marginal_exploded_id_pairs_table_sql(linker, br)
+        sql = br.marginal_exploded_id_pairs_table_sql(linker, br, link_type)
 
         pipeline.enqueue_sql(sql, table_name)
 
