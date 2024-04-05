@@ -5,15 +5,23 @@ cd "$(dirname "$0")"
 set -e
 set -x
 
-if ! command -v mamba &> /dev/null
+# Is mamba already available in an *interactive* shell?
+if ! $SHELL -ic 'command -v mamba &> /dev/null'
 then
     # Instructions found here: https://github.com/conda-forge/miniforge?tab=readme-ov-file#downloading-the-installer-as-part-of-a-ci-pipeline
     curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
     bash Miniforge3-$(uname)-$(uname -m).sh -b -p $HOME/miniforge3
     source "${HOME}/miniforge3/etc/profile.d/conda.sh"
     source "${HOME}/miniforge3/etc/profile.d/mamba.sh"
-    mamba config --set auto_activate_base false
+    conda config --set auto_activate_base false
+    mamba init $(basename $SHELL)
     rm ./Miniforge3-$(uname)-$(uname -m).sh
+else
+    # Get location of conda installation used by default in an interactive shell,
+    # see https://github.com/conda/conda/issues/7980#issuecomment-472648567
+    CONDA_BASE=$($SHELL -ic 'conda info --base')
+    source "${CONDA_BASE}/etc/profile.d/conda.sh"
+    source "${CONDA_BASE}/etc/profile.d/mamba.sh"
 fi
 
 # NOTE: Unlike poetry, conda doesn't have great support for locking dependencies.
