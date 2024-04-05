@@ -1,4 +1,4 @@
-name: autoruff
+name: Lint with ruff
 on:
   pull_request:
     branches:
