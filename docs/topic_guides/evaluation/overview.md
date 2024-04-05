@@ -18,7 +18,7 @@ Once you have trained a model, you will use it to predict the probability of lin
 
 ### :fontawesome-solid-circle-nodes: Cluster Evaluation
 
-Once you have chosen a linkage threshold, the edges are used to generate clusters of records. To see how to evaluate these clusters, check out the [Cluster Evaluation guide](./clusters.md).
+Once you have chosen a linkage threshold, the edges are used to generate clusters of records. To see how to evaluate these clusters, check out the [Cluster Evaluation guide](./clusters/overview.md).
 
 <hr>
 

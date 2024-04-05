@@ -51,4 +51,4 @@ Evaluating the edges (links) of a linkage model depends on your use case. Defini
 
 Your desired metric should help give an initial estimation for a linkage threshold, then you can use spot checking to help settle on a final threshold.
 
-In general, the links between pairs of records are not the final output of linkage pipeline. Most use-cases use these links to group records together into clusters. In this instance, evaluating the links themselves is not sufficient, you have to [evaluate the resulting clusters as well](./clusters.md).
+In general, the links between pairs of records are not the final output of linkage pipeline. Most use-cases use these links to group records together into clusters. In this instance, evaluating the links themselves is not sufficient, you have to [evaluate the resulting clusters as well](./clusters/overview.md).

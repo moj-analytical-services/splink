@@ -169,7 +169,10 @@ nav:
           - Overview: "topic_guides/evaluation/edge_overview.md"
           - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
           - Clerical Labelling: "topic_guides/evaluation/labelling.md"
-        - Clusters: "topic_guides/evaluation/clusters.md"
+        - Clusters: 
+          - Overview: "topic_guides/evaluation/clusters/overview.md"
+          - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
+          - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
