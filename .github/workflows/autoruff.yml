@@ -14,7 +14,9 @@ jobs:
     name: Lint with Ruff using Python 3.12.1
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Install poetry using pipx
         run: pipx install poetry && pipx ensurepath
 
