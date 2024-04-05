@@ -28,11 +28,14 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root --only linting
 
-      - name: Run Ruff linting
-        run: poetry run ruff --fix .
+      - name: Run Ruff formatting
+        run: poetry run ruff format
 
       - name: Commit Ruff changes if any
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git diff-index --quiet HEAD || (git commit -am 'Apply Ruff linting fixes' && git push -f)
+
+      - name: Run Ruff formatting
+        run: poetry run ruff format --check
