@@ -96,7 +96,6 @@ class CTEPipeline:
         return self._input_dataframes_as_cte() + self.queue
 
     def generate_cte_pipeline_sql(self):
-
         self.spent = True
 
         pipeline = self.ctes_pipeline()

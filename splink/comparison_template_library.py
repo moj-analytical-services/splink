@@ -54,7 +54,6 @@ class DateComparison(ComparisonCreator):
         separate_1st_january: bool = False,
         use_damerau_levenshtein: bool = True,
     ):
-
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
         self.datetime_thresholds = [*date_thresholds_as_iterable]
         date_metrics_as_iterable = ensure_is_iterable(datetime_metrics)
@@ -88,7 +87,6 @@ class DateComparison(ComparisonCreator):
         return self.col_expression.try_parse_date
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-
         if self.invalid_dates_as_null:
             null_col = self.datetime_parse_function(self.datetime_format)
         else:
@@ -153,7 +151,6 @@ class DateComparison(ComparisonCreator):
         return levels
 
     def create_description(self) -> str:
-
         comparison_desc = "Exact match "
         if self.separate_1st_january:
             comparison_desc += "(with separate 1st Jan) "

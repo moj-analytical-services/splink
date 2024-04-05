@@ -6,7 +6,7 @@ from .misc import ensure_is_iterable
 
 
 def to_blocking_rule_creator(
-    blocking_rule_creator: Union[dict, str, BlockingRuleCreator]
+    blocking_rule_creator: Union[dict, str, BlockingRuleCreator],
 ):
     if isinstance(blocking_rule_creator, dict):
         return CustomRule(**blocking_rule_creator)

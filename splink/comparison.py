@@ -62,7 +62,6 @@ class Comparison:
         comparison_description: str = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
-
         self.comparison_levels: list[ComparisonLevel] = comparison_levels
 
         self._column_info_settings: Optional[ColumnInfoSettings] = column_info_settings

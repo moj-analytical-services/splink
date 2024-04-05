@@ -81,7 +81,6 @@ def vertically_concatenate_sql(linker: Linker) -> str:
 
 
 def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
-
     cache = linker._intermediate_table_cache
     if "__splink__df_concat_with_tf" in cache:
         nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")

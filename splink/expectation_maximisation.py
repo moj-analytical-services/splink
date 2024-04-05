@@ -404,9 +404,9 @@ def _max_change_in_parameters_comparison_levels(
         max_change_levels["prev_comparison_level"] = None
         max_change_levels["current_comparison_level"] = None
         max_change_levels["max_change_type"] = "probability_two_random_records_match"
-        max_change_levels[
-            "max_change_value"
-        ] = change_probability_two_random_records_match
+        max_change_levels["max_change_value"] = (
+            change_probability_two_random_records_match
+        )
         max_change_levels["max_abs_change_value"] = abs(
             change_probability_two_random_records_match
         )

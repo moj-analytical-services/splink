@@ -576,7 +576,6 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         self.input_is_string = input_is_string
 
     def convert_time_metric_to_seconds(self, threshold: float, metric: str) -> float:
-
         conversion_factors = {
             "second": 1,
             "minute": 60,

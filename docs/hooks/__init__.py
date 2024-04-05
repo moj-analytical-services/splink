@@ -77,6 +77,7 @@ def re_route_links(markdown: str, page_title: str) -> str | None:
 
 # hooks for use by mkdocs
 
+
 # priority last - run this after any other such hooks
 # this ensures we are overwriting mknotebooks config,
 # not the other way round

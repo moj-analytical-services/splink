@@ -191,7 +191,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
 
         if not self.debug_mode:
-
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
@@ -231,7 +230,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         input_aliases: Optional[List[str]] = None,
         overwrite: bool = False,
     ) -> Dict[str, SplinkDataFrame]:
-
         tables_as_splink_dataframes = {}
         existing_tables = []
 
