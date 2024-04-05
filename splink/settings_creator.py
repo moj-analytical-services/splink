@@ -19,13 +19,6 @@ def to_comparison_creator(comparison_creator):
     return comparison_creator
 
 
-LinkTypeLiteralOptions = Literal[
-    "link_only",
-    "link_and_dedupe",
-    "dedupe_only",
-]
-
-
 @dataclass
 class SettingsCreator:
     """
@@ -33,7 +26,8 @@ class SettingsCreator:
     Responsible for authoring Settings, but not implementing anything
     """
 
-    link_type: LinkTypeLiteralOptions
+    link_type: Literal["link_only", "link_and_dedupe", "dedupe_only"]
+
     # TODO: make this compulsory once we farm more stuff out of linker
     comparisons: List[ComparisonCreator | dict] = field(default_factory=list)
     blocking_rules_to_generate_predictions: List[BlockingRuleCreator | dict] = field(
