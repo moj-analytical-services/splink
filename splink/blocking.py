@@ -11,7 +11,6 @@ from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
 from .pipeline import CTEPipeline
-from .settings import LinkTypeLiteralType
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 from .vertically_concatenate import compute_df_concat_with_tf
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
+    from .settings import LinkTypeLiteralType
 
 
 def blocking_rule_to_obj(br: BlockingRule | dict | str) -> BlockingRule:
@@ -490,7 +490,7 @@ def block_using_rules_sqls(
     input_tablename_l: str,
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
-    link_type: LinkTypeLiteralType,
+    link_type: "LinkTypeLiteralType",
     set_match_probability_to_one: bool = False,
 ):
     """Use the blocking rules specified in the linker's settings object to

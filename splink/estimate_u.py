@@ -68,8 +68,6 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
     training_linker: Linker = deepcopy(linker)
 
-    training_linker._train_u_using_random_sample_mode = True
-
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
