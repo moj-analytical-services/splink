@@ -59,4 +59,7 @@ fi
 echo "$line_block Running pyspelling spellchecker on docs $line_block"
 
 echo "$source_to_spellcheck"
-pyspelling -c ./scripts/pyspelling/pyspelling.yml -S "$source_to_spellcheck"'|!docs/includes/**/*.md'
+pyspelling \
+    -c ./scripts/pyspelling/pyspelling.yml \
+    -n "Markdown docs" \
+    -S "$source_to_spellcheck"'|!docs/includes/**/*.md'
