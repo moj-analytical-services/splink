@@ -16,7 +16,7 @@ Once you've finished updating Splink documentation we ask that you run our spell
 
 ## Spellchecking docs
 
-When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. Please note, the spellchecker _only works on markdown files_.
+When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. If for whatever reason you can't run the spellchecker on your system, please don't let this prevent you from contributing to the documentation. Please note, the spellchecker _only works on markdown files_.
 
 If you are a Mac user with the `Homebrew` package manager installed, the script below will automatically install
 the required system dependency, `aspell`.
