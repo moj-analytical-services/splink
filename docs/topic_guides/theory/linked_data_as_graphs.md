@@ -42,4 +42,4 @@ Increasing the threshold further (to 0.999) breaks an additional two links, resu
 
 ![Threshold Cluster](../../img/clusters/threshold_cluster_high.drawio.png){:width="80%"}
 
-So, we can see that our threshold selection can have a significant impact on out final linked data (i.e. clusters). For more specific guidance on selecting linkage thresholds, check out the [Evaluation Topic Guides](../evaluation/overview.md).
+This demonstrates that choice of threshold can have a significant impact on the final linked data produced (i.e. clusters). For more specific guidance on selecting linkage thresholds, check out the [Evaluation Topic Guides](../evaluation/overview.md).
