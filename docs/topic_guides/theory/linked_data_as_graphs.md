@@ -24,7 +24,7 @@ When linking people together, a cluster represents the all of the records in our
 
 ## Probabilistic data linkage and graphs
 
-When using [probabilistic linkage](./probabilistic_vs_deterministic.md), each pair of records has a score indicating how similar they are. For example, consider a collection of records with pairwise similarity score:
+When performing [probabilistic linkage](./probabilistic_vs_deterministic.md), each pair of records has a score indicating how similar they are. For example, consider a collection of records with pairwise similarity scores:
 
 ![Threshold Cluster](../../img/clusters/threshold_cluster.drawio.png){:width="80%"}
 
