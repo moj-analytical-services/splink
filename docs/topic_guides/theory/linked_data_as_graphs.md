@@ -28,7 +28,7 @@ When performing [probabilistic linkage](./probabilistic_vs_deterministic.md), ea
 
 ![Threshold Cluster](../../img/clusters/threshold_cluster.drawio.png){:width="80%"}
 
-Having a score associated with each pair of records is the key benefit of probabilistic linkage, as we have a measure of how similarity of the records (rather than a binary link/no-link). However, we need to choose a threshold above which links are considered valid in order to generate oue final linked data (clusters).
+Having a score associated with each pair of records is the key benefit of probabilistic linkage, as we have a measure of similarity of the records (rather than a binary link/no-link). However, we need to choose a threshold at or above which links are considered valid in order to generate our final linked data (clusters).
 
 Let's consider a few different thresholds for the records above to see how the resulting clusters change. Setting a threshold of 0.95 keeps all links, so the records are considered as a single cluster.
 
