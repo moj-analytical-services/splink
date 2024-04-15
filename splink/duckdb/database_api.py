@@ -107,6 +107,7 @@ class DuckDBAPI(DatabaseAPI):
         return accepted_df_dtypes
 
     def process_input_tables(self, input_tables):
+        input_tables = super().process_input_tables(input_tables)
         return [
             self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
         ]
