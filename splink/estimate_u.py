@@ -5,7 +5,7 @@ import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
-from .blocking import block_using_rules_sqls, blocking_rule_to_obj
+from .blocking import BlockingRule, block_using_rules_sqls, blocking_rule_to_obj
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -16,7 +16,10 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from .pipeline import CTEPipeline
-from .vertically_concatenate import compute_df_concat_with_tf
+from .vertically_concatenate import (
+    compute_df_concat_with_tf,
+    split_df_concat_with_tf_into_two_tables_sqls,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -64,8 +67,6 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     original_settings_obj = linker._settings_obj
 
     training_linker: Linker = deepcopy(linker)
-
-    training_linker._train_u_using_random_sample_mode = True
 
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
@@ -144,13 +145,33 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql_infos = block_using_rules_sqls(training_linker)
+    input_tablename_sample_l = "__splink__df_concat_with_tf_sample"
+    input_tablename_sample_r = "__splink__df_concat_with_tf_sample"
+
+    if (
+        len(linker._input_tables_dict) == 2
+        and linker._settings_obj._link_type == "link_only"
+    ):
+        input_tablename_sample_l = "__splink__df_concat_with_tf_sample_left"
+        input_tablename_sample_r = "__splink__df_concat_with_tf_sample_right"
+        sqls = split_df_concat_with_tf_into_two_tables_sqls(
+            "__splink__df_concat_with_tf_sample",
+            linker._settings_obj.column_info_settings.source_dataset_column_name,
+            sample_switch=True,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+    sql_infos = block_using_rules_sqls(
+        linker,
+        input_tablename_l=input_tablename_sample_l,
+        input_tablename_r=input_tablename_sample_r,
+        blocking_rules=[BlockingRule("1=1")],
+        link_type=linker._settings_obj._link_type,
+    )
     pipeline.enqueue_list_of_sqls(sql_infos)
 
     # repartition after blocking only exists on the SparkLinker
-    repartition_after_blocking = getattr(
-        training_linker, "repartition_after_blocking", False
-    )
+    repartition_after_blocking = getattr(linker, "repartition_after_blocking", False)
     if repartition_after_blocking:
         pipeline = pipeline.break_lineage(db_api)
 

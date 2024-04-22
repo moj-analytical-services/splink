@@ -154,3 +154,42 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
     nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     cache["__splink__df_concat"] = nodes_with_tf
     return nodes_with_tf
+
+
+def split_df_concat_with_tf_into_two_tables_sqls(
+    input_tablename, source_dataset_col, sample_switch: bool = False
+):
+    # For the two dataset link only, rather than a self join of
+    # __splink__df_concat_with_tf, it's much faster to split the input
+    # into two tables, and join (because then Splink doesn't have to evaluate)
+    # intra-dataset comparisons.
+    # see https://github.com/moj-analytical-services/splink/pull/1359
+
+    sqls = []
+    sample_text = "_sample" if sample_switch else ""
+
+    sql = f"""
+        select * from __splink__df_concat_with_tf{sample_text}
+        where {source_dataset_col} =
+            (select min({source_dataset_col}) from {input_tablename})
+        """
+
+    sqls.append(
+        {
+            "sql": sql,
+            "output_table_name": f"__splink__df_concat_with_tf{sample_text}_left",
+        }
+    )
+
+    sql = f"""
+        select * from __splink__df_concat_with_tf{sample_text}
+        where {source_dataset_col} =
+            (select max({source_dataset_col}) from {input_tablename})
+        """
+    sqls.append(
+        {
+            "sql": sql,
+            "output_table_name": f"__splink__df_concat_with_tf{sample_text}_right",
+        }
+    )
+    return sqls

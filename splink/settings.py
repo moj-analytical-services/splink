@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import List, TypedDict
+from typing import List, Literal, TypedDict
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -140,13 +140,22 @@ class CoreModelSettings:
         raise ValueError(f"No comparison column with name {name}")
 
 
+LinkTypeLiteralType = Literal[
+    "two_dataset_link_only",
+    "self_link",
+    "link_only",
+    "link_and_dedupe",
+    "dedupe_only",
+]
+
+
 class Settings:
     """The settings object contains the configuration and parameters of the data
     linking model"""
 
     def __init__(
         self,
-        link_type: str,
+        link_type: LinkTypeLiteralType,
         *,
         # TODO: make everything compulsory at this level?
         comparisons: List[Comparison] = [],

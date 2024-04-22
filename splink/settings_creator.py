@@ -4,7 +4,7 @@ import json
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import List, Union
+from typing import List, Literal, Union
 
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
@@ -26,7 +26,8 @@ class SettingsCreator:
     Responsible for authoring Settings, but not implementing anything
     """
 
-    link_type: str
+    link_type: Literal["link_only", "link_and_dedupe", "dedupe_only"]
+
     # TODO: make this compulsory once we farm more stuff out of linker
     comparisons: List[ComparisonCreator | dict] = field(default_factory=list)
     blocking_rules_to_generate_predictions: List[BlockingRuleCreator | dict] = field(

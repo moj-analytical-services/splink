@@ -298,7 +298,7 @@ def _cc_assess_exit_condition(representatives_name):
 def _cc_create_unique_id_cols(
     linker: "Linker",
     concat_with_tf: str,
-    df_predict: str,
+    df_predict: SplinkDataFrame,
     match_probability_threshold: Optional[float],
 ):
     """Create SQL to pull unique ID columns for connected components.
@@ -323,7 +323,7 @@ def _cc_create_unique_id_cols(
 
     """
     # Set probability threshold
-    if linker._deterministic_link_mode:
+    if "is_deterministic_link" in df_predict.metadata:
         match_probability_condition = ""
     elif match_probability_threshold is None:
         raise TypeError("Parameter 'match_probability_threshold' is missing or None")
@@ -342,7 +342,7 @@ def _cc_create_unique_id_cols(
         select
         {uid_concat_edges_l} as unique_id_l,
         {uid_concat_edges_r} as unique_id_r
-        from {df_predict}
+        from {df_predict.physical_name}
         {match_probability_condition}
 
         UNION

@@ -31,16 +31,18 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
             # TODO: ComparisonLevel: manage access
             cl._tf_adjustment_column = None
 
-    settings_obj._blocking_rules_to_generate_predictions = [
-        BlockingRule(f"l.{label_colname} = r.{label_colname}")
-    ]
-
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     pipeline = CTEPipeline([nodes_with_tf])
 
-    sqls = block_using_rules_sqls(training_linker)
+    sqls = block_using_rules_sqls(
+        training_linker,
+        input_tablename_l="__splink__df_concat_with_tf",
+        input_tablename_r="__splink__df_concat_with_tf",
+        blocking_rules=[BlockingRule(f"l.{label_colname} = r.{label_colname}")],
+        link_type=training_linker._settings_obj._link_type,
+    )
     pipeline.enqueue_list_of_sqls(sqls)
 
     sql = compute_comparison_vector_values_sql(

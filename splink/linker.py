@@ -124,7 +124,10 @@ from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
-from .vertically_concatenate import vertically_concatenate_sql
+from .vertically_concatenate import (
+    vertically_concatenate_sql,
+    split_df_concat_with_tf_into_two_tables_sqls,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -242,13 +245,6 @@ class Linker:
         self._validate_settings(validate_settings)
         self._em_training_sessions: list[EMTrainingSession] = []
 
-        self._find_new_matches_mode = False
-        self._train_u_using_random_sample_mode = False
-        self._compare_two_records_mode = False
-        self._self_link_mode = False
-        self._analyse_blocking_mode = False
-        self._deterministic_link_mode = False
-
         self.debug_mode = False
 
     def _input_columns(
@@ -330,67 +326,10 @@ class Linker:
         self._settings_obj._cache_uid = value
 
     @property
-    def _input_tablename_l(self):
-        if self._find_new_matches_mode:
-            return "__splink__df_concat_with_tf"
-
-        if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
-
-        if self._compare_two_records_mode:
-            return "__splink__compare_two_records_left_with_tf"
-
-        if self._train_u_using_random_sample_mode:
-            if self._two_dataset_link_only:
-                return "__splink__df_concat_with_tf_sample_left"
-            else:
-                return "__splink__df_concat_with_tf_sample"
-
-        if self._analyse_blocking_mode:
-            return "__splink__df_concat"
-
-        if self._two_dataset_link_only:
-            return "__splink__df_concat_with_tf_left"
-
-        return "__splink__df_concat_with_tf"
-
-    @property
-    def _input_tablename_r(self):
-        if self._find_new_matches_mode:
-            return "__splink__df_new_records_with_tf"
-
-        if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
-
-        if self._compare_two_records_mode:
-            return "__splink__compare_two_records_right_with_tf"
-
-        if self._train_u_using_random_sample_mode:
-            if self._two_dataset_link_only:
-                return "__splink__df_concat_with_tf_sample_right"
-            else:
-                return "__splink__df_concat_with_tf_sample"
-
-        if self._analyse_blocking_mode:
-            return "__splink__df_concat"
-
-        if self._two_dataset_link_only:
-            return "__splink__df_concat_with_tf_right"
-        return "__splink__df_concat_with_tf"
-
-    @property
     def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
         # concatenation of all input datasets
-        if self._find_new_matches_mode:
-            return True
-
-        if self._compare_two_records_mode:
-            return True
-
-        if self._analyse_blocking_mode:
-            return False
 
         if (
             len(self._input_tables_dict) == 2
@@ -804,17 +743,24 @@ class Linker:
         # Allows clustering during a deterministic linkage.
         # This is used in `cluster_pairwise_predictions_at_threshold`
         # to set the cluster threshold to 1
-        self._deterministic_link_mode = True
 
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
+        link_type = self._settings_obj._link_type
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
 
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
-
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            link_type=link_type,
+            set_match_probability_to_one=True,
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         deterministic_link_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        deterministic_link_df.metadata["is_deterministic_link"] = True
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
 
@@ -1141,11 +1087,36 @@ class Linker:
         else:
             pipeline = enqueue_df_concat_with_tf(self, pipeline)
 
+        blocking_input_tablename_l = "__splink__df_concat_with_tf"
+        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+
+        link_type = self._settings_obj._link_type
+        if (
+            len(self._input_tables_dict) == 2
+            and self._settings_obj._link_type == "link_only"
+        ):
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat_with_tf",
+                self._settings_obj.column_info_settings.source_dataset_column_name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
+            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+            link_type = "two_dataset_link_only"
+
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            link_type=link_type,
+        )
+
         pipeline.enqueue_list_of_sqls(sqls)
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
@@ -1242,13 +1213,13 @@ class Linker:
         nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         pipeline = CTEPipeline([nodes_with_tf, new_records_df])
+        if len(blocking_rules) == 0:
+            blocking_rules = [BlockingRule("1=1")]
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
             br.add_preceding_rules(blocking_rules[:n])
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
-
-        self._find_new_matches_mode = True
 
         for tf_col in self._settings_obj._term_frequency_columns:
             tf_table = colname_to_tf_tablename(tf_col)
@@ -1263,7 +1234,13 @@ class Linker:
             self, new_records_df, pipeline
         )
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_new_records_with_tf",
+            blocking_rules=blocking_rules,
+            link_type="two_dataset_link_only",
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
@@ -1292,7 +1269,6 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._find_new_matches_mode = False
 
         return predictions
 
@@ -1321,7 +1297,6 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
         cache = self._intermediate_table_cache
@@ -1368,7 +1343,13 @@ class Linker:
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__compare_two_records_left_with_tf",
+            input_tablename_r="__splink__compare_two_records_right_with_tf",
+            blocking_rules=[BlockingRule("1=1")],
+            link_type=self._settings_obj._link_type,
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
@@ -1390,7 +1371,6 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._compare_two_records_mode = False
 
         return predictions
 
@@ -1403,31 +1383,27 @@ class Linker:
                 themselves.
         """
 
-        original_blocking_rules = (
-            self._settings_obj._blocking_rules_to_generate_predictions
-        )
-        original_link_type = self._settings_obj._link_type
-
-        # Changes our sql to allow for a self link.
-        # This is used in `_sql_gen_where_condition` in blocking.py
-        # to remove any 'where' clauses when blocking (normally when blocking
-        # we want to *remove* self links!)
-        self._self_link_mode = True
-
         # Block on uid i.e. create pairwise record comparisons where the uid matches
         uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
-        self._settings_obj._blocking_rules_to_generate_predictions = [
-            BlockingRule(f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect)
-        ]
+        blocking_rule = BlockingRule(
+            f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect
+        )
+
         pipeline = CTEPipeline()
         nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         pipeline = CTEPipeline([nodes_with_tf])
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(
+            self,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            blocking_rules=[blocking_rule],
+            link_type="self_link",
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
@@ -1448,12 +1424,6 @@ class Linker:
             pipeline.enqueue_sql(sql_info["sql"], output_table_name)
 
         predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        self._settings_obj._blocking_rules_to_generate_predictions = (
-            original_blocking_rules
-        )
-        self._settings_obj._link_type = original_link_type
-        self._self_link_mode = False
 
         return predictions
 
@@ -1499,7 +1469,7 @@ class Linker:
         edges_table = _cc_create_unique_id_cols(
             self,
             nodes_with_tf.physical_name,
-            df_predict.physical_name,
+            df_predict,
             threshold_match_probability,
         )
 
