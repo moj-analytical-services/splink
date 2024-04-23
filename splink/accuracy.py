@@ -26,7 +26,6 @@ def truth_space_table_from_labels_with_predictions_sqls(
     else:
         truth_thres_expr = "match_weight"
 
-    # c_P and c_N are clerical positive and negative, respectively
     sqls = []
     sql = f"""
     select
@@ -35,11 +34,11 @@ def truth_space_table_from_labels_with_predictions_sqls(
     case when clerical_match_score >= {threshold_actual} then 1
     else 0
     end
-    as c_P,
+    as clerical_positive,
     case when clerical_match_score >= {threshold_actual} then 0
     else 1
     end
-    as c_N
+    as clerical_negative
     from __splink__labels_with_predictions
     order by match_weight
     """
@@ -51,8 +50,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     select
         truth_threshold,
         count(*) as num_records_in_row,
-        sum(c_P) as c_P,
-        sum(c_N) as c_N
+        sum(clerical_positive) as clerical_positive,
+        sum(clerical_negative) as clerical_negative
     from
     __splink__labels_with_pos_neg
     group by truth_threshold
@@ -69,11 +68,14 @@ def truth_space_table_from_labels_with_predictions_sqls(
     select
     truth_threshold,
 
-    (sum(c_P) over (order by truth_threshold desc))  as cum_clerical_P,
-    (sum(c_N) over (order by truth_threshold)) - c_N as cum_clerical_N,
+    (sum(clerical_positive) over (order by truth_threshold desc))  as cum_clerical_P,
+    (sum(clerical_negative) over (order by truth_threshold)) - clerical_negative
+        as cum_clerical_N,
 
-    (select sum(c_P) from __splink__labels_with_pos_neg_grouped) as total_clerical_P,
-    (select sum(c_N) from __splink__labels_with_pos_neg_grouped) as total_clerical_N,
+    (select sum(clerical_positive) from __splink__labels_with_pos_neg_grouped)
+        as total_clerical_P,
+    (select sum(clerical_negative) from __splink__labels_with_pos_neg_grouped)
+        as total_clerical_N,
 
     (select sum(num_records_in_row) from __splink__labels_with_pos_neg_grouped)
         as row_count,
