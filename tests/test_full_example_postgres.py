@@ -70,7 +70,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     register_roc_data(linker)
 
-    linker.threshold_selection_tool_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 

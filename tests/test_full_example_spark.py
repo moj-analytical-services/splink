@@ -122,7 +122,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     )
     register_roc_data(linker)
 
-    linker.threshold_selection_tool_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table("labels")
 
     record = {
         "unique_id": 1,

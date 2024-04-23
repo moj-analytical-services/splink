@@ -60,7 +60,7 @@ def test_full_example_sqlite(tmp_path):
 
     register_roc_data(linker)
 
-    linker.threshold_selection_tool_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table("labels")
 
 
 @mark_with_dialects_including("sqlite")
