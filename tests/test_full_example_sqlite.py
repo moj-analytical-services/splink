@@ -59,7 +59,7 @@ def test_full_example_sqlite(tmp_path):
     _test_table_registration(linker)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
+
     linker.threshold_selection_tool_from_labels_table("labels")
 
 

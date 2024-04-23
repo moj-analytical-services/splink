@@ -193,9 +193,9 @@ def test_roc_chart_dedupe_only():
 
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -226,9 +226,9 @@ def test_roc_chart_link_and_dedupe():
         df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api
     )
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_prediction_errors_from_labels_table():

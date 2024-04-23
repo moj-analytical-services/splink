@@ -89,7 +89,7 @@ def test_full_example_duckdb(tmp_path):
     linker.waterfall_chart(records)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
+
     linker.threshold_selection_tool_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)

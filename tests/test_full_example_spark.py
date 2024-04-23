@@ -121,7 +121,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         ]
     )
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
+
     linker.threshold_selection_tool_from_labels_table("labels")
 
     record = {
