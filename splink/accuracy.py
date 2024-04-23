@@ -122,16 +122,23 @@ def truth_space_table_from_labels_with_predictions_sqls(
         select * from __splink__labels_with_pos_neg_grouped_with_stats
         """
     else:
+        # This code is only needed in the case of labelling from a column
+        # rather than a pairwise table
         total_labels_str = f"cast({total_labels} as float8)"
-        total_clerical_negatives = (
-            f"(cast({total_labels} as float8) - total_clerical_positives)"
-        )
+
+        # When we blocked, some clerical negatives would have been found indirectly
+        # for comparisons found by blocking rules, but where the id\label column
+        # didn't match
+        total_additional_clerical_negatives = f"""({total_labels_str} -
+            total_clerical_positives - total_clerical_negatives)"""
+
         sql = f"""
         select
             truth_threshold,
             cumulative_clerical_positives_at_or_above_threshold,
 
-            cumulative_clerical_negatives_below_threshold + {total_clerical_negatives}
+            cumulative_clerical_negatives_below_threshold
+                + {total_additional_clerical_negatives}
                 as cumulative_clerical_negatives_below_threshold,
 
             total_clerical_positives,
@@ -141,7 +148,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
 
             {total_labels_str} as total_clerical_labels,
 
-            num_labels_scored_below_threshold + {total_clerical_negatives}
+            num_labels_scored_below_threshold + {total_additional_clerical_negatives}
                 as num_labels_scored_below_threshold,
 
             num_labels_scored_at_or_above_threshold

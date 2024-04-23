@@ -160,7 +160,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             try:
                 from IPython.display import display
 
-                display(df_pd)
+                display(df_pd.head())
             except ModuleNotFoundError:
                 print(df_pd)  # noqa: T201
 
