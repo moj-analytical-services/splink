@@ -2153,6 +2153,7 @@ class Linker:
         labels_column_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
+        positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
     ):
         """Generate truth statistics (false positive etc.) for each threshold value of
         match_probability, suitable for plotting a ROC chart.
@@ -2181,7 +2182,11 @@ class Linker:
         """
 
         return truth_space_table_from_labels_column(
-            self, labels_column_name, threshold_actual, match_weight_round_to_nearest
+            self,
+            labels_column_name,
+            threshold_actual,
+            match_weight_round_to_nearest,
+            positives_not_captured_by_blocking_rules_scored_as_zero,
         )
 
     def roc_chart_from_labels_column(

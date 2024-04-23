@@ -11,7 +11,6 @@ from .sql_transform import move_l_r_table_prefix_to_column_suffix
 from .vertically_concatenate import (
     compute_df_concat,
     compute_df_concat_with_tf,
-    enqueue_df_concat,
 )
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 def truth_space_table_from_labels_with_predictions_sqls(
     threshold_actual=0.5,
     match_weight_round_to_nearest=None,
-    true_positives_to_add: int = 0,
+    total_labels: int = None,
     positives_not_captured_by_blocking_rules_scored_as_zero=True,
 ):
     # Round to match_weight_round_to_nearest.
@@ -79,31 +78,32 @@ def truth_space_table_from_labels_with_predictions_sqls(
     }
     sqls.append(sql_info)
 
-    sql = f"""
+    sql = """
     select
     truth_threshold,
 
-    (sum(clerical_positive) over (order by truth_threshold desc))  as cum_clerical_P,
+    (sum(clerical_positive) over (order by truth_threshold desc))
+        as cumulative_clerical_positives_at_or_above_threshold,
+
     (sum(clerical_negative) over (order by truth_threshold))
-        + cast({true_positives_to_add} as float8)
         - clerical_negative
-        as cum_clerical_N,
+        as cumulative_clerical_negatives_below_threshold,
 
     (select sum(clerical_positive) from __splink__labels_with_pos_neg_grouped)
-        as total_clerical_P,
+        as total_clerical_positives,
+
     (select sum(clerical_negative) from __splink__labels_with_pos_neg_grouped)
-        + cast({true_positives_to_add} as float8)
-        as total_clerical_N,
+        as total_clerical_negatives,
 
     (select sum(num_records_in_row) from __splink__labels_with_pos_neg_grouped)
-        + cast({true_positives_to_add} as float8)
-        as row_count,
+        as total_clerical_labels,
 
     -num_records_in_row + sum(num_records_in_row) over (order by truth_threshold)
-        + cast({true_positives_to_add} as float8)
-        as N_labels,
+        as num_labels_scored_below_threshold,
 
-    sum(num_records_in_row) over (order by truth_threshold desc) as P_labels
+    sum(num_records_in_row)
+        over (order by truth_threshold desc) as num_labels_scored_at_or_above_threshold
+
     from __splink__labels_with_pos_neg_grouped
     order by  truth_threshold
     """
@@ -114,20 +114,65 @@ def truth_space_table_from_labels_with_predictions_sqls(
     }
     sqls.append(sql_info)
 
+    # If total comparisons is defined, we want to modify the above table
+    # to account for the fact it's missing a bunch of true negatives
+
+    if total_labels is None:
+        sql = """
+        select * from __splink__labels_with_pos_neg_grouped_with_stats
+        """
+    else:
+        total_labels_str = f"cast({total_labels} as float8)"
+        total_clerical_negatives = (
+            f"(cast({total_labels} as float8) - total_clerical_positives)"
+        )
+        sql = f"""
+        select
+            truth_threshold,
+            cumulative_clerical_positives_at_or_above_threshold,
+
+            cumulative_clerical_negatives_below_threshold + {total_clerical_negatives}
+                as cumulative_clerical_negatives_below_threshold,
+
+            total_clerical_positives,
+
+            {total_labels_str} - total_clerical_positives
+                as total_clerical_negatives,
+
+            {total_labels_str} as total_clerical_labels,
+
+            num_labels_scored_below_threshold + {total_clerical_negatives}
+                as num_labels_scored_below_threshold,
+
+            num_labels_scored_at_or_above_threshold
+        from
+        __splink__labels_with_pos_neg_grouped_with_stats
+        """
+
+    sql_info = {
+        "sql": sql,
+        "output_table_name": "__splink__labels_with_pos_neg_grouped_with_stats_adj",
+    }
+    sqls.append(sql_info)
+
     sql = """
     select
     truth_threshold,
-    row_count,
-    total_clerical_P as P,
-    total_clerical_N as N,
+    total_clerical_labels,
+    total_clerical_positives as P,
+    total_clerical_negatives as N,
 
-    P_labels - cum_clerical_P as FP,
-    cum_clerical_P as TP,
+    num_labels_scored_at_or_above_threshold -
+        cumulative_clerical_positives_at_or_above_threshold as FP,
 
-    N_labels - cum_clerical_N as FN,
-    cum_clerical_N as TN
+    cumulative_clerical_positives_at_or_above_threshold as TP,
 
-    from __splink__labels_with_pos_neg_grouped_with_stats
+    num_labels_scored_below_threshold - cumulative_clerical_negatives_below_threshold
+        as FN,
+
+    cumulative_clerical_negatives_below_threshold as TN
+
+    from __splink__labels_with_pos_neg_grouped_with_stats_adj
     """
 
     sql_info = {
@@ -141,15 +186,15 @@ def truth_space_table_from_labels_with_predictions_sqls(
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
             as match_probability,
-        cast(row_count as float8) as row_count,
+        cast(total_clerical_labels as float8) as total_clerical_labels,
         cast(P as float8) as p,
         cast(N as float8) as n,
         cast(TP as float8) as tp,
         cast(TN as float8) as tn,
         cast(FP as float8) as fp,
         cast(FN as float8) as fn,
-        cast(P/row_count as float8) as P_rate,
-        cast(N as float)/row_count as N_rate,
+        cast(P/total_clerical_labels as float8) as P_rate,
+        cast(N as float)/total_clerical_labels as N_rate,
         cast(TP as float8)/P as tp_rate,
         cast(TN as float8)/N as tn_rate,
         cast(FP as float8)/N as fp_rate,
@@ -245,41 +290,36 @@ def truth_space_table_from_labels_column(
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
 
-    total_comparisons = calculate_cartesian(row_count_df, link_type)
+    total_labels = calculate_cartesian(row_count_df, link_type)
 
-    # # Now we want to compute the total number of rows generated by the blocking rules
+    new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
 
-    if positives_not_captured_by_blocking_rules_scored_as_zero:
+    df_predict = _predict_from_label_column_sql(
+        linker,
+        label_colname,
+    )
 
-        count_br_rows = linker.cumulative_comparisons_from_blocking_rules_records(
-            linker._settings_obj._blocking_rules_to_generate_predictions
-        )
-
-    else:
-        new_linker = deepcopy(linker)
-
-        label_blocking_rule = BlockingRule(f"l.{label_colname} = r.{label_colname}")
-        settings = new_linker._settings_obj
-        brs = settings._blocking_rules_to_generate_predictions
-
-        label_blocking_rule = BlockingRule(f"l.{label_colname} = r.{label_colname}")
-        label_blocking_rule.preceding_rules = brs.copy()
-        brs.append(label_blocking_rule)
-
-        count_br_rows = linker.cumulative_comparisons_from_blocking_rules_records(
-            linker._settings_obj._blocking_rules_to_generate_predictions
-        )
-
-    a = 1
-
-    unaccounted_for_comparisons = total_comparisons - count_br_rows
+    sql = f"""
+    select
+    case
+        when ({label_colname}_l = {label_colname}_r)
+        then cast(1.0 as float8) else cast(0.0 as float8)
+    end AS clerical_match_score,
+    not (cast(match_key as int) = {new_matchkey})
+        as found_by_blocking_rules,
+    *
+    from {df_predict.physical_name}
+    """
 
     pipeline = CTEPipeline()
 
     pipeline.enqueue_sql(sql, "__splink__labels_with_predictions")
 
     sqls = truth_space_table_from_labels_with_predictions_sqls(
-        threshold_actual, match_weight_round_to_nearest, unaccounted_for_comparisons
+        threshold_actual,
+        match_weight_round_to_nearest=match_weight_round_to_nearest,
+        total_labels=total_labels,
+        positives_not_captured_by_blocking_rules_scored_as_zero=positives_not_captured_by_blocking_rules_scored_as_zero,  # noqa: E501
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
