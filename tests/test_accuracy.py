@@ -487,7 +487,9 @@ def test_truth_space_table_from_labels_column_dedupe_only():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "cluster", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 4
@@ -556,7 +558,9 @@ def test_truth_space_table_from_labels_column_link_only():
 
     linker = Linker([df_left, df_right], settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "ground_truth", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 3

@@ -1828,7 +1828,7 @@ class Linker:
             ]
         ] = [],
     ):
-        """Generate an accuracy chart from ground truth data, whereby the ground
+        """Generate an accuracy chart or table from ground truth data, where the ground
         truth is in a column in the input dataset called `labels_column_name`
 
         Args:
@@ -1854,12 +1854,12 @@ class Linker:
                 - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
+            linker.accuracy_analysis_from_labels_column("ground_truth", add_metrics=["f1"])
             ```
 
         Returns:
             altair.Chart: An altair chart
-        """
+        """  # noqa: E501
 
         if not isinstance(add_metrics, list):
             raise Exception(
@@ -1960,12 +1960,12 @@ class Linker:
                 - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
+            linker.accuracy_analysis_from_labels_table("ground_truth", add_metrics=["f1"])
             ```
 
         Returns:
             altair.Chart: An altair chart
-        """
+        """  # noqa: E501
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
 
