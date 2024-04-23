@@ -1813,7 +1813,7 @@ class Linker:
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = 0.1,
         output_type: Literal[
-            "threshold_selection", "roc", "precision_recall", "table"
+            "threshold_selection", "roc", "precision_recall", "table", "accuracy"
         ] = "threshold_selection",
         add_metrics: List[
             Literal[
@@ -1861,16 +1861,17 @@ class Linker:
             altair.Chart: An altair chart
         """  # noqa: E501
 
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
         if not isinstance(add_metrics, list):
             raise Exception(
                 "add_metrics must be a list containing one or more of the following:",
-                self.ALLOWED_METRICS,
+                allowed,
             )
 
-        if not all(metric in self.ALLOWED_METRICS for metric in add_metrics):
+        if not all(metric in allowed for metric in add_metrics):
             raise ValueError(
-                "Invalid metric. "
-                f"Allowed metrics are: {', '.join(self.ALLOWED_METRICS)}."
+                "Invalid metric. " f"Allowed metrics are: {', '.join(allowed)}."
             )
 
         df_truth_space = truth_space_table_from_labels_column(
@@ -1894,7 +1895,7 @@ class Linker:
         else:
             raise ValueError(
                 "Invalid chart_type. Allowed chart types are: "
-                "'threshold_selection', 'roc', 'precision_recall'."
+                "'threshold_selection', 'roc', 'precision_recall', 'accuracy."
             )
 
     def accuracy_analysis_from_labels_table(
@@ -1904,7 +1905,7 @@ class Linker:
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = 0.1,
         output_type: Literal[
-            "threshold_selection", "roc", "precision_recall", "table"
+            "threshold_selection", "roc", "precision_recall", "table", "accuracy"
         ] = "threshold_selection",
         add_metrics: List[
             Literal[
@@ -2005,7 +2006,7 @@ class Linker:
         else:
             raise ValueError(
                 "Invalid chart_type. Allowed chart types are: "
-                "'threshold_selection', 'roc', 'precision_recall'."
+                "'threshold_selection', 'roc', 'precision_recall', 'accuracy."
             )
 
     def prediction_errors_from_labels_column(
