@@ -6,7 +6,7 @@ import os
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict, Optional, Union, List
+from typing import Dict, Optional, Union, List, Literal
 
 from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
 from .vertically_concatenate import (
@@ -2148,183 +2148,25 @@ class Linker:
             threshold,
         )
 
-    def truth_space_table_from_labels_column(
-        self,
-        labels_column_name,
-        threshold_actual=0.5,
-        match_weight_round_to_nearest: float = None,
-    ):
-        """Generate truth statistics (false positive etc.) for each threshold value of
-        match_probability, suitable for plotting a ROC chart.
 
-        Your labels_column_name should include the ground truth cluster (unique
-        identifier) that groups entities which are the same
 
-        Args:
-            labels_tablename (str): Name of table containing labels in the database
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
 
-        Examples:
-            ```py
-            linker.truth_space_table_from_labels_column("cluster")
-            ```
 
-        Returns:
-            SplinkDataFrame:  Table of truth statistics
-        """
 
-        return truth_space_table_from_labels_column(
-            self, labels_column_name, threshold_actual, match_weight_round_to_nearest
-        )
 
-    def roc_chart_from_labels_column(
-        self,
-        labels_column_name,
-        threshold_actual=0.5,
-        match_weight_round_to_nearest: float = None,
-    ):
-        """Generate a ROC chart from ground truth data, whereby the ground truth
-        is in a column in the input dataset called `labels_column_name`
 
-        Args:
-            labels_column_name (str): Column name containing labels in the input table
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
 
-        Examples:
-            ```py
-            linker.roc_chart_from_labels_column("labels")
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        df_truth_space = truth_space_table_from_labels_column(
-            self,
-            labels_column_name,
-            threshold_actual=threshold_actual,
-            match_weight_round_to_nearest=match_weight_round_to_nearest,
-        )
-        recs = df_truth_space.as_record_dict()
-        return roc_chart(recs)
-
-    def precision_recall_chart_from_labels_column(
-        self,
-        labels_column_name,
-        threshold_actual=0.5,
-        match_weight_round_to_nearest: float = None,
-    ):
-        """Generate a precision-recall chart from ground truth data, whereby the ground
-        truth is in a column in the input dataset called `labels_column_name`
-
-        Args:
-            labels_column_name (str): Column name containing labels in the input table
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
-        Examples:
-            ```py
-            linker.precision_recall_chart_from_labels_column("ground_truth")
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        df_truth_space = truth_space_table_from_labels_column(
-            self,
-            labels_column_name,
-            threshold_actual=threshold_actual,
-            match_weight_round_to_nearest=match_weight_round_to_nearest,
-        )
-        recs = df_truth_space.as_record_dict()
-        return precision_recall_chart(recs)
-
-    def accuracy_chart_from_labels_column(
-        self,
-        labels_column_name,
-        threshold_actual=0.5,
-        match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
-    ):
-        """Generate an accuracy chart from ground truth data, whereby the ground
-        truth is in a column in the input dataset called `labels_column_name`
-
-        Args:
-            labels_column_name (str): Column name containing labels in the input table
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the chart. Defaults to None.
-            add_metrics (list(str), optional): Precision and recall metrics are always
-                included. Where provided, `add_metrics` specifies additional metrics
-                to show, with the following options:
-
-                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
-                - `"npv"`: negative predictive value (NPV)
-                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
-                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
-                - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
-        Examples:
-            ```py
-            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
-
-        if not isinstance(add_metrics, list):
-            raise Exception(
-                "add_metrics must be a list containing one or more of the following:",
-                allowed,
-            )
-
-        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
-        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
-
-        df_truth_space = truth_space_table_from_labels_column(
-            self,
-            labels_column_name,
-            threshold_actual=threshold_actual,
-            match_weight_round_to_nearest=match_weight_round_to_nearest,
-        )
-        recs = df_truth_space.as_record_dict()
-        return accuracy_chart(recs, add_metrics=add_metrics)
-
-    def threshold_selection_tool_from_labels_column(
+    def accuracy_analysis_from_labels_column(
         self,
         labels_column_name: str,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        output_type: Literal[
+            "threshold_selection", "roc", "precision_recall", "table"
+        ] = "threshold_selection",
+        add_metrics: List[
+            Literal["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+        ] = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2367,8 +2209,10 @@ class Linker:
                 allowed,
             )
 
-        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
-        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+        if not all(metric in allowed for metric in add_metrics):
+            raise ValueError(
+                f"Invalid metric. Allowed metrics are: {', '.join(allowed)}."
+            )
 
         df_truth_space = truth_space_table_from_labels_column(
             self,
@@ -2377,7 +2221,22 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
         recs = df_truth_space.as_record_dict()
-        return threshold_selection_tool(recs, add_metrics=add_metrics)
+
+        if output_type == "threshold_selection":
+            return threshold_selection_tool(recs, add_metrics=add_metrics)
+        elif output_type == "accuracy":
+            return accuracy_chart(recs, add_metrics=add_metrics)
+        elif output_type == "roc":
+            return roc_chart(recs)
+        elif output_type == "precision_recall":
+            return precision_recall_chart(recs)
+        elif output_type == "table":
+            return df_truth_space
+        else:
+            raise ValueError(
+                "Invalid chart_type. Allowed chart types are: "
+                "'threshold_selection', 'roc', 'precision_recall'."
+            )
 
     def prediction_errors_from_labels_column(
         self,
