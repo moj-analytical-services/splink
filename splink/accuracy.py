@@ -4,17 +4,25 @@ from typing import TYPE_CHECKING
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
+from .misc import calculate_cartesian
 from .pipeline import CTEPipeline
 from .predict import predict_from_comparison_vectors_sqls_using_settings
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
-from .vertically_concatenate import compute_df_concat_with_tf
+from .vertically_concatenate import (
+    compute_df_concat,
+    compute_df_concat_with_tf,
+    enqueue_df_concat,
+)
 
 if TYPE_CHECKING:
     from .linker import Linker
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
-    threshold_actual=0.5, match_weight_round_to_nearest=None
+    threshold_actual=0.5,
+    match_weight_round_to_nearest=None,
+    true_positives_to_add: int = 0,
+    positives_not_captured_by_blocking_rules_scored_as_zero=True,
 ):
     # Round to match_weight_round_to_nearest.
     # e.g. if it's 0.25, 1.27 gets rounded to 1.25
@@ -46,16 +54,23 @@ def truth_space_table_from_labels_with_predictions_sqls(
     sql_info = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg"}
     sqls.append(sql_info)
 
-    sql = """
+    if positives_not_captured_by_blocking_rules_scored_as_zero:
+        truth_threshold = """CASE
+                            WHEN found_by_blocking_rules then truth_threshold
+                            ELSE cast(-999 as float8)
+                            END"""
+    else:
+        truth_threshold = "truth_threshold"
+    sql = f"""
     select
-        truth_threshold,
+        {truth_threshold} as truth_threshold,
         count(*) as num_records_in_row,
         sum(clerical_positive) as clerical_positive,
         sum(clerical_negative) as clerical_negative
     from
     __splink__labels_with_pos_neg
-    group by truth_threshold
-    order by truth_threshold
+    group by {truth_threshold}
+    order by {truth_threshold}
     """
 
     sql_info = {
@@ -64,23 +79,28 @@ def truth_space_table_from_labels_with_predictions_sqls(
     }
     sqls.append(sql_info)
 
-    sql = """
+    sql = f"""
     select
     truth_threshold,
 
     (sum(clerical_positive) over (order by truth_threshold desc))  as cum_clerical_P,
-    (sum(clerical_negative) over (order by truth_threshold)) - clerical_negative
+    (sum(clerical_negative) over (order by truth_threshold))
+        + cast({true_positives_to_add} as float8)
+        - clerical_negative
         as cum_clerical_N,
 
     (select sum(clerical_positive) from __splink__labels_with_pos_neg_grouped)
         as total_clerical_P,
     (select sum(clerical_negative) from __splink__labels_with_pos_neg_grouped)
+        + cast({true_positives_to_add} as float8)
         as total_clerical_N,
 
     (select sum(num_records_in_row) from __splink__labels_with_pos_neg_grouped)
+        + cast({true_positives_to_add} as float8)
         as row_count,
 
     -num_records_in_row + sum(num_records_in_row) over (order by truth_threshold)
+        + cast({true_positives_to_add} as float8)
         as N_labels,
 
     sum(num_records_in_row) over (order by truth_threshold desc) as P_labels
@@ -193,33 +213,90 @@ def truth_space_table_from_labels_table(
 
 
 def truth_space_table_from_labels_column(
-    linker, label_colname, threshold_actual=0.5, match_weight_round_to_nearest=None
+    linker: "Linker",
+    label_colname,
+    threshold_actual=0.5,
+    match_weight_round_to_nearest=None,
+    positives_not_captured_by_blocking_rules_scored_as_zero=True,
 ):
-    new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
 
-    df_predict = _predict_from_label_column_sql(
-        linker,
-        label_colname,
-    )
+    # # First we need to calculate the number of implicit true negatives
+    # # That is, any pair of records which have a different ID in the labels
+    # # column are a negative
+    # link_type = linker.settings_obj._link_type
+    # if link_type == "dedupe_only":
+    #     group_by_statement = ""
+    # else:
+    #     group_by_statement = "group by source_dataset"
 
-    sql = f"""
-    select
-    case
-        when ({label_colname}_l = {label_colname}_r)
-        then cast(1.0 as float8) else cast(0.0 as float8)
-    end AS clerical_match_score,
-    not (cast(match_key as int) = {new_matchkey})
-        as found_by_blocking_rules,
-    *
-    from {df_predict.physical_name}
-    """
+    # concat = compute_df_concat(linker, pipeline)
+
+    # pipeline = CTEPipeline([concat])
+
+    # sql = f"""
+    #     select count(*) as count
+    #     from {concat.physical_name}
+    #     {group_by_statement}
+    # """
+
+    # pipeline.enqueue_sql(sql, "__splink__cartesian_product")
+    # cartesian_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    # row_count_df = cartesian_count.as_record_dict()
+    # cartesian_count.drop_table_from_database_and_remove_from_cache()
+
+    # total_comparisons = calculate_cartesian(row_count_df, link_type)
+
+    # # Now we want to compute the total number of rows generated by the blocking rules
+
+    # linker.count_num_comparisons_from_blocking_rules_for_prediction()
+
+    if positives_not_captured_by_blocking_rules_scored_as_zero:
+        settings = linker._settings_obj
+        add_cols = list(settings._additional_col_names_to_retain).copy()
+
+        if label_colname not in add_cols:
+            settings._additional_col_names_to_retain.append(label_colname)
+
+        df_predict = linker.predict()
+        settings._additional_col_names_to_retain = add_cols
+        sql = f"""
+        select
+        case
+            when ({label_colname}_l = {label_colname}_r)
+            then cast(1.0 as float8) else cast(0.0 as float8)
+        end AS clerical_match_score,
+        true
+            as found_by_blocking_rules,
+        *
+        from {df_predict.physical_name}
+        """
+
+    else:
+        new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
+
+        df_predict = _predict_from_label_column_sql(
+            linker,
+            label_colname,
+        )
+
+        sql = f"""
+        select
+        case
+            when ({label_colname}_l = {label_colname}_r)
+            then cast(1.0 as float8) else cast(0.0 as float8)
+        end AS clerical_match_score,
+        not (cast(match_key as int) = {new_matchkey})
+            as found_by_blocking_rules,
+        *
+        from {df_predict.physical_name}
+        """
+
     pipeline = CTEPipeline()
 
     pipeline.enqueue_sql(sql, "__splink__labels_with_predictions")
 
-    # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
-        threshold_actual, match_weight_round_to_nearest
+        threshold_actual, match_weight_round_to_nearest, 10
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
