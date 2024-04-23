@@ -212,6 +212,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
             else cast((TP*TN)-(FP*FN) as float8)/sqrt((TP+FP)*P*N*(TN+FN)) end as phi
 
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
+    where truth_threshold >= cast(-998 as float8)
     """
 
     sql_info = {"sql": sql, "output_table_name": "__splink__truth_space_table"}
