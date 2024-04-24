@@ -494,7 +494,7 @@ def solve_connected_components(
 
         repr_name = f"__splink__df_representatives_{iteration}"
 
-        representatives = pipeline.enqueue_sql(
+        pipeline.enqueue_sql(
             sql,
             repr_name,
         )
