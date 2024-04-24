@@ -163,7 +163,7 @@ class _SplinkDataSetsMeta(type):
         return super().__new__(cls, clsname, bases, attributes)
 
     @classmethod
-    def progress(cls, block_count, block_size, total_size):
+    def progress(cls, block_count, block_size, total_size) -> None:
         prop_done = (block_count * block_size) / total_size
         if prop_done > 1:
             prop_done = 1
@@ -222,26 +222,26 @@ class _SplinkDataUtils:
         """Return a list of datasets that have already been pre-downloaded"""
         return [self._trim_suffix(f) for f in self._list_downloaded_data_files()]
 
-    def list_all_datasets(self):
+    def list_all_datasets(self) -> list[str]:
         """Return a list of all available datasets, regardless of whether
         or not they have already been pre-downloaded
         """
         return [d.dataset_name for d in _datasets]
 
-    def list_all_dataset_labels(self):
+    def list_all_dataset_labels(self) -> list[str]:
         """Return a list of all available dataset labels, regardless of whether
         or not they have already been pre-downloaded
         """
         return [d.dataset_name for d in _labels]
 
-    def show_downloaded_data(self):
+    def show_downloaded_data(self) -> None:
         """Print a list of datasets that have already been pre-downloaded"""
         print(  # noqa: T201
             "Datasets already downloaded and available:\n"
             + ",\n".join(self.list_downloaded_datasets())
         )
 
-    def clear_downloaded_data(self, datasets: list = None):
+    def clear_downloaded_data(self, datasets: list[str] = None) -> None:
         """Delete any pre-downloaded data stored locally.
 
         Args:
