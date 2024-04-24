@@ -271,9 +271,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def register_table(
         self, input_table, table_name, overwrite=False
     ) -> SplinkDataFrame:
-        input_tables = self.process_input_tables([input_table])
+
         tables_dict = self.register_multiple_tables(
-            input_tables, [table_name], overwrite=overwrite
+            [input_table], [table_name], overwrite=overwrite
         )
         return tables_dict[table_name]
 
