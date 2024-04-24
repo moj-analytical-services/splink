@@ -217,7 +217,7 @@ class NameComparison(ComparisonCreator):
         include_exact_match_level: bool = True,
         phonetic_col_name: Union[str, ColumnExpression] = None,
         fuzzy_metric: str = "jaro_winkler",
-        fuzzy_thresholds: Union[float, list] = [0.9, 0.8],
+        fuzzy_thresholds: Union[float, list[float]] = [0.9, 0.8],
     ):
         fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
         self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
