@@ -233,11 +233,9 @@ class Linker:
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
-        input_tables = ensure_is_list(input_table_or_tables)
-        input_tables = self.db_api.process_input_tables(input_tables)
 
         self._input_tables_dict = self._register_input_tables(
-            input_tables,
+            input_table_or_tables,
             input_table_aliases,
         )
 

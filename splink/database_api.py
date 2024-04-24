@@ -13,10 +13,7 @@ from .dialects import (
 )
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import (
-    ascii_uid,
-    parse_duration,
-)
+from .misc import ascii_uid, ensure_is_list, parse_duration
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 
@@ -191,7 +188,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
 
         if not self.debug_mode:
-
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
@@ -231,6 +227,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         input_aliases: Optional[List[str]] = None,
         overwrite: bool = False,
     ) -> Dict[str, SplinkDataFrame]:
+        input_tables = self.process_input_tables(input_tables)
 
         tables_as_splink_dataframes = {}
         existing_tables = []
@@ -271,9 +268,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return tables_as_splink_dataframes
 
     @final
-    def register_table(self, input, table_name, overwrite=False) -> SplinkDataFrame:
+    def register_table(
+        self, input_table, table_name, overwrite=False
+    ) -> SplinkDataFrame:
+
         tables_dict = self.register_multiple_tables(
-            [input], [table_name], overwrite=overwrite
+            [input_table], [table_name], overwrite=overwrite
         )
         return tables_dict[table_name]
 
@@ -328,6 +328,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         for linker.
         Default just passes through - backends can specialise if desired
         """
+        input_tables = ensure_is_list(input_tables)
         return input_tables
 
     # should probably also be responsible for cache
