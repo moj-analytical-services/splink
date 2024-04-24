@@ -232,7 +232,8 @@ def _select_found_by_blocking_rules(linker: "Linker"):
 
     if brs:
         br_strings = [
-            move_l_r_table_prefix_to_column_suffix(b.blocking_rule_sql) for b in brs
+            move_l_r_table_prefix_to_column_suffix(b.blocking_rule_sql, b.sql_dialect)
+            for b in brs
         ]
         wrapped_br_strings = [f"(coalesce({b}, false))" for b in br_strings]
         full_br_string = " OR ".join(wrapped_br_strings)
