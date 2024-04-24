@@ -115,18 +115,18 @@ class SplinkDialect(ABC):
 
         return nullif_wrapped_function
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def try_parse_date(self, name: str, date_format: str = None) -> str:
         return self._try_parse_date_raw(name, date_format)
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'try_parse_date' function"
         )
 
-    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None) -> str:
         return self._try_parse_timestamp_raw(name, timestamp_format)
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'try_parse_timestamp' function"
         )
@@ -183,12 +183,12 @@ class DuckDBDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "%Y-%m-%dT%H:%M:%S%Z"
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""try_strptime({name}, '{timestamp_format}')"""
@@ -280,17 +280,17 @@ class SparkDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "yyyy-MM-dd\\'T\\'HH:mm:ssXXX"
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None):
+    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""to_date({name}, '{date_format}')"""
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None):
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""to_timestamp({name}, '{timestamp_format}')"""
 
-    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
     @property

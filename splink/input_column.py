@@ -75,7 +75,7 @@ class SqlglotColumnTreeBuilder:
         return tree
 
     @property
-    def sql(self):
+    def sql(self) -> str:
         return self.as_sqlglot_tree.sql(dialect=self.sqlglot_dialect)
 
     @classmethod
