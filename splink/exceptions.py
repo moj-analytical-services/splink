@@ -62,7 +62,7 @@ class ErrorLogger:
 
         return "\n\n".join([f"{e}" for e in self.error_queue])
 
-    def log_error(self, error: Union[list, str, Exception]) -> None:
+    def log_error(self, error: Union[list[Exception], str, Exception]) -> None:
         """
         Log an error or a list of errors.
 
