@@ -60,16 +60,26 @@ def truth_space_table_from_labels_with_predictions_sqls(
                             END"""
     else:
         truth_threshold = "truth_threshold"
+
+    # Originally the case statement was inlined in the follow statement, but spark
+    # doesn't like that
     sql = f"""
+    select *, {truth_threshold} as truth_threshold_adj
+    from __splink__labels_with_pos_neg
+    """
+    sql_info = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg_tt_adj"}
+    sqls.append(sql_info)
+
+    sql = """
     select
-        {truth_threshold} as truth_threshold,
+        truth_threshold_adj as truth_threshold,
         count(*) as num_records_in_row,
         sum(clerical_positive) as clerical_positive,
         sum(clerical_negative) as clerical_negative
     from
-    __splink__labels_with_pos_neg
-    group by {truth_threshold}
-    order by {truth_threshold}
+    __splink__labels_with_pos_neg_tt_adj
+    group by truth_threshold_adj
+    order by truth_threshold_adj
     """
 
     sql_info = {
