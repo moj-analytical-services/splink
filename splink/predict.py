@@ -18,7 +18,7 @@ def predict_from_comparison_vectors_sqls_using_settings(
     threshold_match_weight: float = None,
     include_clerical_match_score: bool = False,
     sql_infinity_expression: str = "'infinity'",
-) -> list[dict]:
+) -> list[dict[str, str]]:
     return predict_from_comparison_vectors_sqls(
         unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
         core_model_settings=settings_obj.core_model_settings,
@@ -49,7 +49,7 @@ def predict_from_comparison_vectors_sqls(
     needs_matchkey_column: bool = False,
     include_clerical_match_score: bool = False,
     sql_infinity_expression: str = "'infinity'",
-) -> list[dict]:
+) -> list[dict[str, str]]:
     sqls = []
 
     select_cols = Settings.columns_to_select_for_bayes_factor_parts(
@@ -141,7 +141,7 @@ def predict_from_agreement_pattern_counts_sqls(
     comparisons: List[Comparison],
     probability_two_random_records_match: float,
     sql_infinity_expression="'infinity'",
-) -> list[dict]:
+) -> list[dict[str, str]]:
     sqls = []
 
     select_cols = []

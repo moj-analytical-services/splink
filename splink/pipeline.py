@@ -54,13 +54,13 @@ class CTEPipeline:
         # A flag to ensure that a pipeline cannot be reused
         self.spent = False
 
-    def enqueue_sql(self, sql, output_table_name):
+    def enqueue_sql(self, sql: str, output_table_name: str) -> None:
         if self.spent:
             raise ValueError("This pipeline has already been used")
         sql_task = CTE(sql, output_table_name)
         self.queue.append(sql_task)
 
-    def enqueue_list_of_sqls(self, sql_list: List[dict]):
+    def enqueue_list_of_sqls(self, sql_list: List[dict[str, str]]) -> None:
         for sql_dict in sql_list:
             self.enqueue_sql(sql_dict["sql"], sql_dict["output_table_name"])
 
@@ -69,7 +69,7 @@ class CTEPipeline:
         new_pipeline = CTEPipeline(input_dataframes=[df])
         return new_pipeline
 
-    def append_input_dataframe(self, df: SplinkDataFrame):
+    def append_input_dataframe(self, df: SplinkDataFrame) -> None:
         self.input_dataframes.append(df)
 
     def _input_dataframes_as_cte(self):
@@ -95,7 +95,7 @@ class CTEPipeline:
         """Common table expressions"""
         return self._input_dataframes_as_cte() + self.queue
 
-    def generate_cte_pipeline_sql(self):
+    def generate_cte_pipeline_sql(self) -> str:
 
         self.spent = True
 
