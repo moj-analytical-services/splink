@@ -14,8 +14,9 @@ from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
 
 # type aliases:
-T = TypeVar('T', bound=ComparisonLevelCreator)
+T = TypeVar("T", bound=ComparisonLevelCreator)
 CreateSQLFunctionType = Callable[[T, SplinkDialect], str]
+
 
 def unsupported_splink_dialects(
     unsupported_dialects: List[str],
