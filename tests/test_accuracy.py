@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from splink import SettingsCreator
 from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
@@ -571,3 +572,156 @@ def test_truth_space_table_from_labels_column_link_only():
     assert truth_dict["fp"] == 1
     assert truth_dict["tn"] == 5
     assert truth_dict["fn"] == 2
+
+
+def compute_tp_tn_fp_fn(predictions_pd_df, threshold):
+
+    # Note that in SPlink, our critiera are great than or equal to
+    # meaning match prob of 0.40 is treated as a match at threshold 0.40
+    df = predictions_pd_df
+    df["predicted_match"] = df["match_weight"] >= threshold
+
+    df["actual_match"] = df["cluster_l"] == df["cluster_r"]
+
+    TP = ((df["predicted_match"] == True) & (df["actual_match"] == True)).sum()
+    TN = ((df["predicted_match"] == False) & (df["actual_match"] == False)).sum()
+    FP = ((df["predicted_match"] == True) & (df["actual_match"] == False)).sum()
+    FN = ((df["predicted_match"] == False) & (df["actual_match"] == True)).sum()
+
+    return TP, TN, FP, FN
+
+
+def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df.head(50)
+
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
+        ],
+        blocking_rules_to_generate_predictions=[block_on("surname"), "1=1"],
+        additional_columns_to_retain=["cluster"],
+    )
+
+    linker_for_predictions = Linker(df, settings, database_api=DuckDBAPI())
+    df_predictions_raw = linker_for_predictions.predict()
+
+    # We want to score all of the positive labels even if not captured by the blocking rules
+    # but not score any negative pairwise comaprisons not captured by the blocking rules
+    sql = f"""
+    SELECT
+        case when
+            cluster_l != cluster_r and match_key = 1 then -999.0
+            else match_weight
+        end as match_weight,
+        case when
+            cluster_l != cluster_r and match_key = 1 then 0
+            else match_probability
+        end as match_probability,
+        unique_id_l,
+        unique_id_r,
+        cluster_l,
+        cluster_r,
+        match_key
+    from {df_predictions_raw.physical_name}
+    """
+    df_predictions = linker_for_predictions.query_sql(sql)
+
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
+        ],
+        blocking_rules_to_generate_predictions=[block_on("surname")],
+        additional_columns_to_retain=["cluster"],
+    )
+
+    linker_for_splink_answer = Linker(df, settings, database_api=DuckDBAPI())
+    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
+        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=False
+    ).as_pandas_dataframe()
+    df_from_splink
+
+    df_predictions
+    for _, splink_row in df_from_splink.iterrows():
+        threshold = splink_row["truth_threshold"]
+        # Compute stats using slow pandas methodology
+        TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)
+        print(f"threshold: {threshold} TP: {TP} TN: {TN} FP: {FP} FN: {FN}")
+        assert TP == splink_row["tp"], f"TP: {TP} != {splink_row['tp']}"
+        assert TN == splink_row["tn"], f"TN: {TN} != {splink_row['tn']}"
+        assert FP == splink_row["fp"], f"FP: {FP} != {splink_row['fp']}"
+        assert FN == splink_row["fn"], f"FN: {FN} != {splink_row['fn']}"
+
+
+def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df.head(100)
+
+    df_1 = df[df["unique_id"] % 2 == 0]
+    df_2 = df[df["unique_id"] % 2 == 1]
+
+    # Get a dataframe of predictions vs labels from splink
+    # Note we need to add the 1-1 blocking rule
+    settings = SettingsCreator(
+        link_type="link_only",
+        comparisons=[
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
+        ],
+        # Add an additional blocking rule to ensure in our results we have
+        # all labels
+        blocking_rules_to_generate_predictions=[block_on("first_name"), "1=1"],
+        additional_columns_to_retain=["cluster"],
+    )
+
+    linker_for_predictions = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
+    df_predictions_raw = linker_for_predictions.predict()
+
+    # When match_key = 1, the record is not really recovered by the blocking rules
+    # so its score must be zero.  Want
+    sql = f"""
+    SELECT
+        case when match_key = 1 then -999.0 else match_weight end as match_weight,
+        case when match_key = 1 then 0 else match_probability end as match_probability,
+        unique_id_l,
+        unique_id_r,
+        cluster_l,
+        cluster_r,
+        match_key
+    from {df_predictions_raw.physical_name}
+    """
+    df_predictions = linker_for_predictions.query_sql(sql)
+
+    settings = SettingsCreator(
+        link_type="link_only",
+        comparisons=[
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
+        ],
+        # Remove 1=1 blocking rule to get splink's verrsion of the truth space table
+        blocking_rules_to_generate_predictions=[block_on("first_name")],
+        additional_columns_to_retain=["cluster"],
+    )
+    linker_for_splink_answer = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
+
+    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
+        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=True
+    ).as_pandas_dataframe()
+
+    for _, splink_row in df_from_splink.iterrows():
+        threshold = splink_row["truth_threshold"]
+        # Compute stats using slow pandas methodology
+        TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)
+        # Make sure you print the values and ueful message if assert fails
+        assert TP == splink_row["tp"], f"TP: {TP} != {splink_row['tp']}"
+        assert TN == splink_row["tn"], f"TN: {TN} != {splink_row['tn']}"
+        assert FP == splink_row["fp"], f"FP: {FP} != {splink_row['fp']}"
+        assert FN == splink_row["fn"], f"FN: {FN} != {splink_row['fn']}"
