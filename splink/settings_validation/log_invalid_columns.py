@@ -56,8 +56,8 @@ def validate_column_suffixes(
 
 def check_for_missing_settings_column(
     settings_id: str,
-    settings_column_to_check: set,
-    valid_input_dataframe_columns: list,
+    settings_column_to_check: set[str],
+    valid_input_dataframe_columns: list[str],
 ):
     """Validate simple settings columns with strings as input.
     i.e. Anything that doesn't require SQL to be parsed.

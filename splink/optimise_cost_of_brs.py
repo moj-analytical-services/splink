@@ -1,5 +1,6 @@
 import logging
 from random import randint
+from typing import TypeVar
 
 import pandas as pd
 
@@ -7,8 +8,9 @@ from .cost_of_blocking_rules import calculate_cost_of_combination_of_brs
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-def localised_shuffle(lst: list, window_percent: float) -> list:
+def localised_shuffle(lst: list[T], window_percent: float) -> list[T]:
     """
     Performs a localised shuffle on a list.
 

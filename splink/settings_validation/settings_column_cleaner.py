@@ -22,7 +22,7 @@ def remove_suffix(c):
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list, columns_to_check: set[str] | str
+    valid_input_dataframe_columns: list[str], columns_to_check: set[str] | str
 ) -> set[str]:
     """Identify missing columns in the input dataframe(s). This function
     does not apply any cleaning to the input column(s).

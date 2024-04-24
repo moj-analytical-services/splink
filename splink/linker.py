@@ -145,11 +145,11 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: str | list,
+        input_table_or_tables: str | list[str],
         settings: SettingsCreator | dict | Path | str,
         database_api: DatabaseAPI,
         set_up_basic_logging: bool = True,
-        input_table_aliases: str | list | None = None,
+        input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,
     ):
         """
@@ -1954,7 +1954,7 @@ class Linker:
         labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy measure chart from labelled (ground truth) data.
 
@@ -2040,7 +2040,7 @@ class Linker:
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from labelled (ground truth) data.
 
@@ -2262,7 +2262,7 @@ class Linker:
         labels_column_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2322,7 +2322,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
