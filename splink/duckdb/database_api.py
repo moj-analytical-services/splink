@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 ddb_con = duckdb.DuckDBPyConnection
 
 
-class DuckDBAPI(DatabaseAPI):
+class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     sql_dialect = DuckDBDialect()
 
     def __init__(

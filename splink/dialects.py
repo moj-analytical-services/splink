@@ -290,7 +290,9 @@ class SparkDialect(SplinkDialect):
             timestamp_format = self.default_timestamp_format
         return f"""to_timestamp({name}, '{timestamp_format}')"""
 
-    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0) -> str:
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
     @property

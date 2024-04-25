@@ -9,7 +9,7 @@ import pandas as pd
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .pipeline import CTEPipeline
@@ -238,7 +238,7 @@ def maximisation_step(
 
 
 def expectation_maximisation(
-    db_api: DatabaseAPI,
+    db_api: DatabaseAPISubClass,
     training_settings: TrainingSettings,
     estimate_without_term_frequencies: bool,
     core_model_settings: CoreModelSettings,

@@ -70,7 +70,7 @@ from .connected_components import (
 )
 from .edge_metrics import compute_edge_metrics
 
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
@@ -147,7 +147,7 @@ class Linker:
         self,
         input_table_or_tables: str | list[str],
         settings: SettingsCreator | dict | Path | str,
-        database_api: DatabaseAPI,
+        database_api: DatabaseAPISubClass,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,

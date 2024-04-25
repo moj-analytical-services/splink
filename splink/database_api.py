@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import hashlib
 import logging
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, Optional, TypeVar, Union, final
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, final
 
 import sqlglot
 
@@ -285,7 +287,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return sql
 
     def _cleanup_for_execute_sql(
-        self, table, templated_name: str, physical_name: str
+        self, table: TablishType, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         # sensible default:
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
@@ -347,3 +349,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         for splink_df in list(self._intermediate_table_cache.values()):
             if splink_df.created_by_splink:
                 splink_df.drop_table_from_database_and_remove_from_cache()
+
+
+DatabaseAPISubClass = DatabaseAPI[Any]

@@ -14,7 +14,7 @@ from .dataframe import SQLiteDataFrame
 sql_con = sqlite3.Connection
 
 
-class SQLiteAPI(DatabaseAPI):
+class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
     sql_dialect = SQLiteDialect()
 
     @staticmethod
