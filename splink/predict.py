@@ -55,7 +55,7 @@ def predict_from_comparison_vectors_sqls(
         thres_prob_as_weight = prob_to_match_weight(threshold_match_probability)
     else:
         thres_prob_as_weight = None
-    if threshold_match_probability or threshold_match_weight:
+    if threshold_match_probability is not None or threshold_match_weight is not None:
         thresholds = [
             thres_prob_as_weight,
             threshold_match_weight,
