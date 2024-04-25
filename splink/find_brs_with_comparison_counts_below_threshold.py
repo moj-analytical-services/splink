@@ -47,8 +47,10 @@ def _generate_output_combinations_table_row(
 
 
 def _generate_combinations(
-    all_columns, current_combination, already_visited: Set[frozenset]
-) -> list:
+    all_columns: list[str],
+    current_combination: list[str],
+    already_visited: Set[frozenset[str]],
+) -> list[list[str]]:
     """Generate combinations of columns to visit that haven't been visited already
     irrespective of order
     """
@@ -83,7 +85,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     all_columns: List[str],
     threshold: float,
     current_combination: List[str] = None,
-    already_visited: Set[frozenset] = None,
+    already_visited: Set[frozenset[str]] = None,
     results: List[Dict[str, str]] = None,
 ) -> List[Dict[str, str]]:
     """

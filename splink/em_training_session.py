@@ -88,7 +88,7 @@ class EMTrainingSession:
             )
 
         # batch together fixed probabilities rather than keep hold of the bools
-        self.training_fixed_probabilities: set = {
+        self.training_fixed_probabilities: set[str] = {
             probability_type
             for (probability_type, fixed) in [
                 ("m", fix_m_probabilities),
