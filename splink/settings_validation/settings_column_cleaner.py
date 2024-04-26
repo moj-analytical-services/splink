@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Sequence
 from copy import deepcopy
 from functools import reduce
 from operator import and_
@@ -36,7 +37,7 @@ def find_columns_not_in_input_dfs(
 
 def clean_and_find_columns_not_in_input_dfs(
     valid_input_dataframe_columns: list,
-    sqlglot_tree_columns_to_check: list[sqlglot.Expression],
+    sqlglot_tree_columns_to_check: Sequence[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
     """Clean a list of sqlglot column names to remove the prefix (l.)
