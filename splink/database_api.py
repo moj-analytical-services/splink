@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # minimal acceptable table types
 AcceptableInputTableType = Union[
-    str, PandasDataFrame, list[dict[str, Any]], dict[str, Any]
+    str, PandasDataFrame, List[Dict[str, Any]], Dict[str, Any]
 ]
 # a placeholder type. This will depend on the backend subclass - something
 # 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
