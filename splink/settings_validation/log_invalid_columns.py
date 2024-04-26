@@ -84,7 +84,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
     sql_strings: list[str],
     valid_input_dataframe_columns: list[str],
     additional_validation_checks: list[Validator] = [],
-) -> dict:
+) -> dict[str, list[InvalidColumnsLogGenerator]]:
     """Evaluate whether the column(s) supplied in a series of SQL strings
     exist in our raw data.
 
@@ -150,7 +150,7 @@ def check_comparison_for_missing_or_invalid_sql_strings(
     sql_dialect: str,
     comparisons_to_check: list[Comparison],
     valid_input_dataframe_columns: list[str],
-) -> list:
+) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
     """Split apart the comparison levels found within a comparison
     and review the SQL contained within.
 
