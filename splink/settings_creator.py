@@ -4,7 +4,7 @@ import json
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import Any, List, Literal, Union
 
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
@@ -29,10 +29,10 @@ class SettingsCreator:
     link_type: Literal["link_only", "link_and_dedupe", "dedupe_only"]
 
     # TODO: make this compulsory once we farm more stuff out of linker
-    comparisons: List[ComparisonCreator | dict] = field(default_factory=list)
-    blocking_rules_to_generate_predictions: List[BlockingRuleCreator | dict] = field(
-        default_factory=list
-    )
+    comparisons: List[ComparisonCreator | dict[str, Any]] = field(default_factory=list)
+    blocking_rules_to_generate_predictions: List[
+        BlockingRuleCreator | dict[str, Any]
+    ] = field(default_factory=list)
 
     probability_two_random_records_match: float = 0.0001
     em_convergence: float = 0.0001
@@ -50,7 +50,7 @@ class SettingsCreator:
 
     linker_uid: str | None = None
 
-    def _as_naive_dict(self) -> dict:
+    def _as_naive_dict(self) -> dict[str, Any]:
         """
         Returns this class as a naive dict.
         Naive in the sense that we do not process the attributes in any way.
@@ -59,7 +59,7 @@ class SettingsCreator:
         """
         return asdict(self)
 
-    def _as_creator_dict(self) -> dict:
+    def _as_creator_dict(self) -> dict[str, Any]:
         """
         Returns class as a dict where we have converted any sub-dicts into
         'creator' types
@@ -79,7 +79,7 @@ class SettingsCreator:
         ]
         return creator_dict
 
-    def create_settings_dict(self, sql_dialect_str: str) -> dict:
+    def create_settings_dict(self, sql_dialect_str: str) -> dict[str, Any]:
         creator_dict = self._as_creator_dict()
         # then we process 'creator' types into dialected dicts
         creator_dict["comparisons"] = [
@@ -110,7 +110,9 @@ class SettingsCreator:
         return Settings(**creator_dict, sql_dialect=sql_dialect_str)
 
     @classmethod
-    def from_path_or_dict(cls, path_or_dict: Union[Path, str, dict]) -> SettingsCreator:
+    def from_path_or_dict(
+        cls, path_or_dict: Union[Path, str, dict[str, Any]]
+    ) -> SettingsCreator:
 
         if isinstance(path_or_dict, (str, Path)):
             settings_path = Path(path_or_dict)
