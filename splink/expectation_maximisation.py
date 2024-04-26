@@ -116,7 +116,9 @@ def compute_proportions_for_new_parameters_sql(table_name):
     return sql
 
 
-def compute_proportions_for_new_parameters_pandas(m_u_df: pd.DataFrame) -> List[dict]:
+def compute_proportions_for_new_parameters_pandas(
+    m_u_df: pd.DataFrame,
+) -> List[dict[str, Any]]:
     data = m_u_df.copy()
     m_prob = "m_probability"
     u_prob = "u_probability"
@@ -145,7 +147,9 @@ def compute_proportions_for_new_parameters_pandas(m_u_df: pd.DataFrame) -> List[
     return data.to_dict("records")
 
 
-def compute_proportions_for_new_parameters(m_u_df: pd.DataFrame) -> List[dict]:
+def compute_proportions_for_new_parameters(
+    m_u_df: pd.DataFrame,
+) -> List[dict[str, Any]]:
     # Execute with duckdb if installed, otherwise default to pandas
     try:
         import duckdb
@@ -208,7 +212,7 @@ def populate_m_u_from_lookup(
 def maximisation_step(
     training_fixed_probabilities: set[str],
     core_model_settings: CoreModelSettings,
-    param_records: List[dict],
+    param_records: List[dict[str, Any]],
 ) -> CoreModelSettings:
     core_model_settings = core_model_settings.copy()
 

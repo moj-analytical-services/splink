@@ -1270,7 +1270,7 @@ class Linker:
 
         return predictions
 
-    def compare_two_records(self, record_1: dict, record_2: dict):
+    def compare_two_records(self, record_1: dict[str, Any], record_2: dict[str, Any]):
         """Use the linkage model to compare and score a pairwise record comparison
         based on the two input records provided
 
@@ -2430,7 +2430,10 @@ class Linker:
         return match_weights_histogram(recs, width=width, height=height)
 
     def waterfall_chart(
-        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+        self,
+        records: list[dict[str, Any]],
+        filter_nulls=True,
+        remove_sensitive_data=False,
     ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
@@ -2896,7 +2899,7 @@ class Linker:
         output_column_name: str,
         n_most_freq: int = 10,
         n_least_freq: int = 10,
-        vals_to_include: str | list | None = None,
+        vals_to_include: str | list[str] | None = None,
         as_dict: bool = False,
     ):
         """Display a chart showing the impact of term frequency adjustments on a
@@ -2975,8 +2978,8 @@ class Linker:
         out_path: str,
         sampling_method="random",
         sample_size: int = 10,
-        cluster_ids: list = None,
-        cluster_names: list = None,
+        cluster_ids: list[str] = None,
+        cluster_names: list[str] = None,
         overwrite: bool = False,
         return_html_as_string=False,
         _df_cluster_metrics: SplinkDataFrame = None,

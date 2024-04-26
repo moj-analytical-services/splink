@@ -28,7 +28,7 @@ def _quo_if_str(x):
         return str(x)
 
 
-def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
+def _clusters_sql(df_clustered_nodes, cluster_ids: list[str]) -> str:
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -42,8 +42,8 @@ def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
 
 
 def df_clusters_as_records(
-    linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
-) -> list[dict]:
+    linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list[str]
+) -> list[dict[str, Any]]:
     """Retrieves distinct clusters which exist in df_clustered_nodes based on
     list of cluster IDs provided and converts them to a record dictionary.
 
@@ -87,7 +87,7 @@ def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
 
 
 def create_df_nodes(
-    linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
+    linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list[str]
 ) -> SplinkDataFrame:
     """Retrieves nodes from df_clustered_nodes for list of cluster IDs provided.
 
@@ -192,7 +192,7 @@ def _get_random_cluster_ids(
 
 def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_partition: int
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     unique_id_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
     pipeline = CTEPipeline()
     sql = f"""
@@ -239,7 +239,7 @@ def _get_lowest_density_clusters(
     df_cluster_metrics: SplinkDataFrame,
     rows_per_partition: int,
     min_nodes: int,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Returns lowest density clusters of different sizes by
     performing stratified sampling.
 
@@ -292,7 +292,7 @@ def _get_cluster_ids(
     sample_size,
     sample_seed,
     _df_cluster_metrics: Optional[SplinkDataFrame] = None,
-) -> tuple[list, list]:
+) -> tuple[list[str], list[str]]:
     if sampling_method == "random":
         cluster_ids = _get_random_cluster_ids(
             linker, df_clustered_nodes, sample_size, sample_seed
@@ -343,7 +343,7 @@ def render_splink_cluster_studio_html(
     sample_size=10,
     sample_seed=None,
     cluster_ids: list[str] = None,
-    cluster_names: list = None,
+    cluster_names: list[str] = None,
     overwrite: bool = False,
     _df_cluster_metrics: SplinkDataFrame = None,
 ):

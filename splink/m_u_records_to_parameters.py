@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
@@ -9,8 +9,10 @@ from .constants import LEVEL_NOT_OBSERVED_TEXT
 logger = logging.getLogger(__name__)
 
 
-def m_u_records_to_lookup_dict(m_u_records: List[dict]) -> Dict[str, dict]:
-    lookup: dict[str, dict] = {}
+def m_u_records_to_lookup_dict(
+    m_u_records: List[Dict[str, Any]]
+) -> Dict[str, Dict[str, Any]]:
+    lookup: Dict[str, Dict[str, Any]] = {}
     for m_u_record in m_u_records:
         comparison_name = m_u_record["output_column_name"]
         level_value = m_u_record["comparison_vector_value"]
@@ -45,7 +47,7 @@ def not_trained_message(
 
 def append_u_probability_to_comparison_level_trained_probabilities(
     comparison_level: ComparisonLevel,
-    m_u_records_lookup: Dict,
+    m_u_records_lookup: Dict[str, Any],
     output_column_name: str,
     training_description: str,
 ) -> None:
@@ -68,7 +70,7 @@ def append_u_probability_to_comparison_level_trained_probabilities(
 
 def append_m_probability_to_comparison_level_trained_probabilities(
     comparison_level: ComparisonLevel,
-    m_u_records_lookup: Dict,
+    m_u_records_lookup: Dict[str, Any],
     output_column_name: str,
     training_description: str,
 ) -> None:

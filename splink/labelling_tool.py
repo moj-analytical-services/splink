@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -62,7 +64,7 @@ def render_labelling_tool_html(
     show_splink_predictions_in_interface=True,
     overwrite: bool = True,
 ):
-    settings: dict = linker._settings_obj.as_dict()
+    settings: dict[str, Any] = linker._settings_obj.as_dict()
 
     logger.warning(
         "\nWARNING:\n"
