@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import string
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 
 import pandas as pd
 
@@ -27,7 +27,7 @@ def sanitise_column_name_for_one_hot_encoding(column_name) -> str:
 
 def _generate_output_combinations_table_row(
     blocking_columns, splink_blocking_rule, comparison_count, all_columns
-) -> dict:
+) -> dict[str, Any]:
     row = {}
 
     blocking_columns = [

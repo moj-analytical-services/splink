@@ -109,7 +109,7 @@ def comparison_viewer_table_sqls(
 
 def render_splink_comparison_viewer_html(
     comparison_vector_data,
-    splink_settings: dict,
+    splink_settings: dict[str, Any],
     out_path: str,
     overwrite: bool = False,
 ):

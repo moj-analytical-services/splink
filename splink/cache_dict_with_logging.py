@@ -7,7 +7,7 @@ from .splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-class CacheDictWithLogging(UserDict):
+class CacheDictWithLogging(UserDict[str, SplinkDataFrame]):
     def __init__(self):
         super().__init__()
         self.executed_queries = []
