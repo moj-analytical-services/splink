@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from inspect import signature
-from typing import final
+from typing import Any, final
 
 from .column_expression import ColumnExpression
 from .comparison_level import ComparisonLevel
@@ -30,7 +32,7 @@ class ComparisonLevelCreator(ABC):
         )
 
     @final
-    def create_level_dict(self, sql_dialect_str: str) -> dict:
+    def create_level_dict(self, sql_dialect_str: str) -> dict[str, Any]:
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         level_dict = {
             "sql_condition": self.create_sql(sql_dialect),

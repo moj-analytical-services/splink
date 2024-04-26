@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from copy import copy
-from typing import Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Optional, Union
 
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
@@ -11,7 +13,7 @@ from .misc import ensure_is_iterable
 class CustomComparison(ComparisonCreator):
     def __init__(
         self,
-        comparison_levels: List[Union[ComparisonLevelCreator, dict]],
+        comparison_levels: List[Union[ComparisonLevelCreator, dict[str, Any]]],
         output_column_name: str = None,
         comparison_description: str = None,
     ):
@@ -35,7 +37,7 @@ class CustomComparison(ComparisonCreator):
         # levels directly
 
     @staticmethod
-    def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict]):
+    def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict[str, Any]]):
         if isinstance(cl, ComparisonLevelCreator):
             return cl
         if isinstance(cl, dict):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Union, final
+from typing import Any, Iterable, Union, final
 
 from .blocking import BlockingRule
 from .comparison_creator import ComparisonLevelCreator
@@ -9,7 +9,7 @@ from .dialects import SplinkDialect
 
 
 def _ensure_is_comparison_level_creator(
-    cl: Union[ComparisonLevelCreator, dict]
+    cl: Union[ComparisonLevelCreator, dict[str, Any]]
 ) -> ComparisonLevelCreator:
     if isinstance(cl, dict):
         from .comparison_level_library import CustomLevel
@@ -28,7 +28,9 @@ class _Merge(ComparisonLevelCreator):
     _clause: str = ""
 
     @final
-    def __init__(self, *comparison_levels: Union[ComparisonLevelCreator, dict]):
+    def __init__(
+        self, *comparison_levels: Union[ComparisonLevelCreator, dict[str, Any]]
+    ):
         num_levels = len(comparison_levels)
         if num_levels == 0:
             raise ValueError(f"Must provide at least one level to {type(self)}()")
@@ -92,7 +94,7 @@ class Not(ComparisonLevelCreator):
             comparison level you wish to negate with 'NOT'
     """
 
-    def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict]):
+    def __init__(self, comparison_level: Union[ComparisonLevelCreator, dict[str, Any]]):
         self.comparison_level = _ensure_is_comparison_level_creator(comparison_level)
         # turn null levels into non-null levels, otherwise do nothing
         if self.comparison_level.is_null_level:

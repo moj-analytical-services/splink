@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -361,7 +361,7 @@ class Comparison:
         return self._all_m_are_trained and self._all_u_are_trained
 
     @property
-    def _as_detailed_records(self) -> list[dict]:
+    def _as_detailed_records(self) -> list[dict[str, Any]]:
         records = []
         for cl in self.comparison_levels:
             record = {}
