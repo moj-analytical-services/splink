@@ -1,13 +1,19 @@
 import logging
 from collections import UserDict
 from copy import copy
+from typing import TYPE_CHECKING
 
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    TypedUserDict = UserDict[str, SplinkDataFrame]
+else:
+    TypedUserDict = UserDict
 
-class CacheDictWithLogging(UserDict[str, SplinkDataFrame]):
+
+class CacheDictWithLogging(TypedUserDict):
     def __init__(self):
         super().__init__()
         self.executed_queries = []
