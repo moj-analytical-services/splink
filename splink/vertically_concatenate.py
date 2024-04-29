@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def vertically_concatenate_sql(
     input_tables: Dict[str, SplinkDataFrame],
-    salting_reqiured: bool,
+    salting_required: bool,
     source_dataset_column_name: str = None,
 ) -> str:
     """
@@ -39,7 +39,7 @@ def vertically_concatenate_sql(
 
     select_columns_sql = ", ".join(columns)
 
-    if salting_reqiured:
+    if salting_required:
         salt_sql = ", random() as __splink_salt"
     else:
         salt_sql = ""
@@ -90,7 +90,7 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
-        salting_reqiured=linker._settings_obj.salting_required,
+        salting_required=linker._settings_obj.salting_required,
         source_dataset_column_name=sds_name,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -112,7 +112,7 @@ def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDa
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
-        salting_reqiured=linker._settings_obj.salting_required,
+        salting_required=linker._settings_obj.salting_required,
         source_dataset_column_name=sds_name,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -145,7 +145,7 @@ def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
-        salting_reqiured=linker._settings_obj.salting_required,
+        salting_required=linker._settings_obj.salting_required,
         source_dataset_column_name=sds_name,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -168,7 +168,7 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
-        salting_reqiured=linker._settings_obj.salting_required,
+        salting_required=linker._settings_obj.salting_required,
         source_dataset_column_name=sds_name,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")

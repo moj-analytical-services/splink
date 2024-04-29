@@ -96,7 +96,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
-        salting_reqiured=linker._settings_obj.salting_required,
+        salting_required=linker._settings_obj.salting_required,
         source_dataset_column_name=sds_name,
     )
 

@@ -2704,7 +2704,7 @@ class Linker:
 
         sql = vertically_concatenate_sql(
             input_tables=self._input_tables_dict,
-            salting_reqiured=self._settings_obj.salting_required,
+            salting_required=self._settings_obj.salting_required,
             source_dataset_column_name=sds_name,
         )
         pipeline.enqueue_sql(sql, "__splink__df_concat")
