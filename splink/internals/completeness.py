@@ -61,18 +61,17 @@ def completeness_chart(
     cols: list[str] = None,
     table_names_for_chart: list[str] = None,
 ):
-    """Generate a summary chart of the completeness (proportion of non-nulls) of
-    columns in each of the input datasets. By default, completeness is assessed for
-    all column in the input data.
+    """Generate a summary chart of data completeness (proportion of non-nulls) of
+    columns in each of the input table or tables. By default, completeness is assessed
+    for all columns in the input data.
 
     Args:
-        table_or_tables: A single table or a list of tables.
+        table_or_tables: A single table or a list of tables of data
         db_api (DatabaseAPISubClass): The backend database API to use
-        input_dataset (str, optional): Name of one of the input tables in the
-            database.  If provided, completeness will be computed for this table
-            alone. Defaults to None.
         cols (List[str], optional): List of column names to calculate completeness. If
             none, all columns will be computed. Default to None.
+        table_names_for_chart: A list of names.  Must be the same length as
+            table_or_tables.
 
 
         ```
