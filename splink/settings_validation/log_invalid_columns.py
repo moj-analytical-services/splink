@@ -33,8 +33,7 @@ logger = logging.getLogger(__name__)
 class Validator(Protocol):
     def __call__(
         self, columns_to_check: Sequence[sqlglot.expressions.Column]
-    ) -> InvalidColumnsLogGenerator:
-        ...
+    ) -> InvalidColumnsLogGenerator: ...
 
 
 def validate_table_names(

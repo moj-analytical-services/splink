@@ -30,7 +30,7 @@ def find_columns_not_in_input_dfs(
     does not apply any cleaning to the input column(s).
     """
     # the key to use when producing our warning logs
-    if type(columns_to_check) == str:
+    if isinstance(columns_to_check, str):
         columns_to_check = {columns_to_check}
 
     return {col for col in columns_to_check if col not in valid_input_dataframe_columns}

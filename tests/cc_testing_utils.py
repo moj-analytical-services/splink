@@ -54,7 +54,6 @@ def register_cc_df(G):
 
 
 def run_cc_implementation(linker, predict_df):
-
     pipeline = CTEPipeline()
     concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 

@@ -268,7 +268,7 @@ def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]
         "f2": "F2",
         "f0_5": "F0.5",
         "p4": "P4",
-        "phi": "\u03C6 (MCC)",
+        "phi": "\u03c6 (MCC)",
     }
     chart["transform"][2]["calculate"] = chart["transform"][2]["calculate"].replace(
         "__mapping__", str(mapping)
@@ -313,7 +313,7 @@ def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
         "f2": "F2",
         "f0_5": "F0.5",
         "p4": "P4",
-        "phi": "\u03C6 (MCC)",
+        "phi": "\u03c6 (MCC)",
     }
     chart["hconcat"][1]["transform"][2]["calculate"] = chart["hconcat"][1]["transform"][
         2
@@ -380,32 +380,32 @@ def unlinkables_chart(
     unlinkables_chart_def["data"]["values"] = records
 
     if x_col == "match_probability":
-        unlinkables_chart_def["layer"][0]["encoding"]["x"][
-            "field"
-        ] = "match_probability"
-        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"][
-            "title"
-        ] = "Threshold match probability"
+        unlinkables_chart_def["layer"][0]["encoding"]["x"]["field"] = (
+            "match_probability"
+        )
+        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"]["title"] = (
+            "Threshold match probability"
+        )
         unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"]["format"] = ".2"
 
-        unlinkables_chart_def["layer"][1]["encoding"]["x"][
-            "field"
-        ] = "match_probability"
+        unlinkables_chart_def["layer"][1]["encoding"]["x"]["field"] = (
+            "match_probability"
+        )
         unlinkables_chart_def["layer"][1]["selection"]["selector112"]["fields"] = [
             "match_probability",
             "cum_prop",
         ]
 
-        unlinkables_chart_def["layer"][2]["encoding"]["x"][
-            "field"
-        ] = "match_probability"
-        unlinkables_chart_def["layer"][2]["encoding"]["x"]["axis"][
-            "title"
-        ] = "Threshold match probability"
+        unlinkables_chart_def["layer"][2]["encoding"]["x"]["field"] = (
+            "match_probability"
+        )
+        unlinkables_chart_def["layer"][2]["encoding"]["x"]["axis"]["title"] = (
+            "Threshold match probability"
+        )
 
-        unlinkables_chart_def["layer"][3]["encoding"]["x"][
-            "field"
-        ] = "match_probability"
+        unlinkables_chart_def["layer"][3]["encoding"]["x"]["field"] = (
+            "match_probability"
+        )
 
     if source_dataset:
         unlinkables_chart_def["title"]["text"] += f" - {source_dataset}"

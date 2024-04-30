@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def m_u_records_to_lookup_dict(
-    m_u_records: List[Dict[str, Any]]
+    m_u_records: List[Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
     lookup: Dict[str, Dict[str, Any]] = {}
     for m_u_record in m_u_records:

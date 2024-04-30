@@ -80,4 +80,4 @@ def test_exact_match_colnames_for_non_exact_matchy_levels(sql_condition, dialect
     # _exact_match_colnames should have an error if it is
     # not actually an exact match level
     with raises(ValueError):
-        lev._exact_match_colnames
+        lev._exact_match_colnames  # noqa: B018

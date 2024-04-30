@@ -51,7 +51,7 @@ class ColumnExpression:
 
     @staticmethod
     def instantiate_if_str(
-        str_or_column_expression: Union[str, "ColumnExpression"]
+        str_or_column_expression: Union[str, "ColumnExpression"],
     ) -> "ColumnExpression":
         if isinstance(str_or_column_expression, ColumnExpression):
             return str_or_column_expression

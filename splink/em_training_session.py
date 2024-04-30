@@ -115,9 +115,9 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc.output_column_name for cc in comparisons_to_deactivate
         ]
-        self._comparisons_that_cannot_be_estimated: list[
-            Comparison
-        ] = comparisons_to_deactivate
+        self._comparisons_that_cannot_be_estimated: list[Comparison] = (
+            comparisons_to_deactivate
+        )
 
         filtered_ccs = [
             cc
@@ -339,9 +339,9 @@ class EMTrainingSession:
             for r in records:
                 r["iteration"] = iteration
                 # TODO: why lambda from current settings, not history?
-                r[
-                    "probability_two_random_records_match"
-                ] = self.core_model_settings.probability_two_random_records_match
+                r["probability_two_random_records_match"] = (
+                    self.core_model_settings.probability_two_random_records_match
+                )
 
             output_records.extend(records)
         return output_records

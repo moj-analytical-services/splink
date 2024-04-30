@@ -55,9 +55,9 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
     )
     sub = sub.format(**percentile_data[0])
     inner_spec["hconcat"][0]["data"]["values"] = percentile_data
-    inner_spec["hconcat"][0]["title"][
-        "text"
-    ] = f"Distribution of counts of values in column {col_name}"
+    inner_spec["hconcat"][0]["title"]["text"] = (
+        f"Distribution of counts of values in column {col_name}"
+    )
 
     inner_spec["hconcat"][0]["title"]["subtitle"] = sub
 
@@ -65,9 +65,9 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
     inner_spec["hconcat"][1]["title"] = f"Top {len(top_n_data)} values by value count"
 
     inner_spec["hconcat"][2]["data"]["values"] = bottom_n_data
-    inner_spec["hconcat"][2][
-        "title"
-    ] = f"Bottom {len(bottom_n_data)} values by value count"
+    inner_spec["hconcat"][2]["title"] = (
+        f"Bottom {len(bottom_n_data)} values by value count"
+    )
 
     max_val = top_n_data[0]["value_count"]
     inner_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}

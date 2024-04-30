@@ -19,7 +19,6 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""
     if sds_col := linker._settings_obj.column_info_settings.source_dataset_column_name:
-
         if sds_col not in cols:
             sds_sel_sql = f", 'new_record' as {sds_col}"
 

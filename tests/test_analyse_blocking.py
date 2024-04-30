@@ -190,9 +190,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "l.surname = r.surname",  # 2l:2r,
         Or(
             block_on("first_name"), CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)")
-        ).get_blocking_rule(
-            dialect
-        ),  # 1r:1r, 1l:2l, 1l:2r
+        ).get_blocking_rule(dialect),  # 1r:1r, 1l:2l, 1l:2r
         "l.surname = r.surname",
     ]
 
@@ -213,9 +211,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         Or(
             block_on("first_name"),
             CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)"),
-        ).get_blocking_rule(
-            dialect
-        ),  # 1l:1r, 1l:2r
+        ).get_blocking_rule(dialect),  # 1l:1r, 1l:2r
         "l.surname = r.surname",
     ]
 

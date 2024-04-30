@@ -202,7 +202,6 @@ def test_parameter_estimate_charts():
 
 
 def test_tf_adjustment_chart():
-
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
