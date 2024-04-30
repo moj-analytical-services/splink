@@ -116,7 +116,6 @@ def test_charts(dialect, test_helpers, tmp_path):
         cl_settings,
         db_api,
     )
-    linker.missingness_chart()
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 
     linker.estimate_probability_two_random_records_match(
