@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 
+from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
 from splink.postgres.database_api import PostgresAPI
 
@@ -33,15 +34,19 @@ def test_full_example_postgres(tmp_path, pg_engine):
         ]
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"surname"',
             'first_name || "surname"',
             "concat(city, first_name)",
-        ]
+        ],
     )
-    linker.missingness_chart()
+
+    completeness_chart(df, db_api=db_api)
+
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -49,8 +54,6 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."surname" = r."surname"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)

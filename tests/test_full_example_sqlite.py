@@ -4,6 +4,7 @@ from math import sqrt
 
 import pandas as pd
 
+from splink.exploratory import profile_columns
 from splink.linker import Linker
 from splink.sqlite.database_api import SQLiteAPI
 
@@ -30,7 +31,8 @@ def test_full_example_sqlite(tmp_path):
         input_table_aliases="fake_data_1",
     )
 
-    linker.profile_columns(["first_name", "surname", "first_name || surname"])
+    profile_columns(df, db_api, ["first_name", "surname", "first_name || surname"])
+
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
