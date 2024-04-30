@@ -88,7 +88,7 @@ def completeness_chart(
     table_or_tables,
     db_api: DatabaseAPISubClass,
     cols: List[str] = None,
-    table_names_for_chart: list[str] = None,
+    table_names_for_chart: List[str] = None,
 ):
     """Generate a summary chart of data completeness (proportion of non-nulls) of
     columns in each of the input table or tables. By default, completeness is assessed
