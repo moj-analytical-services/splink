@@ -23,9 +23,9 @@ def completeness_data(
 
     first_df = next(iter(splink_df_dict.values()))
     if cols is None:
-        cols = first_df.columns
+        cols_as_input_col = first_df.columns
     else:
-        cols = [InputColumn(c) for c in cols]
+        cols_as_input_col = [InputColumn(c) for c in cols]
 
     if len(splink_df_dict) == 1:
         # Make it a string literal, as there is only one source dataset
@@ -34,7 +34,7 @@ def completeness_data(
         source_name = "source_dataset"
 
     sqls = []
-    for col in cols:
+    for col in cols_as_input_col:
         quoted_col = col.name
         unquoted_col = col.unquote().name
 
