@@ -106,6 +106,8 @@ markers = [
     "spark_only",
     "sqlite",
     "sqlite_only",
+    "postgres",
+    "postgres_only",
 ]
 
 [tool.mypy]
