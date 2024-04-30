@@ -656,6 +656,11 @@ class Settings:
 
     @property
     def salting_required(self):
+        # see https://github.com/duckdb/duckdb/discussions/9710
+        # in duckdb to parallelise we need salting
+        if self._sql_dialect == "duckdb":
+            return True
+
         for br in self._blocking_rules_to_generate_predictions:
             if isinstance(br, SaltedBlockingRule):
                 return True

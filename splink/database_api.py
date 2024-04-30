@@ -242,12 +242,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         existing_tables = []
 
         if not input_aliases:
-            # If any of the input_tables are strings, this means they refer
-            # to tables that already exist in the database and an alias is not needed
-            input_aliases = [
-                table if isinstance(table, str) else f"__splink__{ascii_uid(8)}"
-                for table in input_tables
-            ]
+            input_aliases = [f"__splink__{ascii_uid(8)}" for table in input_tables]
 
         for table, alias in zip(input_tables, input_aliases):
             if isinstance(table, str):

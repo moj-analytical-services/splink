@@ -91,7 +91,14 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     linker = Linker(dfs, settings, database_api=db_api)
     pipeline = CTEPipeline()
-    sql = vertically_concatenate_sql(linker)
+
+    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+
+    sql = vertically_concatenate_sql(
+        input_tables=linker._input_tables_dict,
+        salting_required=linker._settings_obj.salting_required,
+        source_dataset_column_name=sds_name,
+    )
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     df_concat = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)

@@ -124,6 +124,8 @@ from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
+
+from .column_expression import ColumnExpression
 from .vertically_concatenate import (
     vertically_concatenate_sql,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -1669,7 +1671,10 @@ class Linker:
         )
 
     def profile_columns(
-        self, column_expressions: str | list[str] | None = None, top_n=10, bottom_n=10
+        self,
+        column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
+        top_n=10,
+        bottom_n=10,
     ):
         """
         Profiles the specified columns of the dataframe initiated with the linker.
@@ -2698,7 +2703,13 @@ class Linker:
 
         pipeline = CTEPipeline()
 
-        sql = vertically_concatenate_sql(self)
+        sds_name = self._settings_obj.column_info_settings.source_dataset_column_name
+
+        sql = vertically_concatenate_sql(
+            input_tables=self._input_tables_dict,
+            salting_required=self._settings_obj.salting_required,
+            source_dataset_column_name=sds_name,
+        )
         pipeline.enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
