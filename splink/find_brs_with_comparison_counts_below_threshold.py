@@ -74,7 +74,6 @@ def _generate_blocking_rule(
     if len(cols_as_string) == 0:
         br: BlockingRuleCreator = CustomRule("1=1", linker._sql_dialect)
     else:
-
         br = block_on(*cols_as_string)
 
     return br.get_blocking_rule(linker._sql_dialect)

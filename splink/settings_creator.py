@@ -113,11 +113,9 @@ class SettingsCreator:
     def from_path_or_dict(
         cls, path_or_dict: Union[Path, str, dict[str, Any]]
     ) -> SettingsCreator:
-
         if isinstance(path_or_dict, (str, Path)):
             settings_path = Path(path_or_dict)
             if settings_path.is_file():
-
                 settings_dict = json.loads(settings_path.read_text())
 
                 # TODO: remove this once we have sorted spec

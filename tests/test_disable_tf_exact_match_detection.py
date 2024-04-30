@@ -6,7 +6,6 @@ from splink import DuckDBAPI, Linker, SettingsCreator
 
 
 def test_disable_tf_exact_match_detection():
-
     comparison_normal_dict = {
         "output_column_name": "my_col",
         "comparison_levels": [
@@ -102,13 +101,11 @@ def test_disable_tf_exact_match_detection():
 
 
 def test_with_predict_calculation():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     df = df[df["unique_id"].isin([835, 836, 147, 975])]
 
     def get_settings(disable_tf_exact_match_detection, tf_minimum_u_value=None):
-
         comparison_level = {
             "sql_condition": 'levenshtein("surname_l", "surname_r") <= 1',
             "label_for_charts": "Levenshtein <= 1",
@@ -239,7 +236,6 @@ def test_with_predict_calculation():
     # This ensures we're checking that serialisation and deserialisation
     # works on the disable_tf_exact_match_detection and tf_minimum_u_value settings
     for linker in linkers:
-
         tf_lookup = [
             {"surname": "Taylor", "tf_surname": 0.001},
             {"surname": "Kirk", "tf_surname": 0.2},

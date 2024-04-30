@@ -542,9 +542,7 @@ class Linker:
             ),
         )
         for em_training_session in self._em_training_sessions:
-            training_lambda = (
-                em_training_session.core_model_settings.probability_two_random_records_match
-            )
+            training_lambda = em_training_session.core_model_settings.probability_two_random_records_match
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_level_infos = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
@@ -1531,9 +1529,9 @@ class Linker:
 
         df_node_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -1568,9 +1566,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -1608,9 +1606,9 @@ class Linker:
         pipeline.enqueue_list_of_sqls(sqls)
 
         df_cluster_metrics = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     def compute_graph_metrics(
@@ -1995,10 +1993,10 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
-                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03b2=1 (balanced), \u03b2=2
+                (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
@@ -2081,10 +2079,10 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
-                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03b2=1 (balanced), \u03b2=2
+                (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
             linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
@@ -2289,10 +2287,10 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
-                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03b2=1 (balanced), \u03b2=2
+                (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
             linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
@@ -2349,10 +2347,10 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
-                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03b2=1 (balanced), \u03b2=2
+                (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
             linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])

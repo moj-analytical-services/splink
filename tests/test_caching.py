@@ -140,7 +140,6 @@ def test_invalidate_cache(debug_mode):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-
         pipeline = CTEPipeline()
         compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_called()

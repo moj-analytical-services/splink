@@ -77,9 +77,9 @@ blocking_rule_test_cases = {
     'dmetaphone(c."surname", r."surname")': [
         InvalidTableNamesLogGenerator({"c.surname"})
     ],
-    block_on("left", "right")
-    .get_blocking_rule("duckdb")
-    .blocking_rule_sql: [MissingColumnsLogGenerator({"left", "right"})],
+    block_on("left", "right").get_blocking_rule("duckdb").blocking_rule_sql: [
+        MissingColumnsLogGenerator({"left", "right"})
+    ],
 }
 
 

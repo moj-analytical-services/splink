@@ -9,7 +9,7 @@ from .dialects import SplinkDialect
 
 
 def _ensure_is_comparison_level_creator(
-    cl: Union[ComparisonLevelCreator, dict[str, Any]]
+    cl: Union[ComparisonLevelCreator, dict[str, Any]],
 ) -> ComparisonLevelCreator:
     if isinstance(cl, dict):
         from .comparison_level_library import CustomLevel

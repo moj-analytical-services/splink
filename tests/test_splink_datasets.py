@@ -14,6 +14,6 @@ def test_datasets_basic_link(test_helpers):
             "link_type": "dedupe_only",
             "comparisons": [cl.ExactMatch("first_name"), cl.ExactMatch("surname")],
         },
-        **helper.extra_linker_args()
+        **helper.extra_linker_args(),
     )
     linker.predict()
