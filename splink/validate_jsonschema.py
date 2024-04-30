@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import operator
 from functools import lru_cache, reduce
+from typing import Any
 
 from jsonschema import Draft7Validator
 
@@ -44,7 +47,7 @@ def get_comparison(e, settings_dict):
     return comparison
 
 
-def validate_settings_against_schema(settings_dict: dict):
+def validate_settings_against_schema(settings_dict: dict[str, Any]):
     """Validate a splink settings object against its jsonschema"""
 
     schema = get_schema()

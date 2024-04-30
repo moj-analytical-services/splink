@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 from typing import Dict, List, Union
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> float:
+def calculate_field_freedom_cost(combination_of_brs: List[Dict[str, float]]) -> float:
     """
     We want a higher scores (lower cost) for combinations of blocking rules that allow
     as much variation in each field as possible
@@ -49,13 +51,13 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> float:
 
 
 def calculate_cost_of_combination_of_brs(
-    br_combination: List[Dict],
+    br_combination: List[Dict[str, float]],
     max_comparison_count: int,
     num_equi_join_weight: Union[int, float] = 1,
     field_freedom_weight: Union[int, float] = 1,
     num_brs_weight: Union[int, float] = 1,
     num_comparison_weight: Union[int, float] = 1,
-) -> dict:
+) -> dict[str, float]:
     """
     Calculates the cost for a given combination of blocking rules.
 

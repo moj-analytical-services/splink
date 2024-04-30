@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import partial
 from typing import List, NamedTuple, Tuple
 
@@ -21,7 +23,7 @@ class InvalidColumnsLogGenerator(NamedTuple):
     """
 
     invalid_type: str
-    invalid_columns: set
+    invalid_columns: set[str]
 
     @property
     def log_string_prefix(self):

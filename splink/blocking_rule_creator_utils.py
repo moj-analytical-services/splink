@@ -1,4 +1,6 @@
-from typing import List, Union
+from __future__ import annotations
+
+from typing import Any, List, Union
 
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule
@@ -6,7 +8,7 @@ from .misc import ensure_is_iterable
 
 
 def to_blocking_rule_creator(
-    blocking_rule_creator: Union[dict, str, BlockingRuleCreator]
+    blocking_rule_creator: Union[dict[str, Any], str, BlockingRuleCreator]
 ):
     if isinstance(blocking_rule_creator, dict):
         return CustomRule(**blocking_rule_creator)

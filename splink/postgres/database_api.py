@@ -1,9 +1,9 @@
 import logging
-from typing import List, Union
+from typing import Any, List, Union
 
 import duckdb
 import pandas as pd
-from sqlalchemy import text
+from sqlalchemy import CursorResult, text
 from sqlalchemy.engine import Engine
 
 from ..database_api import DatabaseAPI
@@ -18,7 +18,7 @@ from .dataframe import PostgresDataFrame
 logger = logging.getLogger(__name__)
 
 
-class PostgresAPI(DatabaseAPI):
+class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
     sql_dialect = PostgresDialect()
 
     def __init__(
@@ -91,7 +91,7 @@ class PostgresAPI(DatabaseAPI):
 
     def _execute_sql_against_backend(
         self, final_sql: str, templated_name: str = None, physical_name: str = None
-    ):
+    ) -> CursorResult[Any]:
         with self._engine.begin() as con:
             res = con.execute(text(final_sql))
         return res

@@ -1,4 +1,6 @@
-from typing import List, Optional
+from __future__ import annotations
+
+from collections.abc import Sequence
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -46,7 +48,7 @@ def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
 
 def parse_columns_in_sql(
     sql: str, sql_dialect: str, remove_quotes=True
-) -> Optional[List[sqlglot.Expression]]:
+) -> Sequence[exp.Column]:
     """Extract all columns found within a SQL expression.
 
     Args:
@@ -61,7 +63,7 @@ def parse_columns_in_sql(
         syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
     except Exception:  # Consider catching a more specific exception if possible
         # If we can't parse a SQL condition, it's better to just pass.
-        return None
+        return []
 
     return [
         # Remove quotes if requested by the user

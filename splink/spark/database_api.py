@@ -23,7 +23,7 @@ from .jar_location import get_scala_udfs
 logger = logging.getLogger(__name__)
 
 
-class SparkAPI(DatabaseAPI):
+class SparkAPI(DatabaseAPI[spark_df]):
     sql_dialect = SparkDialect()
 
     def __init__(

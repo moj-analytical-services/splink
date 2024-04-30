@@ -6,7 +6,7 @@ import os
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List
 
 from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
 from .vertically_concatenate import (
@@ -70,7 +70,7 @@ from .connected_components import (
 )
 from .edge_metrics import compute_edge_metrics
 
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
@@ -124,6 +124,8 @@ from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
+
+from .column_expression import ColumnExpression
 from .vertically_concatenate import (
     vertically_concatenate_sql,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -145,11 +147,11 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: str | list,
-        settings: SettingsCreator | dict | Path | str,
-        database_api: DatabaseAPI,
+        input_table_or_tables: str | list[str],
+        settings: SettingsCreator | dict[str, Any] | Path | str,
+        database_api: DatabaseAPISubClass,
         set_up_basic_logging: bool = True,
-        input_table_aliases: str | list | None = None,
+        input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,
     ):
         """
@@ -233,11 +235,9 @@ class Linker:
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
-        input_tables = ensure_is_list(input_table_or_tables)
-        input_tables = self.db_api.process_input_tables(input_tables)
 
         self._input_tables_dict = self._register_input_tables(
-            input_tables,
+            input_table_or_tables,
             input_table_aliases,
         )
 
@@ -1272,7 +1272,7 @@ class Linker:
 
         return predictions
 
-    def compare_two_records(self, record_1: dict, record_2: dict):
+    def compare_two_records(self, record_1: dict[str, Any], record_2: dict[str, Any]):
         """Use the linkage model to compare and score a pairwise record comparison
         based on the two input records provided
 
@@ -1671,7 +1671,10 @@ class Linker:
         )
 
     def profile_columns(
-        self, column_expressions: str | list[str] | None = None, top_n=10, bottom_n=10
+        self,
+        column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
+        top_n=10,
+        bottom_n=10,
     ):
         """
         Profiles the specified columns of the dataframe initiated with the linker.
@@ -1956,7 +1959,7 @@ class Linker:
         labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy measure chart from labelled (ground truth) data.
 
@@ -2042,7 +2045,7 @@ class Linker:
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from labelled (ground truth) data.
 
@@ -2269,7 +2272,7 @@ class Linker:
         labels_column_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2329,7 +2332,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        add_metrics: list = [],
+        add_metrics: list[str] = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2437,7 +2440,10 @@ class Linker:
         return match_weights_histogram(recs, width=width, height=height)
 
     def waterfall_chart(
-        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+        self,
+        records: list[dict[str, Any]],
+        filter_nulls=True,
+        remove_sensitive_data=False,
     ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
@@ -2702,7 +2708,13 @@ class Linker:
 
         pipeline = CTEPipeline()
 
-        sql = vertically_concatenate_sql(self)
+        sds_name = self._settings_obj.column_info_settings.source_dataset_column_name
+
+        sql = vertically_concatenate_sql(
+            input_tables=self._input_tables_dict,
+            salting_required=self._settings_obj.salting_required,
+            source_dataset_column_name=sds_name,
+        )
         pipeline.enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
@@ -2715,7 +2727,7 @@ class Linker:
 
     def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         self,
-        blocking_rule: BlockingRuleCreator | str | dict,
+        blocking_rule: BlockingRuleCreator | str | dict[str, Any],
     ) -> int:
         """Compute the number of pairwise record comparisons that would be generated by
         a blocking rule, prior to any filters (non equi-join conditions) being applied
@@ -2903,7 +2915,7 @@ class Linker:
         output_column_name: str,
         n_most_freq: int = 10,
         n_least_freq: int = 10,
-        vals_to_include: str | list | None = None,
+        vals_to_include: str | list[str] | None = None,
         as_dict: bool = False,
     ):
         """Display a chart showing the impact of term frequency adjustments on a
@@ -2982,8 +2994,8 @@ class Linker:
         out_path: str,
         sampling_method="random",
         sample_size: int = 10,
-        cluster_ids: list = None,
-        cluster_names: list = None,
+        cluster_ids: list[str] = None,
+        cluster_names: list[str] = None,
         overwrite: bool = False,
         return_html_as_string=False,
         _df_cluster_metrics: SplinkDataFrame = None,
@@ -3045,7 +3057,7 @@ class Linker:
 
     def save_model_to_json(
         self, out_path: str | None = None, overwrite: bool = False
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
         The model can later be loaded back in using `linker.load_model()`.

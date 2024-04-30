@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .input_column import InputColumn
 
@@ -25,8 +25,8 @@ class SplinkDataFrame(ABC):
         self,
         templated_name: str,
         physical_name: str,
-        database_api: DatabaseAPI,
-        metadata: dict = None,
+        database_api: DatabaseAPI[Any],
+        metadata: dict[str, Any] = None,
     ):
         self.templated_name = templated_name
         self.physical_name = physical_name

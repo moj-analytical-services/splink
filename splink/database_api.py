@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import hashlib
 import logging
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, Optional, TypeVar, Union, final
+from collections.abc import Sequence
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, final
 
 import sqlglot
+from pandas import DataFrame as PandasDataFrame
 
 from .cache_dict_with_logging import CacheDictWithLogging
 from .dialects import (
@@ -13,19 +17,21 @@ from .dialects import (
 )
 from .exceptions import SplinkException
 from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import (
-    ascii_uid,
-    parse_duration,
-)
+from .misc import ascii_uid, ensure_is_list, parse_duration
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
-
+# minimal acceptable table types
+AcceptableInputTableType = Union[
+    str, PandasDataFrame, List[Dict[str, Any]], Dict[str, Any]
+]
 # a placeholder type. This will depend on the backend subclass - something
 # 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
 TablishType = TypeVar("TablishType")
+# general typevar
+T = TypeVar("T")
 
 
 class DatabaseAPI(ABC, Generic[TablishType]):
@@ -191,7 +197,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
 
         if not self.debug_mode:
-
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
@@ -227,21 +232,17 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     @final
     def register_multiple_tables(
         self,
-        input_tables,
+        input_tables: Sequence[AcceptableInputTableType],
         input_aliases: Optional[List[str]] = None,
         overwrite: bool = False,
     ) -> Dict[str, SplinkDataFrame]:
+        input_tables = self.process_input_tables(input_tables)
 
         tables_as_splink_dataframes = {}
         existing_tables = []
 
         if not input_aliases:
-            # If any of the input_tables are strings, this means they refer
-            # to tables that already exist in the database and an alias is not needed
-            input_aliases = [
-                table if isinstance(table, str) else f"__splink__{ascii_uid(8)}"
-                for table in input_tables
-            ]
+            input_aliases = [f"__splink__{ascii_uid(8)}" for table in input_tables]
 
         for table, alias in zip(input_tables, input_aliases):
             if isinstance(table, str):
@@ -271,9 +272,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return tables_as_splink_dataframes
 
     @final
-    def register_table(self, input, table_name, overwrite=False) -> SplinkDataFrame:
+    def register_table(
+        self, input_table, table_name, overwrite=False
+    ) -> SplinkDataFrame:
+
         tables_dict = self.register_multiple_tables(
-            [input], [table_name], overwrite=overwrite
+            [input_table], [table_name], overwrite=overwrite
         )
         return tables_dict[table_name]
 
@@ -285,7 +289,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return sql
 
     def _cleanup_for_execute_sql(
-        self, table, templated_name: str, physical_name: str
+        self, table: TablishType, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         # sensible default:
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
@@ -322,12 +326,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
         pass
 
-    def process_input_tables(self, input_tables) -> List:
+    def process_input_tables(
+        self, input_tables: Sequence[AcceptableInputTableType]
+    ) -> Sequence[AcceptableInputTableType]:
         """
         Process list of input tables from whatever form they arrive in to that suitable
         for linker.
         Default just passes through - backends can specialise if desired
         """
+        input_tables = ensure_is_list(input_tables)
         return input_tables
 
     # should probably also be responsible for cache
@@ -346,3 +353,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         for splink_df in list(self._intermediate_table_cache.values()):
             if splink_df.created_by_splink:
                 splink_df.drop_table_from_database_and_remove_from_cache()
+
+
+DatabaseAPISubClass = DatabaseAPI[Any]

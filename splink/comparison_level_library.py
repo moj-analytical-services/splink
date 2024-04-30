@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import List, Literal, Union
+from functools import wraps
+from typing import Callable, List, Literal, TypeVar, Union
 
 from sqlglot import TokenError, parse_one
 
@@ -12,16 +13,23 @@ from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
 
+# type aliases:
+T = TypeVar("T", bound=ComparisonLevelCreator)
+CreateSQLFunctionType = Callable[[T, SplinkDialect], str]
 
-def unsupported_splink_dialects(unsupported_dialects: List[str]):
-    def decorator(func):
-        def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
+
+def unsupported_splink_dialects(
+    unsupported_dialects: List[str],
+) -> Callable[[CreateSQLFunctionType[T]], CreateSQLFunctionType[T]]:
+    def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
+        @wraps(func)
+        def wrapper(self, splink_dialect: SplinkDialect) -> str:
             if splink_dialect.name in unsupported_dialects:
                 raise ValueError(
                     f"Dialect {splink_dialect.name} is not supported "
                     f"for {self.__class__.__name__}"
                 )
-            return func(self, splink_dialect, *args, **kwargs)
+            return func(self, splink_dialect)
 
         return wrapper
 

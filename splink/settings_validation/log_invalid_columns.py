@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, List
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Protocol
 
 import sqlglot
 import sqlglot.expressions
@@ -29,8 +30,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class Validator(Protocol):
+    def __call__(
+        self, columns_to_check: Sequence[sqlglot.expressions.Column]
+    ) -> InvalidColumnsLogGenerator:
+        ...
+
+
 def validate_table_names(
-    columns_to_check: list[sqlglot.expressions.Column],
+    columns_to_check: Sequence[sqlglot.expressions.Column],
 ) -> InvalidColumnsLogGenerator:
     """Validate a series of table names assigned to columns extracted from
     SQL statements. We expect all columns to be assigned either a `l` or
@@ -42,7 +50,7 @@ def validate_table_names(
 
 
 def validate_column_suffixes(
-    columns_to_check: list[sqlglot.Expression],
+    columns_to_check: Sequence[sqlglot.expressions.Column],
 ) -> InvalidColumnsLogGenerator:
     """Validate a series of column suffixes. We expect columns to be suffixed
     with either `_l` or `_r`. Where this is missing, flag it as an error.
@@ -56,8 +64,8 @@ def validate_column_suffixes(
 
 def check_for_missing_settings_column(
     settings_id: str,
-    settings_column_to_check: set,
-    valid_input_dataframe_columns: list,
+    settings_column_to_check: set[str],
+    valid_input_dataframe_columns: list[str],
 ):
     """Validate simple settings columns with strings as input.
     i.e. Anything that doesn't require SQL to be parsed.
@@ -75,8 +83,8 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
     sql_dialect: str,
     sql_strings: list[str],
     valid_input_dataframe_columns: list[str],
-    additional_validation_checks: List[Callable] = [],
-) -> dict:
+    additional_validation_checks: list[Validator] = [],
+) -> dict[str, list[InvalidColumnsLogGenerator]]:
     """Evaluate whether the column(s) supplied in a series of SQL strings
     exist in our raw data.
 
@@ -142,7 +150,7 @@ def check_comparison_for_missing_or_invalid_sql_strings(
     sql_dialect: str,
     comparisons_to_check: list[Comparison],
     valid_input_dataframe_columns: list[str],
-) -> list:
+) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
     """Split apart the comparison levels found within a comparison
     and review the SQL contained within.
 

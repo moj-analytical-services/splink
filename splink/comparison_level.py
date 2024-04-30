@@ -163,8 +163,8 @@ class ComparisonLevel:
         self._max_level: Optional[bool] = None
 
         # Enable the level to 'know' when it's been trained
-        self._trained_m_probabilities: list = []
-        self._trained_u_probabilities: list = []
+        self._trained_m_probabilities: list[dict[str, Any]] = []
+        self._trained_u_probabilities: list[dict[str, Any]] = []
         # controls warnings from model training - ensures we only send once
         self._m_warning_sent = False
         self._u_warning_sent = False

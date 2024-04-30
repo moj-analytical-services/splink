@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Sequence
 from copy import deepcopy
 from functools import reduce
 from operator import and_
@@ -10,6 +11,7 @@ from typing import TYPE_CHECKING, List
 import sqlglot
 
 from ..input_column import InputColumn
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ def remove_suffix(c):
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list, columns_to_check: set[str] | str
+    valid_input_dataframe_columns: list[str], columns_to_check: set[str] | str
 ) -> set[str]:
     """Identify missing columns in the input dataframe(s). This function
     does not apply any cleaning to the input column(s).
@@ -35,8 +37,8 @@ def find_columns_not_in_input_dfs(
 
 
 def clean_and_find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list,
-    sqlglot_tree_columns_to_check: list[sqlglot.Expression],
+    valid_input_dataframe_columns: list[str],
+    sqlglot_tree_columns_to_check: Sequence[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
     """Clean a list of sqlglot column names to remove the prefix (l.)
@@ -81,7 +83,9 @@ def clean_list_of_column_names(col_list: List[InputColumn]):
     return set((c.unquote().name for c in col_list))
 
 
-def clean_user_input_columns(input_columns: dict, return_as_single_column: bool = True):
+def clean_user_input_columns(
+    input_columns: dict[str, SplinkDataFrame], return_as_single_column: bool = True
+):
     """A dictionary containing all input dataframes and the columns located
     within.
 
@@ -106,7 +110,9 @@ class SettingsColumnCleaner:
     cleaned up settings columns and SQL strings.
     """
 
-    def __init__(self, settings_object: Settings, input_columns: dict):
+    def __init__(
+        self, settings_object: Settings, input_columns: dict[str, SplinkDataFrame]
+    ):
         self.sql_dialect = settings_object._sql_dialect
         self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(

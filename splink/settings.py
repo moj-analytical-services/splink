@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import List, Literal, TypedDict
+from typing import Any, List, Literal, TypedDict
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -60,14 +60,14 @@ class ColumnInfoSettings:
 
         return cols
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         full_dict = self._as_full_dict()
         full_dict["source_dataset_column_name"] = self._source_dataset_column_name
         del full_dict["_source_dataset_column_name"]
         del full_dict["_source_dataset_column_name_is_required"]
         return full_dict
 
-    def _as_full_dict(self) -> dict:
+    def _as_full_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -76,7 +76,7 @@ class TrainingSettings:
     em_convergence: float
     max_iterations: int
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, float]:
         naive_dict = asdict(self)
         return naive_dict
 
@@ -536,7 +536,7 @@ class Settings:
             output.extend(records)
         return output
 
-    def _simple_dict_entries(self) -> dict:
+    def _simple_dict_entries(self) -> dict[str, Any]:
         return {
             "link_type": self._link_type,
             "probability_two_random_records_match": (
@@ -656,6 +656,11 @@ class Settings:
 
     @property
     def salting_required(self):
+        # see https://github.com/duckdb/duckdb/discussions/9710
+        # in duckdb to parallelise we need salting
+        if self._sql_dialect == "duckdb":
+            return True
+
         for br in self._blocking_rules_to_generate_predictions:
             if isinstance(br, SaltedBlockingRule):
                 return True

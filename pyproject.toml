@@ -128,6 +128,5 @@ strict_equality = true
 strict_concatenate = true
 check_untyped_defs = true
 disallow_subclassing_any = true
-# next set to enforce:
-# disallow_untyped_decorators = true
-# disallow_any_generics = true
+disallow_untyped_decorators = true
+disallow_any_generics = true

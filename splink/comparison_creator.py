@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union, final
+from typing import Any, Dict, List, Optional, Union, final
 
 from .column_expression import ColumnExpression
 from .comparison import Comparison
@@ -126,7 +128,7 @@ class ComparisonCreator(ABC):
         )
 
     @final
-    def create_comparison_dict(self, sql_dialect_str: str) -> dict:
+    def create_comparison_dict(self, sql_dialect_str: str) -> dict[str, Any]:
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
