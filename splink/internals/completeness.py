@@ -21,17 +21,24 @@ def completeness_data(
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
+    # In the case of a single input dataframe, a source_dataset column
+    # will not have been created, create one
     first_df = next(iter(splink_df_dict.values()))
+    if len(splink_df_dict) == 1:
+        sql = f"""
+        select '{first_df.physical_name}' as source_dataset, *
+        from __splink__df_concat
+        """
+
+    else:
+        sql = "select * from __splink__df_concat"
+
+    pipeline.enqueue_sql(sql, "__splink__df_concat_with_source_dataset")
+
     if cols is None:
         cols_as_input_col = first_df.columns
     else:
         cols_as_input_col = [InputColumn(c) for c in cols]
-
-    if len(splink_df_dict) == 1:
-        # Make it a string literal, as there is only one source dataset
-        source_name = f"'{first_df.physical_name}'"
-    else:
-        source_name = "source_dataset"
 
     sqls = []
     for col in cols_as_input_col:
@@ -40,13 +47,13 @@ def completeness_data(
 
         sql = f"""
         (select
-            {source_name} as source_dataset,
+            source_dataset,
             '{unquoted_col}' as column_name,
             count(*) - count({quoted_col}) as total_null_rows,
             count(*) as total_rows_inc_nulls,
             cast(count({quoted_col})*1.0/count(*) as float) as completeness
-        from __splink__df_concat
-        group by {source_name}
+        from __splink__df_concat_with_source_dataset
+        group by source_dataset
         order by count(*) desc)
         """
         sqls.append(sql)
@@ -60,11 +67,11 @@ def completeness_data(
         table_names_for_chart = [
             f"input_data_{i+1}" for i in range(len(splink_df_dict))
         ]
-
+    physical_names = [df.physical_name for df in splink_df_dict.values()]
     whens = " ".join(
         [
             f"WHEN source_dataset = '{table}' THEN '{name}'"
-            for table, name in zip(splink_df_dict.keys(), table_names_for_chart)
+            for table, name in zip(physical_names, table_names_for_chart)
         ]
     )
     case_when = f"CASE {whens} END"
