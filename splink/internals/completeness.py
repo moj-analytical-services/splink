@@ -8,7 +8,10 @@ from ..vertically_concatenate import vertically_concatenate_sql
 
 
 def completeness_data(
-    splink_df_dict, db_api: DatabaseAPISubClass, cols: List[str] = None
+    splink_df_dict,
+    db_api: DatabaseAPISubClass,
+    cols: List[str] = None,
+    table_names_for_chart: List[str] = None,
 ):
     pipeline = CTEPipeline()
 
@@ -18,14 +21,15 @@ def completeness_data(
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
+    first_df = next(iter(splink_df_dict.values()))
     if cols is None:
-        first_df = next(iter(splink_df_dict.values()))
         cols = first_df.columns
     else:
-        cols = [InputColumn(c).name for c in cols]
+        cols = [InputColumn(c) for c in cols]
 
     if len(splink_df_dict) == 1:
-        source_name = "'input_data'"
+        # Make it a string literal, as there is only one source dataset
+        source_name = f"'{first_df.physical_name}'"
     else:
         source_name = "source_dataset"
 
@@ -42,7 +46,7 @@ def completeness_data(
             count(*) as total_rows_inc_nulls,
             cast(count({quoted_col})*1.0/count(*) as float) as completeness
         from __splink__df_concat
-        group by source_dataset
+        group by {source_name}
         order by count(*) desc)
         """
         sqls.append(sql)
@@ -50,6 +54,31 @@ def completeness_data(
     sql = " union all ".join(sqls)
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_completeness")
+
+    # Replace table names with something user-friendly
+    if table_names_for_chart is None:
+        table_names_for_chart = [
+            f"input_data_{i+1}" for i in range(len(splink_df_dict))
+        ]
+
+    whens = " ".join(
+        [
+            f"WHEN source_dataset = '{table}' THEN '{name}'"
+            for table, name in zip(splink_df_dict.keys(), table_names_for_chart)
+        ]
+    )
+    case_when = f"CASE {whens} END"
+
+    sql = f"""
+    select {case_when} as source_dataset,
+    column_name,
+    total_null_rows,
+    total_rows_inc_nulls,
+    completeness
+    from __splink__df_all_column_completeness
+    """
+
+    pipeline.enqueue_sql(sql, "__splink__df_all_column_completeness_renames")
     df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df.as_record_dict()
@@ -76,12 +105,7 @@ def completeness_chart(
 
         ```
     """
-    if table_names_for_chart is None:
-        table_names_for_chart = [
-            f"input_data_{i+1}" for i in range(len(table_or_tables))
-        ]
-    splink_df_dict = db_api.register_multiple_tables(
-        table_or_tables, input_aliases=table_names_for_chart
-    )
-    records = completeness_data(splink_df_dict, db_api, cols)
+
+    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    records = completeness_data(splink_df_dict, db_api, cols, table_names_for_chart)
     return records_to_completeness_chart(records)

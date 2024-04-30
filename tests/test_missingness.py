@@ -2,34 +2,31 @@ import pandas as pd
 from pytest import raises
 
 from splink.exceptions import SplinkException
+from splink.exploratory import completeness_chart
 from tests.decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-def test_missingness_chart(dialect, test_helpers):
+def test_completeness_chart(dialect, test_helpers):
     helper = test_helpers[dialect]
-
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    linker = helper.Linker(
-        df, {"link_type": "dedupe_only"}, **helper.extra_linker_args()
-    )
-    linker.missingness_chart()
+    completeness_chart(df, db_api)
+    completeness_chart(df, db_api, cols=["first_name", "surname"])
+    completeness_chart(df, db_api, cols=["first_name"], table_names_for_chart=["t1"])
 
 
 @mark_with_dialects_excluding()
-def test_missingness_chart_mismatched_columns(dialect, test_helpers):
+def test_completeness_chart_mismatched_columns(dialect, test_helpers):
     helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     df_l = helper.load_frame_from_csv(
         "./tests/datasets/fake_1000_from_splink_demos.csv"
     )
     df_r = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df_r.rename(columns={"surname": "SURNAME"}, inplace=True)
+    df_r.rename(columns={"surname": "surname_2"}, inplace=True)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.Linker(
-        [df_l, df_r], {"link_type": "link_only"}, **helper.extra_linker_args()
-    )
     with raises(SplinkException):
-        linker.missingness_chart()
+        completeness_chart([df_l, df_r], db_api)

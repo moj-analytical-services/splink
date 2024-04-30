@@ -7,8 +7,8 @@ from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
-from splink.profile_data import profile_columns
 from splink.spark.database_api import SparkAPI
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -62,6 +62,14 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         "max_iterations": 2,
     }
 
+    profile_columns(
+        df_spark,
+        spark_api,
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+    )
+
+    completeness_chart(df_spark, spark_api)
+
     linker = Linker(
         df_spark,
         settings,
@@ -73,11 +81,6 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         ),
     )
 
-    profile_columns(
-        df_spark,
-        spark_api,
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
-    )
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
