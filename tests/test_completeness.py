@@ -6,7 +6,9 @@ from splink.exploratory import completeness_chart
 from tests.decorator import mark_with_dialects_excluding
 
 
-@mark_with_dialects_excluding()
+# The UNION ALL used for this chart gives a
+# "(": syntax error in sqlite
+@mark_with_dialects_excluding("sqlite")
 def test_completeness_chart(dialect, test_helpers):
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -16,7 +18,7 @@ def test_completeness_chart(dialect, test_helpers):
     completeness_chart(df, db_api, cols=["first_name"], table_names_for_chart=["t1"])
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_completeness_chart_mismatched_columns(dialect, test_helpers):
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
