@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import final
+from typing import Any, final
 
 from .blocking import BlockingRule, blocking_rule_to_obj
 from .dialects import SplinkDialect
@@ -24,7 +26,7 @@ class BlockingRuleCreator(ABC):
         pass
 
     @final
-    def create_blocking_rule_dict(self, sql_dialect_str: str) -> dict:
+    def create_blocking_rule_dict(self, sql_dialect_str: str) -> dict[str, Any]:
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         level_dict = {
             "blocking_rule": self.create_sql(sql_dialect),

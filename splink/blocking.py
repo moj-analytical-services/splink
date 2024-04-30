@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Join
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .settings import LinkTypeLiteralType
 
 
-def blocking_rule_to_obj(br: BlockingRule | dict | str) -> BlockingRule:
+def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRule:
     if isinstance(br, BlockingRule):
         return br
     elif isinstance(br, dict):
@@ -280,9 +280,9 @@ class SaltedBlockingRule(BlockingRule):
 class ExplodingBlockingRule(BlockingRule):
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule: BlockingRule | dict[str, Any] | str,
         sqlglot_dialect: str = None,
-        array_columns_to_explode: list = [],
+        array_columns_to_explode: list[str] = [],
     ):
         if isinstance(blocking_rule, BlockingRule):
             blocking_rule_sql = blocking_rule.blocking_rule_sql

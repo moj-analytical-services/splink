@@ -51,7 +51,7 @@ def create_temporary_duckdb_connection(self):
     return con
 
 
-def duckdb_load_from_file(path):
+def duckdb_load_from_file(path: str) -> str:
     file_functions = {
         ".csv": f"read_csv_auto('{path}')",
         ".parquet": f"read_parquet('{path}')",

@@ -84,7 +84,7 @@ def row_examples(linker: Linker, example_rows_per_category=2):
 
 def comparison_viewer_table_sqls(
     linker: Linker, example_rows_per_category=2
-) -> list[dict]:
+) -> list[dict[str, str]]:
     sqls = row_examples(linker, example_rows_per_category)
 
     sql = """
@@ -109,7 +109,7 @@ def comparison_viewer_table_sqls(
 
 def render_splink_comparison_viewer_html(
     comparison_vector_data,
-    splink_settings: dict,
+    splink_settings: dict[str, Any],
     out_path: str,
     overwrite: bool = False,
 ):

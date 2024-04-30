@@ -1,4 +1,6 @@
-from typing import Union, final
+from __future__ import annotations
+
+from typing import Any, Union, final
 
 from sqlglot import TokenError, parse_one
 
@@ -80,7 +82,7 @@ class _Merge(BlockingRuleCreator):
     @final
     def __init__(
         self,
-        *blocking_rules: Union[BlockingRuleCreator, dict],
+        *blocking_rules: Union[BlockingRuleCreator, dict[str, Any]],
         salting_partitions=None,
         arrays_to_explode=None,
     ):

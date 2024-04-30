@@ -40,11 +40,11 @@ class ColumnExpression:
 
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
         self.raw_sql_expression = sql_expression
-        self.operations: list[Callable] = []
+        self.operations: list[Callable[..., str]] = []
         if sql_dialect is not None:
             self.sql_dialect: SplinkDialect = sql_dialect
 
-    def _clone(self):
+    def _clone(self) -> "ColumnExpression":
         clone = copy(self)
         clone.operations = [op for op in self.operations]
         return clone
@@ -58,7 +58,7 @@ class ColumnExpression:
         elif isinstance(str_or_column_expression, str):
             return ColumnExpression(str_or_column_expression)
 
-    def parse_input_string(self, dialect: SplinkDialect):
+    def parse_input_string(self, dialect: SplinkDialect) -> str:
         """
         The input into an ColumnExpression can be
             - a column name or column reference e.g. first_name, first name
@@ -79,7 +79,7 @@ class ColumnExpression:
         ).sql
 
     @property
-    def raw_sql_is_pure_column_or_column_reference(self):
+    def raw_sql_is_pure_column_or_column_reference(self) -> bool:
         # It's difficult (possibly impossible) to find a completely general
         # algorithm that can distinguish between the two cases (col name, or sql
         # expression), since lower(first_name) could technically be a column name
@@ -93,25 +93,25 @@ class ColumnExpression:
         return True
 
     @property
-    def is_pure_column_or_column_reference(self):
+    def is_pure_column_or_column_reference(self) -> bool:
         if len(self.operations) > 0:
             return False
 
         return self.raw_sql_is_pure_column_or_column_reference
 
-    def apply_operations(self, name: str, dialect: SplinkDialect):
+    def apply_operations(self, name: str, dialect: SplinkDialect) -> str:
         for op in self.operations:
             name = op(name=name, dialect=dialect)
         return name
 
-    def _lower_dialected(self, name, dialect):
+    def _lower_dialected(self, name: str, dialect: SplinkDialect) -> str:
         lower_sql = sqlglot.parse_one("lower(___col___)").sql(
             dialect=dialect.sqlglot_name
         )
 
         return lower_sql.replace("___col___", name)
 
-    def lower(self):
+    def lower(self) -> "ColumnExpression":
         """
         Applies a lowercase transofrom to the input expression.
         """
@@ -121,14 +121,14 @@ class ColumnExpression:
 
     def _substr_dialected(
         self, name: str, start: int, end: int, dialect: SplinkDialect
-    ):
+    ) -> str:
         substr_sql = sqlglot.parse_one(f"substring(___col___, {start}, {end})").sql(
             dialect=dialect.sqlglot_name
         )
 
         return substr_sql.replace("___col___", name)
 
-    def substr(self, start: int, length: int):
+    def substr(self, start: int, length: int) -> "ColumnExpression":
         """
         Applies a substring transform to the input expression of a given length
         starting from a specified index.
@@ -142,13 +142,13 @@ class ColumnExpression:
 
         return clone
 
-    def _cast_to_string_dialected(self, name: str, dialect: SplinkDialect):
+    def _cast_to_string_dialected(self, name: str, dialect: SplinkDialect) -> str:
         cast_sql = sqlglot.parse_one("cast(___col___ as string)").sql(
             dialect=dialect.sqlglot_name
         )
         return cast_sql.replace("___col___", name)
 
-    def cast_to_string(self):
+    def cast_to_string(self) -> "ColumnExpression":
         """
         Applies a cast to string transform to the input expression.
         """
@@ -173,7 +173,7 @@ class ColumnExpression:
             capture_group=capture_group,
         )
 
-    def regex_extract(self, pattern: str, capture_group: int = 0):
+    def regex_extract(self, pattern: str, capture_group: int = 0) -> "ColumnExpression":
         """Applies a regex extract transform to the input expression.
 
         Args:
@@ -197,10 +197,10 @@ class ColumnExpression:
         name: str,
         dialect: SplinkDialect,
         date_format: str = None,
-    ):
+    ) -> str:
         return dialect.try_parse_date(name, date_format=date_format)
 
-    def try_parse_date(self, date_format: str = None):
+    def try_parse_date(self, date_format: str = None) -> "ColumnExpression":
         clone = self._clone()
         op = partial(
             clone._try_parse_date_dialected,
@@ -215,10 +215,10 @@ class ColumnExpression:
         name: str,
         dialect: SplinkDialect,
         timestamp_format: str = None,
-    ):
+    ) -> str:
         return dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
 
-    def try_parse_timestamp(self, timestamp_format: str = None):
+    def try_parse_timestamp(self, timestamp_format: str = None) -> "ColumnExpression":
         clone = self._clone()
         op = partial(
             clone._try_parse_timestamp_dialected,

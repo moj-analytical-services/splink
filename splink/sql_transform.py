@@ -1,3 +1,5 @@
+from typing import TypeVar
+
 import sqlglot
 import sqlglot.expressions as exp
 
@@ -96,7 +98,10 @@ def sqlglot_tree_signature(sqlglot_tree):
     return _signature(sqlglot_tree.dump())
 
 
-def remove_quotes_from_identifiers(tree) -> exp.Expression:
+T = TypeVar("T", bound=exp.Expression)
+
+
+def remove_quotes_from_identifiers(tree: T) -> T:
     tree = tree.copy()
     for identifier in tree.find_all(exp.Identifier):
         identifier.args["quoted"] = False

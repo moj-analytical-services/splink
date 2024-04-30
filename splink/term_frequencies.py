@@ -4,7 +4,7 @@ from __future__ import annotations
 # https://github.com/moj-analytical-services/splink/pull/107
 import logging
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
@@ -132,7 +132,7 @@ def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str)
 
 def compute_all_term_frequencies_sqls(
     linker: Linker, pipeline: CTEPipeline
-) -> list[dict]:
+) -> list[dict[str, str]]:
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -167,7 +167,7 @@ def compute_all_term_frequencies_sqls(
     return sqls
 
 
-def comparison_level_to_tf_chart_data(cl: dict) -> dict:
+def comparison_level_to_tf_chart_data(cl: dict[str, Any]) -> dict[str, Any]:
     df = cl["df_tf"]
     df.columns = ["value", "tf"]
     df = df[df.value.notnull()]

@@ -13,7 +13,7 @@ from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
 from .input_column import InputColumn
@@ -44,7 +44,7 @@ class EMTrainingSession:
         self,
         # TODO: remove linker arg once we unpick the two places we use it
         linker: Linker,
-        db_api: DatabaseAPI,
+        db_api: DatabaseAPISubClass,
         blocking_rule_for_training: BlockingRule,
         core_model_settings: CoreModelSettings,
         training_settings: TrainingSettings,
@@ -88,7 +88,7 @@ class EMTrainingSession:
             )
 
         # batch together fixed probabilities rather than keep hold of the bools
-        self.training_fixed_probabilities: set = {
+        self.training_fixed_probabilities: set[str] = {
             probability_type
             for (probability_type, fixed) in [
                 ("m", fix_m_probabilities),

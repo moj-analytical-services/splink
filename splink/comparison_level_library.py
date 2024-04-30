@@ -20,8 +20,8 @@ CreateSQLFunctionType = Callable[[T, SplinkDialect], str]
 
 def unsupported_splink_dialects(
     unsupported_dialects: List[str],
-) -> Callable[[CreateSQLFunctionType], CreateSQLFunctionType]:
-    def decorator(func: CreateSQLFunctionType) -> CreateSQLFunctionType:
+) -> Callable[[CreateSQLFunctionType[T]], CreateSQLFunctionType[T]]:
+    def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
         @wraps(func)
         def wrapper(self, splink_dialect: SplinkDialect) -> str:
             if splink_dialect.name in unsupported_dialects:

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
-from typing import Union
+from typing import Sequence, Union
 
 import duckdb
 import pandas as pd
 
-from ..database_api import DatabaseAPI
+from ..database_api import AcceptableInputTableType, DatabaseAPI
 from ..dialects import (
     DuckDBDialect,
 )
@@ -22,7 +24,7 @@ logger = logging.getLogger(__name__)
 ddb_con = duckdb.DuckDBPyConnection
 
 
-class DuckDBAPI(DatabaseAPI):
+class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     sql_dialect = DuckDBDialect()
 
     def __init__(
@@ -88,7 +90,7 @@ class DuckDBAPI(DatabaseAPI):
             return False
         return True
 
-    def load_from_file(self, file_path: str):
+    def load_from_file(self, file_path: str) -> str:
         return duckdb_load_from_file(file_path)
 
     def _execute_sql_against_backend(self, final_sql: str) -> duckdb.DuckDBPyRelation:
@@ -106,7 +108,9 @@ class DuckDBAPI(DatabaseAPI):
             pass
         return accepted_df_dtypes
 
-    def process_input_tables(self, input_tables):
+    def process_input_tables(
+        self, input_tables: Sequence[AcceptableInputTableType]
+    ) -> Sequence[AcceptableInputTableType]:
         input_tables = super().process_input_tables(input_tables)
         return [
             self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
