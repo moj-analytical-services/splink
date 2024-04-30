@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 from .charts import altair_or_json, load_chart_definition
 from .column_expression import ColumnExpression
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .misc import ensure_is_list
 from .pipeline import CTEPipeline
 from .vertically_concatenate import vertically_concatenate_sql
@@ -200,7 +200,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(
     table_or_tables,
-    db_api: DatabaseAPI,
+    db_api: DatabaseAPISubClass,
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
     top_n=10,
     bottom_n=10,
