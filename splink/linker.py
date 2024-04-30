@@ -123,7 +123,6 @@ from .unique_id_concat import (
 )
 from .unlinkables import unlinkables_data
 
-from .column_expression import ColumnExpression
 from .vertically_concatenate import (
     vertically_concatenate_sql,
     split_df_concat_with_tf_into_two_tables_sqls,
