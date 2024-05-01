@@ -1,4 +1,5 @@
 import logging
+import os
 
 from splink.internals.spark.jar_location import similarity_jar_location
 
@@ -32,37 +33,34 @@ def enable_splink(spark):
     optionClass = getattr(sc._jvm.scala, "Option$")
     optionModule = getattr(optionClass, "MODULE$")
 
-    # Note(bobby): So dirty
+    dbr_version = float(os.environ.get("DATABRICKS_RUNTIME_VERSION"))
+    
     try:
-        # This will fix the exception when running on Databricks Runtime 14.x+
-        lib = JavaJarId(
-            JarURI,
-            ManagedLibraryId.defaultOrganization(),
-            NoVersionModule.simpleString(),
-            optionModule.apply(None),
-            optionModule.apply(None),
-            optionModule.apply(None),
-        )
+        if dbr_version >= 14:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+                optionModule.apply(None),
+                optionModule.apply(None),
+                optionModule.apply(None),
+            )
+        elif dbr_version >= 13:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+                optionModule.apply(None),
+                optionModule.apply(None),
+            )
+        else:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+            )
     except Exception as e:
-        logger.warn("failed to initialize for 14.x+", e)
-        try:
-            # This will fix the exception when running on Databricks Runtime 13.x
-            lib = JavaJarId(
-                JarURI,
-                ManagedLibraryId.defaultOrganization(),
-                NoVersionModule.simpleString(),
-                optionModule.apply(None),
-                optionModule.apply(None),
-            )
-        except Exception as ex:
-            logger.warn("failed to initialize for 13.x", ex)
-
-            # This will work for < 13.x
-            lib = JavaJarId(
-                JarURI,
-                ManagedLibraryId.defaultOrganization(),
-                NoVersionModule.simpleString(),
-            )
+        logger.warn("failed to enable similarity jar functions for Databricks", e)
 
     libSeq = converters.asScalaBufferConverter((lib,)).asScala().toSeq()
 
