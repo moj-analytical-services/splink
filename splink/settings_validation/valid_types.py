@@ -49,7 +49,6 @@ def _check_input_dataframes_for_single_comparison_column(
     source_dataset_column_name: str = None,
     unique_id_column_name: str = None,
 ):
-
     if source_dataset_column_name is None:
         source_dataset_column_name = default_value_from_schema(
             "source_dataset_column_name", "root"
