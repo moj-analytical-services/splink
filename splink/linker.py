@@ -19,8 +19,9 @@ from splink.settings_validation.log_invalid_columns import (
     SettingsColumnCleaner,
 )
 from splink.settings_validation.valid_types import (
+    _check_input_dataframes_for_single_comparison_column,
+    _log_comparison_errors,
     _validate_dialect,
-    log_comparison_errors,
 )
 
 from .accuracy import (
@@ -515,7 +516,7 @@ class Linker:
         # Constructs output logs for our various settings inputs
         cleaned_settings = SettingsColumnCleaner(
             settings_object=self._settings_obj,
-            input_columns=self._input_tables_dict,
+            splink_input_table_dfs=self._input_tables_dict,
         )
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
@@ -1133,8 +1134,13 @@ class Linker:
         settings_dict["sql_dialect"] = sql_dialect
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
 
+        _check_input_dataframes_for_single_comparison_column(
+            self._input_tables_dict,
+            source_dataset_column_name=settings_dict.get("source_dataset_column_name"),
+            unique_id_column_name=settings_dict.get("unique_id_column_name"),
+        )
         # Check the user's comparisons (if they exist)
-        log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
+        _log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
         self._settings_obj_ = Settings(settings_dict)
         # Check the final settings object
         self._validate_settings(validate_settings)
