@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, NamedTuple, Tuple
+from typing import Dict, List, NamedTuple, Tuple
 
 
 def indent_error_message(message):
@@ -200,3 +200,21 @@ def create_incorrect_dialect_import_log_string(
         "for your specified linker.\n"
     )
     return indent_error_message(log_message)
+
+
+def construct_single_dataframe_log_str(input_columns: Dict[str, str]) -> str:
+    if len(input_columns) == 1:
+        df_txt = "dataframe is"
+    else:
+        df_txt = "dataframes are"
+
+    log_message = (
+        f"\nThe provided {df_txt} unsuitable for linkage with Splink as\n"
+        "it contains only a single column for matching.\n"
+        "Splink is not designed for linking based on a single 'bag of words'\n"
+        "column, such as a table with only a 'company name' column and\n"
+        "no other details.\n\nFor more information see: \n"
+        "https://github.com/moj-analytical-services/splink/issues/1362"
+    )
+
+    return log_message
