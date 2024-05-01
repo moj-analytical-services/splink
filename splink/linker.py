@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import time
+from typing import Any, Dict
 import warnings
 from copy import copy, deepcopy
 from pathlib import Path
@@ -498,7 +499,26 @@ class Linker:
         else:
             return True
 
-    def _validate_settings(self, validate_settings):
+    def _validate_settings_dictionary(
+        self, validate_settings: bool, settings_dict: Dict[Any]
+    ):
+        if settings_dict is None:
+            return
+
+        if validate_settings:
+            _check_input_dataframes_for_single_comparison_column(
+                self._input_tables_dict,
+                source_dataset_column_name=settings_dict.get(
+                    "source_dataset_column_name"
+                ),
+                unique_id_column_name=settings_dict.get("unique_id_column_name"),
+            )
+            # Check the user's comparisons (if they exist)
+            _log_comparison_errors(
+                settings_dict.get("comparisons"), settings_dict.get("sql_dialect")
+            )
+
+    def _validate_settings_object(self, validate_settings: bool):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
@@ -1134,16 +1154,10 @@ class Linker:
         settings_dict["sql_dialect"] = sql_dialect
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
 
-        _check_input_dataframes_for_single_comparison_column(
-            self._input_tables_dict,
-            source_dataset_column_name=settings_dict.get("source_dataset_column_name"),
-            unique_id_column_name=settings_dict.get("unique_id_column_name"),
-        )
-        # Check the user's comparisons (if they exist)
-        _log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
+        self._validate_settings_dictionary(validate_settings, settings_dict)
         self._settings_obj_ = Settings(settings_dict)
         # Check the final settings object
-        self._validate_settings(validate_settings)
+        self._validate_settings_object(validate_settings)
 
     def load_model(self, model_path: Path):
         """
@@ -2159,9 +2173,9 @@ class Linker:
 
         df_node_metrics = self._execute_sql_pipeline()
 
-        df_node_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_node_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_node_metrics
 
     def _compute_metrics_edges(
@@ -2196,9 +2210,9 @@ class Linker:
         df_edge_metrics = compute_edge_metrics(
             self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics.metadata[
-            "threshold_match_probability"
-        ] = threshold_match_probability
+        df_edge_metrics.metadata["threshold_match_probability"] = (
+            threshold_match_probability
+        )
         return df_edge_metrics
 
     def _compute_metrics_clusters(
@@ -2238,9 +2252,9 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-        df_cluster_metrics.metadata[
-            "threshold_match_probability"
-        ] = df_node_metrics.metadata["threshold_match_probability"]
+        df_cluster_metrics.metadata["threshold_match_probability"] = (
+            df_node_metrics.metadata["threshold_match_probability"]
+        )
         return df_cluster_metrics
 
     def compute_graph_metrics(
