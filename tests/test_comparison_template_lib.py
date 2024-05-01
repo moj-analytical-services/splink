@@ -1,16 +1,14 @@
 import pandas as pd
 import pytest
 
-from .decorator import mark_with_dialects_excluding
 import splink.duckdb.comparison_template_library as ctld
 import splink.spark.comparison_template_library as ctls
 from splink.duckdb.linker import DuckDBLinker
 from splink.spark.linker import SparkLinker
+from tests.decorator import mark_with_dialects_excluding
 
 
 ## date_comparison
-
-
 @pytest.mark.parametrize(
     ("ctl"),
     [
