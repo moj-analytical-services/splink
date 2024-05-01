@@ -4,8 +4,9 @@ import logging
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from sqlglot import parse_one
-from sqlglot.expressions import Column, Expression, Join
+from sqlglot.expressions import Boolean, Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
+from sqlglot.optimizer.optimizer import optimize
 
 from .exceptions import SplinkException
 from .input_column import InputColumn
@@ -190,6 +191,10 @@ class BlockingRule:
         if not filter_condition:
             return ""
         else:
+            filter_condition = optimize(filter_condition)
+            for i in filter_condition.find_all(Identifier):
+                i.set("quoted", False)
+
             return filter_condition.sql(self.sqlglot_dialect)
 
     def as_dict(self):

@@ -6,37 +6,68 @@ from typing import TYPE_CHECKING, Union
 import pandas as pd
 
 from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sqls
+from .database_api import DatabaseAPISubClass
+from .input_column import InputColumn
 from .misc import calculate_cartesian, calculate_reduction_ratio
 from .pipeline import CTEPipeline
-from .vertically_concatenate import compute_df_concat, enqueue_df_concat
+from .splink_dataframe import SplinkDataFrame
+from .vertically_concatenate import (
+    compute_df_concat,
+    vertically_concatenate_sql,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
 
 
-def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
-    linker: Linker,
-    blocking_rule,
+def number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
+    input_data_dict: dict[str, "SplinkDataFrame"],
+    blocking_rule: Union[str, "BlockingRule"],
+    link_type: str,
+    db_api: DatabaseAPISubClass,
+    unique_id_column_name: str,
 ) -> str:
-    settings_obj = linker._settings_obj
+    input_dataframes = list(input_data_dict.values())
 
-    where_condition = _sql_gen_where_condition(
-        settings_obj._link_type,
-        settings_obj.column_info_settings.unique_id_input_columns,
-    )
+    if len(input_dataframes) > 1:
+        unique_id_cols = [
+            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
+            InputColumn("source_dataset", sql_dialect=db_api.sql_dialect.name),
+        ]
+    else:
+        unique_id_cols = [
+            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
+        ]
+    where_condition = _sql_gen_where_condition(link_type, unique_id_cols)
+
+    sqls = []
+
+    two_dataset_link_only = link_type == "link_only" and len(input_dataframes) == 2
+
+    if two_dataset_link_only:
+        input_tablename_l = input_dataframes[0].physical_name
+        input_tablename_r = input_dataframes[1].physical_name
+    else:
+        sql = vertically_concatenate_sql(
+            input_data_dict, salting_required=False, source_dataset_column_name=None
+        )
+        sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
+
+        input_tablename_l = "__splink__df_concat"
+        input_tablename_r = "__splink__df_concat"
 
     sql = f"""
     select count(*) as count_of_pairwise_comparisons_generated
 
-    from __splink__df_concat as l
-    inner join __splink__df_concat as r
+    from {input_tablename_l} as l
+    inner join {input_tablename_r} as r
     on
-    {blocking_rule}
+    {blocking_rule.blocking_rule_sql}
     {where_condition}
     """
-
-    return sql
+    sqls.append({"sql": sql, "output_table_name": "__splink__comparions_post_filter"})
+    return sqls
 
 
 def cumulative_comparisons_generated_by_blocking_rules(
@@ -167,12 +198,32 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
 
 def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-    linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
+    input_data_dict: dict[str, "SplinkDataFrame"],
+    blocking_rule: Union[str, "BlockingRule"],
+    link_type: str,
+    db_api: DatabaseAPISubClass,
 ):
+    input_dataframes = list(input_data_dict.values())
+
     if isinstance(blocking_rule, str):
-        blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=linker._sql_dialect)
+        blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=db_api.sql_dialect)
 
     join_conditions = blocking_rule._equi_join_conditions
+    two_dataset_link_only = link_type == "link_only" and len(input_dataframes) == 2
+
+    sqls = []
+
+    if two_dataset_link_only:
+        input_tablename_l = input_dataframes[0].physical_name
+        input_tablename_r = input_dataframes[1].physical_name
+    else:
+        sql = vertically_concatenate_sql(
+            input_data_dict, salting_required=False, source_dataset_column_name=None
+        )
+        sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
+
+        input_tablename_l = "__splink__df_concat"
+        input_tablename_r = "__splink__df_concat"
 
     l_cols_sel = []
     r_cols_sel = []
@@ -195,20 +246,8 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     r_cols_gb_str = ", ".join(r_cols_gb)
     using_str = ", ".join(using)
 
-    sqls = []
-
-    if linker._two_dataset_link_only:
-        #    Can just use the raw input datasets
-        keys = list(linker._input_tables_dict.keys())
-        input_tablename_l = linker._input_tables_dict[keys[0]].physical_name
-        input_tablename_r = linker._input_tables_dict[keys[1]].physical_name
-
-    else:
-        input_tablename_l = "__splink__df_concat"
-        input_tablename_r = "__splink__df_concat"
-
     if not join_conditions:
-        if linker._two_dataset_link_only:
+        if two_dataset_link_only:
             sql = f"""
             SELECT
                 (SELECT COUNT(*) FROM {input_tablename_l})
@@ -257,7 +296,7 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     sqls.append({"sql": sql, "output_table_name": "__splink__block_counts"})
 
     sql = """
-    select sum(block_count) as count_of_pairwise_comparisons_generated
+    select cast(sum(block_count) as integer) as count_of_pairwise_comparisons_generated
     from __splink__block_counts
     """
 
@@ -266,17 +305,5 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     return sqls
 
 
-def count_comparisons_from_blocking_rule_pre_filter_conditions(
-    linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
-):
-    pipeline = CTEPipeline()
-    pipeline = enqueue_df_concat(linker, pipeline)
-
-    sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        linker, blocking_rule
-    )
-    pipeline.enqueue_list_of_sqls(sqls)
-
-    df_res = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    res = df_res.as_record_dict()[0]
-    return int(res["count_of_pairwise_comparisons_generated"])
+def count_comparisons_from_blocking_rule_pre_filter_conditions():
+    pass
