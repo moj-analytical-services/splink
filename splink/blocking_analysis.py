@@ -1,6 +1,8 @@
 import logging
 from typing import List, Literal, Union
 
+import sqlglot
+
 from .analyse_blocking import (
     count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
     number_of_comparisons_generated_by_blocking_rule_post_filters_sqls,
@@ -65,16 +67,30 @@ def count_comparisons_generated_from_blocking_rule(
         post_filter_total = None
 
         logger.warning(
-            "WARNING: Computation of number of comparisons pre-filter conditions was "
+            "WARNING:\nComputation of number of comparisons pre-filter conditions was "
             f"skipped because it exceeded post_filter_limit={post_filter_limit:.2e}."
-            "\nIt would be likely to be slow to compute.\nIf you still want to go ahead "
-            "increase the value of post_filter_limit argument to above "
-            f"{pre_filter_total:.3e}.\nRead more about the definitions here:"
+            "\nIt would be likely to be slow to compute.\nIf you still want to go ahead"
+            " increase the value of post_filter_limit argument to above "
+            f"{pre_filter_total:.3e}.\nRead more about the definitions here:\n"
             "https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions"
         )
+
+    def add_l_r(sql, table_name):
+        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_name)
+        for node in tree.find_all(sqlglot.expressions.Column):
+            node.set("table", table_name)
+        return tree.sql(dialect=db_api.sql_dialect.sqlglot_name)
+
+    equi_join_conditions = [
+        add_l_r(i, "l") + " = " + add_l_r(j, "r")
+        for i, j in blocking_rule._equi_join_conditions
+    ]
+
+    equi_join_conditions = " AND ".join(equi_join_conditions)
+
     return {
         "number_of_comparison_pre_filter_conditions": pre_filter_total,
         "number_of_comparison_post_filter_conditions": post_filter_total,
         "filter_conditions_identified": blocking_rule._filter_conditions,
-        "equi_join_conditions_identified": blocking_rule._equi_join_conditions,
+        "equi_join_conditions_identified": equi_join_conditions,
     }
