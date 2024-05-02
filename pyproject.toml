@@ -19,6 +19,15 @@ altair = "^5.0.1"
 Jinja2 = ">=3.0.3"
 phonetics = ">=1.0.5"
 
+# need to manually specify numpy versions suitable for CI
+# 1.24.4 works with python 3.8, but not 3.12
+numpy = [
+    # version is minimum valid with above listed pandas version
+    {version=">=1.17.3", python = "<3.12"},
+    {version=">=1.26.0", python = ">=3.12"},
+]
+
+
 # Optional installs
 pyspark = {version=">=3.2.1", optional=true}
 
