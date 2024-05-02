@@ -2944,7 +2944,9 @@ class Linker:
                 f" have term frequency adjustment activated"
             )
 
-        vals_to_include = ensure_is_list(vals_to_include)
+        vals_to_include = (
+            [] if vals_to_include is None else ensure_is_list(vals_to_include)
+        )
 
         return tf_adjustment_chart(
             self,
