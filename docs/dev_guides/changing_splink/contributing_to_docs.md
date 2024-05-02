@@ -38,7 +38,7 @@ Spelling check passed :)
 
 otherwise, PySpelling will printout the spelling mistakes found in each file.
 
-Correct spellings of words not found in a standard dictionary (e.g. Splink) can be recorded as such by adding them to `scripts/pyspelling/custom_dictionary.txt`. (Don't worry about adding them in alphabetical order or accidental duplication as this will be handled automatically by a GitHub Action future.)
+Correct spellings of words not found in a standard dictionary (e.g. "Splink") can be recorded as such by adding them to `scripts/pyspelling/custom_dictionary.txt`.
 
 Please correct any mistakes found or update the custom dictionary to ensure the spellchecker passes before putting in a pull request containing updates to the documentation.
 
