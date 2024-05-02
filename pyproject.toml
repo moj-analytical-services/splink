@@ -29,6 +29,7 @@ numpy = [
 
 
 # Optional installs
+# python >=3.12 requires pyspark >=4.0.0 - currently unreleased
 pyspark = {version=">=3.2.1", optional=true}
 
 awswrangler = [

@@ -15,7 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        # pyspark < 4 does not support python 3.12
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     name: Run tests with Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
