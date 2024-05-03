@@ -1,8 +1,11 @@
+from pandas import DataFrame
+
+
 def _sql_expr_move_left_to_right(
-    col_name,
+    col_name: str,
     unique_id_col: str = "unique_id",
     source_dataset_col: str = "source_dataset",
-):
+) -> str:
     sds_l = f"{source_dataset_col}_l"
     uid_l = f"{unique_id_col}_l"
     sds_r = f"{source_dataset_col}_r"
@@ -42,10 +45,10 @@ def _sql_expr_move_left_to_right(
 
 
 def lower_id_to_left_hand_side(
-    df,
+    df: DataFrame,
     source_dataset_col: str = "source_dataset",
     unique_id_col: str = "unique_id",
-):
+) -> str:
     """Take a dataframe in the format of splink record comparisons (with _l and _r suffixes)
     and return a dataframe where the _l columns correspond to the record with the lower id.
     For example:

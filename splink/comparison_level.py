@@ -60,7 +60,7 @@ def _exact_match_colname(sql_syntax_tree):
     return cols[0]
 
 
-def _get_and_subclauses(expr: sqlglot.Expression):
+def _get_and_subclauses(expr: sqlglot.Expression) -> list[sqlglot.Expression]:
     # get list of subclauses joined together by 'AND' at top-level
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     # or if no AND, return expression as a list, e.g. 'A' -> ['A']
@@ -138,7 +138,7 @@ class ComparisonLevel:
         tf_minimum_u_value: float = 0.0,
         m_probability: float = None,
         u_probability: float = None,
-        disable_tf_exact_match_detection=False,
+        disable_tf_exact_match_detection: bool = False,
     ):
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
@@ -367,7 +367,7 @@ class ComparisonLevel:
 
     def _label_for_charts_no_duplicates(
         self, comparison_levels: list[ComparisonLevel] = None
-    ):
+    ) -> str:
         if comparison_levels is not None:
             labels = []
             for cl in comparison_levels:
@@ -518,7 +518,7 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    def _bayes_factor_sql(self, gamma_column_name: str):
+    def _bayes_factor_sql(self, gamma_column_name: str) -> str:
         bayes_factor = (
             self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
         )
@@ -531,7 +531,7 @@ class ComparisonLevel:
 
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> str:
         gamma_colname_value_is_this_level = (
             f"{gamma_column_name} = {self._comparison_vector_value}"
         )
@@ -635,7 +635,7 @@ class ComparisonLevel:
 
     def _as_detailed_record(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> dict[str, Any]:
         "A detailed representation of this level to describe it in charting outputs"
         output: dict[str, Any] = {}
         output["sql_condition"] = self.sql_condition
@@ -667,7 +667,7 @@ class ComparisonLevel:
 
     def _parameter_estimates_as_records(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> list[dict[str, Any]]:
         output_records = []
 
         cl_record = self._as_detailed_record(comparison_num_levels, comparison_levels)
