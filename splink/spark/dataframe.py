@@ -44,7 +44,7 @@ class SparkDataFrame(SplinkDataFrame):
         else:
             pass
 
-    def as_pandas_dataframe(self, limit=None) -> PandasDataFrame:
+    def as_pandas_dataframe(self, limit: int = None) -> PandasDataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

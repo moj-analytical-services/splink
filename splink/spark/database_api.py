@@ -9,7 +9,7 @@ from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
 
-from ..database_api import DatabaseAPI
+from ..database_api import AcceptableInputTableType, DatabaseAPI
 from ..databricks.enable_splink import enable_splink
 from ..dialects import (
     SparkDialect,
@@ -70,7 +70,9 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         self._set_default_break_lineage_method()
 
-    def _table_registration(self, input, table_name) -> None:
+    def _table_registration(
+        self, input: AcceptableInputTableType, table_name: str
+    ) -> None:
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -83,7 +85,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
         input.createOrReplaceTempView(table_name)
 
     def table_to_splink_dataframe(
-        self, templated_name, physical_name
+        self, templated_name: str, physical_name: str
     ) -> SparkDataFrame:
         return SparkDataFrame(templated_name, physical_name, self)
 
@@ -115,7 +117,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
     def _cleanup_for_execute_sql(
         self, table: spark_df, templated_name: str, physical_name: str
-    ):
+    ) -> SparkDataFrame:
         spark_df = self._break_lineage_and_repartition(
             table, templated_name, physical_name
         )

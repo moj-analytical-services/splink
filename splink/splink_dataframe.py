@@ -33,7 +33,7 @@ class SplinkDataFrame(ABC):
         self.db_api = database_api
         self._target_schema = "splink"
         self.created_by_splink = False
-        self.sql_used_to_create = None
+        self.sql_used_to_create: str | None = None
         self.metadata = metadata or {}
 
     @abstractproperty

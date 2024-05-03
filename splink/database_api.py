@@ -134,9 +134,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     @final
     def sql_to_splink_dataframe_checking_cache(
         self,
-        sql,
-        output_tablename_templated,
-        use_cache=True,
+        sql: str,
+        output_tablename_templated: str,
+        use_cache: bool = True,
     ) -> SplinkDataFrame:
         # differences from _sql_to_splink_dataframe:
         # this _calculates_ physical name, and
@@ -187,7 +187,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
-        use_cache=True,
+        use_cache: bool = True,
     ) -> SplinkDataFrame:
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
@@ -273,7 +273,10 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     @final
     def register_table(
-        self, input_table, table_name, overwrite=False
+        self,
+        input_table: AcceptableInputTableType,
+        table_name: str,
+        overwrite: bool = False,
     ) -> SplinkDataFrame:
         tables_dict = self.register_multiple_tables(
             [input_table], [table_name], overwrite=overwrite
@@ -298,13 +301,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def _execute_sql_against_backend(self, final_sql: str) -> TablishType:
         pass
 
-    def delete_table_from_database(self, name: str):
+    def delete_table_from_database(self, name: str) -> None:
         # sensible default:
         drop_sql = f"DROP TABLE IF EXISTS {name}"
         self._execute_sql_against_backend(drop_sql)
 
     @abstractmethod
-    def _table_registration(self, input, table_name: str) -> None:
+    def _table_registration(
+        self, input: AcceptableInputTableType, table_name: str
+    ) -> None:
         """
         Actually register table with backend.
 
@@ -314,7 +319,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     @abstractmethod
     def table_to_splink_dataframe(
-        self, templated_name, physical_name
+        self, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         pass
 
@@ -339,7 +344,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     # should probably also be responsible for cache
     # TODO: stick this in a cache-api that lives on this
 
-    def remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
+    def remove_splinkdataframe_from_cache(
+        self, splink_dataframe: SplinkDataFrame
+    ) -> None:
         keys_to_delete = set()
         for key, df in self._intermediate_table_cache.items():
             if df.physical_name == splink_dataframe.physical_name:
