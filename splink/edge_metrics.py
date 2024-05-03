@@ -52,7 +52,7 @@ def compute_edge_metrics(
 
 def compute_basic_edge_metrics(
     linker: Linker, df_predict: SplinkDataFrame, threshold_match_probability: float
-):
+) -> SplinkDataFrame:
     pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
     pipeline.enqueue_sql(**sql_info)
