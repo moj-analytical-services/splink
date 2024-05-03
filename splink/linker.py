@@ -6,7 +6,7 @@ import os
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Sequence, Union, List
 
 from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
 from .vertically_concatenate import (
@@ -68,9 +68,10 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .dialects import SplinkDialect
 from .edge_metrics import compute_edge_metrics
 
-from .database_api import DatabaseAPISubClass
+from .database_api import AcceptableInputTableType, DatabaseAPISubClass
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
@@ -249,8 +250,8 @@ class Linker:
 
     def _input_columns(
         self,
-        include_unique_id_col_names=True,
-        include_additional_columns_to_retain=True,
+        include_unique_id_col_names: bool = True,
+        include_additional_columns_to_retain: bool = True,
     ) -> list[InputColumn]:
         """Retrieve the column names from the input dataset(s) as InputColumns
 
@@ -341,20 +342,20 @@ class Linker:
 
     # convenience wrappers:
     @property
-    def debug_mode(self):
+    def debug_mode(self) -> bool:
         return self.db_api.debug_mode
 
     @debug_mode.setter
-    def debug_mode(self, value: bool):
+    def debug_mode(self, value: bool) -> None:
         self.db_api.debug_mode = value
 
     # TODO: rename these!
     @property
-    def _sql_dialect(self):
+    def _sql_dialect(self) -> str:
         return self.db_api.sql_dialect.name
 
     @property
-    def _sql_dialect_object(self):
+    def _sql_dialect_object(self) -> SplinkDialect:
         return self.db_api.sql_dialect
 
     @property
@@ -369,7 +370,7 @@ class Linker:
         )
 
     def _register_input_tables(
-        self, input_tables, input_aliases
+        self, input_tables: Sequence[AcceptableInputTableType], input_aliases
     ) -> Dict[str, SplinkDataFrame]:
         if input_aliases is None:
             input_table_aliases = [

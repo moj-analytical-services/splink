@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, TypeVar, Type, final
+from typing import TYPE_CHECKING, Type, TypeVar, final
 
 if TYPE_CHECKING:
     from .comparison_level_library import (

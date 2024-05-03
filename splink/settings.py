@@ -460,7 +460,9 @@ class Settings:
     def _get_comparison_by_output_column_name(self, name: str) -> Comparison:
         return self.core_model_settings.get_comparison_by_output_column_name(name)
 
-    def _brs_as_objs(self, brs_as_strings: Sequence[str | BlockingRule]) -> List[BlockingRule]:
+    def _brs_as_objs(
+        self, brs_as_strings: Sequence[str | BlockingRule]
+    ) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])
