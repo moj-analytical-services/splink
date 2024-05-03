@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 def m_u_records_to_lookup_dict(
     m_u_records: List[Dict[str, Any]],
-) -> Dict[str, Dict[str, Any]]:
-    lookup: Dict[str, Dict[str, Any]] = {}
+) -> Dict[str, Dict[int, Any]]:
+    lookup: Dict[str, Dict[int, Any]] = {}
     for m_u_record in m_u_records:
         comparison_name = m_u_record["output_column_name"]
         level_value = m_u_record["comparison_vector_value"]

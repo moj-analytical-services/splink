@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
+    from .splink_dataframe import SplinkDataFrame
 
 
 class EMTrainingSession:
@@ -175,7 +176,7 @@ class EMTrainingSession:
             f" since they are used in the blocking rules: {not_estimated_str}"
         )
 
-    def _comparison_vectors(self):
+    def _comparison_vectors(self) -> SplinkDataFrame:
         self._training_log_message()
 
         pipeline = CTEPipeline()
@@ -211,7 +212,7 @@ class EMTrainingSession:
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    def _train(self, cvv=None) -> CoreModelSettings:
+    def _train(self, cvv: SplinkDataFrame = None) -> CoreModelSettings:
         if cvv is None:
             cvv = self._comparison_vectors()
 

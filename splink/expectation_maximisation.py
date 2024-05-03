@@ -23,7 +23,7 @@ from .splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-def count_agreement_patterns_sql(comparisons: List[Comparison]):
+def count_agreement_patterns_sql(comparisons: List[Comparison]) -> str:
     """Count how many times each realized agreement pattern
     was observed across the blocked dataset."""
     gamma_cols = [cc._gamma_column_name for cc in comparisons]
@@ -42,7 +42,7 @@ def count_agreement_patterns_sql(comparisons: List[Comparison]):
 
 def compute_new_parameters_sql(
     estimate_without_term_frequencies: bool, comparisons: List[Comparison]
-):
+) -> str:
     """compute m and u counts from the results of predict"""
     if estimate_without_term_frequencies:
         agreement_pattern_count = "agreement_pattern_count"
@@ -164,7 +164,7 @@ def populate_m_u_from_lookup(
     training_fixed_probabilities: set[str],
     comparison_level: ComparisonLevel,
     output_column_name: str,
-    m_u_records_lookup,
+    m_u_records_lookup: dict[str, dict[int, Any]],
 ) -> None:
     cl = comparison_level
 
@@ -295,8 +295,8 @@ def expectation_maximisation(
                 sql_infinity_expression=sql_infinity_expression,
             )
 
-        for sql in sqls:
-            pipeline.enqueue_sql(sql["sql"], sql["output_table_name"])
+        for sql_info in sqls:
+            pipeline.enqueue_sql(sql_info["sql"], sql_info["output_table_name"])
 
         sql = compute_new_parameters_sql(
             estimate_without_term_frequencies,
@@ -361,7 +361,7 @@ def _max_change_message(max_change_dict):
 
 def _max_change_in_parameters_comparison_levels(
     core_model_settings_history: List[CoreModelSettings],
-):
+) -> dict[str, Any]:
     previous_iteration = core_model_settings_history[-2]
     this_iteration = core_model_settings_history[-1]
     max_change = -0.1
