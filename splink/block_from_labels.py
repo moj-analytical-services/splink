@@ -39,12 +39,12 @@ def block_from_labels(
     sql = lower_id_to_left_hand_side(df, source_dataset_col, unique_id_col)
 
     sqls = []
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__labels_prepared_for_joining",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     columns_to_select = linker._settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
@@ -82,11 +82,11 @@ def block_from_labels(
     on {join_condition_r}
     """
 
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_blocked",
     }
 
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
