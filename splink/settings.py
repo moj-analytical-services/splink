@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Any, List, Literal, TypedDict
+from typing import Any, List, Literal, Sequence, TypedDict
 
 from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -133,7 +133,7 @@ class CoreModelSettings:
         output.insert(0, prop_record)
         return output
 
-    def get_comparison_by_output_column_name(self, name) -> Comparison:
+    def get_comparison_by_output_column_name(self, name: str) -> Comparison:
         for cc in self.comparisons:
             if cc.output_column_name == name:
                 return cc
@@ -249,7 +249,7 @@ class Settings:
 
     # TODO: especially factor the setters
     @comparisons.setter
-    def comparisons(self, value) -> None:
+    def comparisons(self, value: list[Comparison]) -> None:
         self.core_model_settings.comparisons = value
 
     @property
@@ -257,7 +257,7 @@ class Settings:
         return self.core_model_settings.probability_two_random_records_match
 
     @_probability_two_random_records_match.setter
-    def _probability_two_random_records_match(self, value) -> None:
+    def _probability_two_random_records_match(self, value: float) -> None:
         self.core_model_settings.probability_two_random_records_match = value
 
     @property
@@ -457,10 +457,10 @@ class Settings:
         cols = dedupe_preserving_order(cols)
         return cols
 
-    def _get_comparison_by_output_column_name(self, name) -> Comparison:
+    def _get_comparison_by_output_column_name(self, name: str) -> Comparison:
         return self.core_model_settings.get_comparison_by_output_column_name(name)
 
-    def _brs_as_objs(self, brs_as_strings) -> List[BlockingRule]:
+    def _brs_as_objs(self, brs_as_strings: Sequence[str | BlockingRule]) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])
