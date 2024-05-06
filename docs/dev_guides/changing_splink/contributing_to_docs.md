@@ -24,7 +24,7 @@ If you've created your development environment [using conda](./development_quick
 process.
 Instructions for installing `aspell` through other means may be added here in the future.
 
-To run the spellchecker on either a single markdown file or folder of markdown files, you can use the following script:
+To run the spellchecker on either a single markdown file or folder of markdown files, you can run the following bash script:
 
 ```sh
 ./scripts/pyspelling/spellchecker.sh <path_to_file_or_folder>
