@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import altair as alt
 
 # type alias:
-ChartReturnType = Union[dict[Any, Any], alt.core.SchemaBase]
+ChartReturnType = Union[Dict[Any, Any], alt.core.SchemaBase]
 
 
 def load_chart_definition(filename):
