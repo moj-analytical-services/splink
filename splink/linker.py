@@ -765,7 +765,9 @@ class Linker:
 
         return deterministic_link_df
 
-    def estimate_u_using_random_sampling(self, max_pairs: int = None, seed: int = None):
+    def estimate_u_using_random_sampling(
+        self, max_pairs: float = 1e6, seed: int = None
+    ):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
