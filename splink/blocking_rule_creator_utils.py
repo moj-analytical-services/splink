@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, List, Union
 
+from .blocking import BlockingRule
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule
 from .misc import ensure_is_iterable
@@ -9,7 +10,7 @@ from .misc import ensure_is_iterable
 
 def to_blocking_rule_creator(
     blocking_rule_creator: Union[dict[str, Any], str, BlockingRuleCreator],
-):
+) -> BlockingRuleCreator:
     if isinstance(blocking_rule_creator, dict):
         return CustomRule(**blocking_rule_creator)
     if isinstance(blocking_rule_creator, str):
@@ -22,7 +23,7 @@ def blocking_rule_args_to_list_of_blocking_rules(
         str, BlockingRuleCreator, List[Union[str, BlockingRuleCreator]]
     ],
     sql_dialect: str,
-):
+) -> list[BlockingRule]:
     """In functions such as `linker.estimate_probability_two_random_records_match`
     the user may have passed in strings or BlockingRuleCreator objects.
 

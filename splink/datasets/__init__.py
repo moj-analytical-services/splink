@@ -165,7 +165,7 @@ class _SplinkDataSetsMeta(type):
         return super().__new__(cls, clsname, bases, attributes)
 
     @classmethod
-    def progress(cls, block_count, block_size, total_size) -> None:
+    def progress(cls, block_count: int, block_size: int, total_size: int) -> None:
         prop_done = (block_count * block_size) / total_size
         if prop_done > 1:
             prop_done = 1

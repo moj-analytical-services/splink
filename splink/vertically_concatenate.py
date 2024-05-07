@@ -179,8 +179,8 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
 
 
 def split_df_concat_with_tf_into_two_tables_sqls(
-    input_tablename, source_dataset_col, sample_switch: bool = False
-):
+    input_tablename: str, source_dataset_col: str, sample_switch: bool = False
+) -> list[dict[str, str]]:
     # For the two dataset link only, rather than a self join of
     # __splink__df_concat_with_tf, it's much faster to split the input
     # into two tables, and join (because then Splink doesn't have to evaluate)

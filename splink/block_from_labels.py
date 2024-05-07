@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 
 def block_from_labels(
-    linker: Linker, labels_table_name: str, include_clerical_match_score=False
-):
+    linker: Linker, labels_table_name: str, include_clerical_match_score: bool = False
+) -> list[dict[str, str]]:
     """Create pairwise record comparisons corresponding to the ID pairs in a labels
     table
 

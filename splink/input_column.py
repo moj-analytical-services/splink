@@ -189,7 +189,7 @@ class InputColumn:
             )
         )
 
-    def register_dialect(self, sql_dialect: str | None):
+    def register_dialect(self, sql_dialect: str | None) -> None:
         if self.column_info_settings is not None:
             column_info_sql_dialect = self.column_info_settings.sql_dialect
             if sql_dialect is not None:
@@ -335,7 +335,7 @@ def _get_dialect_quotes(dialect):
     return _get_sqlglot_dialect_quotes(sqlglot_dialect)
 
 
-def _get_sqlglot_dialect_quotes(dialect: Type[sqlglot.Dialect]):
+def _get_sqlglot_dialect_quotes(dialect: Type[sqlglot.Dialect]) -> tuple[str, str]:
     try:
         start = dialect.IDENTIFIER_START
         end = dialect.IDENTIFIER_END
