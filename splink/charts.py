@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,12 @@ try:
     import altair as alt
 except ImportError:
     altair_installed = False
+
+if TYPE_CHECKING:
+    import altair as alt
+
+# type alias:
+ChartReturnType = Union[dict, alt.core.SchemaBase]
 
 
 def load_chart_definition(filename):
@@ -30,7 +37,7 @@ def _load_external_libs():
     return {k: read_resource(v) for k, v in to_load.items()}
 
 
-def altair_or_json(chart_dict, as_dict=False):
+def altair_or_json(chart_dict: dict, as_dict: bool = False) -> ChartReturnType:
     if altair_installed:
         if not as_dict:
             try:
