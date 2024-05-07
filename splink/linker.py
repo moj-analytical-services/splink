@@ -1221,9 +1221,11 @@ class Linker:
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
         for tf_col in self._settings_obj._term_frequency_columns:
-            tf_table = colname_to_tf_tablename(tf_col)
-            if tf_table in self._intermediate_table_cache:
-                tf_table = self._intermediate_table_cache.get_with_logging(tf_table)
+            tf_table_name = colname_to_tf_tablename(tf_col)
+            if tf_table_name in self._intermediate_table_cache:
+                tf_table = self._intermediate_table_cache.get_with_logging(
+                    tf_table_name
+                )
                 pipeline.append_input_dataframe(tf_table)
 
         sql = _join_new_table_to_df_concat_with_tf_sql(self, "__splink__df_new_records")
@@ -1318,9 +1320,9 @@ class Linker:
             pipeline.append_input_dataframe(nodes_with_tf)
 
         for tf_col in self._settings_obj._term_frequency_columns:
-            tf_table = colname_to_tf_tablename(tf_col)
-            if tf_table in cache:
-                tf_table = cache.get_with_logging(tf_table)
+            tf_table_name = colname_to_tf_tablename(tf_col)
+            if tf_table_name in cache:
+                tf_table = cache.get_with_logging(tf_table_name)
                 pipeline.append_input_dataframe(tf_table)
             else:
                 if "__splink__df_concat_with_tf" not in cache:
