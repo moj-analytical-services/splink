@@ -367,10 +367,10 @@ def _exit_query(
     pairwise_filter: bool,
 ) -> str:
     representatives_name = representatives.physical_name
-    df_predict_name = df_predict.physical_name
     concat_with_tf_name = concat_with_tf.physical_name
 
     if pairwise_mode:
+        df_predict_name = df_predict.physical_name
         uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
         uid_concat_r = _composite_unique_id_from_edges_sql(uid_cols, "r", "n")
 
