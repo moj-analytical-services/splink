@@ -567,7 +567,7 @@ class Linker:
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
-                    reverse_level._comparison_vector_value
+                    reverse_level.comparison_vector_value
                 )
 
                 if cl._has_estimated_values:

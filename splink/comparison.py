@@ -95,7 +95,7 @@ class Comparison:
                 level._comparison_vector_value
             ]
             level.default_u_probability = default_u_values[
-                level._comparison_vector_value
+                level.comparison_vector_value
             ]
 
     @property
@@ -391,7 +391,7 @@ class Comparison:
         self, value: int
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
-            if cl._comparison_vector_value == value:
+            if cl.comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
 
@@ -424,7 +424,7 @@ class Comparison:
 
         comp_levels = [
             cl_template.format(
-                cvv=cl._comparison_vector_value,
+                cvv=cl.comparison_vector_value,
                 label=cl.label_for_charts,
                 sql=cl.sql_condition,
             )

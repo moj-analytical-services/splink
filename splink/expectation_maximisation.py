@@ -171,7 +171,7 @@ def populate_m_u_from_lookup(
     if "m" not in training_fixed_probabilities:
         try:
             m_probability = m_u_records_lookup[output_column_name][
-                cl._comparison_vector_value
+                cl.comparison_vector_value
             ]["m_probability"]
 
         except KeyError:
@@ -190,7 +190,7 @@ def populate_m_u_from_lookup(
     if "u" not in training_fixed_probabilities:
         try:
             u_probability = m_u_records_lookup[output_column_name][
-                cl._comparison_vector_value
+                cl.comparison_vector_value
             ]["u_probability"]
 
         except KeyError:

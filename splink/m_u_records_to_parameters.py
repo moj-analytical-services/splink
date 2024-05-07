@@ -40,7 +40,7 @@ def not_trained_message(
     return (
         f"not trained for {output_column_name} - "
         f"{cl.label_for_charts} (comparison vector value: "
-        f"{cl._comparison_vector_value}). This usually means the "
+        f"{cl.comparison_vector_value}). This usually means the "
         "comparison level was never observed in the training data."
     )
 
@@ -55,7 +55,7 @@ def append_u_probability_to_comparison_level_trained_probabilities(
 
     try:
         u_probability = m_u_records_lookup[output_column_name][
-            cl._comparison_vector_value
+            cl.comparison_vector_value
         ]["u_probability"]
 
     except KeyError:
@@ -78,7 +78,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
 
     try:
         m_probability = m_u_records_lookup[output_column_name][
-            cl._comparison_vector_value
+            cl.comparison_vector_value
         ]["m_probability"]
 
     except KeyError:

@@ -261,7 +261,7 @@ class EMTrainingSession:
             )
             for cl in cc._comparison_levels_excluding_null:
                 orig_cl = orig_cc._get_comparison_level_by_comparison_vector_value(
-                    cl._comparison_vector_value
+                    cl.comparison_vector_value
                 )
 
                 if "m" not in self.training_fixed_probabilities:
@@ -271,7 +271,7 @@ class EMTrainingSession:
                         logger.info(
                             f"m probability not trained for {cc.output_column_name} - "
                             f"{cl.label_for_charts} (comparison vector value: "
-                            f"{cl._comparison_vector_value}). This usually means the "
+                            f"{cl.comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
                     else:
@@ -286,7 +286,7 @@ class EMTrainingSession:
                         logger.info(
                             f"u probability not trained for {cc.output_column_name} - "
                             f"{cl.label_for_charts} (comparison vector value: "
-                            f"{cl._comparison_vector_value}). This usually means the "
+                            f"{cl.comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
                     else:
