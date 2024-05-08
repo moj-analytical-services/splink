@@ -2,8 +2,8 @@ import os
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink.exploratory import profile_columns
 from splink.linker import Linker
-from splink.profile_data import profile_columns
 
 from .decorator import mark_with_dialects_excluding
 
@@ -116,7 +116,6 @@ def test_charts(dialect, test_helpers, tmp_path):
         cl_settings,
         db_api,
     )
-    linker.missingness_chart()
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 
     linker.estimate_probability_two_random_records_match(

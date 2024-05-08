@@ -36,10 +36,8 @@ from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     ChartReturnType,
     accuracy_chart,
-    completeness_chart,
     cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
-    missingness_chart,
     parameter_estimate_comparisons,
     precision_recall_chart,
     roc_chart,
@@ -91,14 +89,12 @@ from .misc import (
     ensure_is_list,
     prob_to_bayes_factor,
 )
-from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import CTEPipeline
 from .predict import (
     predict_from_comparison_vectors_sqls,
     predict_from_comparison_vectors_sqls_using_settings,
 )
-from .profile_data import profile_columns
 from .settings_creator import SettingsCreator
 from .settings_validation.log_invalid_columns import (
     InvalidColumnsLogger,
@@ -1684,63 +1680,6 @@ class Linker:
             nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
 
-    def profile_columns(
-        self,
-        column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
-        top_n: int = 10,
-        bottom_n: int = 10,
-    ) -> ChartReturnType | None:
-        """
-        Profiles the specified columns of the dataframe initiated with the linker.
-
-        This can be computationally expensive if the dataframe is large.
-
-        For the provided columns with column_expressions (or for all columns if
-         left empty) calculate:
-        - A distribution plot that shows the count of values at each percentile.
-        - A top n chart, that produces a chart showing the count of the top n values
-        within the column
-        - A bottom n chart, that produces a chart showing the count of the bottom
-        n values within the column
-
-        This should be used to explore the dataframe, determine if columns have
-        sufficient completeness for linking, analyse the cardinality of columns, and
-        identify the need for standardisation within a given column.
-
-        Args:
-            linker (object): The initiated linker.
-            column_expressions (list, optional): A list of strings containing the
-                specified column names.
-                If left empty this will default to all columns.
-            top_n (int, optional): The number of top n values to plot.
-            bottom_n (int, optional): The number of bottom n values to plot.
-
-        Returns:
-            altair.Chart or dict: A visualization or JSON specification describing the
-            profiling charts.
-
-        Examples:
-            ```py
-            linker = Linker(df, db_api)
-            linker.profile_columns()
-            ```
-
-        Note:
-            - The `linker` object should be an instance of the initiated linker.
-            - The provided `column_expressions` can be a list of column names to
-                profile. If left empty, all columns will be profiled.
-            - The `top_n` and `bottom_n` parameters determine the number of top and
-                 bottom values to display in the respective charts.
-        """
-
-        return profile_columns(
-            list(map(lambda sdf: sdf.physical_name, self._input_tables_dict.values())),
-            self.db_api,
-            column_expressions=column_expressions,
-            top_n=top_n,
-            bottom_n=bottom_n,
-        )
-
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
     ) -> str:
@@ -2170,6 +2109,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
+        positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
     ) -> SplinkDataFrame:
         """Generate truth statistics (false positive etc.) for each threshold value of
         match_probability, suitable for plotting a ROC chart.
@@ -2198,7 +2138,11 @@ class Linker:
         """
 
         return truth_space_table_from_labels_column(
-            self, labels_column_name, threshold_actual, match_weight_round_to_nearest
+            self,
+            labels_column_name,
+            threshold_actual,
+            match_weight_round_to_nearest,
+            positives_not_captured_by_blocking_rules_scored_as_zero,
         )
 
     def roc_chart_from_labels_column(
@@ -2617,72 +2561,6 @@ class Linker:
         records = [r for r in records if r["m_or_u"] in to_retain]
 
         return parameter_estimate_comparisons(records)
-
-    def missingness_chart(self, input_dataset: str = None) -> ChartReturnType:
-        """Generate a summary chart of the missingness (prevalence of nulls) of
-        columns in the input datasets.  By default, missingness is assessed across
-        all input datasets
-
-        Args:
-            input_dataset (str, optional): Name of one of the input tables in the
-                database.  If provided, missingness will be computed for
-                this table alone.
-                Defaults to None.
-
-        Examples:
-            ```py
-            linker.missingness_chart()
-            ```
-            To view offline (if you don't have an internet connection):
-            ```py
-            from splink.charts import save_offline_chart
-            c = linker.missingness_chart()
-            save_offline_chart(c.to_dict(), "test_chart.html")
-            ```
-            View resultant html file in Jupyter (or just load it in your browser)
-            ```py
-            from IPython.display import IFrame
-            IFrame(src="./test_chart.html", width=1000, height=500
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-        records = missingness_data(self, input_dataset)
-        return missingness_chart(records)
-
-    def completeness_chart(
-        self, input_dataset: str = None, cols: list[str] = None
-    ) -> ChartReturnType:
-        """Generate a summary chart of the completeness (proportion of non-nulls) of
-        columns in each of the input datasets. By default, completeness is assessed for
-        all column in the input data.
-
-        Args:
-            input_dataset (str, optional): Name of one of the input tables in the
-                database.  If provided, completeness will be computed for this table
-                alone. Defaults to None.
-            cols (List[str], optional): List of column names to calculate completeness.
-                Default to None.
-
-        Examples:
-            ```py
-            linker.completeness_chart()
-            ```
-            To view offline (if you don't have an internet connection):
-            ```py
-            from splink.charts import save_offline_chart
-            c = linker.completeness_chart()
-            save_offline_chart(c.to_dict(), "test_chart.html")
-            ```
-            View resultant html file in Jupyter (or just load it in your browser)
-            ```py
-            from IPython.display import IFrame
-            IFrame(src="./test_chart.html", width=1000, height=500
-            ```
-        """
-        records = completeness_data(self, input_dataset, cols)
-        return completeness_chart(records)
 
     def count_num_comparisons_from_blocking_rule(
         self,

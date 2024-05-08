@@ -3,12 +3,12 @@ import re
 from copy import deepcopy
 from typing import List, Optional, Sequence, Union
 
-from .charts import ChartReturnType, altair_or_json, load_chart_definition
-from .column_expression import ColumnExpression
-from .database_api import AcceptableInputTableType, DatabaseAPISubClass
-from .misc import ensure_is_list
-from .pipeline import CTEPipeline
-from .vertically_concatenate import vertically_concatenate_sql
+from ..charts import ChartReturnType, altair_or_json, load_chart_definition
+from ..column_expression import ColumnExpression
+from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
+from ..misc import ensure_is_list
+from ..pipeline import CTEPipeline
+from ..vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +223,7 @@ def profile_columns(
     identify the need for standardisation within a given column.
 
     Args:
-        linker (object): The initiated linker.
+
         column_expressions (list, optional): A list of strings containing the
             specified column names.
             If left empty this will default to all columns.

@@ -9,8 +9,8 @@ import pytest
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink.duckdb.database_api import DuckDBAPI
+from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
-from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -61,7 +61,8 @@ def test_full_example_duckdb(tmp_path):
             "concat(city, first_name)",
         ],
     )
-    linker.missingness_chart()
+    completeness_chart(df, db_api)
+
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -69,8 +70,6 @@ def test_full_example_duckdb(tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)

@@ -6,12 +6,12 @@ from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
 
 from splink.duckdb.database_api import DuckDBAPI
-from splink.misc import ensure_is_list
-from splink.pipeline import CTEPipeline
-from splink.profile_data import (
+from splink.internals.profile_data import (
     _col_or_expr_frequencies_raw_data_sql,
     profile_columns,
 )
+from splink.misc import ensure_is_list
+from splink.pipeline import CTEPipeline
 from splink.sqlite.database_api import SQLiteAPI
 
 from .decorator import mark_with_dialects_including
