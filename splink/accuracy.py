@@ -152,7 +152,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def _select_found_by_blocking_rules(linker: "Linker"):
+def _select_found_by_blocking_rules(linker: "Linker") -> str:
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
 
     if brs:

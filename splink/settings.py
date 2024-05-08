@@ -278,9 +278,9 @@ class Settings:
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
             already_used = [InputColumn(c) for c in already_used_names]
-            already_used = [c.unquote().name for c in already_used]
+            already_used_names = [c.unquote().name for c in already_used]
 
-            new_cols = list(set(used_by_brs) - set(already_used))
+            new_cols = list(set(used_by_brs) - set(already_used_names))
             cols_to_retain.extend(new_cols)
 
         cols_to_retain.extend(self._additional_col_names_to_retain)

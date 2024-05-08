@@ -41,7 +41,9 @@ def _final_score_record(record_as_dict):
     return rec
 
 
-def _comparison_records(record_as_dict, comparison: Comparison, hide_details=False):
+def _comparison_records(
+    record_as_dict: dict[str, Any], comparison: Comparison, hide_details: bool = False
+) -> list[dict[str, Any]]:
     output_records = []
     waterfall_record = {}
 
