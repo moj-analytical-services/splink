@@ -46,7 +46,6 @@ from .charts import (
     waterfall_chart,
 )
 from .cluster_studio import SamplingMethods, render_splink_cluster_studio_html
-from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
