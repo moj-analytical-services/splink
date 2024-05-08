@@ -19,16 +19,19 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def sanitise_column_name_for_one_hot_encoding(column_name) -> str:
+def sanitise_column_name_for_one_hot_encoding(column_name: str) -> str:
     allowed_chars = string.ascii_letters + string.digits + "_"
     sanitised_name = "".join(c for c in column_name if c in allowed_chars)
     return sanitised_name
 
 
 def _generate_output_combinations_table_row(
-    blocking_columns, splink_blocking_rule, comparison_count, all_columns
+    blocking_columns: list[str],
+    splink_blocking_rule: BlockingRule,
+    comparison_count: int,
+    all_columns: list[str],
 ) -> dict[str, Any]:
-    row = {}
+    row: dict[str, Any] = {}
 
     blocking_columns = [
         sanitise_column_name_for_one_hot_encoding(c) for c in blocking_columns
@@ -189,7 +192,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
 def find_blocking_rules_below_threshold_comparison_count(
     linker: "Linker",
-    max_comparisons_per_rule,
+    max_comparisons_per_rule: int,
     column_expressions: Optional[Sequence[str | InputColumn]] = None,
 ) -> pd.DataFrame:
     """
