@@ -234,16 +234,16 @@ class InputColumn:
         return input_column_copy
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.col_builder.sql
 
     @property
-    def name_l(self):
+    def name_l(self) -> str:
         new_column_name = self.col_builder.column_name + "_l"
         return replace(self.col_builder, column_name=new_column_name).sql
 
     @property
-    def name_r(self):
+    def name_r(self) -> str:
         new_column_name = self.col_builder.column_name + "_r"
         return replace(self.col_builder, column_name=new_column_name).sql
 

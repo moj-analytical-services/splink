@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from copy import deepcopy
 from functools import reduce
 from operator import and_
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Iterable, List, Literal, overload
 
 import sqlglot
 
@@ -19,12 +19,12 @@ if TYPE_CHECKING:
     from ..settings import Settings
 
 
-def remove_suffix(c):
+def remove_suffix(c: str) -> str:
     return re.sub("_[l|r]{1}$", "", c)
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list[str], columns_to_check: set[str] | str
+    valid_input_dataframe_columns: Iterable[str], columns_to_check: Iterable[str] | str
 ) -> set[str]:
     """Identify missing columns in the input dataframe(s). This function
     does not apply any cleaning to the input column(s).
@@ -37,7 +37,7 @@ def find_columns_not_in_input_dfs(
 
 
 def clean_and_find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: list[str],
+    valid_input_dataframe_columns: Iterable[str],
     sqlglot_tree_columns_to_check: Sequence[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
@@ -56,7 +56,7 @@ def clean_and_find_columns_not_in_input_dfs(
 def remove_prefix_and_suffix_from_column(
     col_syntax_tree: sqlglot.Expression,
     sql_dialect: str,
-):
+) -> str:
     """Remove the prefix and suffix from a given sqlglot syntax tree
     and return it as a string of SQL.
 
@@ -70,7 +70,7 @@ def remove_prefix_and_suffix_from_column(
     return remove_suffix(col_syntax_tree.sql(sql_dialect))
 
 
-def clean_list_of_column_names(col_list: List[InputColumn]):
+def clean_list_of_column_names(col_list: List[InputColumn]) -> set[str]:
     """Clean a list of columns names by removing the quote characters
     that may exist.
 
@@ -83,9 +83,21 @@ def clean_list_of_column_names(col_list: List[InputColumn]):
     return set((c.unquote().name for c in col_list))
 
 
+@overload
+def clean_user_input_columns(
+    input_columns: dict[str, SplinkDataFrame], return_as_single_column: Literal[True]
+) -> set[str]: ...
+
+
+@overload
+def clean_user_input_columns(
+    input_columns: dict[str, SplinkDataFrame], return_as_single_column: Literal[False]
+) -> dict[str, set[str]]: ...
+
+
 def clean_user_input_columns(
     input_columns: dict[str, SplinkDataFrame], return_as_single_column: bool = True
-):
+) -> set[str] | dict[str, set[str]]:
     """A dictionary containing all input dataframes and the columns located
     within.
 
@@ -94,14 +106,14 @@ def clean_user_input_columns(
     """
     # For each input dataframe, grab the column names and create a dictionary
     # of the form: {table_name: [column_1, column_2, ...]}
-    input_columns = {
+    cleaned_columns = {
         k: clean_list_of_column_names(v.columns) for k, v in input_columns.items()
     }
 
     if return_as_single_column:
-        return reduce(and_, input_columns.values())
+        return reduce(and_, cleaned_columns.values())
     else:
-        return input_columns
+        return cleaned_columns
 
 
 class SettingsColumnCleaner:

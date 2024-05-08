@@ -12,7 +12,9 @@ def extract_sql_dialect_from_cll(cll):
         return getattr(cll, "_sql_dialect", None)
 
 
-def _validate_dialect(settings_dialect: str, linker_dialect: str, linker_type: str):
+def _validate_dialect(
+    settings_dialect: str, linker_dialect: str, linker_type: str
+) -> None:
     # settings_dialect = self.linker._settings_obj._sql_dialect
     # linker_dialect = self.linker._sql_dialect
     # linker_type = self.linker.__class__.__name__

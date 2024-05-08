@@ -4,7 +4,7 @@ from functools import partial
 from typing import List, NamedTuple, Tuple
 
 
-def indent_error_message(message):
+def indent_error_message(message: str) -> str:
     """Indents an error message by 4 spaces."""
     return "\n    ".join(message.splitlines())
 
@@ -64,7 +64,9 @@ InvalidColumnSuffixesLogGenerator = partial(
 )
 
 
-def construct_missing_settings_column_log(constructor_dict) -> str:
+def construct_missing_settings_column_log(
+    constructor_dict: tuple[str, InvalidColumnsLogGenerator] | None,
+) -> str:
     if not constructor_dict:
         return ""
 
@@ -81,8 +83,7 @@ def construct_missing_settings_column_log(constructor_dict) -> str:
 
 
 def construct_invalid_sql_log_string(
-    # invalid_sql_statements: dict[str, list[InvalidColumnsTracker]]
-    invalid_sql_statements,
+    invalid_sql_statements: dict[str, list[InvalidColumnsLogGenerator]],
 ) -> str:
     log_str = []
     for sql, invalid_cols in invalid_sql_statements.items():
@@ -96,7 +97,9 @@ def construct_invalid_sql_log_string(
     return "\n".join(log_str)
 
 
-def construct_missing_column_in_blocking_rule_log(invalid_brs):
+def construct_missing_column_in_blocking_rule_log(
+    invalid_brs: dict[str, list[InvalidColumnsLogGenerator]],
+) -> str:
     if not invalid_brs:
         return ""
 
@@ -117,7 +120,9 @@ def construct_missing_column_in_blocking_rule_log(invalid_brs):
     return "\n".join(output_warning)
 
 
-def construct_missing_column_in_comparison_level_log(invalid_cls) -> str:
+def construct_missing_column_in_comparison_level_log(
+    invalid_cls: list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]],
+) -> str:
     if not invalid_cls:
         return ""
 
@@ -147,7 +152,7 @@ def construct_missing_column_in_comparison_level_log(invalid_cls) -> str:
 
 def create_invalid_comparison_level_log_string(
     comparison_string: str, invalid_comparison_levels: List[Tuple[str, str]]
-):
+) -> str:
     invalid_levels_str = ",\n".join(
         [
             f"- Type: {type_name}. Level: {level}"
@@ -167,7 +172,7 @@ def create_invalid_comparison_level_log_string(
 
 def create_invalid_comparison_log_string(
     comparison_string: str, comparison_level: bool
-):
+) -> str:
     if comparison_level:
         type_msg = "is a comparison level"
     else:
@@ -181,7 +186,7 @@ def create_invalid_comparison_log_string(
     return indent_error_message(log_message)
 
 
-def create_no_comparison_levels_error_log_string(comparison_string: str):
+def create_no_comparison_levels_error_log_string(comparison_string: str) -> str:
     log_message = (
         f"\n{comparison_string}\n"
         "is missing the required `comparison_levels` dictionary"
@@ -193,7 +198,7 @@ def create_no_comparison_levels_error_log_string(comparison_string: str):
 
 def create_incorrect_dialect_import_log_string(
     comparison_string: str, comparison_dialects: List[str]
-):
+) -> str:
     log_message = (
         f"\n{comparison_string}\n"
         "contains the following invalid SQL dialect(s)"

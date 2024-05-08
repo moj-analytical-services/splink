@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Iterable, Protocol
 
 import sqlglot
 import sqlglot.expressions
@@ -63,8 +63,8 @@ def validate_column_suffixes(
 
 def check_for_missing_settings_column(
     settings_id: str,
-    settings_column_to_check: set[str],
-    valid_input_dataframe_columns: list[str],
+    settings_column_to_check: Iterable[str],
+    valid_input_dataframe_columns: Iterable[str],
 ) -> tuple[str, InvalidColumnsLogGenerator] | None:
     """Validate simple settings columns with strings as input.
     i.e. Anything that doesn't require SQL to be parsed.
@@ -81,8 +81,8 @@ def check_for_missing_settings_column(
 
 def check_for_missing_or_invalid_columns_in_sql_strings(
     sql_dialect: str,
-    sql_strings: list[str],
-    valid_input_dataframe_columns: list[str],
+    sql_strings: Iterable[str],
+    valid_input_dataframe_columns: Iterable[str],
     additional_validation_checks: list[Validator] = [],
 ) -> dict[str, list[InvalidColumnsLogGenerator]]:
     """Evaluate whether the column(s) supplied in a series of SQL strings
@@ -148,8 +148,8 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
 
 def check_comparison_for_missing_or_invalid_sql_strings(
     sql_dialect: str,
-    comparisons_to_check: list[Comparison],
-    valid_input_dataframe_columns: list[str],
+    comparisons_to_check: Iterable[Comparison],
+    valid_input_dataframe_columns: Iterable[str],
 ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
     """Split apart the comparison levels found within a comparison
     and review the SQL contained within.
@@ -186,21 +186,21 @@ class InvalidColumnsLogger:
     def __init__(self, cleaned_settings: SettingsColumnCleaner):
         self.cleaned_settings_values = cleaned_settings
 
-    def validate_uid(self):
+    def validate_uid(self) -> tuple[str, InvalidColumnsLogGenerator] | None:
         return check_for_missing_settings_column(
             settings_id="unique_id_column_name",
             settings_column_to_check=self.cleaned_settings_values.uid,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )
 
-    def validate_cols_to_retain(self):
+    def validate_cols_to_retain(self) -> tuple[str, InvalidColumnsLogGenerator] | None:
         return check_for_missing_settings_column(
             settings_id="additional_columns_to_retain",
             settings_column_to_check=self.cleaned_settings_values.cols_to_retain,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )
 
-    def validate_blocking_rules(self):
+    def validate_blocking_rules(self) -> dict[str, list[InvalidColumnsLogGenerator]]:
         return check_for_missing_or_invalid_columns_in_sql_strings(
             sql_dialect=self.cleaned_settings_values.sql_dialect,
             sql_strings=self.cleaned_settings_values.blocking_rules,
@@ -208,14 +208,16 @@ class InvalidColumnsLogger:
             additional_validation_checks=[validate_table_names],
         )
 
-    def validate_comparison_levels(self):
+    def validate_comparison_levels(
+        self,
+    ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
         return check_comparison_for_missing_or_invalid_sql_strings(
             sql_dialect=self.cleaned_settings_values.sql_dialect,
             comparisons_to_check=self.cleaned_settings_values.comparisons,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )
 
-    def construct_output_logs(self, run_settings_validations=True):
+    def construct_output_logs(self, run_settings_validations: bool = True) -> None:
         if not run_settings_validations:
             return
 
