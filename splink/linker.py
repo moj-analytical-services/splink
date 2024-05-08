@@ -458,7 +458,7 @@ class Linker:
                 pipeline
         """
 
-        return self.db_api.register_table(input, table_name, overwrite)
+        return self.db_api.register_table(input_table, table_name, overwrite)
 
     def query_sql(self, sql, output_type="pandas"):
         """
