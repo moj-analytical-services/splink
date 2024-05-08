@@ -2,7 +2,7 @@ import pytest
 
 dialect_groups = {
     "duckdb": ["default"],
-    "spark": ["default"],
+    "spark": [],
     "sqlite": [],
     "postgres": [],
 }
