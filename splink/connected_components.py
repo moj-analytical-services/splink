@@ -13,6 +13,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Optional
 
+from .input_column import InputColumn
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
+def _cc_create_nodes_table(linker: "Linker", generated_graph: bool = False) -> str:
     """SQL to create our connected components nodes table.
 
     From our edges table, create a nodes table.
@@ -60,7 +61,7 @@ def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
     return sql
 
 
-def _cc_generate_neighbours_representation():
+def _cc_generate_neighbours_representation() -> str:
     """SQL to generate all the 'neighbours' of each input node.
 
     The 'neighbour' of a node is any other node that is connected to the original node
@@ -98,7 +99,7 @@ def _cc_generate_neighbours_representation():
     return sql
 
 
-def _cc_generate_initial_representatives_table():
+def _cc_generate_initial_representatives_table() -> str:
     """SQL to generate our initial "representatives" table.
 
     The 'representative' column will eventually become the cluster ID.
@@ -128,7 +129,7 @@ def _cc_generate_initial_representatives_table():
     return sql
 
 
-def _cc_update_neighbours_first_iter():
+def _cc_update_neighbours_first_iter() -> str:
     """SQL to update our neighbours table - first iteration only.
 
     Takes our initial neighbours table, join on the representatives table
@@ -159,7 +160,7 @@ def _cc_update_neighbours_first_iter():
     return sql
 
 
-def _cc_update_representatives_first_iter():
+def _cc_update_representatives_first_iter() -> str:
     """SQL to update our representatives table - first iteration only.
 
     From here, standardised code can be used inside a while loop,
@@ -189,8 +190,8 @@ def _cc_update_representatives_first_iter():
 
 
 def _cc_generate_representatives_loop_cond(
-    prev_representatives,
-):
+    prev_representatives: str,
+) -> str:
     """SQL for Connected components main loop.
 
     Takes our core neighbours table (this is constant), and
@@ -252,8 +253,8 @@ def _cc_generate_representatives_loop_cond(
 
 
 def _cc_update_representatives_loop_cond(
-    prev_representatives,
-):
+    prev_representatives: str,
+) -> str:
     """SQL to update our representatives table - while loop condition.
 
     Reorganises our representatives output generated in
@@ -278,7 +279,7 @@ def _cc_update_representatives_loop_cond(
     return sql
 
 
-def _cc_assess_exit_condition(representatives_name):
+def _cc_assess_exit_condition(representatives_name: str) -> str:
     """SQL exit condition for our Connected Components algorithm.
 
     Where 'rep_match' (summarised in 'cc_update_representatives_first_iter')
@@ -300,7 +301,7 @@ def _cc_create_unique_id_cols(
     concat_with_tf: str,
     df_predict: SplinkDataFrame,
     match_probability_threshold: Optional[float],
-):
+) -> SplinkDataFrame:
     """Create SQL to pull unique ID columns for connected components.
 
     Takes the output of linker.predict() and either creates unique IDs for
@@ -358,18 +359,18 @@ def _cc_create_unique_id_cols(
 
 
 def _exit_query(
-    pairwise_mode=False,
-    df_predict=None,
-    representatives=None,
-    concat_with_tf=None,
-    uid_cols=None,
-    pairwise_filter=False,
-):
-    representatives = representatives.physical_name if representatives else None
-    df_predict = df_predict.physical_name if df_predict else None
-    concat_with_tf = concat_with_tf.physical_name if concat_with_tf else None
+    pairwise_mode: bool,
+    df_predict: SplinkDataFrame,
+    representatives: SplinkDataFrame,
+    concat_with_tf: SplinkDataFrame,
+    uid_cols: list[InputColumn],
+    pairwise_filter: bool,
+) -> str:
+    representatives_name = representatives.physical_name
+    concat_with_tf_name = concat_with_tf.physical_name
 
     if pairwise_mode:
+        df_predict_name = df_predict.physical_name
         uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
         uid_concat_r = _composite_unique_id_from_edges_sql(uid_cols, "r", "n")
 
@@ -380,9 +381,9 @@ def _exit_query(
                 n.*,
                 repr_l.representative as cluster_id_l,
                 repr_r.representative as cluster_id_r
-            from {df_predict} as n
+            from {df_predict_name} as n
             left join
-            {representatives} as repr_l
+            {representatives_name} as repr_l
                 on {uid_concat_l} = repr_l.node_id
             left join
             {representatives} as repr_r
@@ -398,9 +399,9 @@ def _exit_query(
         return f"""
             select
                 c.representative as cluster_id, n.*
-            from {representatives} as c
+            from {representatives_name} as c
 
-            left join {concat_with_tf} as n
+            left join {concat_with_tf_name} as n
             on {uid_concat} = c.node_id
         """
 
@@ -413,7 +414,7 @@ def solve_connected_components(
     pairwise_output: bool = False,
     filter_pairwise_format_for_clusters: bool = False,
     _generated_graph: bool = False,
-):
+) -> SplinkDataFrame:
     """Connected Components main algorithm.
 
     This function helps cluster your linked (or deduped) records

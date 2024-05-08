@@ -576,7 +576,6 @@ def test_truth_space_table_from_labels_column_link_only():
 
 
 def compute_tp_tn_fp_fn(predictions_pd_df, threshold):
-
     # Note that in Splink, our critiera are great than or equal to
     # meaning match prob of 0.40 is treated as a match at threshold 0.40
     predicted_match = predictions_pd_df["match_weight"] >= threshold
@@ -644,9 +643,7 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
     df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
         "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=False
     ).as_pandas_dataframe()
-    df_from_splink
 
-    df_predictions
     for _, splink_row in df_from_splink.iterrows():
         threshold = splink_row["truth_threshold"]
         # Compute stats using slow pandas methodology
@@ -740,7 +737,6 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
     on l.unique_id < r.unique_id
     """
     labels_table = duckdb.sql(sql).df()
-    labels_table
 
     # Predictions for this lael
     settings = SettingsCreator(
@@ -796,7 +792,6 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
     on concat(l.source_dataset,l.unique_id) < concat(r.source_dataset,r.unique_id)
     """
     labels_table = duckdb.sql(sql).df()
-    labels_table
 
     # Predictions for this lael
     settings = SettingsCreator(

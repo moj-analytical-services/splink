@@ -47,7 +47,7 @@ def get_comparison(e, settings_dict):
     return comparison
 
 
-def validate_settings_against_schema(settings_dict: dict[str, Any]):
+def validate_settings_against_schema(settings_dict: dict[str, Any]) -> None:
     """Validate a splink settings object against its jsonschema"""
 
     schema = get_schema()

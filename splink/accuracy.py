@@ -330,7 +330,6 @@ def truth_space_table_from_labels_column(
     match_weight_round_to_nearest=None,
     positives_not_captured_by_blocking_rules_scored_as_zero=True,
 ):
-
     # First we need to calculate the number of implicit true negatives
     # That is, any pair of records which have a different ID in the labels
     # column are a negative

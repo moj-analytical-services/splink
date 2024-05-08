@@ -180,7 +180,7 @@ class ComparisonCreator(ABC):
 
     @term_frequency_adjustments.setter
     @final
-    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool) -> None:
         self._term_frequency_adjustments = term_frequency_adjustments
 
     @property
@@ -189,7 +189,7 @@ class ComparisonCreator(ABC):
 
     @m_probabilities.setter
     @final
-    def m_probabilities(self, m_probabilities: List[float]):
+    def m_probabilities(self, m_probabilities: List[float]) -> None:
         if m_probabilities:
             num_probs_supplied = len(m_probabilities)
             num_non_null_levels = self.num_non_null_levels
@@ -207,7 +207,7 @@ class ComparisonCreator(ABC):
 
     @u_probabilities.setter
     @final
-    def u_probabilities(self, u_probabilities: List[float]):
+    def u_probabilities(self, u_probabilities: List[float]) -> None:
         if u_probabilities:
             num_probs_supplied = len(u_probabilities)
             num_non_null_levels = self.num_non_null_levels

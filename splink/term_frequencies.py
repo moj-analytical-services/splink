@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
 
-from .charts import altair_or_json, load_chart_definition
+from .charts import ChartReturnType, altair_or_json, load_chart_definition
 from .input_column import InputColumn
 from .pipeline import CTEPipeline
 
@@ -20,14 +20,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def colname_to_tf_tablename(input_column: InputColumn):
+def colname_to_tf_tablename(input_column: InputColumn) -> str:
     column_name_str = input_column.unquote().name.replace(" ", "_")
     return f"__splink__df_tf_{column_name_str}"
 
 
 def term_frequencies_for_single_column_sql(
-    input_column: InputColumn, table_name="__splink__df_concat"
-):
+    input_column: InputColumn, table_name: str = "__splink__df_concat"
+) -> str:
     col_name = input_column.name
 
     sql = f"""
@@ -154,15 +154,15 @@ def compute_all_term_frequencies_sqls(
             pipeline.append_input_dataframe(tf_table)
         else:
             sql = term_frequencies_for_single_column_sql(tf_col)
-            sql = {"sql": sql, "output_table_name": tf_table_name}
-            sqls.append(sql)
+            sql_info = {"sql": sql, "output_table_name": tf_table_name}
+            sqls.append(sql_info)
 
     sql = _join_tf_to_df_concat_sql(linker)
-    sql = {
+    sql_info = {
         "sql": sql,
         "output_table_name": "__splink__df_concat_with_tf",
     }
-    sqls.append(sql)
+    sqls.append(sql_info)
 
     return sqls
 
@@ -204,8 +204,13 @@ def comparison_level_to_tf_chart_data(cl: dict[str, Any]) -> dict[str, Any]:
 
 
 def tf_adjustment_chart(
-    linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
-):
+    linker: Linker,
+    col: str,
+    n_most_freq: int,
+    n_least_freq: int,
+    vals_to_include: list[str],
+    as_dict: bool,
+) -> ChartReturnType:
     # Data for chart
     comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
     comparison_records = comparison._as_detailed_records

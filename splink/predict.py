@@ -140,7 +140,7 @@ def predict_from_comparison_vectors_sqls(
 def predict_from_agreement_pattern_counts_sqls(
     comparisons: List[Comparison],
     probability_two_random_records_match: float,
-    sql_infinity_expression="'infinity'",
+    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     sqls = []
 

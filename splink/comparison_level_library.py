@@ -23,7 +23,7 @@ def unsupported_splink_dialects(
 ) -> Callable[[CreateSQLFunctionType[T]], CreateSQLFunctionType[T]]:
     def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
         @wraps(func)
-        def wrapper(self, splink_dialect: SplinkDialect) -> str:
+        def wrapper(self: T, splink_dialect: SplinkDialect) -> str:
             if splink_dialect.name in unsupported_dialects:
                 raise ValueError(
                     f"Dialect {splink_dialect.name} is not supported "
@@ -197,7 +197,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
         return self.tf_adjustment_column is not None  # type: ignore [attr-defined]
 
     @term_frequency_adjustments.setter
-    def term_frequency_adjustments(self, term_frequency_adjustments: bool):
+    def term_frequency_adjustments(self, term_frequency_adjustments: bool) -> None:
         if term_frequency_adjustments:
             if not self.col_expression.is_pure_column_or_column_reference:
                 raise ValueError(

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from ..linker import Linker
 
 
-def comparison_vector_distribution_sql(linker: Linker):
+def comparison_vector_distribution_sql(linker: Linker) -> str:
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
     groupby_cols = " , ".join(gamma_columns)
     gam_concat = " || ',' || ".join(gamma_columns)

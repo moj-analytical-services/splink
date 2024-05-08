@@ -19,7 +19,7 @@ class CacheDictWithLogging(TypedUserDict):
         self.executed_queries = []
         self.queries_retrieved_from_cache = []
 
-    def __getitem__(self, key) -> SplinkDataFrame:
+    def __getitem__(self, key: str) -> SplinkDataFrame:
         splink_dataframe = super().__getitem__(key)
 
         # Return a copy so that user can modify physical or templated name

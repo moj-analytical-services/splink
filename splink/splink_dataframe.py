@@ -33,7 +33,7 @@ class SplinkDataFrame(ABC):
         self.db_api = database_api
         self._target_schema = "splink"
         self.created_by_splink = False
-        self.sql_used_to_create = None
+        self.sql_used_to_create: str | None = None
         self.metadata = metadata or {}
 
     @abstractproperty
@@ -73,7 +73,7 @@ class SplinkDataFrame(ABC):
         )
 
     def drop_table_from_database_and_remove_from_cache(
-        self, force_non_splink_table=False
+        self, force_non_splink_table: bool = False
     ) -> None:
         """Drops the table from the underlying database, and removes it
         from the (linker) cache.

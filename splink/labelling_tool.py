@@ -22,8 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 def generate_labelling_tool_comparisons(
-    linker: "Linker", unique_id, source_dataset, match_weight_threshold=-4
-):
+    linker: "Linker",
+    unique_id: str,
+    source_dataset: str,
+    match_weight_threshold: float = -4,
+) -> SplinkDataFrame:
     # ensure the tf table exists
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
@@ -59,11 +62,11 @@ def generate_labelling_tool_comparisons(
 def render_labelling_tool_html(
     linker: "Linker",
     df_comparisons: SplinkDataFrame,
-    out_path="labelling_tool.html",
-    view_in_jupyter=False,
-    show_splink_predictions_in_interface=True,
+    out_path: str = "labelling_tool.html",
+    view_in_jupyter: bool = False,
+    show_splink_predictions_in_interface: bool = True,
     overwrite: bool = True,
-):
+) -> str:
     settings: dict[str, Any] = linker._settings_obj.as_dict()
 
     logger.warning(

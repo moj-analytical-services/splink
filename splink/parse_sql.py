@@ -47,7 +47,7 @@ def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
 
 
 def parse_columns_in_sql(
-    sql: str, sql_dialect: str, remove_quotes=True
+    sql: str, sql_dialect: str, remove_quotes: bool = True
 ) -> Sequence[exp.Column]:
     """Extract all columns found within a SQL expression.
 

@@ -65,7 +65,7 @@ def check_for_missing_settings_column(
     settings_id: str,
     settings_column_to_check: set[str],
     valid_input_dataframe_columns: list[str],
-):
+) -> tuple[str, InvalidColumnsLogGenerator] | None:
     """Validate simple settings columns with strings as input.
     i.e. Anything that doesn't require SQL to be parsed.
     """
@@ -76,6 +76,7 @@ def check_for_missing_settings_column(
     if missing_columns:
         # If the column is missing, return an InvalidColumnsTracker
         return settings_id, MissingColumnsLogGenerator(missing_columns)
+    return None
 
 
 def check_for_missing_or_invalid_columns_in_sql_strings(

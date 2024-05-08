@@ -95,7 +95,7 @@ class Comparison:
                 level._comparison_vector_value
             ]
             level.default_u_probability = default_u_values[
-                level._comparison_vector_value
+                level.comparison_vector_value
             ]
 
     @property
@@ -214,7 +214,9 @@ class Comparison:
         return dedupe_preserving_order(output_cols)
 
     def _columns_to_select_for_bayes_factor_parts(
-        self, retain_matching_columns, retain_intermediate_calculation_columns
+        self,
+        retain_matching_columns: bool,
+        retain_intermediate_calculation_columns: bool,
     ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
@@ -258,9 +260,9 @@ class Comparison:
 
     def _columns_to_select_for_predict(
         self,
-        retain_matching_columns,
-        retain_intermediate_calculation_columns,
-        training_mode,
+        retain_matching_columns: bool,
+        retain_intermediate_calculation_columns: bool,
+        training_mode: bool,
     ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
@@ -386,10 +388,10 @@ class Comparison:
         return records
 
     def _get_comparison_level_by_comparison_vector_value(
-        self, value
+        self, value: int
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
-            if cl._comparison_vector_value == value:
+            if cl.comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
 
@@ -422,7 +424,7 @@ class Comparison:
 
         comp_levels = [
             cl_template.format(
-                cvv=cl._comparison_vector_value,
+                cvv=cl.comparison_vector_value,
                 label=cl.label_for_charts,
                 sql=cl.sql_condition,
             )

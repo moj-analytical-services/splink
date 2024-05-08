@@ -24,7 +24,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
             d[col[0]] = row[idx]
         return d
 
-    def _register_udfs(self, register_udfs: bool):
+    def _register_udfs(self, register_udfs: bool) -> None:
         self.con.create_function("log2", 1, math.log2)
         self.con.create_function("pow", 2, pow)
         self.con.create_function("power", 2, pow)
@@ -63,7 +63,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
             self.con.create_function(sql_name, 2, wrap_func_with_str(func))
 
     def __init__(
-        self, connection: Union[str, sql_con] = ":memory:", register_udfs=True
+        self, connection: Union[str, sql_con] = ":memory:", register_udfs: bool = True
     ):
         super().__init__()
 

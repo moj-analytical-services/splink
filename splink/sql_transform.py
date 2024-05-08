@@ -10,7 +10,7 @@ def sqlglot_transform_sql(sql, func, dialect=None):
     return transformed_tree.sql(dialect)
 
 
-def _add_l_or_r_to_identifier(node: exp.Expression):
+def _add_l_or_r_to_identifier(node: exp.Expression) -> exp.Expression:
     if not isinstance(node, exp.Identifier):
         return node
 
@@ -37,7 +37,9 @@ def _remove_table_prefix(node):
     return node
 
 
-def move_l_r_table_prefix_to_column_suffix(blocking_rule, dialect=None) -> str:
+def move_l_r_table_prefix_to_column_suffix(
+    blocking_rule: str, dialect: str = None
+) -> str:
     expression_tree = sqlglot.parse_one(blocking_rule, read=dialect)
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
@@ -144,7 +146,7 @@ def add_suffix_to_all_column_identifiers(
 # TODO: can we get rid of add_quotes_and_table_prefix and use this everywhere instead
 def add_table_to_all_column_identifiers(
     sql_str: str, table_name: str, sqlglot_dialect: str
-):
+) -> str:
     tree = sqlglot.parse_one(sql_str, dialect=sqlglot_dialect)
     for col in tree.find_all(exp.Column):
         col.args["table"] = table_name

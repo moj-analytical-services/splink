@@ -60,7 +60,7 @@ def _exact_match_colname(sql_syntax_tree):
     return cols[0]
 
 
-def _get_and_subclauses(expr: sqlglot.Expression):
+def _get_and_subclauses(expr: sqlglot.Expression) -> list[sqlglot.Expression]:
     # get list of subclauses joined together by 'AND' at top-level
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     # or if no AND, return expression as a list, e.g. 'A' -> ['A']
@@ -138,7 +138,7 @@ class ComparisonLevel:
         tf_minimum_u_value: float = 0.0,
         m_probability: float = None,
         u_probability: float = None,
-        disable_tf_exact_match_detection=False,
+        disable_tf_exact_match_detection: bool = False,
     ):
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
@@ -363,11 +363,11 @@ class ComparisonLevel:
 
     @property
     def label_for_charts(self):
-        return self._label_for_charts or str(self._comparison_vector_value)
+        return self._label_for_charts or str(self.comparison_vector_value)
 
     def _label_for_charts_no_duplicates(
         self, comparison_levels: list[ComparisonLevel] = None
-    ):
+    ) -> str:
         if comparison_levels is not None:
             labels = []
             for cl in comparison_levels:
@@ -377,7 +377,7 @@ class ComparisonLevel:
             return self.label_for_charts
 
         # Make label unique
-        cvv = str(self._comparison_vector_value)
+        cvv = str(self.comparison_vector_value)
         label = self.label_for_charts
         return f"{cvv}. {label}"
 
@@ -385,6 +385,15 @@ class ComparisonLevel:
     def _is_else_level(self):
         if self.sql_condition.strip().upper() == "ELSE":
             return True
+
+    @property
+    def comparison_vector_value(self) -> int:
+        if (cvv := self._comparison_vector_value) is not None:
+            return cvv
+        raise ValueError(
+            "To access a `comparison_vector_value`, a `ComparisonLevel` must "
+            "belong to a `Comparison`"
+        )
 
     @property
     def _has_tf_adjustments(self):
@@ -451,9 +460,9 @@ class ComparisonLevel:
                 "context of a list of ComparisonLevels within a Comparison."
             )
         if self._is_else_level:
-            return f"{self.sql_condition} {self._comparison_vector_value}"
+            return f"{self.sql_condition} {self.comparison_vector_value}"
         else:
-            return f"WHEN {self.sql_condition} THEN {self._comparison_vector_value}"
+            return f"WHEN {self.sql_condition} THEN {self.comparison_vector_value}"
 
     @property
     def _is_exact_match(self):
@@ -518,26 +527,26 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    def _bayes_factor_sql(self, gamma_column_name: str):
+    def _bayes_factor_sql(self, gamma_column_name: str) -> str:
         bayes_factor = (
             self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
         )
         sql = f"""
         WHEN
-        {gamma_column_name} = {self._comparison_vector_value}
+        {gamma_column_name} = {self.comparison_vector_value}
         THEN cast({bayes_factor} as float8)
         """
         return dedent(sql)
 
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> str:
         gamma_colname_value_is_this_level = (
-            f"{gamma_column_name} = {self._comparison_vector_value}"
+            f"{gamma_column_name} = {self.comparison_vector_value}"
         )
 
         # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
-        if self._comparison_vector_value == -1:
+        if self.comparison_vector_value == -1:
             sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif not self._has_tf_adjustments:
             sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
@@ -630,12 +639,12 @@ class ComparisonLevel:
 
     def _as_completed_dict(self):
         comp_dict = self.as_dict()
-        comp_dict["comparison_vector_value"] = self._comparison_vector_value
+        comp_dict["comparison_vector_value"] = self.comparison_vector_value
         return comp_dict
 
     def _as_detailed_record(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> dict[str, Any]:
         "A detailed representation of this level to describe it in charting outputs"
         output: dict[str, Any] = {}
         output["sql_condition"] = self.sql_condition
@@ -659,7 +668,7 @@ class ComparisonLevel:
         output["is_null_level"] = self.is_null_level
         output["bayes_factor"] = self._bayes_factor
         output["log2_bayes_factor"] = self._log2_bayes_factor
-        output["comparison_vector_value"] = self._comparison_vector_value
+        output["comparison_vector_value"] = self.comparison_vector_value
         output["max_comparison_vector_value"] = comparison_num_levels - 1
         output["bayes_factor_description"] = self._bayes_factor_description
 
@@ -667,7 +676,7 @@ class ComparisonLevel:
 
     def _parameter_estimates_as_records(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> list[dict[str, Any]]:
         output_records = []
 
         cl_record = self._as_detailed_record(comparison_num_levels, comparison_levels)

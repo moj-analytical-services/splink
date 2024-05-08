@@ -56,7 +56,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
                 """
             )
 
-    def delete_table_from_database(self, name: str):
+    def delete_table_from_database(self, name: str) -> None:
         # If the table is in fact a pandas dataframe that's been registered using
         # duckdb con.register() then DROP TABLE will fail with
         # Catalog Error: x is of type View
@@ -67,7 +67,9 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
             drop_sql = f"DROP VIEW IF EXISTS {name}"
             self._execute_sql_against_backend(drop_sql)
 
-    def _table_registration(self, input, table_name) -> None:
+    def _table_registration(
+        self, input: AcceptableInputTableType, table_name: str
+    ) -> None:
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -76,7 +78,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         self._con.register(table_name, input)
 
     def table_to_splink_dataframe(
-        self, templated_name, physical_name
+        self, templated_name: str, physical_name: str
     ) -> DuckDBDataFrame:
         return DuckDBDataFrame(templated_name, physical_name, self)
 

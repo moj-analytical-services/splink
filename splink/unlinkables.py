@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .pipeline import CTEPipeline
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def unlinkables_data(linker: Linker):
+def unlinkables_data(linker: Linker) -> dict[str, Any]:
     """Generate data displaying the proportion of records that are "unlinkable"
     for a given splink score threshold and model parameters. These are records that,
     even when compared with themselves, do not contain enough information to confirm

@@ -111,7 +111,7 @@ class ComparisonLevelCreator(ABC):
 
     @is_null_level.setter
     @final
-    def is_null_level(self, is_null_level: bool):
+    def is_null_level(self, is_null_level: bool) -> None:
         self._is_null_level = is_null_level
 
     @property
@@ -120,7 +120,7 @@ class ComparisonLevelCreator(ABC):
 
     @is_exact_match_level.setter
     @final
-    def is_exact_match_level(self, is_exact_match_level: bool):
+    def is_exact_match_level(self, is_exact_match_level: bool) -> None:
         self._is_exact_match_level = is_exact_match_level
 
     def __repr__(self) -> str:

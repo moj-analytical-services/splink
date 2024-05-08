@@ -38,8 +38,8 @@ def _rows_needed_for_n_pairs(n_pairs):
 
 
 def _proportion_sample_size_link_only(
-    row_counts_individual_dfs: List[int], max_pairs: int
-):
+    row_counts_individual_dfs: List[int], max_pairs: float
+) -> tuple[float, float]:
     # total valid links is sum of pairwise product of individual row counts
     # i.e. if frame_counts are [a, b, c, d, ...],
     # total_links = a*b + a*c + a*d + ... + b*c + b*d + ... + c*d + ...
@@ -57,7 +57,7 @@ def _proportion_sample_size_link_only(
     return proportion, sample_size
 
 
-def estimate_u_values(linker: Linker, max_pairs, seed=None):
+def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline()
 

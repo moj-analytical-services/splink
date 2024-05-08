@@ -1,7 +1,13 @@
+from __future__ import annotations
+
+from .input_column import InputColumn
+
 CONCAT_SEPARATOR = "-__-"
 
 
-def _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix=None):
+def _composite_unique_id_from_nodes_sql(
+    unique_id_cols: list[InputColumn], table_prefix: str | None = None
+) -> str:
     """
     Returns:
         str: e.g. 'l."source_dataset" || -__- || l."unique_id"'

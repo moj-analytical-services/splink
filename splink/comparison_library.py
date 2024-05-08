@@ -37,7 +37,9 @@ class CustomComparison(ComparisonCreator):
         # levels directly
 
     @staticmethod
-    def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict[str, Any]]):
+    def _convert_to_creator(
+        cl: Union[ComparisonLevelCreator, dict[str, Any]],
+    ) -> ComparisonLevelCreator:
         if isinstance(cl, ComparisonLevelCreator):
             return cl
         if isinstance(cl, dict):
@@ -398,7 +400,7 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
-        distance_function_name,
+        distance_function_name: str,
         distance_threshold_or_thresholds: Union[Iterable[float], float],
         higher_is_more_similar: bool = True,
     ):
@@ -471,8 +473,8 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         metrics: Union[DateMetricType, List[DateMetricType]],
         thresholds: Union[int, float, List[Union[int, float]]],
         datetime_format: str = None,
-        term_frequency_adjustments=False,
-        invalid_dates_as_null=True,
+        term_frequency_adjustments: bool = False,
+        invalid_dates_as_null: bool = True,
     ):
         """Invalid dates as null does nothing if input is not a string"""
         time_metrics_as_iterable = ensure_is_iterable(metrics)

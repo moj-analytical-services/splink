@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from jinja2 import Template
 
@@ -20,6 +20,10 @@ from .unique_id_concat import (
 if TYPE_CHECKING:
     from .linker import Linker
 
+SamplingMethods = Literal[
+    "random", "by_cluster_size", "lowest_density_clusters_by_size"
+]
+
 
 def _quo_if_str(x):
     if isinstance(x, str):
@@ -28,7 +32,7 @@ def _quo_if_str(x):
         return str(x)
 
 
-def _clusters_sql(df_clustered_nodes, cluster_ids: list[str]) -> str:
+def _clusters_sql(df_clustered_nodes: SplinkDataFrame, cluster_ids: list[str]) -> str:
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -64,7 +68,7 @@ def df_clusters_as_records(
     return df_clusters.as_record_dict()
 
 
-def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
+def _nodes_sql(df_clustered_nodes: SplinkDataFrame, cluster_ids: list[str]) -> str:
     """Generates SQL query to select all columns from df_clustered_nodes
     for list of cluster IDs provided.
 
@@ -110,7 +114,7 @@ def create_df_nodes(
 
 def _edges_sql(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
-):
+) -> str:
     unique_id_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     nodes_l_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols, "nodes_l")
@@ -143,7 +147,7 @@ def _edges_sql(
 
 def df_edges_as_records(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
-):
+) -> list[dict[str, Any]]:
     sql = _edges_sql(linker, df_predicted_edges, df_nodes)
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__scs_edges")
@@ -153,7 +157,10 @@ def df_edges_as_records(
 
 
 def _get_random_cluster_ids(
-    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int, seed=None
+    linker: "Linker",
+    connected_components: SplinkDataFrame,
+    sample_size: int,
+    seed: int | None = None,
 ) -> list[str]:
     sql = f"""
     select count(distinct cluster_id) as count
@@ -288,9 +295,9 @@ def _get_lowest_density_clusters(
 def _get_cluster_ids(
     linker: "Linker",
     df_clustered_nodes: SplinkDataFrame,
-    sampling_method,
-    sample_size,
-    sample_seed,
+    sampling_method: SamplingMethods,
+    sample_size: int,
+    sample_seed: int | None,
     _df_cluster_metrics: Optional[SplinkDataFrame] = None,
 ) -> tuple[list[str], list[str]]:
     if sampling_method == "random":
@@ -339,14 +346,14 @@ def render_splink_cluster_studio_html(
     df_predicted_edges: SplinkDataFrame,
     df_clustered_nodes: SplinkDataFrame,
     out_path: str,
-    sampling_method="random",
-    sample_size=10,
-    sample_seed=None,
+    sampling_method: SamplingMethods = "random",
+    sample_size: int = 10,
+    sample_seed: int | None = None,
     cluster_ids: list[str] = None,
     cluster_names: list[str] = None,
     overwrite: bool = False,
     _df_cluster_metrics: SplinkDataFrame = None,
-):
+) -> str:
     bundle_observable_notebook = True
 
     svu_options = {

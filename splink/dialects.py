@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, Type, final
+from typing import TYPE_CHECKING, Type, TypeVar, final
 
 if TYPE_CHECKING:
     from .comparison_level_library import (
         AbsoluteTimeDifferenceLevel,
         ArrayIntersectLevel,
     )
+
+# equivalent to typing.Self in python >= 3.11
+Self = TypeVar("Self", bound="SplinkDialect")
 
 
 class SplinkDialect(ABC):
@@ -35,7 +38,7 @@ class SplinkDialect(ABC):
         return self.name
 
     @classmethod
-    def from_string(cls, dialect_name: str):
+    def from_string(cls: type[Self], dialect_name: str) -> Self:
         # list of classes which match _dialect_name_for_factory
         # should just get a single subclass, as this should be unique
         classes_from_dialect_name = [
@@ -132,17 +135,24 @@ class SplinkDialect(ABC):
         )
 
     @final
-    def regex_extract(self, name: str, pattern: str, capture_group: int = 0):
+    def regex_extract(self, name: str, pattern: str, capture_group: int = 0) -> str:
         return self._wrap_in_nullif(self._regex_extract_raw)(
             name, pattern, capture_group
         )
 
-    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'regex_extract' function"
         )
 
-    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+    def explode_arrays_sql(
+        self,
+        tbl_name: str,
+        columns_to_explode: list[str],
+        other_columns_to_retain: list[str],
+    ) -> str:
         raise NotImplementedError(
             f"Unnesting blocking rules are not supported for {type(self)}"
         )
@@ -195,7 +205,7 @@ class DuckDBDialect(SplinkDialect):
 
     # TODO: this is only needed for duckdb < 0.9.0.
     # should we just ditch support for that? (only for cll - engine should still work)
-    def array_intersect(self, clc: ArrayIntersectLevel):
+    def array_intersect(self, clc: ArrayIntersectLevel) -> str:
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
         threshold = clc.min_intersection
@@ -207,7 +217,9 @@ class DuckDBDialect(SplinkDialect):
             f" >= {threshold}"
         ).strip()
 
-    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
     # TODO: roll out to other dialects, at least for now
@@ -226,7 +238,12 @@ class DuckDBDialect(SplinkDialect):
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
 
-    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+    def explode_arrays_sql(
+        self,
+        tbl_name: str,
+        columns_to_explode: list[str],
+        other_columns_to_retain: list[str],
+    ) -> str:
         """Generated sql that explodes one or more columns in a table"""
         columns_to_explode = columns_to_explode.copy()
         other_columns_to_retain = other_columns_to_retain.copy()
@@ -310,7 +327,12 @@ class SparkDialect(SplinkDialect):
         else:
             return f" TABLESAMPLE ({percent} PERCENT) "
 
-    def explode_arrays_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+    def explode_arrays_sql(
+        self,
+        tbl_name: str,
+        columns_to_explode: list[str],
+        other_columns_to_retain: list[str],
+    ) -> str:
         """Generated sql that explodes one or more columns in a table"""
         columns_to_explode = columns_to_explode.copy()
         other_columns_to_retain = other_columns_to_retain.copy()
@@ -385,7 +407,7 @@ class PostgresDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
-    def absolute_time_difference(self, clc: AbsoluteTimeDifferenceLevel):
+    def absolute_time_difference(self, clc: AbsoluteTimeDifferenceLevel) -> str:
         # need custom solution as sqlglot gets confused by 'metric', as in Spark
         # datediff _only_ works in days
         clc.col_expression.sql_dialect = self
@@ -397,7 +419,9 @@ class PostgresDialect(SplinkDialect):
             f"<= {clc.time_threshold_seconds}"
         )
 
-    def _regex_extract_raw(self, name: str, pattern: str, capture_group: int = 0):
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
         # full match - wrap pattern in parentheses so first group is whole expression
         if capture_group == 0:
             pattern = f"({pattern})"
@@ -417,17 +441,17 @@ class PostgresDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "YYYY-MM-DDTHH24:MI:SS"
 
-    def try_parse_date(self, name: str, date_format: str = None):
+    def try_parse_date(self, name: str, date_format: str = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_cast_date({name}, '{date_format}')"""
 
-    def try_parse_timestamp(self, name: str, timestamp_format: str = None):
+    def try_parse_timestamp(self, name: str, timestamp_format: str = None) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""try_cast_timestamp({name}, '{timestamp_format}')"""
 
-    def array_intersect(self, clc: ArrayIntersectLevel):
+    def array_intersect(self, clc: ArrayIntersectLevel) -> str:
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
         threshold = clc.min_intersection
