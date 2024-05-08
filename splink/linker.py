@@ -1,4 +1,4 @@
-from __future__ import annotations  # noqa: I001
+from __future__ import annotations
 
 import json
 import logging
@@ -6,24 +6,8 @@ import os
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Any, Dict, Optional, Sequence, Union, List
+from typing import Any, Dict, List, Optional, Sequence, Union
 
-from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
-from .vertically_concatenate import (
-    enqueue_df_concat_with_tf,
-    compute_df_concat_with_tf,
-    enqueue_df_concat,
-)
-
-from splink.input_column import InputColumn
-from splink.settings_validation.log_invalid_columns import (
-    InvalidColumnsLogger,
-    SettingsColumnCleaner,
-)
-from splink.settings_validation.valid_types import (
-    _validate_dialect,
-)
-from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
@@ -44,6 +28,10 @@ from .blocking import (
     materialise_exploded_id_tables,
 )
 from .blocking_rule_creator import BlockingRuleCreator
+from .blocking_rule_creator_utils import (
+    blocking_rule_args_to_list_of_blocking_rules,
+    to_blocking_rule_creator,
+)
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     ChartReturnType,
@@ -59,7 +47,8 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_studio import render_splink_cluster_studio_html, SamplingMethods
+from .cluster_studio import SamplingMethods, render_splink_cluster_studio_html
+from .column_expression import ColumnExpression
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
@@ -70,10 +59,9 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .database_api import AcceptableInputTableType, DatabaseAPISubClass
 from .dialects import SplinkDialect
 from .edge_metrics import compute_edge_metrics
-
-from .database_api import AcceptableInputTableType, DatabaseAPISubClass
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
@@ -86,6 +74,7 @@ from .graph_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
+from .input_column import InputColumn
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
@@ -106,32 +95,40 @@ from .missingness import completeness_data, missingness_data
 from .optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import CTEPipeline
 from .predict import (
-    predict_from_comparison_vectors_sqls_using_settings,
     predict_from_comparison_vectors_sqls,
+    predict_from_comparison_vectors_sqls_using_settings,
 )
 from .profile_data import profile_columns
 from .settings_creator import SettingsCreator
+from .settings_validation.log_invalid_columns import (
+    InvalidColumnsLogger,
+    SettingsColumnCleaner,
+)
+from .settings_validation.valid_types import (
+    _validate_dialect,
+)
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
 )
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
+    _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
     term_frequencies_for_single_column_sql,
     tf_adjustment_chart,
-    _join_new_table_to_df_concat_with_tf_sql,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
 from .unlinkables import unlinkables_data
-
-from .column_expression import ColumnExpression
 from .vertically_concatenate import (
-    vertically_concatenate_sql,
+    compute_df_concat_with_tf,
+    enqueue_df_concat,
+    enqueue_df_concat_with_tf,
     split_df_concat_with_tf_into_two_tables_sqls,
+    vertically_concatenate_sql,
 )
 
 logger = logging.getLogger(__name__)
