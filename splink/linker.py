@@ -31,6 +31,7 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
+    CumulativeComparisonsDict,
     count_comparisons_from_blocking_rule_pre_filter_conditions,
     cumulative_comparisons_generated_by_blocking_rules,
     number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
@@ -58,7 +59,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_studio import render_splink_cluster_studio_html
+from .cluster_studio import render_splink_cluster_studio_html, SamplingMethods
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
@@ -1854,7 +1855,7 @@ class Linker:
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
-    ):
+    ) -> ChartReturnType:
         """Generate a ROC chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -1919,7 +1920,7 @@ class Linker:
         labels_splinkdataframe_or_table_name: SplinkDataFrame | str,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
-    ):
+    ) -> ChartReturnType:
         """Generate a precision-recall chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -1976,7 +1977,7 @@ class Linker:
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
-    ):
+    ) -> ChartReturnType:
         """Generate an accuracy measure chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -2059,10 +2060,10 @@ class Linker:
     def threshold_selection_tool_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
-        threshold_actual=0.5,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
-    ):
+    ) -> ChartReturnType:
         """Generate an accuracy chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -2172,7 +2173,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
-    ):
+    ) -> SplinkDataFrame:
         """Generate truth statistics (false positive etc.) for each threshold value of
         match_probability, suitable for plotting a ROC chart.
 
@@ -2208,7 +2209,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
-    ):
+    ) -> ChartReturnType:
         """Generate a ROC chart from ground truth data, whereby the ground truth
         is in a column in the input dataset called `labels_column_name`
 
@@ -2246,7 +2247,7 @@ class Linker:
         labels_column_name: str,
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
-    ):
+    ) -> ChartReturnType:
         """Generate a precision-recall chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
 
@@ -2284,7 +2285,7 @@ class Linker:
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
-    ):
+    ) -> ChartReturnType:
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
 
@@ -2344,7 +2345,7 @@ class Linker:
         threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
-    ):
+    ) -> ChartReturnType:
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
 
@@ -2429,8 +2430,12 @@ class Linker:
         )
 
     def match_weights_histogram(
-        self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
-    ):
+        self,
+        df_predict: SplinkDataFrame,
+        target_bins: int = 30,
+        width: int = 600,
+        height: int = 250,
+    ) -> ChartReturnType:
         """Generate a histogram that shows the distribution of match weights in
         `df_predict`
 
@@ -2453,9 +2458,9 @@ class Linker:
     def waterfall_chart(
         self,
         records: list[dict[str, Any]],
-        filter_nulls=True,
-        remove_sensitive_data=False,
-    ):
+        filter_nulls: bool = True,
+        remove_sensitive_data: bool = False,
+    ) -> ChartReturnType:
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -2492,10 +2497,10 @@ class Linker:
 
     def unlinkables_chart(
         self,
-        x_col="match_weight",
-        source_dataset=None,
-        as_dict=False,
-    ):
+        x_col: str = "match_weight",
+        source_dataset: str | None = None,
+        as_dict: bool = False,
+    ) -> ChartReturnType:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
 
@@ -2534,10 +2539,10 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         out_path: str,
-        overwrite=False,
-        num_example_rows=2,
-        return_html_as_string=False,
-    ):
+        overwrite: bool = False,
+        num_example_rows: int = 2,
+        return_html_as_string: bool = False,
+    ) -> str | None:
         """Generate an interactive html visualization of the linker's predictions and
         save to `out_path`.  For more information see
         [this video](https://www.youtube.com/watch?v=DNvCMqjipis)
@@ -2584,8 +2589,11 @@ class Linker:
         )
         if return_html_as_string:
             return rendered
+        return None
 
-    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=False):
+    def parameter_estimate_comparisons_chart(
+        self, include_m: bool = True, include_u: bool = False
+    ) -> ChartReturnType:
         """Show a chart that shows how parameter estimates have differed across
         the different estimation methods you have used.
 
@@ -2613,7 +2621,7 @@ class Linker:
 
         return parameter_estimate_comparisons(records)
 
-    def missingness_chart(self, input_dataset: str = None):
+    def missingness_chart(self, input_dataset: str = None) -> ChartReturnType:
         """Generate a summary chart of the missingness (prevalence of nulls) of
         columns in the input datasets.  By default, missingness is assessed across
         all input datasets
@@ -2646,7 +2654,9 @@ class Linker:
         records = missingness_data(self, input_dataset)
         return missingness_chart(records)
 
-    def completeness_chart(self, input_dataset: str = None, cols: list[str] = None):
+    def completeness_chart(
+        self, input_dataset: str = None, cols: list[str] = None
+    ) -> ChartReturnType:
         """Generate a summary chart of the completeness (proportion of non-nulls) of
         columns in each of the input datasets. By default, completeness is assessed for
         all column in the input data.
@@ -2764,7 +2774,7 @@ class Linker:
     def cumulative_comparisons_from_blocking_rules_records(
         self,
         blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] | None = None,
-    ):
+    ) -> list[CumulativeComparisonsDict]:
         """Output the number of comparisons generated by each successive blocking rule.
 
         This is equivalent to the output size of df_predict and details how many
@@ -2818,7 +2828,7 @@ class Linker:
     def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
         blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] = None,
-    ):
+    ) -> ChartReturnType:
         """Display a chart with the cumulative number of comparisons generated by a
         selection of blocking rules.
 
@@ -2932,7 +2942,7 @@ class Linker:
         n_least_freq: int = 10,
         vals_to_include: str | list[str] | None = None,
         as_dict: bool = False,
-    ):
+    ) -> ChartReturnType:
         """Display a chart showing the impact of term frequency adjustments on a
         specific comparison level.
         Each value
@@ -3009,14 +3019,14 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         out_path: str,
-        sampling_method="random",
+        sampling_method: SamplingMethods = "random",
         sample_size: int = 10,
         cluster_ids: list[str] = None,
         cluster_names: list[str] = None,
         overwrite: bool = False,
-        return_html_as_string=False,
+        return_html_as_string: bool = False,
         _df_cluster_metrics: SplinkDataFrame = None,
-    ):
+    ) -> str | None:
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
 
@@ -3071,6 +3081,7 @@ class Linker:
 
         if return_html_as_string:
             return rendered
+        return None
 
     def save_model_to_json(
         self, out_path: str | None = None, overwrite: bool = False
@@ -3107,7 +3118,7 @@ class Linker:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
-    ):
+    ) -> None:
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
 
