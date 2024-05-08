@@ -23,8 +23,8 @@ class ExactMatchRule(BlockingRuleCreator):
     def __init__(
         self,
         col_name_or_expr: Union[str, ColumnExpression],
-        salting_partitions=None,
-        arrays_to_explode=None,
+        salting_partitions: int = None,
+        arrays_to_explode: list[str] | None = None,
     ):
         super().__init__(
             salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
@@ -42,8 +42,8 @@ class CustomRule(BlockingRuleCreator):
         self,
         blocking_rule: str,
         base_dialect_str: str = None,
-        salting_partitions=None,
-        arrays_to_explode=None,
+        salting_partitions: int | None = None,
+        arrays_to_explode: list[str] | None = None,
     ):
         super().__init__(
             salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
@@ -83,8 +83,8 @@ class _Merge(BlockingRuleCreator):
     def __init__(
         self,
         *blocking_rules: Union[BlockingRuleCreator, dict[str, Any]],
-        salting_partitions=None,
-        arrays_to_explode=None,
+        salting_partitions: int | None = None,
+        arrays_to_explode: list[str] | None = None,
     ):
         super().__init__(
             salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
@@ -161,8 +161,8 @@ class Not(BlockingRuleCreator):
 
 def block_on(
     *col_names_or_exprs: Union[str, ColumnExpression],
-    salting_partitions=None,
-    arrays_to_explode=None,
+    salting_partitions: int | None = None,
+    arrays_to_explode: list[str] | None = None,
 ) -> BlockingRuleCreator:
     if isinstance(col_names_or_exprs[0], list):
         raise TypeError(
