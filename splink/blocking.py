@@ -88,7 +88,7 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker) -> str:
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
@@ -99,7 +99,7 @@ class BlockingRule:
         # meaning these comparisons get lost
         return f"coalesce(({self.blocking_rule_sql}),false)"
 
-    def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker) -> str:
         """A SQL string that excludes the results of ALL previous blocking rules from
         the pairwise comparisons generated.
         """
@@ -116,11 +116,11 @@ class BlockingRule:
         self,
         linker: Linker,
         *,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+    ) -> str:
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -249,11 +249,11 @@ class SaltedBlockingRule(BlockingRule):
         self,
         linker: Linker,
         *,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+    ) -> str:
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -296,7 +296,7 @@ class ExplodingBlockingRule(BlockingRule):
 
     def marginal_exploded_id_pairs_table_sql(
         self, linker: Linker, br: BlockingRule, link_type: "LinkTypeLiteralType"
-    ):
+    ) -> str:
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
         the preceding blocking rules
@@ -336,7 +336,7 @@ class ExplodingBlockingRule(BlockingRule):
             self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
         self.exploded_id_pair_table = None
 
-    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker) -> str:
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
@@ -372,11 +372,11 @@ class ExplodingBlockingRule(BlockingRule):
         self,
         linker: Linker,
         *,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+    ) -> str:
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -413,7 +413,9 @@ class ExplodingBlockingRule(BlockingRule):
         return output
 
 
-def materialise_exploded_id_tables(linker: Linker, link_type: "LinkTypeLiteralType"):
+def materialise_exploded_id_tables(
+    linker: Linker, link_type: "LinkTypeLiteralType"
+) -> list[ExplodingBlockingRule]:
     settings_obj = linker._settings_obj
 
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
@@ -486,7 +488,7 @@ def block_using_rules_sqls(
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
     set_match_probability_to_one: bool = False,
-):
+) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
