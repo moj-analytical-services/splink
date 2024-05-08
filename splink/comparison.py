@@ -92,7 +92,7 @@ class Comparison:
                     level._max_level = False
                 counter -= 1
             level.default_m_probability = default_m_values[
-                level._comparison_vector_value
+                level.comparison_vector_value
             ]
             level.default_u_probability = default_u_values[
                 level.comparison_vector_value
