@@ -14,7 +14,9 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def row_examples(linker: Linker, example_rows_per_category=2):
+def row_examples(
+    linker: Linker, example_rows_per_category: int = 2
+) -> list[dict[str, str]]:
     sqls = []
 
     uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
@@ -83,7 +85,7 @@ def row_examples(linker: Linker, example_rows_per_category=2):
 
 
 def comparison_viewer_table_sqls(
-    linker: Linker, example_rows_per_category=2
+    linker: Linker, example_rows_per_category: int = 2
 ) -> list[dict[str, str]]:
     sqls = row_examples(linker, example_rows_per_category)
 
@@ -108,11 +110,11 @@ def comparison_viewer_table_sqls(
 
 
 def render_splink_comparison_viewer_html(
-    comparison_vector_data,
+    comparison_vector_data: list[dict[str, Any]],
     splink_settings: dict[str, Any],
     out_path: str,
     overwrite: bool = False,
-):
+) -> str:
     # When developing the package, it can be easier to point
     # ar the script live on observable using <script src=>
     # rather than bundling the whole thing into the html
