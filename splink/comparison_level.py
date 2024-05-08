@@ -6,7 +6,7 @@ import re
 from copy import copy
 from statistics import median
 from textwrap import dedent
-from typing import Any, Optional
+from typing import Any, Optional, Union, cast
 
 import sqlglot
 from sqlglot.expressions import Column, Identifier
@@ -69,14 +69,14 @@ def _get_and_subclauses(expr: sqlglot.Expression) -> list[sqlglot.Expression]:
     return [expr]
 
 
-def _default_m_values(num_levels):
+def _default_m_values(num_levels: int) -> list[float]:
     proportion_exact_match = 0.95
     remainder = 1 - proportion_exact_match
     split_remainder = remainder / (num_levels - 1)
     return [split_remainder] * (num_levels - 1) + [proportion_exact_match]
 
 
-def _default_u_values(num_levels):
+def _default_u_values(num_levels: int) -> list[float]:
     m_vals = _default_m_values(num_levels)
     if num_levels == 2:
         match_weights = [-5]
@@ -154,8 +154,8 @@ class ComparisonLevel:
         # internally these can be LEVEL_NOT_OBSERVED_TEXT, so allow for this
         self._m_probability: float | None | str = m_probability
         self._u_probability: float | None | str = u_probability
-        self.default_m_probability = None
-        self.default_u_probability = None
+        self.default_m_probability: float | None = None
+        self.default_u_probability: float | None = None
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
@@ -207,34 +207,36 @@ class ComparisonLevel:
             return input_column.unquote().name
 
     @property
-    def m_probability(self):
+    def m_probability(self) -> float | None:
         if self.is_null_level:
             raise ValueError("Null levels have no m-probability")
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._m_probability is None and self.default_m_probability is not None:
+        m_probability = cast(Union[float, None], self._m_probability)
+        if m_probability is None and self.default_m_probability is not None:
             return self.default_m_probability
-        return self._m_probability
+        return m_probability
 
     @m_probability.setter
-    def m_probability(self, value):
+    def m_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
 
         self._m_probability = value
 
     @property
-    def u_probability(self):
+    def u_probability(self) -> float | None:
         if self.is_null_level:
             raise ValueError("Null levels have no u-probability")
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
-        if self._u_probability is None and self.default_m_probability is not None:
+        u_probability = cast(Union[float, None], self._u_probability)
+        if u_probability is None and self.default_u_probability is not None:
             return self.default_u_probability
-        return self._u_probability
+        return u_probability
 
     @u_probability.setter
-    def u_probability(self, value):
+    def u_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         self._u_probability = value
@@ -502,7 +504,7 @@ class ComparisonLevel:
 
     def _u_probability_corresponding_to_exact_match(
         self, comparison_levels: list[ComparisonLevel]
-    ):
+    ) -> float | None:
         if self.disable_tf_exact_match_detection:
             return self.u_probability
 
