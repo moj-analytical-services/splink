@@ -209,7 +209,7 @@ class ComparisonLevel:
     @property
     def m_probability(self):
         if self.is_null_level:
-            return None
+            raise ValueError("Null levels have no m-probability")
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._m_probability is None and self.default_m_probability is not None:
@@ -226,7 +226,7 @@ class ComparisonLevel:
     @property
     def u_probability(self):
         if self.is_null_level:
-            return None
+            raise ValueError("Null levels have no u-probability")
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._u_probability is None and self.default_m_probability is not None:
@@ -652,11 +652,12 @@ class ComparisonLevel:
             comparison_levels
         )
 
-        output["m_probability"] = self.m_probability
-        output["u_probability"] = self.u_probability
+        if not self._is_null_level:
+            output["m_probability"] = self.m_probability
+            output["u_probability"] = self.u_probability
 
-        output["m_probability_description"] = self._m_probability_description
-        output["u_probability_description"] = self._u_probability_description
+            output["m_probability_description"] = self._m_probability_description
+            output["u_probability_description"] = self._u_probability_description
 
         output["has_tf_adjustments"] = self._has_tf_adjustments
         if self._has_tf_adjustments:

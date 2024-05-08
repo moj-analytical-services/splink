@@ -47,23 +47,30 @@ def _comparison_records(
     record_as_dict: dict[str, Any], comparison: Comparison, hide_details: bool = False
 ) -> list[dict[str, Any]]:
     output_records = []
-    waterfall_record = {}
 
     c = comparison
     cv_value = record_as_dict[c._gamma_column_name]
 
     cl = c._get_comparison_level_by_comparison_vector_value(cv_value)
+    waterfall_record = {
+        field: value
+        for field, value in cl._as_detailed_record(
+            c._num_levels, c.comparison_levels
+        ).items()
+        if field
+        in [
+            "label_for_charts",
+            "sql_condition",
+            "log2_bayes_factor",
+            "bayes_factor",
+            "comparison_vector_value",
+            "m_probability",
+            "u_probability",
+            "bayes_factor_description",
+        ]
+    }
 
     waterfall_record["column_name"] = c.output_column_name
-    waterfall_record["label_for_charts"] = cl.label_for_charts
-
-    waterfall_record["sql_condition"] = cl.sql_condition
-    waterfall_record["log2_bayes_factor"] = cl._log2_bayes_factor
-    waterfall_record["bayes_factor"] = cl._bayes_factor
-    waterfall_record["comparison_vector_value"] = int(cv_value)
-    waterfall_record["m_probability"] = cl.m_probability
-    waterfall_record["u_probability"] = cl.u_probability
-    waterfall_record["bayes_factor_description"] = cl._bayes_factor_description
     input_cols_used = c._input_columns_used_by_case_statement
     input_cols_l = [ic.unquote().name_l for ic in input_cols_used]
     input_cols_r = [ic.unquote().name_r for ic in input_cols_used]
