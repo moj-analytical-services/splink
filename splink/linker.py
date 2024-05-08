@@ -45,6 +45,7 @@ from .blocking import (
 from .blocking_rule_creator import BlockingRuleCreator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
+    ChartReturnType,
     accuracy_chart,
     completeness_chart,
     cumulative_blocking_rule_comparisons_generated,
@@ -370,7 +371,9 @@ class Linker:
         )
 
     def _register_input_tables(
-        self, input_tables: Sequence[AcceptableInputTableType], input_aliases
+        self,
+        input_tables: Sequence[AcceptableInputTableType],
+        input_aliases: Optional[str | List[str]],
     ) -> Dict[str, SplinkDataFrame]:
         if input_aliases is None:
             input_table_aliases = [
@@ -410,7 +413,7 @@ class Linker:
         InvalidColumnsLogger(cleaned_settings).construct_output_logs(validate_settings)
 
     def _table_to_splink_dataframe(
-        self, templated_name, physical_name
+        self, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         """Create a SplinkDataframe from a table in the underlying database called
         `physical_name`.
@@ -422,7 +425,12 @@ class Linker:
         """
         return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
 
-    def register_table(self, input, table_name, overwrite=False):
+    def register_table(
+        self,
+        input_table: AcceptableInputTableType,
+        table_name: str,
+        overwrite: bool = False,
+    ) -> SplinkDataFrame:
         """
         Register a table to your backend database, to be used in one of the
         splink methods, or simply to allow querying.
@@ -767,7 +775,7 @@ class Linker:
 
     def estimate_u_using_random_sampling(
         self, max_pairs: float = 1e6, seed: int = None
-    ):
+    ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -809,7 +817,7 @@ class Linker:
 
         self._settings_obj._columns_without_estimated_parameters_message()
 
-    def estimate_m_from_label_column(self, label_colname: str):
+    def estimate_m_from_label_column(self, label_colname: str) -> None:
         """Estimate the m parameters of the linkage model from a label (ground truth)
         column in the input dataframe(s).
 
@@ -862,9 +870,9 @@ class Linker:
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
         fix_probability_two_random_records_match: bool = False,
-        fix_m_probabilities=False,
-        fix_u_probabilities=True,
-        populate_probability_two_random_records_match_from_trained_values=False,
+        fix_m_probabilities: bool = False,
+        fix_u_probabilities: bool = True,
+        populate_probability_two_random_records_match_from_trained_values: bool = False,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -1034,7 +1042,7 @@ class Linker:
         self,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
-        materialise_after_computing_term_frequencies=True,
+        materialise_after_computing_term_frequencies: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -1148,9 +1156,12 @@ class Linker:
 
     def find_matches_to_new_records(
         self,
-        records_or_tablename,
-        blocking_rules=[],
-        match_weight_threshold=-4,
+        records_or_tablename: AcceptableInputTableType | str,
+        blocking_rules: list[BlockingRule | dict[str, Any] | str]
+        | BlockingRule
+        | dict[str, Any]
+        | str = [],
+        match_weight_threshold: float = -4,
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the Splink prediction score.
@@ -1194,7 +1205,7 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        blocking_rules = ensure_is_list(blocking_rules)
+        blocking_rule_list = ensure_is_list(blocking_rules)
 
         if not isinstance(records_or_tablename, str):
             uid = ascii_uid(8)
@@ -1214,13 +1225,13 @@ class Linker:
         nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
 
         pipeline = CTEPipeline([nodes_with_tf, new_records_df])
-        if len(blocking_rules) == 0:
-            blocking_rules = [BlockingRule("1=1")]
-        blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
-        for n, br in enumerate(blocking_rules):
-            br.add_preceding_rules(blocking_rules[:n])
+        if len(blocking_rule_list) == 0:
+            blocking_rule_list = [BlockingRule("1=1")]
+        blocking_rule_list = [blocking_rule_to_obj(br) for br in blocking_rule_list]
+        for n, br in enumerate(blocking_rule_list):
+            br.add_preceding_rules(blocking_rule_list[:n])
 
-        self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+        self._settings_obj._blocking_rules_to_generate_predictions = blocking_rule_list
 
         for tf_col in self._settings_obj._term_frequency_columns:
             tf_table_name = colname_to_tf_tablename(tf_col)
@@ -1241,7 +1252,7 @@ class Linker:
             self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_new_records_with_tf",
-            blocking_rules=blocking_rules,
+            blocking_rules=blocking_rule_list,
             link_type="two_dataset_link_only",
         )
         pipeline.enqueue_list_of_sqls(sqls)
@@ -1275,7 +1286,9 @@ class Linker:
 
         return predictions
 
-    def compare_two_records(self, record_1: dict[str, Any], record_2: dict[str, Any]):
+    def compare_two_records(
+        self, record_1: dict[str, Any], record_2: dict[str, Any]
+    ) -> SplinkDataFrame:
         """Use the linkage model to compare and score a pairwise record comparison
         based on the two input records provided
 
@@ -1676,9 +1689,9 @@ class Linker:
     def profile_columns(
         self,
         column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
-        top_n=10,
-        bottom_n=10,
-    ):
+        top_n: int = 10,
+        bottom_n: int = 10,
+    ) -> ChartReturnType | None:
         """
         Profiles the specified columns of the dataframe initiated with the linker.
 
@@ -1732,7 +1745,7 @@ class Linker:
 
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
-    ):
+    ) -> str:
         if isinstance(labels_splinkdataframe_or_table_name, SplinkDataFrame):
             labels_tablename = labels_splinkdataframe_or_table_name.physical_name
         elif isinstance(labels_splinkdataframe_or_table_name, str):
@@ -1781,8 +1794,8 @@ class Linker:
 
     def truth_space_table_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
-        threshold_actual=0.5,
+        labels_splinkdataframe_or_table_name: SplinkDataFrame | str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ) -> SplinkDataFrame:
         """Generate truth statistics (false positive etc.) for each threshold value of
@@ -1839,7 +1852,7 @@ class Linker:
     def roc_chart_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
-        threshold_actual=0.5,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ):
         """Generate a ROC chart from labelled (ground truth) data.
@@ -1903,8 +1916,8 @@ class Linker:
 
     def precision_recall_chart_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
-        threshold_actual=0.5,
+        labels_splinkdataframe_or_table_name: SplinkDataFrame | str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ):
         """Generate a precision-recall chart from labelled (ground truth) data.
@@ -1959,8 +1972,8 @@ class Linker:
 
     def accuracy_chart_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
-        threshold_actual=0.5,
+        labels_splinkdataframe_or_table_name: SplinkDataFrame | str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
     ):
@@ -2156,8 +2169,8 @@ class Linker:
 
     def truth_space_table_from_labels_column(
         self,
-        labels_column_name,
-        threshold_actual=0.5,
+        labels_column_name: str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ):
         """Generate truth statistics (false positive etc.) for each threshold value of
@@ -2192,8 +2205,8 @@ class Linker:
 
     def roc_chart_from_labels_column(
         self,
-        labels_column_name,
-        threshold_actual=0.5,
+        labels_column_name: str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ):
         """Generate a ROC chart from ground truth data, whereby the ground truth
@@ -2230,8 +2243,8 @@ class Linker:
 
     def precision_recall_chart_from_labels_column(
         self,
-        labels_column_name,
-        threshold_actual=0.5,
+        labels_column_name: str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
     ):
         """Generate a precision-recall chart from ground truth data, whereby the ground
@@ -2267,8 +2280,8 @@ class Linker:
 
     def accuracy_chart_from_labels_column(
         self,
-        labels_column_name,
-        threshold_actual=0.5,
+        labels_column_name: str,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
     ):
@@ -2328,7 +2341,7 @@ class Linker:
     def threshold_selection_tool_from_labels_column(
         self,
         labels_column_name: str,
-        threshold_actual=0.5,
+        threshold_actual: float = 0.5,
         match_weight_round_to_nearest: float = None,
         add_metrics: list[str] = [],
     ):
