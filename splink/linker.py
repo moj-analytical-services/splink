@@ -8,7 +8,6 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Dict, Optional, Union, List
 
-from .blocking_rule_creator_utils import blocking_rule_args_to_list_of_blocking_rules
 from .vertically_concatenate import (
     enqueue_df_concat_with_tf,
     compute_df_concat_with_tf,
@@ -30,8 +29,9 @@ from .accuracy import (
     truth_space_table_from_labels_column,
     truth_space_table_from_labels_table,
 )
+
 from .analyse_blocking import (
-    cumulative_comparisons_generated_by_blocking_rules,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker,
 )
 from .blocking import (
     BlockingRule,
@@ -2886,6 +2886,7 @@ class Linker:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
+        post_filter_limit: int = 1e9,
     ):
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -2908,11 +2909,9 @@ class Linker:
                 f"and no more than 1. Supplied value {recall}."
             )
 
-        rules = blocking_rule_args_to_list_of_blocking_rules(
-            deterministic_matching_rules, self._sql_dialect
+        records = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
+            self
         )
-
-        records = cumulative_comparisons_generated_by_blocking_rules(self, rules)
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]
