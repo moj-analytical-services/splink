@@ -2911,7 +2911,7 @@ class Linker:
 
         records = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
             self
-        )
+        ).to_dict(orient="records")
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]

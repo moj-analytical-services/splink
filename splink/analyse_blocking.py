@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Iterable, List, Literal, Union
 
+import pandas as pd
 import sqlglot
 
 from .blocking import (
@@ -215,7 +216,7 @@ def _row_counts_per_df(linker: "Linker"):
     return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
-def cumulative_comparisons_to_be_scored_from_blocking_rules(
+def count_comparisons_to_be_scored_from_blocking_rules(
     table_or_tables,
     *,
     blocking_rules: Iterable[Union[BlockingRuleCreator, str, dict]],
@@ -245,14 +246,36 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules(
         database_api=db_api,
     )
 
-    return cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(linker)
+    return cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
+        linker, post_filter_limit=post_filter_limit
+    )
 
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
     linker: "Linker",
+    post_filter_limit: int = 1e9,
 ):
     link_type = linker._settings_obj._link_type
     db_api = linker.db_api
+    brs = linker._settings_obj._blocking_rules_to_generate_predictions
+    col_settings = linker._settings_obj.column_info_settings
+
+    # Check none of the blocking rules will create a vast/computationally
+    # intractable number of comparisons
+    for br in brs:
+        br = br.as_dict()
+        input_tables = list(linker._input_tables_dict.values())
+
+        count_comparisons_generated_from_blocking_rule(
+            input_tables,
+            blocking_rule=br,
+            link_type=link_type,
+            db_api=db_api,
+            post_filter_limit=post_filter_limit,
+            compute_post_filter_count=False,
+            unique_id_column_name=col_settings.unique_id_column_name,
+        )
+
     rc = _row_counts_per_df(linker).as_record_dict()
     cartesian_count = calculate_cartesian(rc, link_type)
 
@@ -266,7 +289,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
         linker,
         input_tablename_l="__splink__df_concat",
         input_tablename_r="__splink__df_concat",
-        blocking_rules=linker._settings_obj._blocking_rules_to_generate_predictions,
+        blocking_rules=brs,
         link_type=link_type,
         set_match_probability_to_one=True,
     )
@@ -310,7 +333,16 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
         r["blocking_rule"] = rules[int(r["match_key"])]
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
-    return records
+
+    col_order = [
+        "blocking_rule",
+        "row_count",
+        "cumulative_rows",
+        "cartesian",
+        "match_key",
+        "start",
+    ]
+    return pd.DataFrame(records)[col_order]
 
 
 def count_comparisons_generated_from_blocking_rule(
