@@ -2910,7 +2910,7 @@ class Linker:
             )
 
         records = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
-            self
+            self, deterministic_matching_rules, post_filter_limit=post_filter_limit
         ).to_dict(orient="records")
 
         summary_record = records[-1]

@@ -247,26 +247,36 @@ def count_comparisons_to_be_scored_from_blocking_rules(
     )
 
     return cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
-        linker, post_filter_limit=post_filter_limit
+        linker, blocking_rules, post_filter_limit=post_filter_limit
     )
 
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
     linker: "Linker",
+    brs,
     post_filter_limit: int = 1e9,
 ):
     link_type = linker._settings_obj._link_type
     db_api = linker.db_api
-    brs = linker._settings_obj._blocking_rules_to_generate_predictions
     col_settings = linker._settings_obj.column_info_settings
+
+    blocking_rules = []
+    for br in brs:
+        if isinstance(br, BlockingRule):
+            blocking_rules.append(br)
+        else:
+            blocking_rules.append(
+                to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+            )
 
     # Check none of the blocking rules will create a vast/computationally
     # intractable number of comparisons
-    for br in brs:
-        br = br.as_dict()
-        input_tables = list(linker._input_tables_dict.values())
+    for br in blocking_rules:
+        input_tables = [
+            t.physical_name for t in list(linker._input_tables_dict.values())
+        ]
 
-        count_comparisons_generated_from_blocking_rule(
+        count = count_comparisons_generated_from_blocking_rule(
             input_tables,
             blocking_rule=br,
             link_type=link_type,
@@ -275,6 +285,15 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
             compute_post_filter_count=False,
             unique_id_column_name=col_settings.unique_id_column_name,
         )
+        count_pre_filter = count["number_of_comparison_pre_filter_conditions"]
+
+        if count_pre_filter > post_filter_limit:
+            raise ValueError(
+                f"Blocking rule {br.blocking_rule_sql} would create {count_pre_filter} "
+                "comparisons, which exceeds the post_filter_limit of "
+                f"{post_filter_limit}.  Please adjust the "
+                "blocking rule or the post_filter_limit"
+            )
 
     rc = _row_counts_per_df(linker).as_record_dict()
     cartesian_count = calculate_cartesian(rc, link_type)
@@ -289,7 +308,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
         linker,
         input_tablename_l="__splink__df_concat",
         input_tablename_r="__splink__df_concat",
-        blocking_rules=brs,
+        blocking_rules=blocking_rules,
         link_type=link_type,
         set_match_probability_to_one=True,
     )
@@ -320,14 +339,10 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks_2")
 
     records = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_record_dict()
+    print(records)
 
     # Lookup table match_key -> blocking_rule
-    rules = {
-        i: r.blocking_rule_sql
-        for i, r in enumerate(
-            linker._settings_obj._blocking_rules_to_generate_predictions
-        )
-    }
+    rules = {i: r.blocking_rule_sql for i, r in enumerate(blocking_rules)}
 
     for r in records:
         r["blocking_rule"] = rules[int(r["match_key"])]
@@ -348,7 +363,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
 def count_comparisons_generated_from_blocking_rule(
     table_or_tables,
     *,
-    blocking_rule: Union[BlockingRuleCreator, str, dict],
+    blocking_rule: Union[BlockingRule, BlockingRuleCreator, str, dict],
     link_type: link_type_type,
     db_api: DatabaseAPI,
     compute_post_filter_count: bool = False,
@@ -358,9 +373,10 @@ def count_comparisons_generated_from_blocking_rule(
     # TODO: if it's an exploding blocking rule, make sure we error out
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
-    blocking_rule = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-        db_api.sql_dialect.name
-    )
+    if not isinstance(blocking_rule, BlockingRule):
+        blocking_rule = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
+            db_api.sql_dialect.name
+        )
     pipeline = CTEPipeline()
     sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         splink_df_dict, blocking_rule, link_type, db_api
@@ -372,6 +388,27 @@ def count_comparisons_generated_from_blocking_rule(
         "count_of_pairwise_comparisons_generated"
     ]
     pre_filter_total_df.drop_table_from_database_and_remove_from_cache()
+
+    def add_l_r(sql, table_name):
+        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_name)
+        for node in tree.find_all(sqlglot.expressions.Column):
+            node.set("table", table_name)
+        return tree.sql(dialect=db_api.sql_dialect.sqlglot_name)
+
+    equi_join_conditions = [
+        add_l_r(i, "l") + " = " + add_l_r(j, "r")
+        for i, j in blocking_rule._equi_join_conditions
+    ]
+
+    equi_join_conditions = " AND ".join(equi_join_conditions)
+
+    if not compute_post_filter_count:
+        return {
+            "number_of_comparison_pre_filter_conditions": pre_filter_total,
+            "number_of_comparison_post_filter_conditions": "not computed",
+            "filter_conditions_identified": blocking_rule._filter_conditions,
+            "equi_join_conditions_identified": equi_join_conditions,
+        }
 
     if pre_filter_total < post_filter_limit:
         pipeline = CTEPipeline()
@@ -395,19 +432,6 @@ def count_comparisons_generated_from_blocking_rule(
             f"{pre_filter_total:.3e}.\nRead more about the definitions here:\n"
             "https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions"
         )
-
-    def add_l_r(sql, table_name):
-        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_name)
-        for node in tree.find_all(sqlglot.expressions.Column):
-            node.set("table", table_name)
-        return tree.sql(dialect=db_api.sql_dialect.sqlglot_name)
-
-    equi_join_conditions = [
-        add_l_r(i, "l") + " = " + add_l_r(j, "r")
-        for i, j in blocking_rule._equi_join_conditions
-    ]
-
-    equi_join_conditions = " AND ".join(equi_join_conditions)
 
     return {
         "number_of_comparison_pre_filter_conditions": pre_filter_total,

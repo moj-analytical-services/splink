@@ -535,6 +535,7 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
+    print(sql)
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
 
