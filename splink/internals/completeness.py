@@ -1,18 +1,26 @@
-from typing import List
+from __future__ import annotations
 
-from ..charts import completeness_chart as records_to_completeness_chart
-from ..database_api import DatabaseAPISubClass
+from typing import Any, List, Sequence
+
+from ..charts import (
+    ChartReturnType,
+)
+from ..charts import (
+    completeness_chart as records_to_completeness_chart,
+)
+from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..input_column import InputColumn
 from ..pipeline import CTEPipeline
+from ..splink_dataframe import SplinkDataFrame
 from ..vertically_concatenate import vertically_concatenate_sql
 
 
 def completeness_data(
-    splink_df_dict,
+    splink_df_dict: dict[str, SplinkDataFrame],
     db_api: DatabaseAPISubClass,
     cols: List[str] = None,
     table_names_for_chart: List[str] = None,
-):
+) -> list[dict[str, Any]]:
     pipeline = CTEPipeline()
 
     sql = vertically_concatenate_sql(
@@ -92,11 +100,11 @@ def completeness_data(
 
 
 def completeness_chart(
-    table_or_tables,
+    table_or_tables: Sequence[AcceptableInputTableType],
     db_api: DatabaseAPISubClass,
     cols: List[str] = None,
     table_names_for_chart: List[str] = None,
-):
+) -> ChartReturnType:
     """Generate a summary chart of data completeness (proportion of non-nulls) of
     columns in each of the input table or tables. By default, completeness is assessed
     for all columns in the input data.

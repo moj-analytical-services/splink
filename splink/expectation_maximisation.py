@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, List
+from typing import Any, List, cast
 
 import pandas as pd
 
@@ -382,8 +382,14 @@ def _max_change_in_parameters_comparison_levels(
                 continue
             prev_cl = z_cl[0]
             this_cl = z_cl[1]
-            change_m = this_cl.m_probability - prev_cl.m_probability
-            change_u = this_cl.u_probability - prev_cl.u_probability
+
+            prev_m_prob = cast(float, prev_cl.m_probability)
+            this_m_prob = cast(float, this_cl.m_probability)
+            prev_u_prob = cast(float, prev_cl.u_probability)
+            this_u_prob = cast(float, this_cl.u_probability)
+            change_m = this_m_prob - prev_m_prob
+            change_u = this_u_prob - prev_u_prob
+
             change = max(abs(change_m), abs(change_u))
             change_type = (
                 "m_probability" if abs(change_m) > abs(change_u) else "u_probability"

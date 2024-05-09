@@ -8,7 +8,11 @@ from .dialects import SplinkDialect
 
 
 class BlockingRuleCreator(ABC):
-    def __init__(self, salting_partitions=None, arrays_to_explode=None):
+    def __init__(
+        self,
+        salting_partitions: int | None = None,
+        arrays_to_explode: list[str] | None = None,
+    ):
         self._salting_partitions = salting_partitions
         self._arrays_to_explode = arrays_to_explode
 

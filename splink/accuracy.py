@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -7,6 +9,7 @@ from .comparison_vector_values import compute_comparison_vector_values_sql
 from .misc import calculate_cartesian
 from .pipeline import CTEPipeline
 from .predict import predict_from_comparison_vectors_sqls_using_settings
+from .splink_dataframe import SplinkDataFrame
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 from .vertically_concatenate import (
     compute_df_concat,
@@ -18,11 +21,11 @@ if TYPE_CHECKING:
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
-    threshold_actual=0.5,
-    match_weight_round_to_nearest=None,
+    threshold_actual: float = 0.5,
+    match_weight_round_to_nearest: float | None = None,
     total_labels: int = None,
-    positives_not_captured_by_blocking_rules_scored_as_zero=True,
-):
+    positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
+) -> list[dict[str, str]]:
     """
     Create truth statistics (TP, TN, FP, FN) at each threshold, suitable for
     plotting e.g. on a ROC chart.
@@ -284,7 +287,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def _select_found_by_blocking_rules(linker: "Linker"):
+def _select_found_by_blocking_rules(linker: "Linker") -> str:
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
 
     if brs:
@@ -325,11 +328,11 @@ def truth_space_table_from_labels_table(
 
 def truth_space_table_from_labels_column(
     linker: "Linker",
-    label_colname,
-    threshold_actual=0.5,
-    match_weight_round_to_nearest=None,
-    positives_not_captured_by_blocking_rules_scored_as_zero=True,
-):
+    label_colname: str,
+    threshold_actual: float = 0.5,
+    match_weight_round_to_nearest: float = None,
+    positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
+) -> SplinkDataFrame:
     # First we need to calculate the number of implicit true negatives
     # That is, any pair of records which have a different ID in the labels
     # column are a negative

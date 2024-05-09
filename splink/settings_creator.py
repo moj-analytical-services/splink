@@ -94,7 +94,7 @@ class SettingsCreator:
         ]
         return creator_dict
 
-    def get_settings(self, sql_dialect_str) -> Settings:
+    def get_settings(self, sql_dialect_str: str) -> Settings:
         creator_dict = self._as_creator_dict()
         # then we process 'creator' types into dialected concrete types
         creator_dict["comparisons"] = [

@@ -1,11 +1,11 @@
 import logging
 import re
 from copy import deepcopy
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
-from ..charts import altair_or_json, load_chart_definition
+from ..charts import ChartReturnType, altair_or_json, load_chart_definition
 from ..column_expression import ColumnExpression
-from ..database_api import DatabaseAPISubClass
+from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..misc import ensure_is_list
 from ..pipeline import CTEPipeline
 from ..vertically_concatenate import vertically_concatenate_sql
@@ -199,12 +199,12 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(
-    table_or_tables,
+    table_or_tables: Sequence[AcceptableInputTableType],
     db_api: DatabaseAPISubClass,
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
-    top_n=10,
-    bottom_n=10,
-):
+    top_n: int = 10,
+    bottom_n: int = 10,
+) -> Optional[ChartReturnType]:
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 

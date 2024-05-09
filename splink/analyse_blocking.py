@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Sequence, TypedDict, Union
 
 import pandas as pd
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     linker: Linker,
-    blocking_rule,
+    blocking_rule: str,
 ) -> str:
     settings_obj = linker._settings_obj
 
@@ -39,9 +39,21 @@ def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     return sql
 
 
+class CumulativeComparisonsDict(TypedDict):
+    row_count: int
+    rule: str
+    cumulative_rows: int
+    cartesian: int
+    reduction_ratio: str
+    start: int
+
+
 def cumulative_comparisons_generated_by_blocking_rules(
-    linker: Linker, blocking_rules, output_chart=True, return_dataframe=False
-):
+    linker: Linker,
+    blocking_rules: Sequence[str | BlockingRule],
+    output_chart: bool = True,
+    return_dataframe: bool = False,
+) -> pd.DataFrame | list[CumulativeComparisonsDict]:
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
     # original blocking rules.
@@ -168,7 +180,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
 def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
-):
+) -> list[dict[str, str]]:
     if isinstance(blocking_rule, str):
         blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=linker._sql_dialect)
 
@@ -268,7 +280,7 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
 
 def count_comparisons_from_blocking_rule_pre_filter_conditions(
     linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
-):
+) -> int:
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(linker, pipeline)
 
