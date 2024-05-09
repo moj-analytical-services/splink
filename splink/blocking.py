@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from sqlglot import parse_one
-from sqlglot.expressions import Boolean, Column, Expression, Identifier, Join
+from sqlglot.expressions import Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 
@@ -535,7 +535,6 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
-    print(sql)
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
 

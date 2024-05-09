@@ -288,27 +288,32 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
         count_pre_filter = count["number_of_comparison_pre_filter_conditions"]
 
         if count_pre_filter > post_filter_limit:
+            # TODO: Use a SplinkException?  Want this to give a sensible message
+            # when ocoming from estimate_probability_two_random_records_match
             raise ValueError(
                 f"Blocking rule {br.blocking_rule_sql} would create {count_pre_filter} "
-                "comparisons, which exceeds the post_filter_limit of "
-                f"{post_filter_limit}.  Please adjust the "
-                "blocking rule or the post_filter_limit"
+                "comparisonns.\nThis exceeds the post_filter_limit of "
+                f"{post_filter_limit}.\nPlease tighten the "
+                "blocking rule or increase the post_filter_limit."
             )
 
     rc = _row_counts_per_df(linker).as_record_dict()
     cartesian_count = calculate_cartesian(rc, link_type)
 
+    brs_as_objs = linker._settings_obj._brs_as_objs(blocking_rules)
+
     pipeline = CTEPipeline()
 
     pipeline = enqueue_df_concat(linker, pipeline)
 
+    # TODO: Check it works with explodining id tables
     exploding_br_with_id_tables = materialise_exploded_id_tables(linker, link_type)
 
     sqls = block_using_rules_sqls(
         linker,
         input_tablename_l="__splink__df_concat",
         input_tablename_r="__splink__df_concat",
-        blocking_rules=blocking_rules,
+        blocking_rules=brs_as_objs,
         link_type=link_type,
         set_match_probability_to_one=True,
     )
@@ -339,7 +344,6 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks_2")
 
     records = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_record_dict()
-    print(records)
 
     # Lookup table match_key -> blocking_rule
     rules = {i: r.blocking_rule_sql for i, r in enumerate(blocking_rules)}

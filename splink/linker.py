@@ -2907,11 +2907,20 @@ class Linker:
             raise ValueError(
                 f"Estimated recall must be greater than 0 "
                 f"and no more than 1. Supplied value {recall}."
-            )
+            ) from None
 
-        records = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
-            self, deterministic_matching_rules, post_filter_limit=post_filter_limit
-        ).to_dict(orient="records")
+        try:
+            df = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
+                self, deterministic_matching_rules, post_filter_limit=post_filter_limit
+            )
+        except ValueError as e:
+            raise SplinkException(
+                "Running this algorithm on the deterministic matching rules specified "
+                "may take a long time.\nIf you wish to continue, re-run after setting "
+                "a higher post_filter_limit argument.\nSee the following message "
+                f"for more details:\n{e}\n"
+            ) from e
+        records = df.to_dict(orient="records")
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]
