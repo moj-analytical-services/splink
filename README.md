@@ -7,7 +7,7 @@
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
 > [!IMPORTANT]
-> Development has begun on Splink 4 on the `splink4_dev` branch.  Splink 3 is in maintenance mode and we are no longer accepting new features. We welcome contributions to Splink 4. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/03/19/splink4.html).
+> Development has begun on Splink 4 on the `splink4_dev` branch.  Splink 3 is in maintenance mode and we are no longer accepting new features. We welcome contributions to Splink 4. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/04/02/splink-3-updates-and-splink-4-development-announcement---april-2024.html).
 
 # Fast, accurate and scalable probabilistic data linkage
 
