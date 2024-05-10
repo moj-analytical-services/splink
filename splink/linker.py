@@ -804,7 +804,12 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-
+        if max_pairs == 1e6:
+            logger.warning(
+                "You are using the default value for `max_pairs`, "
+                "which may lead to inaccurate estimates for your "
+                "model's u-parameters. Consider increasing.python"
+            )
         estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
 
