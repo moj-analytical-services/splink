@@ -353,10 +353,10 @@ class ExplodingBlockingRule(BlockingRule):
         )
         sql = f"""
             select distinct
-                {id_expr_l} as {unique_id_col}_l,
-                {id_expr_r} as {unique_id_col}_r
-            from __splink__df_concat_with_tf_unnested as l
-            inner join __splink__df_concat_with_tf_unnested as r
+                {id_expr_l} as {unique_id_col.name_l},
+                {id_expr_r} as {unique_id_col.name_r}
+            from __splink__df_concat_unnested as l
+            inner join __splink__df_concat_unnested as r
             on ({br.blocking_rule_sql})
             {where_condition}
             {exclude_sql}
@@ -451,7 +451,7 @@ class ExplodingBlockingRule(BlockingRule):
 
 
 def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
-    return db_api._sql_dialect.explode_arrays_sql(
+    return db_api.sql_dialect.explode_arrays_sql(
         tbl_name, columns_to_explode, other_columns_to_retain
     )
 
@@ -477,7 +477,7 @@ def materialise_exploded_id_tables(
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_input_column.name,
+        source_dataset_column_name=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -487,19 +487,19 @@ def materialise_exploded_id_tables(
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
         arrays_to_explode_quoted = [
-            InputColumn(colname, sql_dialect=db_api._sql_dialect).quote().name
+            InputColumn(colname, sql_dialect=db_api.sql_dialect.name).quote().name
             for colname in br.array_columns_to_explode
         ]
         expl_sql = _explode_arrays_sql(
             db_api,
-            "__splink__df_concat_with_tf",
+            "__splink__df_concat",
             br.array_columns_to_explode,
             list(input_colnames.difference(arrays_to_explode_quoted)),
         )
 
         pipeline.enqueue_sql(
             expl_sql,
-            "__splink__df_concat_with_tf_unnested",
+            "__splink__df_concat_unnested",
         )
 
         base_name = "__splink__marginal_exploded_ids_blocking_rule"

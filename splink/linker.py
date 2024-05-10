@@ -3271,10 +3271,3 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
-
-    def _explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
-        return self._sql_dialect_object.explode_arrays_sql(
-            tbl_name, columns_to_explode, other_columns_to_retain
-        )
