@@ -16,21 +16,27 @@ Once you've finished updating Splink documentation we ask that you run our spell
 
 ## Spellchecking docs
 
-When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. Please note, the spellchecker _only works on markdown files_ and currently only works on systems which support `Homebrew` package manager. Instructions for other operating systems will be released later.
+When updating Splink documentation, we ask that you run our spellchecker before submitting a pull request. This is to help ensure quality and consistency across the documentation. If for whatever reason you can't run the spellchecker on your system, please don't let this prevent you from contributing to the documentation. Please note, the spellchecker _only works on markdown files_.
 
-To run the spellchecker on either a single markdown file or folder of markdown files, you can use the following script:
+If you are a Mac user with the `Homebrew` package manager installed, the script below will automatically install
+the required system dependency, `aspell`.
+If you've created your development environment [using conda](./development_quickstart.md), `aspell` will have been installed as part of that
+process.
+Instructions for installing `aspell` through other means may be added here in the future.
+
+To run the spellchecker on either a single markdown file or folder of markdown files, you can run the following bash script:
 
 ```sh
-source scripts/pyspelling/spellchecker.sh <path_to_file_or_folder>
+./scripts/pyspelling/spellchecker.sh <path_to_file_or_folder>
 ```
 
 Omitting the file/folder path will run the spellchecker on all markdown files contained in the `docs` folder. We recommend running the spellchecker only on files that you have created or edited. 
 
 The spellchecker uses the Python package [PySpelling](https://facelessuser.github.io/pyspelling/) and its underlying spellchecking tool, Aspell. Running the above script will automatically install these packages along with any other necessary dependencies.
 
-The spellchecker compares words to a [standard British English dictionary](https://github.com/LibreOffice/dictionaries/blob/master/en/en_GB.aff) and a custom dictionary (`scripts/pyspelling/custom_dictionary.txt`) of words. If no spelling mistakes are found, you will see the following terminal printout:
+The spellchecker compares words to a standard British English dictionary and a custom dictionary (`scripts/pyspelling/custom_dictionary.txt`) of words. If no spelling mistakes are found, you will see the following terminal printout:
 
-```sh
+```
 
 Spelling check passed :)
 
