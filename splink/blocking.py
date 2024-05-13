@@ -60,6 +60,16 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
         return br
 
 
+def combine_unique_id_input_columns(
+    source_dataset_input_column: InputColumn, unique_id_input_column: InputColumn
+) -> Tuple[InputColumn]:
+    unique_id_input_columns = ()
+    if source_dataset_input_column:
+        unique_id_input_columns += (source_dataset_input_column,)
+    unique_id_input_columns += (unique_id_input_column,)
+    return unique_id_input_columns
+
+
 class BlockingRule:
     def __init__(
         self,
@@ -127,16 +137,15 @@ class BlockingRule:
 
     def create_blocked_pairs_sql(
         self,
-        linker: Linker,
+        source_dataset_input_column: InputColumn,
+        unique_id_input_column: InputColumn,
         *,
         input_tablename_l,
         input_tablename_r,
         where_condition,
         probability,
-        columns_to_select,
+        sql_select_expr,
     ):
-        sql_select_expr = ", ".join(columns_to_select)
-
         sql = f"""
             select
             {sql_select_expr}
@@ -147,7 +156,7 @@ class BlockingRule:
             on
             ({self.blocking_rule_sql})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(source_dataset_input_column, unique_id_input_column)}
             """
         return sql
 
@@ -264,17 +273,19 @@ class SaltedBlockingRule(BlockingRule):
 
     def create_blocked_pairs_sql(
         self,
-        linker: Linker,
         *,
+        source_dataset_input_column: InputColumn,
+        unique_id_input_column: InputColumn,
         input_tablename_l,
         input_tablename_r,
         where_condition,
         probability,
+        sql_select_expr,
     ):
-        columns_to_select = linker._settings_obj._columns_to_select_for_blocking
-        sql_select_expr = ", ".join(columns_to_select)
-
         sqls = []
+        exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
+            source_dataset_input_column, unique_id_input_column
+        )
         for salt in range(self.salting_partitions):
             salt_condition = self._salting_condition(salt)
             sql = f"""
@@ -287,21 +298,17 @@ class SaltedBlockingRule(BlockingRule):
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            {exclude_sql}
             """
 
             sqls.append(sql)
         return " UNION ALL ".join(sqls)
 
 
-def combine_unique_id_input_columns(
-    source_dataset_input_column: InputColumn, unique_id_input_column: InputColumn
-) -> Tuple[InputColumn]:
-    unique_id_input_columns = ()
-    if source_dataset_input_column:
-        unique_id_input_columns += (source_dataset_input_column,)
-    unique_id_input_columns += (unique_id_input_column,)
-    return unique_id_input_columns
+def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
+    return db_api.sql_dialect.explode_arrays_sql(
+        tbl_name, columns_to_explode, other_columns_to_retain
+    )
 
 
 class ExplodingBlockingRule(BlockingRule):
@@ -399,34 +406,34 @@ class ExplodingBlockingRule(BlockingRule):
         return f"""EXISTS (
             select 1 from ({ids_to_compare_sql}) as ids_to_compare
             where (
-                {id_expr_l} = ids_to_compare.{unique_id_column}_l and
-                {id_expr_r} = ids_to_compare.{unique_id_column}_r
+                {id_expr_l} = ids_to_compare.{unique_id_column.name_l} and
+                {id_expr_r} = ids_to_compare.{unique_id_column.name_r}
             )
         )
         """
 
     def create_blocked_pairs_sql(
         self,
-        linker: Linker,
         *,
+        source_dataset_input_column: InputColumn,
+        unique_id_input_column: InputColumn,
         input_tablename_l,
         input_tablename_r,
         where_condition,
         probability,
+        sql_select_expr,
     ):
-        columns_to_select = linker._settings_obj._columns_to_select_for_blocking
-        sql_select_expr = ", ".join(columns_to_select)
-
         if self.exploded_id_pair_table is None:
             raise ValueError(
                 "Exploding blocking rules are not supported for the function you have"
                 " called."
             )
-        settings_obj = linker._settings_obj
-        unique_id_col = settings_obj.column_info_settings.unique_id_column_name
-        unique_id_input_columns = (
-            settings_obj.column_info_settings.unique_id_input_columns
+
+        unique_id_col = unique_id_input_column
+        unique_id_input_columns = combine_unique_id_input_columns(
+            source_dataset_input_column, unique_id_input_column
         )
+
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
         id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
@@ -438,9 +445,9 @@ class ExplodingBlockingRule(BlockingRule):
                 {probability}
             from {exploded_id_pair_table.physical_name} as pairs
             left join {input_tablename_l} as l
-                on pairs.{unique_id_col}_l={id_expr_l}
+                on pairs.{unique_id_col.name_l}={id_expr_l}
             left join {input_tablename_r} as r
-                on pairs.{unique_id_col}_r={id_expr_r}
+                on pairs.{unique_id_col.name_r}={id_expr_r}
         """
         return sql
 
@@ -448,12 +455,6 @@ class ExplodingBlockingRule(BlockingRule):
         output = super().as_dict()
         output["arrays_to_explode"] = self.array_columns_to_explode
         return output
-
-
-def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
-    return db_api.sql_dialect.explode_arrays_sql(
-        tbl_name, columns_to_explode, other_columns_to_retain
-    )
 
 
 def materialise_exploded_id_tables(
@@ -490,8 +491,8 @@ def materialise_exploded_id_tables(
             InputColumn(colname, sql_dialect=db_api.sql_dialect.name).quote().name
             for colname in br.array_columns_to_explode
         ]
-        expl_sql = _explode_arrays_sql(
-            db_api,
+
+        expl_sql = db_api.sql_dialect.explode_arrays_sql(
             "__splink__df_concat",
             br.array_columns_to_explode,
             list(input_colnames.difference(arrays_to_explode_quoted)),
@@ -542,10 +543,10 @@ def block_using_rules_sqls(
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
-    sql_dialect: str,
+    columns_to_select: List[InputColumn],
+    unique_id_input_column: InputColumn,
+    source_dataset_input_column: InputColumn,
     set_match_probability_to_one: bool = False,
-    unique_id_colname: str = None,
-    source_dataset_column_name: str = None,
 ):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -555,15 +556,14 @@ def block_using_rules_sqls(
     so that duplicate comparisons are not generated.
     """
 
+    sql_select_expr = ",".join(
+        [item for c in columns_to_select for item in c.l_r_names_as_l_r]
+    )
+
     sqls = []
 
-    unique_id_input_columns = []
-    if source_dataset_column_name:
-        unique_id_input_columns.append(
-            InputColumn(source_dataset_column_name, sql_dialect=sql_dialect)
-        )
-    unique_id_input_columns.append(
-        InputColumn(unique_id_colname, sql_dialect=sql_dialect)
+    unique_id_input_columns = combine_unique_id_input_columns(
+        source_dataset_input_column, unique_id_input_column
     )
 
     where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
@@ -586,12 +586,13 @@ def block_using_rules_sqls(
 
     for br in blocking_rules:
         sql = br.create_blocked_pairs_sql(
-            unique_id_column_name="unique_id",
-            source_dataset_column_name="source_dataset",
+            unique_id_input_column=unique_id_input_column,
+            source_dataset_input_column=source_dataset_input_column,
             input_tablename_l=input_tablename_l,
             input_tablename_r=input_tablename_r,
             where_condition=where_condition,
             probability=probability,
+            sql_select_expr=sql_select_expr,
         )
         br_sqls.append(sql)
 
