@@ -733,15 +733,45 @@ class Linker:
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
         link_type = self._settings_obj._link_type
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        blocking_input_tablename_l = "__splink__df_concat_with_tf"
+        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+
+        link_type = self._settings_obj._link_type
+        if (
+            len(self._input_tables_dict) == 2
+            and self._settings_obj._link_type == "link_only"
+        ):
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat_with_tf",
+                self._settings_obj.column_info_settings.source_dataset_column_name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
+            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+            link_type = "two_dataset_link_only"
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
-            set_match_probability_to_one=True,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
