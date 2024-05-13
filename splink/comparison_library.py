@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import copy
 from typing import Any, Iterable, List, Optional, Union
 
 from . import comparison_level_library as cll
@@ -36,49 +35,9 @@ class CustomComparison(ComparisonCreator):
         # column expressions, which we do not need here as we are dealing with
         # levels directly
 
-    @staticmethod
-    def _convert_to_creator(
-        cl: Union[ComparisonLevelCreator, dict[str, Any]],
-    ) -> ComparisonLevelCreator:
-        if isinstance(cl, ComparisonLevelCreator):
-            return cl
-        if isinstance(cl, dict):
-            # TODO: swap this if we develop a more uniform approach to (de)serialising
-            cl_dict = copy(cl)
-            configurable_parameters = (
-                "is_null_level",
-                "m_probability",
-                "u_probability",
-                "tf_adjustment_column",
-                "tf_adjustment_weight",
-                "tf_minimum_u_value",
-                "label_for_charts",
-                "disable_tf_exact_match_detection",
-            )
-            # split dict in two depending whether or not entries are 'configurables'
-            configurables = {
-                key: value
-                for key, value in cl_dict.items()
-                if key in configurable_parameters
-            }
-            cl_dict = {
-                key: value
-                for key, value in cl_dict.items()
-                if key not in configurable_parameters
-            }
-
-            custom_comparison = CustomLevel(**cl_dict)
-            if configurables:
-                custom_comparison.configure(**configurables)
-            return custom_comparison
-        raise ValueError(
-            "`comparison_levels` entries must be `dict` or `ComparisonLevelCreator, "
-            f"but found type {type(cl)} for entry {cl}"
-        )
-
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         comparison_level_creators = [
-            self._convert_to_creator(cl) for cl in self._comparison_levels
+            CustomLevel._convert_to_creator(cl) for cl in self._comparison_levels
         ]
         return comparison_level_creators
 
@@ -93,6 +52,14 @@ class CustomComparison(ComparisonCreator):
     def create_output_column_name(self) -> Optional[str]:
         # TODO: should default logic be here? would need column-extraction logic also
         return self._output_column_name
+
+    @staticmethod
+    def _convert_to_creator(
+        comparison_creator: dict[str, Any] | ComparisonCreator,
+    ) -> ComparisonCreator:
+        if isinstance(comparison_creator, dict):
+            return CustomComparison(**comparison_creator)
+        return comparison_creator
 
 
 class ExactMatch(ComparisonCreator):

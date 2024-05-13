@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from copy import copy
 from functools import wraps
-from typing import Callable, List, Literal, TypeVar, Union
+from typing import Any, Callable, List, Literal, TypeVar, Union
 
 from sqlglot import TokenError, parse_one
 
@@ -168,6 +169,46 @@ class CustomLevel(ComparisonLevelCreator):
             self.label_for_charts
             if self.label_for_charts is not None
             else self.sql_condition
+        )
+
+    @staticmethod
+    def _convert_to_creator(
+        cl: Union[ComparisonLevelCreator, dict[str, Any]],
+    ) -> ComparisonLevelCreator:
+        if isinstance(cl, ComparisonLevelCreator):
+            return cl
+        if isinstance(cl, dict):
+            # TODO: swap this if we develop a more uniform approach to (de)serialising
+            cl_dict = copy(cl)
+            configurable_parameters = (
+                "is_null_level",
+                "m_probability",
+                "u_probability",
+                "tf_adjustment_column",
+                "tf_adjustment_weight",
+                "tf_minimum_u_value",
+                "label_for_charts",
+                "disable_tf_exact_match_detection",
+            )
+            # split dict in two depending whether or not entries are 'configurables'
+            configurables = {
+                key: value
+                for key, value in cl_dict.items()
+                if key in configurable_parameters
+            }
+            cl_dict = {
+                key: value
+                for key, value in cl_dict.items()
+                if key not in configurable_parameters
+            }
+
+            custom_comparison = CustomLevel(**cl_dict)
+            if configurables:
+                custom_comparison.configure(**configurables)
+            return custom_comparison
+        raise ValueError(
+            "`comparison_levels` entries must be `dict` or `ComparisonLevelCreator, "
+            f"but found type {type(cl)} for entry {cl}"
         )
 
 
