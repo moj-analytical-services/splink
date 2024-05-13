@@ -2953,6 +2953,7 @@ class Linker:
             ) from None
 
         try:
+            # TODO: Fix
             df = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
                 self, deterministic_matching_rules, post_filter_limit=post_filter_limit
             )

@@ -22,6 +22,7 @@ from .settings_creator import SettingsCreator
 from .splink_dataframe import SplinkDataFrame
 from .vertically_concatenate import (
     enqueue_df_concat,
+    split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
 )
 
@@ -223,32 +224,83 @@ def count_comparisons_to_be_scored_from_blocking_rules(
     link_type: link_type_type,
     db_api: DatabaseAPI,
     post_filter_limit: int = 1e9,
-    unique_id_column_name: str = "unique_id",
-    source_dataset_column_name: str = "source_dataset",
+    unique_id_column_name: str,
+    source_dataset_column_name: str = None,
 ):
-    # To find marginal rows created by each blocking rule, we need a linker because
-    # the blocking logic in block_using_rules_sqls requires a linker
-    settings = SettingsCreator(
-        link_type=link_type,
-        unique_id_column_name=unique_id_column_name,
-        retain_intermediate_calculation_columns=False,
-        retain_matching_columns=False,
-        blocking_rules_to_generate_predictions=blocking_rules,
-        source_dataset_column_name=source_dataset_column_name,
+    unique_id_input_column = InputColumn(
+        unique_id_column_name, sql_dialect=db_api.sql_dialect.name
+    )
+    if link_type == "dedupe_only":
+        source_dataset_input_column = None
+        input_columns = [unique_id_input_column]
+    else:
+        source_dataset_input_column = InputColumn(
+            source_dataset_column_name, sql_dialect=db_api.sql_dialect.name
+        )
+        input_columns = [unique_id_input_column, source_dataset_input_column]
+
+    blocking_rules_as_brs = [
+        to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+        for br in blocking_rules
+    ]
+
+    for n, br in enumerate(blocking_rules_as_brs):
+        br.add_preceding_rules(blocking_rules_as_brs[:n])
+
+    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+
+    exploding_br_with_id_tables = materialise_exploded_id_tables(
+        link_type,
+        blocking_rules_as_brs,
+        db_api,
+        splink_df_dict,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
     )
 
-    # To avoid circular import
-    from .linker import Linker
+    pipeline = CTEPipeline()
 
-    linker = Linker(
-        table_or_tables,
-        settings=settings,
-        database_api=db_api,
+    sql = vertically_concatenate_sql(
+        splink_df_dict,
+        salting_required=False,
+        source_dataset_column_name="source_dataset",
+    )
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+
+    sql_select_expr = ",".join(
+        [item for c in input_columns for item in c.l_r_names_as_l_r]
+    )
+    blocking_input_tablename_l = "__splink__df_concat"
+    blocking_input_tablename_r = "__splink__df_concat"
+    if len(splink_df_dict) == 2 and link_type == "link_only":
+        sqls = split_df_concat_with_tf_into_two_tables_sqls(
+            "__splink__df_concat",
+            source_dataset_column_name,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        blocking_input_tablename_l = "__splink__df_concat_left"
+        blocking_input_tablename_r = "__splink__df_concat_right"
+        link_type = "two_dataset_link_only"
+
+    sqls = block_using_rules_sqls(
+        input_tablename_l=blocking_input_tablename_l,
+        input_tablename_r=blocking_input_tablename_r,
+        blocking_rules=blocking_rules_as_brs,
+        link_type="dedupe_only",
+        set_match_probability_to_one=True,
+        unique_id_input_column=unique_id_input_column,
+        source_dataset_input_column=source_dataset_input_column,
+        columns_to_select_sql=sql_select_expr,
     )
 
-    return cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
-        linker, blocking_rules, post_filter_limit=post_filter_limit
-    )
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_pandas_dataframe()
+
+    [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+
+    return df
 
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
