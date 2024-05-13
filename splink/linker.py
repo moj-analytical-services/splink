@@ -1093,14 +1093,27 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)

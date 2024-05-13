@@ -543,9 +543,9 @@ def block_using_rules_sqls(
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
-    columns_to_select: List[InputColumn],
-    unique_id_input_column: InputColumn,
+    columns_to_select_sql: str,
     source_dataset_input_column: InputColumn,
+    unique_id_input_column: InputColumn,
     set_match_probability_to_one: bool = False,
 ):
     """Use the blocking rules specified in the linker's settings object to
@@ -555,10 +555,6 @@ def block_using_rules_sqls(
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
     """
-
-    sql_select_expr = ",".join(
-        [item for c in columns_to_select for item in c.l_r_names_as_l_r]
-    )
 
     sqls = []
 
@@ -592,7 +588,7 @@ def block_using_rules_sqls(
             input_tablename_r=input_tablename_r,
             where_condition=where_condition,
             probability=probability,
-            sql_select_expr=sql_select_expr,
+            sql_select_expr=columns_to_select_sql,
         )
         br_sqls.append(sql)
 
