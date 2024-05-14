@@ -14,11 +14,11 @@ from .blocking import (
 )
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
+from .charts import cumulative_blocking_rule_comparisons_generated
 from .database_api import DatabaseAPI, DatabaseAPISubClass
 from .input_column import InputColumn
 from .misc import calculate_cartesian
 from .pipeline import CTEPipeline
-from .settings_creator import SettingsCreator
 from .splink_dataframe import SplinkDataFrame
 from .vertically_concatenate import (
     enqueue_df_concat,
@@ -341,6 +341,42 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         post_filter_limit=post_filter_limit,
         unique_id_column_name=unique_id_column_name,
         source_dataset_column_name=source_dataset_column_name,
+    )
+
+
+def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    *,
+    table_or_tables,
+    blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
+    link_type: link_type_type,
+    db_api: DatabaseAPI,
+    post_filter_limit: int = 1e9,
+    unique_id_column_name: str,
+    source_dataset_column_name: str = None,
+):
+    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+
+    blocking_rules: List[BlockingRule] = []
+    for br in blocking_rule_creators:
+        if isinstance(br, BlockingRule):
+            blocking_rules.append(br)
+        else:
+            blocking_rules.append(
+                to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+            )
+
+    pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
+        splink_df_dict=splink_df_dict,
+        blocking_rules=blocking_rules,
+        link_type=link_type,
+        db_api=db_api,
+        post_filter_limit=post_filter_limit,
+        unique_id_column_name=unique_id_column_name,
+        source_dataset_column_name=source_dataset_column_name,
+    )
+
+    return cumulative_blocking_rule_comparisons_generated(
+        pd_df.to_dict(orient="records")
     )
 
 
