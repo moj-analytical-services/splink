@@ -2927,7 +2927,7 @@ class Linker:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
-        post_filter_limit: int = 1e9,
+        max_rows_limit: int = 1e9,
     ):
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -2965,7 +2965,7 @@ class Linker:
             blocking_rules=blocking_rules,
             link_type=self._settings_obj._link_type,
             db_api=self.db_api,
-            post_filter_limit=post_filter_limit,
+            max_rows_limit=max_rows_limit,
             unique_id_column_name=self._settings_obj.column_info_settings.unique_id_column_name,
             source_dataset_column_name=self._settings_obj.column_info_settings.source_dataset_column_name,
         )
