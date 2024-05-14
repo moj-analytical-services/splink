@@ -40,6 +40,25 @@ class ColumnInfoSettings:
             return None
 
     @property
+    def source_dataset_input_column(self):
+        if self._source_dataset_column_name_is_required:
+            return InputColumn(
+                self._source_dataset_column_name,
+                column_info_settings=self,
+                sql_dialect=self.sql_dialect,
+            )
+        else:
+            return None
+
+    @property
+    def unique_id_input_column(self):
+        return InputColumn(
+            self.unique_id_column_name,
+            column_info_settings=self,
+            sql_dialect=self.sql_dialect,
+        )
+
+    @property
     def unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 

@@ -30,9 +30,7 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 
-from .analyse_blocking import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker,
-)
+from .analyse_blocking import _cumulative_comparisons_to_be_scored_from_blocking_rules
 from .blocking import (
     BlockingRule,
     SaltedBlockingRule,
@@ -733,15 +731,45 @@ class Linker:
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
         link_type = self._settings_obj._link_type
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        blocking_input_tablename_l = "__splink__df_concat_with_tf"
+        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+
+        link_type = self._settings_obj._link_type
+        if (
+            len(self._input_tables_dict) == 2
+            and self._settings_obj._link_type == "link_only"
+        ):
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat_with_tf",
+                self._settings_obj.column_info_settings.source_dataset_column_name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
+            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+            link_type = "two_dataset_link_only"
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
-            set_match_probability_to_one=True,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1093,14 +1121,27 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
@@ -2886,7 +2927,7 @@ class Linker:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
-        post_filter_limit: int = 1e9,
+        max_rows_limit: int = 1e9,
     ):
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -2908,19 +2949,28 @@ class Linker:
                 f"Estimated recall must be greater than 0 "
                 f"and no more than 1. Supplied value {recall}."
             ) from None
+        blocking_rules: List[BlockingRule] = []
+        for br in deterministic_matching_rules:
+            if isinstance(br, BlockingRule):
+                blocking_rules.append(br)
+            else:
+                blocking_rules.append(
+                    to_blocking_rule_creator(br).get_blocking_rule(
+                        self.db_api.sql_dialect.name
+                    )
+                )
 
-        try:
-            df = cumulative_comparisons_to_be_scored_from_blocking_rules_from_linker(
-                self, deterministic_matching_rules, post_filter_limit=post_filter_limit
-            )
-        except ValueError as e:
-            raise SplinkException(
-                "Running this algorithm on the deterministic matching rules specified "
-                "may take a long time.\nIf you wish to continue, re-run after setting "
-                "a higher post_filter_limit argument.\nSee the following message "
-                f"for more details:\n{e}\n"
-            ) from e
-        records = df.to_dict(orient="records")
+        pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
+            splink_df_dict=self._input_tables_dict,
+            blocking_rules=blocking_rules,
+            link_type=self._settings_obj._link_type,
+            db_api=self.db_api,
+            max_rows_limit=max_rows_limit,
+            unique_id_column_name=self._settings_obj.column_info_settings.unique_id_column_name,
+            source_dataset_column_name=self._settings_obj.column_info_settings.source_dataset_column_name,
+        )
+
+        records = pd_df.to_dict(orient="records")
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]
@@ -3271,10 +3321,3 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
-
-    def _explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
-        return self._sql_dialect_object.explode_arrays_sql(
-            tbl_name, columns_to_explode, other_columns_to_retain
-        )
