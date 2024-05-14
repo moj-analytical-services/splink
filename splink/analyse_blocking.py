@@ -253,7 +253,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             compute_post_filter_count=False,
             unique_id_column_name=unique_id_column_name,
         )
-        count_pre_filter = count["number_of_comparison_pre_filter_conditions"]
+        count_pre_filter = count[
+            "number_of_comparisons_generated_pre_filter_conditions"
+        ]
 
         if count_pre_filter > post_filter_limit:
             # TODO: Use a SplinkException?  Want this to give a sensible message
@@ -407,11 +409,15 @@ def _count_comparisons_generated_from_blocking_rule(
 
     equi_join_conditions = " AND ".join(equi_join_conditions)
 
+    filter_conditions = blocking_rule._filter_conditions
+    if filter_conditions == "TRUE":
+        filter_conditions = ""
+
     if not compute_post_filter_count:
         return {
-            "number_of_comparison_pre_filter_conditions": pre_filter_total,
-            "number_of_comparison_post_filter_conditions": "not computed",
-            "filter_conditions_identified": blocking_rule._filter_conditions,
+            "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
+            "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
+            "filter_conditions_identified": filter_conditions,
             "equi_join_conditions_identified": equi_join_conditions,
         }
 
@@ -439,14 +445,14 @@ def _count_comparisons_generated_from_blocking_rule(
         )
 
     return {
-        "number_of_comparison_pre_filter_conditions": pre_filter_total,
-        "number_of_comparison_post_filter_conditions": post_filter_total,
-        "filter_conditions_identified": blocking_rule._filter_conditions,
+        "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
+        "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
+        "filter_conditions_identified": filter_conditions,
         "equi_join_conditions_identified": equi_join_conditions,
     }
 
 
-def count_comparisons_from_blocking_rule_pre_filter_conditions(
+def count_comparisons_from_blocking_rule(
     *,
     table_or_tables,
     blocking_rule: Union[BlockingRuleCreator, str, dict],
