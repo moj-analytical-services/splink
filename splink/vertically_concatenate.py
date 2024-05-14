@@ -193,7 +193,7 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     sql = f"""
         select * from {input_tablename}{sample_text}
         where {source_dataset_col} =
-            (select min({source_dataset_col}) from {input_tablename})
+            (select min({source_dataset_col}) from {input_tablename}{sample_text})
         """
 
     sqls.append(
@@ -206,7 +206,7 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     sql = f"""
         select * from {input_tablename}{sample_text}
         where {source_dataset_col} =
-            (select max({source_dataset_col}) from {input_tablename})
+            (select max({source_dataset_col}) from {input_tablename}{sample_text})
         """
     sqls.append(
         {
