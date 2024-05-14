@@ -1180,8 +1180,8 @@ class Linker:
     def find_matches_to_new_records(
         self,
         records_or_tablename: AcceptableInputTableType | str,
-        blocking_rules: list[BlockingRule | dict[str, Any] | str]
-        | BlockingRule
+        blocking_rules: list[BlockingRuleCreator | dict[str, Any] | str]
+        | BlockingRuleCreator
         | dict[str, Any]
         | str = [],
         match_weight_threshold: float = -4,
@@ -1270,13 +1270,15 @@ class Linker:
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(
             self, new_records_df, pipeline
         )
-
+        settings = self._settings_obj
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_new_records_with_tf",
             blocking_rules=blocking_rule_list,
             link_type="two_dataset_link_only",
+            columns_to_select_sql=", ".join(settings._columns_to_select_for_blocking),
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
