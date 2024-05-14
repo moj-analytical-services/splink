@@ -805,10 +805,12 @@ class Linker:
             and returns nothing.
         """
         if max_pairs == 1e6:
+            # keep default value small so as not to take too long, but warn users
             logger.warning(
                 "You are using the default value for `max_pairs`, "
-                "which may lead to inaccurate estimates for your "
-                "model's u-parameters. Consider increasing.python"
+                "which may be too small and thus lead to inaccurate estimates for your "
+                "model's u-parameters. "
+                "Consider increasing to 1e8 or 1e9 for more accurate estimates."
             )
         estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
