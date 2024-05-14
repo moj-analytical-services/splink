@@ -2471,7 +2471,7 @@ class Linker:
     def unlinkables_chart(
         self,
         x_col: str = "match_weight",
-        source_dataset: str | None = None,
+        name_of_data_in_title: str | None = None,
         as_dict: bool = False,
     ) -> ChartReturnType:
         """Generate an interactive chart displaying the proportion of records that
@@ -2483,7 +2483,7 @@ class Linker:
         Args:
             x_col (str, optional): Column to use for the x-axis.
                 Defaults to "match_weight".
-            source_dataset (str, optional): Name of the source dataset to use for
+            name_of_data_in_title (str, optional): Name of the source dataset to use for
                 the title of the output chart.
             as_dict (bool, optional): If True, return a dict version of the chart.
 
@@ -2506,7 +2506,7 @@ class Linker:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self)
-        return unlinkables_chart(records, x_col, source_dataset, as_dict)
+        return unlinkables_chart(records, x_col, name_of_data_in_title, as_dict)
 
     def comparison_viewer_dashboard(
         self,

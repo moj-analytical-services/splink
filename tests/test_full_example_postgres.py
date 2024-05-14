@@ -84,7 +84,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
