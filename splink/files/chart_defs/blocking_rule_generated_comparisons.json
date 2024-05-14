@@ -49,13 +49,8 @@
       {
         "type": "quantitative",
         "field": "cartesian",
-        "title": "Cartesian Product of Input Data",
+        "title": "Total comparisons in Cartesian product",
         "format": ","
-      },
-      {
-        "type": "nominal",
-        "field": "reduction_ratio",
-        "title": "Reduction Ratio (cumulative rows/cartesian product)"
       }
     ]
     }
