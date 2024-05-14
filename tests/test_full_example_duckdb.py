@@ -8,6 +8,7 @@ import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink.analyse_blocking import count_comparisons_from_blocking_rule
 from splink.duckdb.database_api import DuckDBAPI
 from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
@@ -40,15 +41,20 @@ def test_full_example_duckdb(tmp_path):
     ]
 
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
+
     linker = Linker(
         df,
         settings=settings_dict,
         database_api=db_api,
         # output_schema="splink_in_duckdb",
-    )
-
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
     profile_columns(

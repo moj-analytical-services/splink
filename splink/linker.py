@@ -1423,7 +1423,8 @@ class Linker:
         """
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
+        settings = self._settings_obj
+        uid_cols = settings.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
@@ -1437,11 +1438,13 @@ class Linker:
         pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[blocking_rule],
             link_type="self_link",
+            columns_to_select_sql=", ".join(settings._columns_to_select_for_blocking),
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
