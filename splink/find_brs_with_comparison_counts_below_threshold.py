@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 import pandas as pd
 
 from .analyse_blocking import (
-    count_comparisons_from_blocking_rule_pre_filter_conditions,
+    count_comparisons_from_blocking_rule,
 )
 from .blocking import BlockingRule
 from .blocking_rule_creator import BlockingRuleCreator
@@ -155,8 +155,8 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
     br = _generate_blocking_rule(linker, current_combination)
 
-    comparison_count = count_comparisons_from_blocking_rule_pre_filter_conditions(
-        linker, br
+    comparison_count = count_comparisons_from_blocking_rule(
+        linker, br, compute_post_filter_count=False
     )
 
     already_visited.add(frozenset(current_combination))
