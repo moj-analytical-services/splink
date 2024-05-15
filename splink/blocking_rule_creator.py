@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, final
+from typing import Any, Union, final
 
 from .blocking import BlockingRule, blocking_rule_to_obj
 from .dialects import SplinkDialect
@@ -51,3 +51,6 @@ class BlockingRuleCreator(ABC):
     @final
     def get_blocking_rule(self, sql_dialect_str: str) -> BlockingRule:
         return blocking_rule_to_obj(self.create_blocking_rule_dict(sql_dialect_str))
+
+
+acceptable_br_creator_types = Union[BlockingRuleCreator, str, dict[str, Any]]

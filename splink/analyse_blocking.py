@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Sequence, Union
 
 import pandas as pd
 import sqlglot
@@ -14,10 +14,10 @@ from .blocking import (
     materialise_exploded_id_tables,
     user_input_link_type_options,
 )
-from .blocking_rule_creator import BlockingRuleCreator
+from .blocking_rule_creator import acceptable_br_creator_types
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
-from .database_api import DatabaseAPISubClass
+from .database_api import AcceptableInputTableType, DatabaseAPISubClass
 from .input_column import InputColumn
 from .misc import calculate_cartesian
 from .pipeline import CTEPipeline
@@ -471,18 +471,17 @@ def _count_comparisons_generated_from_blocking_rule(
 
 def count_comparisons_from_blocking_rule(
     *,
-    table_or_tables,
-    blocking_rule: Union[BlockingRuleCreator, str, dict],
+    table_or_tables: Sequence[AcceptableInputTableType],
+    blocking_rule_creator: acceptable_br_creator_types,
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
-    if not isinstance(blocking_rule, BlockingRule):
-        blocking_rule = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-            db_api.sql_dialect.name
-        )
+    blocking_rule = to_blocking_rule_creator(blocking_rule_creator).get_blocking_rule(
+        db_api.sql_dialect.name
+    )
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
@@ -499,8 +498,8 @@ def count_comparisons_from_blocking_rule(
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     *,
-    table_or_tables,
-    blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
+    table_or_tables: Sequence[AcceptableInputTableType],
+    blocking_rule_creators: Iterable[acceptable_br_creator_types],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
@@ -531,8 +530,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     *,
-    table_or_tables,
-    blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
+    table_or_tables: Sequence[AcceptableInputTableType],
+    blocking_rule_creators: Iterable[acceptable_br_creator_types],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
