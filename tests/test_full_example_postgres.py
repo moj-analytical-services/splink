@@ -29,7 +29,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     count_comparisons_from_blocking_rule(
         table_or_tables=df,
-        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',
+        blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
