@@ -313,149 +313,171 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
 
-# def test_analyse_blocking_fast_methodology():
-#     df_1 = pd.DataFrame(
-#         [
-#             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-#             {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-#             {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-#             {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
-#             {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
-#         ]
-#     )
+def test_analyse_blocking_fast_methodology():
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+            {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
+        ]
+    )
 
-#     df_2 = pd.DataFrame(
-#         [
-#             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-#             {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-#             {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-#         ]
-#     )
-#     settings = {"link_type": "dedupe_only"}
-#     db_api = DuckDBAPI()
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+        ]
+    )
 
-#     linker = Linker(df_1, settings, database_api=db_api)
+    db_api = DuckDBAPI()
 
-#     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-#         "1=1",
-#     )
-#     assert res == 5 * 5
+    args = {
+        "table_or_tables": df_1,
+        "link_type": "dedupe_only",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+        "compute_post_filter_count": False,
+    }
 
-#     settings = {"link_type": "dedupe_only"}
-#     db_api = DuckDBAPI()
+    args["blocking_rule"] = "1=1"
 
-#     linker = Linker(df_1, settings, database_api=db_api)
+    res_dict = count_comparisons_from_blocking_rule(**args)
 
-#     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-#         "l.first_name = r.first_name OR l.surname = r.surname",
-#     )
-#     assert res == 5 * 5
+    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
 
-#     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-#         "l.first_name = r.first_name AND levenshtein(l.surname, r.surname) <2",
-#     )
-#     assert res == 3 * 3 + 1 * 1 + 1 * 1
+    assert res == 5 * 5
 
-#     settings = {"link_type": "link_and_dedupe"}
-#     db_api = DuckDBAPI()
+    args["blocking_rule"] = "l.first_name = r.first_name OR l.surname = r.surname"
+    res_dict = count_comparisons_from_blocking_rule(**args)
+    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
+    assert res == 5 * 5
 
-#     linker = Linker([df_1, df_2], settings, database_api=db_api)
+    #     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+    #         "l.first_name = r.first_name AND levenshtein(l.surname, r.surname) <2",
+    #     )
+    #     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
-#     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-#         "l.first_name = r.first_name"
-#     )
-#     assert res == 6 * 6 + 1 * 1 + 1 * 1
+    args["blocking_rule"] = """l.first_name = r.first_name
+                                AND levenshtein(l.surname, r.surname) <2"""
+    res_dict = count_comparisons_from_blocking_rule(**args)
+    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
+    assert res == 3 * 3 + 1 * 1 + 1 * 1
 
-#     settings = {"link_type": "link_only"}
-#     db_api = DuckDBAPI()
+    args["table_or_tables"] = [df_1, df_2]
+    args["link_type"] = "link_and_dedupe"
+    args["blocking_rule"] = block_on("first_name")
 
-#     linker = Linker([df_1, df_2], settings, database_api=db_api)
+    res_dict = count_comparisons_from_blocking_rule(**args)
+    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
 
-#     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-#         "l.first_name = r.first_name"
-#     )
-#     assert res == 3 * 3
+    assert res == 6 * 6 + 1 * 1 + 1 * 1
 
-#     # Test a series of blocking rules with different edge cases.
-#     # Assert that the naive methodology gives the same result as the new methodlogy
+    args["link_type"] = "link_only"
+    args["blocking_rule"] = block_on("first_name")
 
-#     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-#     blocking_rules = [
-#         "l.first_name = r.first_name",
-#         "l.first_name = r.first_name AND l.surname = r.surname",
-#         "substr(l.first_name,2,3) = substr(r.first_name,3,4)",
-#         "substr(l.first_name,1,1) = substr(r.surname,1,1) and l.dob = r.dob",
-#         "l.first_name = r.first_name and levenshtein(l.dob, r.dob) > -1",
-#         "l.dob = r.dob and substr(l.first_name,2,3) = substr(r.first_name,3,4)",
-#     ]
-
-#     sql_template = """
-#     select count(*)
-#     from df as l
-#     inner join df as r
-#     on {blocking_rule}
-#     """
-
-#     results = {}
-#     for br in blocking_rules:
-#         sql = sql_template.format(blocking_rule=br)
-#         res = duckdb.sql(sql).df()
-#         results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
-
-#     db_api = DuckDBAPI()
-
-#     linker = Linker(df, {"link_type": "dedupe_only"}, database_api=db_api)
-#     for br in blocking_rules:
-#         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
-#         results[br]["count_from_efficient_fn_dedupe_only"] = c
-
-#     for br in blocking_rules:
-#         assert (
-#             results[br]["count_from_join_dedupe_only"]
-#             == results[br]["count_from_efficient_fn_dedupe_only"]
-#         )
-
-#     # Link only
-#     df_l = df.iloc[::2].copy()  # even-indexed rows (starting from 0)
-#     df_r = df.iloc[1::2].copy()  # odd-indexed rows (starting from 1)
-
-#     sql_template = """
-#     select count(*)
-#     from df_l as l
-#     inner join df_r as r
-#     on {blocking_rule}
-#     """
-
-#     results = {}
-#     for br in blocking_rules:
-#         sql = sql_template.format(blocking_rule=br)
-#         res = duckdb.sql(sql).df()
-#         results[br] = {"count_from_join_link_only": res.iloc[0][0]}
-
-#     db_api = DuckDBAPI()
-
-#     linker = Linker([df_l, df_r], {"link_type": "link_only"}, database_api=db_api)
-#     for br in blocking_rules:
-#         c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
-#         results[br]["count_from_efficient_fn_link_only"] = c
-
-#     for br in blocking_rules:
-#         assert (
-#             results[br]["count_from_join_link_only"]
-#             == results[br]["count_from_efficient_fn_link_only"]
-#         )
+    res_dict = count_comparisons_from_blocking_rule(**args)
+    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
+    assert res == 3 * 3
 
 
-# def test_blocking_rule_accepts_different_dialects():
-#     br = "l.first_name = r.first_name"
-#     br = BlockingRule(br, sqlglot_dialect="spark")
-#     assert br._equi_join_conditions == [("first_name", "first_name")]
+def test_analyse_blocking_fast_methodology_edge_cases():
+    # Test a series of blocking rules with different edge cases.
+    # Assert that the naive methodology gives the same result as the new methodlogy
 
-#     br = "l.`hi THERE` = r.`hi THERE`"
-#     br = BlockingRule(br, sqlglot_dialect="spark")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-#     assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
+    blocking_rules = [
+        "l.first_name = r.first_name",
+        "l.first_name = r.first_name AND l.surname = r.surname",
+        "substr(l.first_name,2,3) = substr(r.first_name,3,4)",
+        "substr(l.first_name,1,1) = substr(r.surname,1,1) and l.dob = r.dob",
+        "l.first_name = r.first_name and levenshtein(l.dob, r.dob) > -1",
+        "l.dob = r.dob and substr(l.first_name,2,3) = substr(r.first_name,3,4)",
+    ]
+
+    sql_template = """
+    select count(*)
+    from df as l
+    inner join df as r
+    on {blocking_rule}
+    """
+
+    results = {}
+    for br in blocking_rules:
+        sql = sql_template.format(blocking_rule=br)
+        res = duckdb.sql(sql).df()
+        results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
+
+    db_api = DuckDBAPI()
+
+    for br in blocking_rules:
+        res_dict = count_comparisons_from_blocking_rule(
+            table_or_tables=df,
+            blocking_rule=br,
+            link_type="dedupe_only",
+            db_api=db_api,
+            unique_id_column_name="unique_id",
+        )
+        c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
+
+        results[br]["count_from_efficient_fn_dedupe_only"] = c
+
+    for br in blocking_rules:
+        assert (
+            results[br]["count_from_join_dedupe_only"]
+            == results[br]["count_from_efficient_fn_dedupe_only"]
+        )
+
+    # Link only
+    df_l = df.iloc[::2].copy()  # even-indexed rows (starting from 0)
+    df_r = df.iloc[1::2].copy()  # odd-indexed rows (starting from 1)
+
+    sql_template = """
+    select count(*)
+    from df_l as l
+    inner join df_r as r
+    on {blocking_rule}
+    """
+
+    results = {}
+    for br in blocking_rules:
+        sql = sql_template.format(blocking_rule=br)
+        res = duckdb.sql(sql).df()
+        results[br] = {"count_from_join_link_only": res.iloc[0][0]}
+
+    db_api = DuckDBAPI()
+
+    for br in blocking_rules:
+        res_dict = count_comparisons_from_blocking_rule(
+            table_or_tables=[df_l, df_r],
+            blocking_rule=br,
+            link_type="link_only",
+            db_api=db_api,
+            unique_id_column_name="unique_id",
+        )
+        c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
+
+        results[br]["count_from_efficient_fn_link_only"] = c
+
+    for br in blocking_rules:
+        assert (
+            results[br]["count_from_join_link_only"]
+            == results[br]["count_from_efficient_fn_link_only"]
+        )
+
+
+def test_blocking_rule_accepts_different_dialects():
+    br = "l.first_name = r.first_name"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+    assert br._equi_join_conditions == [("first_name", "first_name")]
+
+    br = "l.`hi THERE` = r.`hi THERE`"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+
+    assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
 
 
 # @mark_with_dialects_excluding()
