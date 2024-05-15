@@ -350,17 +350,24 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             "blocking_rule": [br.blocking_rule_sql for br in blocking_rules],
         }
     )
+    if len(result_df) > 0:
+        complete_df = all_rules_df.merge(result_df, on="match_key", how="left").fillna(
+            {"row_count": 0}
+        )
 
-    complete_df = all_rules_df.merge(result_df, on="match_key", how="left").fillna(
-        {"row_count": 0}
-    )
+        complete_df["cumulative_rows"] = complete_df["row_count"].cumsum().astype(int)
+        complete_df["start"] = complete_df["cumulative_rows"] - complete_df["row_count"]
+        complete_df["cartesian"] = cartesian_count
 
-    complete_df["cumulative_rows"] = complete_df["row_count"].cumsum().astype(int)
-    complete_df["start"] = complete_df["cumulative_rows"] - complete_df["row_count"]
-    complete_df["cartesian"] = cartesian_count
+        for c in ["row_count", "cumulative_rows", "cartesian", "start"]:
+            complete_df[c] = complete_df[c].astype(int)
 
-    for c in ["row_count", "cumulative_rows", "cartesian", "start"]:
-        complete_df[c] = complete_df[c].astype(int)
+    else:
+        complete_df = all_rules_df.copy()
+        complete_df["row_count"] = 0
+        complete_df["cumulative_rows"] = 0
+        complete_df["cartesian"] = cartesian_count
+        complete_df["start"] = 0
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
 
@@ -372,21 +379,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         "match_key",
         "start",
     ]
-    if len(complete_df) > 0:
-        return complete_df[col_order]
-    else:
-        return pd.DataFrame(
-            [
-                {
-                    "blocking_rule": "No blocking rules",
-                    "row_count": 0,
-                    "cumulative_rows": 0,
-                    "cartesian": cartesian_count,
-                    "match_key": 0,
-                    "start": 0,
-                }
-            ]
-        )
+
+    return complete_df[col_order]
 
 
 def _count_comparisons_generated_from_blocking_rule(
