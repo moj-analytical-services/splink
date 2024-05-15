@@ -28,7 +28,7 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
-    db_api = helper.extra_linker_args()["database_api"]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         table_or_tables=df,
