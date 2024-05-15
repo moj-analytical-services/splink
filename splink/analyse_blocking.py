@@ -479,7 +479,7 @@ def count_comparisons_from_blocking_rule(
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
-    blocking_rule_creator = to_blocking_rule_creator(
+    blocking_rule_creator_as_creator = to_blocking_rule_creator(
         blocking_rule_creator
     ).get_blocking_rule(db_api.sql_dialect.name)
 
@@ -487,7 +487,7 @@ def count_comparisons_from_blocking_rule(
 
     return _count_comparisons_generated_from_blocking_rule(
         splink_df_dict=splink_df_dict,
-        blocking_rule=blocking_rule_creator,
+        blocking_rule=blocking_rule_creator_as_creator,
         link_type=link_type,
         db_api=db_api,
         compute_post_filter_count=compute_post_filter_count,

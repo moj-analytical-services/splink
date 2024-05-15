@@ -66,7 +66,8 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
 
 
 def combine_unique_id_input_columns(
-    source_dataset_input_column: InputColumn, unique_id_input_column: InputColumn
+    source_dataset_input_column: Optional[InputColumn],
+    unique_id_input_column: InputColumn,
 ) -> List[InputColumn]:
     unique_id_input_columns: List[InputColumn] = []
     if source_dataset_input_column:
@@ -107,7 +108,7 @@ class BlockingRule:
 
     def exclude_pairs_generated_by_this_rule_sql(
         self,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
     ) -> str:
         """A SQL string specifying how to exclude the results
@@ -122,7 +123,7 @@ class BlockingRule:
 
     def exclude_pairs_generated_by_all_preceding_rules_sql(
         self,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
     ) -> str:
         """A SQL string that excludes the results of ALL previous blocking rules from
@@ -143,7 +144,7 @@ class BlockingRule:
     def create_blocked_pairs_sql(
         self,
         *,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
         input_tablename_l: str,
         input_tablename_r: str,
@@ -282,7 +283,7 @@ class SaltedBlockingRule(BlockingRule):
     def create_blocked_pairs_sql(
         self,
         *,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
         input_tablename_l: str,
         input_tablename_r: str,
@@ -338,7 +339,7 @@ class ExplodingBlockingRule(BlockingRule):
 
     def marginal_exploded_id_pairs_table_sql(
         self,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
         br: BlockingRule,
         link_type: "LinkTypeLiteralType",
@@ -386,7 +387,7 @@ class ExplodingBlockingRule(BlockingRule):
 
     def exclude_pairs_generated_by_this_rule_sql(
         self,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
     ) -> str:
         """A SQL string specifying how to exclude the results
@@ -423,7 +424,7 @@ class ExplodingBlockingRule(BlockingRule):
     def create_blocked_pairs_sql(
         self,
         *,
-        source_dataset_input_column: InputColumn,
+        source_dataset_input_column: Optional[InputColumn],
         unique_id_input_column: InputColumn,
         input_tablename_l: str,
         input_tablename_r: str,
@@ -519,7 +520,10 @@ def materialise_exploded_id_tables(
         table_name = f"{base_name}_mk_{br.match_key}"
 
         sql = br.marginal_exploded_id_pairs_table_sql(
-            source_dataset_input_column, unique_id_input_column, br, link_type
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+            br=br,
+            link_type=link_type,
         )
 
         pipeline.enqueue_sql(sql, table_name)
