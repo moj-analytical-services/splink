@@ -2827,14 +2827,11 @@ class Linker:
             ) from None
         blocking_rules: List[BlockingRule] = []
         for br in deterministic_matching_rules:
-            if isinstance(br, BlockingRule):
-                blocking_rules.append(br)
-            else:
-                blocking_rules.append(
-                    to_blocking_rule_creator(br).get_blocking_rule(
-                        self.db_api.sql_dialect.name
-                    )
+            blocking_rules.append(
+                to_blocking_rule_creator(br).get_blocking_rule(
+                    self.db_api.sql_dialect.name
                 )
+            )
 
         pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
             splink_df_dict=self._input_tables_dict,

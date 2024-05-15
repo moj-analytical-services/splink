@@ -343,7 +343,7 @@ def test_analyse_blocking_fast_methodology():
         "compute_post_filter_count": False,
     }
 
-    args["blocking_rule"] = "1=1"
+    args["blocking_rule_creator"] = "1=1"
 
     res_dict = count_comparisons_from_blocking_rule(**args)
 
@@ -351,7 +351,9 @@ def test_analyse_blocking_fast_methodology():
 
     assert res == 5 * 5
 
-    args["blocking_rule"] = "l.first_name = r.first_name OR l.surname = r.surname"
+    args["blocking_rule_creator"] = (
+        "l.first_name = r.first_name OR l.surname = r.surname"
+    )
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
     assert res == 5 * 5
@@ -361,7 +363,7 @@ def test_analyse_blocking_fast_methodology():
     #     )
     #     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
-    args["blocking_rule"] = """l.first_name = r.first_name
+    args["blocking_rule_creator"] = """l.first_name = r.first_name
                                 AND levenshtein(l.surname, r.surname) <2"""
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -369,7 +371,7 @@ def test_analyse_blocking_fast_methodology():
 
     args["table_or_tables"] = [df_1, df_2]
     args["link_type"] = "link_and_dedupe"
-    args["blocking_rule"] = block_on("first_name")
+    args["blocking_rule_creator"] = block_on("first_name")
 
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -377,7 +379,7 @@ def test_analyse_blocking_fast_methodology():
     assert res == 6 * 6 + 1 * 1 + 1 * 1
 
     args["link_type"] = "link_only"
-    args["blocking_rule"] = block_on("first_name")
+    args["blocking_rule_creator"] = block_on("first_name")
 
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]

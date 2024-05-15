@@ -314,7 +314,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     if len(splink_df_dict) == 2 and link_type == "link_only":
         link_type = "two_dataset_link_only"
 
-    if "two_dataset_link_only" and source_dataset_column_name is not None:
+    if link_type == "two_dataset_link_only" and source_dataset_column_name is not None:
         sqls = split_df_concat_with_tf_into_two_tables_sqls(
             "__splink__df_concat",
             source_dataset_column_name,
