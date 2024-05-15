@@ -2,6 +2,10 @@ import os
 
 import pandas as pd
 
+from splink.analyse_blocking import (
+    count_comparisons_from_blocking_rule,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
 from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
 from splink.postgres.database_api import PostgresAPI
@@ -23,15 +27,24 @@ def test_full_example_postgres(tmp_path, pg_engine):
         database_api=db_api,
     )
 
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."surname" = r."surname"'
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
-    linker.cumulative_num_comparisons_from_blocking_rules_chart(
-        [
+
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+        table_or_tables=df,
+        blocking_rule_creators=[
             "l.first_name = r.first_name",
             "l.surname = r.surname",
             "l.city = r.city",
-        ]
+        ],
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
 
     profile_columns(
