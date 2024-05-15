@@ -197,6 +197,8 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     # link and dedupe + link only
+    comparison_count_args["source_dataset_column_name"] = "source_dataset"
+
     df_l = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
@@ -225,6 +227,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "db_api": db_api,
         "unique_id_column_name": "unique_id",
         "blocking_rule_creators": blocking_rules,
+        "source_dataset_column_name": "source_dataset",
     }
 
     validate_blocking_output(
@@ -287,6 +290,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
             block_on("surname"),
             block_on("first_name"),
         ],
+        "source_dataset_column_name": "source_dataset",
     }
 
     validate_blocking_output(
