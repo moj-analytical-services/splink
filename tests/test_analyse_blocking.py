@@ -3,6 +3,7 @@ import pandas as pd
 
 from splink.analyse_blocking import (
     count_comparisons_from_blocking_rule,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_data,
 )
 from splink.blocking import BlockingRule
 from splink.blocking_rule_library import CustomRule, Or, block_on
@@ -110,91 +111,90 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     assert res == 1
 
 
-# def validate_blocking_output(linker, expected_out, **kwargs):
-#     records = cumulative_comparisons_generated_by_blocking_rules(linker, **kwargs)
+def validate_blocking_output(comparison_count_args, expected_out):
+    records = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+        **comparison_count_args
+    ).to_dict(orient="records")
 
-#     assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
+    assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
 
-#     assert expected_out["cumulative_rows"] == list(
-#         map(lambda x: x["cumulative_rows"], records)
-#     )
+    assert expected_out["cumulative_rows"] == list(
+        map(lambda x: x["cumulative_rows"], records)
+    )
 
-#     assert expected_out["cartesian"] == records[0]["cartesian"]
+    assert expected_out["cartesian"] == records[0]["cartesian"]
 
 
-# @mark_with_dialects_excluding()
-# def test_blocking_records_accuracy(test_helpers, dialect):
-#     from numpy import nan
+@mark_with_dialects_excluding()
+def test_blocking_records_accuracy(test_helpers, dialect):
+    from numpy import nan
 
-#     helper = test_helpers[dialect]
-#     Linker = helper.Linker
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-#     # resolve an issue w/ pyspark nulls
+    # resolve an issue w/ pyspark nulls
 
-#     df = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
-#         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
-#         {"unique_id": 3, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
-#         {"unique_id": 4, "first_name": "Kim", "surname": "Lee", "dob": None},
-#     ]
-#     df = pd.DataFrame(df).fillna(nan).replace([nan], [None])
+    df = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
+        {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
+        {"unique_id": 3, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
+        {"unique_id": 4, "first_name": "Kim", "surname": "Lee", "dob": None},
+    ]
+    df = pd.DataFrame(df).fillna(nan).replace([nan], [None])
 
-#     settings = {
-#         "link_type": "dedupe_only",
-#         "blocking_rules_to_generate_predictions": [
-#             "l.first_name = r.first_name",
-#         ],
-#         "comparisons": [],
-#         "retain_matching_columns": True,
-#         "retain_intermediate_calculation_columns": True,
-#         "em_convergence": 0.001,
-#         "max_iterations": 20,
-#     }
+    comparison_count_args = {
+        "table_or_tables": df,
+        "blocking_rule_creators": [block_on("first_name")],
+        "link_type": "dedupe_only",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+    }
 
-#     linker_settings = Linker(df, settings, **helper.extra_linker_args())
-#     n = len(df)
-#     # dedupe only
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [1],
-#             "cumulative_rows": [1],
-#             "cartesian": n * (n - 1) / 2,
-#         },
-#         blocking_rules=None,
-#     )
+    n = len(df)
+    # dedupe only
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [1],
+            "cumulative_rows": [1],
+            "cartesian": n * (n - 1) / 2,
+        },
+    )
 
-#     # dedupe only with additional brs
-#     blocking_rules = [
-#         "l.surname = r.surname",
-#         "l.first_name = r.first_name",
-#     ]
+    # dedupe only with additional brs
+    blocking_rules = [
+        "l.surname = r.surname",
+        "l.first_name = r.first_name",
+    ]
 
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [1, 1],
-#             "cumulative_rows": [1, 2],
-#             "cartesian": n * (n - 1) / 2,
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    comparison_count_args["blocking_rule_creators"] = blocking_rules
 
-#     blocking_rules = [
-#         block_on("first_name").get_blocking_rule(dialect),
-#         block_on("first_name", "surname").get_blocking_rule(dialect),
-#         "l.dob = r.dob",
-#     ]
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [1, 1],
+            "cumulative_rows": [1, 2],
+            "cartesian": n * (n - 1) / 2,
+        },
+    )
 
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [1, 0, 1],
-#             "cumulative_rows": [1, 1, 2],
-#             "cartesian": n * (n - 1) / 2,
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    blocking_rules = [
+        block_on("first_name"),
+        block_on("first_name", "surname"),
+        "l.dob = r.dob",
+    ]
+
+    comparison_count_args["blocking_rule_creators"] = blocking_rules
+
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [1, 0, 1],
+            "cumulative_rows": [1, 1, 2],
+            "cartesian": n * (n - 1) / 2,
+        },
+    )
+
 
 #     # link and dedupe + link only
 #     df_l = [

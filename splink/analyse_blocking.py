@@ -341,27 +341,26 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     """
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
 
-    sql = f"""
-    SELECT
-        row_count,
-        match_key,
-        cast(SUM(row_count) OVER (ORDER BY match_key) as int) AS cumulative_rows,
-        cast(SUM(row_count) OVER (ORDER BY match_key) - row_count as int) AS start,
-        cast({cartesian_count} as int) as cartesian
+    result_df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_pandas_dataframe()
 
-    FROM
-        __splink__df_count_cumulative_blocks
-    """
+    # The above table won't include rules that have no matches
+    all_rules_df = pd.DataFrame(
+        {
+            "match_key": [str(i) for i in range(len(blocking_rules))],
+            "blocking_rule": [br.blocking_rule_sql for br in blocking_rules],
+        }
+    )
 
-    pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks_2")
+    complete_df = all_rules_df.merge(result_df, on="match_key", how="left").fillna(
+        {"row_count": 0}
+    )
 
-    records = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_record_dict()
+    complete_df["cumulative_rows"] = complete_df["row_count"].cumsum().astype(int)
+    complete_df["start"] = complete_df["cumulative_rows"] - complete_df["row_count"]
+    complete_df["cartesian"] = cartesian_count
 
-    # Lookup table match_key -> blocking_rule
-    rules = {i: r.blocking_rule_sql for i, r in enumerate(blocking_rules)}
-
-    for r in records:
-        r["blocking_rule"] = rules[int(r["match_key"])]
+    for c in ["row_count", "cumulative_rows", "cartesian", "start"]:
+        complete_df[c] = complete_df[c].astype(int)
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
 
@@ -373,8 +372,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         "match_key",
         "start",
     ]
-    if len(records) > 0:
-        return pd.DataFrame(records)[col_order]
+    if len(complete_df) > 0:
+        return complete_df[col_order]
     else:
         return pd.DataFrame(
             [
@@ -504,8 +503,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
     link_type: link_type_type,
     db_api: DatabaseAPI,
-    max_rows_limit: int = 1e9,
     unique_id_column_name: str,
+    max_rows_limit: int = 1e9,
     source_dataset_column_name: str = None,
 ):
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
@@ -536,8 +535,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
     link_type: link_type_type,
     db_api: DatabaseAPI,
-    max_rows_limit: int = 1e9,
     unique_id_column_name: str,
+    max_rows_limit: int = 1e9,
     source_dataset_column_name: str = None,
 ):
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
