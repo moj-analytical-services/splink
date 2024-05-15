@@ -556,7 +556,7 @@ def block_using_rules_sqls(
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
     columns_to_select_sql: str,
-    source_dataset_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     set_match_probability_to_one: bool = False,
 ) -> list[dict[str, str]]:

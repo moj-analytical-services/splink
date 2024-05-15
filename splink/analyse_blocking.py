@@ -16,7 +16,7 @@ from .blocking import (
 )
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
-from .charts import cumulative_blocking_rule_comparisons_generated
+from .charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
 from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 from .misc import calculate_cartesian
@@ -224,7 +224,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     blocking_rules: List[BlockingRule],
     link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
-    max_rows_limit: float = 1e9,
+    max_rows_limit: int = int(1e9),
     unique_id_column_name: str,
     source_dataset_column_name: Optional[str],
 ) -> pd.DataFrame:
@@ -263,7 +263,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             "number_of_comparisons_generated_pre_filter_conditions"
         ]
 
-        if count_pre_filter > max_rows_limit:
+        if float(count_pre_filter) > max_rows_limit:
             # TODO: Use a SplinkException?  Want this to give a sensible message
             # when ocoming from estimate_probability_two_random_records_match
             raise ValueError(
@@ -396,9 +396,9 @@ def _count_comparisons_generated_from_blocking_rule(
     link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
     compute_post_filter_count: bool,
-    max_rows_limit: float = 1e9,
+    max_rows_limit: int = int(1e9),
     unique_id_column_name: str = "unique_id",
-):
+) -> dict[str, Union[int, str]]:
     # TODO: if it's an exploding blocking rule, make sure we error out
     pipeline = CTEPipeline()
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
@@ -423,7 +423,7 @@ def _count_comparisons_generated_from_blocking_rule(
         for i, j in blocking_rule._equi_join_conditions
     ]
 
-    equi_join_conditions = " AND ".join(equi_join_conditions)
+    equi_join_conditions_joined = " AND ".join(equi_join_conditions)
 
     filter_conditions = blocking_rule._filter_conditions
     if filter_conditions == "TRUE":
@@ -434,7 +434,7 @@ def _count_comparisons_generated_from_blocking_rule(
             "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
             "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
             "filter_conditions_identified": filter_conditions,
-            "equi_join_conditions_identified": equi_join_conditions,
+            "equi_join_conditions_identified": equi_join_conditions_joined,
         }
 
     if pre_filter_total < max_rows_limit:
@@ -465,7 +465,7 @@ def _count_comparisons_generated_from_blocking_rule(
         "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
         "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
         "filter_conditions_identified": filter_conditions,
-        "equi_join_conditions_identified": equi_join_conditions,
+        "equi_join_conditions_identified": equi_join_conditions_joined,
     }
 
 
@@ -477,8 +477,8 @@ def count_comparisons_from_blocking_rule(
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     compute_post_filter_count: bool = True,
-    max_rows_limit: float = 1e9,
-):
+    max_rows_limit: int = int(1e9),
+) -> dict[str, Union[int, str]]:
     if not isinstance(blocking_rule, BlockingRule):
         blocking_rule = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
             db_api.sql_dialect.name
@@ -504,9 +504,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
-    max_rows_limit: float = 1e9,
+    max_rows_limit: int = int(1e9),
     source_dataset_column_name: str = "source_dataset",
-):
+) -> pd.DataFrame:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     blocking_rules: List[BlockingRule] = []
@@ -536,9 +536,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
-    max_rows_limit: float = 1e9,
+    max_rows_limit: int = int(1e9),
     source_dataset_column_name: str = None,
-):
+) -> ChartReturnType:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     blocking_rules: List[BlockingRule] = []
