@@ -17,7 +17,6 @@ from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
 from .linker_utils import (
     _test_table_registration,
-    _test_write_functionality,
     register_roc_data,
 )
 
