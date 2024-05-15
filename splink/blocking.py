@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 
-from .database_api import DatabaseAPI
+from .database_api import DatabaseAPISubClass
 from .exceptions import SplinkException
 from .input_column import InputColumn
 from .misc import ensure_is_list
@@ -61,11 +61,11 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
 
 def combine_unique_id_input_columns(
     source_dataset_input_column: InputColumn, unique_id_input_column: InputColumn
-) -> Tuple[InputColumn]:
-    unique_id_input_columns = ()
+) -> List[InputColumn]:
+    unique_id_input_columns: List[InputColumn] = []
     if source_dataset_input_column:
-        unique_id_input_columns += (source_dataset_input_column,)
-    unique_id_input_columns += (unique_id_input_column,)
+        unique_id_input_columns.append(source_dataset_input_column)
+    unique_id_input_columns.append(unique_id_input_column)
     return unique_id_input_columns
 
 
@@ -103,7 +103,7 @@ class BlockingRule:
         self,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-    ):
+    ) -> str:
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
@@ -118,7 +118,7 @@ class BlockingRule:
         self,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-    ):
+    ) -> str:
         """A SQL string that excludes the results of ALL previous blocking rules from
         the pairwise comparisons generated.
         """
@@ -136,15 +136,15 @@ class BlockingRule:
 
     def create_blocked_pairs_sql(
         self,
+        *,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-        *,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-        sql_select_expr,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+        sql_select_expr: str,
+    ) -> str:
         sql = f"""
             select
             {sql_select_expr}
@@ -278,12 +278,12 @@ class SaltedBlockingRule(BlockingRule):
         *,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-        sql_select_expr,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+        sql_select_expr: str,
+    ) -> str:
         sqls = []
         exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
             source_dataset_input_column, unique_id_input_column
@@ -336,7 +336,7 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_column: InputColumn,
         br: BlockingRule,
         link_type: "LinkTypeLiteralType",
-    ):
+    ) -> str:
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
         the preceding blocking rules
@@ -382,7 +382,7 @@ class ExplodingBlockingRule(BlockingRule):
         self,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-    ):
+    ) -> str:
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
@@ -419,12 +419,12 @@ class ExplodingBlockingRule(BlockingRule):
         *,
         source_dataset_input_column: InputColumn,
         unique_id_input_column: InputColumn,
-        input_tablename_l,
-        input_tablename_r,
-        where_condition,
-        probability,
-        sql_select_expr,
-    ):
+        input_tablename_l: str,
+        input_tablename_r: str,
+        where_condition: str,
+        probability: str,
+        sql_select_expr: str,
+    ) -> str:
         if self.exploded_id_pair_table is None:
             raise ValueError(
                 "Exploding blocking rules are not supported for the function you have"
@@ -462,11 +462,11 @@ class ExplodingBlockingRule(BlockingRule):
 def materialise_exploded_id_tables(
     link_type: "LinkTypeLiteralType",
     blocking_rules: List[BlockingRule],
-    db_api: DatabaseAPI,
+    db_api: DatabaseAPISubClass,
     splink_df_dict: dict[str, SplinkDataFrame],
     source_dataset_input_column: InputColumn,
     unique_id_input_column: InputColumn,
-):
+) -> list[ExplodingBlockingRule]:
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
@@ -480,7 +480,7 @@ def materialise_exploded_id_tables(
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_input_column,
+        source_dataset_column_name=source_dataset_input_column.name,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -549,7 +549,7 @@ def block_using_rules_sqls(
     source_dataset_input_column: InputColumn,
     unique_id_input_column: InputColumn,
     set_match_probability_to_one: bool = False,
-):
+) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
