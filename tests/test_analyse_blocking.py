@@ -3,15 +3,14 @@ import pandas as pd
 
 from splink.analyse_blocking import (
     count_comparisons_from_blocking_rule,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
     cumulative_comparisons_to_be_scored_from_blocking_rules_data,
 )
 from splink.blocking import BlockingRule
 from splink.blocking_rule_library import CustomRule, Or, block_on
 from splink.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
 
-from .basic_settings import get_settings_dict
-from .decorator import mark_with_dialects_excluding
+from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 
 
 @mark_with_dialects_excluding()
@@ -383,6 +382,7 @@ def test_analyse_blocking_fast_methodology():
     assert res == 3 * 3
 
 
+@mark_with_dialects_including("duckdb")
 def test_analyse_blocking_fast_methodology_edge_cases():
     # Test a series of blocking rules with different edge cases.
     # Assert that the naive methodology gives the same result as the new methodlogy
@@ -480,21 +480,17 @@ def test_blocking_rule_accepts_different_dialects():
     assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
 
 
-# @mark_with_dialects_excluding()
-# def test_cumulative_br_funs(test_helpers, dialect):
-#     helper = test_helpers[dialect]
-#     Linker = helper.Linker
+@mark_with_dialects_excluding()
+def test_chart(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-#     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-#     linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
-#     linker.cumulative_comparisons_from_blocking_rules_records()
-#     linker.cumulative_comparisons_from_blocking_rules_records(
-#         ["l.first_name = r.first_name", block_on("surname")]
-#     )
-
-#     linker.cumulative_num_comparisons_from_blocking_rules_chart(
-#         ["l.first_name = r.first_name", block_on("surname")]
-#     )
-
-#     assert linker.count_num_comparisons_from_blocking_rule(block_on("surname")) == 3167
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+        table_or_tables=df,
+        blocking_rule_creators=[block_on("first_name"), "l.surname = r.surname"],
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
