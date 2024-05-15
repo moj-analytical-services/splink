@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 import pandas as pd
 
 from .analyse_blocking import (
-    count_comparisons_from_blocking_rule,
+    _count_comparisons_generated_from_blocking_rule,
 )
 from .blocking import BlockingRule
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule, block_on
+from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 
 if TYPE_CHECKING:
@@ -69,23 +70,23 @@ def _generate_combinations(
 
 
 def _generate_blocking_rule(
-    linker: "Linker", cols_as_string: List[str]
+    db_api: DatabaseAPISubClass, cols_as_string: List[str]
 ) -> BlockingRule:
     """Generate a Splink blocking rule given a list of column names which
     are provided as as string"""
 
     if len(cols_as_string) == 0:
-        br: BlockingRuleCreator = CustomRule("1=1", linker._sql_dialect)
+        br: BlockingRuleCreator = CustomRule("1=1", db_api.sql_dialect.name)
     else:
         br = block_on(*cols_as_string)
 
-    return br.get_blocking_rule(linker._sql_dialect)
+    return br.get_blocking_rule(db_api.sql_dialect.name)
 
 
 def _search_tree_for_blocking_rules_below_threshold_count(
     linker: "Linker",
     all_columns: List[str],
-    threshold: float,
+    threshold: int,
     current_combination: List[str] = None,
     already_visited: Set[frozenset[str]] = None,
     results: List[Dict[str, str]] = None,
@@ -156,12 +157,20 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     if len(current_combination) == len(all_columns):
         return results  # All fields included, meaning we're at a leaf so exit recursion
 
-    br = _generate_blocking_rule(linker, current_combination)
+    br = _generate_blocking_rule(linker.db_api, current_combination)
 
-    comparison_count = count_comparisons_from_blocking_rule(linker, br)
+    comparison_count = _count_comparisons_generated_from_blocking_rule(
+        splink_df_dict=linker._input_tables_dict,
+        blocking_rule=br,
+        link_type=linker._settings_obj._link_type,
+        db_api=linker.db_api,
+        compute_post_filter_count=False,
+    )["number_of_comparisons_generated_pre_filter_conditions"]
 
     already_visited.add(frozenset(current_combination))
 
+    # int just to satisfy mypy
+    comparison_count = int(comparison_count)
     if comparison_count > threshold:
         # Generate all valid combinations and continue the search
         combinations = _generate_combinations(
