@@ -127,6 +127,53 @@ def validate_blocking_output(comparison_count_args, expected_out):
 
 
 @mark_with_dialects_excluding()
+def test_source_dataset_works_as_expected(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+            {"unique_id": 4, "first_name": "John", "surname": "Brown"},
+        ]
+    )
+
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
+        ]
+    )
+    df_1["src_dataset"] = "df_1"
+    df_2["src_dataset"] = "df_2"
+    df_concat = pd.concat([df_1.copy(), df_2.copy()])
+    df_1.drop(columns=["src_dataset"], inplace=True)
+    df_2.drop(columns=["src_dataset"], inplace=True)
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    r1 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+        table_or_tables=df_concat,
+        blocking_rule_creators=[block_on("first_name")],
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+        source_dataset_column_name="src_dataset",
+        link_type="link_only",
+    )
+
+    r2 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+        table_or_tables=[df_1, df_2],
+        blocking_rule_creators=[block_on("first_name")],
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+        link_type="link_only",
+        source_dataset_column_name="source_dataset",
+    )
+    assert r1.to_dict(orient="records") == r2.to_dict(orient="records")
+
+
+@mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
     from numpy import nan
 
