@@ -44,7 +44,7 @@ def test_full_example_duckdb(tmp_path):
 
     count_comparisons_from_blocking_rule(
         table_or_tables=df,
-        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',
+        blocking_rule_creator='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",

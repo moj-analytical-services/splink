@@ -49,13 +49,13 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     }
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule="1=1", **args
+        table_or_tables=df_1, blocking_rule_creator="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 / 2
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule=block_on("first_name"), **args
+        table_or_tables=df_1, blocking_rule_creator=block_on("first_name"), **args
     )
 
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
@@ -63,33 +63,35 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     args["link_type"] = "link_only"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
+        table_or_tables=[df_1, df_2], blocking_rule_creator="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
 
     assert res == 4 * 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=block_on("surname"), **args
+        table_or_tables=[df_1, df_2], blocking_rule_creator=block_on("surname"), **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=block_on("first_name"), **args
+        table_or_tables=[df_1, df_2],
+        blocking_rule_creator=block_on("first_name"),
+        **args,
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2, df_3], blocking_rule="1=1", **args
+        table_or_tables=[df_1, df_2, df_3], blocking_rule_creator="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 + 4 * 2 + 2 * 3
 
     args["link_type"] = "link_and_dedupe"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
+        table_or_tables=[df_1, df_2], blocking_rule_creator="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
@@ -97,14 +99,14 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        table_or_tables=[df_1, df_2], blocking_rule_creator=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     rule = block_on("first_name", "surname")
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        table_or_tables=[df_1, df_2], blocking_rule_creator=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
@@ -416,7 +418,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
             table_or_tables=df,
-            blocking_rule=br,
+            blocking_rule_creator=br,
             link_type="dedupe_only",
             db_api=db_api,
             unique_id_column_name="unique_id",
@@ -453,7 +455,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
             table_or_tables=[df_l, df_r],
-            blocking_rule=br,
+            blocking_rule_creator=br,
             link_type="link_only",
             db_api=db_api,
             unique_id_column_name="unique_id",
