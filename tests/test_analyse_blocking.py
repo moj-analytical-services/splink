@@ -195,124 +195,122 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         },
     )
 
+    # link and dedupe + link only
+    df_l = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
+        {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
+    ]
 
-#     # link and dedupe + link only
-#     df_l = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
-#         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
-#     ]
+    df_l = pd.DataFrame(df_l)
 
-#     df_l = pd.DataFrame(df_l)
+    df_r = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
+        {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
+    ]
 
-#     df_r = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
-#         {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
-#     ]
+    df_r = pd.DataFrame(df_r).fillna(nan).replace([nan], [None])
 
-#     df_r = pd.DataFrame(df_r).fillna(nan).replace([nan], [None])
+    blocking_rules = [
+        "l.surname = r.surname",  # 2l:2r,
+        Or(
+            block_on("first_name"), CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)")
+        ),  # 1r:1r, 1l:2l, 1l:2r
+        "l.surname = r.surname",
+    ]
 
-#     blocking_rules = [
-#         "l.surname = r.surname",  # 2l:2r,
-#         Or(
-#             block_on("first_name"), CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)")
-#         ).get_blocking_rule(dialect),  # 1r:1r, 1l:2l, 1l:2r
-#         "l.surname = r.surname",
-#     ]
+    comparison_count_args = {
+        "table_or_tables": [df_l, df_r],
+        "link_type": "link_and_dedupe",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+        "blocking_rule_creators": blocking_rules,
+    }
 
-#     settings = {"link_type": "link_and_dedupe"}
-#     linker_settings = Linker([df_l, df_r], settings, **helper.extra_linker_args())
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [1, 3, 0],
-#             "cumulative_rows": [1, 4, 4],
-#             "cartesian": 1 + 1 + 4,  # within, within, between
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [1, 3, 0],
+            "cumulative_rows": [1, 4, 4],
+            "cartesian": 1 + 1 + 4,  # within, within, between
+        },
+    )
 
-#     blocking_rules = [
-#         "l.surname = r.surname",  # 2l:2r,
-#         Or(
-#             block_on("first_name"),
-#             CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)"),
-#         ).get_blocking_rule(dialect),  # 1l:1r, 1l:2r
-#         "l.surname = r.surname",
-#     ]
+    blocking_rules = [
+        "l.surname = r.surname",  # 2l:2r,
+        Or(
+            block_on("first_name"),
+            CustomRule("substr(l.dob,1,4) = substr(r.dob,1,4)"),
+        ),  # 1l:1r, 1l:2r
+        "l.surname = r.surname",
+    ]
 
-#     settings = {"link_type": "link_only"}
-#     linker_settings = Linker([df_l, df_r], settings, **helper.extra_linker_args())
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [1, 2, 0],
-#             "cumulative_rows": [1, 3, 3],
-#             "cartesian": 4,
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    comparison_count_args["link_type"] = "link_only"
+    comparison_count_args["blocking_rule_creators"] = blocking_rules
 
-#     # link and dedupe
-#     df_1 = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
-#         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
-#     ]
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [1, 2, 0],
+            "cumulative_rows": [1, 3, 3],
+            "cartesian": 4,
+        },
+    )
 
-#     df_1 = pd.DataFrame(df_l)
+    # link and dedupe
+    df_1 = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
+        {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
+    ]
 
-#     df_2 = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
-#         {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
-#     ]
+    df_1 = pd.DataFrame(df_l)
 
-#     df_2 = pd.DataFrame(df_2).fillna(nan).replace([nan], [None])
+    df_2 = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
+        {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
+    ]
 
-#     df_3 = [
-#         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
-#     ]
+    df_2 = pd.DataFrame(df_2).fillna(nan).replace([nan], [None])
 
-#     df_3 = pd.DataFrame(df_3)
+    df_3 = [
+        {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
+    ]
 
-#     settings = {"link_type": "link_and_dedupe"}
-#     blocking_rules = [
-#         "l.surname = r.surname",
-#         "l.first_name = r.first_name",
-#     ]
+    df_3 = pd.DataFrame(df_3)
 
-#     linker_settings = Linker([df_1, df_2, df_3], settings, **helper.extra_linker_args())
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [2, 2],
-#             "cumulative_rows": [2, 4],
-#             "cartesian": 5 * 4 / 2,
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    comparison_count_args = {
+        "table_or_tables": [df_1, df_2, df_3],
+        "link_type": "link_and_dedupe",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+        "blocking_rule_creators": [
+            block_on("surname"),
+            block_on("first_name"),
+        ],
+    }
 
-#     settings = {"link_type": "link_only"}
-#     blocking_rules = [
-#         "l.surname = r.surname",
-#         "l.first_name = r.first_name",
-#     ]
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [2, 2],
+            "cumulative_rows": [2, 4],
+            "cartesian": 5 * 4 / 2,
+        },
+    )
 
-#     linker_settings = Linker([df_1, df_2, df_3], settings, **helper.extra_linker_args())
-#     validate_blocking_output(
-#         linker_settings,
-#         expected_out={
-#             "row_count": [2, 2],
-#             "cumulative_rows": [2, 4],
-#             "cartesian": 8,
-#         },
-#         blocking_rules=blocking_rules,
-#     )
+    comparison_count_args["link_type"] = "link_only"
+    comparison_count_args["blocking_rule_creators"] = [
+        block_on("surname"),
+        block_on("first_name"),
+    ]
 
-#     blocking_rules_df = cumulative_comparisons_generated_by_blocking_rules(
-#         linker_settings, blocking_rules=blocking_rules, return_dataframe=True
-#     )
-
-#     expected_row_count = pd.DataFrame({"row_count": [2, 2]})
-#     assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
+    validate_blocking_output(
+        comparison_count_args,
+        expected_out={
+            "row_count": [2, 2],
+            "cumulative_rows": [2, 4],
+            "cartesian": 8,
+        },
+    )
 
 
 # def test_analyse_blocking_fast_methodology():
