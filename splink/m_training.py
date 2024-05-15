@@ -37,11 +37,13 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     pipeline = CTEPipeline([nodes_with_tf])
 
     sqls = block_using_rules_sqls(
-        training_linker,
         input_tablename_l="__splink__df_concat_with_tf",
         input_tablename_r="__splink__df_concat_with_tf",
         blocking_rules=[BlockingRule(f"l.{label_colname} = r.{label_colname}")],
-        link_type=training_linker._settings_obj._link_type,
+        link_type=settings_obj._link_type,
+        columns_to_select_sql=", ".join(settings_obj._columns_to_select_for_blocking),
+        source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
