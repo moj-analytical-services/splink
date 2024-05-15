@@ -155,7 +155,10 @@ class BlockingRule:
             on
             ({self.blocking_rule_sql})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(source_dataset_input_column, unique_id_input_column)}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(
+                source_dataset_input_column,
+                unique_id_input_column)
+            }
             """
         return sql
 

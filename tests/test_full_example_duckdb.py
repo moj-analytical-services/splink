@@ -17,6 +17,7 @@ from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
 from .linker_utils import (
     _test_table_registration,
+    _test_write_functionality,
     register_roc_data,
 )
 
@@ -119,21 +120,21 @@ def test_full_example_duckdb(tmp_path):
         "cluster": 10000,
     }
 
-    # linker.find_matches_to_new_records(
-    #     [record], blocking_rules=[], match_weight_threshold=-10000
-    # )
+    linker.find_matches_to_new_records(
+        [record], blocking_rules=[], match_weight_threshold=-10000
+    )
 
-    # # Test saving and loading
-    # path = os.path.join(tmp_path, "model.json")
-    # linker.save_model_to_json(path)
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
 
-    # db_api = DuckDBAPI()
-    # linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
+    db_api = DuckDBAPI()
+    linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
 
-    # linker_2 = Linker(df, database_api=db_api, settings=path)
+    linker_2 = Linker(df, database_api=db_api, settings=path)
 
-    # # Test that writing to files works as expected
-    # _test_write_functionality(linker_2, pd.read_csv)
+    # Test that writing to files works as expected
+    _test_write_functionality(linker_2, pd.read_csv)
 
 
 # Create some dummy dataframes for the link only test
