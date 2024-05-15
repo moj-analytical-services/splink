@@ -1052,7 +1052,7 @@ class Linker:
         self,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
-        materialise_after_computing_term_frequencies=True,
+        materialise_after_computing_term_frequencies: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -1333,12 +1333,6 @@ class Linker:
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
         """
-        original_blocking_rules = (
-            self._settings_obj._blocking_rules_to_generate_predictions
-        )
-        original_link_type = self._settings_obj._link_type
-
-        self._settings_obj._blocking_rules_to_generate_predictions = []
 
         cache = self._intermediate_table_cache
 
@@ -1385,11 +1379,15 @@ class Linker:
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__compare_two_records_left_with_tf",
             input_tablename_r="__splink__compare_two_records_right_with_tf",
             blocking_rules=[BlockingRule("1=1")],
             link_type=self._settings_obj._link_type,
+            columns_to_select_sql=", ".join(
+                self._settings_obj._columns_to_select_for_blocking
+            ),
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1407,11 +1405,6 @@ class Linker:
         predictions = self.db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-
-        self._settings_obj._blocking_rules_to_generate_predictions = (
-            original_blocking_rules
-        )
-        self._settings_obj._link_type = original_link_type
 
         return predictions
 
