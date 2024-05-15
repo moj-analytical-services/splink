@@ -40,20 +40,23 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
 ) -> str:
     input_dataframes = list(input_data_dict.values())
 
-    if len(input_dataframes) > 1:
+    two_dataset_link_only = link_type == "link_only" and len(input_dataframes) == 2
+    if two_dataset_link_only:
+        link_type = "two_dataset_link_only"
+
+    if len(input_dataframes) > 1 and not two_dataset_link_only:
         unique_id_cols = [
-            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
             InputColumn("source_dataset", sql_dialect=db_api.sql_dialect.name),
+            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
         ]
     else:
         unique_id_cols = [
             InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
         ]
+
     where_condition = _sql_gen_where_condition(link_type, unique_id_cols)
 
     sqls = []
-
-    two_dataset_link_only = link_type == "link_only" and len(input_dataframes) == 2
 
     if two_dataset_link_only:
         input_tablename_l = input_dataframes[0].physical_name
@@ -393,7 +396,7 @@ def _count_comparisons_generated_from_blocking_rule(
     blocking_rule: BlockingRule,
     link_type: link_type_type,
     db_api: DatabaseAPI,
-    compute_post_filter_count: bool = False,
+    compute_post_filter_count: bool,
     max_rows_limit: int = 1e9,
     unique_id_column_name: str = "unique_id",
 ):
@@ -474,7 +477,7 @@ def count_comparisons_from_blocking_rule(
     link_type: link_type_type,
     db_api: DatabaseAPI,
     unique_id_column_name: str,
-    compute_post_filter_count: bool = False,
+    compute_post_filter_count: bool = True,
     max_rows_limit: int = 1e9,
 ):
     if not isinstance(blocking_rule, BlockingRule):
