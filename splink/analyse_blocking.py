@@ -505,7 +505,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     db_api: DatabaseAPI,
     unique_id_column_name: str,
     max_rows_limit: int = 1e9,
-    source_dataset_column_name: str = None,
+    source_dataset_column_name: str = "source_dataset",
 ):
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 

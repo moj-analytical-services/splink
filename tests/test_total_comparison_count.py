@@ -1,11 +1,8 @@
 import pandas as pd
 import pytest
 
-from splink.analyse_blocking import (
-    number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
-)
+from splink.analyse_blocking import count_comparisons_from_blocking_rule
 from splink.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
 from splink.misc import calculate_cartesian
 from splink.pipeline import CTEPipeline
 from splink.vertically_concatenate import vertically_concatenate_sql
@@ -85,48 +82,42 @@ def test_calculate_cartesian_equals_total_number_of_links(
         )
 
     dfs = list(map(make_dummy_frame, frame_sizes))
-    settings = {"link_type": link_type}
 
     db_api = DuckDBAPI()
 
-    linker = Linker(dfs, settings, database_api=db_api)
-    pipeline = CTEPipeline()
-
-    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
-
-    sql = vertically_concatenate_sql(
-        input_tables=linker._input_tables_dict,
-        salting_required=linker._settings_obj.salting_required,
-        source_dataset_column_name=sds_name,
+    res_dict = count_comparisons_from_blocking_rule(
+        table_or_tables=dfs,
+        blocking_rule="1=1",
+        link_type=link_type,
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
 
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-    df_concat = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    pipeline = CTEPipeline([df_concat])
-    # calculate full number of comparisons
-    full_count_sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
-        linker, "1=1"
-    )
-    pipeline.enqueue_sql(full_count_sql, "__splink__analyse_blocking_rule")
-    res_df = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    res = res_df.as_record_dict()[0]
+    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
 
     # compare with count from each frame
+    pipeline = CTEPipeline()
+    sql = vertically_concatenate_sql(
+        input_tables=db_api.register_multiple_tables(dfs),
+        salting_required=False,
+        source_dataset_column_name="source_dataset",
+    )
+    pipeline.enqueue_sql(sql, "__splink__df_concat")
+
     sql = f"""
         select count(*) as count
         from __splink__df_concat
         {group_by}
         order by count desc
     """
-    pipeline = CTEPipeline([df_concat])
+
     pipeline.enqueue_sql(sql, "__splink__cartesian_product")
-    cartesian_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    cartesian_count = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
     # check this is what we expect from input
     assert frame_sizes == [frame["count"] for frame in row_count_df]
 
-    computed_value_count = calculate_cartesian(row_count_df, link_type)
+    computed_value_count = int(calculate_cartesian(row_count_df, link_type))
 
-    assert computed_value_count == res["count_of_pairwise_comparisons_generated"]
+    assert computed_value_count == res
