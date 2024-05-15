@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, List, Literal, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 import pandas as pd
 import sqlglot
@@ -9,8 +9,10 @@ import sqlglot
 from .blocking import (
     BlockingRule,
     _sql_gen_where_condition,
+    backend_link_type_options,
     block_using_rules_sqls,
     materialise_exploded_id_tables,
+    user_input_link_type_options,
 )
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
@@ -26,9 +28,6 @@ from .vertically_concatenate import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-link_type_type = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 
 
 def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
@@ -191,7 +190,7 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
 def _row_counts_per_input_table(
     *,
     splink_df_dict: dict[str, "SplinkDataFrame"],
-    link_type: link_type_type,
+    link_type: backend_link_type_options,
     source_dataset_column_name: Optional[str],
     db_api: DatabaseAPISubClass,
 ) -> "SplinkDataFrame":
@@ -223,7 +222,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     *,
     splink_df_dict: dict[str, "SplinkDataFrame"],
     blocking_rules: List[BlockingRule],
-    link_type: link_type_type,
+    link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
     max_rows_limit: float = 1e9,
     unique_id_column_name: str,
@@ -310,8 +309,12 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     )
 
     blocking_input_tablename_l = "__splink__df_concat"
+
     blocking_input_tablename_r = "__splink__df_concat"
     if len(splink_df_dict) == 2 and link_type == "link_only":
+        link_type = "two_dataset_link_only"
+
+    if "two_dataset_link_only" and source_dataset_column_name is not None:
         sqls = split_df_concat_with_tf_into_two_tables_sqls(
             "__splink__df_concat",
             source_dataset_column_name,
@@ -320,7 +323,6 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
         blocking_input_tablename_l = "__splink__df_concat_left"
         blocking_input_tablename_r = "__splink__df_concat_right"
-        link_type = "two_dataset_link_only"
 
     sqls = block_using_rules_sqls(
         input_tablename_l=blocking_input_tablename_l,
@@ -391,7 +393,7 @@ def _count_comparisons_generated_from_blocking_rule(
     *,
     splink_df_dict: dict[str, "SplinkDataFrame"],
     blocking_rule: BlockingRule,
-    link_type: link_type_type,
+    link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
     compute_post_filter_count: bool,
     max_rows_limit: float = 1e9,
@@ -471,7 +473,7 @@ def count_comparisons_from_blocking_rule(
     *,
     table_or_tables,
     blocking_rule: Union[BlockingRuleCreator, str, dict],
-    link_type: link_type_type,
+    link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     compute_post_filter_count: bool = True,
@@ -499,7 +501,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     *,
     table_or_tables,
     blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
-    link_type: link_type_type,
+    link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     max_rows_limit: float = 1e9,
@@ -531,7 +533,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     *,
     table_or_tables,
     blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, dict]],
-    link_type: link_type_type,
+    link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     max_rows_limit: float = 1e9,

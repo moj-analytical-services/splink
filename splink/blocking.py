@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Literal, Optional
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Identifier, Join
@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .settings import LinkTypeLiteralType
+
+user_input_link_type_options = Literal["link_only", "link_and_dedupe", "dedupe_only"]
+
+backend_link_type_options = Literal[
+    "link_only", "link_and_dedupe", "dedupe_only", "two_dataset_link_only", "self_link"
+]
 
 
 def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRule:
@@ -464,7 +470,7 @@ def materialise_exploded_id_tables(
     blocking_rules: List[BlockingRule],
     db_api: DatabaseAPISubClass,
     splink_df_dict: dict[str, SplinkDataFrame],
-    source_dataset_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
 ) -> list[ExplodingBlockingRule]:
     exploding_blocking_rules = [
