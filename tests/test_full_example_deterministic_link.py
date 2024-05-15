@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from splink.analyse_blocking import (
+from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
 )
 from splink.linker import Linker

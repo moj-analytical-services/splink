@@ -3,7 +3,7 @@ import os
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink import block_on
-from splink.analyse_blocking import (
+from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
 )
 from splink.exploratory import profile_columns

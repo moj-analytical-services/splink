@@ -1,12 +1,12 @@
 import duckdb
 import pandas as pd
 
-from splink.analyse_blocking import (
+from splink.blocking import BlockingRule
+from splink.blocking_analysis import (
     count_comparisons_from_blocking_rule,
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
     cumulative_comparisons_to_be_scored_from_blocking_rules_data,
 )
-from splink.blocking import BlockingRule
 from splink.blocking_rule_library import CustomRule, Or, block_on
 from splink.duckdb.database_api import DuckDBAPI
 

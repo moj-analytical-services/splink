@@ -14,7 +14,6 @@ from .accuracy import (
     truth_space_table_from_labels_column,
     truth_space_table_from_labels_table,
 )
-from .analyse_blocking import _cumulative_comparisons_to_be_scored_from_blocking_rules
 from .blocking import (
     BlockingRule,
     SaltedBlockingRule,
@@ -22,6 +21,7 @@ from .blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from .blocking_analysis import _cumulative_comparisons_to_be_scored_from_blocking_rules
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .cache_dict_with_logging import CacheDictWithLogging
