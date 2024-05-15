@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 import pandas as pd
 
 from .blocking import BlockingRule
-from .blocking_analysis import (
-    _count_comparisons_generated_from_blocking_rule,
-)
 from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_library import CustomRule, block_on
 from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn
+from .internals.blocking_analysis import (
+    _count_comparisons_generated_from_blocking_rule,
+)
 
 if TYPE_CHECKING:
     from .linker import Linker
