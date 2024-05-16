@@ -545,7 +545,7 @@ def count_comparisons_from_blocking_rule(
     blocking_rule_creator: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
-    unique_id_column_name: str,
+    unique_id_column_name: str = "unqiue_id",
     source_dataset_column_name: Optional[str] = None,
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
@@ -574,7 +574,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
-    unique_id_column_name: str,
+    unique_id_column_name: str = "unique_id",
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
 ) -> pd.DataFrame:
