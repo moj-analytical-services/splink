@@ -494,12 +494,28 @@ def _count_comparisons_generated_from_blocking_rule(
     if filter_conditions == "TRUE":
         filter_conditions = ""
 
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        splink_df_dict,
+        link_type,
+        db_api.sql_dialect.name,
+    )
+
+    if source_dataset_input_column:
+        uid_for_where = [source_dataset_input_column, unique_id_input_column]
+    else:
+        uid_for_where = [unique_id_input_column]
+
+    join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
+
     if not compute_post_filter_count:
         return {
             "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
             "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
             "filter_conditions_identified": filter_conditions,
             "equi_join_conditions_identified": equi_join_conditions_joined,
+            "inner_join_condition_identified": join_condition_sql,
         }
 
     if pre_filter_total < max_rows_limit:
@@ -536,6 +552,7 @@ def _count_comparisons_generated_from_blocking_rule(
         "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
         "filter_conditions_identified": filter_conditions,
         "equi_join_conditions_identified": equi_join_conditions_joined,
+        "inner_join_condition_identified": join_condition_sql,
     }
 
 

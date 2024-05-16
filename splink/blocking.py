@@ -535,7 +535,9 @@ def materialise_exploded_id_tables(
     return exploding_blocking_rules
 
 
-def _sql_gen_where_condition(link_type, unique_id_cols):
+def _sql_gen_where_condition(
+    link_type: backend_link_type_options, unique_id_cols: List[InputColumn]
+) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
 
