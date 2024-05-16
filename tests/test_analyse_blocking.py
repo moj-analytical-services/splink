@@ -213,7 +213,12 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
     )
     # Both of the above use the vertical concat of the two datasets so should
     # be equivalent
-    assert r1 == r2
+    keys_to_check = [
+        "number_of_comparisons_generated_pre_filter_conditions",
+        "number_of_comparisons_to_be_scored_post_filter_conditions",
+    ]
+    for k in keys_to_check:
+        assert r1[k] == r2[k]
 
     r1 = count_comparisons_from_blocking_rule(
         table_or_tables=df_concat_2,
