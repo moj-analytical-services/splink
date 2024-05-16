@@ -165,6 +165,8 @@ def _search_tree_for_blocking_rules_below_threshold_count(
         link_type=linker._settings_obj._link_type,
         db_api=linker.db_api,
         compute_post_filter_count=False,
+        source_dataset_column_name=linker._settings_obj.column_info_settings.source_dataset_column_name,
+        unique_id_column_name=linker._settings_obj.column_info_settings.unique_id_column_name,
     )["number_of_comparisons_generated_pre_filter_conditions"]
 
     already_visited.add(frozenset(current_combination))

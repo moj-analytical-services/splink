@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     input_data_dict: dict[str, "SplinkDataFrame"],
     blocking_rule: "BlockingRule",
-    link_type: str,
+    link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
     source_dataset_column_name: Optional[str],
