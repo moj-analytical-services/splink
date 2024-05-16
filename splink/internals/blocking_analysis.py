@@ -19,7 +19,7 @@ from ..blocking_rule_creator_utils import to_blocking_rule_creator
 from ..charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..input_column import InputColumn
-from ..misc import calculate_cartesian
+from ..misc import calculate_cartesian, ensure_is_iterable
 from ..pipeline import CTEPipeline
 from ..splink_dataframe import SplinkDataFrame
 from ..vertically_concatenate import (
@@ -580,6 +580,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 ) -> pd.DataFrame:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
+    blocking_rule_creators = ensure_is_iterable(blocking_rule_creators)
+
     blocking_rules: List[BlockingRule] = []
     for br in blocking_rule_creators:
         if isinstance(br, BlockingRule):
@@ -611,6 +613,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     source_dataset_column_name: Optional[str] = None,
 ) -> ChartReturnType:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+
+    blocking_rule_creators = ensure_is_iterable(blocking_rule_creators)
 
     blocking_rules: List[BlockingRule] = []
     for br in blocking_rule_creators:

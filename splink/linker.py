@@ -75,6 +75,7 @@ from .match_weights_histogram import histogram_data
 from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
+    ensure_is_iterable,
     ensure_is_list,
     prob_to_bayes_factor,
 )
@@ -2820,6 +2821,8 @@ class Linker:
                 f"Estimated recall must be greater than 0 "
                 f"and no more than 1. Supplied value {recall}."
             ) from None
+
+        deterministic_matching_rules = ensure_is_iterable(deterministic_matching_rules)
         blocking_rules: List[BlockingRule] = []
         for br in deterministic_matching_rules:
             blocking_rules.append(
