@@ -32,7 +32,7 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         table_or_tables=df,
-        blocking_rule_creators=br_for_predict,
+        blocking_rules=br_for_predict,
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",

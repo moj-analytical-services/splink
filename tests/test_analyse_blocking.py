@@ -49,13 +49,13 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     }
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule_creator="1=1", **args
+        table_or_tables=df_1, blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 / 2
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule_creator=block_on("first_name"), **args
+        table_or_tables=df_1, blocking_rule=block_on("first_name"), **args
     )
 
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
@@ -63,35 +63,35 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     args["link_type"] = "link_only"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule_creator="1=1", **args
+        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
 
     assert res == 4 * 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule_creator=block_on("surname"), **args
+        table_or_tables=[df_1, df_2], blocking_rule=block_on("surname"), **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     res_dict = count_comparisons_from_blocking_rule(
         table_or_tables=[df_1, df_2],
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         **args,
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2, df_3], blocking_rule_creator="1=1", **args
+        table_or_tables=[df_1, df_2, df_3], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 + 4 * 2 + 2 * 3
 
     args["link_type"] = "link_and_dedupe"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule_creator="1=1", **args
+        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
@@ -99,14 +99,14 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule_creator=rule, **args
+        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     rule = block_on("first_name", "surname")
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule_creator=rule, **args
+        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
@@ -155,7 +155,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r1 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         table_or_tables=df_concat,
-        blocking_rule_creators=[block_on("first_name")],
+        blocking_rules=[block_on("first_name")],
         db_api=db_api,
         unique_id_column_name="unique_id",
         source_dataset_column_name="src_dataset",
@@ -164,7 +164,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r2 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         table_or_tables=[df_1, df_2],
-        blocking_rule_creators=[block_on("first_name")],
+        blocking_rules=[block_on("first_name")],
         db_api=db_api,
         unique_id_column_name="unique_id",
         link_type="link_only",
@@ -189,7 +189,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     count_comparisons_from_blocking_rule(
         table_or_tables=df_concat_3,
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         link_type="dedupe_only",
         unique_id_column_name="unique_id",
         db_api=db_api,
@@ -197,7 +197,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r1 = count_comparisons_from_blocking_rule(
         table_or_tables=df_concat_3,
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         link_type="link_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
@@ -206,7 +206,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r2 = count_comparisons_from_blocking_rule(
         table_or_tables=[df_1_no_sds, df_2_no_sds, df_3_no_sds],
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         link_type="link_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
@@ -222,7 +222,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r1 = count_comparisons_from_blocking_rule(
         table_or_tables=df_concat_2,
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         link_type="link_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
@@ -231,7 +231,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
     r2 = count_comparisons_from_blocking_rule(
         table_or_tables=[df_1_no_sds, df_2_no_sds],
-        blocking_rule_creator=block_on("first_name"),
+        blocking_rule=block_on("first_name"),
         link_type="link_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
@@ -269,7 +269,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     comparison_count_args = {
         "table_or_tables": df,
-        "blocking_rule_creators": [block_on("first_name")],
+        "blocking_rules": [block_on("first_name")],
         "link_type": "dedupe_only",
         "db_api": db_api,
         "unique_id_column_name": "unique_id",
@@ -292,7 +292,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "l.first_name = r.first_name",
     ]
 
-    comparison_count_args["blocking_rule_creators"] = blocking_rules
+    comparison_count_args["blocking_rules"] = blocking_rules
 
     validate_blocking_output(
         comparison_count_args,
@@ -309,7 +309,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "l.dob = r.dob",
     ]
 
-    comparison_count_args["blocking_rule_creators"] = blocking_rules
+    comparison_count_args["blocking_rules"] = blocking_rules
 
     validate_blocking_output(
         comparison_count_args,
@@ -350,7 +350,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "link_type": "link_and_dedupe",
         "db_api": db_api,
         "unique_id_column_name": "unique_id",
-        "blocking_rule_creators": blocking_rules,
+        "blocking_rules": blocking_rules,
         "source_dataset_column_name": "source_dataset",
     }
 
@@ -373,7 +373,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     ]
 
     comparison_count_args["link_type"] = "link_only"
-    comparison_count_args["blocking_rule_creators"] = blocking_rules
+    comparison_count_args["blocking_rules"] = blocking_rules
 
     validate_blocking_output(
         comparison_count_args,
@@ -410,7 +410,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "link_type": "link_and_dedupe",
         "db_api": db_api,
         "unique_id_column_name": "unique_id",
-        "blocking_rule_creators": [
+        "blocking_rules": [
             block_on("surname"),
             block_on("first_name"),
         ],
@@ -427,7 +427,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     comparison_count_args["link_type"] = "link_only"
-    comparison_count_args["blocking_rule_creators"] = [
+    comparison_count_args["blocking_rules"] = [
         block_on("surname"),
         block_on("first_name"),
     ]
@@ -471,7 +471,7 @@ def test_analyse_blocking_fast_methodology():
         "compute_post_filter_count": False,
     }
 
-    args["blocking_rule_creator"] = "1=1"
+    args["blocking_rule"] = "1=1"
 
     res_dict = count_comparisons_from_blocking_rule(**args)
 
@@ -479,9 +479,7 @@ def test_analyse_blocking_fast_methodology():
 
     assert res == 5 * 5
 
-    args["blocking_rule_creator"] = (
-        "l.first_name = r.first_name OR l.surname = r.surname"
-    )
+    args["blocking_rule"] = "l.first_name = r.first_name OR l.surname = r.surname"
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
     assert res == 5 * 5
@@ -491,7 +489,7 @@ def test_analyse_blocking_fast_methodology():
     #     )
     #     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
-    args["blocking_rule_creator"] = """l.first_name = r.first_name
+    args["blocking_rule"] = """l.first_name = r.first_name
                                 AND levenshtein(l.surname, r.surname) <2"""
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -499,7 +497,7 @@ def test_analyse_blocking_fast_methodology():
 
     args["table_or_tables"] = [df_1, df_2]
     args["link_type"] = "link_and_dedupe"
-    args["blocking_rule_creator"] = block_on("first_name")
+    args["blocking_rule"] = block_on("first_name")
 
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -507,7 +505,7 @@ def test_analyse_blocking_fast_methodology():
     assert res == 6 * 6 + 1 * 1 + 1 * 1
 
     args["link_type"] = "link_only"
-    args["blocking_rule_creator"] = block_on("first_name")
+    args["blocking_rule"] = block_on("first_name")
 
     res_dict = count_comparisons_from_blocking_rule(**args)
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -548,7 +546,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
             table_or_tables=df,
-            blocking_rule_creator=br,
+            blocking_rule=br,
             link_type="dedupe_only",
             db_api=db_api,
             unique_id_column_name="unique_id",
@@ -585,7 +583,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
             table_or_tables=[df_l, df_r],
-            blocking_rule_creator=br,
+            blocking_rule=br,
             link_type="link_only",
             db_api=db_api,
             unique_id_column_name="unique_id",
@@ -621,7 +619,7 @@ def test_chart(test_helpers, dialect):
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         table_or_tables=df,
-        blocking_rule_creators=[block_on("first_name"), "l.surname = r.surname"],
+        blocking_rules=[block_on("first_name"), "l.surname = r.surname"],
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",

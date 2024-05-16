@@ -87,7 +87,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     res_dict = count_comparisons_from_blocking_rule(
         table_or_tables=dfs,
-        blocking_rule_creator="1=1",
+        blocking_rule="1=1",
         link_type=link_type,
         db_api=db_api,
         unique_id_column_name="unique_id",

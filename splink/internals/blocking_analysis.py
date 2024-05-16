@@ -559,7 +559,7 @@ def _count_comparisons_generated_from_blocking_rule(
 def count_comparisons_from_blocking_rule(
     *,
     table_or_tables: Sequence[AcceptableInputTableType],
-    blocking_rule_creator: Union[BlockingRuleCreator, str, Dict[str, Any]],
+    blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
@@ -567,15 +567,16 @@ def count_comparisons_from_blocking_rule(
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
-    blocking_rule_creator_as_creator = to_blocking_rule_creator(
-        blocking_rule_creator
-    ).get_blocking_rule(db_api.sql_dialect.name)
+    # Ensure what's been passed in is a BlockingRuleCreator
+    blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
+        db_api.sql_dialect.name
+    )
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     return _count_comparisons_generated_from_blocking_rule(
         splink_df_dict=splink_df_dict,
-        blocking_rule=blocking_rule_creator_as_creator,
+        blocking_rule=blocking_rule_creator,
         link_type=link_type,
         db_api=db_api,
         compute_post_filter_count=compute_post_filter_count,
@@ -588,7 +589,7 @@ def count_comparisons_from_blocking_rule(
 def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     *,
     table_or_tables: Sequence[AcceptableInputTableType],
-    blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
+    blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
@@ -597,20 +598,19 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 ) -> pd.DataFrame:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
-    blocking_rule_creators = ensure_is_iterable(blocking_rule_creators)
+    # whilst they're named blocking_rules, this is actually a list of
+    # BlockingRuleCreators. The followign code turns them into BlockingRule objects
+    blocking_rules = ensure_is_iterable(blocking_rules)
 
-    blocking_rules: List[BlockingRule] = []
-    for br in blocking_rule_creators:
-        if isinstance(br, BlockingRule):
-            blocking_rules.append(br)
-        else:
-            blocking_rules.append(
-                to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
-            )
+    blocking_rules_as_br: List[BlockingRule] = []
+    for br in blocking_rules:
+        blocking_rules_as_br.append(
+            to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+        )
 
     return _cumulative_comparisons_to_be_scored_from_blocking_rules(
         splink_df_dict=splink_df_dict,
-        blocking_rules=blocking_rules,
+        blocking_rules=blocking_rules_as_br,
         link_type=link_type,
         db_api=db_api,
         max_rows_limit=max_rows_limit,
@@ -622,7 +622,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     *,
     table_or_tables: Sequence[AcceptableInputTableType],
-    blocking_rule_creators: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
+    blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
@@ -631,20 +631,19 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 ) -> ChartReturnType:
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
-    blocking_rule_creators = ensure_is_iterable(blocking_rule_creators)
+    # whilst they're named blocking_rules, this is actually a list of
+    # BlockingRuleCreators. The followign code turns them into BlockingRule objects
+    blocking_rules = ensure_is_iterable(blocking_rules)
 
-    blocking_rules: List[BlockingRule] = []
-    for br in blocking_rule_creators:
-        if isinstance(br, BlockingRule):
-            blocking_rules.append(br)
-        else:
-            blocking_rules.append(
-                to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
-            )
+    blocking_rules_as_br: List[BlockingRule] = []
+    for br in blocking_rules:
+        blocking_rules_as_br.append(
+            to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+        )
 
     pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
         splink_df_dict=splink_df_dict,
-        blocking_rules=blocking_rules,
+        blocking_rules=blocking_rules_as_br,
         link_type=link_type,
         db_api=db_api,
         max_rows_limit=max_rows_limit,

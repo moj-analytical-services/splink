@@ -118,7 +118,7 @@ def test_charts(dialect, test_helpers, tmp_path):
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         table_or_tables=df,
-        blocking_rule_creators=[block_on("dob"), block_on("first_name")],
+        blocking_rules=[block_on("dob"), block_on("first_name")],
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
