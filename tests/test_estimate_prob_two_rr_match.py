@@ -353,7 +353,7 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
         # all comparisons matches using this rule, so we must have perfect recall
         # using recall = 80% is inconsistent, so should get an error
         linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=0.8
+            ["l.first_name = r.first_name"], recall=0.8
         )
     check_range(linker._settings_obj._probability_two_random_records_match)
 
@@ -361,10 +361,10 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     recall_min_city = 6 / 15
     with pytest.raises(ValueError):
         linker.estimate_probability_two_random_records_match(
-            "l.city = r.city", recall=(recall_min_city - 1e-6)
+            ["l.city = r.city"], recall=(recall_min_city - 1e-6)
         )
     linker.estimate_probability_two_random_records_match(
-        "l.city = r.city", recall=recall_min_city
+        ["l.city = r.city"], recall=recall_min_city
     )
     check_range(linker._settings_obj._probability_two_random_records_match)
 
@@ -373,7 +373,7 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     # so should give a warning at this stage
     with caplog.at_level(logging.WARNING):
         linker.estimate_probability_two_random_records_match(
-            "l.surname = r.surname", recall=0.7
+            ["l.surname = r.surname"], recall=0.7
         )
         assert "WARNING:" in caplog.text
     check_range(linker._settings_obj._probability_two_random_records_match)
@@ -382,7 +382,7 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     # as we have a trivial linkage model
     with caplog.at_level(logging.WARNING):
         linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=1.0
+            ["l.first_name = r.first_name"], recall=1.0
         )
         assert "WARNING:" in caplog.text
     check_range(linker._settings_obj._probability_two_random_records_match)
@@ -390,13 +390,13 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     # check we get errors if we pass bogus values for recall
     with pytest.raises(ValueError):
         linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=0.0
+            ["l.first_name = r.first_name"], recall=0.0
         )
     with pytest.raises(ValueError):
         linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=1.2
+            ["l.first_name = r.first_name"], recall=1.2
         )
     with pytest.raises(ValueError):
         linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=-0.4
+            ["l.first_name = r.first_name"], recall=-0.4
         )

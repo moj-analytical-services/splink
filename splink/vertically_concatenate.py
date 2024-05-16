@@ -191,27 +191,27 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     sample_text = "_sample" if sample_switch else ""
 
     sql = f"""
-        select * from __splink__df_concat_with_tf{sample_text}
+        select * from {input_tablename}{sample_text}
         where {source_dataset_col} =
-            (select min({source_dataset_col}) from {input_tablename})
+            (select min({source_dataset_col}) from {input_tablename}{sample_text})
         """
 
     sqls.append(
         {
             "sql": sql,
-            "output_table_name": f"__splink__df_concat_with_tf{sample_text}_left",
+            "output_table_name": f"{input_tablename}{sample_text}_left",
         }
     )
 
     sql = f"""
-        select * from __splink__df_concat_with_tf{sample_text}
+        select * from {input_tablename}{sample_text}
         where {source_dataset_col} =
-            (select max({source_dataset_col}) from {input_tablename})
+            (select max({source_dataset_col}) from {input_tablename}{sample_text})
         """
     sqls.append(
         {
             "sql": sql,
-            "output_table_name": f"__splink__df_concat_with_tf{sample_text}_right",
+            "output_table_name": f"{input_tablename}{sample_text}_right",
         }
     )
     return sqls

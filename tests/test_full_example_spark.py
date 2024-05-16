@@ -111,7 +111,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(name_of_data_in_title="Testing")
     # Test that writing to files works as expected
     # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
     # _test_write_functionality(linker, spark_csv_read)

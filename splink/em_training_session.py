@@ -183,12 +183,17 @@ class EMTrainingSession:
         nodes_with_tf = compute_df_concat_with_tf(self._original_linker, pipeline)
         pipeline = CTEPipeline([nodes_with_tf])
 
+        orig_settings = self._original_linker._settings_obj
         sqls = block_using_rules_sqls(
-            self._original_linker,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[self._blocking_rule_for_training],
-            link_type=self._original_linker._settings_obj._link_type,
+            link_type=orig_settings._link_type,
+            columns_to_select_sql=", ".join(
+                orig_settings._columns_to_select_for_blocking
+            ),
+            source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 

@@ -23,21 +23,15 @@
         "field": "cumulative_rows"
         },
       "y": {
-        "field": "rule",
+        "field": "blocking_rule",
         "title": "SQL Blocking Rule",
         "sort": ["-x2"]
       },
-      "color": {
-        "field": "rule",
-        "legend": null,
-        "scale": {"scheme": "category20c"}
-      },
       "order": {"field": "cumulative_rows"},
-
       "tooltip": [
         {
         "type": "nominal",
-        "field": "rule",
+        "field": "blocking_rule",
         "title": "SQL Condition"
       },
       {
@@ -55,13 +49,8 @@
       {
         "type": "quantitative",
         "field": "cartesian",
-        "title": "Cartesian Product of Input Data",
+        "title": "Total comparisons in Cartesian product",
         "format": ","
-      },
-      {
-        "type": "nominal",
-        "field": "reduction_ratio",
-        "title": "Reduction Ratio (cumulative rows/cartesian product)"
       }
     ]
     }

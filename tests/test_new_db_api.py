@@ -2,6 +2,10 @@ import os
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink import block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
 from splink.exploratory import profile_columns
 from splink.linker import Linker
 
@@ -111,12 +115,16 @@ def test_charts(dialect, test_helpers, tmp_path):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
-    linker = Linker(
-        df,
-        cl_settings,
-        db_api,
+
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+        table_or_tables=df,
+        blocking_rules=[block_on("dob"), block_on("first_name")],
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
-    linker.cumulative_num_comparisons_from_blocking_rules_chart()
+
+    linker = Linker(df, cl_settings, db_api)
 
     linker.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],

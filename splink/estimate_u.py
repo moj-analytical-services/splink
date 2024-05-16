@@ -5,7 +5,7 @@ import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
-from .blocking import BlockingRule, block_using_rules_sqls, blocking_rule_to_obj
+from .blocking import block_using_rules_sqls, blocking_rule_to_obj
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -17,7 +17,7 @@ from .m_u_records_to_parameters import (
 )
 from .pipeline import CTEPipeline
 from .vertically_concatenate import (
-    compute_df_concat_with_tf,
+    enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
 )
 
@@ -61,8 +61,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline()
 
-    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf])
+    pipeline = enqueue_df_concat(linker, pipeline)
 
     original_settings_obj = linker._settings_obj
 
@@ -82,7 +81,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """
         select count(*) as count
-        from __splink__df_concat_with_tf
+        from __splink__df_concat
         """
 
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
@@ -97,7 +96,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     if settings_obj._link_type == "link_only":
         sql = """
         select count(source_dataset) as count
-        from __splink__df_concat_with_tf
+        from __splink__df_concat
         group by source_dataset
         """
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
@@ -118,20 +117,18 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     if sample_size > total_nodes:
         sample_size = total_nodes
 
-    # Grab __splink__df_concat_with_tf from cache
-    df_tf = training_linker._intermediate_table_cache.get_with_logging(
-        "__splink__df_concat_with_tf"
-    )
-    pipeline = CTEPipeline(input_dataframes=[df_tf])
+    pipeline = CTEPipeline()
+    pipeline = enqueue_df_concat(training_linker, pipeline)
 
     sql = f"""
     select *
-    from __splink__df_concat_with_tf
+    from __splink__df_concat
     {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
 
-    pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
+    pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     pipeline = CTEPipeline(input_dataframes=[df_sample])
 
     if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
@@ -145,28 +142,31 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
-    input_tablename_sample_l = "__splink__df_concat_with_tf_sample"
-    input_tablename_sample_r = "__splink__df_concat_with_tf_sample"
+    input_tablename_sample_l = "__splink__df_concat_sample"
+    input_tablename_sample_r = "__splink__df_concat_sample"
 
     if (
         len(linker._input_tables_dict) == 2
         and linker._settings_obj._link_type == "link_only"
     ):
-        input_tablename_sample_l = "__splink__df_concat_with_tf_sample_left"
-        input_tablename_sample_r = "__splink__df_concat_with_tf_sample_right"
         sqls = split_df_concat_with_tf_into_two_tables_sqls(
-            "__splink__df_concat_with_tf_sample",
+            "__splink__df_concat",
             linker._settings_obj.column_info_settings.source_dataset_column_name,
             sample_switch=True,
         )
+        input_tablename_sample_l = "__splink__df_concat_sample_left"
+        input_tablename_sample_r = "__splink__df_concat_sample_right"
+
         pipeline.enqueue_list_of_sqls(sqls)
 
     sql_infos = block_using_rules_sqls(
-        linker,
         input_tablename_l=input_tablename_sample_l,
         input_tablename_r=input_tablename_sample_r,
-        blocking_rules=[BlockingRule("1=1")],
+        blocking_rules=settings_obj._blocking_rules_to_generate_predictions,
         link_type=linker._settings_obj._link_type,
+        columns_to_select_sql=", ".join(settings_obj._columns_to_select_for_blocking),
+        source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
     pipeline.enqueue_list_of_sqls(sql_infos)
 

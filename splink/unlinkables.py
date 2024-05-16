@@ -19,7 +19,7 @@ def unlinkables_data(linker: Linker) -> dict[str, Any]:
         linker (Splink): A Splink data linker
     """
 
-    self_link = linker._self_link()
+    self_link_df = linker._self_link()
 
     pipeline = CTEPipeline()
 
@@ -27,7 +27,7 @@ def unlinkables_data(linker: Linker) -> dict[str, Any]:
         select
         round(match_weight, 2) as match_weight,
         round(match_probability, 5) as match_probability
-        from {self_link.physical_name}
+        from {self_link_df.physical_name}
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_round_self_link")

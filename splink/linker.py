@@ -14,12 +14,6 @@ from .accuracy import (
     truth_space_table_from_labels_column,
     truth_space_table_from_labels_table,
 )
-from .analyse_blocking import (
-    CumulativeComparisonsDict,
-    count_comparisons_from_blocking_rule_pre_filter_conditions,
-    cumulative_comparisons_generated_by_blocking_rules,
-    number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
-)
 from .blocking import (
     BlockingRule,
     SaltedBlockingRule,
@@ -28,15 +22,11 @@ from .blocking import (
     materialise_exploded_id_tables,
 )
 from .blocking_rule_creator import BlockingRuleCreator
-from .blocking_rule_creator_utils import (
-    blocking_rule_args_to_list_of_blocking_rules,
-    to_blocking_rule_creator,
-)
+from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     ChartReturnType,
     accuracy_chart,
-    cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
     parameter_estimate_comparisons,
     precision_recall_chart,
@@ -72,19 +62,20 @@ from .graph_metrics import (
     _size_density_centralisation_sql,
 )
 from .input_column import InputColumn
+from .internals.blocking_analysis import (
+    _cumulative_comparisons_to_be_scored_from_blocking_rules,
+)
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
-from .match_key_analysis import (
-    count_num_comparisons_from_blocking_rules_for_prediction_sql,
-)
 from .match_weights_histogram import histogram_data
 from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
+    ensure_is_iterable,
     ensure_is_list,
     prob_to_bayes_factor,
 )
@@ -123,7 +114,6 @@ from .vertically_concatenate import (
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
     split_df_concat_with_tf_into_two_tables_sqls,
-    vertically_concatenate_sql,
 )
 
 logger = logging.getLogger(__name__)
@@ -747,15 +737,45 @@ class Linker:
         df_concat_with_tf = compute_df_concat_with_tf(self, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
         link_type = self._settings_obj._link_type
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        blocking_input_tablename_l = "__splink__df_concat_with_tf"
+        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+
+        link_type = self._settings_obj._link_type
+        if (
+            len(self._input_tables_dict) == 2
+            and self._settings_obj._link_type == "link_only"
+        ):
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat_with_tf",
+                self._settings_obj.column_info_settings.source_dataset_column_name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
+            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
+            link_type = "two_dataset_link_only"
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
-            set_match_probability_to_one=True,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1116,14 +1136,27 @@ class Linker:
 
         # If exploded blocking rules exist, we need to materialise
         # the tables of ID pairs
-        exploding_br_with_id_tables = materialise_exploded_id_tables(self, link_type)
+
+        exploding_br_with_id_tables = materialise_exploded_id_tables(
+            link_type=link_type,
+            blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
+            db_api=self.db_api,
+            splink_df_dict=self._input_tables_dict,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+        )
+
+        columns_to_select = self._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
+            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
@@ -1157,8 +1190,8 @@ class Linker:
     def find_matches_to_new_records(
         self,
         records_or_tablename: AcceptableInputTableType | str,
-        blocking_rules: list[BlockingRule | dict[str, Any] | str]
-        | BlockingRule
+        blocking_rules: list[BlockingRuleCreator | dict[str, Any] | str]
+        | BlockingRuleCreator
         | dict[str, Any]
         | str = [],
         match_weight_threshold: float = -4,
@@ -1247,13 +1280,15 @@ class Linker:
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(
             self, new_records_df, pipeline
         )
-
+        settings = self._settings_obj
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_new_records_with_tf",
             blocking_rules=blocking_rule_list,
             link_type="two_dataset_link_only",
+            columns_to_select_sql=", ".join(settings._columns_to_select_for_blocking),
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1308,12 +1343,6 @@ class Linker:
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
         """
-        original_blocking_rules = (
-            self._settings_obj._blocking_rules_to_generate_predictions
-        )
-        original_link_type = self._settings_obj._link_type
-
-        self._settings_obj._blocking_rules_to_generate_predictions = []
 
         cache = self._intermediate_table_cache
 
@@ -1360,11 +1389,15 @@ class Linker:
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__compare_two_records_left_with_tf",
             input_tablename_r="__splink__compare_two_records_right_with_tf",
             blocking_rules=[BlockingRule("1=1")],
             link_type=self._settings_obj._link_type,
+            columns_to_select_sql=", ".join(
+                self._settings_obj._columns_to_select_for_blocking
+            ),
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -1383,11 +1416,6 @@ class Linker:
             pipeline, use_cache=False
         )
 
-        self._settings_obj._blocking_rules_to_generate_predictions = (
-            original_blocking_rules
-        )
-        self._settings_obj._link_type = original_link_type
-
         return predictions
 
     def _self_link(self) -> SplinkDataFrame:
@@ -1400,7 +1428,8 @@ class Linker:
         """
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj.column_info_settings.unique_id_input_columns
+        settings = self._settings_obj
+        uid_cols = settings.column_info_settings.unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
@@ -1414,11 +1443,13 @@ class Linker:
         pipeline = CTEPipeline([nodes_with_tf])
 
         sqls = block_using_rules_sqls(
-            self,
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[blocking_rule],
             link_type="self_link",
+            columns_to_select_sql=", ".join(settings._columns_to_select_for_blocking),
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -2445,7 +2476,7 @@ class Linker:
     def unlinkables_chart(
         self,
         x_col: str = "match_weight",
-        source_dataset: str | None = None,
+        name_of_data_in_title: str | None = None,
         as_dict: bool = False,
     ) -> ChartReturnType:
         """Generate an interactive chart displaying the proportion of records that
@@ -2457,7 +2488,7 @@ class Linker:
         Args:
             x_col (str, optional): Column to use for the x-axis.
                 Defaults to "match_weight".
-            source_dataset (str, optional): Name of the source dataset to use for
+            name_of_data_in_title (str, optional): Name of the source dataset to use for
                 the title of the output chart.
             as_dict (bool, optional): If True, return a dict version of the chart.
 
@@ -2480,7 +2511,7 @@ class Linker:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self)
-        return unlinkables_chart(records, x_col, source_dataset, as_dict)
+        return unlinkables_chart(records, x_col, name_of_data_in_title, as_dict)
 
     def comparison_viewer_dashboard(
         self,
@@ -2567,230 +2598,6 @@ class Linker:
         records = [r for r in records if r["m_or_u"] in to_retain]
 
         return parameter_estimate_comparisons(records)
-
-    def count_num_comparisons_from_blocking_rule(
-        self,
-        blocking_rule: str | BlockingRuleCreator,
-    ) -> int:
-        """Compute the number of pairwise record comparisons that would be generated by
-        a blocking rule
-
-        Args:
-            blocking_rule (str | BlockingRule): The blocking rule to analyse
-            link_type (str, optional): The link type.  This is needed only if the
-                linker has not yet been provided with a settings dictionary.  Defaults
-                to None.
-            unique_id_column_name (str, optional):  This is needed only if the
-                linker has not yet been provided with a settings dictionary.  Defaults
-                to None.
-
-        Examples:
-
-            ```py
-            br = block_on("name", "substr(dob,1,4)")
-            linker.count_num_comparisons_from_blocking_rule(br)
-            ```
-            > 394
-
-            ```py
-            br = "l.surname = r.surname"
-            linker.count_num_comparisons_from_blocking_rule(br)
-            ```
-            > 19387
-
-        Returns:
-            int: The number of comparisons generated by the blocking rule
-        """
-
-        blocking_rule_str = (
-            to_blocking_rule_creator(blocking_rule)
-            .get_blocking_rule(self._sql_dialect)
-            .blocking_rule_sql
-        )
-
-        pipeline = CTEPipeline()
-
-        sds_name = self._settings_obj.column_info_settings.source_dataset_column_name
-
-        sql = vertically_concatenate_sql(
-            input_tables=self._input_tables_dict,
-            salting_required=self._settings_obj.salting_required,
-            source_dataset_column_name=sds_name,
-        )
-        pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-        sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
-            self, blocking_rule_str
-        )
-        pipeline.enqueue_sql(sql, "__splink__analyse_blocking_rule")
-        res_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        res = res_df.as_record_dict()[0]
-        return res["count_of_pairwise_comparisons_generated"]
-
-    def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-        self,
-        blocking_rule: BlockingRuleCreator | str | dict[str, Any],
-    ) -> int:
-        """Compute the number of pairwise record comparisons that would be generated by
-        a blocking rule, prior to any filters (non equi-join conditions) being applied
-        by the SQL engine.
-
-        For more information on what this means, see
-        https://github.com/moj-analytical-services/splink/discussions/1391
-
-        Args:
-            blocking_rule (str): The blocking rule to analyse
-
-        Returns:
-            int: The number of comparisons generated by the blocking rule
-        """
-
-        blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-            self._sql_dialect
-        )
-        return count_comparisons_from_blocking_rule_pre_filter_conditions(
-            self, blocking_rule_obj
-        )
-
-    def cumulative_comparisons_from_blocking_rules_records(
-        self,
-        blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] | None = None,
-    ) -> list[CumulativeComparisonsDict]:
-        """Output the number of comparisons generated by each successive blocking rule.
-
-        This is equivalent to the output size of df_predict and details how many
-        comparisons each of your individual blocking rules will contribute to the
-        total.
-
-        Args:
-            blocking_rules (str or list): The blocking rule(s) to compute comparisons
-                for. If null, the rules set out in your settings object will be used.
-
-        Examples:
-            Generate total comparisons from Blocking Rules defined in settings
-            dictionary
-            ```py
-            linker_settings = DuckDBLinker(df, settings)
-            # Compute the cumulative number of comparisons generated by the rules
-            # in your settings object.
-            linker_settings.cumulative_comparisons_from_blocking_rules_records()
-            ```
-
-            Generate total comparisons with custom blocking rules.
-            ```py
-            blocking_rules = [
-               "l.surname = r.surname",
-               "l.first_name = r.first_name
-                and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            ]
-
-            linker_settings.cumulative_comparisons_from_blocking_rules_records(
-                blocking_rules
-             )
-            ```
-
-        Returns:
-            List: A list of blocking rules and the corresponding number of
-                comparisons it is forecast to generate.
-        """
-        if blocking_rules:
-            brs = blocking_rule_args_to_list_of_blocking_rules(
-                blocking_rules, self._sql_dialect
-            )
-        else:
-            brs = []
-
-        records = cumulative_comparisons_generated_by_blocking_rules(
-            self, brs, output_chart=False
-        )
-
-        return records
-
-    def cumulative_num_comparisons_from_blocking_rules_chart(
-        self,
-        blocking_rules: Optional[List[Union[str, BlockingRuleCreator]]] = None,
-    ) -> ChartReturnType:
-        """Display a chart with the cumulative number of comparisons generated by a
-        selection of blocking rules.
-
-        This is equivalent to the output size of df_predict and details how many
-        comparisons each of your individual blocking rules will contribute to the
-        total.
-
-        Args:
-            blocking_rules (str or list): The blocking rule(s) to compute comparisons
-                for. If null, the rules set out in your settings object will be used.
-
-        Examples:
-            ```py
-            linker_settings = DuckDBLinker(df, settings)
-            # Compute the cumulative number of comparisons generated by the rules
-            # in your settings object.
-            linker_settings.cumulative_num_comparisons_from_blocking_rules_chart()
-            >>>
-            # Generate total comparisons with custom blocking rules.
-            blocking_rules = [
-               "l.surname = r.surname",
-               "l.first_name = r.first_name
-                and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            ]
-            >>>
-            linker_settings.cumulative_num_comparisons_from_blocking_rules_chart(
-                blocking_rules
-             )
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        if blocking_rules:
-            brs = blocking_rule_args_to_list_of_blocking_rules(
-                blocking_rules, self._sql_dialect
-            )
-        else:
-            brs = []
-
-        records = cumulative_comparisons_generated_by_blocking_rules(
-            self, brs, output_chart=True
-        )
-
-        return cumulative_blocking_rule_comparisons_generated(records)
-
-    def count_num_comparisons_from_blocking_rules_for_prediction(self, df_predict):
-        """Counts the marginal number of edges created from each of the blocking rules
-        in `blocking_rules_to_generate_predictions`
-
-        This is different to `count_num_comparisons_from_blocking_rule`
-        because it (a) analyses multiple blocking rules rather than a single rule, and
-        (b) deduplicates any comparisons that are generated, to tell you the
-        marginal effect of each entry in `blocking_rules_to_generate_predictions`
-
-        Args:
-            df_predict (SplinkDataFrame): SplinkDataFrame with match weights
-            and probabilities of rows matching
-
-        Examples:
-            ```py
-            linker = DuckDBLinker(df)
-            linker.load_model("settings.json")
-            df_predict = linker.predict(threshold_match_probability=0.95)
-            count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
-            count_pairwise.as_pandas_dataframe(limit=5)
-            ```
-
-        Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons and
-                estimated pairwise comparisons generated by the blocking rules.
-        """  # noqa: E501
-        sql = count_num_comparisons_from_blocking_rules_for_prediction_sql(
-            self, df_predict
-        )
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(sql, "__splink__match_key_analysis")
-        match_key_analysis = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        return match_key_analysis
 
     def match_weights_chart(self):
         """Display a chart of the (partial) match weights of the linkage model
@@ -2999,6 +2806,7 @@ class Linker:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
+        max_rows_limit: int = int(1e9),
     ) -> None:
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -3019,13 +2827,28 @@ class Linker:
             raise ValueError(
                 f"Estimated recall must be greater than 0 "
                 f"and no more than 1. Supplied value {recall}."
+            ) from None
+
+        deterministic_matching_rules = ensure_is_iterable(deterministic_matching_rules)
+        blocking_rules: List[BlockingRule] = []
+        for br in deterministic_matching_rules:
+            blocking_rules.append(
+                to_blocking_rule_creator(br).get_blocking_rule(
+                    self.db_api.sql_dialect.name
+                )
             )
 
-        rules = blocking_rule_args_to_list_of_blocking_rules(
-            deterministic_matching_rules, self._sql_dialect
+        pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
+            splink_df_dict=self._input_tables_dict,
+            blocking_rules=blocking_rules,
+            link_type=self._settings_obj._link_type,
+            db_api=self.db_api,
+            max_rows_limit=max_rows_limit,
+            unique_id_column_name=self._settings_obj.column_info_settings.unique_id_column_name,
+            source_dataset_column_name=self._settings_obj.column_info_settings.source_dataset_column_name,
         )
 
-        records = cumulative_comparisons_generated_by_blocking_rules(self, rules)
+        records = pd_df.to_dict(orient="records")
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]
@@ -3376,10 +3199,3 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
-
-    def _explode_arrays_sql(
-        self, tbl_name, columns_to_explode, other_columns_to_retain
-    ):
-        return self._sql_dialect_object.explode_arrays_sql(
-            tbl_name, columns_to_explode, other_columns_to_retain
-        )
