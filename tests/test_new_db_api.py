@@ -122,7 +122,6 @@ def test_charts(dialect, test_helpers, tmp_path):
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
-        source_dataset_column_name="source_dataset",
     )
 
     linker = Linker(df, cl_settings, db_api)

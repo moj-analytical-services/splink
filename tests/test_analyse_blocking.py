@@ -172,6 +172,78 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
     )
     assert r1.to_dict(orient="records") == r2.to_dict(orient="records")
 
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df_1 = df[df["unique_id"] % 3 == 0].copy()
+    df_1["sds"] = "df_1_name"
+    df_2 = df[df["unique_id"] % 3 == 1].copy()
+    df_2["sds"] = "df_2_name"
+    df_3 = df[df["unique_id"] % 3 == 2].copy()
+    df_3["sds"] = "df_3_name"
+
+    df_concat_2 = pd.concat([df_1, df_2])
+    df_concat_3 = pd.concat([df_1, df_2, df_3])
+
+    df_1_no_sds = df[df["unique_id"] % 3 == 0].copy()
+    df_2_no_sds = df[df["unique_id"] % 3 == 1].copy()
+    df_3_no_sds = df[df["unique_id"] % 3 == 2].copy()
+
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df_concat_3,
+        blocking_rule_creator=block_on("first_name"),
+        link_type="dedupe_only",
+        unique_id_column_name="unique_id",
+        db_api=db_api,
+    )
+
+    r1 = count_comparisons_from_blocking_rule(
+        table_or_tables=df_concat_3,
+        blocking_rule_creator=block_on("first_name"),
+        link_type="link_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+        source_dataset_column_name="sds",
+    )
+
+    r2 = count_comparisons_from_blocking_rule(
+        table_or_tables=[df_1_no_sds, df_2_no_sds, df_3_no_sds],
+        blocking_rule_creator=block_on("first_name"),
+        link_type="link_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
+    # Both of the above use the vertical concat of the two datasets so should
+    # be equivalent
+    assert r1 == r2
+
+    r1 = count_comparisons_from_blocking_rule(
+        table_or_tables=df_concat_2,
+        blocking_rule_creator=block_on("first_name"),
+        link_type="link_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+        source_dataset_column_name="sds",
+    )
+
+    r2 = count_comparisons_from_blocking_rule(
+        table_or_tables=[df_1_no_sds, df_2_no_sds],
+        blocking_rule_creator=block_on("first_name"),
+        link_type="link_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
+    # There's an optimisation in the case of two input dataframes only
+    # so these are not the same
+    assert (
+        r1["number_of_comparisons_generated_pre_filter_conditions"]
+        > r2["number_of_comparisons_generated_pre_filter_conditions"]
+    )
+
+    # But after filters, should be the same
+    assert (
+        r1["number_of_comparisons_to_be_scored_post_filter_conditions"]
+        == r2["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    )
+
 
 @mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
