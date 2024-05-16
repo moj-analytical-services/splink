@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import sqlglot
@@ -36,6 +36,7 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     link_type: str,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
+    source_dataset_column_name: Optional[str],
 ) -> list[dict[str, str]]:
     input_dataframes = list(input_data_dict.values())
 
@@ -43,17 +44,26 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     if two_dataset_link_only:
         link_type = "two_dataset_link_only"
 
-    if len(input_dataframes) > 1 and not two_dataset_link_only:
-        unique_id_cols = [
-            InputColumn("source_dataset", sql_dialect=db_api.sql_dialect.name),
-            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
-        ]
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        input_data_dict,
+        link_type,
+        db_api.sql_dialect.name,
+    )
+    if source_dataset_input_column:
+        unique_id_cols = [source_dataset_input_column, unique_id_input_column]
     else:
-        unique_id_cols = [
-            InputColumn(unique_id_column_name, sql_dialect=db_api.sql_dialect.name),
-        ]
+        unique_id_cols = [unique_id_input_column]
 
     where_condition = _sql_gen_where_condition(link_type, unique_id_cols)
+
+    # If it's a link_only or link_and_dedupe and no source_dataset_column_name is
+    # provided, it will have been set to a default by _process_unique_id_columns
+    if source_dataset_input_column is None:
+        source_dataset_column_name = None
+    else:
+        source_dataset_column_name = source_dataset_input_column.name
 
     sqls = []
 
@@ -62,7 +72,9 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
         input_tablename_r = input_dataframes[1].physical_name
     else:
         sql = vertically_concatenate_sql(
-            input_data_dict, salting_required=False, source_dataset_column_name=None
+            input_data_dict,
+            salting_required=False,
+            source_dataset_column_name=source_dataset_column_name,
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -218,6 +230,61 @@ def _row_counts_per_input_table(
     return db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
+def _process_unique_id_columns(
+    unique_id_column_name: str,
+    source_dataset_column_name: Optional[str],
+    splink_df_dict: dict[str, "SplinkDataFrame"],
+    link_type: user_input_link_type_options,
+    sql_dialect_name: str,
+) -> Tuple[Optional[InputColumn], InputColumn]:
+    # Various options:
+    # In the dedupe_only case we do need a source dataset column. If it is provided,
+    # retain it.  (it'll probably be ignored, but does no harm)
+    #
+    # link_only, link_and_dedupe cases: The user may have provided a single input
+    # table, in which case their input table must contain the source dataset column
+    #
+    # If the user provides n tables, then we can create the source dataset column
+    # for them a default name
+
+    if link_type == "dedupe_only":
+        if source_dataset_column_name is None:
+            return [
+                None,
+                InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+            ]
+        else:
+            return [
+                InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
+                InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+            ]
+
+    if link_type in ("link_only", "link_and_dedupe") and len(splink_df_dict) == 1:
+        # get first iem in splink_df_dict
+        df = next(iter(splink_df_dict.values()))
+        cols = df.columns
+        if source_dataset_column_name not in [col.unquote().name for col in cols]:
+            raise ValueError(
+                "You have provided a single input table with link type 'link_only' or "
+                "'link_and_dedupe'.  You provided a source_dataset_column_name of "
+                f"'{source_dataset_column_name}'.\nThis column was not found "
+                "in the input data, so Splink does not know how to split your input "
+                "data into multiple tables.\n Either provide multiple input datasets, "
+                "or create a source dataset column name in your input table"
+            )
+
+    if source_dataset_column_name is None:
+        return [
+            InputColumn("source_dataset", sql_dialect=sql_dialect_name),
+            InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+        ]
+    else:
+        return [
+            InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
+            InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+        ]
+
+
 def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     *,
     splink_df_dict: dict[str, "SplinkDataFrame"],
@@ -228,23 +295,13 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     unique_id_column_name: str,
     source_dataset_column_name: Optional[str],
 ) -> pd.DataFrame:
-    unique_id_input_column = InputColumn(
-        unique_id_column_name, sql_dialect=db_api.sql_dialect.name
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        splink_df_dict,
+        link_type,
+        db_api.sql_dialect.name,
     )
-    if link_type == "dedupe_only":
-        source_dataset_input_column = None
-        input_columns = [unique_id_input_column]
-    else:
-        if source_dataset_column_name is not None:
-            source_dataset_input_column = InputColumn(
-                source_dataset_column_name, sql_dialect=db_api.sql_dialect.name
-            )
-            input_columns = [unique_id_input_column, source_dataset_input_column]
-        else:
-            raise ValueError(
-                "source_dataset_column_name cannot be None "
-                "for link_type other than 'dedupe_only'"
-            )
 
     # Check none of the blocking rules will create a vast/computationally
     # intractable number of comparisons
@@ -258,6 +315,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             max_rows_limit=max_rows_limit,
             compute_post_filter_count=False,
             unique_id_column_name=unique_id_column_name,
+            source_dataset_column_name=source_dataset_column_name,
         )
         count_pre_filter = count[
             "number_of_comparisons_generated_pre_filter_conditions"
@@ -276,7 +334,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     rc = _row_counts_per_input_table(
         splink_df_dict=splink_df_dict,
         link_type=link_type,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_column_name=source_dataset_input_column.name,
         db_api=db_api,
     ).as_record_dict()
 
@@ -304,6 +362,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
+    input_columns = [source_dataset_input_column, unique_id_input_column]
     sql_select_expr = ",".join(
         [item for c in input_columns for item in c.l_r_names_as_l_r]
     )
@@ -397,7 +456,8 @@ def _count_comparisons_generated_from_blocking_rule(
     db_api: DatabaseAPISubClass,
     compute_post_filter_count: bool,
     max_rows_limit: int = int(1e9),
-    unique_id_column_name: str = "unique_id",
+    unique_id_column_name: str,
+    source_dataset_column_name: Optional[str],
 ) -> dict[str, Union[int, str]]:
     # TODO: if it's an exploding blocking rule, make sure we error out
     pipeline = CTEPipeline()
@@ -440,7 +500,12 @@ def _count_comparisons_generated_from_blocking_rule(
     if pre_filter_total < max_rows_limit:
         pipeline = CTEPipeline()
         sqls = _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
-            splink_df_dict, blocking_rule, link_type, db_api, unique_id_column_name
+            splink_df_dict,
+            blocking_rule,
+            link_type,
+            db_api,
+            unique_id_column_name,
+            source_dataset_column_name,
         )
         pipeline.enqueue_list_of_sqls(sqls)
         post_filter_total_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -476,6 +541,7 @@ def count_comparisons_from_blocking_rule(
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     unique_id_column_name: str,
+    source_dataset_column_name: Optional[str] = None,
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
@@ -493,6 +559,7 @@ def count_comparisons_from_blocking_rule(
         compute_post_filter_count=compute_post_filter_count,
         max_rows_limit=max_rows_limit,
         unique_id_column_name=unique_id_column_name,
+        source_dataset_column_name=source_dataset_column_name,
     )
 
 
