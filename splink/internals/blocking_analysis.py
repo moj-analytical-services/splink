@@ -239,7 +239,7 @@ def _process_unique_id_columns(
     unique_id_column_name: str,
     source_dataset_column_name: Optional[str],
     splink_df_dict: dict[str, "SplinkDataFrame"],
-    link_type: user_input_link_type_options,
+    link_type: backend_link_type_options,
     sql_dialect_name: str,
 ) -> Tuple[Optional[InputColumn], InputColumn]:
     # Various options:
@@ -254,24 +254,24 @@ def _process_unique_id_columns(
 
     if link_type == "dedupe_only":
         if source_dataset_column_name is None:
-            return [
+            return (
                 None,
                 InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
-            ]
+            )
         else:
-            return [
+            return (
                 InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
                 InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
-            ]
+            )
 
     if link_type in ("link_only", "link_and_dedupe") and len(splink_df_dict) == 1:
-        # get first iem in splink_df_dict
+        # Get first item in splink_df_dict
         df = next(iter(splink_df_dict.values()))
         cols = df.columns
         if source_dataset_column_name not in [col.unquote().name for col in cols]:
             raise ValueError(
                 "You have provided a single input table with link type 'link_only' or "
-                "'link_and_dedupe'.  You provided a source_dataset_column_name of "
+                "'link_and_dedupe'. You provided a source_dataset_column_name of "
                 f"'{source_dataset_column_name}'.\nThis column was not found "
                 "in the input data, so Splink does not know how to split your input "
                 "data into multiple tables.\n Either provide multiple input datasets, "
@@ -279,15 +279,15 @@ def _process_unique_id_columns(
             )
 
     if source_dataset_column_name is None:
-        return [
+        return (
             InputColumn("source_dataset", sql_dialect=sql_dialect_name),
             InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
-        ]
+        )
     else:
-        return [
+        return (
             InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
             InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
-        ]
+        )
 
 
 def _cumulative_comparisons_to_be_scored_from_blocking_rules(
@@ -545,7 +545,7 @@ def count_comparisons_from_blocking_rule(
     blocking_rule_creator: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
-    unique_id_column_name: str = "unqiue_id",
+    unique_id_column_name: str = "unique_id",
     source_dataset_column_name: Optional[str] = None,
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
