@@ -203,10 +203,15 @@ def _row_counts_per_input_table(
     *,
     splink_df_dict: dict[str, "SplinkDataFrame"],
     link_type: backend_link_type_options,
-    source_dataset_column_name: Optional[str],
+    source_dataset_input_column: Optional[InputColumn],
     db_api: DatabaseAPISubClass,
 ) -> "SplinkDataFrame":
     pipeline = CTEPipeline()
+
+    if source_dataset_input_column:
+        source_dataset_column_name = source_dataset_input_column.name
+    else:
+        source_dataset_column_name = None
 
     sql = vertically_concatenate_sql(
         splink_df_dict,
@@ -334,7 +339,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     rc = _row_counts_per_input_table(
         splink_df_dict=splink_df_dict,
         link_type=link_type,
-        source_dataset_column_name=source_dataset_input_column.name,
+        source_dataset_input_column=source_dataset_input_column,
         db_api=db_api,
     ).as_record_dict()
 
@@ -364,7 +369,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     input_columns = [source_dataset_input_column, unique_id_input_column]
     sql_select_expr = ",".join(
-        [item for c in input_columns for item in c.l_r_names_as_l_r]
+        [item for c in input_columns if c is not None for item in c.l_r_names_as_l_r]
     )
 
     blocking_input_tablename_l = "__splink__df_concat"
