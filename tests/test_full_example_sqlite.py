@@ -4,7 +4,6 @@ from math import sqrt
 
 import pandas as pd
 
-from splink.exploratory import profile_columns
 from splink.linker import Linker
 from splink.sqlite.database_api import SQLiteAPI
 
@@ -31,8 +30,7 @@ def test_full_example_sqlite(tmp_path):
         input_table_aliases="fake_data_1",
     )
 
-    profile_columns(df, db_api, ["first_name", "surname", "first_name || surname"])
-
+    linker.profile_columns(["first_name", "surname", "first_name || surname"])
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -56,13 +54,13 @@ def test_full_example_sqlite(tmp_path):
 
     linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.unlinkables_chart(source_dataset="Testing")
 
     _test_table_registration(linker)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
-    linker.threshold_selection_tool_from_labels_table("labels")
+
+    linker.accuracy_analysis_from_labels_table("labels")
 
 
 @mark_with_dialects_including("sqlite")
