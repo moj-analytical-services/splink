@@ -8,9 +8,10 @@ import pytest
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.duckdb.database_api import DuckDBAPI
+from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
-from splink.profile_data import profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -40,15 +41,20 @@ def test_full_example_duckdb(tmp_path):
     ]
 
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
+
     linker = Linker(
         df,
         settings=settings_dict,
         database_api=db_api,
         # output_schema="splink_in_duckdb",
-    )
-
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
     profile_columns(
@@ -61,7 +67,8 @@ def test_full_example_duckdb(tmp_path):
             "concat(city, first_name)",
         ],
     )
-    linker.missingness_chart()
+    completeness_chart(df, db_api)
+
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -69,8 +76,6 @@ def test_full_example_duckdb(tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -89,8 +94,8 @@ def test_full_example_duckdb(tmp_path):
     linker.waterfall_chart(records)
 
     register_roc_data(linker)
-
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.roc_chart_from_labels_table("labels")
+    linker.threshold_selection_tool_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -101,7 +106,7 @@ def test_full_example_duckdb(tmp_path):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
