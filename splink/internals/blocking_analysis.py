@@ -507,7 +507,7 @@ def _count_comparisons_generated_from_blocking_rule(
     else:
         uid_for_where = [unique_id_input_column]
 
-    join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
+    link_type_join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
 
     if not compute_post_filter_count:
         return {
@@ -515,7 +515,7 @@ def _count_comparisons_generated_from_blocking_rule(
             "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
             "filter_conditions_identified": filter_conditions,
             "equi_join_conditions_identified": equi_join_conditions_joined,
-            "inner_join_condition_identified": join_condition_sql,
+            "link_type_join_condition": link_type_join_condition_sql,
         }
 
     if pre_filter_total < max_rows_limit:
@@ -552,7 +552,7 @@ def _count_comparisons_generated_from_blocking_rule(
         "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
         "filter_conditions_identified": filter_conditions,
         "equi_join_conditions_identified": equi_join_conditions_joined,
-        "inner_join_condition_identified": join_condition_sql,
+        "link_type_join_condition": link_type_join_condition_sql,
     }
 
 
