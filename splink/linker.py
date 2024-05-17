@@ -1820,6 +1820,7 @@ class Linker:
                 "phi",
             ]
         ] = [],
+        positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
     ) -> Union[ChartReturnType, SplinkDataFrame]:
         """Generate an accuracy chart or table from ground truth data, where the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -1872,6 +1873,7 @@ class Linker:
             labels_column_name,
             threshold_actual=threshold_actual,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
+            positives_not_captured_by_blocking_rules_scored_as_zero=positives_not_captured_by_blocking_rules_scored_as_zero,
         )
         recs = df_truth_space.as_record_dict()
 

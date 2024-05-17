@@ -644,8 +644,10 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
     )
 
     linker_for_splink_answer = Linker(df, settings, database_api=DuckDBAPI())
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
-        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=False
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_column(
+        "cluster",
+        output_type="table",
+        positives_not_captured_by_blocking_rules_scored_as_zero=False,
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -711,8 +713,10 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
     )
     linker_for_splink_answer = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
 
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
-        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=True
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_column(
+        "cluster",
+        output_type="table",
+        positives_not_captured_by_blocking_rules_scored_as_zero=True,
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -759,8 +763,8 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
 
     linker_for_splink_answer = Linker(df, settings, database_api=DuckDBAPI())
     labels_input = linker_for_splink_answer.register_labels_table(labels_table)
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_table(
-        labels_input
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_table(
+        labels_input, output_type="table"
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -841,8 +845,8 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
 
     linker_for_splink_answer = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
     labels_input = linker_for_splink_answer.register_labels_table(labels_table)
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_table(
-        labels_input
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_table(
+        labels_input, output_type="table"
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
