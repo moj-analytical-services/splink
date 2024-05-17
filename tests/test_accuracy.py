@@ -195,9 +195,9 @@ def test_roc_chart_dedupe_only():
 
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -228,9 +228,9 @@ def test_roc_chart_link_and_dedupe():
         df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api
     )
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_prediction_errors_from_labels_table():
@@ -489,7 +489,9 @@ def test_truth_space_table_from_labels_column_dedupe_only():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "cluster", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 4
@@ -558,7 +560,9 @@ def test_truth_space_table_from_labels_column_link_only():
 
     linker = Linker([df_left, df_right], settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "ground_truth", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 3
