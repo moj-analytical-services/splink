@@ -195,9 +195,9 @@ def test_roc_chart_dedupe_only():
 
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -228,9 +228,9 @@ def test_roc_chart_link_and_dedupe():
         df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api
     )
 
-    linker.register_table(df_labels, "labels")
+    labels_sdf = linker.register_table(df_labels, "labels")
 
-    linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_prediction_errors_from_labels_table():
@@ -489,7 +489,9 @@ def test_truth_space_table_from_labels_column_dedupe_only():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "cluster", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 4
@@ -558,7 +560,9 @@ def test_truth_space_table_from_labels_column_link_only():
 
     linker = Linker([df_left, df_right], settings, database_api=db_api)
 
-    tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
+    tt = linker.accuracy_analysis_from_labels_column(
+        "ground_truth", output_type="table"
+    ).as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 3
@@ -640,8 +644,10 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
     )
 
     linker_for_splink_answer = Linker(df, settings, database_api=DuckDBAPI())
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
-        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=False
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_column(
+        "cluster",
+        output_type="table",
+        positives_not_captured_by_blocking_rules_scored_as_zero=False,
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -707,8 +713,10 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
     )
     linker_for_splink_answer = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
 
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_column(
-        "cluster", positives_not_captured_by_blocking_rules_scored_as_zero=True
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_column(
+        "cluster",
+        output_type="table",
+        positives_not_captured_by_blocking_rules_scored_as_zero=True,
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -755,8 +763,8 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
 
     linker_for_splink_answer = Linker(df, settings, database_api=DuckDBAPI())
     labels_input = linker_for_splink_answer.register_labels_table(labels_table)
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_table(
-        labels_input
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_table(
+        labels_input, output_type="table"
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
@@ -837,8 +845,8 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
 
     linker_for_splink_answer = Linker([df_1, df_2], settings, database_api=DuckDBAPI())
     labels_input = linker_for_splink_answer.register_labels_table(labels_table)
-    df_from_splink = linker_for_splink_answer.truth_space_table_from_labels_table(
-        labels_input
+    df_from_splink = linker_for_splink_answer.accuracy_analysis_from_labels_table(
+        labels_input, output_type="table"
     ).as_pandas_dataframe()
 
     for _, splink_row in df_from_splink.iterrows():
