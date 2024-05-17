@@ -48,10 +48,8 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     # provided, it will have been set to a default by _process_unique_id_columns
     if source_dataset_input_column:
         unique_id_cols = [source_dataset_input_column, unique_id_input_column]
-        source_dataset_column_name = source_dataset_input_column.name
     else:
         unique_id_cols = [unique_id_input_column]
-        source_dataset_column_name = None
 
     where_condition = _sql_gen_where_condition(link_type, unique_id_cols)
 
@@ -64,7 +62,7 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
         sql = vertically_concatenate_sql(
             input_data_dict,
             salting_required=False,
-            source_dataset_column_name=source_dataset_column_name,
+            source_dataset_input_column=source_dataset_input_column,
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -102,7 +100,7 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         input_tablename_r = input_dataframes[1].physical_name
     else:
         sql = vertically_concatenate_sql(
-            input_data_dict, salting_required=False, source_dataset_column_name=None
+            input_data_dict, salting_required=False, source_dataset_input_column=None
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -198,15 +196,10 @@ def _row_counts_per_input_table(
 ) -> "SplinkDataFrame":
     pipeline = CTEPipeline()
 
-    if source_dataset_input_column:
-        source_dataset_column_name = source_dataset_input_column.name
-    else:
-        source_dataset_column_name = None
-
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_input_column=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
@@ -215,12 +208,17 @@ def _row_counts_per_input_table(
         select count(*) as count
         from __splink__df_concat
         """
-    else:
+    elif source_dataset_input_column is not None:
         sql = f"""
         select count(*) as count
         from __splink__df_concat
-        group by {source_dataset_column_name}
+        group by {source_dataset_input_column.name}
         """
+    else:
+        raise ValueError(
+            "If you are using link_only or link_and_dedupe, you must provide a "
+            "source_dataset_column_name"
+        )
     pipeline.enqueue_sql(sql, "__splink__df_count")
     return db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -339,17 +337,12 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         unique_id_input_column=unique_id_input_column,
     )
 
-    if source_dataset_input_column:
-        source_dataset_column_name = source_dataset_input_column.name
-    else:
-        source_dataset_column_name = None
-
     pipeline = CTEPipeline()
 
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_input_column=source_dataset_input_column,
     )
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -364,6 +357,11 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     blocking_input_tablename_r = "__splink__df_concat"
     if len(splink_df_dict) == 2 and link_type == "link_only":
         link_type = "two_dataset_link_only"
+
+    if source_dataset_input_column:
+        source_dataset_column_name = source_dataset_input_column.name
+    else:
+        source_dataset_column_name = None
 
     if link_type == "two_dataset_link_only" and source_dataset_column_name is not None:
         sqls = split_df_concat_with_tf_into_two_tables_sqls(

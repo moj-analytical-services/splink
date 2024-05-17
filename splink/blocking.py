@@ -484,14 +484,10 @@ def materialise_exploded_id_tables(
 
     pipeline = CTEPipeline()
 
-    source_dataset_column_name = (
-        source_dataset_input_column.name if source_dataset_input_column else None
-    )
-
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_input_column=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
