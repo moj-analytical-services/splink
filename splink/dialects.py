@@ -497,12 +497,3 @@ class AthenaDialect(SplinkDialect):
     @property
     def _levenshtein_name(self):
         return "levenshtein_distance"
-
-
-_dialect_lookup = {
-    "duckdb": DuckDBDialect(),
-    "spark": SparkDialect(),
-    "sqlite": SQLiteDialect(),
-    "postgres": PostgresDialect(),
-    "athena": AthenaDialect(),
-}

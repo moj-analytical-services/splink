@@ -4,7 +4,7 @@ import re
 import string
 from copy import copy
 from functools import partial
-from typing import Callable, Union
+from typing import Protocol, Union
 
 import sqlglot
 
@@ -14,6 +14,10 @@ from .sql_transform import (
     add_suffix_to_all_column_identifiers,
     add_table_to_all_column_identifiers,
 )
+
+
+class ColumnExpressionOperation(Protocol):
+    def __call__(self, name: str, dialect: SplinkDialect) -> str: ...
 
 
 class ColumnExpression:
@@ -40,7 +44,7 @@ class ColumnExpression:
 
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
         self.raw_sql_expression = sql_expression
-        self.operations: list[Callable[..., str]] = []
+        self.operations: list[ColumnExpressionOperation] = []
         if sql_dialect is not None:
             self.sql_dialect: SplinkDialect = sql_dialect
 
@@ -113,7 +117,7 @@ class ColumnExpression:
 
     def lower(self) -> "ColumnExpression":
         """
-        Applies a lowercase transofrom to the input expression.
+        Applies a lowercase transform to the input expression.
         """
         clone = self._clone()
         clone.operations.append(clone._lower_dialected)

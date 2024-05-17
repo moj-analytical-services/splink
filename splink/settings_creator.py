@@ -13,12 +13,6 @@ from .comparison_library import CustomComparison
 from .settings import Settings
 
 
-def to_comparison_creator(comparison_creator):
-    if isinstance(comparison_creator, dict):
-        return CustomComparison(**comparison_creator)
-    return comparison_creator
-
-
 @dataclass
 class SettingsCreator:
     """
@@ -68,7 +62,7 @@ class SettingsCreator:
         # we adjust dict to ensure that comparisons + blocking rules are
         # consistently of creatore types
         creator_dict["comparisons"] = [
-            to_comparison_creator(comparison_creator)
+            CustomComparison._convert_to_creator(comparison_creator)
             for comparison_creator in creator_dict["comparisons"]
         ]
         creator_dict["blocking_rules_to_generate_predictions"] = [
