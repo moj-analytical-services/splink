@@ -35,8 +35,8 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     blocking_rule: "BlockingRule",
     link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
-    unique_id_column_name: str,
-    source_dataset_column_name: Optional[str],
+    unique_id_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
 ) -> list[dict[str, str]]:
     input_dataframes = list(input_data_dict.values())
 
@@ -44,26 +44,14 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
     if two_dataset_link_only:
         link_type = "two_dataset_link_only"
 
-    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
-        unique_id_column_name,
-        source_dataset_column_name,
-        input_data_dict,
-        link_type,
-        db_api.sql_dialect.name,
-    )
+    # If it's a link_only or link_and_dedupe and no source_dataset_column_name is
+    # provided, it will have been set to a default by _process_unique_id_columns
     if source_dataset_input_column:
         unique_id_cols = [source_dataset_input_column, unique_id_input_column]
     else:
         unique_id_cols = [unique_id_input_column]
 
     where_condition = _sql_gen_where_condition(link_type, unique_id_cols)
-
-    # If it's a link_only or link_and_dedupe and no source_dataset_column_name is
-    # provided, it will have been set to a default by _process_unique_id_columns
-    if source_dataset_input_column is None:
-        source_dataset_column_name = None
-    else:
-        source_dataset_column_name = source_dataset_input_column.name
 
     sqls = []
 
@@ -74,7 +62,7 @@ def _number_of_comparisons_generated_by_blocking_rule_post_filters_sqls(
         sql = vertically_concatenate_sql(
             input_data_dict,
             salting_required=False,
-            source_dataset_column_name=source_dataset_column_name,
+            source_dataset_input_column=source_dataset_input_column,
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -112,7 +100,7 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         input_tablename_r = input_dataframes[1].physical_name
     else:
         sql = vertically_concatenate_sql(
-            input_data_dict, salting_required=False, source_dataset_column_name=None
+            input_data_dict, salting_required=False, source_dataset_input_column=None
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -208,15 +196,10 @@ def _row_counts_per_input_table(
 ) -> "SplinkDataFrame":
     pipeline = CTEPipeline()
 
-    if source_dataset_input_column:
-        source_dataset_column_name = source_dataset_input_column.name
-    else:
-        source_dataset_column_name = None
-
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_input_column=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
@@ -225,12 +208,17 @@ def _row_counts_per_input_table(
         select count(*) as count
         from __splink__df_concat
         """
-    else:
+    elif source_dataset_input_column is not None:
         sql = f"""
         select count(*) as count
         from __splink__df_concat
-        group by {source_dataset_column_name}
+        group by {source_dataset_input_column.name}
         """
+    else:
+        raise ValueError(
+            "If you are using link_only or link_and_dedupe, you must provide a "
+            "source_dataset_column_name"
+        )
     pipeline.enqueue_sql(sql, "__splink__df_count")
     return db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -297,17 +285,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
     max_rows_limit: int = int(1e9),
-    unique_id_column_name: str,
-    source_dataset_column_name: Optional[str],
+    unique_id_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
 ) -> pd.DataFrame:
-    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
-        unique_id_column_name,
-        source_dataset_column_name,
-        splink_df_dict,
-        link_type,
-        db_api.sql_dialect.name,
-    )
-
     # Check none of the blocking rules will create a vast/computationally
     # intractable number of comparisons
     for br in blocking_rules:
@@ -319,8 +299,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             db_api=db_api,
             max_rows_limit=max_rows_limit,
             compute_post_filter_count=False,
-            unique_id_column_name=unique_id_column_name,
-            source_dataset_column_name=source_dataset_column_name,
+            unique_id_input_column=unique_id_input_column,
+            source_dataset_input_column=source_dataset_input_column,
         )
         count_pre_filter = count[
             "number_of_comparisons_generated_pre_filter_conditions"
@@ -362,7 +342,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     sql = vertically_concatenate_sql(
         splink_df_dict,
         salting_required=False,
-        source_dataset_column_name=source_dataset_column_name,
+        source_dataset_input_column=source_dataset_input_column,
     )
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -377,6 +357,11 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     blocking_input_tablename_r = "__splink__df_concat"
     if len(splink_df_dict) == 2 and link_type == "link_only":
         link_type = "two_dataset_link_only"
+
+    if source_dataset_input_column:
+        source_dataset_column_name = source_dataset_input_column.name
+    else:
+        source_dataset_column_name = None
 
     if link_type == "two_dataset_link_only" and source_dataset_column_name is not None:
         sqls = split_df_concat_with_tf_into_two_tables_sqls(
@@ -461,8 +446,8 @@ def _count_comparisons_generated_from_blocking_rule(
     db_api: DatabaseAPISubClass,
     compute_post_filter_count: bool,
     max_rows_limit: int = int(1e9),
-    unique_id_column_name: str,
-    source_dataset_column_name: Optional[str],
+    unique_id_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
 ) -> dict[str, Union[int, str]]:
     # TODO: if it's an exploding blocking rule, make sure we error out
     pipeline = CTEPipeline()
@@ -494,20 +479,12 @@ def _count_comparisons_generated_from_blocking_rule(
     if filter_conditions == "TRUE":
         filter_conditions = ""
 
-    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
-        unique_id_column_name,
-        source_dataset_column_name,
-        splink_df_dict,
-        link_type,
-        db_api.sql_dialect.name,
-    )
-
     if source_dataset_input_column:
         uid_for_where = [source_dataset_input_column, unique_id_input_column]
     else:
         uid_for_where = [unique_id_input_column]
 
-    join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
+    link_type_join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
 
     if not compute_post_filter_count:
         return {
@@ -515,7 +492,7 @@ def _count_comparisons_generated_from_blocking_rule(
             "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
             "filter_conditions_identified": filter_conditions,
             "equi_join_conditions_identified": equi_join_conditions_joined,
-            "inner_join_condition_identified": join_condition_sql,
+            "link_type_join_condition": link_type_join_condition_sql,
         }
 
     if pre_filter_total < max_rows_limit:
@@ -525,8 +502,8 @@ def _count_comparisons_generated_from_blocking_rule(
             blocking_rule,
             link_type,
             db_api,
-            unique_id_column_name,
-            source_dataset_column_name,
+            unique_id_input_column,
+            source_dataset_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
         post_filter_total_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -552,7 +529,7 @@ def _count_comparisons_generated_from_blocking_rule(
         "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
         "filter_conditions_identified": filter_conditions,
         "equi_join_conditions_identified": equi_join_conditions_joined,
-        "inner_join_condition_identified": join_condition_sql,
+        "link_type_join_condition": link_type_join_condition_sql,
     }
 
 
@@ -574,6 +551,14 @@ def count_comparisons_from_blocking_rule(
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        splink_df_dict,
+        link_type,
+        db_api.sql_dialect.name,
+    )
+
     return _count_comparisons_generated_from_blocking_rule(
         splink_df_dict=splink_df_dict,
         blocking_rule=blocking_rule_creator,
@@ -581,8 +566,8 @@ def count_comparisons_from_blocking_rule(
         db_api=db_api,
         compute_post_filter_count=compute_post_filter_count,
         max_rows_limit=max_rows_limit,
-        unique_id_column_name=unique_id_column_name,
-        source_dataset_column_name=source_dataset_column_name,
+        unique_id_input_column=unique_id_input_column,
+        source_dataset_input_column=source_dataset_input_column,
     )
 
 
@@ -608,14 +593,22 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
             to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
         )
 
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        splink_df_dict,
+        link_type,
+        db_api.sql_dialect.name,
+    )
+
     return _cumulative_comparisons_to_be_scored_from_blocking_rules(
         splink_df_dict=splink_df_dict,
         blocking_rules=blocking_rules_as_br,
         link_type=link_type,
         db_api=db_api,
         max_rows_limit=max_rows_limit,
-        unique_id_column_name=unique_id_column_name,
-        source_dataset_column_name=source_dataset_column_name,
+        unique_id_input_column=unique_id_input_column,
+        source_dataset_input_column=source_dataset_input_column,
     )
 
 
@@ -641,14 +634,22 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
             to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
         )
 
+    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
+        unique_id_column_name,
+        source_dataset_column_name,
+        splink_df_dict,
+        link_type,
+        db_api.sql_dialect.name,
+    )
+
     pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
         splink_df_dict=splink_df_dict,
         blocking_rules=blocking_rules_as_br,
         link_type=link_type,
         db_api=db_api,
         max_rows_limit=max_rows_limit,
-        unique_id_column_name=unique_id_column_name,
-        source_dataset_column_name=source_dataset_column_name,
+        unique_id_input_column=unique_id_input_column,
+        source_dataset_input_column=source_dataset_input_column,
     )
 
     return cumulative_blocking_rule_comparisons_generated(

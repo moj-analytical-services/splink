@@ -2844,8 +2844,8 @@ class Linker:
             link_type=self._settings_obj._link_type,
             db_api=self.db_api,
             max_rows_limit=max_rows_limit,
-            unique_id_column_name=self._settings_obj.column_info_settings.unique_id_column_name,
-            source_dataset_column_name=self._settings_obj.column_info_settings.source_dataset_column_name,
+            unique_id_input_column=self._settings_obj.column_info_settings.unique_id_input_column,
+            source_dataset_input_column=self._settings_obj.column_info_settings.source_dataset_input_column,
         )
 
         records = pd_df.to_dict(orient="records")

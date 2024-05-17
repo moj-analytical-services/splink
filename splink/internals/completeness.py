@@ -24,7 +24,7 @@ def completeness_data(
     pipeline = CTEPipeline()
 
     sql = vertically_concatenate_sql(
-        splink_df_dict, salting_required=False, source_dataset_column_name=None
+        splink_df_dict, salting_required=False, source_dataset_input_column=None
     )
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")

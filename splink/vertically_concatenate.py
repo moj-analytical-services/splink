@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict
 
+from .input_column import InputColumn
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import compute_all_term_frequencies_sqls
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 def vertically_concatenate_sql(
     input_tables: Dict[str, SplinkDataFrame],
     salting_required: bool,
-    source_dataset_column_name: str = None,
+    source_dataset_input_column: InputColumn = None,
 ) -> str:
     """
     Using `input_tables`, create a single table with the columns and
@@ -45,10 +46,11 @@ def vertically_concatenate_sql(
         salt_sql = ""
 
     source_dataset_column_already_exists = False
-    if source_dataset_column_name:
-        source_dataset_column_already_exists = source_dataset_column_name in [
-            c.unquote().name for c in df_obj.columns
-        ]
+    if source_dataset_input_column:
+        source_dataset_column_already_exists = (
+            source_dataset_input_column.unquote().name
+            in [c.unquote().name for c in df_obj.columns]
+        )
 
     select_columns_sql = ", ".join(columns)
     if len(input_tables) > 1:
@@ -86,12 +88,12 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
         pipeline.append_input_dataframe(nodes_with_tf)
         return pipeline
 
-    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
         salting_required=linker._settings_obj.salting_required,
-        source_dataset_column_name=sds_name,
+        source_dataset_input_column=sds_ic,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
@@ -108,12 +110,12 @@ def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDa
     if "__splink__df_concat_with_tf" in cache:
         return cache.get_with_logging("__splink__df_concat_with_tf")
 
-    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
         salting_required=linker._settings_obj.salting_required,
-        source_dataset_column_name=sds_name,
+        source_dataset_input_column=sds_ic,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
@@ -141,12 +143,12 @@ def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
         pipeline.append_input_dataframe(nodes_with_tf)
         return pipeline
 
-    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
         salting_required=linker._settings_obj.salting_required,
-        source_dataset_column_name=sds_name,
+        source_dataset_input_column=sds_ic,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
@@ -164,12 +166,12 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
         df.templated_name = "__splink__df_concat"
         return df
 
-    sds_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
         salting_required=linker._settings_obj.salting_required,
-        source_dataset_column_name=sds_name,
+        source_dataset_input_column=sds_ic,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
