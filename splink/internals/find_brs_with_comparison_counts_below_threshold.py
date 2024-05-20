@@ -17,7 +17,7 @@ from splink.internals.database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 
 if TYPE_CHECKING:
-    from splink.linker import Linker
+    from splink.internals.linker import Linker
 logger = logging.getLogger(__name__)
 
 

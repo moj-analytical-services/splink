@@ -6,7 +6,7 @@ from pytest import approx, raises
 
 from splink.internals.comparison_library import ExactMatch
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 

@@ -4,7 +4,7 @@ import pandas as pd
 
 from splink.internals.comparison_library import ExactMatch
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 settings_template = {
     "probability_two_random_records_match": 0.01,

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from ..linker import Linker
+    from splink.internals.linker import Linker
 
 
 def comparison_vector_distribution_sql(linker: Linker) -> str:

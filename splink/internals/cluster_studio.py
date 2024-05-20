@@ -18,7 +18,7 @@ from splink.internals.unique_id_concat import (
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.linker import Linker
+    from splink.internals.linker import Linker
 
 SamplingMethods = Literal[
     "random", "by_cluster_size", "lowest_density_clusters_by_size"

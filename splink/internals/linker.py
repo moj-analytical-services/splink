@@ -120,7 +120,7 @@ from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
 )
 
-from .internals.blocking_analysis import (
+from splink.internals.blocking_analysis import (
     _cumulative_comparisons_to_be_scored_from_blocking_rules,
 )
 

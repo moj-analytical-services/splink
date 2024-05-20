@@ -18,7 +18,7 @@ from splink.internals.settings_validation.log_invalid_columns import (
     check_for_missing_settings_column,
     validate_table_names,
 )
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 from .basic_settings import get_settings_dict
 

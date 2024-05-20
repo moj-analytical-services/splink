@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 
 def get_data():

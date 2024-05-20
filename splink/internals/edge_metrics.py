@@ -20,7 +20,7 @@ from splink.internals.unique_id_concat import (
 from .exceptions import MissingDependencyException
 
 if TYPE_CHECKING:
-    from splink.linker import Linker
+    from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
 

@@ -19,7 +19,7 @@ from splink.internals.vertically_concatenate import (
 )
 
 if TYPE_CHECKING:
-    from splink.linker import Linker
+    from splink.internals.linker import Linker
 
 
 def truth_space_table_from_labels_with_predictions_sqls(

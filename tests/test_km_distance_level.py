@@ -3,7 +3,7 @@ import pandas as pd
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 

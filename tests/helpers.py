@@ -10,7 +10,7 @@ from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.postgres.database_api import PostgresAPI
 from splink.internals.spark.database_api import SparkAPI
 from splink.internals.sqlite.database_api import SQLiteAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 
 class TestHelper(ABC):

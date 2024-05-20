@@ -2,7 +2,7 @@ import pandas as pd
 
 from splink.internals.cluster_studio import _get_lowest_density_clusters
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 
 def test_density_sample():

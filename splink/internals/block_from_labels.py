@@ -6,7 +6,7 @@ from splink.internals.lower_id_on_lhs import lower_id_to_left_hand_side
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.linker import Linker
+    from splink.internals.linker import Linker
 
 
 def block_from_labels(

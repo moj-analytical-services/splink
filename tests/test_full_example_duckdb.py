@@ -11,7 +11,7 @@ import splink.internals.comparison_library as cl
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.exploratory import completeness_chart, profile_columns
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+from splink.internals.linker import Linker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
