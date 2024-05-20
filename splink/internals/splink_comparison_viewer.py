@@ -121,7 +121,7 @@ def render_splink_comparison_viewer_html(
     # rather than bundling the whole thing into the html
     bundle_observable_notebook = True
 
-    template_path = "files/splink_comparison_viewer/template.j2"
+    template_path = "internals/files/splink_comparison_viewer/template.j2"
     template = Template(read_resource(template_path))
 
     template_data: dict[str, Any] = {
@@ -132,12 +132,12 @@ def render_splink_comparison_viewer_html(
     }
 
     files = {
-        "embed": "files/external_js/vega-embed@6.20.2",
-        "vega": "files/external_js/vega@5.21.0",
-        "vegalite": "files/external_js/vega-lite@5.2.0",
-        "stdlib": "files/external_js/stdlib.js@5.8.3",
-        "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
-        "custom_css": "files/splink_comparison_viewer/custom.css",
+        "embed": "internals/files/external_js/vega-embed@6.20.2",
+        "vega": "internals/files/external_js/vega@5.21.0",
+        "vegalite": "internals/files/external_js/vega-lite@5.2.0",
+        "stdlib": "internals/files/external_js/stdlib.js@5.8.3",
+        "svu_text": "internals/files/splink_vis_utils/splink_vis_utils.js",
+        "custom_css": "internals/files/splink_comparison_viewer/custom.css",
     }
     for k, v in files.items():
         template_data[k] = read_resource(v)

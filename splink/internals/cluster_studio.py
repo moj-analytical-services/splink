@@ -376,7 +376,7 @@ def render_splink_cluster_studio_html(
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges
-    template_path = "files/splink_cluster_studio/cluster_template.j2"
+    template_path = "internals/files/splink_cluster_studio/cluster_template.j2"
     template = Template(read_resource(template_path))
 
     template_data: dict[str, Any] = {
@@ -397,12 +397,12 @@ def render_splink_cluster_studio_html(
         )
 
     files = {
-        "embed": "files/external_js/vega-embed@6.20.2",
-        "stdlib": "files/external_js/stdlib.js@5.8.3",
-        "vega": "files/external_js/vega@5.21.0",
-        "vegalite": "files/external_js/vega-lite@5.2.0",
-        "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
-        "custom_css": "files/splink_cluster_studio/custom.css",
+        "embed": "internals/files/external_js/vega-embed@6.20.2",
+        "stdlib": "internals/files/external_js/stdlib.js@5.8.3",
+        "vega": "internals/files/external_js/vega@5.21.0",
+        "vegalite": "internals/files/external_js/vega-lite@5.2.0",
+        "svu_text": "internals/files/splink_vis_utils/splink_vis_utils.js",
+        "custom_css": "internals/files/splink_cluster_studio/custom.css",
     }
     for k, v in files.items():
         template_data[k] = read_resource(v)

@@ -88,13 +88,13 @@ def render_labelling_tool_html(
 
     comparisons_recs = comparisons_recs.to_dict(orient="records")
     # Render template with cluster, nodes and edges
-    template_path = "files/labelling_tool/template.j2"
+    template_path = "internals/files/labelling_tool/template.j2"
     template = Template(read_resource(template_path))
 
     template_data = {
-        "slt": read_resource("files/labelling_tool/slt.js"),
-        "d3": read_resource("files/external_js/d3@7.8.5"),
-        "stdlib": read_resource("files/external_js/stdlib.js@5.8.3"),
+        "slt": read_resource("internals/files/labelling_tool/slt.js"),
+        "d3": read_resource("internals/files/external_js/d3@7.8.5"),
+        "stdlib": read_resource("internals/files/external_js/stdlib.js@5.8.3"),
         "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
         "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
         "view_in_jupyter": view_in_jupyter,

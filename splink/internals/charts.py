@@ -32,9 +32,9 @@ def load_chart_definition(filename):
 
 def _load_external_libs():
     to_load = {
-        "vega-embed": "files/external_js/vega-embed@6.20.2",
-        "vega-lite": "files/external_js/vega-lite@5.2.0",
-        "vega": "files/external_js/vega@5.21.0",
+        "vega-embed": "internals/files/external_js/vega-embed@6.20.2",
+        "vega-lite": "internals/files/external_js/vega-lite@5.2.0",
+        "vega": "internals/files/external_js/vega@5.21.0",
     }
     return {k: read_resource(v) for k, v in to_load.items()}
 
@@ -84,7 +84,7 @@ def save_offline_chart(
     if type(chart_dict).__name__ == "VegaliteNoValidate":
         chart_dict = chart_dict.spec
 
-    template = read_resource("files/templates/single_chart_template.html")
+    template = read_resource("internals/files/templates/single_chart_template.html")
 
     fmt_dict = _load_external_libs()
 
