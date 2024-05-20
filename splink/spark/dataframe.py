@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from pandas import DataFrame as PandasDataFrame
 
-from ..input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from ..splink_dataframe import SplinkDataFrame
 from .spark_helpers.custom_spark_dialect import Dialect
 

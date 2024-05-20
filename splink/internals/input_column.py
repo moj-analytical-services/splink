@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Optional, Type
 import sqlglot
 import sqlglot.expressions as exp
 
-from .sql_transform import sqlglot_tree_signature
+from splink.sql_transform import sqlglot_tree_signature
 
 if TYPE_CHECKING:
-    from .settings import ColumnInfoSettings
+    from splink.settings import ColumnInfoSettings
 
 
 @dataclass(frozen=True)

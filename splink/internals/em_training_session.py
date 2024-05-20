@@ -17,7 +17,7 @@ from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
-from splink.input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.parse_sql import get_columns_used_from_sql
 from splink.pipeline import CTEPipeline

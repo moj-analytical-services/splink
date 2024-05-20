@@ -14,7 +14,7 @@ from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
-from .input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight
 from .parse_sql import get_columns_used_from_sql
 

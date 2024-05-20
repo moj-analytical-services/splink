@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .input_column import InputColumn
+from splink.internals.input_column import InputColumn
 
 CONCAT_SEPARATOR = "-__-"
 

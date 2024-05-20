@@ -13,7 +13,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Optional
 
-from splink.input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from splink.pipeline import CTEPipeline
 from splink.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (

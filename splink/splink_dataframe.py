@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .input_column import InputColumn
+from splink.internals.input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 

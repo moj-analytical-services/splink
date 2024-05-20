@@ -12,12 +12,12 @@ from splink.internals.blocking_rule_library import CustomRule, block_on
 
 from splink.internals.database_api import DatabaseAPISubClass
 from .input_column import InputColumn
-from .internals.blocking_analysis import (
+from splink.internals.blocking_analysis import (
     _count_comparisons_generated_from_blocking_rule,
 )
 
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 logger = logging.getLogger(__name__)
 
 

@@ -10,7 +10,7 @@ from splink.internals.charts import (
 )
 
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
-from ..input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from ..pipeline import CTEPipeline
 from ..splink_dataframe import SplinkDataFrame
 from ..vertically_concatenate import vertically_concatenate_sql

@@ -56,20 +56,20 @@ from splink.internals.edge_metrics import compute_edge_metrics
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.estimate_u import estimate_u_values
 from splink.internals.exceptions import SplinkException
-from .find_brs_with_comparison_counts_below_threshold import (
+from splink.internals.find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
-from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
-from .graph_metrics import (
+from splink.internals.find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
+from splink.internals.graph_metrics import (
     GraphMetricsResults,
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
-from .input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from .internals.blocking_analysis import (
     _cumulative_comparisons_to_be_scored_from_blocking_rules,
 )
-from .labelling_tool import (
+from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )

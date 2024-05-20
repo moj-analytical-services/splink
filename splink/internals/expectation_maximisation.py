@@ -10,7 +10,7 @@ from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
-from splink.input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from splink.m_u_records_to_parameters import m_u_records_to_lookup_dict
 from splink.pipeline import CTEPipeline
 from splink.predict import (

@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .input_column import InputColumn
-from .pipeline import CTEPipeline
+from splink.pipeline import CTEPipeline
 
 if TYPE_CHECKING:
-    from .linker import Linker
-    from .splink_dataframe import SplinkDataFrame
+    from splink.linker import Linker
+    from splink.splink_dataframe import SplinkDataFrame
 
 
 def add_unique_id_and_source_dataset_cols_if_needed(

@@ -9,14 +9,14 @@ import numpy as np
 import pandas as pd
 from jinja2 import Template
 
-from .misc import EverythingEncoder, read_resource
-from .pipeline import CTEPipeline
-from .splink_dataframe import SplinkDataFrame
-from .vertically_concatenate import compute_df_concat_with_tf
+from splink.misc import EverythingEncoder, read_resource
+from splink.pipeline import CTEPipeline
+from splink.splink_dataframe import SplinkDataFrame
+from splink.vertically_concatenate import compute_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 
 logger = logging.getLogger(__name__)
 
@@ -88,13 +88,13 @@ def render_labelling_tool_html(
 
     comparisons_recs = comparisons_recs.to_dict(orient="records")
     # Render template with cluster, nodes and edges
-    template_path = "files/labelling_tool/template.j2"
+    template_path = "../files/labelling_tool/template.j2"
     template = Template(read_resource(template_path))
 
     template_data = {
-        "slt": read_resource("files/labelling_tool/slt.js"),
-        "d3": read_resource("files/external_js/d3@7.8.5"),
-        "stdlib": read_resource("files/external_js/stdlib.js@5.8.3"),
+        "slt": read_resource("../files/labelling_tool/slt.js"),
+        "d3": read_resource("../files/external_js/d3@7.8.5"),
+        "stdlib": read_resource("../files/external_js/stdlib.js@5.8.3"),
         "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
         "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
         "view_in_jupyter": view_in_jupyter,

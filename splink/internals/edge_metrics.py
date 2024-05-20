@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from .exceptions import MissingDependencyException
-from splink.graph_metrics import (
+from splink.internals.graph_metrics import (
     _basic_edge_metrics_sql,
     _bridges_from_igraph_sql,
     _edges_for_igraph_sql,

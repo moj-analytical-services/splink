@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict
 
-from .input_column import InputColumn
+from splink.internals.input_column import InputColumn
 from .pipeline import CTEPipeline
 from .splink_dataframe import SplinkDataFrame
 from .term_frequencies import compute_all_term_frequencies_sqls
