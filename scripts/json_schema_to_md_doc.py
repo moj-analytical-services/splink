@@ -1,4 +1,4 @@
-from splink.validate_jsonschema import get_schema
+from splink.internals.validate_jsonschema import get_schema
 
 schema = get_schema()
 

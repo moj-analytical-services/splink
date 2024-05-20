@@ -13,7 +13,7 @@ from splink.internals.graph_metrics import (
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.unique_id_concat import (
+from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )
 

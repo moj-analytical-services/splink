@@ -13,7 +13,7 @@ from splink.internals.input_column import InputColumn
 
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from ..vertically_concatenate import vertically_concatenate_sql
+from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 
 def completeness_data(

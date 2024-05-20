@@ -6,7 +6,7 @@ from splink.duckdb.database_api import DuckDBAPI
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import calculate_cartesian
 from splink.internals.pipeline import CTEPipeline
-from splink.vertically_concatenate import vertically_concatenate_sql
+from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 
 # convenience to get list into format as though it was result of a count query

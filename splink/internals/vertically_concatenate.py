@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 
 
 def vertically_concatenate_sql(

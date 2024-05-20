@@ -12,7 +12,7 @@ from jinja2 import Template
 from splink.internals.misc import EverythingEncoder, read_resource
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from splink.internals.misc import read_resource
-from splink.waterfall_chart import records_to_waterfall_data
+from splink.internals.waterfall_chart import records_to_waterfall_data
 
 altair_installed = True
 

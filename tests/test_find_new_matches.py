@@ -5,7 +5,7 @@ import pandas as pd
 import splink.internals.comparison_library as cl
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.pipeline import CTEPipeline
-from splink.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding

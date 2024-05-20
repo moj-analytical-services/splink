@@ -25,7 +25,7 @@ from splink.internals.settings import (
     Settings,
     TrainingSettings,
 )
-from splink.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException

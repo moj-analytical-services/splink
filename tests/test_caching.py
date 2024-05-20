@@ -8,7 +8,7 @@ from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.linker import Linker, SplinkDataFrame
 from splink.internals.pipeline import CTEPipeline
-from splink.vertically_concatenate import (
+from splink.internals.vertically_concatenate import (
     compute_df_concat,
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,

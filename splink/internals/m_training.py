@@ -10,7 +10,7 @@ from splink.internals.expectation_maximisation import (
     compute_proportions_for_new_parameters,
 )
 from splink.internals.pipeline import CTEPipeline
-from splink.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .m_u_records_to_parameters import (
     append_m_probability_to_comparison_level_trained_probabilities,

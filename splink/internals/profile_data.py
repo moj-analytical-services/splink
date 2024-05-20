@@ -13,7 +13,7 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPIS
 
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
-from ..vertically_concatenate import vertically_concatenate_sql
+from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 

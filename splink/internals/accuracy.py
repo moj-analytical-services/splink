@@ -13,7 +13,7 @@ from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import predict_from_comparison_vectors_sqls_using_settings
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.sql_transform import move_l_r_table_prefix_to_column_suffix
-from splink.vertically_concatenate import (
+from splink.internals.vertically_concatenate import (
     compute_df_concat,
     compute_df_concat_with_tf,
 )

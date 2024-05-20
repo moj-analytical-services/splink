@@ -14,8 +14,8 @@ from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.unique_id_concat import _composite_unique_id_from_nodes_sql
-from splink.vertically_concatenate import vertically_concatenate_sql
+from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
+from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ from splink.internals.m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from splink.internals.pipeline import CTEPipeline
-from splink.vertically_concatenate import (
+from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
 )

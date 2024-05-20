@@ -106,18 +106,18 @@ from splink.internals.splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
-from .term_frequencies import (
+from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
     term_frequencies_for_single_column_sql,
     tf_adjustment_chart,
 )
-from .unique_id_concat import (
+from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
-from .unlinkables import unlinkables_data
-from .vertically_concatenate import (
+from splink.internals.unlinkables import unlinkables_data
+from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
