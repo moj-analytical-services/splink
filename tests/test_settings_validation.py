@@ -9,8 +9,7 @@ from splink.internals.comparison_library import (
     LevenshteinAtThresholds,
 )
 from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
-from splink.settings_validation.log_invalid_columns import (
+from splink.internals.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
     InvalidTableNamesLogGenerator,
     MissingColumnsLogGenerator,
@@ -19,6 +18,7 @@ from splink.settings_validation.log_invalid_columns import (
     check_for_missing_settings_column,
     validate_table_names,
 )
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 

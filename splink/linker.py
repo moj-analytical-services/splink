@@ -90,6 +90,13 @@ from splink.internals.predict import (
     predict_from_comparison_vectors_sqls_using_settings,
 )
 from splink.internals.settings_creator import SettingsCreator
+from splink.internals.settings_validation.log_invalid_columns import (
+    InvalidColumnsLogger,
+    SettingsColumnCleaner,
+)
+from splink.internals.settings_validation.valid_types import (
+    _validate_dialect,
+)
 from splink.internals.splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -115,13 +122,6 @@ from splink.internals.vertically_concatenate import (
 
 from .internals.blocking_analysis import (
     _cumulative_comparisons_to_be_scored_from_blocking_rules,
-)
-from .settings_validation.log_invalid_columns import (
-    InvalidColumnsLogger,
-    SettingsColumnCleaner,
-)
-from .settings_validation.valid_types import (
-    _validate_dialect,
 )
 
 logger = logging.getLogger(__name__)
