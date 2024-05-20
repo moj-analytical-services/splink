@@ -1,19 +1,7 @@
 from typing import TYPE_CHECKING
 
-# Explicitly declare exported names to avoid 'imported but unused' linting issues
-__all__ = [
-    "block_on",
-    "splink_datasets",
-    "Linker",
-    "SettingsCreator",
-    "SQLiteAPI",
-    "SparkAPI",
-    "DuckDBAPI",
-    "PostgresAPI",
-]
-
-
 from splink.internals.blocking_rule_library import block_on
+from splink.internals.column_expression import ColumnExpression
 from splink.internals.datasets import splink_datasets
 from splink.internals.linker import Linker
 from splink.internals.settings_creator import SettingsCreator
@@ -57,3 +45,16 @@ def __getattr__(name):
 
 
 __version__ = "4.0.0.dev4"
+
+
+__all__ = [
+    "block_on",
+    "ColumnExpression",
+    "DuckDBAPI",
+    "Linker",
+    "PostgresAPI",
+    "SettingsCreator",
+    "SparkAPI",
+    "splink_datasets",
+    "SQLiteAPI",
+]
