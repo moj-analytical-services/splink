@@ -12,12 +12,12 @@ import sqlglot
 
 from splink.internals.input_column import InputColumn
 
-from ..splink_dataframe import SplinkDataFrame
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ..settings import Settings
+    from splink.internals.settings import Settings
 
 
 def remove_suffix(c: str) -> str:

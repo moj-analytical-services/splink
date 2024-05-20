@@ -11,7 +11,7 @@ from splink.internals.profile_data import (
     profile_columns,
 )
 from splink.internals.misc import ensure_is_list
-from splink.pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 from splink.sqlite.database_api import SQLiteAPI
 
 from .decorator import mark_with_dialects_including

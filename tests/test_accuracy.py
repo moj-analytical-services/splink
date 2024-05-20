@@ -11,7 +11,7 @@ from splink.internals.accuracy import (
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.comparison_library import ExactMatch
 from splink.linker import Linker
-from splink.pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 from splink.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict

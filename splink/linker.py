@@ -88,12 +88,12 @@ from splink.internals.misc import (
     prob_to_bayes_factor,
 )
 from splink.internals.optimise_cost_of_brs import suggest_blocking_rules
-from .pipeline import CTEPipeline
-from .predict import (
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.predict import (
     predict_from_comparison_vectors_sqls,
     predict_from_comparison_vectors_sqls_using_settings,
 )
-from .settings_creator import SettingsCreator
+from splink.internals.settings_creator import SettingsCreator
 from .settings_validation.log_invalid_columns import (
     InvalidColumnsLogger,
     SettingsColumnCleaner,
@@ -101,11 +101,11 @@ from .settings_validation.log_invalid_columns import (
 from .settings_validation.valid_types import (
     _validate_dialect,
 )
-from .splink_comparison_viewer import (
+from splink.internals.splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
 )
-from .splink_dataframe import SplinkDataFrame
+from splink.internals.splink_dataframe import SplinkDataFrame
 from .term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,

@@ -16,7 +16,7 @@ from splink.internals.charts import (
 )
 from splink.internals.input_column import InputColumn
 
-from .pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:

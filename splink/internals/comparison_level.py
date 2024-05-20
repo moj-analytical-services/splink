@@ -22,7 +22,7 @@ from splink.internals.misc import (
     match_weight_to_bayes_factor,
 )
 from splink.internals.parse_sql import get_columns_used_from_sql
-from splink.sql_transform import sqlglot_tree_signature
+from splink.internals.sql_transform import sqlglot_tree_signature
 
 logger = logging.getLogger(__name__)
 

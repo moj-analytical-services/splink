@@ -12,7 +12,7 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 
 from splink.internals.misc import ensure_is_list
-from ..pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 from ..vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)

@@ -14,8 +14,8 @@ import time
 from typing import TYPE_CHECKING, Optional
 
 from splink.internals.input_column import InputColumn
-from splink.pipeline import CTEPipeline
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,

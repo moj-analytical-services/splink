@@ -7,7 +7,7 @@ from pandas import DataFrame as PandasDataFrame
 
 from splink.internals.input_column import InputColumn
 
-from ..splink_dataframe import SplinkDataFrame
+from splink.internals.splink_dataframe import SplinkDataFrame
 from .spark_helpers.custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)

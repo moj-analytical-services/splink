@@ -2,7 +2,7 @@ import awswrangler as wr
 
 from splink.internals.exceptions import InvalidAWSBucketOrDatabase
 from splink.internals.misc import ensure_is_list
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 
 def athena_warning_text(database_bucket_txt, do_does_grammar):

@@ -8,7 +8,7 @@ from .comparison_level import ComparisonLevel, _default_m_values, _default_u_val
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.settings import ColumnInfoSettings
+    from splink.internals.settings import ColumnInfoSettings
 
 
 class Comparison:

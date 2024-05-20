@@ -24,8 +24,8 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPIS
 from splink.internals.input_column import InputColumn
 
 from splink.internals.misc import calculate_cartesian, ensure_is_iterable
-from ..pipeline import CTEPipeline
-from ..splink_dataframe import SplinkDataFrame
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from ..vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,

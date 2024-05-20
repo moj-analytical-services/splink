@@ -5,7 +5,7 @@ import pytest
 
 import splink.internals.comparison_library as cl
 from splink.internals.estimate_u import _proportion_sample_size_link_only
-from splink.pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
 
 

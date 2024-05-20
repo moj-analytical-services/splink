@@ -14,8 +14,8 @@ from pandas import DataFrame as PandasDataFrame
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
 from splink.internals.misc import ascii_uid, ensure_is_list, parse_duration
-from splink.pipeline import CTEPipeline
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 from .dialects import (
     SplinkDialect,

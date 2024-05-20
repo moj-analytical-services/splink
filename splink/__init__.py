@@ -16,7 +16,7 @@ __all__ = [
 from splink.datasets import splink_datasets
 from splink.internals.blocking_rule_library import block_on
 from splink.linker import Linker
-from splink.settings_creator import SettingsCreator
+from splink.internals.settings_creator import SettingsCreator
 from splink.sqlite.database_api import SQLiteAPI
 
 # The following is a workaround for the fact that dependencies of postgres, spark

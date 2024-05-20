@@ -9,7 +9,7 @@ from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )
-from splink.pipeline import CTEPipeline
+from splink.internals.pipeline import CTEPipeline
 from splink.vertically_concatenate import compute_df_concat_with_tf
 
 from .m_u_records_to_parameters import (

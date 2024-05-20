@@ -12,8 +12,8 @@ from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
-from splink.pipeline import CTEPipeline
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.vertically_concatenate import vertically_concatenate_sql
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.settings import LinkTypeLiteralType
+    from splink.internals.settings import LinkTypeLiteralType
 
 user_input_link_type_options = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 

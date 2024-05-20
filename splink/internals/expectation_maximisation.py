@@ -11,13 +11,13 @@ from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.input_column import InputColumn
 from splink.internals.m_u_records_to_parameters import m_u_records_to_lookup_dict
-from splink.pipeline import CTEPipeline
-from splink.predict import (
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from splink.settings import CoreModelSettings, TrainingSettings
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.settings import CoreModelSettings, TrainingSettings
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 from .database_api import DatabaseAPISubClass
 

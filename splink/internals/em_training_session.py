@@ -18,8 +18,8 @@ from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.internals.parse_sql import get_columns_used_from_sql
-from splink.pipeline import CTEPipeline
-from splink.settings import (
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.settings import (
     ComparisonAndLevelDict,
     CoreModelSettings,
     Settings,
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from splink.linker import Linker
-    from splink.splink_dataframe import SplinkDataFrame
+    from splink.internals.splink_dataframe import SplinkDataFrame
 
 
 class EMTrainingSession:

@@ -11,8 +11,8 @@ from splink.internals.graph_metrics import (
     _node_mapping_table_sql,
     _truncated_edges_sql,
 )
-from splink.pipeline import CTEPipeline
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )

@@ -3,7 +3,7 @@ from collections import UserDict
 from copy import copy
 from typing import TYPE_CHECKING
 
-from splink.splink_dataframe import SplinkDataFrame
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
