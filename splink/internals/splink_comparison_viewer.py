@@ -121,7 +121,7 @@ def render_splink_comparison_viewer_html(
     # rather than bundling the whole thing into the html
     bundle_observable_notebook = True
 
-    template_path = "../files/splink_comparison_viewer/template.j2"
+    template_path = "files/splink_comparison_viewer/template.j2"
     template = Template(read_resource(template_path))
 
     template_data: dict[str, Any] = {

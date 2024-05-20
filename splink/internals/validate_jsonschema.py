@@ -12,7 +12,7 @@ from splink.internals.misc import read_resource
 
 @lru_cache()
 def get_schema():
-    path = "../files/settings_jsonschema.json"
+    path = "files/settings_jsonschema.json"
     return json.loads(read_resource(path))
 
 

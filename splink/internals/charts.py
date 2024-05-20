@@ -84,7 +84,7 @@ def save_offline_chart(
     if type(chart_dict).__name__ == "VegaliteNoValidate":
         chart_dict = chart_dict.spec
 
-    template = read_resource("../files/templates/single_chart_template.html")
+    template = read_resource("files/templates/single_chart_template.html")
 
     fmt_dict = _load_external_libs()
 
