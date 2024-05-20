@@ -41,9 +41,9 @@ from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.duckdb.dataframe import DuckDBDataFrame
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
+from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import predict_from_comparison_vectors_sqls_using_settings
-from splink.internals.linker import Linker
 
 
 def test_splink_converges_to_known_params():

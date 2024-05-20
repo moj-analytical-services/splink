@@ -15,8 +15,8 @@ __all__ = [
 
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.datasets import splink_datasets
-from splink.internals.settings_creator import SettingsCreator
 from splink.internals.linker import Linker
+from splink.internals.settings_creator import SettingsCreator
 
 # The following is a workaround for the fact that dependencies of postgres, spark
 # and duckdb may not be installed, but we don't want this to prevent import

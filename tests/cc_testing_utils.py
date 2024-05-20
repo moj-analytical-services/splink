@@ -7,9 +7,9 @@ from networkx.algorithms import connected_components as cc_nx
 from splink.internals.connected_components import solve_connected_components
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.vertically_concatenate import compute_df_concat_with_tf
-from splink.internals.linker import Linker
 
 
 def generate_random_graph(graph_size, seed=None):

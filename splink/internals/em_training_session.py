@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.internals.splink_dataframe import SplinkDataFrame
     from splink.internals.linker import Linker
+    from splink.internals.splink_dataframe import SplinkDataFrame
 
 
 class EMTrainingSession:

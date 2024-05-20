@@ -21,6 +21,9 @@ from splink.internals.blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from splink.internals.blocking_analysis import (
+    _cumulative_comparisons_to_be_scored_from_blocking_rules,
+)
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
@@ -118,10 +121,6 @@ from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
     split_df_concat_with_tf_into_two_tables_sqls,
-)
-
-from splink.internals.blocking_analysis import (
-    _cumulative_comparisons_to_be_scored_from_blocking_rules,
 )
 
 logger = logging.getLogger(__name__)

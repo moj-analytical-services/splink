@@ -7,8 +7,8 @@ from splink.internals.pipeline import CTEPipeline
 from .input_column import InputColumn
 
 if TYPE_CHECKING:
-    from splink.internals.splink_dataframe import SplinkDataFrame
     from splink.internals.linker import Linker
+    from splink.internals.splink_dataframe import SplinkDataFrame
 
 
 def add_unique_id_and_source_dataset_cols_if_needed(
