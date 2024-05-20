@@ -1,6 +1,8 @@
 import sqlglot
 
-from splink.internals.athena.athena_helpers.athena_transforms import cast_concat_as_varchar
+from splink.internals.athena.athena_helpers.athena_transforms import (
+    cast_concat_as_varchar,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
