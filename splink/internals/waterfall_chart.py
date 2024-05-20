@@ -5,7 +5,6 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from splink.internals.comparison import Comparison
-
 from splink.internals.misc import prob_to_bayes_factor
 
 

@@ -75,10 +75,6 @@ from splink.internals.labelling_tool import (
 )
 from splink.internals.m_from_labels import estimate_m_from_pairwise_labels
 from splink.internals.m_training import estimate_m_values_from_label_column
-
-from .internals.blocking_analysis import (
-    _cumulative_comparisons_to_be_scored_from_blocking_rules,
-)
 from splink.internals.match_weights_histogram import histogram_data
 from splink.internals.misc import (
     ascii_uid,
@@ -94,13 +90,6 @@ from splink.internals.predict import (
     predict_from_comparison_vectors_sqls_using_settings,
 )
 from splink.internals.settings_creator import SettingsCreator
-from .settings_validation.log_invalid_columns import (
-    InvalidColumnsLogger,
-    SettingsColumnCleaner,
-)
-from .settings_validation.valid_types import (
-    _validate_dialect,
-)
 from splink.internals.splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -122,6 +111,17 @@ from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
     split_df_concat_with_tf_into_two_tables_sqls,
+)
+
+from .internals.blocking_analysis import (
+    _cumulative_comparisons_to_be_scored_from_blocking_rules,
+)
+from .settings_validation.log_invalid_columns import (
+    InvalidColumnsLogger,
+    SettingsColumnCleaner,
+)
+from .settings_validation.valid_types import (
+    _validate_dialect,
 )
 
 logger = logging.getLogger(__name__)

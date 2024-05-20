@@ -10,10 +10,10 @@ from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import (
     PostgresDialect,
 )
-
 from splink.internals.misc import (
     ensure_is_list,
 )
+
 from .dataframe import PostgresDataFrame
 
 logger = logging.getLogger(__name__)

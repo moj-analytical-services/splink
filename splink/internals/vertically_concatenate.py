@@ -4,9 +4,9 @@ import logging
 from typing import TYPE_CHECKING, Dict
 
 from splink.internals.input_column import InputColumn
-
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
+
 from .term_frequencies import compute_all_term_frequencies_sqls
 
 logger = logging.getLogger(__name__)

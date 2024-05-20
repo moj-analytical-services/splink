@@ -13,11 +13,11 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
 from splink.internals.dialects import (
     SparkDialect,
 )
-
-from ..databricks.enable_splink import enable_splink
 from splink.internals.misc import (
     major_minor_version_greater_equal_than,
 )
+
+from ..databricks.enable_splink import enable_splink
 from .dataframe import SparkDataFrame
 from .jar_location import get_scala_udfs
 

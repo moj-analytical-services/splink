@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from jinja2 import Template
 
 from splink.internals.misc import EverythingEncoder, read_resource
+
 from .predict import _combine_prior_and_bfs
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports

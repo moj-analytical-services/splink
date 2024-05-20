@@ -22,7 +22,6 @@ from splink.internals.charts import (
 )
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
-
 from splink.internals.misc import calculate_cartesian, ensure_is_iterable
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame

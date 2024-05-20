@@ -6,13 +6,13 @@ import pytest
 
 from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
-from splink.linker import Linker, SplinkDataFrame
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.vertically_concatenate import (
     compute_df_concat,
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
 )
+from splink.linker import Linker, SplinkDataFrame
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")

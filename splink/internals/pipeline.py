@@ -8,6 +8,7 @@ from sqlglot.errors import ParseError
 from sqlglot.expressions import Table
 
 from splink.internals.misc import ensure_is_list
+
 from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
