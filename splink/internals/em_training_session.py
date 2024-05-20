@@ -16,8 +16,8 @@ from splink.internals.comparison_vector_values import (
 )
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.input_column import InputColumn
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.parse_sql import get_columns_used_from_sql
+from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.internals.parse_sql import get_columns_used_from_sql
 from splink.pipeline import CTEPipeline
 from splink.settings import (
     ComparisonAndLevelDict,

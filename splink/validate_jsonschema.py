@@ -7,7 +7,7 @@ from typing import Any
 
 from jsonschema import Draft7Validator
 
-from .misc import read_resource
+from splink.internals.misc import read_resource
 
 
 @lru_cache()

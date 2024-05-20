@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 from jinja2 import Template
 
 from splink.internals.exceptions import SplinkException
-from splink.misc import EverythingEncoder, read_resource
+from splink.internals.misc import EverythingEncoder, read_resource
 from splink.pipeline import CTEPipeline
 from splink.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (

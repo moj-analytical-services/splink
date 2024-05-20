@@ -15,13 +15,13 @@ from sqlglot.optimizer.simplify import simplify
 
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.input_column import InputColumn
-from splink.misc import (
+from splink.internals.misc import (
     dedupe_preserving_order,
     interpolate,
     join_list_with_commas_final_and,
     match_weight_to_bayes_factor,
 )
-from splink.parse_sql import get_columns_used_from_sql
+from splink.internals.parse_sql import get_columns_used_from_sql
 from splink.sql_transform import sqlglot_tree_signature
 
 logger = logging.getLogger(__name__)

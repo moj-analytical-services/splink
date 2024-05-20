@@ -79,15 +79,15 @@ from splink.internals.m_training import estimate_m_values_from_label_column
 from .internals.blocking_analysis import (
     _cumulative_comparisons_to_be_scored_from_blocking_rules,
 )
-from .match_weights_histogram import histogram_data
-from .misc import (
+from splink.internals.match_weights_histogram import histogram_data
+from splink.internals.misc import (
     ascii_uid,
     bayes_factor_to_prob,
     ensure_is_iterable,
     ensure_is_list,
     prob_to_bayes_factor,
 )
-from .optimise_cost_of_brs import suggest_blocking_rules
+from splink.internals.optimise_cost_of_brs import suggest_blocking_rules
 from .pipeline import CTEPipeline
 from .predict import (
     predict_from_comparison_vectors_sqls,

@@ -3,7 +3,7 @@ import pytest
 
 from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.sqlite.database_api import SQLiteAPI
 
 from .basic_settings import get_settings_dict

@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 from splink.internals.comparison import Comparison
 
-from .misc import prob_to_bayes_factor
+from splink.internals.misc import prob_to_bayes_factor
 
 
 def _prior_record(settings_obj):

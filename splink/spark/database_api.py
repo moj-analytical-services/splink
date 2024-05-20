@@ -15,7 +15,7 @@ from splink.internals.dialects import (
 )
 
 from ..databricks.enable_splink import enable_splink
-from ..misc import (
+from splink.internals.misc import (
     major_minor_version_greater_equal_than,
 )
 from .dataframe import SparkDataFrame

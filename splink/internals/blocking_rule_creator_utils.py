@@ -4,7 +4,7 @@ from typing import Any, List, Union
 
 from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
-from splink.misc import ensure_is_iterable
+from splink.internals.misc import ensure_is_iterable
 
 from .blocking_rule_library import CustomRule
 

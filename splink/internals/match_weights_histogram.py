@@ -1,6 +1,6 @@
 from math import floor
 
-from .pipeline import CTEPipeline
+from splink.pipeline import CTEPipeline
 
 
 def _bins(min, max, num_bins):

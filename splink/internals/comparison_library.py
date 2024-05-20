@@ -6,7 +6,7 @@ from splink.internals import comparison_level_library as cll
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.comparison_level_library import CustomLevel, DateMetricType
-from splink.misc import ensure_is_iterable
+from splink.internals.misc import ensure_is_iterable
 
 
 class CustomComparison(ComparisonCreator):

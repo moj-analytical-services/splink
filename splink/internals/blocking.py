@@ -11,7 +11,7 @@ from sqlglot.optimizer.optimizer import optimize
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
-from splink.misc import ensure_is_list
+from splink.internals.misc import ensure_is_list
 from splink.pipeline import CTEPipeline
 from splink.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import _composite_unique_id_from_nodes_sql

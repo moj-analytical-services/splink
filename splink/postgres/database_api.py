@@ -11,7 +11,7 @@ from splink.internals.dialects import (
     PostgresDialect,
 )
 
-from ..misc import (
+from splink.internals.misc import (
     ensure_is_list,
 )
 from .dataframe import PostgresDataFrame

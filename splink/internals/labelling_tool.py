@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from jinja2 import Template
 
-from splink.misc import EverythingEncoder, read_resource
+from splink.internals.misc import EverythingEncoder, read_resource
 from splink.pipeline import CTEPipeline
 from splink.splink_dataframe import SplinkDataFrame
 from splink.vertically_concatenate import compute_df_concat_with_tf

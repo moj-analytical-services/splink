@@ -8,7 +8,7 @@ from splink.internals.blocking import BlockingRule
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_sql,
 )
-from splink.misc import calculate_cartesian
+from splink.internals.misc import calculate_cartesian
 from splink.pipeline import CTEPipeline
 from splink.predict import predict_from_comparison_vectors_sqls_using_settings
 from splink.splink_dataframe import SplinkDataFrame

@@ -6,7 +6,7 @@ import sqlglot
 import sqlglot.expressions as exp
 from sqlglot.expressions import Bracket, Column, Lambda
 
-from .sql_transform import remove_quotes_from_identifiers
+from splink.sql_transform import remove_quotes_from_identifiers
 
 
 def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
