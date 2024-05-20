@@ -10,8 +10,8 @@ from splink.internals.charts import (
     probability_two_random_records_match_iteration_chart,
 )
 
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
+from splink.internals.comparison import Comparison
+from splink.internals.comparison_level import ComparisonLevel
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass

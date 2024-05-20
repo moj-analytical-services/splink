@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Iterable, List, Optional, Union
 
-from . import comparison_level_library as cll
-from .comparison_creator import ComparisonCreator
-from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_library import CustomLevel, DateMetricType
+from .internals import comparison_level_library as cll
+from splink.internals.comparison_creator import ComparisonCreator
+from splink.internals.comparison_level_creator import ComparisonLevelCreator
+from splink.internals.comparison_level_library import CustomLevel, DateMetricType
 from .misc import ensure_is_iterable
 
 

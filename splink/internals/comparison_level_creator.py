@@ -6,7 +6,7 @@ from typing import Any, final
 
 from splink.internals.column_expression import ColumnExpression
 from .comparison_level import ComparisonLevel
-from .dialects import SplinkDialect
+from splink.dialects import SplinkDialect
 
 
 class ComparisonLevelCreator(ABC):

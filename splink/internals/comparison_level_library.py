@@ -11,8 +11,8 @@ from splink.internals.column_expression import ColumnExpression
 # import composition functions for export
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
 from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_sql import great_circle_distance_km_sql
-from .dialects import SplinkDialect
+from splink.comparison_level_sql import great_circle_distance_km_sql
+from splink.dialects import SplinkDialect
 
 # type aliases:
 T = TypeVar("T", bound=ComparisonLevelCreator)

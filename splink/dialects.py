@@ -4,7 +4,7 @@ from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING, Type, TypeVar, final
 
 if TYPE_CHECKING:
-    from .comparison_level_library import (
+    from splink.internals.comparison_level_library import (
         AbsoluteTimeDifferenceLevel,
         ArrayIntersectLevel,
     )

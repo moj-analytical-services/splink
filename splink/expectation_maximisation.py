@@ -6,8 +6,8 @@ from typing import Any, List, cast
 
 import pandas as pd
 
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
+from splink.internals.comparison import Comparison
+from splink.internals.comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn

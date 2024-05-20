@@ -3,7 +3,7 @@ import gc
 import pandas as pd
 import pytest
 
-import splink.comparison_level_library as cll
+import splink.internals.comparison_level_library as cll
 import splink.comparison_library as cl
 import splink.comparison_template_library as ctl
 from splink.internals.column_expression import ColumnExpression

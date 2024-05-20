@@ -1,6 +1,6 @@
 import os
 
-import splink.comparison_level_library as cll
+import splink.internals.comparison_level_library as cll
 import splink.comparison_library as cl
 from splink import block_on
 from splink.blocking_analysis import (

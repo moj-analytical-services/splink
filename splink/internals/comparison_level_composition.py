@@ -6,7 +6,7 @@ from splink.internals.blocking import BlockingRule
 
 from .comparison_creator import ComparisonLevelCreator
 from .comparison_level import ComparisonLevel
-from .dialects import SplinkDialect
+from splink.dialects import SplinkDialect
 
 
 def _ensure_is_comparison_level_creator(

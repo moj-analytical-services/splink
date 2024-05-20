@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import List, Type, Union
 
-from . import comparison_level_library as cll
+from .internals import comparison_level_library as cll
 from splink.internals.column_expression import ColumnExpression
-from .comparison_creator import ComparisonCreator
-from .comparison_level_creator import ComparisonLevelCreator
-from .comparison_level_library import DateMetricType
+from splink.internals.comparison_creator import ComparisonCreator
+from splink.internals.comparison_level_creator import ComparisonLevelCreator
+from splink.internals.comparison_level_library import DateMetricType
 from .misc import ensure_is_iterable
 
 # alternatively we could stick an inheritance layer in these, just for typing:

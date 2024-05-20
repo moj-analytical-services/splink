@@ -40,8 +40,8 @@ from splink.internals.cluster_studio import (
     render_splink_cluster_studio_html,
 )
 
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
+from splink.internals.comparison import Comparison
+from splink.internals.comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
     comparison_vector_distribution_sql,
 )

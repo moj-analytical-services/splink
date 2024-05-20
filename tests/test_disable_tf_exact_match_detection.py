@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import splink.comparison_level_library as cll
+import splink.internals.comparison_level_library as cll
 from splink import DuckDBAPI, Linker, SettingsCreator
 
 

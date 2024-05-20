@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from .comparison_level import ComparisonLevel
+from splink.internals.comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 logger = logging.getLogger(__name__)
