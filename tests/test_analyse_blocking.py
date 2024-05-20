@@ -6,9 +6,9 @@ from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
     cumulative_comparisons_to_be_scored_from_blocking_rules_data,
 )
-from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_library import CustomRule, Or, block_on
+from splink.internals.duckdb.database_api import DuckDBAPI
 
 from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 

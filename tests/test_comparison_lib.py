@@ -1,8 +1,8 @@
 import pandas as pd
 
 import splink.internals.comparison_library as cl
-from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 

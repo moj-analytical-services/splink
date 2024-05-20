@@ -5,8 +5,8 @@ from math import sqrt
 import pandas as pd
 
 from splink.exploratory import profile_columns
-from splink.linker import Linker
 from splink.internals.sqlite.database_api import SQLiteAPI
+from splink.linker import Linker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including

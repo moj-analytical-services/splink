@@ -3,12 +3,12 @@ import logging
 import pandas as pd
 import pytest
 
-from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.comparison_library import (
     CustomComparison,
     LevenshteinAtThresholds,
 )
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,

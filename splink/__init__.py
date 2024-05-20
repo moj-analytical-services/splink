@@ -27,8 +27,8 @@ from splink.linker import Linker
 # without importing them at runtime
 if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
-    from splink.postgres.database_api import PostgresAPI
     from splink.internals.spark.database_api import SparkAPI
+    from splink.postgres.database_api import PostgresAPI
 
 
 # Use getarr to make the error appear at the point of use
