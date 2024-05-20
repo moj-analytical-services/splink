@@ -37,8 +37,8 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink.duckdb.database_api import DuckDBAPI
-from splink.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
 from splink.internals.pipeline import CTEPipeline

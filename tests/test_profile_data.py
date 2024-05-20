@@ -5,7 +5,7 @@ import pandas as pd
 from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
 
-from splink.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.profile_data import (

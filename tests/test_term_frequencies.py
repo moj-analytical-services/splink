@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 
 

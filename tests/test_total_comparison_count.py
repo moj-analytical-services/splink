@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
-from splink.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import calculate_cartesian
 from splink.internals.pipeline import CTEPipeline

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from splink import SettingsCreator
-from splink.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,

@@ -4,8 +4,8 @@ from unittest.mock import create_autospec, patch
 import pandas as pd
 import pytest
 
-from splink.duckdb.database_api import DuckDBAPI
-from splink.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.vertically_concatenate import (
     compute_df_concat,

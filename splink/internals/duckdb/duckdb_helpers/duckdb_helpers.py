@@ -44,7 +44,7 @@ def create_temporary_duckdb_connection(self):
     """
     Create a temporary duckdb connection.
     """
-    self._temp_dir = tempfile.TemporaryDirectory(dir=".")
+    self._temp_dir = tempfile.TemporaryDirectory(dir="")
     fname = uuid.uuid4().hex[:7]
     path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
     con = duckdb.connect(database=path, read_only=False)

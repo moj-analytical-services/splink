@@ -27,7 +27,7 @@ from splink.sqlite.database_api import SQLiteAPI
 # and ensures that typing information is retained so e.g. the arguments autocomplete
 # without importing them at runtime
 if TYPE_CHECKING:
-    from splink.duckdb.database_api import DuckDBAPI
+    from splink.internals.duckdb.database_api import DuckDBAPI
     from splink.postgres.database_api import PostgresAPI
     from splink.spark.database_api import SparkAPI
 
@@ -40,7 +40,7 @@ def __getattr__(name):
 
             return SparkAPI
         elif name == "DuckDBAPI":
-            from splink.duckdb.database_api import DuckDBAPI
+            from splink.internals.duckdb.database_api import DuckDBAPI
 
             return DuckDBAPI
         elif name == "PostgresAPI":
