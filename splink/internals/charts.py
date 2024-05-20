@@ -26,7 +26,7 @@ ChartReturnType = Union[Dict[Any, Any], alt.core.SchemaBase]
 
 
 def load_chart_definition(filename):
-    path = f"files/chart_defs/{filename}"
+    path = f"internals/files/chart_defs/{filename}"
     return json.loads(read_resource(path))
 
 
