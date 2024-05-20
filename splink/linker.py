@@ -8,6 +8,8 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+
 from .accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
@@ -21,7 +23,6 @@ from .blocking import (
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
-from .blocking_rule_creator import BlockingRuleCreator
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (

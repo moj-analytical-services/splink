@@ -6,7 +6,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, List, Literal, Union
 
-from .blocking_rule_creator import BlockingRuleCreator
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .comparison_creator import ComparisonCreator
 from .comparison_library import CustomComparison

@@ -6,6 +6,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import pandas as pd
 import sqlglot
 
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+
 from ..blocking import (
     BlockingRule,
     _sql_gen_where_condition,
@@ -14,7 +16,6 @@ from ..blocking import (
     materialise_exploded_id_tables,
     user_input_link_type_options,
 )
-from ..blocking_rule_creator import BlockingRuleCreator
 from ..blocking_rule_creator_utils import to_blocking_rule_creator
 from ..charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass

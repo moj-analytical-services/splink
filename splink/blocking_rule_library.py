@@ -4,7 +4,8 @@ from typing import Any, Union, final
 
 from sqlglot import TokenError, parse_one
 
-from .blocking_rule_creator import BlockingRuleCreator
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+
 from .column_expression import ColumnExpression
 from .dialects import SplinkDialect
 
