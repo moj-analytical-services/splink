@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from inspect import signature
 from typing import Any, final
 
-from .column_expression import ColumnExpression
+from splink.internals.column_expression import ColumnExpression
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Type, Union
 
 from . import comparison_level_library as cll
-from .column_expression import ColumnExpression
+from splink.internals.column_expression import ColumnExpression
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_library import DateMetricType

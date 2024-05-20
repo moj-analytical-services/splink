@@ -9,7 +9,7 @@ from splink.internals.charts import (
     load_chart_definition,
 )
 
-from ..column_expression import ColumnExpression
+from splink.internals.column_expression import ColumnExpression
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..misc import ensure_is_list
 from ..pipeline import CTEPipeline

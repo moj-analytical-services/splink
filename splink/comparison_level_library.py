@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Literal, TypeVar, Union
 
 from sqlglot import TokenError, parse_one
 
-from .column_expression import ColumnExpression
+from splink.internals.column_expression import ColumnExpression
 
 # import composition functions for export
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
