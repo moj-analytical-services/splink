@@ -12,7 +12,7 @@ from splink.internals.column_expression import ColumnExpression
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
 from .comparison_level_creator import ComparisonLevelCreator
 from splink.internals.comparison_level_sql import great_circle_distance_km_sql
-from splink.dialects import SplinkDialect
+from splink.internals.dialects import SplinkDialect
 
 # type aliases:
 T = TypeVar("T", bound=ComparisonLevelCreator)

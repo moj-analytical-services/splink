@@ -4,7 +4,7 @@ from copy import deepcopy
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 
 from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import (
+from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )

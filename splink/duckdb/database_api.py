@@ -6,8 +6,8 @@ from typing import Sequence, Union
 import duckdb
 import pandas as pd
 
-from ..database_api import AcceptableInputTableType, DatabaseAPI
-from ..dialects import (
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
+from splink.internals.dialects import (
     DuckDBDialect,
 )
 from .dataframe import DuckDBDataFrame

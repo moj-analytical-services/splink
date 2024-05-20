@@ -6,8 +6,8 @@ import pandas as pd
 from sqlalchemy import CursorResult, text
 from sqlalchemy.engine import Engine
 
-from ..database_api import DatabaseAPI
-from ..dialects import (
+from splink.internals.database_api import DatabaseAPI
+from splink.internals.dialects import (
     PostgresDialect,
 )
 from ..misc import (

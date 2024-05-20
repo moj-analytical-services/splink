@@ -9,9 +9,9 @@ from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
 
-from ..database_api import AcceptableInputTableType, DatabaseAPI
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
 from ..databricks.enable_splink import enable_splink
-from ..dialects import (
+from splink.internals.dialects import (
     SparkDialect,
 )
 from ..misc import (

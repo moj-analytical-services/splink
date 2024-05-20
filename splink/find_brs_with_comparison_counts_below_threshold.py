@@ -10,7 +10,7 @@ from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_library import CustomRule, block_on
 
-from .database_api import DatabaseAPISubClass
+from splink.internals.database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 from .internals.blocking_analysis import (
     _count_comparisons_generated_from_blocking_rule,

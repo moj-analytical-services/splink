@@ -17,24 +17,24 @@ from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
-from .input_column import InputColumn
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor
-from .parse_sql import get_columns_used_from_sql
-from .pipeline import CTEPipeline
-from .settings import (
+from splink.input_column import InputColumn
+from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.parse_sql import get_columns_used_from_sql
+from splink.pipeline import CTEPipeline
+from splink.settings import (
     ComparisonAndLevelDict,
     CoreModelSettings,
     Settings,
     TrainingSettings,
 )
-from .vertically_concatenate import compute_df_concat_with_tf
+from splink.vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
-    from .splink_dataframe import SplinkDataFrame
+    from splink.linker import Linker
+    from splink.splink_dataframe import SplinkDataFrame
 
 
 class EMTrainingSession:

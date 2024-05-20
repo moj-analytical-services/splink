@@ -12,19 +12,19 @@ from .expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )
-from .m_u_records_to_parameters import (
+from splink.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
-from .pipeline import CTEPipeline
-from .vertically_concatenate import (
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
 )
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 
 logger = logging.getLogger(__name__)
 

@@ -4,11 +4,11 @@ from typing import Union
 
 import pandas as pd
 
-from ..database_api import DatabaseAPI
-from ..dialects import (
+from splink.internals.database_api import DatabaseAPI
+from splink.internals.dialects import (
     SQLiteDialect,
 )
-from ..exceptions import SplinkException
+from splink.internals.exceptions import SplinkException
 from .dataframe import SQLiteDataFrame
 
 sql_con = sqlite3.Connection

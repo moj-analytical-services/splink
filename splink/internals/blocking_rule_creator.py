@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Union, final
 
-from splink.dialects import SplinkDialect
+from splink.internals.dialects import SplinkDialect
 from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
 
 

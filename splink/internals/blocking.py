@@ -8,8 +8,8 @@ from sqlglot.expressions import Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 
-from splink.database_api import DatabaseAPISubClass
-from splink.exceptions import SplinkException
+from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.exceptions import SplinkException
 from splink.input_column import InputColumn
 from splink.misc import ensure_is_list
 from splink.pipeline import CTEPipeline

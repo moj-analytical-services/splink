@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import pandas as pd
 
-from .cost_of_blocking_rules import calculate_cost_of_combination_of_brs
+from splink.internals.cost_of_blocking_rules import calculate_cost_of_combination_of_brs
 
 logger = logging.getLogger(__name__)
 

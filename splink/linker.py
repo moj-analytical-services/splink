@@ -50,12 +50,12 @@ from splink.internals.connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
-from .database_api import AcceptableInputTableType, DatabaseAPISubClass
-from .dialects import SplinkDialect
-from .edge_metrics import compute_edge_metrics
-from .em_training_session import EMTrainingSession
-from .estimate_u import estimate_u_values
-from .exceptions import SplinkException
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.dialects import SplinkDialect
+from splink.internals.edge_metrics import compute_edge_metrics
+from splink.internals.em_training_session import EMTrainingSession
+from splink.internals.estimate_u import estimate_u_values
+from splink.internals.exceptions import SplinkException
 from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )

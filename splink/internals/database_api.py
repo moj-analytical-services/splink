@@ -17,10 +17,10 @@ from .dialects import (
     SplinkDialect,
 )
 from .exceptions import SplinkException
-from .logging_messages import execute_sql_logging_message_info, log_sql
-from .misc import ascii_uid, ensure_is_list, parse_duration
-from .pipeline import CTEPipeline
-from .splink_dataframe import SplinkDataFrame
+from splink.logging_messages import execute_sql_logging_message_info, log_sql
+from splink.misc import ascii_uid, ensure_is_list, parse_duration
+from splink.pipeline import CTEPipeline
+from splink.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 

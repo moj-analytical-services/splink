@@ -9,7 +9,7 @@ from splink.internals.charts import (
     completeness_chart as records_to_completeness_chart,
 )
 
-from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..input_column import InputColumn
 from ..pipeline import CTEPipeline
 from ..splink_dataframe import SplinkDataFrame

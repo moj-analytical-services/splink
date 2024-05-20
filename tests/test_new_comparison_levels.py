@@ -289,7 +289,7 @@ def test_ctl_creators_run_predict(dialect, test_helpers):
 
 
 def test_custom_dialect_no_string_lookup():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined
@@ -311,7 +311,7 @@ def test_custom_dialect_no_string_lookup():
 
 
 def test_custom_dialect_duplicate_string_lookup():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined
@@ -339,7 +339,7 @@ def test_custom_dialect_duplicate_string_lookup():
 
 
 def test_valid_custom_dialect():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined

@@ -8,7 +8,7 @@ from typing import Protocol, Union
 
 import sqlglot
 
-from splink.dialects import SplinkDialect
+from splink.internals.dialects import SplinkDialect
 from splink.input_column import SqlglotColumnTreeBuilder
 from splink.sql_transform import (
     add_suffix_to_all_column_identifiers,

@@ -21,7 +21,7 @@ from splink.internals.charts import (
     cumulative_blocking_rule_comparisons_generated,
 )
 
-from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..input_column import InputColumn
 from ..misc import calculate_cartesian, ensure_is_iterable
 from ..pipeline import CTEPipeline

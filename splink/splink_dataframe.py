@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .database_api import DatabaseAPI
+    from splink.internals.database_api import DatabaseAPI
 
 
 class SplinkDataFrame(ABC):

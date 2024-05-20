@@ -3,7 +3,7 @@ import pytest
 
 import splink.internals.comparison_library as cl
 from splink.duckdb.database_api import DuckDBAPI
-from splink.exceptions import EMTrainingException
+from splink.internals.exceptions import EMTrainingException
 from splink.linker import Linker
 
 

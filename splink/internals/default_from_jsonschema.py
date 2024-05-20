@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .validate_jsonschema import get_schema
+from splink.validate_jsonschema import get_schema
 
 
 def default_value_from_schema(key, schema_part):

@@ -10,15 +10,15 @@ from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
-from .input_column import InputColumn
-from .m_u_records_to_parameters import m_u_records_to_lookup_dict
-from .pipeline import CTEPipeline
-from .predict import (
+from splink.input_column import InputColumn
+from splink.m_u_records_to_parameters import m_u_records_to_lookup_dict
+from splink.pipeline import CTEPipeline
+from splink.predict import (
     predict_from_agreement_pattern_counts_sqls,
     predict_from_comparison_vectors_sqls,
 )
-from .settings import CoreModelSettings, TrainingSettings
-from .splink_dataframe import SplinkDataFrame
+from splink.settings import CoreModelSettings, TrainingSettings
+from splink.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 

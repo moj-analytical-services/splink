@@ -1,6 +1,6 @@
 import awswrangler as wr
 
-from splink.exceptions import InvalidAWSBucketOrDatabase
+from splink.internals.exceptions import InvalidAWSBucketOrDatabase
 from splink.misc import ensure_is_list
 from splink.splink_dataframe import SplinkDataFrame
 
