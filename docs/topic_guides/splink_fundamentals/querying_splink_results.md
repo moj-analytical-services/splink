@@ -89,6 +89,7 @@ Generally speaking, any Splink method that results in a table will return a `Spl
 
 Aside from these you can create a `SplinkDataFrame` for any table in your database. You will need to already have a [linker](../../linker.md)
 to manage interactions with the database:
+
 ```python
 import pandas as pd
 import duckdb
@@ -98,7 +99,7 @@ df_numbers = pd.DataFrame({"id": [1, 2, 3], "number": ["one", "two", "three"]})
 con.sql("CREATE TABLE number_table AS SELECT * FROM df_numbers")
 
 from splink.duckdb.linker import DuckDBLinker, DuckDBDataFrame
-from splink.datasets import splink_datasets
+from splink.internals.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
 
@@ -108,10 +109,11 @@ my_splink_df = DuckDBDataFrame("a_templated_name", "number_table", linker)
 ```
 
 Alternatively if you have an in-memory data source you can use [`linker.register_table()`](../../linker.md#splink.linker.Linker.register_table) which will register the table with the database backend and return a `SplinkDataFrame`:
+
 ```python
 import pandas as pd
 from splink.duckdb.linker import DuckDBLinker, DuckDBDataFrame
-from splink.datasets import splink_datasets
+from splink.internals.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
 

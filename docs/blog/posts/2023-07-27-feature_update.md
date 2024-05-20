@@ -112,7 +112,7 @@ The original structure still works, but throws a warning to switch to the new ve
 When following along with the tutorial or example notebooks, one issue can be references of paths to data that does not exists on users machines. To overcome this issue, Splink now has a `splink_datasets` module which will store these datasets and make sure any users can copy and paste working code without fear of path issues. For example:
 
 ```py
-from splink.datasets import splink_datasets
+from splink.internals.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
 ```
