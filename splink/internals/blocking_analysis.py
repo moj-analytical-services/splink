@@ -15,9 +15,12 @@ from splink.internals.blocking import (
     user_input_link_type_options,
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
-
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
-from splink.internals.charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
+from splink.internals.charts import (
+    ChartReturnType,
+    cumulative_blocking_rule_comparisons_generated,
+)
+
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..input_column import InputColumn
 from ..misc import calculate_cartesian, ensure_is_iterable

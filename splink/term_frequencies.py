@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Any
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
 
-from splink.internals.charts import ChartReturnType, altair_or_json, load_chart_definition
+from splink.internals.charts import (
+    ChartReturnType,
+    altair_or_json,
+    load_chart_definition,
+)
+
 from .input_column import InputColumn
 from .pipeline import CTEPipeline
 

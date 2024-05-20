@@ -4,12 +4,12 @@ import logging
 from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
-
 from splink.internals.charts import (
     m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
     probability_two_random_records_match_iteration_chart,
 )
+
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_values import compute_comparison_vector_values_sql

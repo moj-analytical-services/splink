@@ -22,7 +22,6 @@ from splink.internals.blocking import (
     materialise_exploded_id_tables,
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
-
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.charts import (
@@ -36,7 +35,11 @@ from splink.internals.charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from splink.internals.cluster_studio import SamplingMethods, render_splink_cluster_studio_html
+from splink.internals.cluster_studio import (
+    SamplingMethods,
+    render_splink_cluster_studio_html,
+)
+
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (

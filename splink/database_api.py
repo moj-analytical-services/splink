@@ -12,6 +12,7 @@ import sqlglot
 from pandas import DataFrame as PandasDataFrame
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
+
 from .dialects import (
     SplinkDialect,
 )

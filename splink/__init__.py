@@ -13,8 +13,8 @@ __all__ = [
 ]
 
 
-from splink.internals.blocking_rule_library import block_on
 from splink.datasets import splink_datasets
+from splink.internals.blocking_rule_library import block_on
 from splink.linker import Linker
 from splink.settings_creator import SettingsCreator
 from splink.sqlite.database_api import SQLiteAPI
