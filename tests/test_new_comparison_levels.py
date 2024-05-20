@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_level_library as cll
-import splink.comparison_library as cl
-import splink.comparison_template_library as ctl
+import splink.internals.comparison_library as cl
+import splink.internals.comparison_template_library as ctl
 from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding

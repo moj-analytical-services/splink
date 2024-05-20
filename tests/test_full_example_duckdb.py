@@ -7,7 +7,7 @@ import pyarrow.parquet as pq
 import pytest
 
 import splink.internals.comparison_level_library as cll
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.duckdb.database_api import DuckDBAPI
 from splink.exploratory import completeness_chart, profile_columns

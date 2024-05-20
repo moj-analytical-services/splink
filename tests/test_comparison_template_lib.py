@@ -1,6 +1,6 @@
 import pandas as pd
 
-import splink.comparison_template_library as ctl
+import splink.internals.comparison_template_library as ctl
 
 from .decorator import mark_with_dialects_excluding
 

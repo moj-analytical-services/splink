@@ -6,7 +6,7 @@ import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.internals.comparison_level_library as cll
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.exploratory import completeness_chart, profile_columns
 from splink.linker import Linker
 from splink.spark.database_api import SparkAPI

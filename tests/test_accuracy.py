@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from splink import SettingsCreator
-from splink.comparison_library import ExactMatch
+from splink.internals.comparison_library import ExactMatch
 from splink.duckdb.database_api import DuckDBAPI
 from splink.internals.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,

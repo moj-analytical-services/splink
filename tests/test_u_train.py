@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.estimate_u import _proportion_sample_size_link_only
 from splink.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding

@@ -1,4 +1,4 @@
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.datasets import splink_datasets
 
 

@@ -1,7 +1,7 @@
 import duckdb
 import pandas as pd
 
-from splink.comparison_library import ExactMatch, LevenshteinAtThresholds
+from splink.internals.comparison_library import ExactMatch, LevenshteinAtThresholds
 from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 

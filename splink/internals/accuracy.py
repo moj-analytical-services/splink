@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from splink.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.blocking import BlockingRule
 from splink.misc import calculate_cartesian

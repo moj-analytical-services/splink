@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Iterable, List, Optional, Union
 
-from .internals import comparison_level_library as cll
+from splink.internals import comparison_level_library as cll
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.comparison_level_library import CustomLevel, DateMetricType
-from .misc import ensure_is_iterable
+from splink.misc import ensure_is_iterable
 
 
 class CustomComparison(ComparisonCreator):

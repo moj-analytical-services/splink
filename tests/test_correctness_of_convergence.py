@@ -36,7 +36,7 @@ import re
 import pandas as pd
 import pytest
 
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.duckdb.database_api import DuckDBAPI
 from splink.duckdb.dataframe import DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession

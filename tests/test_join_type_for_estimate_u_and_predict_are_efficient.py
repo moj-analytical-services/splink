@@ -3,7 +3,7 @@ import re
 
 import pandas as pd
 
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 

@@ -10,7 +10,7 @@ from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 
 from splink.internals.comparison_creator import ComparisonCreator
-from .comparison_library import CustomComparison
+from splink.internals.comparison_library import CustomComparison
 from .settings import Settings
 
 

@@ -2,7 +2,7 @@ import random
 
 import pandas as pd
 
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from tests.decorator import mark_with_dialects_including
 
 

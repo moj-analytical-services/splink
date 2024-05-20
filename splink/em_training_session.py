@@ -12,8 +12,8 @@ from splink.internals.charts import (
 
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
-from .comparison_vector_values import compute_comparison_vector_values_sql
-from .constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation

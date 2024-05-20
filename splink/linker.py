@@ -42,11 +42,11 @@ from splink.internals.cluster_studio import (
 
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
-from .comparison_vector_distribution import (
+from splink.internals.comparison_vector_distribution import (
     comparison_vector_distribution_sql,
 )
-from .comparison_vector_values import compute_comparison_vector_values_sql
-from .connected_components import (
+from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )

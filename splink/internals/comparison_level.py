@@ -13,7 +13,7 @@ from sqlglot.expressions import Column, Identifier
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
-from splink.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.input_column import InputColumn
 from splink.misc import (
     dedupe_preserving_order,

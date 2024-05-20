@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
 
-from .comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,

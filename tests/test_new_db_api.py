@@ -1,7 +1,7 @@
 import os
 
 import splink.internals.comparison_level_library as cll
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink import block_on
 from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
