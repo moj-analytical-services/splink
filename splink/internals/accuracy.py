@@ -3,21 +3,21 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from .block_from_labels import block_from_labels
-from .blocking import BlockingRule
-from .comparison_vector_values import compute_comparison_vector_values_sql
-from .misc import calculate_cartesian
-from .pipeline import CTEPipeline
-from .predict import predict_from_comparison_vectors_sqls_using_settings
-from .splink_dataframe import SplinkDataFrame
-from .sql_transform import move_l_r_table_prefix_to_column_suffix
-from .vertically_concatenate import (
+from splink.block_from_labels import block_from_labels
+from splink.blocking import BlockingRule
+from splink.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.misc import calculate_cartesian
+from splink.pipeline import CTEPipeline
+from splink.predict import predict_from_comparison_vectors_sqls_using_settings
+from splink.splink_dataframe import SplinkDataFrame
+from splink.sql_transform import move_l_r_table_prefix_to_column_suffix
+from splink.vertically_concatenate import (
     compute_df_concat,
     compute_df_concat_with_tf,
 )
 
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 
 
 def truth_space_table_from_labels_with_predictions_sqls(

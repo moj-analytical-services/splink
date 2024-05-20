@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
-from .accuracy import (
+from splink.internals.accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
     truth_space_table_from_labels_column,
