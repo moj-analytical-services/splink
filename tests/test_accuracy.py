@@ -3,13 +3,13 @@ import pandas as pd
 import pytest
 
 from splink import SettingsCreator
+from splink.blocking_rule_library import block_on
+from splink.comparison_library import ExactMatch
+from splink.duckdb.database_api import DuckDBAPI
 from splink.internals.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.blocking_rule_library import block_on
-from splink.comparison_library import ExactMatch
-from splink.duckdb.database_api import DuckDBAPI
 from splink.linker import Linker
 from splink.pipeline import CTEPipeline
 from splink.vertically_concatenate import compute_df_concat_with_tf
