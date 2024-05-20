@@ -6,7 +6,7 @@ from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
 )
-from splink.spark.spark_helpers.custom_spark_dialect import Dialect  # noqa 401
+from splink.internals.spark.spark_helpers.custom_spark_dialect import Dialect  # noqa 401
 
 
 def move_l_r_test(br, expected):

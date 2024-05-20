@@ -17,7 +17,6 @@ from splink.datasets import splink_datasets
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.settings_creator import SettingsCreator
 from splink.linker import Linker
-from splink.sqlite.database_api import SQLiteAPI
 
 # The following is a workaround for the fact that dependencies of postgres, spark
 # and duckdb may not be installed, but we don't want this to prevent import
@@ -29,14 +28,14 @@ from splink.sqlite.database_api import SQLiteAPI
 if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
     from splink.postgres.database_api import PostgresAPI
-    from splink.spark.database_api import SparkAPI
+    from splink.internals.spark.database_api import SparkAPI
 
 
 # Use getarr to make the error appear at the point of use
 def __getattr__(name):
     try:
         if name == "SparkAPI":
-            from splink.spark.database_api import SparkAPI
+            from splink.internals.spark.database_api import SparkAPI
 
             return SparkAPI
         elif name == "DuckDBAPI":

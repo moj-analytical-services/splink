@@ -2,16 +2,12 @@ import logging
 
 import pytest
 
-from splink.linker import Linker
-from splink.spark.database_api import SparkAPI
-from splink.spark.jar_location import similarity_jar_location
+from splink.internals.spark.database_api import SparkAPI
+from splink.internals.spark.jar_location import similarity_jar_location
 
 # ruff: noqa: F401
 # imported fixtures:
 from tests.backend_utils.postgres_conf import (
-    _engine_factory,
-    _pg_credentials,
-    _postgres,
     pg_engine,
 )
 from tests.decorator import dialect_groups

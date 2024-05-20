@@ -12,7 +12,7 @@ from splink.internals.profile_data import (
     _col_or_expr_frequencies_raw_data_sql,
     profile_columns,
 )
-from splink.sqlite.database_api import SQLiteAPI
+from splink.internals.sqlite.database_api import SQLiteAPI
 
 from .decorator import mark_with_dialects_including
 

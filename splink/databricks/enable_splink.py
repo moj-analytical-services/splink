@@ -1,6 +1,6 @@
 import logging
 
-from splink.spark.jar_location import similarity_jar_location
+from splink.internals.spark.jar_location import similarity_jar_location
 
 logger = logging.getLogger(__name__)
 
