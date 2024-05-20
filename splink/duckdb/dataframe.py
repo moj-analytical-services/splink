@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 from splink.internals.input_column import InputColumn
+
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)

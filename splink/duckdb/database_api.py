@@ -10,6 +10,7 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
 from splink.internals.dialects import (
     DuckDBDialect,
 )
+
 from .dataframe import DuckDBDataFrame
 from .duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,

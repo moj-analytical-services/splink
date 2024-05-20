@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 import pandas as pd
 
 from splink.internals.blocking import BlockingRule
-from splink.internals.blocking_rule_creator import BlockingRuleCreator
-from splink.internals.blocking_rule_library import CustomRule, block_on
-
-from splink.internals.database_api import DatabaseAPISubClass
-from .input_column import InputColumn
 from splink.internals.blocking_analysis import (
     _count_comparisons_generated_from_blocking_rule,
 )
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+from splink.internals.blocking_rule_library import CustomRule, block_on
+from splink.internals.database_api import DatabaseAPISubClass
+
+from .input_column import InputColumn
 
 if TYPE_CHECKING:
     from splink.linker import Linker

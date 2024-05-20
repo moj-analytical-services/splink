@@ -9,9 +9,8 @@ import pandas as pd
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
-from .database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
-from splink.m_u_records_to_parameters import m_u_records_to_lookup_dict
+from splink.internals.m_u_records_to_parameters import m_u_records_to_lookup_dict
 from splink.pipeline import CTEPipeline
 from splink.predict import (
     predict_from_agreement_pattern_counts_sqls,
@@ -19,6 +18,8 @@ from splink.predict import (
 )
 from splink.settings import CoreModelSettings, TrainingSettings
 from splink.splink_dataframe import SplinkDataFrame
+
+from .database_api import DatabaseAPISubClass
 
 logger = logging.getLogger(__name__)
 

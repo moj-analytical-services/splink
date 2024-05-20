@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from .exceptions import MissingDependencyException
 from splink.internals.graph_metrics import (
     _basic_edge_metrics_sql,
     _bridges_from_igraph_sql,
@@ -17,6 +16,8 @@ from splink.splink_dataframe import SplinkDataFrame
 from splink.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )
+
+from .exceptions import MissingDependencyException
 
 if TYPE_CHECKING:
     from splink.linker import Linker

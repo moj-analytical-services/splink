@@ -6,13 +6,10 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
-
-from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import (
-    compute_new_parameters_sql,
-    compute_proportions_for_new_parameters,
+from splink.internals.comparison_vector_values import (
+    compute_comparison_vector_values_sql,
 )
-from splink.m_u_records_to_parameters import (
+from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
@@ -20,6 +17,11 @@ from splink.pipeline import CTEPipeline
 from splink.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
+)
+
+from .expectation_maximisation import (
+    compute_new_parameters_sql,
+    compute_proportions_for_new_parameters,
 )
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports

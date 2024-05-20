@@ -20,9 +20,9 @@ from splink.internals.charts import (
     ChartReturnType,
     cumulative_blocking_rule_comparisons_generated,
 )
-
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
+
 from ..misc import calculate_cartesian, ensure_is_iterable
 from ..pipeline import CTEPipeline
 from ..splink_dataframe import SplinkDataFrame

@@ -12,15 +12,15 @@ import sqlglot
 from pandas import DataFrame as PandasDataFrame
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
+from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
+from splink.misc import ascii_uid, ensure_is_list, parse_duration
+from splink.pipeline import CTEPipeline
+from splink.splink_dataframe import SplinkDataFrame
 
 from .dialects import (
     SplinkDialect,
 )
 from .exceptions import SplinkException
-from splink.logging_messages import execute_sql_logging_message_info, log_sql
-from splink.misc import ascii_uid, ensure_is_list, parse_duration
-from splink.pipeline import CTEPipeline
-from splink.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 

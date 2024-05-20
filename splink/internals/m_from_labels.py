@@ -1,18 +1,20 @@
 import logging
 
 from splink.internals.block_from_labels import block_from_labels
-
-from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.comparison_vector_values import (
+    compute_comparison_vector_values_sql,
+)
 from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )
+from splink.pipeline import CTEPipeline
+from splink.vertically_concatenate import compute_df_concat_with_tf
+
 from .m_u_records_to_parameters import (
     append_m_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
-from .pipeline import CTEPipeline
-from .vertically_concatenate import compute_df_concat_with_tf
 
 logger = logging.getLogger(__name__)
 

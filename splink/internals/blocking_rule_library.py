@@ -4,9 +4,9 @@ from typing import Any, Union, final
 
 from sqlglot import TokenError, parse_one
 
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.dialects import SplinkDialect
-from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
 
 def _translate_sql_string(

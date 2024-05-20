@@ -7,12 +7,12 @@ from typing import Any, Callable, List, Literal, TypeVar, Union
 from sqlglot import TokenError, parse_one
 
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.comparison_level_sql import great_circle_distance_km_sql
+from splink.internals.dialects import SplinkDialect
 
 # import composition functions for export
 from .comparison_level_composition import And, Not, Or  # NOQA: F401
 from .comparison_level_creator import ComparisonLevelCreator
-from splink.internals.comparison_level_sql import great_circle_distance_km_sql
-from splink.internals.dialects import SplinkDialect
 
 # type aliases:
 T = TypeVar("T", bound=ComparisonLevelCreator)

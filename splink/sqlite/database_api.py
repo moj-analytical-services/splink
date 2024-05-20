@@ -9,6 +9,7 @@ from splink.internals.dialects import (
     SQLiteDialect,
 )
 from splink.internals.exceptions import SplinkException
+
 from .dataframe import SQLiteDataFrame
 
 sql_con = sqlite3.Connection

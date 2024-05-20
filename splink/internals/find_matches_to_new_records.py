@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .input_column import InputColumn
 from splink.pipeline import CTEPipeline
+
+from .input_column import InputColumn
 
 if TYPE_CHECKING:
     from splink.linker import Linker

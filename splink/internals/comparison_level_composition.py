@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Any, Iterable, Union, final
 
 from splink.internals.blocking import BlockingRule
+from splink.internals.dialects import SplinkDialect
 
 from .comparison_creator import ComparisonLevelCreator
 from .comparison_level import ComparisonLevel
-from splink.internals.dialects import SplinkDialect
 
 
 def _ensure_is_comparison_level_creator(

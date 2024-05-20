@@ -8,6 +8,7 @@ import sqlglot
 import sqlglot.expressions
 
 from splink.internals.comparison import Comparison
+
 from ..parse_sql import parse_columns_in_sql
 from .settings_column_cleaner import (
     SettingsColumnCleaner,

@@ -4,9 +4,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union, final
 
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.exceptions import SplinkException
+
 from .comparison import Comparison
 from .comparison_level_creator import ComparisonLevelCreator
-from splink.internals.exceptions import SplinkException
 
 
 class ComparisonCreator(ABC):

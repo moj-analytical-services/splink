@@ -10,6 +10,7 @@ from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import (
     PostgresDialect,
 )
+
 from ..misc import (
     ensure_is_list,
 )

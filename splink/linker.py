@@ -39,13 +39,14 @@ from splink.internals.cluster_studio import (
     SamplingMethods,
     render_splink_cluster_studio_html,
 )
-
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.comparison_vector_distribution import (
     comparison_vector_distribution_sql,
 )
-from splink.internals.comparison_vector_values import compute_comparison_vector_values_sql
+from splink.internals.comparison_vector_values import (
+    compute_comparison_vector_values_sql,
+)
 from splink.internals.connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
@@ -59,22 +60,25 @@ from splink.internals.exceptions import SplinkException
 from splink.internals.find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
-from splink.internals.find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
+from splink.internals.find_matches_to_new_records import (
+    add_unique_id_and_source_dataset_cols_if_needed,
+)
 from splink.internals.graph_metrics import (
     GraphMetricsResults,
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
 from splink.internals.input_column import InputColumn
-from .internals.blocking_analysis import (
-    _cumulative_comparisons_to_be_scored_from_blocking_rules,
-)
 from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
-from .m_from_labels import estimate_m_from_pairwise_labels
-from .m_training import estimate_m_values_from_label_column
+from splink.internals.m_from_labels import estimate_m_from_pairwise_labels
+from splink.internals.m_training import estimate_m_values_from_label_column
+
+from .internals.blocking_analysis import (
+    _cumulative_comparisons_to_be_scored_from_blocking_rules,
+)
 from .match_weights_histogram import histogram_data
 from .misc import (
     ascii_uid,

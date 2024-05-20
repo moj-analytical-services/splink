@@ -6,6 +6,7 @@ from typing import List
 
 from splink.internals.comparison import Comparison
 from splink.internals.input_column import InputColumn
+
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import CoreModelSettings, Settings
 
