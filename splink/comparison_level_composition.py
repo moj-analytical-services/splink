@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Union, final
 
-from .blocking import BlockingRule
+from splink.internals.blocking import BlockingRule
+
 from .comparison_creator import ComparisonLevelCreator
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect

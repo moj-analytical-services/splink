@@ -3,8 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Union, final
 
-from splink.blocking import BlockingRule, blocking_rule_to_obj
 from splink.dialects import SplinkDialect
+from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
 
 
 class BlockingRuleCreator(ABC):

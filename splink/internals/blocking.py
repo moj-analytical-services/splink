@@ -8,20 +8,20 @@ from sqlglot.expressions import Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 
-from .database_api import DatabaseAPISubClass
-from .exceptions import SplinkException
-from .input_column import InputColumn
-from .misc import ensure_is_list
-from .pipeline import CTEPipeline
-from .splink_dataframe import SplinkDataFrame
-from .unique_id_concat import _composite_unique_id_from_nodes_sql
-from .vertically_concatenate import vertically_concatenate_sql
+from splink.database_api import DatabaseAPISubClass
+from splink.exceptions import SplinkException
+from splink.input_column import InputColumn
+from splink.misc import ensure_is_list
+from splink.pipeline import CTEPipeline
+from splink.splink_dataframe import SplinkDataFrame
+from splink.unique_id_concat import _composite_unique_id_from_nodes_sql
+from splink.vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .settings import LinkTypeLiteralType
+    from splink.settings import LinkTypeLiteralType
 
 user_input_link_type_options = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 

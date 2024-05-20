@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any, List, Union
 
+from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
-from .blocking import BlockingRule
 from .blocking_rule_library import CustomRule
 from .misc import ensure_is_iterable
 

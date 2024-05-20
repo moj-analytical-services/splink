@@ -1,6 +1,7 @@
 import logging
 
-from .block_from_labels import block_from_labels
+from splink.internals.block_from_labels import block_from_labels
+
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,

@@ -1,6 +1,6 @@
-from splink.blocking import BlockingRule, blocking_rule_to_obj
 from splink.blocking_rule_library import block_on
 from splink.input_column import _get_dialect_quotes
+from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
 from splink.linker import Linker
 from splink.settings_creator import SettingsCreator
 

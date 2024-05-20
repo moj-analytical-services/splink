@@ -14,15 +14,15 @@ from splink.internals.accuracy import (
     truth_space_table_from_labels_column,
     truth_space_table_from_labels_table,
 )
-from splink.internals.blocking_rule_creator import BlockingRuleCreator
-
-from .blocking import (
+from splink.internals.blocking import (
     BlockingRule,
     SaltedBlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
 )
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+
 from .blocking_rule_creator_utils import to_blocking_rule_creator
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (

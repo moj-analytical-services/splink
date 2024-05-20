@@ -5,7 +5,12 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, Sequence, TypedDict
 
-from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
+from splink.internals.blocking import (
+    BlockingRule,
+    SaltedBlockingRule,
+    blocking_rule_to_obj,
+)
+
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
