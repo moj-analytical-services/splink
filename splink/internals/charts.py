@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Dict, Union
 import numpy as np
 import pandas as pd
 
-from .misc import read_resource
-from .waterfall_chart import records_to_waterfall_data
+from splink.misc import read_resource
+from splink.waterfall_chart import records_to_waterfall_data
 
 altair_installed = True
 
@@ -84,7 +84,7 @@ def save_offline_chart(
     if type(chart_dict).__name__ == "VegaliteNoValidate":
         chart_dict = chart_dict.spec
 
-    template = read_resource("files/templates/single_chart_template.html")
+    template = read_resource("../files/templates/single_chart_template.html")
 
     fmt_dict = _load_external_libs()
 

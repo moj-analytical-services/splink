@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 
-from .charts import (
+from splink.internals.charts import (
     m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
     probability_two_random_records_match_iteration_chart,

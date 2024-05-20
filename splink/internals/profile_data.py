@@ -3,7 +3,7 @@ import re
 from copy import deepcopy
 from typing import List, Optional, Sequence, Union
 
-from ..charts import ChartReturnType, altair_or_json, load_chart_definition
+from splink.internals.charts import ChartReturnType, altair_or_json, load_chart_definition
 from ..column_expression import ColumnExpression
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
 from ..misc import ensure_is_list

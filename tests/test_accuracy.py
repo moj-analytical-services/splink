@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from splink import SettingsCreator
-from splink.blocking_rule_library import block_on
+from splink.internals.blocking_rule_library import block_on
 from splink.comparison_library import ExactMatch
 from splink.duckdb.database_api import DuckDBAPI
 from splink.internals.accuracy import (

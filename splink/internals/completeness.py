@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any, List, Sequence
 
-from ..charts import (
+from splink.internals.charts import (
     ChartReturnType,
 )
-from ..charts import (
+from splink.internals.charts import (
     completeness_chart as records_to_completeness_chart,
 )
 from ..database_api import AcceptableInputTableType, DatabaseAPISubClass

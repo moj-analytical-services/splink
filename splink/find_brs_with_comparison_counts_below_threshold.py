@@ -9,7 +9,7 @@ import pandas as pd
 from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
-from .blocking_rule_library import CustomRule, block_on
+from splink.internals.blocking_rule_library import CustomRule, block_on
 from .database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 from .internals.blocking_analysis import (

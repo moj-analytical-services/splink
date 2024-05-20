@@ -2,7 +2,7 @@ import duckdb
 import pandas as pd
 import phonetics
 
-from .charts import (
+from splink.internals.charts import (
     _comparator_score_chart,
     _comparator_score_threshold_chart,
     _phonetic_match_chart,

@@ -3,7 +3,7 @@ from copy import deepcopy
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink.blocking_rule_library import block_on
+from splink.internals.blocking_rule_library import block_on
 from splink.pipeline import CTEPipeline
 from splink.vertically_concatenate import compute_df_concat_with_tf
 

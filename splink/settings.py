@@ -11,7 +11,7 @@ from splink.internals.blocking import (
     blocking_rule_to_obj,
 )
 
-from .charts import m_u_parameters_chart, match_weights_chart
+from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .input_column import InputColumn

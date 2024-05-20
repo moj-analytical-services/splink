@@ -6,7 +6,7 @@ from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
 from .blocking_rule_library import CustomRule
-from .misc import ensure_is_iterable
+from splink.misc import ensure_is_iterable
 
 
 def to_blocking_rule_creator(

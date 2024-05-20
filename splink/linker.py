@@ -23,9 +23,9 @@ from splink.internals.blocking import (
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
-from .blocking_rule_creator_utils import to_blocking_rule_creator
-from .cache_dict_with_logging import CacheDictWithLogging
-from .charts import (
+from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
+from splink.internals.cache_dict_with_logging import CacheDictWithLogging
+from splink.internals.charts import (
     ChartReturnType,
     accuracy_chart,
     match_weights_histogram,
@@ -36,7 +36,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_studio import SamplingMethods, render_splink_cluster_studio_html
+from splink.internals.cluster_studio import SamplingMethods, render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (

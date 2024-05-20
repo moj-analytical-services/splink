@@ -11,7 +11,7 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, final
 import sqlglot
 from pandas import DataFrame as PandasDataFrame
 
-from .cache_dict_with_logging import CacheDictWithLogging
+from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from .dialects import (
     SplinkDialect,
 )

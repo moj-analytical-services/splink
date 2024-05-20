@@ -6,8 +6,8 @@ from sqlglot import TokenError, parse_one
 
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 
-from .column_expression import ColumnExpression
-from .dialects import SplinkDialect
+from splink.column_expression import ColumnExpression
+from splink.dialects import SplinkDialect
 
 
 def _translate_sql_string(

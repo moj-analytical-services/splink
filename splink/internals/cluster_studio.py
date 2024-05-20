@@ -7,18 +7,18 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from jinja2 import Template
 
-from .exceptions import SplinkException
-from .misc import EverythingEncoder, read_resource
-from .pipeline import CTEPipeline
-from .splink_dataframe import SplinkDataFrame
-from .unique_id_concat import (
+from splink.exceptions import SplinkException
+from splink.misc import EverythingEncoder, read_resource
+from splink.pipeline import CTEPipeline
+from splink.splink_dataframe import SplinkDataFrame
+from splink.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .linker import Linker
+    from splink.linker import Linker
 
 SamplingMethods = Literal[
     "random", "by_cluster_size", "lowest_density_clusters_by_size"
@@ -376,7 +376,7 @@ def render_splink_cluster_studio_html(
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges
-    template_path = "files/splink_cluster_studio/cluster_template.j2"
+    template_path = "../files/splink_cluster_studio/cluster_template.j2"
     template = Template(read_resource(template_path))
 
     template_data: dict[str, Any] = {
