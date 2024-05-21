@@ -9,16 +9,14 @@ tags:
 
 Splink has some datasets available for use to help you get up and running, test ideas, or explore Splink features.
 To use, simply import `splink_datasets`:
-
 ```py
-from splink.internals.datasets import splink_datasets
+from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
 ```
 which you can then use to set up a linker:
-
 ```py
-from splink.internals.datasets import splink_datasets
+from splink.datasets import splink_datasets
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 
@@ -72,9 +70,8 @@ This can be useful if you have limited internet connection and want to see what 
 or if you need to clear cache items (e.g. if datasets were to be updated, or if space is an issue).
 
 For example:
-
 ```py
-from splink.internals.datasets import splink_dataset_utils
+from splink.datasets import splink_dataset_utils
 
 splink_dataset_utils.show_downloaded_data()
 splink_dataset_utils.clear_cache(['fake_1000'])
