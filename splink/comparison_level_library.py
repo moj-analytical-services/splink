@@ -701,6 +701,66 @@ class DistanceInKMLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Distance less than {self.km_threshold}km"
+    
+class ArrayStringDistanceLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str | ColumnExpression, distance_threshold: int, distance_function: str):
+        """Represents a comparison level based around the distance between
+        arrays
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (int): the maximum distance between string 
+                elements in the arrays for this comparison level.
+            distance_function (str): Distance function name to calculate 
+                pair-wise between arrays
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=distance_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="distance_threshold",
+        )
+        self.distance_function = validate_categorical_parameter(
+            allowed_values=["levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"],
+            parameter_value=distance_function,
+            level_name=self.__class__.__name__,
+            parameter_name="distance_function"
+        )
+    
+    @unsupported_splink_dialects(["sqlite", "spark", "postgres", "athena"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        if (self.distance_function == "levenshtein"):
+            d_fn = sql_dialect.levenshtein_function_name
+        elif (self.distance_function == "damerau_levenshtein"):
+            d_fn = sql_dialect.damerau_levenshtein_function_name
+        elif (self.distance_function == "jaro_winkler"):
+            d_fn = sql_dialect.jaro_winkler_function_name
+        elif (self.distance_function == "jaro"):
+            d_fn = sql_dialect.jaro_function_name
+        return (
+            f"""list_max(
+                    list_transform(
+                        flatten(
+                            list_transform(
+                                {col.name_l}, 
+                                x -> list_transform(
+                                    {col.name_r}, 
+                                    y -> [x,y]
+                                )
+                            )
+                        ), 
+                        pair -> {d_fn}(pair[1], pair[2])
+                    )
+                ) <= {self.distance_threshold}"""
+        )
+    
+    def create_label_for_charts(self) -> str:
+        return f"Array string distance <= {self.distance_threshold}"
 
 
 class ArrayIntersectLevel(ComparisonLevelCreator):
