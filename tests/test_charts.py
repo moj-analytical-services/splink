@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-import splink.comparison_library as cl
-from splink.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+import splink.internals.comparison_library as cl
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 # ground truth:
 # true matches ALWAYS match on gender
@@ -133,7 +133,7 @@ def test_m_u_charts():
     linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_probability_two_random_records_match(
-        "l.true_match_id = r.true_match_id", recall=1.0
+        ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
     linker.estimate_parameters_using_expectation_maximisation(
@@ -161,7 +161,7 @@ def test_parameter_estimate_charts():
     linker = Linker(df, settings, database_api=db_api)
 
     linker.estimate_probability_two_random_records_match(
-        "l.true_match_id = r.true_match_id", recall=1.0
+        ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
     linker.estimate_parameters_using_expectation_maximisation(

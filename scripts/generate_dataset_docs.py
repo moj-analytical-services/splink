@@ -2,8 +2,8 @@
 # otherwise paths for generated files are incorrect
 from pathlib import Path
 
-from splink.datasets import _datasets as datasets_info
-from splink.datasets import _labels as dataset_labels_info
+from splink.internals.datasets import _datasets as datasets_info
+from splink.internals.datasets import _labels as dataset_labels_info
 
 
 def make_dataset_md_table(datasets):

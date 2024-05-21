@@ -4,12 +4,12 @@ import networkx as nx
 import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
-from splink.connected_components import solve_connected_components
-from splink.duckdb.database_api import DuckDBAPI
-from splink.duckdb.dataframe import DuckDBDataFrame
-from splink.linker import Linker
-from splink.pipeline import CTEPipeline
-from splink.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.connected_components import solve_connected_components
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.linker import Linker
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 
 def generate_random_graph(graph_size, seed=None):

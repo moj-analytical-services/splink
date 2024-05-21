@@ -3,8 +3,8 @@ from typing import List, Type, Union
 
 import pytest
 
-from splink.comparison_creator import ComparisonCreator
-from splink.comparison_level_creator import ComparisonLevelCreator
+from splink.internals.comparison_creator import ComparisonCreator
+from splink.internals.comparison_level_creator import ComparisonLevelCreator
 
 
 class ComparisonLevelTestSpec:

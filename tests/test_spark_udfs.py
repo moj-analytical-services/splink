@@ -1,7 +1,8 @@
 import pandas as pd
 
-import splink.comparison_level_library as cll
-from splink.linker import Linker
+import splink.internals.comparison_level_library as cll
+from splink.internals.linker import Linker
+from tests.decorator import mark_with_dialects_including
 
 first_name_cc = {
     "output_column_name": "first_name",
@@ -51,6 +52,7 @@ settings = {
 }
 
 
+@mark_with_dialects_including("spark")
 def test_udf_registration(spark_api):
     spark = spark_api.spark
     # Integration test to ensure spark loads our udfs without any issues
@@ -72,6 +74,7 @@ def test_udf_registration(spark_api):
     linker.predict()
 
 
+@mark_with_dialects_including("spark")
 def test_damerau_levenshtein(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
@@ -158,6 +161,7 @@ def test_damerau_levenshtein(spark_api):
     )
 
 
+@mark_with_dialects_including("spark")
 def test_jaro(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
@@ -239,6 +243,7 @@ def test_jaro(spark_api):
     assert spark.sql("""SELECT jaro_sim("aaapppp", "")  """).first()[0] == 0.0
 
 
+@mark_with_dialects_including("spark")
 def test_jaro_winkler(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]

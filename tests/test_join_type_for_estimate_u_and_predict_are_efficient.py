@@ -3,9 +3,9 @@ import re
 
 import pandas as pd
 
-import splink.comparison_library as cl
-from splink.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+import splink.internals.comparison_library as cl
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 
 # Create a log handler that allows us to captured logged messages to a python list
@@ -125,8 +125,9 @@ def test_dedupe_only():
     linker.estimate_u_using_random_sampling(max_pairs=1000)
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
+
     assert (
-        "from __splink__df_concat_with_tf_sample as l inner join __splink__df_concat_with_tf_sample as r"  # noqa: E501
+        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
         in all_log_messages
     )
 
@@ -181,7 +182,7 @@ def test_link_and_dedupe():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
     assert (
-        "from __splink__df_concat_with_tf_sample as l inner join __splink__df_concat_with_tf_sample as r"  # noqa: E501
+        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
         in all_log_messages
     )
 
@@ -237,7 +238,7 @@ def test_link_only_two():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
     assert (
-        "from __splink__df_concat_with_tf_sample_left as l inner join __splink__df_concat_with_tf_sample_right as r"  # noqa: E501
+        "from __splink__df_concat_sample_left as l inner join __splink__df_concat_sample_right as r"  # noqa: E501
         in all_log_messages
     )
 
@@ -294,7 +295,7 @@ def test_link_only_three():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
     assert (
-        "from __splink__df_concat_with_tf_sample as l inner join __splink__df_concat_with_tf_sample as r"  # noqa: E501
+        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
         in all_log_messages
     )
 

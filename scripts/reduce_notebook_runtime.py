@@ -19,6 +19,13 @@ def modify_notebook(file_path):
         data["cells"] = data["cells"][:19]
         changed = True
 
+    if "sqlite" in file_path:
+        max_pairs = 3e5
+        head_num = 800
+    else:
+        max_pairs = 1e5
+        head_num = 400
+
     for cell in data["cells"]:
         if cell["cell_type"] == "code":
             source = cell["source"]
@@ -26,13 +33,17 @@ def modify_notebook(file_path):
             for line in source:
                 if "splink_datasets" in line and "=" in line:
                     parts = line.split("=")
-                    parts[1] = parts[1].strip() + ".head(400)"
+                    parts[1] = parts[1].strip() + f".head({head_num})"
                     new_line = " = ".join(parts) + "\n"
                     new_source.append(new_line)
                     changed = True
                 elif "estimate_u_using_random_sampling(" in line:
                     new_line = (
-                        re.sub(r"max_pairs=\d+(\.\d+)?[eE]\d+", "max_pairs=1e5", line)
+                        re.sub(
+                            r"max_pairs=\d+(\.\d+)?[eE]\d+",
+                            f"max_pairs={max_pairs}",
+                            line,
+                        )
                         + "\n"
                     )
                     new_source.append(new_line)

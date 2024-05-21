@@ -2,8 +2,13 @@ import os
 
 import pandas as pd
 
-from splink.linker import Linker
-from splink.postgres.database_api import PostgresAPI
+from splink.blocking_analysis import (
+    count_comparisons_from_blocking_rule,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+from splink.exploratory import completeness_chart, profile_columns
+from splink.internals.linker import Linker
+from splink.internals.postgres.database_api import PostgresAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -22,26 +27,39 @@ def test_full_example_postgres(tmp_path, pg_engine):
         database_api=db_api,
     )
 
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."surname" = r."surname"'
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
-    linker.cumulative_num_comparisons_from_blocking_rules_chart(
-        [
+
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+        table_or_tables=df,
+        blocking_rules=[
             "l.first_name = r.first_name",
             "l.surname = r.surname",
             "l.city = r.city",
-        ]
+        ],
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"surname"',
             'first_name || "surname"',
             "concat(city, first_name)",
-        ]
+        ],
     )
-    linker.missingness_chart()
+
+    completeness_chart(df, db_api=db_api)
+
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -49,8 +67,6 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."surname" = r."surname"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -69,8 +85,8 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker.waterfall_chart(records)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
-    linker.threshold_selection_tool_from_labels_table("labels")
+
+    linker.accuracy_analysis_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -81,7 +97,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 

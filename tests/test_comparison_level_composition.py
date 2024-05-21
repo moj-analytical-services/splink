@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-import splink.comparison_level_library as cll
-from splink.input_column import _get_dialect_quotes
+import splink.internals.comparison_level_library as cll
+from splink.internals.input_column import _get_dialect_quotes
 
 from .decorator import mark_with_dialects_excluding
 

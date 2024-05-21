@@ -1,4 +1,4 @@
-from splink.parse_sql import get_columns_used_from_sql
+from splink.internals.parse_sql import get_columns_used_from_sql
 
 
 def test_get_columns_used():

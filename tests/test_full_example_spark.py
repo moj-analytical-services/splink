@@ -5,11 +5,11 @@ import pyspark.sql.functions as f
 import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.comparison_level_library as cll
-import splink.comparison_library as cl
-from splink.linker import Linker
-from splink.profile_data import profile_columns
-from splink.spark.database_api import SparkAPI
+import splink.internals.comparison_level_library as cll
+import splink.internals.comparison_library as cl
+from splink.exploratory import completeness_chart, profile_columns
+from splink.internals.linker import Linker
+from splink.internals.spark.database_api import SparkAPI
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -62,6 +62,14 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         "max_iterations": 2,
     }
 
+    profile_columns(
+        df_spark,
+        spark_api,
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+    )
+
+    completeness_chart(df_spark, spark_api)
+
     linker = Linker(
         df_spark,
         settings,
@@ -73,11 +81,6 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         ),
     )
 
-    profile_columns(
-        df_spark,
-        spark_api,
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
-    )
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
@@ -108,7 +111,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(name_of_data_in_title="Testing")
     # Test that writing to files works as expected
     # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
     # _test_write_functionality(linker, spark_csv_read)
@@ -121,8 +124,8 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         ]
     )
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
-    linker.threshold_selection_tool_from_labels_table("labels")
+
+    linker.accuracy_analysis_from_labels_table("labels")
 
     record = {
         "unique_id": 1,

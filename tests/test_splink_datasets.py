@@ -1,5 +1,5 @@
-import splink.comparison_library as cl
-from splink.datasets import splink_datasets
+import splink.internals.comparison_library as cl
+from splink.internals.datasets import splink_datasets
 
 
 def test_datasets_basic_link(test_helpers):
