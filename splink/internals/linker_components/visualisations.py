@@ -54,6 +54,31 @@ class LinkerVisualisations:
         """
         return self._linker._settings_obj.match_weights_chart()
 
+    def m_u_parameters_chart(self):
+        """Display a chart of the m and u parameters of the linkage model
+
+        Examples:
+            ```py
+            linker.m_u_parameters_chart()
+            ```
+            To view offline (if you don't have an internet connection):
+            ```py
+            from splink.charts import save_offline_chart
+            c = linker.match_weights_chart()
+            save_offline_chart(c.to_dict(), "test_chart.html")
+            ```
+            View resultant html file in Jupyter (or just load it in your browser)
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./test_chart.html", width=1000, height=500)
+            ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        return self._linker._settings_obj.m_u_parameters_chart()
+
     def match_weights_histogram(
         self,
         df_predict: SplinkDataFrame,
@@ -79,6 +104,90 @@ class LinkerVisualisations:
         df = histogram_data(self._linker, df_predict, target_bins)
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
+
+    def parameter_estimate_comparisons_chart(
+        self, include_m: bool = True, include_u: bool = False
+    ) -> ChartReturnType:
+        """Show a chart that shows how parameter estimates have differed across
+        the different estimation methods you have used.
+
+        For example, if you have run two EM estimation sessions, blocking on
+        different variables, and both result in parameter estimates for
+        first_name, this chart will enable easy comparison of the different
+        estimates
+
+        Args:
+            include_m (bool, optional): Show different estimates of m values. Defaults
+                to True.
+            include_u (bool, optional): Show different estimates of u values. Defaults
+                to False.
+
+        """
+        records = self._linker._settings_obj._parameter_estimates_as_records
+
+        to_retain = []
+        if include_m:
+            to_retain.append("m")
+        if include_u:
+            to_retain.append("u")
+
+        records = [r for r in records if r["m_or_u"] in to_retain]
+
+        return parameter_estimate_comparisons(records)
+
+    def tf_adjustment_chart(
+        self,
+        output_column_name: str,
+        n_most_freq: int = 10,
+        n_least_freq: int = 10,
+        vals_to_include: str | list[str] | None = None,
+        as_dict: bool = False,
+    ) -> ChartReturnType:
+        """Display a chart showing the impact of term frequency adjustments on a
+        specific comparison level.
+        Each value
+
+        Args:
+            output_column_name (str): Name of an output column for which term frequency
+                 adjustment has been applied.
+            n_most_freq (int, optional): Number of most frequent values to show. If this
+                 or `n_least_freq` set to None, all values will be shown.
+                Default to 10.
+            n_least_freq (int, optional): Number of least frequent values to show. If
+                this or `n_most_freq` set to None, all values will be shown.
+                Default to 10.
+            vals_to_include (list, optional): Specific values for which to show term
+                sfrequency adjustments.
+                Defaults to None.
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        # Comparisons with TF adjustments
+        tf_comparisons = [
+            c.output_column_name
+            for c in self._linker._settings_obj.comparisons
+            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
+        ]
+        if output_column_name not in tf_comparisons:
+            raise ValueError(
+                f"{output_column_name} is not a valid comparison column, or does not"
+                f" have term frequency adjustment activated"
+            )
+
+        vals_to_include = (
+            [] if vals_to_include is None else ensure_is_list(vals_to_include)
+        )
+
+        return tf_adjustment_chart(
+            self._linker,
+            output_column_name,
+            n_most_freq,
+            n_least_freq,
+            vals_to_include,
+            as_dict,
+        )
 
     def waterfall_chart(
         self,
@@ -175,115 +284,6 @@ class LinkerVisualisations:
         if return_html_as_string:
             return rendered
         return None
-
-    def parameter_estimate_comparisons_chart(
-        self, include_m: bool = True, include_u: bool = False
-    ) -> ChartReturnType:
-        """Show a chart that shows how parameter estimates have differed across
-        the different estimation methods you have used.
-
-        For example, if you have run two EM estimation sessions, blocking on
-        different variables, and both result in parameter estimates for
-        first_name, this chart will enable easy comparison of the different
-        estimates
-
-        Args:
-            include_m (bool, optional): Show different estimates of m values. Defaults
-                to True.
-            include_u (bool, optional): Show different estimates of u values. Defaults
-                to False.
-
-        """
-        records = self._linker._settings_obj._parameter_estimates_as_records
-
-        to_retain = []
-        if include_m:
-            to_retain.append("m")
-        if include_u:
-            to_retain.append("u")
-
-        records = [r for r in records if r["m_or_u"] in to_retain]
-
-        return parameter_estimate_comparisons(records)
-
-    def tf_adjustment_chart(
-        self,
-        output_column_name: str,
-        n_most_freq: int = 10,
-        n_least_freq: int = 10,
-        vals_to_include: str | list[str] | None = None,
-        as_dict: bool = False,
-    ) -> ChartReturnType:
-        """Display a chart showing the impact of term frequency adjustments on a
-        specific comparison level.
-        Each value
-
-        Args:
-            output_column_name (str): Name of an output column for which term frequency
-                 adjustment has been applied.
-            n_most_freq (int, optional): Number of most frequent values to show. If this
-                 or `n_least_freq` set to None, all values will be shown.
-                Default to 10.
-            n_least_freq (int, optional): Number of least frequent values to show. If
-                this or `n_most_freq` set to None, all values will be shown.
-                Default to 10.
-            vals_to_include (list, optional): Specific values for which to show term
-                sfrequency adjustments.
-                Defaults to None.
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        # Comparisons with TF adjustments
-        tf_comparisons = [
-            c.output_column_name
-            for c in self._linker._settings_obj.comparisons
-            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
-        ]
-        if output_column_name not in tf_comparisons:
-            raise ValueError(
-                f"{output_column_name} is not a valid comparison column, or does not"
-                f" have term frequency adjustment activated"
-            )
-
-        vals_to_include = (
-            [] if vals_to_include is None else ensure_is_list(vals_to_include)
-        )
-
-        return tf_adjustment_chart(
-            self._linker,
-            output_column_name,
-            n_most_freq,
-            n_least_freq,
-            vals_to_include,
-            as_dict,
-        )
-
-    def m_u_parameters_chart(self):
-        """Display a chart of the m and u parameters of the linkage model
-
-        Examples:
-            ```py
-            linker.m_u_parameters_chart()
-            ```
-            To view offline (if you don't have an internet connection):
-            ```py
-            from splink.charts import save_offline_chart
-            c = linker.match_weights_chart()
-            save_offline_chart(c.to_dict(), "test_chart.html")
-            ```
-            View resultant html file in Jupyter (or just load it in your browser)
-            ```py
-            from IPython.display import IFrame
-            IFrame(src="./test_chart.html", width=1000, height=500)
-            ```
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        return self._linker._settings_obj.m_u_parameters_chart()
 
     def cluster_studio_dashboard(
         self,
