@@ -3,10 +3,10 @@ import gc
 import pandas as pd
 import pytest
 
-import splink.comparison_level_library as cll
-import splink.comparison_library as cl
-import splink.comparison_template_library as ctl
-from splink.column_expression import ColumnExpression
+import splink.internals.comparison_level_library as cll
+import splink.internals.comparison_library as cl
+import splink.internals.comparison_template_library as ctl
+from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
@@ -289,7 +289,7 @@ def test_ctl_creators_run_predict(dialect, test_helpers):
 
 
 def test_custom_dialect_no_string_lookup():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined
@@ -311,7 +311,7 @@ def test_custom_dialect_no_string_lookup():
 
 
 def test_custom_dialect_duplicate_string_lookup():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined
@@ -339,7 +339,7 @@ def test_custom_dialect_duplicate_string_lookup():
 
 
 def test_valid_custom_dialect():
-    from splink.dialects import SplinkDialect
+    from splink.internals.dialects import SplinkDialect
 
     # force garbage collection so we forget about any other test dialects
     # previously defined

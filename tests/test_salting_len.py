@@ -1,7 +1,7 @@
 import pytest
 
-from splink.blocking_rule_library import block_on
-from splink.linker import Linker
+from splink.internals.blocking_rule_library import block_on
+from splink.internals.linker import Linker
 from tests.basic_settings import get_settings_dict
 
 from .decorator import mark_with_dialects_including

@@ -1,6 +1,6 @@
 from pytest import mark, raises
 
-from splink.comparison_level import ComparisonLevel
+from splink.internals.comparison_level import ComparisonLevel
 
 from .decorator import mark_with_dialects_excluding
 

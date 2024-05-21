@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import pandas as pd
 import sqlglot
 
-from ..blocking import (
+from splink.internals.blocking import (
     BlockingRule,
     _sql_gen_where_condition,
     backend_link_type_options,
@@ -14,15 +14,18 @@ from ..blocking import (
     materialise_exploded_id_tables,
     user_input_link_type_options,
 )
-from ..blocking_rule_creator import BlockingRuleCreator
-from ..blocking_rule_creator_utils import to_blocking_rule_creator
-from ..charts import ChartReturnType, cumulative_blocking_rule_comparisons_generated
-from ..database_api import AcceptableInputTableType, DatabaseAPISubClass
-from ..input_column import InputColumn
-from ..misc import calculate_cartesian, ensure_is_iterable
-from ..pipeline import CTEPipeline
-from ..splink_dataframe import SplinkDataFrame
-from ..vertically_concatenate import (
+from splink.internals.blocking_rule_creator import BlockingRuleCreator
+from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
+from splink.internals.charts import (
+    ChartReturnType,
+    cumulative_blocking_rule_comparisons_generated,
+)
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.input_column import InputColumn
+from splink.internals.misc import calculate_cartesian, ensure_is_iterable
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
 )

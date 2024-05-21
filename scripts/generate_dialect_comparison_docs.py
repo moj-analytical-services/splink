@@ -4,9 +4,9 @@ import importlib
 import inspect
 from pathlib import Path
 
-from splink.comparison import Comparison
-from splink.comparison_level import ComparisonLevel
 from splink.dialect_base import DialectBase
+from splink.internals.comparison import Comparison
+from splink.internals.comparison_level import ComparisonLevel
 
 # could always pick this up dynamically,
 # but this way we get to fix the order, and feels like not unreasonable upkeep

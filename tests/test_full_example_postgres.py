@@ -7,8 +7,8 @@ from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
 )
 from splink.exploratory import completeness_chart, profile_columns
-from splink.linker import Linker
-from splink.postgres.database_api import PostgresAPI
+from splink.internals.linker import Linker
+from splink.internals.postgres.database_api import PostgresAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including

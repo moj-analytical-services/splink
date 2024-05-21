@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-import splink.comparison_library as cl
+import splink.internals.comparison_library as cl
 from splink import block_on
 
 from .decorator import mark_with_dialects_excluding

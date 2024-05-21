@@ -1,9 +1,9 @@
 import pandas as pd
 
-import splink.comparison_library as cl
-from splink.column_expression import ColumnExpression
-from splink.duckdb.database_api import DuckDBAPI
-from splink.linker import Linker
+import splink.internals.comparison_library as cl
+from splink.internals.column_expression import ColumnExpression
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 
 def test_distance_function_comparison():

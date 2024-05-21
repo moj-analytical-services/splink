@@ -3,7 +3,7 @@ from functools import partial
 
 import pytest
 
-from splink.input_column import InputColumn, _get_dialect_quotes
+from splink.internals.input_column import InputColumn, _get_dialect_quotes
 
 
 @dataclass

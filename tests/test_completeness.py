@@ -1,8 +1,8 @@
 import pandas as pd
 from pytest import raises
 
-from splink.exceptions import SplinkException
 from splink.exploratory import completeness_chart
+from splink.internals.exceptions import SplinkException
 from tests.decorator import mark_with_dialects_excluding
 
 

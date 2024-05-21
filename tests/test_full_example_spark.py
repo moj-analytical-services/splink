@@ -5,11 +5,11 @@ import pyspark.sql.functions as f
 import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.comparison_level_library as cll
-import splink.comparison_library as cl
+import splink.internals.comparison_level_library as cll
+import splink.internals.comparison_library as cl
 from splink.exploratory import completeness_chart, profile_columns
-from splink.linker import Linker
-from splink.spark.database_api import SparkAPI
+from splink.internals.linker import Linker
+from splink.internals.spark.database_api import SparkAPI
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including

@@ -1,23 +1,10 @@
 from typing import TYPE_CHECKING
 
-# Explicitly declare exported names to avoid 'imported but unused' linting issues
-__all__ = [
-    "block_on",
-    "splink_datasets",
-    "Linker",
-    "SettingsCreator",
-    "SQLiteAPI",
-    "SparkAPI",
-    "DuckDBAPI",
-    "PostgresAPI",
-]
-
-
-from splink.blocking_rule_library import block_on
-from splink.datasets import splink_datasets
-from splink.linker import Linker
-from splink.settings_creator import SettingsCreator
-from splink.sqlite.database_api import SQLiteAPI
+from splink.internals.blocking_rule_library import block_on
+from splink.internals.column_expression import ColumnExpression
+from splink.internals.datasets import splink_datasets
+from splink.internals.linker import Linker
+from splink.internals.settings_creator import SettingsCreator
 
 # The following is a workaround for the fact that dependencies of postgres, spark
 # and duckdb may not be installed, but we don't want this to prevent import
@@ -27,24 +14,24 @@ from splink.sqlite.database_api import SQLiteAPI
 # and ensures that typing information is retained so e.g. the arguments autocomplete
 # without importing them at runtime
 if TYPE_CHECKING:
-    from splink.duckdb.database_api import DuckDBAPI
-    from splink.postgres.database_api import PostgresAPI
-    from splink.spark.database_api import SparkAPI
+    from splink.internals.duckdb.database_api import DuckDBAPI
+    from splink.internals.postgres.database_api import PostgresAPI
+    from splink.internals.spark.database_api import SparkAPI
 
 
 # Use getarr to make the error appear at the point of use
 def __getattr__(name):
     try:
         if name == "SparkAPI":
-            from splink.spark.database_api import SparkAPI
+            from splink.internals.spark.database_api import SparkAPI
 
             return SparkAPI
         elif name == "DuckDBAPI":
-            from splink.duckdb.database_api import DuckDBAPI
+            from splink.internals.duckdb.database_api import DuckDBAPI
 
             return DuckDBAPI
         elif name == "PostgresAPI":
-            from splink.postgres.database_api import PostgresAPI
+            from splink.internals.postgres.database_api import PostgresAPI
 
             return PostgresAPI
     except ImportError as err:
@@ -58,3 +45,16 @@ def __getattr__(name):
 
 
 __version__ = "4.0.0.dev4"
+
+
+__all__ = [
+    "block_on",
+    "ColumnExpression",
+    "DuckDBAPI",
+    "Linker",
+    "PostgresAPI",
+    "SettingsCreator",
+    "SparkAPI",
+    "splink_datasets",
+    "SQLiteAPI",
+]

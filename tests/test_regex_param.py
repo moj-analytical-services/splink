@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-import splink.comparison_level_library as cll
-from splink.column_expression import ColumnExpression
+import splink.internals.comparison_level_library as cll
+from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
