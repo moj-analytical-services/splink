@@ -111,7 +111,7 @@ from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
 from splink.duckdb.blocking_rule_library import block_on
-from splink.internals.datasets import splink_datasets
+from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
 
@@ -135,12 +135,10 @@ linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = block_on(["first_name", "surname"])
 
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training,
-                                                          estimate_without_term_frequencies=True)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 blocking_rule_for_training = block_on("dob")
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training,
-                                                          estimate_without_term_frequencies=True)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 pairwise_predictions = linker.predict()
 
