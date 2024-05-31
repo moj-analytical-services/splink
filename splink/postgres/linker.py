@@ -288,6 +288,155 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _create_damerau_levenshtein_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION damerau_levenshtein(s1 TEXT, s2 TEXT)
+        RETURNS INT AS $$
+        DECLARE
+            s1_len INT := LENGTH(s1);
+            s2_len INT := LENGTH(s2);
+            d INT[][];
+            i INT;
+            j INT;
+            cost INT;
+        BEGIN
+            -- Initialize matrix
+            d := ARRAY(SELECT ARRAY(SELECT generate_series(0, s2_len)) FROM generate_series(0, s1_len));
+
+            -- Initialize the first column and the first row of the matrix
+            FOR i IN 0..s1_len LOOP
+                d[i + 1][1] := i;
+            END LOOP;
+            FOR j IN 0..s2_len LOOP
+                d[1][j + 1] := j;
+            END LOOP;
+
+            -- Fill the matrix
+            FOR i IN 1..s1_len LOOP
+                FOR j IN 1..s2_len LOOP
+                    IF SUBSTRING(s1 FROM i FOR 1) = SUBSTRING(s2 FROM j FOR 1) THEN
+                        cost := 0;
+                    ELSE
+                        cost := 1;
+                    END IF;
+
+                    d[i + 1][j + 1] := LEAST(
+                        d[i][j + 1] + 1,      -- deletion
+                        d[i + 1][j] + 1,      -- insertion
+                        d[i][j] + cost        -- substitution
+                    );
+
+                    IF (i > 1 AND j > 1 AND SUBSTRING(s1 FROM i FOR 1) = SUBSTRING(s2 FROM j - 1 FOR 1) AND SUBSTRING(s1 FROM i - 1 FOR 1) = SUBSTRING(s2 FROM j FOR 1)) THEN
+                        d[i + 1][j + 1] := LEAST(
+                            d[i + 1][j + 1],
+                            d[i - 1][j - 1] + cost  -- transposition
+                        );
+                    END IF;
+                END LOOP;
+            END LOOP;
+
+            RETURN d[s1_len + 1][s2_len + 1];
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_jaro_similarity_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION jaro_similarity(s1 TEXT, s2 TEXT)
+        RETURNS FLOAT AS $$
+        DECLARE
+            s1_len INT := LENGTH(s1);
+            s2_len INT := LENGTH(s2);
+            match_distance INT := GREATEST(s1_len, s2_len) / 2 - 1;
+            matches INT := 0;
+            transpositions INT := 0;
+            i INT;
+            j INT;
+            s1_matches BOOLEAN[];
+            s2_matches BOOLEAN[];
+        BEGIN
+            IF s1_len = 0 OR s2_len = 0 THEN
+                RETURN 0.0;
+            END IF;
+
+            s1_matches := ARRAY(SELECT FALSE FROM generate_series(1, s1_len));
+            s2_matches := ARRAY(SELECT FALSE FROM generate_series(1, s2_len));
+
+            FOR i IN 1..s1_len LOOP
+                FOR j IN GREATEST(1, i - match_distance)..LEAST(s2_len, i + match_distance) LOOP
+                    IF (SUBSTRING(s1 FROM i FOR 1) = SUBSTRING(s2 FROM j FOR 1)) AND s2_matches[j] = FALSE THEN
+                        s1_matches[i] := TRUE;
+                        s2_matches[j] := TRUE;
+                        matches := matches + 1;
+                        EXIT;
+                    END IF;
+                END LOOP;
+            END LOOP;
+
+            IF matches = 0 THEN
+                RETURN 0.0;
+            END IF;
+
+            j := 1;
+            FOR i IN 1..s1_len LOOP
+                IF s1_matches[i] = TRUE THEN
+                    WHILE s2_matches[j] = FALSE LOOP
+                        j := j + 1;
+                    END LOOP;
+                    IF SUBSTRING(s1 FROM i FOR 1) <> SUBSTRING(s2 FROM j FOR 1) THEN
+                        transpositions := transpositions + 1;
+                    END IF;
+                    j := j + 1;
+                END IF;
+            END LOOP;
+
+            transpositions := transpositions / 2;
+
+            RETURN (matches::FLOAT / s1_len + matches::FLOAT / s2_len + (matches - transpositions)::FLOAT / matches) / 3.0;
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_jaro_winkler_similarity_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION jaro_winkler_similarity(s1 TEXT, s2 TEXT)
+        RETURNS FLOAT AS $$
+        DECLARE
+            jaro FLOAT;
+            prefix_len INT := 0;
+            max_prefix_len INT := 4;
+            p FLOAT := 0.1;  -- scaling factor
+            i INT;
+        BEGIN
+            jaro := jaro_similarity(s1, s2);
+
+            FOR i IN 1..LEAST(LEAST(LENGTH(s1), LENGTH(s2)), max_prefix_len) LOOP
+                IF SUBSTRING(s1 FROM i FOR 1) = SUBSTRING(s2 FROM i FOR 1) THEN
+                    prefix_len := prefix_len + 1;
+                ELSE
+                    EXIT;
+                END IF;
+            END LOOP;
+
+            RETURN jaro + (prefix_len * p * (1 - jaro));
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _create_jaro_winkler_distance_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION jaro_winkler_distance(s1 TEXT, s2 TEXT)
+        RETURNS FLOAT AS $$
+        BEGIN
+            RETURN 1 - jaro_winkler_similarity(s1, s2);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _register_custom_functions(self):
         # if people have issues with permissions we can allow these to be optional
         # need for predict_from_comparison_vectors_sql (could adjust)
@@ -300,7 +449,14 @@ class PostgresLinker(Linker):
         # extension of round to handle doubles - used in unlinkables
         self._extend_round_function()
 
+        self._create_damerau_levenshtein_function()
+        self._create_jaro_similarity_function()
+        self._create_jaro_winkler_similarity_function()
+        self._create_jaro_winkler_distance_function()
+
     def _register_extensions(self):
+        # TODO: Lots of string similarity functionality could be enabled:
+        # CREATE EXTENSION IF NOT EXISTS pg_similarity;
         sql = """
         CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
         """

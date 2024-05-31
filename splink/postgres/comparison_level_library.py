@@ -11,6 +11,8 @@ from .postgres_helpers.postgres_comparison_imports import (  # noqa: F401
     distance_in_km_level,
     else_level,
     exact_match_level,
+    jaro_level,
+    jaro_winkler_level,
     levenshtein_level,
     null_level,
     percentage_difference_level,
