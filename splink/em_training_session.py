@@ -98,9 +98,9 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc._output_column_name for cc in comparisons_to_deactivate
         ]
-        self._comparisons_that_cannot_be_estimated: list[
-            Comparison
-        ] = comparisons_to_deactivate
+        self._comparisons_that_cannot_be_estimated: list[Comparison] = (
+            comparisons_to_deactivate
+        )
 
         filtered_ccs = [
             cc
@@ -286,9 +286,9 @@ class EMTrainingSession:
 
             for r in records:
                 r["iteration"] = iteration
-                r[
-                    "probability_two_random_records_match"
-                ] = self._settings_obj._probability_two_random_records_match
+                r["probability_two_random_records_match"] = (
+                    self._settings_obj._probability_two_random_records_match
+                )
 
             output_records.extend(records)
         return output_records
@@ -391,12 +391,12 @@ class EMTrainingSession:
             max_change = abs(change_probability_two_random_records_match)
             max_change_levels["prev_comparison_level"] = None
             max_change_levels["current_comparison_level"] = None
-            max_change_levels[
-                "max_change_type"
-            ] = "probability_two_random_records_match"
-            max_change_levels[
-                "max_change_value"
-            ] = change_probability_two_random_records_match
+            max_change_levels["max_change_type"] = (
+                "probability_two_random_records_match"
+            )
+            max_change_levels["max_change_value"] = (
+                change_probability_two_random_records_match
+            )
             max_change_levels["max_abs_change_value"] = abs(
                 change_probability_two_random_records_match
             )

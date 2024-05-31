@@ -360,9 +360,9 @@ class Settings:
         for i, cc in enumerate(self.comparisons):
             records = cc._as_detailed_records
             for r in records:
-                r[
-                    "probability_two_random_records_match"
-                ] = self._probability_two_random_records_match
+                r["probability_two_random_records_match"] = (
+                    self._probability_two_random_records_match
+                )
                 r["comparison_sort_order"] = i
             output.extend(records)
 

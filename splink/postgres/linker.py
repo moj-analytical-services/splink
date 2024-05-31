@@ -338,7 +338,7 @@ class PostgresLinker(Linker):
             RETURN d[s1_len + 1][s2_len + 1];
         END;
         $$ LANGUAGE plpgsql IMMUTABLE;
-        """
+        """  # noqa: E501
         self._run_sql_execution(sql)
 
     def _create_jaro_similarity_function(self):
@@ -396,7 +396,7 @@ class PostgresLinker(Linker):
             RETURN (matches::FLOAT / s1_len + matches::FLOAT / s2_len + (matches - transpositions)::FLOAT / matches) / 3.0;
         END;
         $$ LANGUAGE plpgsql IMMUTABLE;
-        """
+        """  # noqa: E501
         self._run_sql_execution(sql)
 
     def _create_jaro_winkler_similarity_function(self):
@@ -423,7 +423,7 @@ class PostgresLinker(Linker):
             RETURN jaro + (prefix_len * p * (1 - jaro));
         END;
         $$ LANGUAGE plpgsql IMMUTABLE;
-        """
+        """  # noqa: E501
         self._run_sql_execution(sql)
 
     def _create_jaro_winkler_distance_function(self):
@@ -434,7 +434,7 @@ class PostgresLinker(Linker):
             RETURN 1 - jaro_winkler_similarity(s1, s2);
         END;
         $$ LANGUAGE plpgsql IMMUTABLE;
-        """
+        """  # noqa: E501
         self._run_sql_execution(sql)
 
     def _register_custom_functions(self):
