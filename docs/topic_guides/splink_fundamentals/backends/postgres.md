@@ -91,13 +91,18 @@ The tests will are run using a temporary database and user that are created at t
 If you are trying to [run tests with Splink](../../../dev_guides/changing_splink/testing.md) on Postgres, or simply develop using Postgres, you may prefer to not actually [install Postgres on you system](https://www.postgresql.org/download/), but to run it instead using [Docker](https://www.docker.com/).
 In this case you can simply run the setup script (a thin wrapper around `docker-compose`):
 ```bash
-./scripts/postgres/setup.sh
+./scripts/postgres_docker/setup.sh
 ```
 Included in the docker-compose file is a [pgAdmin](https://www.pgadmin.org/) container to allow easy exploration of the database as you work, which can be accessed in-browser on the default port.
 
+pgadmin port uri should be:
+```bash
+http://localhost:5050
+```
+
 When you are finished you can remove these resources:
 ```bash
-./scripts/postgres/teardown.sh
+./scripts/postgres_docker/teardown.sh
 ```
 
 ### Running with a pre-existing database
