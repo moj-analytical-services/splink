@@ -158,7 +158,7 @@ class LinkerTableManagement:
 
     def register_labels_table(self, input_data, overwrite=False):
         table_name_physical = "__splink__df_labels_" + ascii_uid(8)
-        splink_dataframe = self._linker.register_table(
+        splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         splink_dataframe.templated_name = "__splink__df_labels"

@@ -238,7 +238,7 @@ class LinkerEvalution:
                 f"Invalid metric. Allowed metrics are: {', '.join(allowed)}."
             )
 
-        labels_tablename = self._get_labels_tablename_from_input(
+        labels_tablename = self._linker._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
         )
         self._linker._raise_error_if_necessary_accuracy_columns_not_computed()

@@ -509,7 +509,7 @@ def _predict_from_label_column_sql(linker, label_colname):
         settings._additional_column_names_to_retain.append(label_colname)
 
     # Now we want to create predictions
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     return df_predict
 
