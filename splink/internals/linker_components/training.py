@@ -227,7 +227,7 @@ class LinkerTraining:
             Default behaviour
             ```py
             br_training = "l.first_name = r.first_name and l.dob = r.dob"
-            linker.estimate_parameters_using_expectation_maximisation(br_training)
+            linker.training.estimate_parameters_using_expectation_maximisation(br_training)
             ```
             Specify which comparisons to deactivate
             ```py
@@ -235,7 +235,7 @@ class LinkerTraining:
             settings_obj = linker._settings_obj
             comp = settings_obj._get_comparison_by_output_column_name("first_name")
             dmeta_level = comp._get_comparison_level_by_comparison_vector_value(1)
-            linker.estimate_parameters_using_expectation_maximisation(
+            linker.training.estimate_parameters_using_expectation_maximisation(
                 br_training,
                 comparisons_to_deactivate=["first_name"],
                 comparison_levels_to_reverse_blocking_rule=[dmeta_level],
@@ -277,13 +277,13 @@ class LinkerTraining:
         Examples:
             ```py
             blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
-            linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
             ```
             or using pre-built rules
             ```py
             from splink.duckdb.blocking_rule_library import block_on
             blocking_rule = block_on(["first_name", "surname"])
-            linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
             ```
 
         Returns:

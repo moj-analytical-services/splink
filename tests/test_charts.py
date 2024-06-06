@@ -132,11 +132,11 @@ def test_m_u_charts():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
@@ -144,7 +144,7 @@ def test_m_u_charts():
 
     assert linker._settings_obj.comparisons[1].comparison_levels[1].u_probability == 0.0
 
-    linker.match_weights_chart()
+    linker.visualisations.match_weights_chart()
 
 
 def test_parameter_estimate_charts():
@@ -160,16 +160,16 @@ def test_parameter_estimate_charts():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
     )
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
@@ -183,7 +183,7 @@ def test_parameter_estimate_charts():
     ]
     assert 1.0 in exact_gender_m_estimates
 
-    linker.parameter_estimate_comparisons_chart()
+    linker.visualisations.parameter_estimate_comparisons_chart()
 
     settings = {
         "link_type": "dedupe_only",
@@ -196,9 +196,9 @@ def test_parameter_estimate_charts():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.estimate_u_using_random_sampling(1e6)
+    linker.training.estimate_u_using_random_sampling(1e6)
 
-    linker.parameter_estimate_comparisons_chart()
+    linker.visualisations.parameter_estimate_comparisons_chart()
 
 
 def test_tf_adjustment_chart():
@@ -215,8 +215,8 @@ def test_tf_adjustment_chart():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.tf_adjustment_chart("gender")
-    linker.tf_adjustment_chart("first_name")
+    linker.visualisations.tf_adjustment_chart("gender")
+    linker.visualisations.tf_adjustment_chart("first_name")
 
     with pytest.raises(ValueError):
-        linker.tf_adjustment_chart("surname")
+        linker.visualisations.tf_adjustment_chart("surname")

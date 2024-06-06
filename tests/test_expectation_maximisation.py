@@ -31,11 +31,13 @@ def test_clear_error_when_empty_block():
 
     linker = Linker(df, settings, database_api=db_api)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-    linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        "l.name = r.name"
+    )
     # No record pairs for which surname matches, so we should get a nice handled error
     with pytest.raises(EMTrainingException):
-        linker.estimate_parameters_using_expectation_maximisation(
+        linker.training.estimate_parameters_using_expectation_maximisation(
             "l.surname = r.surname"
         )
 
@@ -63,7 +65,7 @@ def test_em_manual_deactivate():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.name = r.name", comparisons_to_deactivate=["name"]
     )
 
@@ -88,11 +90,11 @@ def test_estimate_without_term_frequencies():
 
     linker_1 = Linker(df, settings, database_api=db_api)
 
-    session_fast = linker_0.estimate_parameters_using_expectation_maximisation(
+    session_fast = linker_0.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
         estimate_without_term_frequencies=True,
     )
-    session_slow = linker_1.estimate_parameters_using_expectation_maximisation(
+    session_slow = linker_1.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
         estimate_without_term_frequencies=False,
     )

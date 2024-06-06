@@ -302,7 +302,7 @@ class LinkerInference:
             linker.load_settings("saved_settings.json")
             # Pre-compute tf tables for any tables with
             # term frequency adjustments
-            linker.compute_tf_table("first_name")
+            linker.table_management.compute_tf_table("first_name")
             record = {'unique_id': 1,
                 'first_name': "John",
                 'surname': "Smith",
@@ -310,7 +310,9 @@ class LinkerInference:
                 'city': "London",
                 'email': "john@smith.net"
                 }
-            df = linker.find_matches_to_new_records([record], blocking_rules=[])
+            df = linker.inference.find_matches_to_new_records(
+                [record], blocking_rules=[]
+            )
             ```
 
         Returns:
@@ -318,28 +320,28 @@ class LinkerInference:
         """
 
         original_blocking_rules = (
-            self._settings_obj._blocking_rules_to_generate_predictions
+            self._linker._settings_obj._blocking_rules_to_generate_predictions
         )
-        original_link_type = self._settings_obj._link_type
+        original_link_type = self._linker._settings_obj._link_type
 
         blocking_rule_list = ensure_is_list(blocking_rules)
 
         if not isinstance(records_or_tablename, str):
             uid = ascii_uid(8)
             new_records_tablename = f"__splink__df_new_records_{uid}"
-            self.register_table(
+            self._linker.table_management.register_table(
                 records_or_tablename, new_records_tablename, overwrite=True
             )
 
         else:
             new_records_tablename = records_or_tablename
 
-        new_records_df = self.db_api.table_to_splink_dataframe(
+        new_records_df = self._linker.db_api.table_to_splink_dataframe(
             "__splink__df_new_records", new_records_tablename
         )
 
         pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
+        nodes_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
         pipeline = CTEPipeline([nodes_with_tf, new_records_df])
         if len(blocking_rule_list) == 0:
@@ -348,23 +350,27 @@ class LinkerInference:
         for n, br in enumerate(blocking_rule_list):
             br.add_preceding_rules(blocking_rule_list[:n])
 
-        self._settings_obj._blocking_rules_to_generate_predictions = blocking_rule_list
+        self._linker._settings_obj._blocking_rules_to_generate_predictions = (
+            blocking_rule_list
+        )
 
-        for tf_col in self._settings_obj._term_frequency_columns:
+        for tf_col in self._linker._settings_obj._term_frequency_columns:
             tf_table_name = colname_to_tf_tablename(tf_col)
-            if tf_table_name in self._intermediate_table_cache:
-                tf_table = self._intermediate_table_cache.get_with_logging(
+            if tf_table_name in self._linker._intermediate_table_cache:
+                tf_table = self._linker._intermediate_table_cache.get_with_logging(
                     tf_table_name
                 )
                 pipeline.append_input_dataframe(tf_table)
 
-        sql = _join_new_table_to_df_concat_with_tf_sql(self, "__splink__df_new_records")
+        sql = _join_new_table_to_df_concat_with_tf_sql(
+            self._linker, "__splink__df_new_records"
+        )
         pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(
-            self, new_records_df, pipeline
+            self._linker, new_records_df, pipeline
         )
-        settings = self._settings_obj
+        settings = self._linker._settings_obj
         sqls = block_using_rules_sqls(
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_new_records_with_tf",
@@ -377,13 +383,13 @@ class LinkerInference:
         pipeline.enqueue_list_of_sqls(sqls)
 
         sql = compute_comparison_vector_values_sql(
-            self._settings_obj._columns_to_select_for_comparison_vector_values
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values
         )
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
-            self._settings_obj,
-            sql_infinity_expression=self._infinity_expression,
+            self._linker._settings_obj,
+            sql_infinity_expression=self._linker._infinity_expression,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -394,14 +400,14 @@ class LinkerInference:
 
         pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self.db_api.sql_pipeline_to_splink_dataframe(
+        predictions = self._linker.db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
 
-        self._settings_obj._blocking_rules_to_generate_predictions = (
+        self._linker._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
         )
-        self._settings_obj._link_type = original_link_type
+        self._linker._settings_obj._link_type = original_link_type
 
         return predictions
 
@@ -457,7 +463,8 @@ class LinkerInference:
                     logger.warning(
                         f"No term frequencies found for column {tf_col.name}.\n"
                         "To apply term frequency adjustments, you need to register"
-                        " a lookup using `linker.register_term_frequency_lookup`."
+                        " a lookup using "
+                        "`linker.table_management.register_term_frequency_lookup`."
                     )
 
         sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(

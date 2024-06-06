@@ -38,7 +38,7 @@ def test_cache_id(tmp_path):
     prior = linker._settings_obj._cache_uid
 
     path = os.path.join(tmp_path, "model.json")
-    linker.save_model_to_json(path, overwrite=True)
+    linker.misc.save_model_to_json(path, overwrite=True)
 
     db_api = DuckDBAPI()
 
@@ -119,12 +119,12 @@ def test_cache_access_compute_tf_table(debug_mode):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-        linker.compute_tf_table("first_name")
+        linker.table_management.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_called()
         # reset the call counter on the mock
         mockexecute_sql_pipeline.reset_mock()
 
-        linker.compute_tf_table("first_name")
+        linker.table_management.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_not_called()
 
 
@@ -151,14 +151,14 @@ def test_invalidate_cache(debug_mode):
         mockexecute_sql_pipeline.assert_not_called()
 
         # create this:
-        linker.compute_tf_table("surname")
+        linker.table_management.compute_tf_table("surname")
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
         # then check the cache
-        linker.compute_tf_table("surname")
+        linker.table_management.compute_tf_table("surname")
         mockexecute_sql_pipeline.assert_not_called()
 
-        linker.invalidate_cache()
+        linker.table_management.invalidate_cache()
 
         # now we _SHOULD_ compute afresh:
         pipeline = CTEPipeline()
@@ -170,11 +170,11 @@ def test_invalidate_cache(debug_mode):
         compute_df_concat_with_tf(linker, pipeline)
         mockexecute_sql_pipeline.assert_not_called()
         # and should compute this again:
-        linker.compute_tf_table("surname")
+        linker.table_management.compute_tf_table("surname")
         mockexecute_sql_pipeline.assert_called()
         mockexecute_sql_pipeline.reset_mock()
         # then check the cache
-        linker.compute_tf_table("surname")
+        linker.table_management.compute_tf_table("surname")
         mockexecute_sql_pipeline.assert_not_called()
 
 
@@ -261,7 +261,7 @@ def test_cache_register_compute_tf_table(debug_mode):
     ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
-        linker.register_term_frequency_lookup(df, "first_name")
+        linker.table_management.register_term_frequency_lookup(df, "first_name")
         # now this should be cached, as I have manually registered
-        linker.compute_tf_table("first_name")
+        linker.table_management.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_not_called()

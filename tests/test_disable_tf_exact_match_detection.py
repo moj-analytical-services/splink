@@ -150,7 +150,7 @@ def test_with_predict_calculation():
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.register_term_frequency_lookup(tf_lookup, "surname")
+    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
     df_predict = linker.inference.predict()
 
@@ -192,7 +192,7 @@ def test_with_predict_calculation():
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.register_term_frequency_lookup(tf_lookup, "surname")
+    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
     df_predict = linker.inference.predict()
 
@@ -231,7 +231,10 @@ def test_with_predict_calculation():
     )
 
     linker_base = Linker(df, settings_disabled_with_min_tf, DuckDBAPI())
-    linkers = [linker_base, Linker(df, linker_base.save_model_to_json(), DuckDBAPI())]
+    linkers = [
+        linker_base,
+        Linker(df, linker_base.misc.save_model_to_json(), DuckDBAPI()),
+    ]
 
     # This ensures we're checking that serialisation and deserialisation
     # works on the disable_tf_exact_match_detection and tf_minimum_u_value settings
@@ -240,7 +243,7 @@ def test_with_predict_calculation():
             {"surname": "Taylor", "tf_surname": 0.001},
             {"surname": "Kirk", "tf_surname": 0.2},
         ]
-        linker.register_term_frequency_lookup(tf_lookup, "surname")
+        linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
         df_predict = linker.inference.predict()
 

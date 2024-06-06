@@ -105,7 +105,7 @@ def test_splink_converges_to_known_params():
 
     linker._populate_probability_two_random_records_match_from_trained_values()
 
-    linker.match_weights_chart()
+    linker.visualisations.match_weights_chart()
 
     cv = DuckDBDataFrame(
         "__splink__df_comparison_vectors",

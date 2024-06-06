@@ -69,19 +69,19 @@ def test_full_example_duckdb(tmp_path):
     )
     completeness_chart(df, db_api)
 
-    linker.compute_tf_table("city")
-    linker.compute_tf_table("first_name")
+    linker.table_management.compute_tf_table("city")
+    linker.table_management.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
+    linker.training.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df_predict = linker.inference.predict()
 
@@ -120,13 +120,13 @@ def test_full_example_duckdb(tmp_path):
         "cluster": 10000,
     }
 
-    linker.find_matches_to_new_records(
+    linker.inference.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_model_to_json(path)
+    linker.misc.save_model_to_json(path)
 
     db_api = DuckDBAPI()
     linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
@@ -314,11 +314,11 @@ def test_small_example_duckdb(tmp_path):
     db_api = DuckDBAPI()
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     linker.inference.predict()

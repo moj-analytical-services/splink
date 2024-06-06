@@ -119,16 +119,16 @@
 #             ["surname", "city"],
 #         ]
 #     )
-#     linker.compute_tf_table("city")
-#     linker.compute_tf_table("first_name")
+#     linker.table_management.compute_tf_table("city")
+#     linker.table_management.compute_tf_table("first_name")
 
-#     linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=None)
+#     linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=None)
 
 #     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-#     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+#     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
 #     blocking_rule = "l.dob = r.dob"
-#     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+#     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
 #     df_predict = linker.inference.predict()
 

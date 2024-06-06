@@ -129,7 +129,9 @@ def test_compound_comparison_level():
         "surname",
     }
 
-    linker.estimate_parameters_using_expectation_maximisation("l.city = r.city")
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        "l.city = r.city"
+    )
 
 
 def test_complex_compound_comparison_level():
@@ -218,4 +220,4 @@ def test_complex_compound_comparison_level():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    linker.estimate_parameters_using_expectation_maximisation("1=1")
+    linker.training.estimate_parameters_using_expectation_maximisation("1=1")

@@ -37,13 +37,13 @@ class LinkerTableManagement:
             ```py
             linker = Linker(df, db_api)
             linker.load_settings("saved_settings.json")
-            linker.compute_tf_table("surname")
+            linker.table_management.compute_tf_table("surname")
             linker.compare_two_records(record_left, record_right)
             ```
             Pre-computed term frequency tables
             ```py
             linker = Linker(df, db_api)
-            df_first_name_tf = linker.compute_tf_table("first_name")
+            df_first_name_tf = linker.table_management.compute_tf_table("first_name")
             df_first_name_tf.write.parquet("folder/first_name_tf")
             >>>
             # On subsequent data linking job, read this table rather than recompute
@@ -100,7 +100,7 @@ class LinkerTableManagement:
 
         # Drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
-        self._linker.delete_tables_created_by_splink_from_db()
+        self.delete_tables_created_by_splink_from_db()
 
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()

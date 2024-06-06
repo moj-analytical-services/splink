@@ -65,11 +65,11 @@ def test_udf_registration(spark_api):
         settings,
         spark_api,
     )
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
     blocking_rule = "l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     linker.inference.predict()
 

@@ -113,9 +113,7 @@ def get_em_training_string(br_rows):
 
     training_statements = []
     for block_on_str in block_on_strings:
-        statement = (
-            f"linker.estimate_parameters_using_expectation_maximisation({block_on_str})"
-        )
+        statement = f"linker.training.estimate_parameters_using_expectation_maximisation({block_on_str})"
         training_statements.append(statement)
 
     return " \n".join(training_statements)

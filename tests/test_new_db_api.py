@@ -83,15 +83,17 @@ def test_full_run(dialect, test_helpers, tmp_path):
         cl_settings,
         db_api,
     )
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
         0.6,
     )
-    linker.estimate_u_using_random_sampling(500)
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_u_using_random_sampling(500)
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name"
     )
-    linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname")
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname"
+    )
     df_e = linker.inference.predict()
     df_c = linker.cluster_pairwise_predictions_at_threshold(df_e, 0.99)
 
@@ -126,17 +128,19 @@ def test_charts(dialect, test_helpers, tmp_path):
 
     linker = Linker(df, cl_settings, db_api)
 
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
         0.6,
     )
-    linker.estimate_u_using_random_sampling(500)
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_u_using_random_sampling(500)
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name"
     )
-    linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname")
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname"
+    )
 
-    linker.match_weights_chart()
+    linker.visualisations.match_weights_chart()
     linker.m_u_parameters_chart()
 
 

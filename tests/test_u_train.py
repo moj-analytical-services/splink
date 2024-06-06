@@ -31,7 +31,7 @@ def test_u_train(test_helpers, dialect):
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
@@ -80,7 +80,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
     linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -143,7 +143,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     )
     linker.debug_mode = True
 
-    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
+    linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
@@ -267,7 +267,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -299,7 +299,7 @@ def test_u_train_multilink(test_helpers, dialect):
     settings["link_type"] = "link_and_dedupe"
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """

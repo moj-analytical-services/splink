@@ -22,8 +22,10 @@ def test_train_vs_predict(test_helpers, dialect):
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
     linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 
-    training_session = linker.estimate_parameters_using_expectation_maximisation(
-        "l.surname = r.surname", fix_u_probabilities=False
+    training_session = (
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            "l.surname = r.surname", fix_u_probabilities=False
+        )
     )
 
     expected = training_session.core_model_settings.probability_two_random_records_match
