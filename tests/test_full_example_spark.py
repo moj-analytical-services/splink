@@ -95,7 +95,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
@@ -125,7 +125,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     )
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
     record = {
         "unique_id": 1,
@@ -178,7 +178,7 @@ def test_link_only(spark, df_spark, spark_api):
             num_partitions_on_repartition=2,
         ),
     )
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
     assert set(df_predict.source_dataset_l.values) == {"my_left_ds"}
@@ -204,4 +204,4 @@ def test_spark_load_from_file(df, spark, spark_api):
         spark_api,
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 3167
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167

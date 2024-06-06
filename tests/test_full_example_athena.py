@@ -130,7 +130,7 @@
 #     blocking_rule = "l.dob = r.dob"
 #     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-#     df_predict = linker.predict()
+#     df_predict = linker.inference.predict()
 
 #     linker.comparison_viewer_dashboard(df_predict, "test_scv_athena.html", True, 2)
 
@@ -183,7 +183,7 @@
 #             ]
 #         )
 
-#         predict = linker.predict()
+#         predict = linker.inference.predict()
 
 #         return linker, path, predict
 
@@ -277,7 +277,7 @@
 #         input_table_aliases=table_aliases,
 #     )
 
-#     df_predict = linker.predict()
+#     df_predict = linker.inference.predict()
 #     df_predict.as_pandas_dataframe()
 
 #     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)

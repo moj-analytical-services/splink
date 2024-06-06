@@ -16,4 +16,4 @@ def test_datasets_basic_link(test_helpers):
         },
         **helper.extra_linker_args(),
     )
-    linker.predict()
+    linker.inference.predict()

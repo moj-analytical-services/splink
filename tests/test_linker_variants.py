@@ -70,7 +70,7 @@ def test_dedupe_only_join_condition():
 
         linker = Linker(df.copy(), s, database_api=db_api)
 
-        df_predict = linker.predict().as_pandas_dataframe()
+        df_predict = linker.inference.predict().as_pandas_dataframe()
 
         assert len(df_predict) == (6 * 5) / 2
 
@@ -95,7 +95,7 @@ def test_link_only_two_join_condition():
 
         linker = Linker([sds_d_only, sds_b_only], s, database_api=db_api)
 
-        df_predict = linker.predict().as_pandas_dataframe()
+        df_predict = linker.inference.predict().as_pandas_dataframe()
 
         assert len(df_predict) == 4
 
@@ -124,7 +124,7 @@ def test_link_only_three_join_condition():
 
         linker = Linker([sds_d_only, sds_b_only, sds_c_only], s, database_api=db_api)
 
-        df_predict = linker.predict().as_pandas_dataframe()
+        df_predict = linker.inference.predict().as_pandas_dataframe()
 
         assert len(df_predict) == 12
 
@@ -153,7 +153,7 @@ def test_link_and_dedupe_two_join_condition():
 
         linker = Linker([sds_d_only, sds_b_only], s, database_api=db_api)
 
-        df_predict = linker.predict().as_pandas_dataframe()
+        df_predict = linker.inference.predict().as_pandas_dataframe()
 
         assert len(df_predict) == (4 * 3) / 2
 
@@ -182,7 +182,7 @@ def test_link_and_dedupe_three_join_condition():
 
         linker = Linker([sds_d_only, sds_b_only, sds_c_only], s, database_api=db_api)
 
-        df_predict = linker.predict().as_pandas_dataframe()
+        df_predict = linker.inference.predict().as_pandas_dataframe()
 
         assert len(df_predict) == (6 * 5) / 2
 

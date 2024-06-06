@@ -69,7 +69,7 @@ def test_run_predict(dialect, test_helpers):
         cl_settings,
         db_api,
     )
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_excluding()
@@ -92,7 +92,7 @@ def test_full_run(dialect, test_helpers, tmp_path):
         "l.first_name = r.first_name"
     )
     linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname")
-    df_e = linker.predict()
+    df_e = linker.inference.predict()
     df_c = linker.cluster_pairwise_predictions_at_threshold(df_e, 0.99)
 
     linker.comparison_viewer_dashboard(

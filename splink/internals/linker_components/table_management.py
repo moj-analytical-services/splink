@@ -120,7 +120,7 @@ class LinkerTableManagement:
         """
 
         table_name_physical = "__splink__df_concat_with_tf_" + self._linker._cache_uid
-        splink_dataframe = self._linker.register_table(
+        splink_dataframe = self._linker.table_management.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         splink_dataframe.templated_name = "__splink__df_concat_with_tf"
@@ -132,7 +132,7 @@ class LinkerTableManagement:
 
     def register_table_predict(self, input_data, overwrite=False):
         table_name_physical = "__splink__df_predict_" + self._linker._cache_uid
-        splink_dataframe = self._linker.register_table(
+        splink_dataframe = self._linker.table_management.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         self._linker._intermediate_table_cache["__splink__df_predict"] = (
@@ -149,7 +149,7 @@ class LinkerTableManagement:
         )
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._linker._cache_uid}"
-        splink_dataframe = self._linker.register_table(
+        splink_dataframe = self._linker.table_management.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         self._linker._intermediate_table_cache[table_name_templated] = splink_dataframe
@@ -183,7 +183,7 @@ class LinkerTableManagement:
         Examples:
             ```py
             test_dict = {"a": [666,777,888],"b": [4,5,6]}
-            linker.register_table(test_dict, "test_dict")
+            linker.table_management.register_table(test_dict, "test_dict")
             linker.query_sql("select * from test_dict")
             ```
 

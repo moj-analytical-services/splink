@@ -50,11 +50,11 @@ class LinkerEvalution:
         Returns:
             SplinkDataFrame:  Table containing false positives and negatives
         """
-        labels_tablename = self._get_labels_tablename_from_input(
+        labels_tablename = self._linker._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
         )
         return prediction_errors_from_labels_table(
-            self,
+            self._linker,
             labels_tablename,
             include_false_positives,
             include_false_negatives,

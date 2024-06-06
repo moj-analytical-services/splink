@@ -29,7 +29,7 @@ def test_train_vs_predict(test_helpers, dialect):
     expected = training_session.core_model_settings.probability_two_random_records_match
 
     # We expect the probability_two_random_records_match to be the same as for a predict
-    df = linker.predict().as_pandas_dataframe()
+    df = linker.inference.predict().as_pandas_dataframe()
     actual = df["match_probability"].mean()
 
     # Will not be exactly equal because expected represents the

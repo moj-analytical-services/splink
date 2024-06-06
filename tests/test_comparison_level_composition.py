@@ -190,7 +190,7 @@ def test_composition_outputs(test_helpers, dialect):
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
-    pred = linker.predict()
+    pred = linker.inference.predict()
     out = pred.as_pandas_dataframe().sort_values(by=["unique_id_l", "unique_id_r"])
 
     # Check individual IDs are assigned to the correct gamma values

@@ -124,7 +124,7 @@ def compute_igraph_metrics(
     igraph_df = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
     bridges_indices = igraph_df.bridges()
     df_bridges_pd = df_edges_for_igraph.iloc[bridges_indices, :]
-    df_bridges = linker.register_table(
+    df_bridges = linker.table_management.register_table(
         df_bridges_pd, f"__splink__bridges_{igraph_edges_hash}"
     )
     # map our bridge edges back to the original node labelling

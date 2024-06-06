@@ -72,4 +72,4 @@ def test_simple_end_to_end(test_helpers, dialect):
 
     linker.estimate_parameters_using_expectation_maximisation(block_on("dob"))
 
-    linker.predict()
+    linker.inference.predict()

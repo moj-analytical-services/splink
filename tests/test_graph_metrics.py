@@ -39,7 +39,7 @@ def test_size_density_dedupe():
 
     linker = Linker(df_1, settings, database_api=db_api)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     df_result = linker.compute_graph_metrics(
@@ -76,7 +76,7 @@ def test_size_density_link():
         database_api=db_api,
     )
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     df_result = (
@@ -230,8 +230,12 @@ def test_metrics(dialect, test_helpers):
         {"link_type": "dedupe_only"},
         **helper.extra_linker_args(),
     )
-    df_predict = linker.register_table(helper.convert_frame(df_e), "predict")
-    df_clustered = linker.register_table(helper.convert_frame(df_c), "clusters")
+    df_predict = linker.table_management.register_table(
+        helper.convert_frame(df_e), "predict"
+    )
+    df_clustered = linker.table_management.register_table(
+        helper.convert_frame(df_c), "clusters"
+    )
 
     cm = linker.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
@@ -342,8 +346,12 @@ def test_is_bridge(dialect, test_helpers):
         {"link_type": "dedupe_only"},
         **helper.extra_linker_args(),
     )
-    df_predict = linker.register_table(helper.convert_frame(df_e), "br_predict")
-    df_clustered = linker.register_table(helper.convert_frame(df_c), "br_clusters")
+    df_predict = linker.table_management.register_table(
+        helper.convert_frame(df_e), "br_predict"
+    )
+    df_clustered = linker.table_management.register_table(
+        helper.convert_frame(df_c), "br_clusters"
+    )
 
     # linker.debug_mode = True
     cm = linker.compute_graph_metrics(
@@ -392,7 +400,7 @@ def test_edges_without_igraph():
     }
     linker = Linker(df_1, settings, DuckDBAPI())
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     df_clustered = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.9)
 
     # pretend we don't have igraph installed
@@ -428,8 +436,8 @@ def test_no_threshold_provided():
     settings = {"link_type": "dedupe_only"}
     linker = Linker(df_1, settings, DuckDBAPI())
 
-    df_predict = linker.register_table(df_e, "predict")
-    df_clustered = linker.register_table(df_c, "clusters")
+    df_predict = linker.table_management.register_table(df_e, "predict")
+    df_clustered = linker.table_management.register_table(df_c, "clusters")
 
     with raises(TypeError):
         # no threshold_match_probability, no metadata
@@ -450,8 +458,8 @@ def test_override_metadata_threshold():
     settings = {"link_type": "dedupe_only"}
     linker = Linker(df_1, settings, DuckDBAPI())
     # linker.debug_mode = True
-    df_predict = linker.register_table(df_e, "predict")
-    df_clustered = linker.register_table(df_c, "clusters")
+    df_predict = linker.table_management.register_table(df_e, "predict")
+    df_clustered = linker.table_management.register_table(df_c, "clusters")
     df_clustered.metadata["threshold_match_probability"] = 0.95
 
     gm_results_95 = linker.compute_graph_metrics(df_predict, df_clustered)

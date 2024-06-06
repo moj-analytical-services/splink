@@ -42,10 +42,10 @@ def register_cc_df(G):
     )
 
     # re-register under our required name to run the CC function
-    linker.register_table(df_concat, table_name, overwrite=True)
+    linker.table_management.register_table(df_concat, table_name, overwrite=True)
 
     df_nodes = pd.DataFrame({"unique_id": G.nodes})
-    linker.register_table_input_nodes_concat_with_tf(df_nodes)
+    linker.table_management.register_table_input_nodes_concat_with_tf(df_nodes)
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBDataFrame(table_name, table_name, db_api)

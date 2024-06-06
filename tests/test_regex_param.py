@@ -131,7 +131,7 @@ def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
     df = helper.convert_frame(df_pandas)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
-    linker_output = linker.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict().as_pandas_dataframe()
 
     for gamma, id_pairs in record_pairs_gamma.items():
         for left, right in id_pairs:

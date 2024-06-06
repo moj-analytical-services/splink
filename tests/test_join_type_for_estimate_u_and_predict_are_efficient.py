@@ -133,7 +133,7 @@ def test_dedupe_only():
 
     handler.log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -188,7 +188,7 @@ def test_link_and_dedupe():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -244,7 +244,7 @@ def test_link_only_two():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -301,7 +301,7 @@ def test_link_only_three():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)

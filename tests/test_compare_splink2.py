@@ -19,7 +19,7 @@ def test_splink_2_predict():
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
@@ -37,7 +37,7 @@ def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
     linker = Linker(df_spark, settings_dict, spark_api)
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
     f1 = df_e["unique_id_l"] == "479"
     f2 = df_e["unique_id_r"] == "481"
     actual_record = df_e[f1 & f2]
@@ -64,7 +64,7 @@ def test_splink_2_predict_sqlite():
     db_api = SQLiteAPI(con)
     linker = Linker("fake_data_1", settings_dict, database_api=db_api)
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
@@ -188,7 +188,7 @@ def test_lambda():
 
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    ma = linker.predict().as_pandas_dataframe()
+    ma = linker.inference.predict().as_pandas_dataframe()
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
     ma[f1 & f2]

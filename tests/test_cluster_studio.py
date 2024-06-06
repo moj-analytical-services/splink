@@ -34,7 +34,7 @@ def test_density_sample():
     )
 
     # Convert to Splink dataframe
-    df_cluster_metrics = linker.register_table(
+    df_cluster_metrics = linker.table_management.register_table(
         pd_metrics, "df_cluster_metrics", overwrite=True
     )
     result = _get_lowest_density_clusters(

@@ -48,7 +48,7 @@ def test_full_example_sqlite(tmp_path):
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
@@ -62,7 +62,7 @@ def test_full_example_sqlite(tmp_path):
 
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
 
 @mark_with_dialects_including("sqlite")
@@ -84,7 +84,7 @@ def test_small_link_example_sqlite():
         input_table_aliases=["fake_data_1", "fake_data_2"],
     )
 
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_including("sqlite")
@@ -96,4 +96,4 @@ def test_default_conn_sqlite(tmp_path):
     db_api = SQLiteAPI()
     linker = Linker(df, settings_dict, db_api)
 
-    linker.predict()
+    linker.inference.predict()

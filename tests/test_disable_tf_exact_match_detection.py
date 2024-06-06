@@ -152,7 +152,7 @@ def test_with_predict_calculation():
     ]
     linker.register_term_frequency_lookup(tf_lookup, "surname")
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     sql = f"""
     select * from {df_predict.physical_name}
@@ -194,7 +194,7 @@ def test_with_predict_calculation():
     ]
     linker.register_term_frequency_lookup(tf_lookup, "surname")
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     sql = f"""
     select * from {df_predict.physical_name}
@@ -242,7 +242,7 @@ def test_with_predict_calculation():
         ]
         linker.register_term_frequency_lookup(tf_lookup, "surname")
 
-        df_predict = linker.predict()
+        df_predict = linker.inference.predict()
 
         sql = f"""
         select * from {df_predict.physical_name}

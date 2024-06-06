@@ -71,7 +71,7 @@ def test_udf_registration(spark_api):
     blocking_rule = "l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_including("spark")

@@ -76,7 +76,7 @@ def test_cll_creators_run_predict(dialect, test_helpers):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = helper.Linker(df, cll_settings, **helper.extra_linker_args())
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_excluding()
@@ -172,7 +172,7 @@ def test_cl_creators_run_predict(dialect, test_helpers):
 
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
 
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_excluding("sqlite")
@@ -201,7 +201,7 @@ def test_regex_fall_through(dialect, test_helpers):
     }
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     # only entry should be in Else level
     assert df_e["gamma_name"][0] == 0
@@ -231,7 +231,7 @@ def test_null_pattern_match(dialect, test_helpers):
     }
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     # only entry should be in Null level
     assert df_e["gamma_name"][0] == -1
@@ -285,7 +285,7 @@ def test_ctl_creators_run_predict(dialect, test_helpers):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = helper.Linker(df, ctl_settings, **helper.extra_linker_args())
-    linker.predict()
+    linker.inference.predict()
 
 
 def test_custom_dialect_no_string_lookup():

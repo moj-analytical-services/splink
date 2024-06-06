@@ -74,7 +74,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_postgres.html"), True, 2
@@ -86,7 +86,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -137,4 +137,4 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
         database_api=db_api,
         settings=settings_dict,
     )
-    linker.predict()
+    linker.inference.predict()

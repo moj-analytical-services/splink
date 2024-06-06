@@ -83,7 +83,7 @@ def test_full_example_duckdb(tmp_path):
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
@@ -95,7 +95,7 @@ def test_full_example_duckdb(tmp_path):
 
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -181,7 +181,7 @@ def test_link_only(input, source_l, source_r):
 
     db_api = DuckDBAPI()
     linker = Linker(input, settings, database_api=db_api)
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
     assert set(df_predict.source_dataset_l.values) == source_l
@@ -227,7 +227,7 @@ def test_duckdb_load_from_file(df):
         database_api=db_api,
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 3167
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
 
     settings["link_type"] = "link_only"
 
@@ -239,7 +239,7 @@ def test_duckdb_load_from_file(df):
         input_table_aliases=["testing1", "testing2"],
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 7257
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
 
 
 @mark_with_dialects_including("duckdb")
@@ -321,4 +321,4 @@ def test_small_example_duckdb(tmp_path):
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.predict()
+    linker.inference.predict()

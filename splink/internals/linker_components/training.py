@@ -383,7 +383,9 @@ class LinkerTraining:
         Examples:
             ```py
             pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
-            linker.register_table(pairwise_labels, "labels", overwrite=True)
+            linker.table_management.register_table(
+                pairwise_labels, "labels", overwrite=True
+            )
             linker.estimate_m_from_pairwise_labels("labels")
             ```
         """

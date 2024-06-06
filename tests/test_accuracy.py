@@ -56,7 +56,7 @@ def test_scored_labels_table():
     concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     pipeline = CTEPipeline([concat_with_tf])
-    linker.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
     pipeline.enqueue_list_of_sqls(sqls)
@@ -69,7 +69,7 @@ def test_scored_labels_table():
     assert len(df_scores_labels) == 6
 
     # Check predictions are the same as the labels
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     f1 = df_predict["unique_id_l"] == 1
     f2 = df_predict["unique_id_r"] == 2
@@ -139,7 +139,9 @@ def test_truth_space_table():
     ]
     labels_with_predictions = pd.DataFrame(labels_with_predictions)
 
-    linker.register_table(labels_with_predictions, "__splink__labels_with_predictions")
+    linker.table_management.register_table(
+        labels_with_predictions, "__splink__labels_with_predictions"
+    )
     pipeline = CTEPipeline()
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     pipeline.enqueue_list_of_sqls(sqls)
@@ -195,9 +197,9 @@ def test_roc_chart_dedupe_only():
 
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    labels_sdf = linker.register_table(df_labels, "labels")
+    labels_sdf = linker.table_management.register_table(df_labels, "labels")
 
-    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
+    linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -228,9 +230,9 @@ def test_roc_chart_link_and_dedupe():
         df, settings_dict, input_table_aliases="fake_data_1", database_api=db_api
     )
 
-    labels_sdf = linker.register_table(df_labels, "labels")
+    labels_sdf = linker.table_management.register_table(df_labels, "labels")
 
-    linker.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
+    linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
 def test_prediction_errors_from_labels_table():
@@ -290,12 +292,14 @@ def test_prediction_errors_from_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    linker.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels")
 
     pipeline = CTEPipeline()
     compute_df_concat_with_tf(linker, pipeline)
 
-    df_res = linker.prediction_errors_from_labels_table("labels").as_pandas_dataframe()
+    df_res = linker.evaluation.prediction_errors_from_labels_table(
+        "labels"
+    ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
     records = list(df_res.to_records(index=False))
     records = [tuple(p) for p in records]
@@ -309,12 +313,12 @@ def test_prediction_errors_from_labels_table():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    linker.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels")
 
     pipeline = CTEPipeline()
     compute_df_concat_with_tf(linker, pipeline)
 
-    df_res = linker.prediction_errors_from_labels_table(
+    df_res = linker.evaluation.prediction_errors_from_labels_table(
         "labels", include_false_negatives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
@@ -329,12 +333,12 @@ def test_prediction_errors_from_labels_table():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels")
 
     pipeline = CTEPipeline()
     compute_df_concat_with_tf(linker, pipeline)
 
-    df_res = linker.prediction_errors_from_labels_table(
+    df_res = linker.evaluation.prediction_errors_from_labels_table(
         "labels", include_false_positives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
@@ -393,7 +397,7 @@ def test_prediction_errors_from_labels_column():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    df_res = linker.prediction_errors_from_labels_column(
+    df_res = linker.evaluation.prediction_errors_from_labels_column(
         "cluster"
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
@@ -410,7 +414,7 @@ def test_prediction_errors_from_labels_column():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    df_res = linker.prediction_errors_from_labels_column(
+    df_res = linker.evaluation.prediction_errors_from_labels_column(
         "cluster", include_false_positives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
@@ -427,7 +431,7 @@ def test_prediction_errors_from_labels_column():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    df_res = linker.prediction_errors_from_labels_column(
+    df_res = linker.evaluation.prediction_errors_from_labels_column(
         "cluster", include_false_negatives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]

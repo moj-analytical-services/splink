@@ -12,21 +12,23 @@ def _test_table_registration(
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
-    linker.register_table(a, "__splink__df_pd")
+    linker.table_management.register_table(a, "__splink__df_pd")
     pd_df = linker.query_sql("select * from __splink__df_pd", output_type="splinkdf")
     assert sum(pd_df.as_pandas_dataframe().a) == sum(a.a)
 
     # Standard dictionary
     test_dict = {"a": [666, 777, 888], "b": [4, 5, 6]}
-    t_dict = linker.register_table(test_dict, "__splink__df_test_dict")
+    t_dict = linker.table_management.register_table(test_dict, "__splink__df_test_dict")
     test_dict_df = pd.DataFrame(test_dict)
     assert sum(t_dict.as_pandas_dataframe().b) == sum(test_dict_df.b)
 
     # Duplicate table name (check for error)
     with pytest.raises(ValueError):
-        linker.register_table(test_dict, "__splink__df_pd")
+        linker.table_management.register_table(test_dict, "__splink__df_pd")
     # Test overwriting works
-    linker.register_table(test_dict_df, "__splink__df_pd", overwrite=True)
+    linker.table_management.register_table(
+        test_dict_df, "__splink__df_pd", overwrite=True
+    )
     out = linker.query_sql("select * from __splink__df_pd", output_type="pandas")
     assert sum(out.a) == sum(test_dict_df.a)
 
@@ -37,7 +39,7 @@ def _test_table_registration(
         {"a": 3, "b": 44, "c": 555},
     ]
 
-    linker.register_table(b, "__splink__df_record_df")
+    linker.table_management.register_table(b, "__splink__df_record_df")
     record_df = linker.query_sql(
         "select * from __splink__df_record_df", output_type="pandas"
     )
@@ -58,7 +60,7 @@ def _test_table_registration(
     # Test registration on additional data types for specific linkers
     if additional_tables_to_register:
         for table in additional_tables_to_register:
-            linker.register_table(table, "test_table", overwrite=True)
+            linker.table_management.register_table(table, "test_table", overwrite=True)
 
 
 def register_roc_data(linker):
@@ -83,7 +85,7 @@ def register_roc_data(linker):
         axis=1,
     )
 
-    linker.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels")
 
 
 def _test_write_functionality(linker, read_csv_func):
@@ -93,18 +95,18 @@ def _test_write_functionality(linker, read_csv_func):
         shutil.rmtree(root)
 
     parquet_f = f"{root}/tmp_files/test.parquet"
-    linker.predict().to_parquet(parquet_f)
+    linker.inference.predict().to_parquet(parquet_f)
     assert len(pd.read_parquet(parquet_f)) == 3167
     # Duplicate table name (check for error)
     with pytest.raises(FileExistsError):
-        linker.predict().to_parquet(parquet_f)
+        linker.inference.predict().to_parquet(parquet_f)
 
     csv_f = f"{root}/tmp_files/test.csv"
-    linker.predict().to_csv(csv_f)
+    linker.inference.predict().to_csv(csv_f)
     assert len(read_csv_func(csv_f)) == 3167
     # Duplicate table name (check for error)
     with pytest.raises(FileExistsError):
-        linker.predict().to_csv(csv_f)
+        linker.inference.predict().to_csv(csv_f)
 
     # delete the folder and its contents
     shutil.rmtree(root)
