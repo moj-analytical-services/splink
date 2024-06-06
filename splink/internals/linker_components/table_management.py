@@ -2,12 +2,19 @@ from __future__ import annotations
 
 import logging
 
+from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
 )
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
     colname_to_tf_tablename,
+    term_frequencies_for_single_column_sql,
+)
+from splink.internals.vertically_concatenate import (
+    enqueue_df_concat,
 )
 
 logger = logging.getLogger(__name__)
@@ -16,6 +23,61 @@ logger = logging.getLogger(__name__)
 class LinkerTableManagement:
     def __init__(self, linker):
         self._linker = linker
+
+    def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
+        """Compute a term frequency table for a given column and persist to the database
+
+        This method is useful if you want to pre-compute term frequency tables e.g.
+        so that real time linkage executes faster, or so that you can estimate
+        various models without having to recompute term frequency tables each time
+
+        Examples:
+
+            Real time linkage
+            ```py
+            linker = Linker(df, db_api)
+            linker.load_settings("saved_settings.json")
+            linker.compute_tf_table("surname")
+            linker.compare_two_records(record_left, record_right)
+            ```
+            Pre-computed term frequency tables
+            ```py
+            linker = Linker(df, db_api)
+            df_first_name_tf = linker.compute_tf_table("first_name")
+            df_first_name_tf.write.parquet("folder/first_name_tf")
+            >>>
+            # On subsequent data linking job, read this table rather than recompute
+            df_first_name_tf = pd.read_parquet("folder/first_name_tf")
+            df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+            ```
+
+
+        Args:
+            column_name (str): The column name in the input table
+
+        Returns:
+            SplinkDataFrame: The resultant table as a splink data frame
+        """
+
+        input_col = InputColumn(
+            column_name,
+            column_info_settings=self._linker._settings_obj.column_info_settings,
+            sql_dialect=self._linker._settings_obj._sql_dialect,
+        )
+        tf_tablename = colname_to_tf_tablename(input_col)
+        cache = self._linker._intermediate_table_cache
+
+        if tf_tablename in cache:
+            tf_df = cache.get_with_logging(tf_tablename)
+        else:
+            pipeline = CTEPipeline()
+            pipeline = enqueue_df_concat(self._linker, pipeline)
+            sql = term_frequencies_for_single_column_sql(input_col)
+            pipeline.enqueue_sql(sql, tf_tablename)
+            tf_df = self._linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            self._linker._intermediate_table_cache[tf_tablename] = tf_df
+
+        return tf_df
 
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
@@ -101,3 +163,40 @@ class LinkerTableManagement:
         )
         splink_dataframe.templated_name = "__splink__df_labels"
         return splink_dataframe
+
+    def delete_tables_created_by_splink_from_db(self):
+        self._linker.db_api.delete_tables_created_by_splink_from_db()
+
+    def register_table(
+        self,
+        input_table: AcceptableInputTableType,
+        table_name: str,
+        overwrite: bool = False,
+    ) -> SplinkDataFrame:
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
+
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        Examples:
+            ```py
+            test_dict = {"a": [666,777,888],"b": [4,5,6]}
+            linker.register_table(test_dict, "test_dict")
+            linker.query_sql("select * from test_dict")
+            ```
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
+        """
+
+        return self._linker.db_api.register_table(input_table, table_name, overwrite)

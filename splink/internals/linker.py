@@ -11,10 +11,6 @@ from splink.internals.blocking import (
     block_using_rules_sqls,
 )
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
-from splink.internals.charts import (
-    ChartReturnType,
-    unlinkables_chart,
-)
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_sql,
 )
@@ -26,10 +22,6 @@ from splink.internals.find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
 from splink.internals.input_column import InputColumn
-from splink.internals.labelling_tool import (
-    generate_labelling_tool_comparisons,
-    render_labelling_tool_html,
-)
 from splink.internals.linker_components.clustering import LinkerClustering
 from splink.internals.linker_components.evaluation import LinkerEvalution
 from splink.internals.linker_components.inference import LinkerInference
@@ -57,17 +49,11 @@ from splink.internals.settings_validation.valid_types import (
     _validate_dialect,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.term_frequencies import (
-    colname_to_tf_tablename,
-    term_frequencies_for_single_column_sql,
-)
 from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )
-from splink.internals.unlinkables import unlinkables_data
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
-    enqueue_df_concat,
 )
 
 logger = logging.getLogger(__name__)
@@ -370,79 +356,6 @@ class Linker:
         """
         return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
 
-    def register_table(
-        self,
-        input_table: AcceptableInputTableType,
-        table_name: str,
-        overwrite: bool = False,
-    ) -> SplinkDataFrame:
-        """
-        Register a table to your backend database, to be used in one of the
-        splink methods, or simply to allow querying.
-
-        Tables can be of type: dictionary, record level dictionary,
-        pandas dataframe, pyarrow table and in the spark case, a spark df.
-
-        Examples:
-            ```py
-            test_dict = {"a": [666,777,888],"b": [4,5,6]}
-            linker.register_table(test_dict, "test_dict")
-            linker.query_sql("select * from test_dict")
-            ```
-
-        Args:
-            input: The data you wish to register. This can be either a dictionary,
-                pandas dataframe, pyarrow table or a spark dataframe.
-            table_name (str): The name you wish to assign to the table.
-            overwrite (bool): Overwrite the table in the underlying database if it
-                exists
-
-        Returns:
-            SplinkDataFrame: An abstraction representing the table created by the sql
-                pipeline
-        """
-
-        return self.db_api.register_table(input_table, table_name, overwrite)
-
-    def query_sql(self, sql, output_type="pandas"):
-        """
-        Run a SQL query against your backend database and return
-        the resulting output.
-
-        Examples:
-            ```py
-            linker = Linker(df, settings, db_api)
-            df_predict = linker.predict()
-            linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
-            ```
-
-        Args:
-            sql (str): The SQL to be queried.
-            output_type (str): One of splink_df/splinkdf or pandas.
-                This determines the type of table that your results are output in.
-        """
-
-        output_tablename_templated = "__splink__df_sql_query"
-
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(sql, output_tablename_templated)
-        splink_dataframe = self.db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
-        )
-
-        if output_type in ("splink_df", "splinkdf"):
-            return splink_dataframe
-        elif output_type == "pandas":
-            out = splink_dataframe.as_pandas_dataframe()
-            # If pandas, drop the table to cleanup the db
-            splink_dataframe.drop_table_from_database_and_remove_from_cache()
-            return out
-        else:
-            raise ValueError(
-                f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
-            )
-
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
         of the main linker e.g. setting parameters on the copy will not affect the
@@ -571,9 +484,6 @@ class Linker:
                 if cl._has_estimated_m_values:
                     cl.m_probability = cl._trained_m_median
 
-    def delete_tables_created_by_splink_from_db(self):
-        self.db_api.delete_tables_created_by_splink_from_db()
-
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
         rmc = self._settings_obj._retain_matching_columns
@@ -597,61 +507,6 @@ class Linker:
                 f" Its current value is {rmc}. "
                 "Please re-run your linkage with it set to True."
             )
-
-    def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
-        """Compute a term frequency table for a given column and persist to the database
-
-        This method is useful if you want to pre-compute term frequency tables e.g.
-        so that real time linkage executes faster, or so that you can estimate
-        various models without having to recompute term frequency tables each time
-
-        Examples:
-
-            Real time linkage
-            ```py
-            linker = Linker(df, db_api)
-            linker.load_settings("saved_settings.json")
-            linker.compute_tf_table("surname")
-            linker.compare_two_records(record_left, record_right)
-            ```
-            Pre-computed term frequency tables
-            ```py
-            linker = Linker(df, db_api)
-            df_first_name_tf = linker.compute_tf_table("first_name")
-            df_first_name_tf.write.parquet("folder/first_name_tf")
-            >>>
-            # On subsequent data linking job, read this table rather than recompute
-            df_first_name_tf = pd.read_parquet("folder/first_name_tf")
-            df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
-            ```
-
-
-        Args:
-            column_name (str): The column name in the input table
-
-        Returns:
-            SplinkDataFrame: The resultant table as a splink data frame
-        """
-
-        input_col = InputColumn(
-            column_name,
-            column_info_settings=self._settings_obj.column_info_settings,
-            sql_dialect=self._settings_obj._sql_dialect,
-        )
-        tf_tablename = colname_to_tf_tablename(input_col)
-        cache = self._intermediate_table_cache
-
-        if tf_tablename in cache:
-            tf_df = cache.get_with_logging(tf_tablename)
-        else:
-            pipeline = CTEPipeline()
-            pipeline = enqueue_df_concat(self, pipeline)
-            sql = term_frequencies_for_single_column_sql(input_col)
-            pipeline.enqueue_sql(sql, tf_tablename)
-            tf_df = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            self._intermediate_table_cache[tf_tablename] = tf_df
-
-        return tf_df
 
     def _self_link(self) -> SplinkDataFrame:
         """Use the linkage model to compare and score all records in our input df with
@@ -723,95 +578,6 @@ class Linker:
                 " in the input database"
             )
         return labels_tablename
-
-    def unlinkables_chart(
-        self,
-        x_col: str = "match_weight",
-        name_of_data_in_title: str | None = None,
-        as_dict: bool = False,
-    ) -> ChartReturnType:
-        """Generate an interactive chart displaying the proportion of records that
-        are "unlinkable" for a given splink score threshold and model parameters.
-
-        Unlinkable records are those that, even when compared with themselves, do not
-        contain enough information to confirm a match.
-
-        Args:
-            x_col (str, optional): Column to use for the x-axis.
-                Defaults to "match_weight".
-            name_of_data_in_title (str, optional): Name of the source dataset to use for
-                the title of the output chart.
-            as_dict (bool, optional): If True, return a dict version of the chart.
-
-        Examples:
-            For the simplest code pipeline, load a pre-trained model
-            and run this against the test data.
-            ```py
-            from splink.datasets import splink_datasets
-            df = splink_datasets.fake_1000
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            linker.unlinkables_chart()
-            ```
-            For more complex code pipelines, you can run an entire pipeline
-            that estimates your m and u values, before `unlinkables_chart().
-
-        Returns:
-            altair.Chart: An altair chart
-        """
-
-        # Link our initial df on itself and calculate the % of unlinkable entries
-        records = unlinkables_data(self)
-        return unlinkables_chart(records, x_col, name_of_data_in_title, as_dict)
-
-    def labelling_tool_for_specific_record(
-        self,
-        unique_id,
-        source_dataset=None,
-        out_path="labelling_tool.html",
-        overwrite=False,
-        match_weight_threshold=-4,
-        view_in_jupyter=False,
-        show_splink_predictions_in_interface=True,
-    ):
-        """Create a standalone, offline labelling dashboard for a specific record
-        as identified by its unique id
-
-        Args:
-            unique_id (str): The unique id of the record for which to create the
-                labelling tool
-            source_dataset (str, optional): If there are multiple datasets, to
-                identify the record you must also specify the source_dataset. Defaults
-                to None.
-            out_path (str, optional): The output path for the labelling tool. Defaults
-                to "labelling_tool.html".
-            overwrite (bool, optional): If true, overwrite files at the output
-                path if they exist. Defaults to False.
-            match_weight_threshold (int, optional): Include possible matches in the
-                output which score above this threshold. Defaults to -4.
-            view_in_jupyter (bool, optional): If you're viewing in the Jupyter
-                html viewer, set this to True to extract your labels. Defaults to False.
-            show_splink_predictions_in_interface (bool, optional): Whether to
-                show information about the Splink model's predictions that could
-                potentially bias the decision of the clerical labeller. Defaults to
-                True.
-        """
-
-        df_comparisons = generate_labelling_tool_comparisons(
-            self,
-            unique_id,
-            source_dataset,
-            match_weight_threshold=match_weight_threshold,
-        )
-
-        render_labelling_tool_html(
-            self,
-            df_comparisons,
-            show_splink_predictions_in_interface=show_splink_predictions_in_interface,
-            out_path=out_path,
-            view_in_jupyter=view_in_jupyter,
-            overwrite=overwrite,
-        )
 
     def _find_blocking_rules_below_threshold(
         self, max_comparisons_per_rule, blocking_expressions=None
