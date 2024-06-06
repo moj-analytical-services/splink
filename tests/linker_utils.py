@@ -13,7 +13,9 @@ def _test_table_registration(
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
     linker.table_management.register_table(a, "__splink__df_pd")
-    pd_df = linker.query_sql("select * from __splink__df_pd", output_type="splinkdf")
+    pd_df = linker.misc.query_sql(sql)(
+        "select * from __splink__df_pd", output_type="splinkdf"
+    )
     assert sum(pd_df.as_pandas_dataframe().a) == sum(a.a)
 
     # Standard dictionary
@@ -29,7 +31,9 @@ def _test_table_registration(
     linker.table_management.register_table(
         test_dict_df, "__splink__df_pd", overwrite=True
     )
-    out = linker.query_sql("select * from __splink__df_pd", output_type="pandas")
+    out = linker.misc.query_sql(sql)(
+        "select * from __splink__df_pd", output_type="pandas"
+    )
     assert sum(out.a) == sum(test_dict_df.a)
 
     # Record level dictionary
@@ -40,19 +44,21 @@ def _test_table_registration(
     ]
 
     linker.table_management.register_table(b, "__splink__df_record_df")
-    record_df = linker.query_sql(
+    record_df = linker.misc.query_sql(sql)(
         "select * from __splink__df_record_df", output_type="pandas"
     )
     assert sum(record_df.b) == sum(record["b"] for record in b)
 
     with pytest.raises(ValueError):
-        linker.query_sql("select * from __splink__df_test_dict", output_type="testing")
-    df = linker.query_sql(
+        linker.misc.query_sql(sql)(
+            "select * from __splink__df_test_dict", output_type="testing"
+        )
+    df = linker.misc.query_sql(sql)(
         "select * from __splink__df_test_dict", output_type="splinkdf"
     ).as_pandas_dataframe()
     assert sum(df.b) == sum(test_dict_df.b)
 
-    r_dict = linker.query_sql(
+    r_dict = linker.misc.query_sql(sql)(
         "select * from __splink__df_record_df", output_type="splinkdf"
     ).as_record_dict()
     assert sum(pd.DataFrame.from_records(r_dict).a) == sum(record["a"] for record in b)

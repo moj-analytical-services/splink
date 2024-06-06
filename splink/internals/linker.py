@@ -363,6 +363,13 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
+        new_linker.clustering._linker = new_linker
+        new_linker.evaluation._linker = new_linker
+        new_linker.inference._linker = new_linker
+        new_linker.misc._linker = new_linker
+        new_linker.table_management._linker = new_linker
+        new_linker.training._linker = new_linker
+        new_linker.visualisations._linker = new_linker
         new_settings = deepcopy(self._settings_obj)
         new_linker._settings_obj = new_settings
         return new_linker

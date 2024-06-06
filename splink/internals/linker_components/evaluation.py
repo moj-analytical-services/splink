@@ -110,7 +110,7 @@ class LinkerEvalution:
                 - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.accuracy_analysis_from_labels_column("ground_truth", add_metrics=["f1"])
+            linker.evaluation.accuracy_analysis_from_labels_column("ground_truth", add_metrics=["f1"])
             ```
 
         Returns:

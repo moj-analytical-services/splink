@@ -105,7 +105,7 @@ def test_damerau_levenshtein(spark_api):
         where l.id < r.id
     """
 
-    udf_out = linker.query_sql(sql)
+    udf_out = linker.misc.query_sql(sql)
     # Set accuracy level
     decimals = 4
 
@@ -192,7 +192,7 @@ def test_jaro(spark_api):
         where l.id < r.id
     """
 
-    udf_out = linker.query_sql(sql)
+    udf_out = linker.misc.query_sql(sql)
     # Set accuracy level
     decimals = 4
 
@@ -274,7 +274,7 @@ def test_jaro_winkler(spark_api):
         where l.id < r.id
     """
 
-    udf_out = linker.query_sql(sql)
+    udf_out = linker.misc.query_sql(sql)
     # Set accuracy level
     decimals = 4
 
