@@ -30,7 +30,7 @@ def test_u_train(test_helpers, dialect):
     df_linker = helper.convert_frame(df)
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
+    linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -79,7 +79,7 @@ def test_u_train_link_only(test_helpers, dialect):
     df_r = helper.convert_frame(df_r)
 
     linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
-    linker.debug_mode = True
+    linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -141,7 +141,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         input_table_aliases=["_a", "_b"],
         **helper.extra_linker_args(),
     )
-    linker.debug_mode = True
+    linker._debug_mode = True
 
     linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
@@ -266,7 +266,7 @@ def test_u_train_multilink(test_helpers, dialect):
     }
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
+    linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -298,7 +298,7 @@ def test_u_train_multilink(test_helpers, dialect):
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
+    linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
