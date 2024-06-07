@@ -178,6 +178,7 @@ class LinkerTraining:
                 "model's u-parameters. Consider increasing to 1e8 or 1e9, which will "
                 "result in more accurate estimates, but with a longer run time."
             )
+
         estimate_u_values(self._linker, max_pairs, seed)
         self._linker._populate_m_u_from_trained_values()
 

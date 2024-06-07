@@ -363,15 +363,18 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_linker.clustering._linker = new_linker
-        new_linker.evaluation._linker = new_linker
-        new_linker.inference._linker = new_linker
-        new_linker.misc._linker = new_linker
-        new_linker.table_management._linker = new_linker
-        new_linker.training._linker = new_linker
-        new_linker.visualisations._linker = new_linker
+
         new_settings = deepcopy(self._settings_obj)
         new_linker._settings_obj = new_settings
+
+        new_linker.clustering = LinkerClustering(new_linker)
+        new_linker.evaluation = LinkerEvalution(new_linker)
+        new_linker.inference = LinkerInference(new_linker)
+        new_linker.misc = LinkerMisc(new_linker)
+        new_linker.table_management = LinkerTableManagement(new_linker)
+        new_linker.training = LinkerTraining(new_linker)
+        new_linker.visualisations = LinkerVisualisations(new_linker)
+
         return new_linker
 
     def _predict_warning(self):

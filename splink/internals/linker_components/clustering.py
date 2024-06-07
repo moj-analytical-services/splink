@@ -168,7 +168,11 @@ class LinkerClustering:
         ...
         """
         df_edge_metrics = compute_edge_metrics(
-            self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
+            self._linker,
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
         )
         df_edge_metrics.metadata["threshold_match_probability"] = (
             threshold_match_probability
@@ -258,17 +262,17 @@ class LinkerClustering:
                     "to compute graph metrics you must provide "
                     "`threshold_match_probability` manually"
                 )
-        df_node_metrics = self._linker._compute_metrics_nodes(
+        df_node_metrics = self._compute_metrics_nodes(
             df_predict, df_clustered, threshold_match_probability
         )
-        df_edge_metrics = self._linker._compute_metrics_edges(
+        df_edge_metrics = self._compute_metrics_edges(
             df_node_metrics,
             df_predict,
             df_clustered,
             threshold_match_probability,
         )
         # don't need edges as information is baked into node metrics
-        df_cluster_metrics = self._linker._compute_metrics_clusters(df_node_metrics)
+        df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
 
         return GraphMetricsResults(
             nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics

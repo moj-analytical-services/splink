@@ -95,15 +95,15 @@ def test_full_run(dialect, test_helpers, tmp_path):
         "l.surname = r.surname"
     )
     df_e = linker.inference.predict()
-    df_c = linker.cluster_pairwise_predictions_at_threshold(df_e, 0.99)
+    df_c = linker.clustering.cluster_pairwise_predictions_at_threshold(df_e, 0.99)
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_e,
         os.path.join(tmp_path, "test_cvd_duckdb.html"),
         overwrite=True,
         num_example_rows=2,
     )
-    linker.cluster_studio_dashboard(
+    linker.visualisations.cluster_studio_dashboard(
         df_e,
         df_c,
         os.path.join(tmp_path, "test_csd_duckdb.html"),

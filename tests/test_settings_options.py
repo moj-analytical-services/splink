@@ -64,8 +64,12 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
     linker.training.estimate_u_using_random_sampling(2e4)
     linker.training.estimate_parameters_using_expectation_maximisation("l.dob = r.dob")
     df_predict = linker.predict(0.1)
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
-    linker.comparison_viewer_dashboard(df_predict, os.path.join(tmp_path, "csv.html"))
-    linker.cluster_studio_dashboard(
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
+    linker.visualisations.comparison_viewer_dashboard(
+        df_predict, os.path.join(tmp_path, "csv.html")
+    )
+    linker.visualisations.cluster_studio_dashboard(
         df_predict, df_clusters, os.path.join(tmp_path, "csd.html")
     )

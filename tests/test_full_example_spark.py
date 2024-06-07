@@ -97,13 +97,15 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
 
     df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
 
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.2)
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.2
+    )
 
-    linker.cluster_studio_dashboard(
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         cluster_ids=[0, 4],
@@ -111,7 +113,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
     # Test that writing to files works as expected
     # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
     # _test_write_functionality(linker, spark_csv_read)

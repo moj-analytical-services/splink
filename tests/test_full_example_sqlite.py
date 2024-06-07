@@ -50,13 +50,13 @@ def test_full_example_sqlite(tmp_path):
 
     df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
     )
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 

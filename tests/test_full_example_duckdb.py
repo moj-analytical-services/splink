@@ -85,28 +85,30 @@ def test_full_example_duckdb(tmp_path):
 
     df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
     df_e = df_predict.as_pandas_dataframe(limit=5)
     records = df_e.to_dict(orient="records")
-    linker.waterfall_chart(records)
+    linker.visualisations.waterfall_chart(records)
 
     register_roc_data(linker)
 
     linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
 
-    linker.cluster_studio_dashboard(
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         sampling_method="by_cluster_size",
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
@@ -269,7 +271,7 @@ def test_duckdb_arrow_array():
         },
         database_api=db_api,
     )
-    df = linker.deterministic_link().as_pandas_dataframe()
+    df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
 
 

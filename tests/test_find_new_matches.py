@@ -112,4 +112,4 @@ def test_matches_work(test_helpers, dialect):
     )
 
     matches = matches.as_pandas_dataframe()
-    # assert len(matches) == 2
+    assert len(matches) == 2

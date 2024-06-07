@@ -132,20 +132,20 @@
 
 #     df_predict = linker.inference.predict()
 
-#     linker.comparison_viewer_dashboard(df_predict, "test_scv_athena.html", True, 2)
+#     linker.visualisations.comparison_viewer_dashboard(df_predict, "test_scv_athena.html", True, 2)
 
 #     df_predict.as_pandas_dataframe()
 
-#     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+#     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
-#     linker.cluster_studio_dashboard(
+#     linker.visualisations.cluster_studio_dashboard(
 #         df_predict,
 #         df_clusters,
 #         sampling_method="by_cluster_size",
 #         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
 #     )
 
-#     linker.unlinkables_chart(source_dataset="Testing")
+#     linker.evaluation.unlinkables_chart(source_dataset="Testing")
 
 #     _test_table_registration(linker)
 
