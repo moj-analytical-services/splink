@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
     ChartReturnType,
@@ -15,7 +15,6 @@ from splink.internals.cluster_studio import (
 from splink.internals.comparison_vector_distribution import (
     comparison_vector_distribution_sql,
 )
-from splink.internals.linker import Linker
 from splink.internals.match_weights_histogram import histogram_data
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
@@ -27,6 +26,9 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
     tf_adjustment_chart,
 )
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 
 class LinkerVisualisations:

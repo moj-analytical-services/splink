@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
-from splink.internals.linker import Linker
 from splink.internals.misc import (
     ascii_uid,
 )
@@ -17,6 +17,9 @@ from splink.internals.term_frequencies import (
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
 )
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
 

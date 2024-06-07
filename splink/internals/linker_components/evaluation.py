@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Literal, Union
+from typing import TYPE_CHECKING, List, Literal, Union
 
 from splink.internals.accuracy import (
     prediction_errors_from_label_column,
@@ -20,9 +20,11 @@ from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
-from splink.internals.linker import Linker
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unlinkables import unlinkables_data
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 
 class LinkerEvalution:

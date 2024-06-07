@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from splink.internals.connected_components import (
     _cc_create_unique_id_cols,
@@ -12,7 +12,6 @@ from splink.internals.graph_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
-from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import (
@@ -22,6 +21,9 @@ from splink.internals.unique_id_concat import (
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
 )
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 
 class LinkerClustering:

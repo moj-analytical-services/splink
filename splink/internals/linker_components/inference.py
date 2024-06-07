@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -17,7 +17,6 @@ from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
 )
-from splink.internals.linker import Linker
 from splink.internals.misc import (
     ascii_uid,
     ensure_is_list,
@@ -36,6 +35,9 @@ from splink.internals.vertically_concatenate import (
     enqueue_df_concat_with_tf,
     split_df_concat_with_tf_into_two_tables_sqls,
 )
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
 

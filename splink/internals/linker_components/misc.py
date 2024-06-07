@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
+
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 
 
 class LinkerMisc:
