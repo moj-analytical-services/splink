@@ -2,6 +2,7 @@ from math import floor
 from typing import TYPE_CHECKING
 
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
@@ -62,7 +63,9 @@ def _hist_sql(bin_width):
     return sqls
 
 
-def histogram_data(linker: "Linker", df_predict, num_bins=100):
+def histogram_data(
+    linker: "Linker", df_predict: SplinkDataFrame, num_bins: int = 100
+) -> SplinkDataFrame:
     sql = """
     select min(match_weight) as min_weight, max(match_weight) as max_weight from
     __splink__df_predict
@@ -70,7 +73,7 @@ def histogram_data(linker: "Linker", df_predict, num_bins=100):
     pipeline = CTEPipeline([df_predict])
     pipeline.enqueue_sql(sql, "__splink__df_min_max")
 
-    df_min_max = linker.db_api.sql_pipeline_to_splink_dataframe(
+    df_min_max = linker._db_api.sql_pipeline_to_splink_dataframe(
         pipeline
     ).as_record_dict()
 

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def estimate_m_from_pairwise_labels(linker: "Linker", table_name):
+def estimate_m_from_pairwise_labels(linker: "Linker", table_name: str) -> None:
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
     pipeline = CTEPipeline([nodes_with_tf])

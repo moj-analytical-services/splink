@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def estimate_m_values_from_label_column(linker: "Linker", df_dict, label_colname):
+def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) -> None:
     msg = f" Estimating m probabilities using from column {label_colname} "
     logger.info(f"{msg:-^70}")
 

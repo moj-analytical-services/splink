@@ -437,7 +437,6 @@ class LinkerTraining:
 
         estimate_m_values_from_label_column(
             self._linker,
-            self._linker._input_tables_dict,
             label_colname,
         )
         self._linker._populate_m_u_from_trained_values()

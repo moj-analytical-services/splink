@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.blocking import BlockingRule
@@ -308,10 +308,10 @@ def _select_found_by_blocking_rules(linker: "Linker") -> str:
 
 def truth_space_table_from_labels_table(
     linker: Linker,
-    labels_tablename,
-    threshold_actual=0.5,
-    match_weight_round_to_nearest=None,
-):
+    labels_tablename: str,
+    threshold_actual: float = 0.5,
+    match_weight_round_to_nearest: Optional[float] = None,
+) -> SplinkDataFrame:
     pipeline = CTEPipeline()
 
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
@@ -443,11 +443,11 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
 def prediction_errors_from_labels_table(
     linker: Linker,
-    labels_tablename,
-    include_false_positives=True,
-    include_false_negatives=True,
-    threshold=0.5,
-):
+    labels_tablename: str,
+    include_false_positives: bool = True,
+    include_false_negatives: bool = True,
+    threshold: float = 0.5,
+) -> SplinkDataFrame:
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
     pipeline = CTEPipeline([nodes_with_tf])
@@ -519,11 +519,11 @@ def _predict_from_label_column_sql(linker, label_colname):
 
 def prediction_errors_from_label_column(
     linker: Linker,
-    label_colname,
-    include_false_positives=True,
-    include_false_negatives=True,
-    threshold=0.5,
-):
+    label_colname: str,
+    include_false_positives: bool = True,
+    include_false_negatives: bool = True,
+    threshold: float = 0.5,
+) -> SplinkDataFrame:
     df_predict = _predict_from_label_column_sql(
         linker,
         label_colname,
