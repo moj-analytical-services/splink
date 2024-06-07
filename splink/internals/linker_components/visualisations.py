@@ -15,6 +15,7 @@ from splink.internals.cluster_studio import (
 from splink.internals.comparison_vector_distribution import (
     comparison_vector_distribution_sql,
 )
+from splink.internals.linker import Linker
 from splink.internals.match_weights_histogram import histogram_data
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
@@ -29,7 +30,7 @@ from splink.internals.term_frequencies import (
 
 
 class LinkerVisualisations:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def match_weights_chart(self):

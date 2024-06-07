@@ -20,12 +20,13 @@ from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
 )
+from splink.internals.linker import Linker
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unlinkables import unlinkables_data
 
 
 class LinkerEvalution:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def prediction_errors_from_labels_table(

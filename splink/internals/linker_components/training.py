@@ -16,6 +16,7 @@ from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.estimate_u import estimate_u_values
+from splink.internals.linker import Linker
 from splink.internals.m_from_labels import estimate_m_from_pairwise_labels
 from splink.internals.m_training import estimate_m_values_from_label_column
 from splink.internals.misc import (
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTraining:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def estimate_probability_two_random_records_match(

@@ -4,6 +4,7 @@ import logging
 
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
+from splink.internals.linker import Linker
 from splink.internals.misc import (
     ascii_uid,
 )
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTableManagement:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
@@ -120,7 +121,7 @@ class LinkerTableManagement:
         """
 
         table_name_physical = "__splink__df_concat_with_tf_" + self._linker._cache_uid
-        splink_dataframe = self._linker.table_management.register_table(
+        splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         splink_dataframe.templated_name = "__splink__df_concat_with_tf"
@@ -132,7 +133,7 @@ class LinkerTableManagement:
 
     def register_table_predict(self, input_data, overwrite=False):
         table_name_physical = "__splink__df_predict_" + self._linker._cache_uid
-        splink_dataframe = self._linker.table_management.register_table(
+        splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         self._linker._intermediate_table_cache["__splink__df_predict"] = (
@@ -149,7 +150,7 @@ class LinkerTableManagement:
         )
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._linker._cache_uid}"
-        splink_dataframe = self._linker.table_management.register_table(
+        splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
         self._linker._intermediate_table_cache[table_name_templated] = splink_dataframe

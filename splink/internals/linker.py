@@ -172,13 +172,13 @@ class Linker:
 
         self.debug_mode = False
 
-        self.clustering = LinkerClustering(self)
-        self.evaluation = LinkerEvalution(self)
-        self.inference = LinkerInference(self)
-        self.misc = LinkerMisc(self)
-        self.table_management = LinkerTableManagement(self)
-        self.training = LinkerTraining(self)
-        self.visualisations = LinkerVisualisations(self)
+        self.clustering: "LinkerClustering" = LinkerClustering(self)
+        self.evaluation: "LinkerEvalution" = LinkerEvalution(self)
+        self.inference: "LinkerInference" = LinkerInference(self)
+        self.misc: "LinkerMisc" = LinkerMisc(self)
+        self.table_management: "LinkerTableManagement" = LinkerTableManagement(self)
+        self.training: "LinkerTraining" = LinkerTraining(self)
+        self.visualisations: "LinkerVisualisations" = LinkerVisualisations(self)
 
     def _input_columns(
         self,

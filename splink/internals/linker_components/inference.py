@@ -17,6 +17,7 @@ from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
 )
+from splink.internals.linker import Linker
 from splink.internals.misc import (
     ascii_uid,
     ensure_is_list,
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerInference:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def deterministic_link(self) -> SplinkDataFrame:

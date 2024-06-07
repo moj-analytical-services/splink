@@ -12,6 +12,7 @@ from splink.internals.graph_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
+from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import (
@@ -24,7 +25,7 @@ from splink.internals.vertically_concatenate import (
 
 
 class LinkerClustering:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def cluster_pairwise_predictions_at_threshold(

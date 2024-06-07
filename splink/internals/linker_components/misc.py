@@ -4,11 +4,12 @@ import json
 import os
 from typing import Any
 
+from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 
 
 class LinkerMisc:
-    def __init__(self, linker):
+    def __init__(self, linker: Linker):
         self._linker = linker
 
     def save_model_to_json(
