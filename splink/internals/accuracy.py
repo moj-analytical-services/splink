@@ -356,7 +356,7 @@ def truth_space_table_from_labels_column(
     """
 
     pipeline.enqueue_sql(sql, "__splink__cartesian_product")
-    cartesian_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    cartesian_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
 
@@ -393,7 +393,7 @@ def truth_space_table_from_labels_column(
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truth_space_table = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 

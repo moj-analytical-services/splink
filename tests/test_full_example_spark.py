@@ -25,7 +25,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
 
     # Test that writing to files works as expected
     def spark_csv_read(x):
-        return linker.db_api.spark.read.csv(x, header=True).toPandas()
+        return linker._db_api.spark.read.csv(x, header=True).toPandas()
 
     _test_write_functionality(linker, spark_csv_read)
 

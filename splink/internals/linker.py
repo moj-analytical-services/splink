@@ -133,11 +133,11 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self.db_api = database_api
+        self._db_api = database_api
 
         # TODO: temp hack for compat
         self._intermediate_table_cache: CacheDictWithLogging = (
-            self.db_api._intermediate_table_cache
+            self._db_api._intermediate_table_cache
         )
 
         # Turn into a creator
@@ -170,7 +170,7 @@ class Linker:
         self._validate_settings(validate_settings)
         self._em_training_sessions: list[EMTrainingSession] = []
 
-        self.debug_mode = False
+        self._debug_mode = False
 
         self.clustering: "LinkerClustering" = LinkerClustering(self)
         self.evaluation: "LinkerEvalution" = LinkerEvalution(self)
@@ -274,21 +274,21 @@ class Linker:
 
     # convenience wrappers:
     @property
-    def debug_mode(self) -> bool:
-        return self.db_api.debug_mode
+    def _debug_mode(self) -> bool:
+        return self._db_api.debug_mode
 
-    @debug_mode.setter
-    def debug_mode(self, value: bool) -> None:
-        self.db_api.debug_mode = value
+    @_debug_mode.setter
+    def _debug_mode(self, value: bool) -> None:
+        self._db_api.debug_mode = value
 
     # TODO: rename these!
     @property
     def _sql_dialect(self) -> str:
-        return self.db_api.sql_dialect.name
+        return self._db_api.sql_dialect.name
 
     @property
     def _sql_dialect_object(self) -> SplinkDialect:
-        return self.db_api.sql_dialect
+        return self._db_api.sql_dialect
 
     @property
     def _infinity_expression(self):
@@ -315,7 +315,7 @@ class Linker:
             input_table_aliases = ensure_is_list(input_aliases)
             overwrite = False
 
-        return self.db_api.register_multiple_tables(
+        return self._db_api.register_multiple_tables(
             input_tables, input_table_aliases, overwrite
         )
 
@@ -354,7 +354,7 @@ class Linker:
             templated_name (str): The purpose of the table to Splink
             physical_name (str): The name of the table in the underlying databse
         """
-        return self.db_api.table_to_splink_dataframe(templated_name, physical_name)
+        return self._db_api.table_to_splink_dataframe(templated_name, physical_name)
 
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the linker which is independent
@@ -570,7 +570,7 @@ class Linker:
             output_table_name = output_table_name.replace("predict", "self_link")
             pipeline.enqueue_sql(sql_info["sql"], output_table_name)
 
-        predictions = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        predictions = self._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         return predictions
 

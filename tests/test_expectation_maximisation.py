@@ -30,7 +30,7 @@ def test_clear_error_when_empty_block():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = True
+    linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.training.estimate_parameters_using_expectation_maximisation(
         "l.name = r.name"

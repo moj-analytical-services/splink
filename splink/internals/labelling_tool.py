@@ -50,7 +50,7 @@ def generate_labelling_tool_comparisons(
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_labelling_tool_record")
-    splink_df = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    splink_df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     matches = linker.inference.find_matches_to_new_records(
         splink_df.physical_name, match_weight_threshold=match_weight_threshold

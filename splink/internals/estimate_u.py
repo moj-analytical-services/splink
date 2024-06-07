@@ -74,7 +74,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
 
-    db_api = training_linker.db_api
+    db_api = training_linker._db_api
 
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:

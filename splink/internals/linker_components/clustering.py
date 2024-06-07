@@ -134,7 +134,9 @@ class LinkerClustering:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        df_node_metrics = self._linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        df_node_metrics = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
+        )
 
         df_node_metrics.metadata["threshold_match_probability"] = (
             threshold_match_probability
@@ -216,7 +218,7 @@ class LinkerClustering:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        df_cluster_metrics = self._linker.db_api.sql_pipeline_to_splink_dataframe(
+        df_cluster_metrics = self._linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline
         )
         df_cluster_metrics.metadata["threshold_match_probability"] = (

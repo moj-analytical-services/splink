@@ -61,7 +61,7 @@ def test_scored_labels_table():
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_scores_labels = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_scores_labels = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     df_scores_labels = df_scores_labels.as_pandas_dataframe()
     df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
@@ -146,7 +146,7 @@ def test_truth_space_table():
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_roc = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_roc = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     df_roc = df_roc.as_pandas_dataframe()
 

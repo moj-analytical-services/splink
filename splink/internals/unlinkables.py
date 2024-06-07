@@ -51,7 +51,7 @@ def unlinkables_data(linker: Linker) -> dict[str, Any]:
         where match_probability < 1
     """
     pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
-    data = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
+    data = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
 
     unlinkables_dict = data.as_record_dict()
     data.drop_table_from_database_and_remove_from_cache()

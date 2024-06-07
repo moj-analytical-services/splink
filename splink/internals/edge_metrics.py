@@ -68,7 +68,7 @@ def compute_basic_edge_metrics(
     )
     pipeline.enqueue_sql(**sql_info)
 
-    df_truncated_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truncated_edges = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     return df_truncated_edges
 
 
@@ -96,13 +96,13 @@ def compute_igraph_metrics(
     # this is how igraph deals with nodes
     sql_infos = _node_mapping_table_sql(df_node_metrics)
     pipeline.enqueue_list_of_sqls(sql_infos)
-    df_node_mappings = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_node_mappings = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we keep only edges at or above relevant threshold
     pipeline = CTEPipeline()
     sql_info = _truncated_edges_sql(df_predict, threshold_match_probability)
     pipeline.enqueue_sql(**sql_info)
-    df_truncated_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truncated_edges = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # we map the truncated edges to the integer encoding for nodes above,
     # keeping only the list of endpoints
@@ -114,7 +114,7 @@ def compute_igraph_metrics(
         composite_uid_edges_r,
     )
     pipeline.enqueue_sql(**sql_info)
-    edges_for_igraph = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    edges_for_igraph = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     # we will need to manually register a table, so we use the hash from this table
     igraph_edges_hash = edges_for_igraph.physical_name[-9:]
     # NB: for large data we may have to revise this and process in chunks
@@ -139,5 +139,5 @@ def compute_igraph_metrics(
         composite_uid_edges_r,
     )
     pipeline.enqueue_sql(**sql_info)
-    df_edge_metrics = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_edge_metrics = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     return df_edge_metrics

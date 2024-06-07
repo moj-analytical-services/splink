@@ -78,7 +78,7 @@ class LinkerTableManagement:
             pipeline = enqueue_df_concat(self._linker, pipeline)
             sql = term_frequencies_for_single_column_sql(input_col)
             pipeline.enqueue_sql(sql, tf_tablename)
-            tf_df = self._linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            tf_df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
             self._linker._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
@@ -169,7 +169,7 @@ class LinkerTableManagement:
         return splink_dataframe
 
     def delete_tables_created_by_splink_from_db(self):
-        self._linker.db_api.delete_tables_created_by_splink_from_db()
+        self._linker._db_api.delete_tables_created_by_splink_from_db()
 
     def register_table(
         self,
@@ -203,4 +203,4 @@ class LinkerTableManagement:
                 pipeline
         """
 
-        return self._linker.db_api.register_table(input_table, table_name, overwrite)
+        return self._linker._db_api.register_table(input_table, table_name, overwrite)

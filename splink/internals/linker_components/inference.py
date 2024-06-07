@@ -114,7 +114,7 @@ class LinkerInference:
         exploding_br_with_id_tables = materialise_exploded_id_tables(
             link_type=link_type,
             blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
-            db_api=self._linker.db_api,
+            db_api=self._linker._db_api,
             splink_df_dict=self._linker._input_tables_dict,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
@@ -134,7 +134,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        deterministic_link_df = self._linker.db_api.sql_pipeline_to_splink_dataframe(
+        deterministic_link_df = self._linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline
         )
         deterministic_link_df.metadata["is_deterministic_link"] = True
@@ -225,7 +225,7 @@ class LinkerInference:
         exploding_br_with_id_tables = materialise_exploded_id_tables(
             link_type=link_type,
             blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
-            db_api=self._linker.db_api,
+            db_api=self._linker._db_api,
             splink_df_dict=self._linker._input_tables_dict,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
@@ -252,7 +252,7 @@ class LinkerInference:
 
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
-            pipeline = pipeline.break_lineage(self._linker.db_api)
+            pipeline = pipeline.break_lineage(self._linker._db_api)
 
         sql = compute_comparison_vector_values_sql(
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values
@@ -267,7 +267,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
         self._linker._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
@@ -339,7 +339,7 @@ class LinkerInference:
         else:
             new_records_tablename = records_or_tablename
 
-        new_records_df = self._linker.db_api.table_to_splink_dataframe(
+        new_records_df = self._linker._db_api.table_to_splink_dataframe(
             "__splink__df_new_records", new_records_tablename
         )
 
@@ -403,7 +403,7 @@ class LinkerInference:
 
         pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self._linker.db_api.sql_pipeline_to_splink_dataframe(
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
 
@@ -506,7 +506,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._linker.db_api.sql_pipeline_to_splink_dataframe(
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
 

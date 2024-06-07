@@ -355,7 +355,7 @@ def _cc_create_unique_id_cols(
     """
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_connected_components_df")
-    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _exit_query(
@@ -453,7 +453,7 @@ def solve_connected_components(
     pipeline.enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation()
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
-    neighbours = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    neighbours = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # Create our initial representatives table
     pipeline = CTEPipeline([neighbours])
@@ -465,7 +465,7 @@ def solve_connected_components(
     # Execute if we have no batching, otherwise add it to our batched process
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
-    representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
@@ -500,7 +500,7 @@ def solve_connected_components(
             repr_name,
         )
 
-        representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -512,7 +512,7 @@ def solve_connected_components(
 
         pipeline.enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = linker.db_api.sql_pipeline_to_splink_dataframe(
+        root_rows_df = linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
 
@@ -540,6 +540,6 @@ def solve_connected_components(
     )
     pipeline = CTEPipeline([representatives])
     pipeline.enqueue_sql(exit_query, "__splink__df_representatives")
-    representatives = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return representatives

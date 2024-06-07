@@ -68,7 +68,7 @@ class LinkerTraining:
         for br in deterministic_matching_rules:
             blocking_rules.append(
                 to_blocking_rule_creator(br).get_blocking_rule(
-                    self._linker.db_api.sql_dialect.name
+                    self._linker._db_api.sql_dialect.name
                 )
             )
 
@@ -76,7 +76,7 @@ class LinkerTraining:
             splink_df_dict=self._linker._input_tables_dict,
             blocking_rules=blocking_rules,
             link_type=self._linker._settings_obj._link_type,
-            db_api=self._linker.db_api,
+            db_api=self._linker._db_api,
             max_rows_limit=max_rows_limit,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
@@ -335,7 +335,7 @@ class LinkerTraining:
 
         em_training_session = EMTrainingSession(
             self._linker,
-            db_api=self._linker.db_api,
+            db_api=self._linker._db_api,
             blocking_rule_for_training=blocking_rule_obj,
             core_model_settings=self._linker._settings_obj.core_model_settings,
             training_settings=self._linker._settings_obj.training_settings,

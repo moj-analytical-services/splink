@@ -120,7 +120,7 @@ def test_splink_converges_to_known_params():
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     predictions_df = predictions.as_pandas_dataframe()
 
     from pandas.testing import assert_series_equal

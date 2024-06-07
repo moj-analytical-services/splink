@@ -83,7 +83,7 @@ def test_cache_access_df_concat(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
@@ -115,7 +115,7 @@ def test_cache_access_compute_tf_table(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
@@ -135,7 +135,7 @@ def test_invalidate_cache(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
 
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -185,7 +185,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
@@ -202,7 +202,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     db_api = DuckDBAPI()
 
     new_linker = Linker(df, settings, database_api=db_api)
-    new_linker.debug_mode = debug_mode
+    new_linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
@@ -233,7 +233,7 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
 
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -254,7 +254,7 @@ def test_cache_register_compute_tf_table(debug_mode):
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    linker.debug_mode = debug_mode
+    linker._debug_mode = debug_mode
 
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)

@@ -278,7 +278,7 @@ class LinkerVisualisations:
         sqls = comparison_viewer_table_sqls(self._linker, num_example_rows)
         pipeline.enqueue_list_of_sqls(sqls)
 
-        df = self._linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         rendered = render_splink_comparison_viewer_html(
             df.as_record_dict(),
