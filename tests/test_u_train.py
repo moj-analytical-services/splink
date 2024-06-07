@@ -343,9 +343,9 @@ def test_seed_u_outputs(test_helpers, dialect):
     linker_2 = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_3 = helper.Linker(df, settings, **helper.extra_linker_args())
 
-    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+    linker_1.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
 
     assert (
         linker_1._settings_obj._parameter_estimates_as_records

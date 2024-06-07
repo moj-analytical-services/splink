@@ -4,6 +4,7 @@ import pandas as pd
 
 import splink.internals.comparison_library as cl
 from splink import block_on
+from splink.internals.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 
@@ -56,14 +57,14 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
         "term_frequency_adjustment_column_prefix": "term_freq__",
         "comparison_vector_value_column_prefix": "cvv__",
     }
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = Linker([df_l, df_r], settings, **helper.extra_linker_args())
     # run through a few common operations to check functioning
     linker.training.estimate_probability_two_random_records_match(
         ["l.dob = r.dob"], 0.5
     )
     linker.training.estimate_u_using_random_sampling(2e4)
     linker.training.estimate_parameters_using_expectation_maximisation("l.dob = r.dob")
-    df_predict = linker.predict(0.1)
+    df_predict = linker.inference.predict(0.1)
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
         df_predict, 0.1
     )

@@ -141,7 +141,7 @@ def test_charts(dialect, test_helpers, tmp_path):
     )
 
     linker.visualisations.match_weights_chart()
-    linker.m_u_parameters_chart()
+    linker.visualisations.m_u_parameters_chart()
 
 
 @mark_with_dialects_excluding()

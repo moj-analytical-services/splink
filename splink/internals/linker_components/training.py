@@ -419,7 +419,7 @@ class LinkerTraining:
 
         Examples:
             ```py
-            linker.estimate_m_from_label_column("social_security_number")
+            linker.training.estimate_m_from_label_column("social_security_number")
             ```
 
         Returns:
