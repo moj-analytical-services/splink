@@ -307,7 +307,10 @@ def _select_found_by_blocking_rules(linker: "Linker") -> str:
 
 
 def truth_space_table_from_labels_table(
-    linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
+    linker: Linker,
+    labels_tablename,
+    threshold_actual=0.5,
+    match_weight_round_to_nearest=None,
 ):
     pipeline = CTEPipeline()
 
@@ -323,7 +326,7 @@ def truth_space_table_from_labels_table(
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truth_space_table = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -439,7 +442,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
 
 def prediction_errors_from_labels_table(
-    linker,
+    linker: Linker,
     labels_tablename,
     include_false_positives=True,
     include_false_negatives=True,
@@ -486,7 +489,7 @@ def prediction_errors_from_labels_table(
 
     pipeline.enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
 
-    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _predict_from_label_column_sql(linker, label_colname):
@@ -515,7 +518,7 @@ def _predict_from_label_column_sql(linker, label_colname):
 
 
 def prediction_errors_from_label_column(
-    linker,
+    linker: Linker,
     label_colname,
     include_false_positives=True,
     include_false_negatives=True,
@@ -577,6 +580,6 @@ def prediction_errors_from_label_column(
 
     pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
 
-    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return predictions

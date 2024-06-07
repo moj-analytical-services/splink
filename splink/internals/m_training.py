@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.comparison_vector_values import (
@@ -17,10 +18,12 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 logger = logging.getLogger(__name__)
 
 
-def estimate_m_values_from_label_column(linker, df_dict, label_colname):
+def estimate_m_values_from_label_column(linker: "Linker", df_dict, label_colname):
     msg = f" Estimating m probabilities using from column {label_colname} "
     logger.info(f"{msg:-^70}")
 
@@ -68,7 +71,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     )
     pipeline.enqueue_sql(sql, "__splink__m_u_counts")
 
-    df_params = training_linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_params = training_linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
