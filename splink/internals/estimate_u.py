@@ -211,7 +211,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
-    print(f"at this point, original settings obje has id {id(original_settings_obj)}")
+
     for c in original_settings_obj.comparisons:
         for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
