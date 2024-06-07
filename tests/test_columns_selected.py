@@ -64,7 +64,7 @@ def test_regression(tmp_path):
 
             linker = Linker(df.copy(), settings_dict, database_api=db_api)
 
-            linker.predict()
+            linker.inference.predict()
 
 
 def test_discussion_example(tmp_path):
@@ -125,4 +125,4 @@ def test_discussion_example(tmp_path):
 
             linker = Linker(df.copy(), settings_dict, database_api=db_api)
 
-            linker.predict()
+            linker.inference.predict()

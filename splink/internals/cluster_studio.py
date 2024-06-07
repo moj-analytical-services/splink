@@ -63,7 +63,7 @@ def df_clusters_as_records(
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__scs_clusters")
-    df_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_clusters = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_clusters.as_record_dict()
 
@@ -107,7 +107,7 @@ def create_df_nodes(
     pipeline = CTEPipeline()
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
     pipeline.enqueue_sql(sql, "__splink__scs_nodes")
-    df_nodes = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_nodes = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_nodes
 
@@ -151,7 +151,7 @@ def df_edges_as_records(
     sql = _edges_sql(linker, df_predicted_edges, df_nodes)
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__scs_edges")
-    df_edges = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_edges = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_edges.as_record_dict()
 
@@ -168,7 +168,7 @@ def _get_random_cluster_ids(
     """
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__cluster_count")
-    df_cluster_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_cluster_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
     df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
@@ -192,7 +192,7 @@ def _get_random_cluster_ids(
     """
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
-    df_sample = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_sample = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return [r["cluster_id"] for r in df_sample.as_record_dict()]
 
@@ -234,7 +234,7 @@ def _get_cluster_id_of_each_size(
     """
 
     pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
-    df_cluster_sample_with_size = linker.db_api.sql_pipeline_to_splink_dataframe(
+    df_cluster_sample_with_size = linker._db_api.sql_pipeline_to_splink_dataframe(
         pipeline
     )
 
@@ -285,7 +285,7 @@ def _get_lowest_density_clusters(
     """
 
     pipeline.enqueue_sql(sql, "__splink__lowest_density_clusters")
-    df_lowest_density_clusters = linker.db_api.sql_pipeline_to_splink_dataframe(
+    df_lowest_density_clusters = linker._db_api.sql_pipeline_to_splink_dataframe(
         pipeline
     )
 

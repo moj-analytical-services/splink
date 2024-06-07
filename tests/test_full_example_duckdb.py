@@ -69,44 +69,46 @@ def test_full_example_duckdb(tmp_path):
     )
     completeness_chart(df, db_api)
 
-    linker.compute_tf_table("city")
-    linker.compute_tf_table("first_name")
+    linker.table_management.compute_tf_table("city")
+    linker.table_management.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
+    linker.training.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
     df_e = df_predict.as_pandas_dataframe(limit=5)
     records = df_e.to_dict(orient="records")
-    linker.waterfall_chart(records)
+    linker.visualisations.waterfall_chart(records)
 
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
 
-    linker.cluster_studio_dashboard(
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         sampling_method="by_cluster_size",
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
@@ -120,13 +122,13 @@ def test_full_example_duckdb(tmp_path):
         "cluster": 10000,
     }
 
-    linker.find_matches_to_new_records(
+    linker.inference.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_model_to_json(path)
+    linker.misc.save_model_to_json(path)
 
     db_api = DuckDBAPI()
     linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
@@ -181,7 +183,7 @@ def test_link_only(input, source_l, source_r):
 
     db_api = DuckDBAPI()
     linker = Linker(input, settings, database_api=db_api)
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
     assert set(df_predict.source_dataset_l.values) == source_l
@@ -227,7 +229,7 @@ def test_duckdb_load_from_file(df):
         database_api=db_api,
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 3167
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
 
     settings["link_type"] = "link_only"
 
@@ -239,7 +241,7 @@ def test_duckdb_load_from_file(df):
         input_table_aliases=["testing1", "testing2"],
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 7257
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
 
 
 @mark_with_dialects_including("duckdb")
@@ -269,7 +271,7 @@ def test_duckdb_arrow_array():
         },
         database_api=db_api,
     )
-    df = linker.deterministic_link().as_pandas_dataframe()
+    df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
 
 
@@ -314,11 +316,11 @@ def test_small_example_duckdb(tmp_path):
     db_api = DuckDBAPI()
     linker = Linker(df, settings_dict, database_api=db_api)
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.predict()
+    linker.inference.predict()

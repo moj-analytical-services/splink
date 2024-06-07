@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.blocking import BlockingRule
@@ -307,8 +307,11 @@ def _select_found_by_blocking_rules(linker: "Linker") -> str:
 
 
 def truth_space_table_from_labels_table(
-    linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
-):
+    linker: Linker,
+    labels_tablename: str,
+    threshold_actual: float = 0.5,
+    match_weight_round_to_nearest: Optional[float] = None,
+) -> SplinkDataFrame:
     pipeline = CTEPipeline()
 
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
@@ -323,7 +326,7 @@ def truth_space_table_from_labels_table(
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truth_space_table = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -356,7 +359,7 @@ def truth_space_table_from_labels_column(
     """
 
     pipeline.enqueue_sql(sql, "__splink__cartesian_product")
-    cartesian_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    cartesian_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
 
@@ -393,7 +396,7 @@ def truth_space_table_from_labels_column(
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_truth_space_table = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_truth_space_table = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return df_truth_space_table
 
@@ -439,12 +442,12 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
 
 def prediction_errors_from_labels_table(
-    linker,
-    labels_tablename,
-    include_false_positives=True,
-    include_false_negatives=True,
-    threshold=0.5,
-):
+    linker: Linker,
+    labels_tablename: str,
+    include_false_positives: bool = True,
+    include_false_negatives: bool = True,
+    threshold: float = 0.5,
+) -> SplinkDataFrame:
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
     pipeline = CTEPipeline([nodes_with_tf])
@@ -486,7 +489,7 @@ def prediction_errors_from_labels_table(
 
     pipeline.enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
 
-    return linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
 def _predict_from_label_column_sql(linker, label_colname):
@@ -509,18 +512,18 @@ def _predict_from_label_column_sql(linker, label_colname):
         settings._additional_column_names_to_retain.append(label_colname)
 
     # Now we want to create predictions
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     return df_predict
 
 
 def prediction_errors_from_label_column(
-    linker,
-    label_colname,
-    include_false_positives=True,
-    include_false_negatives=True,
-    threshold=0.5,
-):
+    linker: Linker,
+    label_colname: str,
+    include_false_positives: bool = True,
+    include_false_negatives: bool = True,
+    threshold: float = 0.5,
+) -> SplinkDataFrame:
     df_predict = _predict_from_label_column_sql(
         linker,
         label_colname,
@@ -577,6 +580,6 @@ def prediction_errors_from_label_column(
 
     pipeline.enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
 
-    predictions = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     return predictions

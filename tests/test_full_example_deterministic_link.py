@@ -40,11 +40,11 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
 
     linker = Linker(df, settings, **helper.extra_linker_args())
 
-    df_predict = linker.deterministic_link()
+    df_predict = linker.inference.deterministic_link()
 
-    clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict)
+    clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict)
 
-    linker.cluster_studio_dashboard(
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         clusters,
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),

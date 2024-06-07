@@ -39,7 +39,7 @@ def test_column_reversal(test_helpers, dialect):
     df = helper.convert_frame(df)
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
     assert row["gamma_full_name"] == 1
@@ -85,7 +85,7 @@ def test_perc_difference(test_helpers, dialect):
     df = helper.convert_frame(df)
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])  # 16.66%
     assert row["gamma_amount"] == 3
@@ -168,7 +168,7 @@ def test_levenshtein_level(test_helpers, dialect):
     df = helper.convert_frame(df)
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     for id_r, lev_dist in id_distance_from_1.items():
         expected_gamma_lev = gamma_lev_from_distance(lev_dist)
@@ -248,7 +248,7 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
     df = helper.convert_frame(df)
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     for id_r, lev_dist in id_distance_from_1.items():
         expected_gamma_lev = gamma_lev_from_distance(lev_dist)

@@ -150,16 +150,16 @@ def test_with_predict_calculation():
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.register_term_frequency_lookup(tf_lookup, "surname")
+    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     sql = f"""
     select * from {df_predict.physical_name}
     where unique_id_l = 835
     and unique_id_r = 836
     """
-    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
 
     # Exact match, normal tf adjustement, Kirk
     assert res["bf_surname"] == pytest.approx(8.0)
@@ -172,7 +172,7 @@ def test_with_predict_calculation():
     where unique_id_l = 147
     and unique_id_r = 975
     """
-    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
     # Levenshtein match, normal tf adustments, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
@@ -192,16 +192,16 @@ def test_with_predict_calculation():
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.register_term_frequency_lookup(tf_lookup, "surname")
+    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
     sql = f"""
     select * from {df_predict.physical_name}
     where unique_id_l = 835
     and unique_id_r = 836
     """
-    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
     # Exact match, normal tf adjustement, Kirk
     assert res["bf_surname"] == pytest.approx(8.0)
     # Overall BF should be m/u = 0.8/0.2 = 4
@@ -212,7 +212,7 @@ def test_with_predict_calculation():
     where unique_id_l = 147
     and unique_id_r = 975
     """
-    res = linker.query_sql(sql).to_dict(orient="records")[0]
+    res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
     # Levenshtein match, tf exact match detection disabled, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
@@ -231,7 +231,10 @@ def test_with_predict_calculation():
     )
 
     linker_base = Linker(df, settings_disabled_with_min_tf, DuckDBAPI())
-    linkers = [linker_base, Linker(df, linker_base.save_model_to_json(), DuckDBAPI())]
+    linkers = [
+        linker_base,
+        Linker(df, linker_base.misc.save_model_to_json(), DuckDBAPI()),
+    ]
 
     # This ensures we're checking that serialisation and deserialisation
     # works on the disable_tf_exact_match_detection and tf_minimum_u_value settings
@@ -240,16 +243,16 @@ def test_with_predict_calculation():
             {"surname": "Taylor", "tf_surname": 0.001},
             {"surname": "Kirk", "tf_surname": 0.2},
         ]
-        linker.register_term_frequency_lookup(tf_lookup, "surname")
+        linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
 
-        df_predict = linker.predict()
+        df_predict = linker.inference.predict()
 
         sql = f"""
         select * from {df_predict.physical_name}
         where unique_id_l = 835
         and unique_id_r = 836
         """
-        res = linker.query_sql(sql).to_dict(orient="records")[0]
+        res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
         # Exact match, normal tf adjustement, Kirk
         assert res["bf_surname"] == pytest.approx(8.0)
         # Overall BF should be m/u = 0.8/0.2 = 4
@@ -260,7 +263,7 @@ def test_with_predict_calculation():
         where unique_id_l = 147
         and unique_id_r = 975
         """
-        res = linker.query_sql(sql).to_dict(orient="records")[0]
+        res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
         # Levenshtein match, tf exact match detection disabled, Taylor
         # Splink makes the tf adjustment based on on the exact match level
         # Lev match level has bf of 0.9/0.3

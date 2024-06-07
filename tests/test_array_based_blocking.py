@@ -38,7 +38,7 @@ def test_simple_example_link_only(test_helpers, dialect):
     ## the additional pairs returned by the second blocking rule are (1,4),(3,5)
     linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
     linker.debug_mode = False
-    returned_triples = linker.predict().as_pandas_dataframe()[
+    returned_triples = linker.inference.predict().as_pandas_dataframe()[
         ["unique_id_l", "unique_id_r", "match_key"]
     ]
     returned_triples = {
@@ -110,7 +110,7 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
     }
     linker = helper.Linker(input_data, settings, **helper.extra_linker_args())
     linker.debug_mode = False
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
     ## check that there are no duplicates in the output
     assert (
         df_predict.drop_duplicates(["unique_id_l", "unique_id_r"]).shape[0]
@@ -159,7 +159,7 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
         [input_data_l, input_data_r], settings, **helper.extra_linker_args()
     )
     linker.debug_mode = False
-    df_predict = linker.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     ## check that we get no within-dataset links
     within_dataset_links = df_predict[
@@ -232,7 +232,7 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         input_table_aliases=["a_", "b_", "c_"],
         **helper.extra_linker_args(),
     )
-    returned_triples = linker.predict().as_pandas_dataframe()[
+    returned_triples = linker.inference.predict().as_pandas_dataframe()[
         [
             "source_dataset_l",
             "unique_id_l",

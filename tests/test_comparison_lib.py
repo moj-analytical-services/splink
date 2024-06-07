@@ -33,7 +33,7 @@ def test_distance_function_comparison():
 
     linker = Linker(df, settings, database_api=db_api)
 
-    df_pred = linker.predict().as_pandas_dataframe()
+    df_pred = linker.inference.predict().as_pandas_dataframe()
 
     expected_gamma_counts = {
         "forename": {
@@ -85,7 +85,7 @@ def test_set_to_lowercase():
     db_api = DuckDBAPI()
 
     linker = Linker(df, settings, database_api=db_api)
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
     assert row["gamma_forename"] == 1

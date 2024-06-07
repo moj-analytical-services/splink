@@ -68,7 +68,7 @@ def test_name_comparison_levels(dialect, test_helpers):
 
     df = helper.convert_frame(df)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker_output = linker.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
     size_gamma_lookup = {0: 6, 1: 6, 2: 0, 3: 2, 4: 1}
@@ -161,7 +161,7 @@ def test_forename_surname_comparison_levels(dialect, test_helpers):
 
     df = helper.convert_frame(df)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker_output = linker.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
     size_gamma_lookup = {0: 8, 1: 3, 2: 3, 3: 2, 4: 2, 5: 2, 6: 1}
@@ -273,7 +273,7 @@ def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
 
     df = helper.convert_frame(df)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker_output = linker.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict().as_pandas_dataframe()
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
@@ -326,7 +326,7 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
 
     df = helper.convert_frame(df)
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker_output = linker.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict().as_pandas_dataframe()
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}

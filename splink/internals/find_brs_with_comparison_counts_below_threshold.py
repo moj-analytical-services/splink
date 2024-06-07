@@ -158,13 +158,13 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     if len(current_combination) == len(all_columns):
         return results  # All fields included, meaning we're at a leaf so exit recursion
 
-    br = _generate_blocking_rule(linker.db_api, current_combination)
+    br = _generate_blocking_rule(linker._db_api, current_combination)
 
     comparison_count = _count_comparisons_generated_from_blocking_rule(
         splink_df_dict=linker._input_tables_dict,
         blocking_rule=br,
         link_type=linker._settings_obj._link_type,
-        db_api=linker.db_api,
+        db_api=linker._db_api,
         compute_post_filter_count=False,
         source_dataset_input_column=linker._settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=linker._settings_obj.column_info_settings.unique_id_input_column,

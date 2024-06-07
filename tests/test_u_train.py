@@ -30,8 +30,8 @@ def test_u_train(test_helpers, dialect):
     df_linker = helper.convert_frame(df)
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
@@ -79,8 +79,8 @@ def test_u_train_link_only(test_helpers, dialect):
     df_r = helper.convert_frame(df_r)
 
     linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -90,7 +90,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
-    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -141,9 +141,9 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         input_table_aliases=["_a", "_b"],
         **helper.extra_linker_args(),
     )
-    linker.debug_mode = True
+    linker._debug_mode = True
 
-    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
+    linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
@@ -152,7 +152,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
-    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -266,8 +266,8 @@ def test_u_train_multilink(test_helpers, dialect):
     }
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -277,7 +277,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
-    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -298,8 +298,8 @@ def test_u_train_multilink(test_helpers, dialect):
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -309,7 +309,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
-    self_table_count = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -343,9 +343,9 @@ def test_seed_u_outputs(test_helpers, dialect):
     linker_2 = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_3 = helper.Linker(df, settings, **helper.extra_linker_args())
 
-    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+    linker_1.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
 
     assert (
         linker_1._settings_obj._parameter_estimates_as_records

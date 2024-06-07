@@ -74,7 +74,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
 
-    db_api = training_linker.db_api
+    db_api = training_linker._db_api
 
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
@@ -211,6 +211,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+
     for c in original_settings_obj.comparisons:
         for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(

@@ -84,7 +84,7 @@ def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str)
     Joins any required tf columns onto new_tablename
 
     This is needed e.g. when using linker.compare_two_records
-    or linker.find_matches_to_new_records in which the user provides
+    or linker.inference.find_matches_to_new_records in which the user provides
     new records which need tf adjustments computed
     """
 
@@ -241,7 +241,7 @@ def tf_adjustment_chart(
         dict(
             cl,
             **{
-                "df_tf": linker.compute_tf_table(
+                "df_tf": linker.table_management.compute_tf_table(
                     cl["tf_adjustment_column"]
                 ).as_pandas_dataframe()
             },

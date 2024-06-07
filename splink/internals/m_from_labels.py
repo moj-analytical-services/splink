@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.comparison_vector_values import (
@@ -16,10 +17,12 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 
+if TYPE_CHECKING:
+    from splink.internals.linker import Linker
 logger = logging.getLogger(__name__)
 
 
-def estimate_m_from_pairwise_labels(linker, table_name):
+def estimate_m_from_pairwise_labels(linker: "Linker", table_name: str) -> None:
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
     pipeline = CTEPipeline([nodes_with_tf])
@@ -45,7 +48,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     )
     pipeline.enqueue_sql(sql, "__splink__m_u_counts")
 
-    df_params = linker.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    df_params = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)

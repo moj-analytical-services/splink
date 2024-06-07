@@ -15,7 +15,7 @@ from splink.internals.sqlite.database_api import SQLiteAPI
 
 class TestHelper(ABC):
     @property
-    def Linker(self):
+    def Linker(self) -> Linker:
         return Linker
 
     @property

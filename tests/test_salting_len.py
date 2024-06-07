@@ -39,7 +39,7 @@ def generate_linker_output(
 
     linker = Linker(df, settings, spark_api)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     df_predict = df_predict.as_pandas_dataframe()
     return df_predict.sort_values(by=["unique_id_l", "unique_id_r"], ignore_index=True)
 

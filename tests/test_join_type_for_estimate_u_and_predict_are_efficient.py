@@ -122,7 +122,7 @@ def test_dedupe_only():
     )
     logging.getLogger("splink").setLevel(1)
 
-    linker.estimate_u_using_random_sampling(max_pairs=1000)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1000)
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
@@ -133,7 +133,7 @@ def test_dedupe_only():
 
     handler.log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -177,7 +177,7 @@ def test_link_and_dedupe():
 
     handler.log_list.clear()
     logging.getLogger("splink").setLevel(1)
-    linker.estimate_u_using_random_sampling(max_pairs=1000)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -188,7 +188,7 @@ def test_link_and_dedupe():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -233,7 +233,7 @@ def test_link_only_two():
 
     log_list.clear()
     logging.getLogger("splink").setLevel(1)
-    linker.estimate_u_using_random_sampling(max_pairs=1000)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -244,7 +244,7 @@ def test_link_only_two():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -290,7 +290,7 @@ def test_link_only_three():
 
     log_list.clear()
     logging.getLogger("splink").setLevel(1)
-    linker.estimate_u_using_random_sampling(max_pairs=1000)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1000)
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
@@ -301,7 +301,7 @@ def test_link_only_three():
 
     log_list.clear()
 
-    linker.predict()
+    linker.inference.predict()
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)

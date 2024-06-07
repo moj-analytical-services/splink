@@ -33,36 +33,36 @@ def test_full_example_sqlite(tmp_path):
 
     profile_columns(df, db_api, ["first_name", "surname", "first_name || surname"])
 
-    linker.compute_tf_table("city")
-    linker.compute_tf_table("first_name")
+    linker.table_management.compute_tf_table("city")
+    linker.table_management.compute_tf_table("first_name")
 
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
     )
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
 
-    linker.unlinkables_chart(name_of_data_in_title="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
     register_roc_data(linker)
 
-    linker.accuracy_analysis_from_labels_table("labels")
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
 
 @mark_with_dialects_including("sqlite")
@@ -84,7 +84,7 @@ def test_small_link_example_sqlite():
         input_table_aliases=["fake_data_1", "fake_data_2"],
     )
 
-    linker.predict()
+    linker.inference.predict()
 
 
 @mark_with_dialects_including("sqlite")
@@ -96,4 +96,4 @@ def test_default_conn_sqlite(tmp_path):
     db_api = SQLiteAPI()
     linker = Linker(df, settings_dict, db_api)
 
-    linker.predict()
+    linker.inference.predict()

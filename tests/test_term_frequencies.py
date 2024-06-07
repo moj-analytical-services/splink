@@ -82,7 +82,7 @@ def test_tf_basic():
 
     db_api = DuckDBAPI(connection=":memory:")
     linker = Linker(data, settings, database_api=db_api)
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -119,7 +119,7 @@ def test_tf_clamp():
 
     db_api = DuckDBAPI(connection=":memory:")
     linker = Linker(data, settings, database_api=db_api)
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -157,7 +157,7 @@ def test_weight():
     db_api = DuckDBAPI(connection=":memory:")
 
     linker = Linker(data, settings, database_api=db_api)
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -208,7 +208,7 @@ def test_weightand_clamp():
     db_api = DuckDBAPI(connection=":memory:")
 
     linker = Linker(data, settings, database_api=db_api)
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
