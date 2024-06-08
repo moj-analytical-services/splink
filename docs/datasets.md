@@ -77,7 +77,7 @@ splink_dataset_utils.show_downloaded_data()
 splink_dataset_utils.clear_cache(['fake_1000'])
 ```
 
-::: splink.datasets._SplinkDataUtils
+::: splink.internals.datasets._SplinkDataUtils
     handler: python
     options:
       members:
