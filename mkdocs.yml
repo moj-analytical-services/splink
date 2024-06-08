@@ -50,8 +50,9 @@ plugins:
       default_handler: python
       handlers:
         python:
-          rendering:
+          options:
             show_source: false
+            docstring_style: google
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
