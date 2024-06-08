@@ -5,11 +5,11 @@ tags:
 ---
 ::: splink.internals.linker_components.visualisations.LinkerVisualisations
     handler: python
-    selection:
-      members:
-        - cluster_pairwise_predictions_at_threshold
-        - compute_graph_metrics
-    rendering:
+    filters:
+      - "!^__init__$"
+    options:
       show_root_heading: false
-      show_source: true
+      show_root_toc: false
+      show_source: false
+      members_order: source
 

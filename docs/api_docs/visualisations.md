@@ -3,18 +3,13 @@ tags:
   - API
   - Visualisations
 ---
+# Methods in Linker.visualisations
+
 ::: splink.internals.linker_components.visualisations.LinkerVisualisations
     handler: python
-    selection:
-      members:
-        - match_weights_chart
-        - m_u_parameters_chart
-        - match_weights_histogram
-        - parameter_estimate_comparisons_chart
-        - tf_adjustment_chart
-        - waterfall_chart
-        - comparison_viewer_dashboard
-        - cluster_studio_dashboard
-    rendering:
+    filters:
+      - "!^__init__$"
+    options:
       show_root_heading: false
-      show_source: true
+      show_source: false
+      members_order: source

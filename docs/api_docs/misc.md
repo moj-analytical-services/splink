@@ -3,12 +3,14 @@ tags:
   - API
   - Misc
 ---
+# Methods in Linker.misc
 
 ::: splink.internals.linker_components.misc.LinkerMisc
-handler: python
-selection:
-members: - save_model_to_json
-
-    rendering:
+    handler: python
+    filters:
+      - "!^__init__$"
+    options:
       show_root_heading: false
-      show_source: true
+      show_root_toc: false
+      show_source: false
+      members_order: source
