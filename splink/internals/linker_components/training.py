@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTraining:
+    """
+    Hi there!
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 
