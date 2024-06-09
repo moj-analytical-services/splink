@@ -5,7 +5,7 @@ tags:
 ---
 # Documentation for the `comparison_library`
 
-::: splink.internals.comparison_library
+::: splink.comparison_library
     handler: python
     options:
       show_root_heading: false
