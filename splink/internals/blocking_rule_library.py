@@ -164,6 +164,31 @@ def block_on(
     salting_partitions: int | None = None,
     arrays_to_explode: list[str] | None = None,
 ) -> BlockingRuleCreator:
+    """Generates blocking rules of equality conditions  based on the columns
+    or SQL expressions specified.
+
+    When multiple columns or SQL snippets are provided, the function generates a
+    compound blocking rule, connecting individual match conditions with
+    "AND" clauses.
+
+    Further information on equi-join conditions can be found
+    [here](https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html)
+
+    Args:
+        col_names (list[str]): A list of input columns or sql conditions
+            you wish to create blocks on.
+        salting_partitions (optional, int): Whether to add salting
+            to the blocking rule. More information on salting can
+            be found within the docs. Salting is only valid for Spark.
+
+    Examples:
+        ``` python
+        from splink import block_on
+        block_on("first_name")  # check for exact matches on first name
+        block_on("substr(surname,1,2)", "surname")
+        ```
+
+    """
     if isinstance(col_names_or_exprs[0], list):
         raise TypeError(
             "block_on no longer accepts a list as the first argument. "
