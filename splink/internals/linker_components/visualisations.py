@@ -32,6 +32,10 @@ if TYPE_CHECKING:
 
 
 class LinkerVisualisations:
+    """Visualisations to help you understand and diagnose your linkage model.
+    Accessed via `linker.visualisations`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 

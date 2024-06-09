@@ -43,6 +43,10 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerInference:
+    """Use your Splink model to make predictions (perform inference). Accessed via
+    `linker.inference`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 

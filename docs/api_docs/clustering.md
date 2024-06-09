@@ -3,7 +3,10 @@ tags:
   - API
   - Clustering
 ---
-::: splink.internals.linker_components.visualisations.LinkerVisualisations
+# Methods in Linker.clustering
+
+
+::: splink.internals.linker_components.clustering.LinkerClustering
     handler: python
     filters:
       - "!^__init__$"

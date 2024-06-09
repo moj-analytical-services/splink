@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTraining:
-    """Methods for estimating the parameters of the linkage model, accessed via
+    """Estimate the parameters of the linkage model, accessed via
     `linker.training`.
     """
 

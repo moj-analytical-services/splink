@@ -28,6 +28,10 @@ if TYPE_CHECKING:
 
 
 class LinkerEvalution:
+    """Evaluate the performance of a Splink model.  Accessed via
+    `linker.evaluation`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 
