@@ -3,9 +3,9 @@ tags:
   - API
   - comparisons
 ---
-# Documentation for the `comparison_library`
+# Documentation for the `comparison_level_library`
 
-::: splink.internals.comparison_library
+::: splink.comparison_level_library
     handler: python
     options:
       show_root_heading: false
@@ -17,9 +17,9 @@ tags:
 
 ## Configuring comparisons
 
-Note that all comparisons have a `.configure()` method as follows:
+Note that all comparison levels have a `.configure()` method as follows:
 
-::: splink.internals.comparison_creator.ComparisonCreator.configure
+::: splink.internals.comparison_creator.ComparisonLevelCreator.configure
     handler: python
     options:
       show_root_heading: false

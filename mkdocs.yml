@@ -115,6 +115,10 @@ nav:
           - Evaluation: "api_docs/evaluation.md"
           - Table Management: "api_docs/table_management.md"
           - Miscellaneous functions: "api_docs/misc.md"
+        - Comparisons Library API:
+            - Comparison Template Library: "api_docs/comparison_template_library.md"
+            - Comparison Library: "api_docs/comparison_library.md"
+            - Comparison Level Library: "api_docs/comparison_level_library.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css

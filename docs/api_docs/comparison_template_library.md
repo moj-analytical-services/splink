@@ -3,9 +3,9 @@ tags:
   - API
   - comparisons
 ---
-# Documentation for the `comparison_library`
+# Documentation for the `comparison_template_library`
 
-::: splink.internals.comparison_library
+::: splink.internals.comparison_template_library
     handler: python
     options:
       show_root_heading: false
