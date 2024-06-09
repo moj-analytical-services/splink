@@ -9,64 +9,12 @@ from splink.internals.comparison_level_library import CustomLevel, DateMetricTyp
 from splink.internals.misc import ensure_is_iterable
 
 
-class CustomComparison(ComparisonCreator):
-    def __init__(
-        self,
-        comparison_levels: List[Union[ComparisonLevelCreator, dict[str, Any]]],
-        output_column_name: str = None,
-        comparison_description: str = None,
-    ):
-        """
-        Represents a comparison of the data with custom supplied levels.
-
-        Args:
-            output_col_name (str): The column name to use to refer to this comparison
-            comparison_levels (list): A list of some combination of
-                `ComparisonLevelCreator` objects, or dicts. These represent the
-                similarity levels assessed by the comparison, in order of decreasing
-                specificity
-            description (str, optional): An optional description of the comparison
-        """
-
-        self._output_column_name = output_column_name
-        self._comparison_levels = comparison_levels
-        self._description = comparison_description
-        # we deliberately don't call super().__init__() - all that does is set up
-        # column expressions, which we do not need here as we are dealing with
-        # levels directly
-
-    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-        comparison_level_creators = [
-            CustomLevel._convert_to_creator(cl) for cl in self._comparison_levels
-        ]
-        return comparison_level_creators
-
-    def create_description(self) -> str:
-        # TODO: fleshed out default description?
-        return (
-            self._description
-            if self._description is not None
-            else f"Comparison for {self._output_column_name}"
-        )
-
-    def create_output_column_name(self) -> Optional[str]:
-        # TODO: should default logic be here? would need column-extraction logic also
-        return self._output_column_name
-
-    @staticmethod
-    def _convert_to_creator(
-        comparison_creator: dict[str, Any] | ComparisonCreator,
-    ) -> ComparisonCreator:
-        if isinstance(comparison_creator, dict):
-            return CustomComparison(**comparison_creator)
-        return comparison_creator
-
-
 class ExactMatch(ComparisonCreator):
     """
     Represents a comparison of the data in `col_name` with two levels:
-        - Exact match in `col_name`
-        - Anything else
+
+    - Exact match in `col_name`
+    - Anything else
 
     Args:
         col_name (str): The name of the column to compare
@@ -100,16 +48,18 @@ class LevenshteinAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Levenshtein levels at specified distance thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Levenshtein levels at specified distance thresholds
+        - ...
+        - Anything else
 
         For example, with distance_threshold_or_thresholds = [1, 3] the levels are
-            - Exact match in `col_name`
-            - Levenshtein distance in `col_name` <= 1
-            - Levenshtein distance in `col_name` <= 3
-            - Anything else
+
+        - Exact match in `col_name`
+        - Levenshtein distance in `col_name` <= 1
+        - Levenshtein distance in `col_name` <= 3
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare
@@ -155,16 +105,18 @@ class DamerauLevenshteinAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Damerau-Levenshtein levels at specified distance thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Damerau-Levenshtein levels at specified distance thresholds
+        - ...
+        - Anything else
 
         For example, with distance_threshold_or_thresholds = [1, 3] the levels are
-            - Exact match in `col_name`
-            - Damerau-Levenshtein distance in `col_name` <= 1
-            - Damerau-Levenshtein distance in `col_name` <= 3
-            - Anything else
+
+        - Exact match in `col_name`
+        - Damerau-Levenshtein distance in `col_name` <= 1
+        - Damerau-Levenshtein distance in `col_name` <= 3
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare.
@@ -209,16 +161,18 @@ class JaccardAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Jaccard score levels at specified thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaccard score levels at specified thresholds
+        - ...
+        - Anything else
 
         For example, with score_threshold_or_thresholds = [0.9, 0.7] the levels are:
-            - Exact match in `col_name`
-            - Jaccard score in `col_name` >= 0.9
-            - Jaccard score in `col_name` >= 0.7
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaccard score in `col_name` >= 0.9
+        - Jaccard score in `col_name` >= 0.7
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare.
@@ -263,16 +217,18 @@ class JaroAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Jaro score levels at specified thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaro score levels at specified thresholds
+        - ...
+        - Anything else
 
         For example, with score_threshold_or_thresholds = [0.9, 0.7] the levels are:
-            - Exact match in `col_name`
-            - Jaro score in `col_name` >= 0.9
-            - Jaro score in `col_name` >= 0.7
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaro score in `col_name` >= 0.9
+        - Jaro score in `col_name` >= 0.7
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare.
@@ -317,16 +273,18 @@ class JaroWinklerAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Jaro-Winkler score levels at specified thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaro-Winkler score levels at specified thresholds
+        - ...
+        - Anything else
 
         For example, with score_threshold_or_thresholds = [0.9, 0.7] the levels are:
-            - Exact match in `col_name`
-            - Jaro-Winkler score in `col_name` >= 0.9
-            - Jaro-Winkler score in `col_name` >= 0.7
-            - Anything else
+
+        - Exact match in `col_name`
+        - Jaro-Winkler score in `col_name` >= 0.9
+        - Jaro-Winkler score in `col_name` >= 0.7
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare.
@@ -373,18 +331,20 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
     ):
         """
         Represents a comparison of the data in `col_name` with three or more levels:
-            - Exact match in `col_name`
-            - Custom distance function levels at specified thresholds
-            - ...
-            - Anything else
+
+        - Exact match in `col_name`
+        - Custom distance function levels at specified thresholds
+        - ...
+        - Anything else
 
         For example, with distance_threshold_or_thresholds = [1, 3]
         and distance_function 'hamming', with higher_is_more_similar False
         the levels are:
-            - Exact match in `col_name`
-            - Hamming distance of `col_name` <= 1
-            - Hamming distance of `col_name` <= 3
-            - Anything else
+
+        - Exact match in `col_name`
+        - Hamming distance of `col_name` <= 1
+        - Hamming distance of `col_name` <= 3
+        - Anything else
 
         Args:
             col_name (str): The name of the column to compare.
@@ -545,14 +505,16 @@ class ArrayIntersectAtSizes(ComparisonCreator):
         """
         Represents a comparison of the data in `col_name` with multiple levels based on
         the intersection sizes of array elements:
-            - Intersection at specified size thresholds
-            - ...
-            - Anything else
+
+        - Intersection at specified size thresholds
+        - ...
+        - Anything else
 
         For example, with size_threshold_or_thresholds = [3, 1], the levels are:
-            - Intersection of arrays in `col_name` has at least 3 elements
-            - Intersection of arrays in `col_name` has at least 1 element
-            - Anything else (e.g., empty intersection)
+
+        - Intersection of arrays in `col_name` has at least 3 elements
+        - Intersection of arrays in `col_name` has at least 1 element
+        - Anything else (e.g., empty intersection)
 
         Args:
             col_name (str): The name of the column to compare.
@@ -600,9 +562,9 @@ class DistanceInKMAtThresholds(ComparisonCreator):
 
         An example of the output with km_thresholds = [1, 10] would be:
 
-        * The two coordinates are within 1 km of one another
-        * The two coordinates are within 10 km of one another
-        * Anything else (i.e. the distance between coordinates are > 10km apart)
+        - The two coordinates are within 1 km of one another
+        - The two coordinates are within 10 km of one another
+        - Anything else (i.e. the distance between coordinates are > 10km apart)
 
         Args:
             lat_col(str): The name of the latitude column to compare.
@@ -644,3 +606,56 @@ class DistanceInKMAtThresholds(ComparisonCreator):
         lat_col = self.col_expressions["latitude_column"]
         long_col = self.col_expressions["longitude_column"]
         return f"{lat_col.output_column_name}_{long_col.output_column_name}"
+
+
+class CustomComparison(ComparisonCreator):
+    def __init__(
+        self,
+        comparison_levels: List[Union[ComparisonLevelCreator, dict[str, Any]]],
+        output_column_name: str = None,
+        comparison_description: str = None,
+    ):
+        """
+        Represents a comparison of the data with custom supplied levels.
+
+        Args:
+            output_col_name (str): The column name to use to refer to this comparison
+            comparison_levels (list): A list of some combination of
+                `ComparisonLevelCreator` objects, or dicts. These represent the
+                similarity levels assessed by the comparison, in order of decreasing
+                specificity
+            description (str, optional): An optional description of the comparison
+        """
+
+        self._output_column_name = output_column_name
+        self._comparison_levels = comparison_levels
+        self._description = comparison_description
+        # we deliberately don't call super().__init__() - all that does is set up
+        # column expressions, which we do not need here as we are dealing with
+        # levels directly
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        comparison_level_creators = [
+            CustomLevel._convert_to_creator(cl) for cl in self._comparison_levels
+        ]
+        return comparison_level_creators
+
+    def create_description(self) -> str:
+        # TODO: fleshed out default description?
+        return (
+            self._description
+            if self._description is not None
+            else f"Comparison for {self._output_column_name}"
+        )
+
+    def create_output_column_name(self) -> Optional[str]:
+        # TODO: should default logic be here? would need column-extraction logic also
+        return self._output_column_name
+
+    @staticmethod
+    def _convert_to_creator(
+        comparison_creator: dict[str, Any] | ComparisonCreator,
+    ) -> ComparisonCreator:
+        if isinstance(comparison_creator, dict):
+            return CustomComparison(**comparison_creator)
+        return comparison_creator

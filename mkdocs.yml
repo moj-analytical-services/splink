@@ -108,13 +108,13 @@ nav:
       - Introduction: "documentation_index.md"
       - API:
         - Linker API:
-          - Visualisations: "api_docs/visualisations.md"
-          - Miscellaneous functions: "api_docs/misc.md"
-          - Clustering: "api_docs/clustering.md"
-          - Inference: "api_docs/inference.md"
-          - Table Management: "api_docs/table_management.md"
-          - Evaluation: "api_docs/evaluation.md"
           - Training: "api_docs/training.md"
+          - Visualisations: "api_docs/visualisations.md"
+          - Inference: "api_docs/inference.md"
+          - Clustering: "api_docs/clustering.md"
+          - Evaluation: "api_docs/evaluation.md"
+          - Table Management: "api_docs/table_management.md"
+          - Miscellaneous functions: "api_docs/misc.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
