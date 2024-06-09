@@ -61,9 +61,6 @@ plugins:
   - mkdocs-video:
       is_video: True
       video_autoplay: false
-  - git-committers:
-      repository: moj-analytical-services/splink
-      branch: master
   - rss:
       match_path: blog/posts/.*
       date_from_meta:
@@ -121,6 +118,7 @@ nav:
             - Comparison Level Library: "api_docs/comparison_level_library.md"
         - Blocking:
             - Blocking: "api_docs/blocking.md"
+        - EM Training Session API: "api_docs/em_training_session.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
