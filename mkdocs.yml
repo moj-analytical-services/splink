@@ -116,9 +116,10 @@ nav:
             - Comparison Template Library: "api_docs/comparison_template_library.md"
             - Comparison Library: "api_docs/comparison_library.md"
             - Comparison Level Library: "api_docs/comparison_level_library.md"
-        - Blocking:
+        - Other:
+            - SplinkDataFrame: "api_docs/splink_dataframe.md"
             - Blocking: "api_docs/blocking.md"
-        - EM Training Session API: "api_docs/em_training_session.md"
+            - EM Training Session API: "api_docs/em_training_session.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
