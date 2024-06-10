@@ -37,10 +37,10 @@ theme:
         name: Switch to light mode
   custom_dir: docs/overrides
 plugins:
+  - mknotebooks
   - blog:
       post_date_format: long
       archive: false
-  - mknotebooks
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -48,18 +48,7 @@ plugins:
           options:
             show_source: false
             docstring_style: google
-  - git-revision-date-localized:
-      enable_creation_date: true
-      type: timeago
-      fallback_to_build_date: true
   - charts
-  - mkdocs-video:
-      is_video: True
-      video_autoplay: false
-  - rss:
-      match_path: blog/posts/.*
-      date_from_meta:
-        as_creation: date
 hooks:
   - docs/hooks/__init__.py
 
@@ -97,24 +86,11 @@ markdown_extensions:
 nav:
   - Home: "index.md"
   - Documentation:
-      - Introduction: "documentation_index.md"
-      - API:
-        - Linker:
-          - Training: "api_docs/training.md"
-          - Visualisations: "api_docs/visualisations.md"
-          - Inference: "api_docs/inference.md"
-          - Clustering: "api_docs/clustering.md"
-          - Evaluation: "api_docs/evaluation.md"
-          - Table Management: "api_docs/table_management.md"
-          - Miscellaneous functions: "api_docs/misc.md"
-        - Comparisons Library:
-            - Comparison Template Library: "api_docs/comparison_template_library.md"
-            - Comparison Library: "api_docs/comparison_library.md"
-            - Comparison Level Library: "api_docs/comparison_level_library.md"
-        - Other:
-            - SplinkDataFrame: "api_docs/splink_dataframe.md"
-            - Blocking: "api_docs/blocking.md"
-            - EM Training Session API: "api_docs/em_training_session.md"
+    - Introduction: "documentation_index.md"
+  - Topic Guides:
+    - Comparing Records:
+      - Comparisons and Comparison Levels: "topic_guides/comparisons/comparisons_and_comparison_levels.md"
+      - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
