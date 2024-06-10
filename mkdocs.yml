@@ -38,7 +38,7 @@ theme:
   custom_dir: docs/overrides
 plugins:
   # I have tried https://github.com/greenape/mknotebooks/blob/master/examples/cell_tag_remove/mkdocs.yml
-  # and it doesn't work
+  # and it doesn't work, see also https://github.com/moj-analytical-services/splink/pull/2033
   - mknotebooks
   - blog:
       post_date_format: long
