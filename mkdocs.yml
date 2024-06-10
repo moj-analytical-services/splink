@@ -13,9 +13,6 @@ theme:
     - content.tabs.link
     - content.tooltips
     - header.autohide
-    - search.highlight
-    - search.share
-    - search.suggest
     - navigation.indexes
     - navigation.footer
     - content.action.edit
@@ -43,9 +40,7 @@ plugins:
   - blog:
       post_date_format: long
       archive: false
-  - search
   - mknotebooks
-  - tags
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -104,7 +99,7 @@ nav:
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:
-        - Linker API:
+        - Linker:
           - Training: "api_docs/training.md"
           - Visualisations: "api_docs/visualisations.md"
           - Inference: "api_docs/inference.md"
@@ -112,7 +107,7 @@ nav:
           - Evaluation: "api_docs/evaluation.md"
           - Table Management: "api_docs/table_management.md"
           - Miscellaneous functions: "api_docs/misc.md"
-        - Comparisons Library API:
+        - Comparisons Library:
             - Comparison Template Library: "api_docs/comparison_template_library.md"
             - Comparison Library: "api_docs/comparison_library.md"
             - Comparison Level Library: "api_docs/comparison_level_library.md"
@@ -144,3 +139,5 @@ extra:
     - icon: fontawesome/solid/rss
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
+exclude:
+  - "api_docs/**"
