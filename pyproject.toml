@@ -49,7 +49,6 @@ sqlalchemy = ">=1.4.0"
 # temporarily use binary version, to avoid issues with pg_config path
 psycopg2-binary = ">=2.8.0"
 igraph = ">=0.11.2"
-ipykernel = "^6.29.4"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
