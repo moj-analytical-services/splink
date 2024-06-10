@@ -37,6 +37,8 @@ theme:
         name: Switch to light mode
   custom_dir: docs/overrides
 plugins:
+  # I have tried https://github.com/greenape/mknotebooks/blob/master/examples/cell_tag_remove/mkdocs.yml
+  # and it doesn't work
   - mknotebooks
   - blog:
       post_date_format: long
