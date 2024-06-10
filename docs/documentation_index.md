@@ -35,7 +35,7 @@ The [Splink Charts Gallery](./charts/index.md) contains examples for all of the 
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.
 
-- [In-build datasets](./datasets.md) - information on included datasets, as well as how to use them, and methods for managing them.
+- [In-built datasets](./datasets.md) - information on included datasets, as well as how to use them, and methods for managing them.
 
 ## Splink Settings
 Reference materials for the Splink Settings dictionary:
