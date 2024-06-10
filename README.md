@@ -15,11 +15,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.  
-🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required for model training.  
-📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.  
+⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.
+🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.
+🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+🎓 **Unsupervised Learning:** No training data is required for model training.
+📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.
 
 Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
@@ -107,43 +107,54 @@ The following code demonstrates how to estimate the parameters of a deduplicatio
 For more detailed tutorial, please see [here](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html).
 
 ```py
-from splink.duckdb.linker import DuckDBLinker
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
-from splink.duckdb.blocking_rule_library import block_on
-from splink.datasets import splink_datasets
+import splink.comparison_library as cl
+import splink.comparison_template_library as ctl
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+
+db_api = DuckDBAPI()
 
 df = splink_datasets.fake_1000
 
-settings = {
-    "link_type": "dedupe_only",
-    "blocking_rules_to_generate_predictions": [
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    comparisons=[
+        cl.JaroWinklerAtThresholds("first_name", [0.9, 0.7]),
+        cl.JaroWinklerAtThresholds("surname", [0.9, 0.7]),
+        ctl.DateComparison(
+            "dob",
+            input_is_string=True,
+            datetime_metrics=["year", "month"],
+            datetime_thresholds=[1, 1],
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        ctl.EmailComparison("email"),
+    ],
+    blocking_rules_to_generate_predictions=[
         block_on("first_name"),
         block_on("surname"),
-    ],
-    "comparisons": [
-        ctl.name_comparison("first_name"),
-        ctl.name_comparison("surname"),
-        ctl.date_comparison("dob", cast_strings_to_date=True),
-        cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email", include_username_fuzzy_level=False),
-    ],
-}
+    ]
+)
 
-linker = DuckDBLinker(df, settings)
-linker.estimate_u_using_random_sampling(max_pairs=1e6)
+linker = Linker(df, settings, db_api)
 
-blocking_rule_for_training = block_on(["first_name", "surname"])
+linker.training.estimate_probability_two_random_records_match(
+    [block_on("first_name", "surname")],
+    recall=0.7,
+)
 
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = block_on("dob")
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("first_name", "surname")
+)
 
-pairwise_predictions = linker.predict()
+linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
 
-clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-clusters.as_pandas_dataframe(limit=5)
+pairwise_predictions = linker.inference.predict(threshold_match_weight=-10)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
+
+df_clusters = clusters.as_pandas_dataframe(limit=5)
 ```
 
 ## Videos
