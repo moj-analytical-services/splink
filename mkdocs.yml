@@ -91,8 +91,9 @@ nav:
     - Introduction: "documentation_index.md"
   - Topic Guides:
     - Comparing Records:
-      - Comparisons and Comparison Levels: "topic_guides/comparisons/comparisons_and_comparison_levels.md"
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
+      - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
+      - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
