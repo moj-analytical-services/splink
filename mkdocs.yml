@@ -39,6 +39,7 @@ theme:
 plugins:
   # I have tried https://github.com/greenape/mknotebooks/blob/master/examples/cell_tag_remove/mkdocs.yml
   # and it doesn't work, see also https://github.com/moj-analytical-services/splink/pull/2033
+  # and https://github.com/greenape/mknotebooks/issues/1118
   - mknotebooks
   - blog:
       post_date_format: long
@@ -87,8 +88,54 @@ markdown_extensions:
   - neoteroi.cards
 nav:
   - Home: "index.md"
+  - Getting Started: "getting_started.md"
+  - Tutorial:
+      - Introduction: "demos/tutorials/00_Tutorial_Introduction.ipynb"
+      - 1. Data prep prerequisites: "demos/tutorials/01_Prerequisites.ipynb"
+      - 2. Exploratory analysis: "demos/tutorials/02_Exploratory_analysis.ipynb"
+      - 3. Blocking: "demos/tutorials/03_Blocking.ipynb"
+      - 4. Estimating model parameters: "demos/tutorials/04_Estimating_model_parameters.ipynb"
+      - 5. Predicting results: "demos/tutorials/05_Predicting_results.ipynb"
+      - 6. Visualising predictions: "demos/tutorials/06_Visualising_predictions.ipynb"
+      - 7. Evaluation: "demos/tutorials/07_Evaluation.ipynb"
+  - Examples:
+      - Introduction: "demos/examples/examples_index.md"
+      - DuckDB:
+        - Deduplicate 50k rows historical persons: "demos/examples/duckdb/deduplicate_50k_synthetic.ipynb"
+        - Linking financial transactions: "demos/examples/duckdb/transactions.ipynb"
+        - Linking two tables of persons: "demos/examples/duckdb/link_only.ipynb"
+        - Real time record linkage: "demos/examples/duckdb/real_time_record_linkage.ipynb"
+        - Evaluation from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
+        - Estimating m probabilities from labels: "demos/examples/duckdb/pairwise_labels.ipynb"
+        - Quick and dirty persons model: "demos/examples/duckdb/quick_and_dirty_persons.ipynb"
+        - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
+        - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
+        - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
+      - PySpark:
+        - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
+      - Athena:
+        - Deduplicate 50k rows historical persons: "demos/examples/athena/deduplicate_50k_synthetic.ipynb"
+      - SQLite:
+        - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
   - Documentation:
     - Introduction: "documentation_index.md"
+    - API:
+      - Linker:
+        - Training: "api_docs/training.md"
+        - Visualisations: "api_docs/visualisations.md"
+        - Inference: "api_docs/inference.md"
+        - Clustering: "api_docs/clustering.md"
+        - Evaluation: "api_docs/evaluation.md"
+        - Table Management: "api_docs/table_management.md"
+        - Miscellaneous functions: "api_docs/misc.md"
+      - Comparisons Library:
+          - Comparison Template Library: "api_docs/comparison_template_library.md"
+          - Comparison Library: "api_docs/comparison_library.md"
+          - Comparison Level Library: "api_docs/comparison_level_library.md"
+      - Other:
+          - SplinkDataFrame: "api_docs/splink_dataframe.md"
+          - Blocking: "api_docs/blocking.md"
+          - EM Training Session API: "api_docs/em_training_session.md"
   - Topic Guides:
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"

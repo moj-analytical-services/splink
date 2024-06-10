@@ -8,21 +8,25 @@ hide:
 This section contains reference material for the modules and functions within Splink.
 
 ## API
-The documentation for the Splink API is broken up into the following categories:
 
-- [Linker API](./linker.md) - for all of the methods that can be used with an instantiated `Linker` object.
+#### Linker
+- [Training](api_docs/training.md)
+- [Visualisations](api_docs/visualisations.md)
+- [Inference](api_docs/inference.md)
+- [Clustering](api_docs/clustering.md)
+- [Evaluation](api_docs/evaluation.md)
+- [Table Management](api_docs/table_management.md)
+- [Miscellaneous functions](api_docs/misc.md)
 
-- [Comparisons Library API](./comparison_level_library.md) - for methods that can be used to define `Comparisons` within a Splink Settings dictionary.
+#### Comparisons Library
+- [Comparison Template Library](api_docs/comparison_template_library.md)
+- [Comparison Library](api_docs/comparison_library.md)
+- [Comparison Level Library](api_docs/comparison_level_library.md)
 
-- [Blocking Rules Library API](./blocking_rule_library.md) - for methods that can be used to define a `Blocking Rule` for use within a Splink Settings dictionary or in the expectation maximisation step.
-
-- [EM Training Session API](./em_training_session.md) - for methods that be used to inspect the results of individual iterations of the Expectation Maximisation model training algorithm.
-
-- [Splink Dataframe API](./SplinkDataFrame.md) - for methods that can be used to manipulate a `SplinkDataFrame` across all SQL backends.
-
-- [Comparisons API](./comparison.md) - for reference material giving more explanation on the `Comparison` and `ComparisonLevel` objects within Splink.
-
-Note: When building a Splink model, the [Linker API](./linker.md) and [Comparisons Library API](./comparison_level_library.md) will be the most useful parts of the API documentation. The other sections are primarily for reference.
+#### Other
+- [SplinkDataFrame](api_docs/splink_dataframe.md)
+- [Blocking](api_docs/blocking.md)
+- [EM Training Session API](api_docs/em_training_session.md)
 
 ## Charts Gallery
 
