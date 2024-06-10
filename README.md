@@ -119,7 +119,7 @@ settings = SettingsCreator(
     link_type="dedupe_only",
     comparisons=[
         cl.JaroWinklerAtThresholds("first_name", [0.9, 0.7]),
-        cl.JaroWinklerAtThresholds("surname", [0.9, 0.7]),
+        cl.JaroAtThresholds("surname", [0.9, 0.7]),
         ctl.DateComparison(
             "dob",
             input_is_string=True,
@@ -152,7 +152,9 @@ linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob
 
 pairwise_predictions = linker.inference.predict(threshold_match_weight=-10)
 
-clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    pairwise_predictions, 0.95
+)
 
 df_clusters = clusters.as_pandas_dataframe(limit=5)
 ```
