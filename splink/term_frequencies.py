@@ -237,7 +237,9 @@ def tf_adjustment_chart(
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
 
-    vals_not_included = [val for val in vals_to_include if val not in df["value"].values]
+    vals_not_included = [
+        val for val in vals_to_include if val not in df["value"].values
+    ]
     if vals_not_included:
         warnings.warn(
             f"Values {vals_not_included} from `vals_to_include` were not found in "
