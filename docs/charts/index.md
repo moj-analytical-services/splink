@@ -3,22 +3,16 @@
 ## Exploratory Analysis
 
 ::cards::
-[
-  {
-    "title": "`completeness chart`",
-    "image": "./img/completeness_chart.png",
-    "url": "./completeness_chart.ipynb"
-  },
-  {
-    "title": "`missingness chart`",
-    "image": "./img/missingness_chart.png",
-    "url": "./missingness_chart.ipynb"
-  },
-  {
+[{
     "title": "`profile columns`",
     "image": "./img/profile_columns.png",
     "url": "./profile_columns.ipynb"
   },
+  {
+    "title": "`completeness chart`",
+    "image": "./img/completeness_chart.png",
+    "url": "./completeness_chart.ipynb"
+  }
 ]
 ::/cards::
 
@@ -86,7 +80,7 @@
     "title": "`unlinkables chart`",
     "image": "./img/unlinkables_chart.png",
     "url": "./unlinkables_chart.ipynb"
-    },  
+    },
 ]
 ::/cards::
 
@@ -132,7 +126,7 @@
     "title": "`waterfall chart`",
     "image": "./img/waterfall_chart.png",
     "url": "./waterfall_chart.ipynb"
-    },   
+    },
 ]
 ::/cards::
 
@@ -201,11 +195,6 @@
     "title": "`match weights chart`",
     "image": "./img/match_weights_chart.png",
     "url": "./match_weights_chart.ipynb"
-  },
-  {
-    "title": "`missingness chart`",
-    "image": "./img/missingness_chart.png",
-    "url": "./missingness_chart.ipynb"
   },
   {
     "title": "`parameter estimate comparisons chart`",
