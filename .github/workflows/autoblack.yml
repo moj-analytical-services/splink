@@ -18,28 +18,23 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Load cached Poetry installation
-        uses: actions/cache@v2
-        with:
-          path: ~/.local  # the path depends on the OS
-          key: poetry-0  # increment to reset cache
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: '1.7.0'
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+      - name: Install poetry using pipx
+        run: |
+          pipx install poetry
+          pipx ensurepath
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v2
+      - uses: actions/setup-python@v5
         with:
-          path: .venv
-          key: venv-lint-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-01
-      - name: Install linting dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --only linting
+          python-version: "3.12.1"
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root --only linting
+
+      - name: Run Black autoformatter
+        run: poetry run black .
 
       - name: Run Black autoformatter
         run: |
