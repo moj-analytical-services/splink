@@ -195,7 +195,7 @@ def comparison_level_to_tf_chart_data(cl: dict):
 def tf_adjustment_chart(
     linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
 ):
-    # Data for chart
+
     c = linker._settings_obj._get_comparison_by_output_column_name(col)
     c = c._as_detailed_records
 
@@ -237,7 +237,9 @@ def tf_adjustment_chart(
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
 
-    vals_not_included = [val for val in vals_to_include if val not in df["value"].values]
+    vals_not_included = [
+        val for val in vals_to_include if val not in df["value"].values
+    ]
     if vals_not_included:
         warnings.warn(
             f"Values {vals_not_included} from `vals_to_include` were not found in "
