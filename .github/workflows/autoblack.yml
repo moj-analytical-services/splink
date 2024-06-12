@@ -43,7 +43,5 @@ jobs:
           # short-circuit if we have no changes, otherwise attempt to commit and push
           # should only fail on forks, in which case contributors will need to manually run black, commit, and push
           git diff-index --quiet HEAD || (echo "Attempting to commit changes" && git commit -am 'lint with black' && git push -f)
-      - name: Run black --check .
-        run: |
-          source .venv/bin/activate
-          python3 -m black --check .
+      - name: Run black --check
+        run: poetry run black --check .
