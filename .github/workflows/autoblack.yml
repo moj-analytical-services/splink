@@ -36,10 +36,6 @@ jobs:
       - name: Run Black autoformatter
         run: poetry run black .
 
-      - name: Run Black autoformatter
-        run: |
-          source .venv/bin/activate
-          python3 -m black .
       - name: If needed, commit black changes to the pull request
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
