@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, replace
 
 import sqlglot
@@ -216,20 +216,20 @@ class InputColumn:
         )
 
     def unquote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=False)
         self_copy.col_builder = b
         return self_copy
 
     def quote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=True)
         self_copy.col_builder = b
         return self_copy
 
     @property
     def as_base_dialect(self) -> InputColumn:
-        input_column_copy = deepcopy(self)
+        input_column_copy = copy(self)
         input_column_copy.sql_dialect = None
         return input_column_copy
 
