@@ -135,8 +135,10 @@ nav:
           - Comparison Library: "api_docs/comparison_library.md"
           - Comparison Level Library: "api_docs/comparison_level_library.md"
       - Other:
+          - Exploratory: "api_docs/exploratory.md"
+          - Blocking rule creator: "api_docs/blocking.md"
+          - Blocking analysis: "api_docs/blocking_analysis.md"
           - SplinkDataFrame: "api_docs/splink_dataframe.md"
-          - Blocking: "api_docs/blocking.md"
           - EM Training Session API: "api_docs/em_training_session.md"
     - Charts Gallery:
       - "charts/index.md"

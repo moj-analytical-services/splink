@@ -21,9 +21,9 @@
 ::cards::
 [
     {
-    "title": "`cumulative num comparisons from blocking rules chart`",
+    "title": "`cumulative comparisons to be scored from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
-    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+    "url": "./cumulative_comparisons_to_be_scored_from_blocking_rules_chart.ipynb"
     },
 ]
 ::/cards::
