@@ -140,13 +140,29 @@ nav:
           - Blocking analysis: "api_docs/blocking_analysis.md"
           - SplinkDataFrame: "api_docs/splink_dataframe.md"
           - EM Training Session API: "api_docs/em_training_session.md"
-    - Charts Gallery:
-      - "charts/index.md"
-      - Exploratory Analysis:
-        - completeness chart: "charts/completeness_chart.ipynb"
-        - profile columns: "charts/profile_columns.ipynb"
-      - Model Evaluation:
-        - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+      - Charts Gallery:
+        - "charts/index.md"
+        - Exploratory Analysis:
+          - completeness chart: "charts/completeness_chart.ipynb"
+          - profile columns: "charts/profile_columns.ipynb"
+        - Blocking:
+          - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+        - Comparison Helpers:
+          - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
+          - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
+          - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
+        - Model Training:
+          - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
+          - match weights chart: "charts/match_weights_chart.ipynb"
+          - m u parameters chart: "charts/m_u_parameters_chart.ipynb"
+          - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
+          - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"
+          - unlinkables chart: "charts/unlinkables_chart.ipynb"
+          - waterfall chart: "charts/waterfall_chart.ipynb"
+        - Clustering:
+          - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
+        - Model Evaluation:
+          - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
   - Topic Guides:
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
@@ -177,5 +193,5 @@ extra:
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
 exclude_docs: |
-    # api_docs/**
+    api_docs/**
     demos/**
