@@ -3,7 +3,7 @@ tags:
   - API
   - comparisons
 ---
-# Documentation for`block_on`
+# Documentation for`SplinkDataFrame`
 
 ::: splink.internals.splink_dataframe.SplinkDataFrame
     handler: python
