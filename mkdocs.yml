@@ -181,9 +181,8 @@ nav:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
-      - Prediction Blocking Rules: "topic_guides/blocking/predictions.md"
-      - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
+      - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
       - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
