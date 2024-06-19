@@ -164,10 +164,25 @@ nav:
         - Model Evaluation:
           - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
   - Topic Guides:
+    - Introduction: "topic_guides/topic_guides_index.md"
+    - Record Linkage Theory:
+      - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
+      - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
+      - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
+      - Linked Data as Graphs: "topic_guides/theory/linked_data_as_graphs.md"
+    - Linkage Models in Splink:
+      - Splink's SQL backends - Spark, DuckDB etc:
+        - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
+        - PostgreSQL: "topic_guides/splink_fundamentals/backends/postgres.md"
+      - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
+      - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
+      - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
       - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
       - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+  - How Splink works:
+    - User-Defined Functions: "dev_guides/udfs.md"
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
@@ -193,5 +208,5 @@ extra:
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
 exclude_docs: |
-    api_docs/**
-    demos/**
+    charts/**
+    blog/**
