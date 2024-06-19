@@ -27,6 +27,10 @@ if TYPE_CHECKING:
 
 
 class LinkerClustering:
+    """Cluster the results of the linkage model and analyse clusters, accessed via
+    `linker.clustering`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 

@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTraining:
+    """Estimate the parameters of the linkage model, accessed via
+    `linker.training`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 
@@ -426,8 +430,7 @@ class LinkerTraining:
             ```
 
         Returns:
-            Updates the estimated m parameters within the linker object
-            and returns nothing.
+            None: Updates the estimated m parameters within the linker object.
         """
 
         # Ensure this has been run on the main linker so that it can be used by

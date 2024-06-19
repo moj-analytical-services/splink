@@ -1,6 +1,8 @@
 # Linked data as graphs
 
-A graph is a collection of points (often referred to as nodes or vertices) connected by lines (often referred to as edges).
+When you link data, the results can be thought of as a graph, where each record (node) in your data is connected to other records by links (edges).  This guide discusses relevant graph theory.
+
+A graph is a collection of points (referred to in graph theory as nodes or vertices) connected by lines (referred to as edges).
 
 ![Basic Graph](../../img/clusters/basic_graph.drawio.png){:width="80%"}
 

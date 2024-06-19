@@ -156,6 +156,7 @@ class ComparisonCreator(ABC):
         the 'ELSE' level.
 
         Example:
+            ```py
             cc = LevenshteinAtThresholds("name", 2)
             cc.configure(
                 m_probabilities=[0.9, 0.08, 0.02],
@@ -163,6 +164,7 @@ class ComparisonCreator(ABC):
                 # probabilities for exact match level, levenshtein <= 2, and else
                 # in that order
             )
+            ```
         Args:
             term_frequency_adjustments (bool, optional): Whether term frequency
                 adjustments are switched on for this comparison. Only applied

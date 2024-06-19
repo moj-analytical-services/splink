@@ -8,6 +8,7 @@ from mkdocs.plugins import event_priority
 from mkdocs.structure.files import Files
 from mkdocs.structure.pages import Page
 from nbconvert import MarkdownExporter
+from nbconvert.preprocessors import TagRemovePreprocessor
 
 INCLUDE_MARKDOWN_REGEX = (
     # opening tag and any whitespace
@@ -86,7 +87,17 @@ def on_config(config: MkDocsConfig) -> MkDocsConfig:
     # convert ipynb to md rather than html directly
     # this ensures we render symbols such as '<' correctly
     # in codeblocks, instead of '%lt;'
+
+    t = TagRemovePreprocessor()
+    mknotebooks_config = config.get("plugins", {}).get("mknotebooks", {})
+    tag_remove_configs = mknotebooks_config.config.get("tag_remove_configs", {})
+    for option, setting in tag_remove_configs.items():
+        setattr(t, option, set(setting))
+
     md_exporter = MarkdownExporter(config=config)
+    md_exporter.register_preprocessor(t, enabled=True)
+
+    # md_exporter.config["TagRemovePreprocessor"]["remove_input_tags"] = ("hideme",)
     # overwrite mknotebooks config option
     config["notebook_exporter"] = md_exporter
     return config

@@ -547,6 +547,7 @@ def count_comparisons_from_blocking_rule(
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
+    """TODO: Add docstring here"""
     # Ensure what's been passed in is a BlockingRuleCreator
     blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.name
@@ -584,6 +585,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
 ) -> pd.DataFrame:
+    """TODO: Add docstring here"""
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     # whilst they're named blocking_rules, this is actually a list of
@@ -625,6 +627,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
 ) -> ChartReturnType:
+    """TODO: Add docstring here"""
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     # whilst they're named blocking_rules, this is actually a list of

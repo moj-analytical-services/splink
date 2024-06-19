@@ -83,7 +83,7 @@ class SplinkDataFrame(ABC):
 
         Examples:
             ```py
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             df_predict.drop_table_from_database_and_remove_from_cache()
             # predictions table no longer in the database / cache
             ```
@@ -103,7 +103,7 @@ class SplinkDataFrame(ABC):
 
         Examples:
             ```py
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             ten_edges = df_predict.as_record_dict(10)
             ```
         Args:
@@ -126,7 +126,7 @@ class SplinkDataFrame(ABC):
 
         Examples:
             ```py
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             df_ten_edges = df_predict.as_pandas_dataframe(10)
             ```
         Returns:
@@ -153,7 +153,7 @@ class SplinkDataFrame(ABC):
 
         Examples:
             ```py
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             df_predict.to_parquet("model_predictions.parquet", overwrite=True)
             ```
         Args:
@@ -168,7 +168,7 @@ class SplinkDataFrame(ABC):
 
         Examples:
             ```py
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             df_predict.to_csv("model_predictions.csv", overwrite=True)
             ```
         Args:

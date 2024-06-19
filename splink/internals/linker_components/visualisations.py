@@ -32,10 +32,14 @@ if TYPE_CHECKING:
 
 
 class LinkerVisualisations:
+    """Visualisations to help you understand and diagnose your linkage model.
+    Accessed via `linker.visualisations`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 
-    def match_weights_chart(self):
+    def match_weights_chart(self) -> ChartReturnType:
         """Display a chart of the (partial) match weights of the linkage model
 
         Examples:
@@ -55,7 +59,7 @@ class LinkerVisualisations:
             ```
 
         Returns:
-            altair.Chart: An altair chart
+            An Altair chart object.
         """
         return self._linker._settings_obj.match_weights_chart()
 
@@ -103,7 +107,7 @@ class LinkerVisualisations:
 
 
         Returns:
-            altair.Chart: An altair chart
+            altair.Chart: An altair chart object.
 
         """
         df = histogram_data(self._linker, df_predict, target_bins)

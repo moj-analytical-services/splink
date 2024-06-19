@@ -11,6 +11,10 @@ if TYPE_CHECKING:
 
 
 class LinkerMisc:
+    """Miscellaneous methods on the linker that don't fit into other categories.
+    Accessed via `linker.misc`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 

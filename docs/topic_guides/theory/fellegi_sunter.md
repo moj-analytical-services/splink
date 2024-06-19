@@ -1,6 +1,8 @@
 # The Fellegi-Sunter model
 
-Splink implements the Fellegi-Sunter model for probabilistic record linkage. This topic guide is intended to give a high-level introduction to the model. If you aren't familiar with the concept probabilistic record linkage, it is recommended to read that [topic guide](./probabilistic_vs_deterministic.md) first.
+This topic guide gives a high-level introduction to the Fellegi Sunter model, the statistical model that underlies Splink's methodology.
+
+For a more detailed interactive guide that aligns to Splink's methodology see Robin Linacre's [interactive introduction to probabilistic linkage](https://www.robinlinacre.com/intro_to_probabilistic_linkage/).
 
 <hr>
 
@@ -9,7 +11,7 @@ Splink implements the Fellegi-Sunter model for probabilistic record linkage. Thi
 The Fellegi-Sunter model has three main parameters that need to be considered to generate a match probability between two records:
 
 !!! note ""
-    * $\lambda$ - probability that any two records match 
+    * $\lambda$ - probability that any two records match
     * $m$ - probability of a given observation *given* the records are a match
     * $u$ - probability of a given observation *given* the records are **not** a match
 
@@ -25,9 +27,9 @@ $$
 
 This is the same for all records comparisons, but is highly dependent on:
 
-* The total number of records  
-* The number of duplicate records (more duplicates increases $\lambda$)  
-* The overlap between datasets  
+* The total number of records
+* The number of duplicate records (more duplicates increases $\lambda$)
+* The overlap between datasets
     * Two datasets covering the same cohort (high overlap, high $\lambda$)
     * Two entirely independent datasets (low overlap, low $\lambda$)
 
@@ -75,7 +77,7 @@ The $u$ probability is a measure of coincidence. As there are so many possible s
 
 In the case of a perfect unique identifier:
 
-* A person is only assigned one such value - $m = 1$ (match) or $m=0$ (non-match)  
+* A person is only assigned one such value - $m = 1$ (match) or $m=0$ (non-match)
 * A value is only ever assigned to one person - $u = 0$ (match) or $u = 1$ (non-match)
 
 Where $m$ and $u$ deviate from these ideals can usually be intuitively explained:
@@ -84,7 +86,7 @@ Where $m$ and $u$ deviate from these ideals can usually be intuitively explained
     ### _m_ probability
     A measure of **data quality/reliability**.
 
-    How often might a person's information change legitimately or through data error? 
+    How often might a person's information change legitimately or through data error?
 
     * **Names**: typos, aliases, nicknames, middle names, married names etc.
     * **DOB**: typos, estimates (e.g. 1st Jan YYYY where date not known)
@@ -99,7 +101,7 @@ Where $m$ and $u$ deviate from these ideals can usually be intuitively explained
     * **DOB** (high cardinality) – for a flat age distribution spanning ~30 years, there are ~10,000 DOBs (0.01% chance of a match)
     * **Sex** (low cardinality) – only 2 potential values (~50% chance of a match)
 
-[^1]: 
+[^1]:
     Cardinality is the the number of items in a set. In record linkage, cardinality refers to the number of possible values a feature could have.
     This is important in record linkage, as the number of possible options for e.g. date of birth has a significant impact on the amount of evidence that a match on date of birth provides for two records being a match.
 
@@ -107,7 +109,7 @@ Where $m$ and $u$ deviate from these ideals can usually be intuitively explained
 
 ## Match Weights
 
-One of the key measures of evidence of a match between records is the match weight. 
+One of the key measures of evidence of a match between records is the match weight.
 
 ### Deriving Match Weights from m and u
 
@@ -149,7 +151,7 @@ $$
 
 ### Interpreting Match Weights
 
-The _match weight_ is the central metric showing the amount of evidence of a match is provided by each of the features in a model.  
+The _match weight_ is the central metric showing the amount of evidence of a match is provided by each of the features in a model.
 The is most easily shown through Splink's Waterfall Chart:
 
 ![](../../img/fellegi_sunter/waterfall.png)
@@ -160,8 +162,8 @@ The is most easily shown through Splink's Waterfall Chart:
 
 - 3️⃣ are the _match weights_ of **each feature**, $M_\textsf{forename}$, $M_\textsf{surname}$, $M_\textsf{dob}$, $M_\textsf{city}$ and $M_\textsf{email}$ respectively.
 - 4️⃣ is the **total** _match weight_ for two observed records, combining 2️⃣ and 3️⃣:
-    
-    $$ 
+
+    $$
     \begin{equation}
     \begin{aligned}
         M_\textsf{obs} &= M_\textsf{prior} + M_\textsf{forename} + M_\textsf{surname} + M_\textsf{dob} + M_\textsf{city} + M_\textsf{email} \\[10pt]
@@ -190,14 +192,14 @@ Pr(\textsf{Match | Observation}) = \frac{2^{M_\textsf{obs}}}{1+2^{M_\textsf{obs}
 $$
 
 ???+ example "Example"
-    Consider the example in the [Interpreting Match Weights](#interpreting-match-weights) section. 
+    Consider the example in the [Interpreting Match Weights](#interpreting-match-weights) section.
     The total _match weight_, $M_\textsf{obs} = 9.48$. Therefore,
 
     $$ Pr(\textsf{Match | Observation}) = \frac{2^{9.48}}{1+2^{9.48}} \approx 0.999 $$
 
 #### Understanding the relationship between Match Probability and Match Weight
 
-It can be helpful to build up some intuition for how _match weight_ translates into _match probability_. 
+It can be helpful to build up some intuition for how _match weight_ translates into _match probability_.
 
 Plotting _match probability_ versus _match weight_ gives the following chart:
 
@@ -206,10 +208,10 @@ Plotting _match probability_ versus _match weight_ gives the following chart:
 Some observations from this chart:
 
 * $\textsf{Match weight} = 0 \Longrightarrow \textsf{Match probability} = 0.5$
-* $\textsf{Match weight} = 2 \Longrightarrow \textsf{Match probability} = 0.8$ 
-* $\textsf{Match weight} = 3 \Longrightarrow \textsf{Match probability} = 0.9$ 
-* $\textsf{Match weight} = 4 \Longrightarrow \textsf{Match probability} = 0.95$ 
-* $\textsf{Match weight} = 7 \Longrightarrow \textsf{Match probability} = 0.99$ 
+* $\textsf{Match weight} = 2 \Longrightarrow \textsf{Match probability} = 0.8$
+* $\textsf{Match weight} = 3 \Longrightarrow \textsf{Match probability} = 0.9$
+* $\textsf{Match weight} = 4 \Longrightarrow \textsf{Match probability} = 0.95$
+* $\textsf{Match weight} = 7 \Longrightarrow \textsf{Match probability} = 0.99$
 
 So, the impact of any additional _match weight_ on _match probability_ gets smaller as the total _match weight_ increases. This makes intuitive sense as, when comparing two records, after you already have a lot of evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
 
@@ -236,14 +238,5 @@ $$
 
 ## Further Reading
 
-!!! info ""
-    For a more in-depth introduction to the Fellegi-Sunter model, see Robin Linacre's [**Interactive Blogs**](https://www.robinlinacre.com/probabilistic_linkage/) including:
-
-    * [The mathematics of the Fellegi Sunter model](https://www.robinlinacre.com/maths_of_fellegi_sunter/)
-    * [Visualising the Fellegi Sunter Model](https://www.robinlinacre.com/visualising_fellegi_sunter/)
-    * [Understanding match weights](https://www.robinlinacre.com/understanding_match_weights/)
-    * [Dependencies between match weights](https://www.robinlinacre.com/match_weight_dependencies/)
-    * [m and u probability generator](https://www.robinlinacre.com/m_u_generator/)
-
-    Also, see the [academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) used as the basis for a similar implementation of Fellegi Sunter in the R [fastLink package](https://github.com/kosukeimai/fastLink).
+[This academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) provides a detailed mathematical description of the model used by R [fastLink package](https://github.com/kosukeimai/fastLink).  The mathematical uesd by Splink is very similar.
 

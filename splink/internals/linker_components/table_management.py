@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 class LinkerTableManagement:
+    """Register Splink tables against your database backend and manage the Splink cache.
+    Accessed via `linker.table_management`.
+    """
+
     def __init__(self, linker: Linker):
         self._linker = linker
 
