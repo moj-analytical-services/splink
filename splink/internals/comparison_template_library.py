@@ -550,116 +550,41 @@ class PostcodeComparison(ComparisonCreator):
         return self.col_expressions["postcode"].output_column_name
 
 
-_DEFAULT_EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$"
-
-
 class EmailComparison(ComparisonCreator):
     USERNAME_REGEX = "^[^@]+"
     DOMAIN_REGEX = "@([^@]+)$"
 
-    def __init__(
-        self,
-        col_name: Union[str, ColumnExpression],
-        *,
-        invalid_emails_as_null: bool = False,
-        valid_email_regex: str = _DEFAULT_EMAIL_REGEX,
-        include_exact_match_level: bool = True,
-        include_username_match_level: bool = True,
-        include_username_fuzzy_level: bool = True,
-        include_domain_match_level: bool = False,
-        # TODO: typing.Literal? enum?
-        fuzzy_metric: str = "jaro_winkler",
-        fuzzy_thresholds: Union[float, List[float]] = [0.88],
-    ):
-        thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
-        self.fuzzy_thresholds = [*thresholds_as_iterable]
-
-        self.valid_email_regex = valid_email_regex if invalid_emails_as_null else None
-
-        self.exact_match = include_exact_match_level
-        self.username_match = include_username_match_level
-        self.username_fuzzy = include_username_fuzzy_level
-        self.domain_match = include_domain_match_level
-
-        if self.fuzzy_thresholds:
-            try:
-                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
-            except KeyError:
-                raise ValueError(
-                    f"Invalid value for {fuzzy_metric=}.  "
-                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
-                ) from None
-            # store metric for description
-            self.fuzzy_metric = fuzzy_metric
-
+    def __init__(self, col_name: Union[str, ColumnExpression]):
         super().__init__(col_name)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         full_col_expression = self.col_expression
         username_col_expression = full_col_expression.regex_extract(self.USERNAME_REGEX)
-        domain_col_expression = full_col_expression.regex_extract(self.DOMAIN_REGEX)
 
         levels: list[ComparisonLevelCreator] = [
-            # Null level accept pattern if not None, otherwise will ignore
-            cll.NullLevel(
-                full_col_expression, valid_string_pattern=self.valid_email_regex
+            cll.NullLevel(full_col_expression, valid_string_pattern=None),
+            cll.ExactMatchLevel(full_col_expression).configure(
+                tf_adjustment_column=full_col_expression
             ),
+            cll.ExactMatchLevel(username_col_expression).configure(
+                label_for_charts="Exact match on username"
+            ),
+            cll.JaroWinklerLevel(full_col_expression, 0.88),
+            cll.JaroWinklerLevel(username_col_expression, 0.88).configure(
+                label_for_charts="Jaro-Winkler >0.88 on username"
+            ),
+            cll.ElseLevel(),
         ]
-        if self.exact_match:
-            levels.append(cll.ExactMatchLevel(full_col_expression))
-        if self.username_match:
-            levels.append(cll.ExactMatchLevel(username_col_expression))
-        if self.fuzzy_thresholds:
-            levels.extend(
-                [
-                    self.fuzzy_level(full_col_expression, threshold)
-                    for threshold in self.fuzzy_thresholds
-                ]
-            )
-            if self.username_fuzzy:
-                levels.extend(
-                    [
-                        self.fuzzy_level(username_col_expression, threshold)
-                        for threshold in self.fuzzy_thresholds
-                    ]
-                )
-        if self.domain_match:
-            levels.append(cll.ExactMatchLevel(domain_col_expression))
-
-        levels.append(cll.ElseLevel())
         return levels
 
     def create_description(self) -> str:
-        comparison_desc = ""
-        if self.exact_match:
-            comparison_desc += "Exact match vs. "
-
-        if self.username_match:
-            comparison_desc += "Exact username match different domain vs. "
-
-        if self.fuzzy_thresholds:
-            comma_separated_thresholds_string = ", ".join(
-                map(str, self.fuzzy_thresholds)
-            )
-            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
-            comparison_desc = (
-                f"{self.fuzzy_metric} at threshold{plural} "
-                f"{comma_separated_thresholds_string} vs. "
-            )
-            if self.username_fuzzy:
-                comma_separated_thresholds_string = ", ".join(
-                    map(str, self.fuzzy_thresholds)
-                )
-                plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
-                comparison_desc = (
-                    f"{self.fuzzy_metric} on username at threshold{plural} "
-                    f"{comma_separated_thresholds_string} vs. "
-                )
-
-        if self.domain_match:
-            comparison_desc += "Domain-only match vs. "
-
-        comparison_desc += "anything else"
+        comparison_desc = (
+            "Exact match vs. "
+            "Exact username match different domain vs. "
+            "Jaro-Winkler at threshold 0.88 vs. "
+            "Jaro-Winkler on username at threshold 0.88 vs. "
+            "anything else"
+        )
         return comparison_desc
 
     def create_output_column_name(self) -> str:

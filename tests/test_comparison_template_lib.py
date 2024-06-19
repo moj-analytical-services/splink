@@ -1,6 +1,14 @@
 import pandas as pd
+import pytest
 
+import splink.internals.comparison_library as cl
 import splink.internals.comparison_template_library as ctl
+from tests.decorator import mark_with_dialects_excluding
+from tests.literal_utils import (
+    ComparisonTestSpec,
+    LiteralTestValues,
+    run_tests_with_args,
+)
 
 from .decorator import mark_with_dialects_excluding
 
@@ -291,73 +299,30 @@ def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
-    col_name = "email"
-
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "email": "chris@mail.com"},
-            {"unique_id": 2, "email": "chris@mail.com"},
-            {"unique_id": 3, "email": "chris@othermail.com"},
-            {"unique_id": 4, "email": "chrisa@gmail.com"},
-            {"unique_id": 5, "email": "chrisa@mali.com"},
-            {"unique_id": 6, "email": "chrisa@mailtwo.com"},
-            {"unique_id": 7, "email": "chrisat@verydifferentmail.com"},
-            {"unique_id": 8, "email": "hcirs@verydifferentmail.com"},
-            {"unique_id": 9, "email": "christopher@verydifferentmail.com"},
-            {"unique_id": 10, "email": "notchrisarall@mail.com"},
-            {"unique_id": 11, "email": "someoneelse@domain.com"},
-            {"unique_id": 12, "email": "chrismail.com"},
-        ]
-    )
-
-    # Generate our various settings objs
-    settings = {
-        "link_type": "dedupe_only",
-        "comparisons": [
-            ctl.EmailComparison(
-                col_name=col_name,
-                invalid_emails_as_null=True,
-                fuzzy_thresholds=[2],
-                fuzzy_metric="damerau_levenshtein",
-                include_domain_match_level=True,
-            )
+    db_api = helper.extra_linker_args()["database_api"]
+    test_spec = ComparisonTestSpec(
+        ctl.EmailComparison("email"),
+        tests=[
+            LiteralTestValues(
+                {"email_l": "john@smith.com", "email_r": "john@smith.com"},
+                expected_gamma_val=4,
+            ),
+            LiteralTestValues(
+                {"email_l": "rebecca@company.com", "email_r": "rebecca@smith.com"},
+                expected_gamma_val=3,
+            ),
+            LiteralTestValues(
+                {"email_l": "rebecca@company.com", "email_r": "rebbecca@company.com"},
+                expected_gamma_val=2,
+            ),
+            LiteralTestValues(
+                {"email_l": "rebecca@company.com", "email_r": "rebbecca@xyz.com"},
+                expected_gamma_val=1,
+            ),
+            LiteralTestValues(
+                {"email_l": "john@smith.com", "email_r": "rebbecca@xyz.com"},
+                expected_gamma_val=0,
+            ),
         ],
-    }
-
-    df = helper.convert_frame(df)
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker_output = linker.inference.predict().as_pandas_dataframe()
-
-    # Check individual IDs are assigned to the correct gamma values
-    # Dict key: {gamma_level: tuple of ID pairs}
-    # size_gamma_lookup = {
-    #     9: [(1, 2)],  # Exact match
-    #     8: [(1, 3), (2, 3)],  # Exact match on username, different domain
-    #     7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
-    #     6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
-    #     5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
-    #     4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
-    #     3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
-    #     2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
-    #     1: [(1, 10), (2, 10)],  # Domain-only match#
-    #     0: [(1, 11), (2, 11)],  # Everything else
-    #     -1: [(1, 12)],  # Null level- invalid email
-    # }
-    size_gamma_lookup = {
-        5: [(1, 2)],  # Exact match
-        4: [(1, 3), (2, 3)],  # Exact match on username, different domain
-        3: [(1, 5), (2, 5), (1, 4), (2, 4)],  # Fuzzy match- full email (dmlev)
-        2: [
-            (1, 8),
-            (2, 8),
-            (1, 7),
-            (2, 7),
-            (1, 6),
-            (2, 6),
-        ],  # Fuzzy match- username only (dmlev)
-        1: [(1, 10), (2, 10)],  # Domain-only match#
-        0: [(1, 11), (2, 11), (1, 9), (2, 9)],  # Everything else
-        -1: [(1, 12)],  # Null level- invalid email
-    }
-
-    test_gamma_assert(linker_output, size_gamma_lookup, col_name)
+    )
+    run_tests_with_args(test_spec, db_api)
