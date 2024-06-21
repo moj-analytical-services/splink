@@ -628,3 +628,96 @@ def test_postcode_comparison(dialect, test_helpers, test_gamma_assert):
         ],
     )
     run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_name_comparison(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+    test_spec = ComparisonTestSpec(
+        ctl.NameComparison("name"),
+        tests=[
+            LiteralTestValues(
+                {"name_l": "John", "name_r": "John"},
+                expected_gamma_val=4,  # Exact match
+            ),
+            LiteralTestValues(
+                {"name_l": "Stephen", "name_r": "Stephan"},
+                expected_gamma_val=3,  # Jaro-Winkler similarity > 0.92
+            ),
+            LiteralTestValues(
+                {"name_l": "Stephen", "name_r": "Steven"},
+                expected_gamma_val=2,  # Jaro-Winkler similarity > 0.88
+            ),
+            LiteralTestValues(
+                {"name_l": "Stephen", "name_r": "Steve"},
+                expected_gamma_val=1,  # Jaro-Winkler similarity > 0.70
+            ),
+            LiteralTestValues(
+                {"name_l": "Alice", "name_r": "Bob"},
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.NameComparison("name", dmeta_col_name="dmeta_name"),
+        tests=[
+            LiteralTestValues(
+                {
+                    "name_l": "Smith",
+                    "name_r": "Smith",
+                    "dmeta_name_l": ["SM0", "XMT"],
+                    "dmeta_name_r": ["SM0", "XMT"],
+                },
+                expected_gamma_val=5,  # Exact match
+            ),
+            LiteralTestValues(
+                {
+                    "name_l": "Stephen",
+                    "name_r": "Stephan",
+                    "dmeta_name_l": ["STFN"],
+                    "dmeta_name_r": ["STFN"],
+                },
+                expected_gamma_val=4,  # Jaro-Winkler similarity > 0.92
+            ),
+            LiteralTestValues(
+                {
+                    "name_l": "Stephen",
+                    "name_r": "Steven",
+                    "dmeta_name_l": ["STFN"],
+                    "dmeta_name_r": ["STFN"],
+                },
+                expected_gamma_val=3,  # Jaro-Winkler similarity > 0.88
+            ),
+            LiteralTestValues(
+                {
+                    "name_l": "Smith",
+                    "name_r": "Schmidt",
+                    "dmeta_name_l": ["SM0", "XMT"],
+                    "dmeta_name_r": ["SMT", "XMT"],
+                },
+                expected_gamma_val=2,  # Array intersect > 1
+            ),
+            LiteralTestValues(
+                {
+                    "name_l": "Stephen",
+                    "name_r": "Steve",
+                    "dmeta_name_l": ["STFN"],
+                    "dmeta_name_r": ["STF"],
+                },
+                expected_gamma_val=1,  # Jaro-Winkler similarity > 0.70
+            ),
+            LiteralTestValues(
+                {
+                    "name_l": "Alice",
+                    "name_r": "Bob",
+                    "dmeta_name_l": ["ALS"],
+                    "dmeta_name_r": ["PP"],
+                },
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
