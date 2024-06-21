@@ -451,61 +451,19 @@ class NameComparison(ComparisonCreator):
 
 
 class ForenameSurnameComparison(ComparisonCreator):
-    """
-    A wrapper to generate a comparison for a name column the data in
-    `col_name` with preselected defaults.
-
-    The default arguments will give a comparison with comparison levels:\n
-    - Exact match forename and surname\n
-    - Macth of forename and surname reversed\n
-    - Exact match surname\n
-    - Exact match forename\n
-    - Fuzzy match surname jaro-winkler >= 0.88\n
-    - Fuzzy match forename jaro-winkler>=  0.88\n
-    - Anything else
-    """
-
     def __init__(
         self,
         forename_col_name: Union[str, ColumnExpression],
         surname_col_name: Union[str, ColumnExpression],
         *,
-        include_exact_match_level: bool = True,
-        include_columns_reversed: bool = True,
-        # TODO: think about how this works and maybe restore?
-        # tf_adjustment_col_forename_and_surname: str = None,
-        phonetic_forename_col_name: Union[str, ColumnExpression] = None,
-        phonetic_surname_col_name: Union[str, ColumnExpression] = None,
-        fuzzy_metric: str = "jaro_winkler",
-        fuzzy_thresholds: Union[float, List[float]] = [0.88],
+        jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88],
+        forename_surname_concat_col_name: str = None,
     ):
-        fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
-        self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
-
-        self.exact_match = include_exact_match_level
-        self.columns_reversed = include_columns_reversed
-
-        if self.fuzzy_thresholds:
-            try:
-                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
-            except KeyError:
-                raise ValueError(
-                    f"Invalid value for {fuzzy_metric=}.  "
-                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
-                ) from None
-            # store metric for description
-            self.fuzzy_metric = fuzzy_metric
+        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
+        self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
         cols = {"forename": forename_col_name, "surname": surname_col_name}
-        if (
-            phonetic_forename_col_name is not None
-            and phonetic_surname_col_name is not None
-        ):
-            # TODO: warn if only one set?
-            self.phonetic_match = True
-            cols["phonetic_forename"] = phonetic_forename_col_name
-            cols["phonetic_surname"] = phonetic_surname_col_name
-        else:
-            self.phonetic_match = False
+        if forename_surname_concat_col_name is not None:
+            cols["forename_surname_concat"] = forename_surname_concat_col_name
         super().__init__(cols)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
@@ -518,45 +476,44 @@ class ForenameSurnameComparison(ComparisonCreator):
                 cll.NullLevel(surname_col_expression),
             )
         ]
-        if self.exact_match:
+        if "forename_surname_concat" in self.col_expressions:
+            concat_col_expr = self.col_expressions["forename_surname_concat"]
+            levels.append(
+                cll.ExactMatchLevel(concat_col_expr).configure(
+                    tf_adjustment_column=concat_col_expr.raw_sql_expression
+                )
+            )
+        else:
             levels.append(
                 cll.And(
                     cll.ExactMatchLevel(forename_col_expression),
                     cll.ExactMatchLevel(surname_col_expression),
                 )
             )
-        if self.phonetic_match:
-            phonetic_forename_col_expression = self.col_expressions["phonetic_forename"]
-            phonetic_surname_col_expression = self.col_expressions["phonetic_surname"]
+
+        levels.append(
+            cll.ColumnsReversedLevel(forename_col_expression, surname_col_expression)
+        )
+
+        for threshold in self.jaro_winkler_thresholds:
             levels.append(
                 cll.And(
-                    cll.ExactMatchLevel(phonetic_forename_col_expression),
-                    cll.ExactMatchLevel(phonetic_surname_col_expression),
-                )
-            )
-        if self.columns_reversed:
-            levels.append(
-                cll.ColumnsReversedLevel(
-                    forename_col_expression, surname_col_expression
+                    cll.JaroWinklerLevel(forename_col_expression, threshold),
+                    cll.JaroWinklerLevel(surname_col_expression, threshold),
                 )
             )
 
-        levels.append(cll.ExactMatchLevel(surname_col_expression))
-        levels.append(cll.ExactMatchLevel(forename_col_expression))
+        levels.append(
+            cll.ExactMatchLevel(surname_col_expression).configure(
+                tf_adjustment_column=surname_col_expression.raw_sql_expression
+            )
+        )
+        levels.append(
+            cll.ExactMatchLevel(forename_col_expression).configure(
+                tf_adjustment_column=forename_col_expression.raw_sql_expression
+            )
+        )
 
-        if self.fuzzy_thresholds:
-            levels.extend(
-                [
-                    self.fuzzy_level(surname_col_expression, threshold)
-                    for threshold in self.fuzzy_thresholds
-                ]
-            )
-            levels.extend(
-                [
-                    self.fuzzy_level(forename_col_expression, threshold)
-                    for threshold in self.fuzzy_thresholds
-                ]
-            )
         levels.append(cll.ElseLevel())
         return levels
 
