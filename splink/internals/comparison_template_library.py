@@ -7,6 +7,7 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.comparison_level_library import DateMetricType
+from splink.internals.dialects import SplinkDialect
 from splink.internals.misc import ensure_is_iterable
 
 # alternatively we could stick an inheritance layer in these, just for typing:
@@ -26,7 +27,26 @@ _fuzzy_levels: dict[str, _fuzzy_cll_type] = {
 _AVAILABLE_METRICS_STRING = ", ".join(map(lambda x: f"'{x}'", _fuzzy_levels.keys()))
 
 
-class DateComparison(ComparisonCreator):
+class _DamerauLevenshteinIfSupportedElseLevenshteinLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_threshold = distance_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        try:
+            lev_fn = sql_dialect.damerau_levenshtein_function_name
+        except NotImplementedError:
+            lev_fn = sql_dialect.levenshtein_function_name
+        return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Levenshtein distance of {col.label} <= {self.distance_threshold}"
+
+
+class DateOfBirthComparison(ComparisonCreator):
     """
     A wrapper to generate a comparison for a date column the data in
     `col_name` with preselected defaults.
@@ -45,14 +65,16 @@ class DateComparison(ComparisonCreator):
         self,
         col_name: Union[str, ColumnExpression],
         *,
-        datetime_thresholds: Union[int, float, List[Union[int, float]]],
-        datetime_metrics: Union[DateMetricType, List[DateMetricType]],
         input_is_string: bool,
+        datetime_thresholds: Union[int, float, List[Union[int, float]]] = [1, 1, 10],
+        datetime_metrics: Union[DateMetricType, List[DateMetricType]] = [
+            "month",
+            "year",
+            "year",
+        ],
         datetime_format: str = None,
-        invalid_dates_as_null: bool = False,
-        include_exact_match_level: bool = True,
         separate_1st_january: bool = False,
-        use_damerau_levenshtein: bool = True,
+        invalid_dates_as_null: bool = True,
     ):
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
         self.datetime_thresholds = [*date_thresholds_as_iterable]
@@ -72,13 +94,11 @@ class DateComparison(ComparisonCreator):
             )
 
         self.datetime_format = datetime_format
-        self.invalid_dates_as_null = invalid_dates_as_null
 
         self.separate_1st_january = separate_1st_january
-        self.exact_match = include_exact_match_level
 
         self.input_is_string = input_is_string
-        self.use_damerau_levenshtein = use_damerau_levenshtein
+        self.invalid_dates_as_null = invalid_dates_as_null
 
         super().__init__(col_name)
 
@@ -87,7 +107,7 @@ class DateComparison(ComparisonCreator):
         return self.col_expression.try_parse_date
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-        if self.invalid_dates_as_null:
+        if self.invalid_dates_as_null and self.input_is_string:
             null_col = self.datetime_parse_function(self.datetime_format)
         else:
             null_col = self.col_expression
@@ -96,43 +116,49 @@ class DateComparison(ComparisonCreator):
             cll.NullLevel(null_col),
         ]
 
-        if self.separate_1st_january:
-            # Ensure date in isoformat:
-            if self.input_is_string:
-                date_as_iso_string = self.datetime_parse_function(
-                    self.datetime_format
-                ).cast_to_string()
-            else:
-                date_as_iso_string = self.col_expression.cast_to_string()
+        if self.input_is_string:
+            date_as_iso_string = self.datetime_parse_function(
+                self.datetime_format
+            ).cast_to_string()
+        else:
+            date_as_iso_string = self.col_expression.cast_to_string()
 
-            levels.append(
-                cll.And(
+        if self.separate_1st_january:
+            level = cll.And(
+                cll.Or(
                     cll.LiteralMatchLevel(
                         date_as_iso_string.substr(6, 5),
                         literal_value="01-01",
                         literal_datatype="string",
                         side_of_comparison="left",
                     ),
-                    cll.ExactMatchLevel(self.col_expression),
-                )
+                    cll.LiteralMatchLevel(
+                        date_as_iso_string.substr(6, 5),
+                        literal_value="01-01",
+                        literal_datatype="string",
+                        side_of_comparison="right",
+                    ),
+                ),
+                cll.ExactMatchLevel(date_as_iso_string.substr(0, 4)),
             )
-        if self.exact_match:
-            levels.append(cll.ExactMatchLevel(self.col_expression))
+
+            level.create_label_for_charts = (
+                lambda: "Exact match on year (1st of January only)"
+            )
+            levels.append(level)
+
+        levels.append(cll.ExactMatchLevel(self.col_expression))
 
         if self.input_is_string:
             col_expr_as_string = self.col_expression
         else:
             col_expr_as_string = self.col_expression.cast_to_string()
 
-        # postgres doesn't have damerau_levenshtein
-        if self.use_damerau_levenshtein:
-            levels.append(
-                cll.DamerauLevenshteinLevel(col_expr_as_string, distance_threshold=1)
+        levels.append(
+            _DamerauLevenshteinIfSupportedElseLevenshteinLevel(
+                col_expr_as_string, distance_threshold=1
             )
-        else:
-            levels.append(
-                cll.LevenshteinLevel(col_expr_as_string, distance_threshold=1)
-            )
+        )
 
         if self.datetime_thresholds:
             for threshold, metric in zip(
@@ -156,10 +182,7 @@ class DateComparison(ComparisonCreator):
             comparison_desc += "(with separate 1st Jan) "
         comparison_desc += "vs. "
 
-        if self.use_damerau_levenshtein:
-            comparison_desc += "Damerau-Levenshtein distance <= 1 vs. "
-        else:
-            comparison_desc += "Levenshtein distance <= 1 vs. "
+        comparison_desc += "Damerau-Levenshtein distance <= 1 vs. "
 
         for threshold, metric in zip(self.datetime_thresholds, self.datetime_metrics):
             comparison_desc += f"{metric} difference <= {threshold} vs. "
@@ -167,29 +190,6 @@ class DateComparison(ComparisonCreator):
         comparison_desc += "anything else"
 
         return comparison_desc
-
-        # if self.fuzzy_thresholds:
-        #     comma_separated_thresholds_string = ", ".join(
-        #         map(str, self.fuzzy_thresholds)
-        #     )
-        #     plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
-        #     comparison_desc = (
-        #         f"{self.fuzzy_metric} at threshold{plural} "
-        #         f"{comma_separated_thresholds_string} vs. "
-        #     )
-
-        # if self.datetime_thresholds:
-        #     datediff_separated_thresholds_string = ", ".join(
-        #         [
-        #             f"{m.title()}(s): {v}"
-        #             for v, m in zip(self.datetime_thresholds, self.datetime_metrics)
-        #         ]
-        #     )
-        #     plural = "s" if len(self.datetime_thresholds) > 1 else ""
-        #     comparison_desc += (
-        #         f"dates within the following threshold{plural} "
-        #         f"{datediff_separated_thresholds_string} vs. "
-        #     )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name

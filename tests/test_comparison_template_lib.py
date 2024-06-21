@@ -3,6 +3,7 @@ import pytest
 
 import splink.internals.comparison_library as cl
 import splink.internals.comparison_template_library as ctl
+from splink.internals.column_expression import ColumnExpression
 from tests.decorator import mark_with_dialects_excluding
 from tests.literal_utils import (
     ComparisonTestSpec,
@@ -326,3 +327,204 @@ def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
         ],
     )
     run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+    test_spec = ComparisonTestSpec(
+        ctl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            separate_1st_january=True,
+            invalid_dates_as_null=True,
+        ),
+        tests=[
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "1990-01-01"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "2012-01-01", "date_of_birth_r": "2012-02-02"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1985-03-11", "date_of_birth_r": "1985-01-01"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "1990-05-20"},
+                expected_gamma_val=5,  # Exact match
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-01", "date_of_birth_r": "1990-05-11"},
+                expected_gamma_val=4,  # Damerau-Levenshtein distance <= 1
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "1990-06-19"},
+                expected_gamma_val=3,  # Date difference <= 1 month
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "1991-04-21"},
+                expected_gamma_val=2,  # Date difference <= 1 year
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "1999-02-20"},
+                expected_gamma_val=1,  # Date difference <= 10 years
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "2010-01-17"},
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.DateOfBirthComparison(
+            ColumnExpression("dob").try_parse_date(),
+            input_is_string=False,
+            separate_1st_january=True,
+        ),
+        tests=[
+            LiteralTestValues(
+                {"dob_l": "1990-01-01", "dob_r": "1990-01-01"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"dob_l": "2012-01-01", "dob_r": "2012-02-02"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"dob_l": "1985-03-11", "dob_r": "1985-01-01"},
+                expected_gamma_val=6,  # Exact match on year (1st of January only)
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-20", "dob_r": "1990-05-20"},
+                expected_gamma_val=5,  # Exact match
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-01", "dob_r": "1990-05-11"},
+                expected_gamma_val=4,  # Damerau-Levenshtein distance <= 1
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-20", "dob_r": "1990-06-19"},
+                expected_gamma_val=3,  # Date difference <= 1 month
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-20", "dob_r": "1991-04-21"},
+                expected_gamma_val=2,  # Date difference <= 1 year
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-20", "dob_r": "1999-02-20"},
+                expected_gamma_val=1,  # Date difference <= 10 years
+            ),
+            LiteralTestValues(
+                {"dob_l": "1990-05-20", "dob_r": "2010-01-17"},
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            invalid_dates_as_null=False,
+        ),
+        tests=[
+            LiteralTestValues(
+                {"date_of_birth_l": "2012-02-02", "date_of_birth_r": "2012-02-02"},
+                expected_gamma_val=5,  # Exact match
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1985-31-11", "date_of_birth_r": "1985-01-11"},
+                expected_gamma_val=4,  # Damerau-Levenshtein distance <= 1
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1985-31-11", "date_of_birth_r": "1985-01-22"},
+                expected_gamma_val=0,  # Everythign else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            separate_1st_january=False,
+            datetime_thresholds=[1, 2, 5],
+            datetime_metrics=["day", "month", "year"],
+        ),
+        tests=[
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "1990-01-01"},
+                expected_gamma_val=5,  # Exact match
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1989-12-30", "date_of_birth_r": "1989-12-31"},
+                expected_gamma_val=4,  # Damerau-Levenshtein distance <= 1
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-31", "date_of_birth_r": "1990-02-01"},
+                expected_gamma_val=3,  # Date difference <= 1 day
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "1990-02-15"},
+                expected_gamma_val=2,  # Date difference <= 2 months
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "1994-07-30"},
+                expected_gamma_val=1,  # Date difference <= 5 years
+            ),
+            LiteralTestValues(
+                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "2000-11-23"},
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_date_comparison_error_logger(dialect):
+    # Differing lengths between thresholds and units
+    with pytest.raises(ValueError):
+        ctl.DateOfBirthComparison(
+            "date",
+            datetime_thresholds=[1, 2],
+            datetime_metrics=["month"],
+            input_is_string=True,
+        ).get_comparison(dialect)
+    # Check metric and threshold are the correct way around
+    with pytest.raises(TypeError):
+        ctl.DateOfBirthComparison(
+            "date",
+            datetime_thresholds=["month"],
+            datetime_metrics=[1],
+            input_is_string=True,
+        ).get_comparison(dialect)
+    # Invalid metric
+    with pytest.raises(ValueError):
+        ctl.DateOfBirthComparison(
+            "date",
+            datetime_thresholds=[1],
+            datetime_metrics=["dy"],
+            input_is_string=True,
+        ).get_comparison(dialect)
+    # Threshold len == 0
+    with pytest.raises(ValueError):
+        ctl.DateOfBirthComparison(
+            "date",
+            datetime_thresholds=[],
+            datetime_metrics=["day"],
+            input_is_string=True,
+        ).get_comparison(dialect)
+    # Metric len == 0
+    with pytest.raises(ValueError):
+        ctl.DateOfBirthComparison(
+            "date", datetime_thresholds=[1], datetime_metrics=[], input_is_string=True
+        ).get_comparison(dialect)

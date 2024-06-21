@@ -1,5 +1,5 @@
 from splink.internals.comparison_template_library import (
-    DateComparison,
+    DateOfBirthComparison,
     EmailComparison,
     ForenameSurnameComparison,
     NameComparison,
@@ -7,7 +7,7 @@ from splink.internals.comparison_template_library import (
 )
 
 __all__ = [
-    "DateComparison",
+    "DateOfBirthComparison",
     "EmailComparison",
     "ForenameSurnameComparison",
     "NameComparison",
