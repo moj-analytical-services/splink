@@ -298,7 +298,7 @@ def test_postcode_comparison_levels(dialect, test_helpers, test_gamma_assert):
 
 
 @mark_with_dialects_excluding("postgres", "sqlite")
-def test_email_comparison_levels(dialect, test_helpers, test_gamma_assert):
+def test_email_comparison(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
     test_spec = ComparisonTestSpec(
