@@ -203,19 +203,11 @@ class DuckDBDialect(SplinkDialect):
             timestamp_format = self.default_timestamp_format
         return f"""try_strptime({name}, '{timestamp_format}')"""
 
-    # TODO: this is only needed for duckdb < 0.9.0.
-    # should we just ditch support for that? (only for cll - engine should still work)
     def array_intersect(self, clc: ArrayIntersectLevel) -> str:
         clc.col_expression.sql_dialect = self
         col = clc.col_expression
-        threshold = clc.min_intersection
-
-        # sum of individual (unique) array sizes, minus the (unique) union
-        return (
-            f"list_unique({col.name_l}) + list_unique({col.name_r})"
-            f" - list_unique(list_concat({col.name_l}, {col.name_r}))"
-            f" >= {threshold}"
-        ).strip()
+        thres = clc.min_intersection
+        return f"array_length(list_intersect({col.name_l}, {col.name_r})) >= {thres}"
 
     def _regex_extract_raw(
         self, name: str, pattern: str, capture_group: int = 0
