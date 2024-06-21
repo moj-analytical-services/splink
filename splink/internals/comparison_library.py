@@ -33,9 +33,6 @@ class ExactMatch(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        return f"Exact match '{self.col_expression.label}' vs. anything else"
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
@@ -83,15 +80,6 @@ class LevenshteinAtThresholds(ComparisonCreator):
             ],
             cll.ElseLevel(),
         ]
-
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"Levenshtein distance at thresholds "
-            f"{comma_separated_thresholds_string} vs. "
-            "anything else"
-        )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
@@ -196,15 +184,6 @@ class JaccardAtThresholds(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"Jaccard score at thresholds "
-            f"{comma_separated_thresholds_string} vs. "
-            "anything else"
-        )
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
@@ -252,15 +231,6 @@ class JaroAtThresholds(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"Jaro score at thresholds "
-            f"{comma_separated_thresholds_string} vs. "
-            "anything else"
-        )
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
@@ -307,15 +277,6 @@ class JaroWinklerAtThresholds(ComparisonCreator):
             ],
             cll.ElseLevel(),
         ]
-
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"Jaro-Winkler score at thresholds "
-            f"{comma_separated_thresholds_string} vs. "
-            "anything else"
-        )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
@@ -377,15 +338,6 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
             ],
             cll.ElseLevel(),
         ]
-
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"`{self.distance_function_name}` at thresholds "
-            f"{comma_separated_thresholds_string} vs. "
-            "anything else"
-        )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
@@ -473,15 +425,6 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        return (
-            f"Exact match '{self.col_expression.label}' vs. "
-            f"abs time difference at thresholds "
-            f"{self.time_thresholds} "
-            f"with metrics {self.time_metrics} vs. "
-            "anything else"
-        )
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
@@ -537,14 +480,6 @@ class ArrayIntersectAtSizes(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        plural = "s" if len(self.thresholds) > 1 else ""
-        return (
-            f"Array intersection at minimum size{plural} "
-            f"{comma_separated_thresholds_string} vs. anything else"
-        )
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
@@ -594,14 +529,6 @@ class DistanceInKMAtThresholds(ComparisonCreator):
             cll.ElseLevel(),
         ]
 
-    def create_description(self) -> str:
-        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
-        plural = "s" if len(self.thresholds) > 1 else ""
-        return (
-            f"Distance in km at distance{plural} "
-            f"{comma_separated_thresholds_string} vs. anything else"
-        )
-
     def create_output_column_name(self) -> str:
         lat_col = self.col_expressions["latitude_column"]
         long_col = self.col_expressions["longitude_column"]
@@ -639,14 +566,6 @@ class CustomComparison(ComparisonCreator):
             CustomLevel._convert_to_creator(cl) for cl in self._comparison_levels
         ]
         return comparison_level_creators
-
-    def create_description(self) -> str:
-        # TODO: fleshed out default description?
-        return (
-            self._description
-            if self._description is not None
-            else f"Comparison for {self._output_column_name}"
-        )
 
     def create_output_column_name(self) -> Optional[str]:
         # TODO: should default logic be here? would need column-extraction logic also
