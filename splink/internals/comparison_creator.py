@@ -77,6 +77,8 @@ class ComparisonCreator(ABC):
 
         if self.term_frequency_adjustments:
             for cl in comparison_levels:
+                # TODO: Check that the column name a 'pure' column name and
+                # not a column expression with transforms applied
                 if cl.is_exact_match_level:
                     cl.term_frequency_adjustments = True
 
@@ -110,9 +112,8 @@ class ComparisonCreator(ABC):
             [cl for cl in self.create_comparison_levels() if not cl.is_null_level]
         )
 
-    @abstractmethod
     def create_description(self) -> str:
-        pass
+        return self.__class__.__name__
 
     @abstractmethod
     def create_output_column_name(self) -> Optional[str]:

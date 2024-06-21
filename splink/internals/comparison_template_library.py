@@ -197,68 +197,28 @@ class DateOfBirthComparison(ComparisonCreator):
         levels.append(cll.ElseLevel())
         return levels
 
-    def create_description(self) -> str:
-        comparison_desc = "Exact match "
-        if self.separate_1st_january:
-            comparison_desc += "(with separate 1st Jan) "
-        comparison_desc += "vs. "
-
-        comparison_desc += "Damerau-Levenshtein distance <= 1 vs. "
-
-        for threshold, metric in zip(self.datetime_thresholds, self.datetime_metrics):
-            comparison_desc += f"{metric} difference <= {threshold} vs. "
-
-        comparison_desc += "anything else"
-
-        return comparison_desc
-
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
 
 
 class NameComparison(ComparisonCreator):
-    """
-    A wrapper to generate a comparison for a name column the data in
-    `col_name` with preselected defaults.
-
-    The default arguments will give a comparison with comparison levels:
-    - Exact match
-    - Jaro Winkler similarity >= 0.9
-    - Jaro Winkler similarity >= 0.8
-    - Anything else
-    """
-
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
         *,
-        include_exact_match_level: bool = True,
-        phonetic_col_name: Union[str, ColumnExpression] = None,
-        fuzzy_metric: str = "jaro_winkler",
-        fuzzy_thresholds: Union[float, list[float]] = [0.9, 0.8],
+        jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88, 0.7],
+        dmeta_col_name: str = None,
     ):
-        fuzzy_thresholds_as_iterable = ensure_is_iterable(fuzzy_thresholds)
-        self.fuzzy_thresholds = [*fuzzy_thresholds_as_iterable]
-
-        self.exact_match = include_exact_match_level
-
-        if self.fuzzy_thresholds:
-            try:
-                self.fuzzy_level = _fuzzy_levels[fuzzy_metric]
-            except KeyError:
-                raise ValueError(
-                    f"Invalid value for {fuzzy_metric=}.  "
-                    f"Must choose one of: {_AVAILABLE_METRICS_STRING}."
-                ) from None
-            # store metric for description
-            self.fuzzy_metric = fuzzy_metric
+        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
+        self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
 
         cols = {"name": col_name}
-        if phonetic_col_name is not None:
-            cols["phonetic_name"] = phonetic_col_name
-            self.phonetic_col = True
+        if dmeta_col_name is not None:
+            cols["dmeta_name"] = dmeta_col_name
+            self.dmeta_col = True
         else:
-            self.phonetic_col = False
+            self.dmeta_col = False
+
         super().__init__(cols)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
@@ -267,42 +227,32 @@ class NameComparison(ComparisonCreator):
         levels: list[ComparisonLevelCreator] = [
             cll.NullLevel(name_col_expression),
         ]
-        if self.exact_match:
-            levels.append(cll.ExactMatchLevel(name_col_expression))
-        if self.phonetic_col:
-            phonetic_col_expression = self.col_expressions["phonetic_name"]
-            levels.append(cll.ExactMatchLevel(phonetic_col_expression))
 
-        if self.fuzzy_thresholds:
-            levels.extend(
-                [
-                    self.fuzzy_level(name_col_expression, threshold)
-                    for threshold in self.fuzzy_thresholds
-                ]
+        exact_match = cll.ExactMatchLevel(name_col_expression)
+
+        # Term frequencies can only be applied to 'pure' columns
+        if name_col_expression.is_pure_column_or_column_reference:
+            exact_match.configure(
+                tf_adjustment_column=name_col_expression.raw_sql_expression
             )
+        levels.append(exact_match)
+
+        for threshold in self.jaro_winkler_thresholds:
+            if threshold >= 0.88:
+                levels.append(cll.JaroWinklerLevel(name_col_expression, threshold))
+
+        if self.dmeta_col:
+            dmeta_col_expression = self.col_expressions["dmeta_name"]
+            levels.append(
+                cll.ArrayIntersectLevel(dmeta_col_expression, min_intersection=1)
+            )
+
+        for threshold in self.jaro_winkler_thresholds:
+            if threshold < 0.88:
+                levels.append(cll.JaroWinklerLevel(name_col_expression, threshold))
 
         levels.append(cll.ElseLevel())
         return levels
-
-    def create_description(self) -> str:
-        comparison_desc = ""
-        if self.exact_match:
-            comparison_desc += "Exact match vs"
-        if self.phonetic_col:
-            comparison_desc += "Phonetic name match vs. "
-
-        if self.fuzzy_thresholds:
-            comma_separated_thresholds_string = ", ".join(
-                map(str, self.fuzzy_thresholds)
-            )
-            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
-            comparison_desc = (
-                f"{self.fuzzy_metric} at threshold{plural} "
-                f"{comma_separated_thresholds_string} vs. "
-            )
-
-        comparison_desc += "anything else"
-        return comparison_desc
 
     def create_output_column_name(self) -> str:
         return self.col_expressions["name"].output_column_name
@@ -417,35 +367,6 @@ class ForenameSurnameComparison(ComparisonCreator):
             )
         levels.append(cll.ElseLevel())
         return levels
-
-    def create_description(self) -> str:
-        comparison_desc = ""
-        if self.exact_match:
-            comparison_desc += "Exact match both names vs. "
-
-        if self.phonetic_match:
-            comparison_desc += "Exact phonetic match both names vs. "
-        if self.columns_reversed:
-            comparison_desc += "Names reversed vs. "
-        comparison_desc += "Surname only match vs. "
-        comparison_desc += "Forename only match vs. "
-
-        if self.fuzzy_thresholds:
-            comma_separated_thresholds_string = ", ".join(
-                map(str, self.fuzzy_thresholds)
-            )
-            plural = "s" if len(self.fuzzy_thresholds) > 1 else ""
-            comparison_desc = (
-                f"{self.fuzzy_metric} surname at threshold{plural} "
-                f"{comma_separated_thresholds_string} vs. "
-            )
-            comparison_desc = (
-                f"{self.fuzzy_metric} forename at threshold{plural} "
-                f"{comma_separated_thresholds_string} vs. "
-            )
-
-        comparison_desc += "anything else"
-        return comparison_desc
 
     def create_output_column_name(self) -> str:
         forename_output_name = self.col_expressions["forename"].output_column_name
@@ -562,25 +483,6 @@ class PostcodeComparison(ComparisonCreator):
         levels.append(cll.ElseLevel())
         return levels
 
-    def create_description(self) -> str:
-        comparison_desc = (
-            "Exact match vs. "
-            "Exact sector match vs. "
-            "Exact district match vs. "
-            "Exact area match vs. "
-        )
-
-        if self.km_thresholds:
-            comma_separated_thresholds_string = ", ".join(map(str, self.km_thresholds))
-            plural = "s" if len(self.km_thresholds) > 1 else ""
-            comparison_desc += (
-                f"km distance within threshold{plural} "
-                f"{comma_separated_thresholds_string} vs. "
-            )
-
-        comparison_desc += "anything else"
-        return comparison_desc
-
     def create_output_column_name(self) -> str:
         return self.col_expressions["postcode"].output_column_name
 
@@ -631,16 +533,6 @@ class EmailComparison(ComparisonCreator):
             cll.ElseLevel(),
         ]
         return levels
-
-    def create_description(self) -> str:
-        comparison_desc = (
-            "Exact match vs. "
-            "Exact username match different domain vs. "
-            "Jaro-Winkler at threshold 0.88 vs. "
-            "Jaro-Winkler on username at threshold 0.88 vs. "
-            "anything else"
-        )
-        return comparison_desc
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name
