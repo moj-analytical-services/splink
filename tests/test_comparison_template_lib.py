@@ -528,3 +528,103 @@ def test_date_comparison_error_logger(dialect):
         ctl.DateOfBirthComparison(
             "date", datetime_thresholds=[1], datetime_metrics=[], input_is_string=True
         ).get_comparison(dialect)
+
+
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_postcode_comparison(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonTestSpec(
+        ctl.PostcodeComparison("postcode"),
+        tests=[
+            LiteralTestValues(
+                {"postcode_l": "SW1A 1AA", "postcode_r": "SW1A 1AA"},
+                expected_gamma_val=4,  # Exact match on full postcode
+            ),
+            LiteralTestValues(
+                {"postcode_l": "SW1A 1AA", "postcode_r": "SW1A 1AB"},
+                expected_gamma_val=3,  # Exact match on sector
+            ),
+            LiteralTestValues(
+                {"postcode_l": "SW1A 1AA", "postcode_r": "SW1A 2AA"},
+                expected_gamma_val=2,  # Exact match on district
+            ),
+            LiteralTestValues(
+                {"postcode_l": "SW1A 1AA", "postcode_r": "SW2A 1AA"},
+                expected_gamma_val=1,  # Exact match on area
+            ),
+            LiteralTestValues(
+                {"postcode_l": "SW1A 1AA", "postcode_r": "NW1A 1AA"},
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.PostcodeComparison(
+            "postcode",
+            lat_col="latitude",
+            long_col="longitude",
+            km_thresholds=[1, 5, 10],
+        ),
+        tests=[
+            LiteralTestValues(
+                {
+                    "postcode_l": "SW1A 1AA",
+                    "postcode_r": "SW1A 1AA",
+                    "latitude_l": 51.501009,
+                    "longitude_l": -0.141588,
+                    "latitude_r": 51.501009,
+                    "longitude_r": -0.141588,
+                },
+                expected_gamma_val=5,  # Exact match on full postcode
+            ),
+            LiteralTestValues(
+                {
+                    "postcode_l": "SW1A 1AA",
+                    "postcode_r": "SW1A 1AB",
+                    "latitude_l": 51.501009,
+                    "longitude_l": -0.141588,
+                    "latitude_r": 51.501009,
+                    "longitude_r": -0.141599,
+                },
+                expected_gamma_val=4,  # sector
+            ),
+            LiteralTestValues(
+                {
+                    "postcode_l": "SW1A 1AA",
+                    "postcode_r": "SW1A 2AA",
+                    "latitude_l": 51.501009,
+                    "longitude_l": -0.141588,
+                    "latitude_r": 51.502009,
+                    "longitude_r": -0.142588,
+                },
+                expected_gamma_val=3,  # Within 1 km threshold
+            ),
+            LiteralTestValues(
+                {
+                    "postcode_l": "SW1A 1AA",
+                    "postcode_r": "NW1A 1AA",
+                    "latitude_l": 51.501009,
+                    "longitude_l": -0.141588,
+                    "latitude_r": 51.5155,
+                    "longitude_r": -0.1752,
+                },
+                expected_gamma_val=2,  # Within 10 km threshold
+            ),
+            LiteralTestValues(
+                {
+                    "postcode_l": "SW1A 1AA",
+                    "postcode_r": "M1 1AA",
+                    "latitude_l": 51.501009,
+                    "longitude_l": -0.141588,
+                    "latitude_r": 53.478,
+                    "longitude_r": -2.242631,
+                },
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
