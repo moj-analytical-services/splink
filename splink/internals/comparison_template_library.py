@@ -47,20 +47,6 @@ class _DamerauLevenshteinIfSupportedElseLevenshteinLevel(ComparisonLevelCreator)
 
 
 class DateOfBirthComparison(ComparisonCreator):
-    """
-    A wrapper to generate a comparison for a date column the data in
-    `col_name` with preselected defaults.
-
-    The default arguments will give a comparison with comparison levels:\n
-    - Exact match (1st of January only)
-    - Exact match (all other dates)
-    - Damerau-Levenshtein distance <= 1
-    - Date difference <= 1 month
-    - Date difference <= 1 year
-    - Date difference <= 10 years
-    - Anything else
-    """
-
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
@@ -76,6 +62,41 @@ class DateOfBirthComparison(ComparisonCreator):
         separate_1st_january: bool = False,
         invalid_dates_as_null: bool = True,
     ):
+        """
+        Generate an 'out of the box' comparison for a date of birth column
+        in the `col_name` provided.
+
+        Note that `input_is_string` is a required argument: you must denote whether the
+        `col_name` contains if of type date/dattime or string.
+
+        The default arguments will give a comparison with comparison levels:
+
+        - Exact match (all other dates)
+        - Damerau-Levenshtein distance <= 1
+        - Date difference <= 1 month
+        - Date difference <= 1 year
+        - Date difference <= 10 years
+        - Anything else
+
+        Args:
+            col_name (Union[str, ColumnExpression]): The column name
+            input_is_string (bool): If True, the provided `col_name` must be of type
+                string.  If False, it must be a date or datetime.
+            datetime_thresholds (Union[int, float, List[Union[int, float]]], optional):
+                Numeric thresholds for date differences. Defaults to [1, 1, 10].
+            datetime_metrics (Union[DateMetricType, List[DateMetricType]], optional):
+                Metrics for date differences. Defaults to ["month", "year", "year"].
+            datetime_format (str, optional): The datetime format used to cast strings
+                to dates.  Only used if input is a string.
+            separate_1st_january (bool, optional): Used for when date of birth is
+                sometimes recorded as 1st of Jan when only the year is known / If True,
+                a level is included for for a  match on the year where at least one
+                side of the match is a date on the the 1st of January.
+            invalid_dates_as_null (bool, optional): If True, treat invalid dates as null
+                as opposed to allowing e.g. an exact or levenshtein match where one side
+                or both are an invalid date.  Only used if input is a string.  Defaults
+                to True.
+        """
         date_thresholds_as_iterable = ensure_is_iterable(datetime_thresholds)
         self.datetime_thresholds = [*date_thresholds_as_iterable]
         date_metrics_as_iterable = ensure_is_iterable(datetime_metrics)
@@ -555,6 +576,26 @@ class EmailComparison(ComparisonCreator):
     DOMAIN_REGEX = "@([^@]+)$"
 
     def __init__(self, col_name: Union[str, ColumnExpression]):
+        """
+        Generate an 'out of the box' comparison for an email address column with the
+        in the `col_name` provided.
+
+        The default comparison levels are:
+
+        - Null comparison: e.g., one email is missing or invalid.
+        - Exact match on full email: e.g., `john@smith.com` vs. `john@smith.com`.
+        - Exact match on username part of email: e.g., `john@company.com` vs.
+        `john@other.com`.
+        - Jaro-Winkler similarity > 0.88 on full email: e.g., `john.smith@company.com`
+        vs. `john.smyth@company.com`.
+        - Jaro-Winkler similarity > 0.88 on username part of email: e.g.,
+        `john.smith@company.com` vs. `john.smyth@other.com`.
+        - Anything else: e.g., `john@company.com` vs. `rebecca@other.com`.
+
+        Args:
+            col_name (Union[str, ColumnExpression]): The column name or expression for
+                the email addresses to be compared.
+        """
         super().__init__(col_name)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
