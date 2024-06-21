@@ -201,6 +201,170 @@ class DateOfBirthComparison(ComparisonCreator):
         return self.col_expression.output_column_name
 
 
+class PostcodeComparison(ComparisonCreator):
+    SECTOR_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]"
+    DISTRICT_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?"
+    AREA_REGEX = "^[A-Za-z]{1,2}"
+    VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
+
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        *,
+        invalid_postcodes_as_null: bool = False,
+        lat_col: Union[str, ColumnExpression] = None,
+        long_col: Union[str, ColumnExpression] = None,
+        km_thresholds: Union[float, List[float]] = [],
+    ):
+        """
+        Generate an 'out of the box' comparison for a postcode column with the
+        in the `col_name` provided.
+
+        The default comparison levels are:
+
+        - Null comparison
+        - Exact match on full postcode
+        - Exact match on sector
+        - Exact match on district
+        - Exact match on area
+        - Distance in km (if lat_col and long_col are provided)
+
+        It's also possible to include levels for distance in km, but this requires
+        you to have geocoded your postcodes prior to importing them into Splink. Use
+        the `lat_col` and `long_col` arguments to tell Splink where to find the
+        latitude and longitude columns.
+
+        See https://ideal-postcodes.co.uk/guides/uk-postcode-format
+        for definitions
+
+        Args:
+            col_name (Union[str, ColumnExpression]): The column name or expression for
+                the postcodes to be compared.
+            invalid_postcodes_as_null (bool, optional): If True, treat invalid postcodes
+                as null. Defaults to False.
+            lat_col (Union[str, ColumnExpression], optional): The column name or
+                expression for latitude. Required if `km_thresholds` is provided.
+            long_col (Union[str, ColumnExpression], optional): The column name or
+                expression for longitude. Required if `km_thresholds` is provided.
+            km_thresholds (Union[float, List[float]], optional): Thresholds for distance
+                in kilometers. If provided, `lat_col` and `long_col` must also be
+                provided.
+        """
+        self.valid_postcode_regex = (
+            self.VALID_POSTCODE_REGEX if invalid_postcodes_as_null else None
+        )
+
+        cols = {"postcode": col_name}
+        if km_thresholds:
+            km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
+            self.km_thresholds = [*km_thresholds_as_iterable]
+            if lat_col is None or long_col is None:
+                raise ValueError(
+                    "If you supply `km_thresholds` you must also provide values for "
+                    "`lat_col` and `long_col`."
+                )
+            cols["latitude"] = lat_col
+            cols["longitude"] = long_col
+        else:
+            self.km_thresholds = None
+        super().__init__(cols)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        full_col_expression = self.col_expressions["postcode"]
+        sector_col_expression = full_col_expression.regex_extract(self.SECTOR_REGEX)
+        district_col_expression = full_col_expression.regex_extract(self.DISTRICT_REGEX)
+        area_col_expression = full_col_expression.regex_extract(self.AREA_REGEX)
+
+        if not self.km_thresholds:
+            levels: list[ComparisonLevelCreator] = [
+                cll.NullLevel(
+                    full_col_expression, valid_string_pattern=self.valid_postcode_regex
+                ),
+                cll.ExactMatchLevel(full_col_expression),
+                cll.ExactMatchLevel(sector_col_expression),
+                cll.ExactMatchLevel(district_col_expression),
+                cll.ExactMatchLevel(area_col_expression),
+            ]
+        if self.km_thresholds:
+            # Don't include the very high level postcode categories
+            # if using km thresholds - they are better modelled as geo distances
+            levels: list[ComparisonLevelCreator] = [
+                cll.NullLevel(
+                    full_col_expression, valid_string_pattern=self.valid_postcode_regex
+                ),
+                cll.ExactMatchLevel(full_col_expression),
+                cll.ExactMatchLevel(sector_col_expression),
+            ]
+
+            lat_col_expression = self.col_expressions["latitude"]
+            long_col_expression = self.col_expressions["longitude"]
+            levels.extend(
+                [
+                    cll.DistanceInKMLevel(
+                        lat_col_expression, long_col_expression, km_threshold
+                    )
+                    for km_threshold in self.km_thresholds
+                ]
+            )
+
+        levels.append(cll.ElseLevel())
+        return levels
+
+    def create_output_column_name(self) -> str:
+        return self.col_expressions["postcode"].output_column_name
+
+
+class EmailComparison(ComparisonCreator):
+    USERNAME_REGEX = "^[^@]+"
+    DOMAIN_REGEX = "@([^@]+)$"
+
+    def __init__(self, col_name: Union[str, ColumnExpression]):
+        """
+        Generate an 'out of the box' comparison for an email address column with the
+        in the `col_name` provided.
+
+        The default comparison levels are:
+
+        - Null comparison: e.g., one email is missing or invalid.
+        - Exact match on full email: e.g., `john@smith.com` vs. `john@smith.com`.
+        - Exact match on username part of email: e.g., `john@company.com` vs.
+        `john@other.com`.
+        - Jaro-Winkler similarity > 0.88 on full email: e.g., `john.smith@company.com`
+        vs. `john.smyth@company.com`.
+        - Jaro-Winkler similarity > 0.88 on username part of email: e.g.,
+        `john.smith@company.com` vs. `john.smyth@other.com`.
+        - Anything else: e.g., `john@company.com` vs. `rebecca@other.com`.
+
+        Args:
+            col_name (Union[str, ColumnExpression]): The column name or expression for
+                the email addresses to be compared.
+        """
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        full_col_expression = self.col_expression
+        username_col_expression = full_col_expression.regex_extract(self.USERNAME_REGEX)
+
+        levels: list[ComparisonLevelCreator] = [
+            cll.NullLevel(full_col_expression, valid_string_pattern=None),
+            cll.ExactMatchLevel(full_col_expression).configure(
+                tf_adjustment_column=full_col_expression
+            ),
+            cll.ExactMatchLevel(username_col_expression).configure(
+                label_for_charts="Exact match on username"
+            ),
+            cll.JaroWinklerLevel(full_col_expression, 0.88),
+            cll.JaroWinklerLevel(username_col_expression, 0.88).configure(
+                label_for_charts="Jaro-Winkler >0.88 on username"
+            ),
+            cll.ElseLevel(),
+        ]
+        return levels
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
+
+
 class NameComparison(ComparisonCreator):
     def __init__(
         self,
@@ -209,6 +373,34 @@ class NameComparison(ComparisonCreator):
         jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88, 0.7],
         dmeta_col_name: str = None,
     ):
+        """
+        Generate an 'out of the box' comparison for a name column in the `col_name`
+        provided.
+
+        It's also possible to include a level for a dmetaphone match, but this requires
+        you to derive a dmetaphone column prior to importing it into Splink. Note
+        this is expected to be a column containing arrays of dmetaphone values, which
+        are of length 1 or 2.
+
+        The default comparison levels are:
+
+        - Null comparison
+        - Exact match
+        - Jaro-Winkler similarity > 0.92
+        - Jaro-Winkler similarity > 0.88
+        - Jaro-Winkler similarity > 0.70
+        - Anything else
+
+        Args:
+            col_name (Union[str, ColumnExpression]): The column name or expression for
+                the names to be compared.
+            jaro_winkler_thresholds (Union[float, list[float]], optional): Thresholds
+                for Jaro-Winkler similarity. Defaults to [0.92, 0.88, 0.7].
+            dmeta_col_name (str, optional): The column name for dmetaphone values.
+                If provided, array intersection level is included. This column must
+                contain arrays of dmetaphone values, which are of length 1 or 2.
+        """
+
         jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
         self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
 
@@ -372,167 +564,3 @@ class ForenameSurnameComparison(ComparisonCreator):
         forename_output_name = self.col_expressions["forename"].output_column_name
         surname_output_name = self.col_expressions["surname"].output_column_name
         return f"{forename_output_name}_{surname_output_name}"
-
-
-class PostcodeComparison(ComparisonCreator):
-    SECTOR_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]"
-    DISTRICT_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?"
-    AREA_REGEX = "^[A-Za-z]{1,2}"
-    VALID_POSTCODE_REGEX = "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
-
-    def __init__(
-        self,
-        col_name: Union[str, ColumnExpression],
-        *,
-        invalid_postcodes_as_null: bool = False,
-        lat_col: Union[str, ColumnExpression] = None,
-        long_col: Union[str, ColumnExpression] = None,
-        km_thresholds: Union[float, List[float]] = [],
-    ):
-        """
-        Generate an 'out of the box' comparison for a postcode column with the
-        in the `col_name` provided.
-
-        The default comparison levels are:
-
-        - Null comparison
-        - Exact match on full postcode
-        - Exact match on sector
-        - Exact match on district
-        - Exact match on area
-        - Distance in km (if lat_col and long_col are provided)
-
-        It's also possible to include levels for distance in km, but this requires
-        you to have geocoded your postcodes prior to importing them into Splink. Use
-        the `lat_col` and `long_col` arguments to tell Splink where to find the
-        latitude and longitude columns.
-
-        See https://ideal-postcodes.co.uk/guides/uk-postcode-format
-        for definitions
-
-        Args:
-            col_name (Union[str, ColumnExpression]): The column name or expression for
-                the postcodes to be compared.
-            invalid_postcodes_as_null (bool, optional): If True, treat invalid postcodes
-                as null. Defaults to False.
-            lat_col (Union[str, ColumnExpression], optional): The column name or
-                expression for latitude. Required if `km_thresholds` is provided.
-            long_col (Union[str, ColumnExpression], optional): The column name or
-                expression for longitude. Required if `km_thresholds` is provided.
-            km_thresholds (Union[float, List[float]], optional): Thresholds for distance
-                in kilometers. If provided, `lat_col` and `long_col` must also be
-                provided.
-        """
-        self.valid_postcode_regex = (
-            self.VALID_POSTCODE_REGEX if invalid_postcodes_as_null else None
-        )
-
-        cols = {"postcode": col_name}
-        if km_thresholds:
-            km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
-            self.km_thresholds = [*km_thresholds_as_iterable]
-            if lat_col is None or long_col is None:
-                raise ValueError(
-                    "If you supply `km_thresholds` you must also provide values for "
-                    "`lat_col` and `long_col`."
-                )
-            cols["latitude"] = lat_col
-            cols["longitude"] = long_col
-        else:
-            self.km_thresholds = None
-        super().__init__(cols)
-
-    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-        full_col_expression = self.col_expressions["postcode"]
-        sector_col_expression = full_col_expression.regex_extract(self.SECTOR_REGEX)
-        district_col_expression = full_col_expression.regex_extract(self.DISTRICT_REGEX)
-        area_col_expression = full_col_expression.regex_extract(self.AREA_REGEX)
-
-        if not self.km_thresholds:
-            levels: list[ComparisonLevelCreator] = [
-                cll.NullLevel(
-                    full_col_expression, valid_string_pattern=self.valid_postcode_regex
-                ),
-                cll.ExactMatchLevel(full_col_expression),
-                cll.ExactMatchLevel(sector_col_expression),
-                cll.ExactMatchLevel(district_col_expression),
-                cll.ExactMatchLevel(area_col_expression),
-            ]
-        if self.km_thresholds:
-            # Don't include the very high level postcode categories
-            # if using km thresholds - they are better modelled as geo distances
-            levels: list[ComparisonLevelCreator] = [
-                cll.NullLevel(
-                    full_col_expression, valid_string_pattern=self.valid_postcode_regex
-                ),
-                cll.ExactMatchLevel(full_col_expression),
-                cll.ExactMatchLevel(sector_col_expression),
-            ]
-
-            lat_col_expression = self.col_expressions["latitude"]
-            long_col_expression = self.col_expressions["longitude"]
-            levels.extend(
-                [
-                    cll.DistanceInKMLevel(
-                        lat_col_expression, long_col_expression, km_threshold
-                    )
-                    for km_threshold in self.km_thresholds
-                ]
-            )
-
-        levels.append(cll.ElseLevel())
-        return levels
-
-    def create_output_column_name(self) -> str:
-        return self.col_expressions["postcode"].output_column_name
-
-
-class EmailComparison(ComparisonCreator):
-    USERNAME_REGEX = "^[^@]+"
-    DOMAIN_REGEX = "@([^@]+)$"
-
-    def __init__(self, col_name: Union[str, ColumnExpression]):
-        """
-        Generate an 'out of the box' comparison for an email address column with the
-        in the `col_name` provided.
-
-        The default comparison levels are:
-
-        - Null comparison: e.g., one email is missing or invalid.
-        - Exact match on full email: e.g., `john@smith.com` vs. `john@smith.com`.
-        - Exact match on username part of email: e.g., `john@company.com` vs.
-        `john@other.com`.
-        - Jaro-Winkler similarity > 0.88 on full email: e.g., `john.smith@company.com`
-        vs. `john.smyth@company.com`.
-        - Jaro-Winkler similarity > 0.88 on username part of email: e.g.,
-        `john.smith@company.com` vs. `john.smyth@other.com`.
-        - Anything else: e.g., `john@company.com` vs. `rebecca@other.com`.
-
-        Args:
-            col_name (Union[str, ColumnExpression]): The column name or expression for
-                the email addresses to be compared.
-        """
-        super().__init__(col_name)
-
-    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
-        full_col_expression = self.col_expression
-        username_col_expression = full_col_expression.regex_extract(self.USERNAME_REGEX)
-
-        levels: list[ComparisonLevelCreator] = [
-            cll.NullLevel(full_col_expression, valid_string_pattern=None),
-            cll.ExactMatchLevel(full_col_expression).configure(
-                tf_adjustment_column=full_col_expression
-            ),
-            cll.ExactMatchLevel(username_col_expression).configure(
-                label_for_charts="Exact match on username"
-            ),
-            cll.JaroWinklerLevel(full_col_expression, 0.88),
-            cll.JaroWinklerLevel(username_col_expression, 0.88).configure(
-                label_for_charts="Jaro-Winkler >0.88 on username"
-            ),
-            cll.ElseLevel(),
-        ]
-        return levels
-
-    def create_output_column_name(self) -> str:
-        return self.col_expression.output_column_name
