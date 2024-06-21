@@ -11,8 +11,6 @@ from tests.literal_utils import (
     run_tests_with_args,
 )
 
-from .decorator import mark_with_dialects_excluding
-
 ## name_comparison
 
 
@@ -715,6 +713,106 @@ def test_name_comparison(dialect, test_helpers, test_gamma_assert):
                     "name_r": "Bob",
                     "dmeta_name_l": ["ALS"],
                     "dmeta_name_r": ["PP"],
+                },
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+
+@mark_with_dialects_excluding("postgres", "sqlite")
+def test_forename_surname_comparison(dialect, test_helpers, test_gamma_assert):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["database_api"]
+
+    test_spec = ComparisonTestSpec(
+        ctl.ForenameSurnameComparison("forename", "surname"),
+        tests=[
+            LiteralTestValues(
+                {
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                },
+                expected_gamma_val=6,  # Exact match on forename and surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "James",
+                    "forename_r": "Smith",
+                    "surname_l": "Smith",
+                    "surname_r": "James",
+                },
+                expected_gamma_val=5,  # Exact match on forename and surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "Stephen",
+                    "forename_r": "Stephan",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                },
+                expected_gamma_val=4,  # jwsim > 0.92 on fname, exact match on surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "Stephen",
+                    "forename_r": "Steven",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                },
+                expected_gamma_val=3,  # jwsim > 0.88 on fname, exact match on surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Doe",
+                    "surname_r": "Smith",
+                },
+                expected_gamma_val=1,  # Exact match forename, anything else on surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "Alice",
+                    "forename_r": "Bob",
+                    "surname_l": "Jones",
+                    "surname_r": "Smith",
+                },
+                expected_gamma_val=0,  # Anything else
+            ),
+        ],
+    )
+    run_tests_with_args(test_spec, db_api)
+
+    test_spec = ComparisonTestSpec(
+        ctl.ForenameSurnameComparison(
+            "forename",
+            "surname",
+            forename_surname_concat_col_name="forename_surname_concat",
+        ),
+        tests=[
+            LiteralTestValues(
+                {
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                    "forename_surname_concat_l": "John Smith",
+                    "forename_surname_concat_r": "John Smith",
+                },
+                expected_gamma_val=6,  # Exact match on forename and surname
+            ),
+            LiteralTestValues(
+                {
+                    "forename_l": "Alice",
+                    "forename_r": "Bob",
+                    "surname_l": "Jones",
+                    "surname_r": "Smith",
+                    "forename_surname_concat_l": "Alice Jones",
+                    "forename_surname_concat_r": "Bob Smith",
                 },
                 expected_gamma_val=0,  # Anything else
             ),
