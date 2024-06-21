@@ -459,6 +459,37 @@ class ForenameSurnameComparison(ComparisonCreator):
         jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88],
         forename_surname_concat_col_name: str = None,
     ):
+        """
+        Generate an 'out of the box' comparison for forename and surname columns
+        in the `forename_col_name` and `surname_col_name` provided.
+
+        It's recommended to derive an additional column containing a concatenated
+        forename and surname column so that term frequencies can be applied to the
+        full name.  If you have derived a column, provide it at
+        `forename_surname_concat_col_name`.
+
+        The default comparison levels are:
+
+        - Null comparison on both forename and surname
+        - Exact match on both forename and surname
+        - Columns reversed comparison (forename and surname swapped)
+        - Jaro-Winkler similarity > 0.92 on both forename and surname
+        - Jaro-Winkler similarity > 0.88 on both forename and surname
+        - Exact match on surname
+        - Exact match on forename
+        - Anything else
+
+        Args:
+            forename_col_name (Union[str, ColumnExpression]): The column name or
+                expression for the forenames to be compared.
+            surname_col_name (Union[str, ColumnExpression]): The column name or
+                expression for the surnames to be compared.
+            jaro_winkler_thresholds (Union[float, list[float]], optional): Thresholds
+                for Jaro-Winkler similarity. Defaults to [0.92, 0.88].
+            forename_surname_concat_col_name (str, optional): The column name for
+                concatenated forename and surname values. If provided, term
+                frequencies are applied on the exact match using this column
+        """
         jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
         self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
         cols = {"forename": forename_col_name, "surname": surname_col_name}
