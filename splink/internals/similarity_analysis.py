@@ -1,6 +1,10 @@
 import duckdb
 import pandas as pd
-import phonetics
+
+try:
+    import phonetics
+except ImportError:
+    pass
 
 from splink.internals.charts import (
     _comparator_score_chart,
