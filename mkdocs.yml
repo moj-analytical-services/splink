@@ -119,8 +119,8 @@ nav:
         - Deduplicate 50k rows historical persons: "demos/examples/athena/deduplicate_50k_synthetic.ipynb"
       - SQLite:
         - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
-  - Documentation:
-    - Introduction: "documentation_index.md"
+  - API Docs:
+    - Introduction: "api_docs/api_docs_index.md"
     - API:
       - Linker:
         - Training: "api_docs/training.md"
@@ -140,29 +140,7 @@ nav:
           - Blocking analysis: "api_docs/blocking_analysis.md"
           - SplinkDataFrame: "api_docs/splink_dataframe.md"
           - EM Training Session API: "api_docs/em_training_session.md"
-      - Charts Gallery:
-        - "charts/index.md"
-        - Exploratory Analysis:
-          - completeness chart: "charts/completeness_chart.ipynb"
-          - profile columns: "charts/profile_columns.ipynb"
-        - Blocking:
-          - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
-        - Comparison Helpers:
-          - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
-          - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
-          - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
-        - Model Training:
-          - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
-          - match weights chart: "charts/match_weights_chart.ipynb"
-          - m u parameters chart: "charts/m_u_parameters_chart.ipynb"
-          - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
-          - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"
-          - unlinkables chart: "charts/unlinkables_chart.ipynb"
-          - waterfall chart: "charts/waterfall_chart.ipynb"
-        - Clustering:
-          - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
-        - Model Evaluation:
-          - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+
   - Topic Guides:
     - Introduction: "topic_guides/topic_guides_index.md"
     - Record Linkage Theory:
@@ -179,14 +157,38 @@ nav:
       - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Data Preparation:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
+      - Phonetic algorithms: "topic_guides/data_preparation/phonetic.md"
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
       - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
-      - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
+      - Out-of-the-box comparisons: "topic_guides/comparisons/out_of_the_box_comparisons.ipynb"
       - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+    - Charts Gallery:
+      - "charts/index.md"
+      - Exploratory Analysis:
+        - completeness chart: "charts/completeness_chart.ipynb"
+        - profile columns: "charts/profile_columns.ipynb"
+      - Blocking:
+        - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+      - Comparison Helpers:
+        - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
+        - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
+        - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
+      - Model Training:
+        - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
+        - match weights chart: "charts/match_weights_chart.ipynb"
+        - m u parameters chart: "charts/m_u_parameters_chart.ipynb"
+        - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
+        - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"
+        - unlinkables chart: "charts/unlinkables_chart.ipynb"
+        - waterfall chart: "charts/waterfall_chart.ipynb"
+      - Clustering:
+        - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
+      - Model Evaluation:
+        - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
   - How Splink works:
     - User-Defined Functions: "dev_guides/udfs.md"
 extra_css:
@@ -214,7 +216,5 @@ extra:
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
 exclude_docs: |
-    charts/**
     blog/**
-    topic_guides/**
     demos/**

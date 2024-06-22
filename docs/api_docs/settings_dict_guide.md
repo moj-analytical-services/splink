@@ -14,7 +14,6 @@ tags:
 This document enumerates all the settings and configuration options available when
 developing your data linkage model.
 
-You can find an [interactive settings editor here](./settingseditor/editor.md).
 
 <hr>
 
@@ -144,24 +143,24 @@ A list specifying how records should be compared for probabilistic matching.  Ea
 
     Each comparison level represents a branch of a SQL case expression. They are specified in order of evaluation, each with a `sql_condition` that represents the branch of a case expression
 
-    **Example**: 
+    **Example**:
     ``` json
     [{
-        "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL", 
-        "label_for_charts": "null", 
+        "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
+        "label_for_charts": "null",
         "null_level": True
-    }, 
+    },
     {
-        "sql_condition": "first_name_l = first_name_r", 
-        "label_for_charts": "exact_match", 
+        "sql_condition": "first_name_l = first_name_r",
+        "label_for_charts": "exact_match",
         "tf_adjustment_column": "first_name"
-    }, 
+    },
     {
-        "sql_condition": "ELSE", 
+        "sql_condition": "ELSE",
         "label_for_charts": "else"
     }]
     ```
-    
+
     <hr>
 
     ??? note "Settings keys nested within each member of `comparison_levels`"
