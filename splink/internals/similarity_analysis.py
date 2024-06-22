@@ -8,7 +8,7 @@ from splink.internals.charts import (
     _phonetic_match_chart,
 )
 
-comparator_cols_sql = """
+_comparator_cols_sql = """
     levenshtein({comparison1}, {comparison2}) as levenshtein_distance,
     damerau_levenshtein({comparison1}, {comparison2}) as damerau_levenshtein_distance,
     ROUND(jaro_similarity(
@@ -27,9 +27,9 @@ def comparator_score(str1, str2, decimal_places=2):
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
-        ch.comparator_score("Richard", "iRchard")
+        sa.comparator_score("Richard", "iRchard")
         ```
     """
     con = duckdb.connect()
@@ -38,7 +38,7 @@ def comparator_score(str1, str2, decimal_places=2):
         select
         '{str1}' as string1,
         '{str2}' as string2,
-        {comparator_cols_sql.format(
+        {_comparator_cols_sql.format(
             comparison1 = 'string1',
             comparison2 = 'string2',
             decimal_places=decimal_places
@@ -53,14 +53,14 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
         list = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_df(list, "string1", "string2")
+        sa.comparator_score_df(list, "string1", "string2")
         ```
     """
     duckdb.connect()
@@ -70,7 +70,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     sql = f"""
         select
         {col1}, {col2},
-        {comparator_cols_sql.format(
+        {_comparator_cols_sql.format(
             comparison1 = col1,
             comparison2 = col2,
             decimal_places=decimal_places
@@ -87,14 +87,14 @@ def comparator_score_chart(list, col1, col2):
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
         list = {
                 "string1": ["Stephen", "Stephen", "Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_chart(list, "string1", "string2")
+        sa.comparator_score_chart(list, "string1", "string2")
         ```
     """
 
@@ -133,19 +133,19 @@ def comparator_score_chart(list, col1, col2):
 def comparator_score_threshold_chart(
     list, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
-    """Helper function returning a heatmap showing the sting similarity
+    """Helper function returning a heatmap showing the string similarity
     scores and string distances for a list of strings given a threshold.
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
         list = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_threshold_chart(data,
+        sa.comparator_score_threshold_chart(data,
                                  "string1", "string2",
                                  similarity_threshold=0.8,
                                  distance_threshold=2)
@@ -169,13 +169,18 @@ def comparator_score_threshold_chart(
         value_name="score",
     )
 
-    similarity_df = df_long.loc[df_long["comparator"].str.contains("similarity"), :]
-    similarity_df["comparator"] = similarity_df["comparator"].str.replace(
+    similarity_df = df_long.loc[
+        df_long["comparator"].str.contains("similarity"), :
+    ].copy()
+    similarity_df.loc[:, "comparator"] = similarity_df["comparator"].str.replace(
         "_similarity", ""
     )
     similarity_records = similarity_df.to_json(orient="records")
-    distance_df = df_long.loc[df_long["comparator"].str.contains("distance"), :]
-    distance_df["comparator"] = distance_df["comparator"].str.replace("_distance", "")
+
+    distance_df = df_long.loc[df_long["comparator"].str.contains("distance"), :].copy()
+    distance_df.loc[:, "comparator"] = distance_df["comparator"].str.replace(
+        "_distance", ""
+    )
     distance_records = distance_df.to_json(orient="records")
 
     return _comparator_score_threshold_chart(
@@ -215,14 +220,14 @@ def phonetic_transform_df(list, col1, col2):
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
         list = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.phonetic_match_chart(list, "string1", "string2")
+        sa.phonetic_match_chart(list, "string1", "string2")
         ```
     """
 
@@ -264,14 +269,14 @@ def phonetic_match_chart(list, col1, col2):
 
     Examples:
         ```py
-        import splink.comparison_helpers as ch
+        import splink.exploratory.similarity_analysis as sa
 
         list = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_threshold_chart(list,
+        sa.comparator_score_threshold_chart(list,
                                  "string1", "string2",
                                  similarity_threshold=0.8,
                                  distance_threshold=2)
@@ -298,3 +303,14 @@ def phonetic_match_chart(list, col1, col2):
     records = df_long.to_json(orient="records")
 
     return _phonetic_match_chart(records)
+
+
+__all__ = [
+    "comparator_score",
+    "comparator_score_df",
+    "comparator_score_chart",
+    "comparator_score_threshold_chart",
+    "phonetic_transform",
+    "phonetic_transform_df",
+    "phonetic_match_chart",
+]
