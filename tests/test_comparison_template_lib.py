@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-import splink.internals.comparison_template_library as ctl
 from splink.internals.column_expression import ColumnExpression
 from tests.decorator import mark_with_dialects_excluding
 from tests.literal_utils import (
@@ -17,7 +16,7 @@ def test_email_comparison(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
     test_spec = ComparisonTestSpec(
-        ctl.EmailComparison("email"),
+        cl.EmailComparison("email"),
         tests=[
             LiteralTestValues(
                 {"email_l": "john@smith.com", "email_r": "john@smith.com"},
@@ -49,7 +48,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
     test_spec = ComparisonTestSpec(
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date_of_birth",
             input_is_string=True,
             separate_1st_january=True,
@@ -97,7 +96,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             ColumnExpression("dob").try_parse_date(),
             input_is_string=False,
             separate_1st_january=True,
@@ -144,7 +143,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date_of_birth",
             input_is_string=True,
             invalid_dates_as_null=False,
@@ -167,7 +166,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date_of_birth",
             input_is_string=True,
             separate_1st_january=False,
@@ -208,7 +207,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
 def test_date_comparison_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date",
             datetime_thresholds=[1, 2],
             datetime_metrics=["month"],
@@ -216,7 +215,7 @@ def test_date_comparison_error_logger(dialect):
         ).get_comparison(dialect)
     # Check metric and threshold are the correct way around
     with pytest.raises(TypeError):
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date",
             datetime_thresholds=["month"],
             datetime_metrics=[1],
@@ -224,7 +223,7 @@ def test_date_comparison_error_logger(dialect):
         ).get_comparison(dialect)
     # Invalid metric
     with pytest.raises(ValueError):
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date",
             datetime_thresholds=[1],
             datetime_metrics=["dy"],
@@ -232,7 +231,7 @@ def test_date_comparison_error_logger(dialect):
         ).get_comparison(dialect)
     # Threshold len == 0
     with pytest.raises(ValueError):
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date",
             datetime_thresholds=[],
             datetime_metrics=["day"],
@@ -240,7 +239,7 @@ def test_date_comparison_error_logger(dialect):
         ).get_comparison(dialect)
     # Metric len == 0
     with pytest.raises(ValueError):
-        ctl.DateOfBirthComparison(
+        cl.DateOfBirthComparison(
             "date", datetime_thresholds=[1], datetime_metrics=[], input_is_string=True
         ).get_comparison(dialect)
 
@@ -251,7 +250,7 @@ def test_postcode_comparison(dialect, test_helpers, test_gamma_assert):
     db_api = helper.extra_linker_args()["database_api"]
 
     test_spec = ComparisonTestSpec(
-        ctl.PostcodeComparison("postcode"),
+        cl.PostcodeComparison("postcode"),
         tests=[
             LiteralTestValues(
                 {"postcode_l": "SW1A 1AA", "postcode_r": "SW1A 1AA"},
@@ -278,7 +277,7 @@ def test_postcode_comparison(dialect, test_helpers, test_gamma_assert):
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.PostcodeComparison(
+        cl.PostcodeComparison(
             "postcode",
             lat_col="latitude",
             long_col="longitude",
@@ -350,7 +349,7 @@ def test_name_comparison(dialect, test_helpers, test_gamma_assert):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["database_api"]
     test_spec = ComparisonTestSpec(
-        ctl.NameComparison("name"),
+        cl.NameComparison("name"),
         tests=[
             LiteralTestValues(
                 {"name_l": "John", "name_r": "John"},
@@ -377,7 +376,7 @@ def test_name_comparison(dialect, test_helpers, test_gamma_assert):
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.NameComparison("name", dmeta_col_name="dmeta_name"),
+        cl.NameComparison("name", dmeta_col_name="dmeta_name"),
         tests=[
             LiteralTestValues(
                 {
@@ -444,7 +443,7 @@ def test_forename_surname_comparison(dialect, test_helpers, test_gamma_assert):
     db_api = helper.extra_linker_args()["database_api"]
 
     test_spec = ComparisonTestSpec(
-        ctl.ForenameSurnameComparison("forename", "surname"),
+        cl.ForenameSurnameComparison("forename", "surname"),
         tests=[
             LiteralTestValues(
                 {
@@ -505,7 +504,7 @@ def test_forename_surname_comparison(dialect, test_helpers, test_gamma_assert):
     run_tests_with_args(test_spec, db_api)
 
     test_spec = ComparisonTestSpec(
-        ctl.ForenameSurnameComparison(
+        cl.ForenameSurnameComparison(
             "forename",
             "surname",
             forename_surname_concat_col_name="forename_surname_concat",

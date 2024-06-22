@@ -4,7 +4,6 @@ import pytest
 
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
-import splink.internals.comparison_template_library as ctl
 from splink.internals.column_expression import ColumnExpression
 from tests.decorator import mark_with_dialects_excluding, mark_with_dialects_including
 from tests.literal_utils import (
