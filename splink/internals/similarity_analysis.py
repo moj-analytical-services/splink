@@ -1,11 +1,6 @@
 import duckdb
 import pandas as pd
 
-try:
-    import phonetics
-except ImportError:
-    pass
-
 from splink.internals.charts import (
     _comparator_score_chart,
     _comparator_score_threshold_chart,
@@ -201,6 +196,8 @@ def phonetic_transform(string):
         phonetic_transform("Richard", "iRchard")
         ```
     """
+    import phonetics
+
     transforms = {}
 
     # Soundex Transform
@@ -234,6 +231,7 @@ def phonetic_transform_df(list, col1, col2):
         sa.phonetic_match_chart(list, "string1", "string2")
         ```
     """
+    import phonetics
 
     df = pd.DataFrame(list)
 
