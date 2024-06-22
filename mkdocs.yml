@@ -140,7 +140,6 @@ nav:
           - Blocking analysis: "api_docs/blocking_analysis.md"
           - SplinkDataFrame: "api_docs/splink_dataframe.md"
           - EM Training Session API: "api_docs/em_training_session.md"
-
   - Topic Guides:
     - Introduction: "topic_guides/topic_guides_index.md"
     - Record Linkage Theory:
@@ -157,7 +156,7 @@ nav:
       - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Data Preparation:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
-      - Phonetic algorithms: "topic_guides/data_preparation/phonetic.md"
+
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
@@ -165,7 +164,13 @@ nav:
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
       - Out-of-the-box comparisons: "topic_guides/comparisons/out_of_the_box_comparisons.ipynb"
-      - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+      - Term frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+      - Comparing strings:
+        - String comparators: "topic_guides/comparisons/comparators.md"
+        - Choosing string comparators: "topic_guides/comparisons/choosing_comparators.ipynb"
+        - Phonetic algorithms: "topic_guides/comparisons/phonetic.md"
+        - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
+
     - Charts Gallery:
       - "charts/index.md"
       - Exploratory Analysis:
@@ -173,10 +178,10 @@ nav:
         - profile columns: "charts/profile_columns.ipynb"
       - Blocking:
         - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
-      - Comparison Helpers:
-        - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
-        - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
-        - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
+      - Similarity analysis:
+        - Comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
+        - Comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
+        - Phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
       - Model Training:
         - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
         - match weights chart: "charts/match_weights_chart.ipynb"
