@@ -157,13 +157,14 @@ nav:
       - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Data Preparation:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
+      - Phonetic algorithms: "topic_guides/data_preparation/phonetic.md"
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
       - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
     - Comparing Records:
       - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
-      - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
+      - Out-of-the-box comparisons: "topic_guides/comparisons/out_of_the_box_comparisons.ipynb"
       - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
     - Charts Gallery:
       - "charts/index.md"
