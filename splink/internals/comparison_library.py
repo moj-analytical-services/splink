@@ -834,10 +834,18 @@ class PostcodeComparison(ComparisonCreator):
                 cll.NullLevel(
                     full_col_expression, valid_string_pattern=self.valid_postcode_regex
                 ),
-                cll.ExactMatchLevel(full_col_expression),
-                cll.ExactMatchLevel(sector_col_expression),
-                cll.ExactMatchLevel(district_col_expression),
-                cll.ExactMatchLevel(area_col_expression),
+                cll.ExactMatchLevel(full_col_expression).configure(
+                    label_for_charts="Exact match on full postcode"
+                ),
+                cll.ExactMatchLevel(sector_col_expression).configure(
+                    label_for_charts="Exact match on sector"
+                ),
+                cll.ExactMatchLevel(district_col_expression).configure(
+                    label_for_charts="Exact match on district"
+                ),
+                cll.ExactMatchLevel(area_col_expression).configure(
+                    label_for_charts="Exact match on area"
+                ),
             ]
         if self.km_thresholds:
             # Don't include the very high level postcode categories

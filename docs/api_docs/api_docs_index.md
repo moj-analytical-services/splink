@@ -3,7 +3,7 @@ hide:
   - toc
 ---
 
-# Documentation
+# API Documentation
 
 This section contains reference material for the modules and functions within Splink.
 
@@ -28,10 +28,6 @@ This section contains reference material for the modules and functions within Sp
 - [Blocking](api_docs/blocking.md)
 - [EM Training Session API](api_docs/em_training_session.md)
 
-## Charts Gallery
-
-The [Splink Charts Gallery](./charts/index.md) contains examples for all of the interactive charts and dashboards that are provided in Splink to help the linking process.
-
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.
 
@@ -42,4 +38,3 @@ Reference materials for the Splink Settings dictionary:
 
 - [Settings Dictionary Reference](./settings_dict_guide.md) - for reference material on the parameters available within a Splink Settings dictionary.
 
-- [Interactive Settings Editor](./settingseditor/editor.md) - for an interactive Settings editor, giving a hands-on sandbox to test out the Splink Settings dictionary. Including validation, autocomplete and autoformatting.
