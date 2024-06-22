@@ -718,9 +718,6 @@ class DateOfBirthComparison(ComparisonCreator):
                 cll.ExactMatchLevel(date_as_iso_string.substr(0, 4)),
             )
 
-            level.create_label_for_charts = (
-                lambda: "Exact match on year (1st of January only)"
-            )
             levels.append(level)
 
         levels.append(cll.ExactMatchLevel(self.col_expression))
@@ -821,7 +818,7 @@ class PostcodeComparison(ComparisonCreator):
             cols["latitude"] = lat_col
             cols["longitude"] = long_col
         else:
-            self.km_thresholds = None
+            self.km_thresholds = []
         super().__init__(cols)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
@@ -830,8 +827,10 @@ class PostcodeComparison(ComparisonCreator):
         district_col_expression = full_col_expression.regex_extract(self.DISTRICT_REGEX)
         area_col_expression = full_col_expression.regex_extract(self.AREA_REGEX)
 
-        if not self.km_thresholds:
-            levels: list[ComparisonLevelCreator] = [
+        levels: list[ComparisonLevelCreator] = []
+
+        if len(self.km_thresholds) == 0:
+            levels = [
                 cll.NullLevel(
                     full_col_expression, valid_string_pattern=self.valid_postcode_regex
                 ),
@@ -843,7 +842,7 @@ class PostcodeComparison(ComparisonCreator):
         if self.km_thresholds:
             # Don't include the very high level postcode categories
             # if using km thresholds - they are better modelled as geo distances
-            levels: list[ComparisonLevelCreator] = [
+            levels = [
                 cll.NullLevel(
                     full_col_expression, valid_string_pattern=self.valid_postcode_regex
                 ),
@@ -903,7 +902,7 @@ class EmailComparison(ComparisonCreator):
         levels: list[ComparisonLevelCreator] = [
             cll.NullLevel(full_col_expression, valid_string_pattern=None),
             cll.ExactMatchLevel(full_col_expression).configure(
-                tf_adjustment_column=full_col_expression
+                tf_adjustment_column=full_col_expression.raw_sql_expression
             ),
             cll.ExactMatchLevel(username_col_expression).configure(
                 label_for_charts="Exact match on username"
@@ -956,8 +955,8 @@ class NameComparison(ComparisonCreator):
                 contain arrays of dmetaphone values, which are of length 1 or 2.
         """
 
-        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-        self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
+        jaro_winkler_thresholds_itr = ensure_is_iterable(jaro_winkler_thresholds)
+        self.jaro_winkler_thresholds = list(jaro_winkler_thresholds_itr)
 
         cols = {"name": col_name}
         if dmeta_col_name is not None:
@@ -1045,8 +1044,8 @@ class ForenameSurnameComparison(ComparisonCreator):
                 concatenated forename and surname values. If provided, term
                 frequencies are applied on the exact match using this column
         """
-        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-        self.jaro_winkler_thresholds = [*jaro_winkler_thresholds]
+        jaro_winkler_thresholds_itr = ensure_is_iterable(jaro_winkler_thresholds)
+        self.jaro_winkler_thresholds = list(jaro_winkler_thresholds_itr)
         cols = {"forename": forename_col_name, "surname": surname_col_name}
         if forename_surname_concat_col_name is not None:
             cols["forename_surname_concat"] = forename_surname_concat_col_name
