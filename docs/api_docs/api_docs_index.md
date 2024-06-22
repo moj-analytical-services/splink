@@ -10,23 +10,22 @@ This section contains reference material for the modules and functions within Sp
 ## API
 
 #### Linker
-- [Training](api_docs/training.md)
-- [Visualisations](api_docs/visualisations.md)
-- [Inference](api_docs/inference.md)
-- [Clustering](api_docs/clustering.md)
-- [Evaluation](api_docs/evaluation.md)
-- [Table Management](api_docs/table_management.md)
-- [Miscellaneous functions](api_docs/misc.md)
+- [Training](./training.md)
+- [Visualisations](./visualisations.md)
+- [Inference](./inference.md)
+- [Clustering](./clustering.md)
+- [Evaluation](./evaluation.md)
+- [Table Management](./table_management.md)
+- [Miscellaneous functions](./misc.md)
 
-#### Comparisons Library
-- [Comparison Template Library](api_docs/comparison_template_library.md)
-- [Comparison Library](api_docs/comparison_library.md)
-- [Comparison Level Library](api_docs/comparison_level_library.md)
+#### Comparisons
+- [Comparison Library](./comparison_library.md)
+- [Comparison Level Library](./comparison_level_library.md)
 
 #### Other
-- [SplinkDataFrame](api_docs/splink_dataframe.md)
-- [Blocking](api_docs/blocking.md)
-- [EM Training Session API](api_docs/em_training_session.md)
+- [SplinkDataFrame](./splink_dataframe.md)
+- [Blocking](./blocking.md)
+- [EM Training Session API](./em_training_session.md)
 
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.

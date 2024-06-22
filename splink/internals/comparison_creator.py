@@ -156,6 +156,13 @@ class ComparisonCreator(ABC):
         levels in sequential order, through to the last element which is usually
         the 'ELSE' level.
 
+        Args:
+            term_frequency_adjustments (bool, optional): Whether term frequency
+                adjustments are switched on for this comparison. Only applied
+                to exact match levels. Default: False
+            m_probabilities (list, optional): List of m probabilities
+            u_probabilities (list, optional): List of u probabilities
+
         Example:
             ```py
             cc = LevenshteinAtThresholds("name", 2)
@@ -166,12 +173,7 @@ class ComparisonCreator(ABC):
                 # in that order
             )
             ```
-        Args:
-            term_frequency_adjustments (bool, optional): Whether term frequency
-                adjustments are switched on for this comparison. Only applied
-                to exact match levels. Default: False
-            m_probabilities (list, optional): List of m probabilities
-            u_probabilities (list, optional): List of u probabilities
+
         """
         self.term_frequency_adjustments = term_frequency_adjustments
         self.m_probabilities = m_probabilities

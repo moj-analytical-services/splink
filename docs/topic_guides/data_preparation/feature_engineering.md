@@ -228,7 +228,7 @@ df.head()
 
 Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phonetics](https://pypi.org/project/phonetics/)
 
-Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](../comparisons/customising_comparisons.ipynb#name-comparisons).
+Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison library](../comparisons/customising_comparisons.ipynb#name-comparisons).
 
 
 ```python
