@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -173,7 +173,7 @@ class InputColumn:
         column_info_settings: ColumnInfoSettings = None,
         sql_dialect: str = None,
     ):
-        self.column_info_settings = deepcopy(column_info_settings)
+        self.column_info_settings = copy(column_info_settings)
 
         self.register_dialect(sql_dialect)
 
@@ -216,20 +216,20 @@ class InputColumn:
         )
 
     def unquote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=False)
         self_copy.col_builder = b
         return self_copy
 
     def quote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=True)
         self_copy.col_builder = b
         return self_copy
 
     @property
     def as_base_dialect(self) -> InputColumn:
-        input_column_copy = deepcopy(self)
+        input_column_copy = copy(self)
         input_column_copy.sql_dialect = None
         return input_column_copy
 
