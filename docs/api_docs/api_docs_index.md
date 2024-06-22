@@ -23,9 +23,11 @@ This section contains reference material for the modules and functions within Sp
 - [Comparison Level Library](./comparison_level_library.md)
 
 #### Other
-- [SplinkDataFrame](./splink_dataframe.md)
+- [Exploratory](./exploratory.md)
 - [Blocking](./blocking.md)
+- [SplinkDataFrame](./splink_dataframe.md)
 - [EM Training Session API](./em_training_session.md)
+
 
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.
