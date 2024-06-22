@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from splink.internals.misc import (
@@ -430,7 +431,7 @@ class Comparison:
             cl_template.format(
                 cvv=cl.comparison_vector_value,
                 label=cl.label_for_charts,
-                sql=cl.sql_condition,
+                sql=re.sub(r"\s+", " ", cl.sql_condition.replace("\n", " ")),
             )
             for cl in self.comparison_levels
         ]

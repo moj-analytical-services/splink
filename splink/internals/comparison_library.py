@@ -718,9 +718,15 @@ class DateOfBirthComparison(ComparisonCreator):
                 cll.ExactMatchLevel(date_as_iso_string.substr(0, 4)),
             )
 
+            level.configure(label_for_charts="Exact match on year, 1st Jan only")
+
             levels.append(level)
 
-        levels.append(cll.ExactMatchLevel(self.col_expression))
+        levels.append(
+            cll.ExactMatchLevel(self.col_expression).configure(
+                label_for_charts="Exact match on date of birth"
+            )
+        )
 
         if self.input_is_string:
             col_expr_as_string = self.col_expression
@@ -730,7 +736,7 @@ class DateOfBirthComparison(ComparisonCreator):
         levels.append(
             _DamerauLevenshteinIfSupportedElseLevenshteinLevel(
                 col_expr_as_string, distance_threshold=1
-            )
+            ).configure(label_for_charts="DamerauLevenshtein distance <= 1")
         )
 
         if self.datetime_thresholds:
@@ -743,6 +749,8 @@ class DateOfBirthComparison(ComparisonCreator):
                         threshold=threshold,
                         metric=metric,
                         input_is_string=self.input_is_string,
+                    ).configure(
+                        label_for_charts=f"Abs date difference <= {threshold} {metric}"
                     )
                 )
 
@@ -766,7 +774,7 @@ class PostcodeComparison(ComparisonCreator):
         invalid_postcodes_as_null: bool = False,
         lat_col: Union[str, ColumnExpression] = None,
         long_col: Union[str, ColumnExpression] = None,
-        km_thresholds: Union[float, List[float]] = [],
+        km_thresholds: Union[float, List[float]] = [1, 10, 100],
     ):
         """
         Generate an 'out of the box' comparison for a postcode column with the
@@ -807,18 +815,15 @@ class PostcodeComparison(ComparisonCreator):
         )
 
         cols = {"postcode": col_name}
-        if km_thresholds:
-            km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
-            self.km_thresholds = [*km_thresholds_as_iterable]
-            if lat_col is None or long_col is None:
-                raise ValueError(
-                    "If you supply `km_thresholds` you must also provide values for "
-                    "`lat_col` and `long_col`."
-                )
+
+        km_thresholds_as_iterable = ensure_is_iterable(km_thresholds)
+        self.km_thresholds = [*km_thresholds_as_iterable]
+        if lat_col is None or long_col is None:
+            self.km_thresholds = []
+        else:
             cols["latitude"] = lat_col
             cols["longitude"] = long_col
-        else:
-            self.km_thresholds = []
+
         super().__init__(cols)
 
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
@@ -847,7 +852,7 @@ class PostcodeComparison(ComparisonCreator):
                     label_for_charts="Exact match on area"
                 ),
             ]
-        if self.km_thresholds:
+        if len(self.km_thresholds) > 0:
             # Don't include the very high level postcode categories
             # if using km thresholds - they are better modelled as geo distances
             levels = [
@@ -860,14 +865,12 @@ class PostcodeComparison(ComparisonCreator):
 
             lat_col_expression = self.col_expressions["latitude"]
             long_col_expression = self.col_expressions["longitude"]
-            levels.extend(
-                [
+            for km_threshold in self.km_thresholds:
+                levels.append(
                     cll.DistanceInKMLevel(
                         lat_col_expression, long_col_expression, km_threshold
-                    )
-                    for km_threshold in self.km_thresholds
-                ]
-            )
+                    ).configure(label_for_charts=f"Distance in km <= {km_threshold}")
+                )
 
         levels.append(cll.ElseLevel())
         return levels

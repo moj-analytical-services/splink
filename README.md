@@ -39,19 +39,16 @@ and clusters these links to produce an estimated person ID:
 
 ## What data does Splink work best with?
 
-Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
-
 Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
-High correlation occurs when the value of a column is highly constrained (predictable) from the value of another column. For example, a 'city' field is almost perfectly correlated with 'postcode'. Gender is highly correlated with 'first name'. Correlation is particularly problematic if **all** of your input columns are highly correlated.
+High correlation occurs when one column is highly predictable from another - for instance, city can be predicted from postcode.  Correlation is particularly problematic if **all** of your input columns are highly correlated.
 
 Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
 ## Documentation
 
-The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink/tree/master/docs/demos), or by clicking the following Binder link:
+The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/), including a [tutorial](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html) and [examples](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) that can be run in the browser.
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Ftutorials%2F00_Tutorial_Introduction.ipynb)
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. The [Splink documentation site](https://moj-analytical-services.github.io/splink/topic_guides/fellegi_sunter.html) and a [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
 
@@ -164,21 +161,16 @@ df_clusters = clusters.as_pandas_dataframe(limit=5)
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
 
-## Charts Gallery
-
-You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](https://moj-analytical-services.github.io/splink/charts/index.html).
 
 ## Support
 
-To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Guide](./CONTRIBUTING.md).
 
 ## Use Cases
 
 To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs.
 
 ## Awards
-
-❓ Future of Government Awards 2023: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
