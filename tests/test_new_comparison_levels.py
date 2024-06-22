@@ -5,7 +5,6 @@ import pytest
 
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
-import splink.internals.comparison_template_library as ctl
 from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
@@ -237,40 +236,30 @@ def test_null_pattern_match(dialect, test_helpers):
     assert df_e["gamma_name"][0] == -1
 
 
-comparison_email_ctl = ctl.EmailComparison(
+comparison_email_cl = cl.EmailComparison(
     "email",
-    invalid_emails_as_null=True,
-    include_domain_match_level=True,
-    fuzzy_metric="levenshtein",
-    fuzzy_thresholds=[1, 3],
 )
-comparison_name_ctl = ctl.NameComparison(
+comparison_name_cl = cl.NameComparison(
     "first_name",
-    include_exact_match_level=False,
-    phonetic_col_name="surname",  # ignore the fact this is nonsense
-    fuzzy_metric="levenshtein",
-    fuzzy_thresholds=[1, 2],
 )
 
-comparison_dob_ctl = ctl.DateComparison(
+comparison_dob_cl = cl.DateOfBirthComparison(
     ColumnExpression("dob"),
-    datetime_metrics=["day", "month", "year"],
-    datetime_thresholds=[1, 2, 1],
     input_is_string=True,
-    use_damerau_levenshtein=False,
 )
-comparison_forenamesurname_ctl = ctl.ForenameSurnameComparison(
-    "first_name", "surname", fuzzy_metric="levenshtein", fuzzy_thresholds=[2]
+comparison_forenamesurname_cl = cl.ForenameSurnameComparison(
+    "first_name",
+    "surname",
 )
-ctl_settings = cl_settings
-ctl_settings = {
+
+cl_settings_2 = {
     "link_type": "dedupe_only",
     "comparisons": [
-        comparison_name_ctl,
+        comparison_name_cl,
         # obviously not realistic:
-        comparison_forenamesurname_ctl,
-        comparison_email_ctl,
-        comparison_dob_ctl,
+        comparison_forenamesurname_cl,
+        comparison_email_cl,
+        comparison_dob_cl,
     ],
     "blocking_rules_to_generate_predictions": [
         "l.dob = r.dob",
@@ -279,12 +268,12 @@ ctl_settings = {
 }
 
 
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_ctl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.Linker(df, ctl_settings, **helper.extra_linker_args())
+    linker = helper.Linker(df, cl_settings_2, **helper.extra_linker_args())
     linker.inference.predict()
 
 

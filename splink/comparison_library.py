@@ -4,13 +4,18 @@ from splink.internals.comparison_library import (
     ArrayIntersectAtSizes,
     CustomComparison,
     DamerauLevenshteinAtThresholds,
+    DateOfBirthComparison,
     DistanceFunctionAtThresholds,
     DistanceInKMAtThresholds,
+    EmailComparison,
     ExactMatch,
+    ForenameSurnameComparison,
     JaccardAtThresholds,
     JaroAtThresholds,
     JaroWinklerAtThresholds,
     LevenshteinAtThresholds,
+    NameComparison,
+    PostcodeComparison,
 )
 
 __all__ = [
@@ -26,4 +31,9 @@ __all__ = [
     "AbsoluteDateDifferenceAtThresholds",
     "ArrayIntersectAtSizes",
     "DistanceInKMAtThresholds",
+    "DateOfBirthComparison",
+    "EmailComparison",
+    "ForenameSurnameComparison",
+    "NameComparison",
+    "PostcodeComparison",
 ]

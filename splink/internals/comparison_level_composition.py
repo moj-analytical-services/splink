@@ -46,7 +46,6 @@ class _Merge(ComparisonLevelCreator):
             map(lambda cl: f"({cl.create_sql(sql_dialect)})", self.comparison_levels)
         )
 
-    @final
     def create_label_for_charts(self) -> str:
         return f" {self._clause} ".join(
             map(lambda cl: f"({cl.create_label_for_charts()})", self.comparison_levels)

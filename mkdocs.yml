@@ -216,3 +216,5 @@ extra:
 exclude_docs: |
     charts/**
     blog/**
+    topic_guides/**
+    demos/**
