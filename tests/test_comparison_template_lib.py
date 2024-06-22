@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl

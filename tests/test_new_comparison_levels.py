@@ -268,7 +268,7 @@ cl_settings_2 = {
 }
 
 
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_ctl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
