@@ -259,15 +259,17 @@ comparison.human_readable_description
 
 ## Full name
 
-When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](../comparisons/out_of_the_box_comparisons.ipynb#forename-and-surname-comparisons) of two records. If a Splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
+If Splink has access to a combined full name column, it can use the term frequency of the full name, as opposed to treating forename and surname as independent.
 
-For example, in the UK, “Mohammed Khan” is a more common full name than the individual frequencies of "Mohammed" or "Khan" would suggest if treated independently.
+This can be important because correlations in names are common.  For example, in the UK, “Mohammed Khan” is a more common full name than the individual frequencies of "Mohammed" or "Khan" would suggest.
+
+The following example shows how to do this.
 
 For more on term frequency, see the dedicated [topic guide](../comparisons/term-frequency.md).
 
 ### Example
 
-It is very simple to create a full name column from a `forename` and a `surname` in python.
+Derive a full name column:
 
 ```python
 import pandas as pd
@@ -280,17 +282,9 @@ df['full_name'] = df['first_name'] + ' ' + df['surname']
 
 df.head()
 ```
-??? note "Output"
-
-    |    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | full_name     |
-    |---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:--------------|
-    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | NaN          |
-    |  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | Julia  Taylor |
-    |  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | Julia  Taylor |
-    |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
-    |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | oNah Watson   |
 
 Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [ForenameSurnameComparison](../../api_docs/comparison_library.md#splink.comparison_library.ForenameSurnameComparison) function from the [comparison library](../../api_docs/comparison_library.md).
+
 
 ```python
 comparison = cl.ForenameSurnameComparison(
