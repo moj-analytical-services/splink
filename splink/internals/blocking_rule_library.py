@@ -41,7 +41,7 @@ class CustomRule(BlockingRuleCreator):
     def __init__(
         self,
         blocking_rule: str,
-        base_dialect_str: str = None,
+        sql_dialect: str = None,
         salting_partitions: int | None = None,
         arrays_to_explode: list[str] | None = None,
     ):
@@ -50,7 +50,7 @@ class CustomRule(BlockingRuleCreator):
         )
         self.sql_condition = blocking_rule
 
-        self.base_dialect_str = base_dialect_str
+        self.base_dialect_str = sql_dialect
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         sql_condition = self.sql_condition

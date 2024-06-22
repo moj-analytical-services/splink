@@ -5,7 +5,7 @@
     "retain_intermediate_calculation_columns": true,
     "additional_columns_to_retain": [],
     "sql_dialect": "duckdb",
-    "linker_uid": "9fxkbpww",
+    "linker_uid": "gael41sp",
     "em_convergence": 0.0001,
     "max_iterations": 25,
     "bayes_factor_column_prefix": "bf_",
