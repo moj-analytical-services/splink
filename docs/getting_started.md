@@ -109,7 +109,7 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials
 
 ## Example Notebooks
 
-You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.html). Each has a corresponding Google Colab link to run the notebook in your browser.
+You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md). Each has a corresponding Google Colab link to run the notebook in your browser.
 
 ## Getting help
 
