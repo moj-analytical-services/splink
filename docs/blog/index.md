@@ -1,2 +1,7 @@
-# Blog
+---
+tags:
+  - Blog
+  - News
+---
 
+# Blog

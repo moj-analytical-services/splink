@@ -13,6 +13,9 @@ theme:
     - content.tabs.link
     - content.tooltips
     - header.autohide
+    - search.highlight
+    - search.share
+    - search.suggest
     - navigation.indexes
     - navigation.footer
     - content.action.edit
@@ -35,26 +38,38 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
+  custom_dir: docs/overrides
 plugins:
-  - mknotebooks:
-      tag_remove_configs:
-        remove_input_tags:
-          - hide_input
-        remove_all_outputs_tags:
-          - hide_output
   - blog:
       post_date_format: long
       archive: false
+  - search
+  - mknotebooks
+  - tags
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
-          options:
+          rendering:
             show_source: false
-            docstring_style: google
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
   - charts
+  - mkdocs-video:
+      is_video: True
+      video_autoplay: false
+  - git-committers:
+      repository: moj-analytical-services/splink
+      branch: master
+  - rss:
+      match_path: blog/posts/.*
+      date_from_meta:
+        as_creation: date
 hooks:
   - docs/hooks/__init__.py
+
 markdown_extensions:
   - abbr
   - attr_list
@@ -216,9 +231,6 @@ nav:
         - Performance and caching:
           - Caching and pipelining: "dev_guides/caching.md"
           - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
-        - Comparison and comparison level libraries:
-          - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
-          - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - Charts:
           - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
           - Building new charts: "dev_guides/charts/building_charts.ipynb"
@@ -227,9 +239,8 @@ nav:
           - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
           - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
         - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
-
-  - How Splink works:
-    - User-Defined Functions: "dev_guides/udfs.md"
+  - Blog:
+    - blog/index.md
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
@@ -254,8 +265,3 @@ extra:
     - icon: fontawesome/solid/rss
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
-exclude_docs: |
-    blog/**
-    demos/**
-    api_docs/**
-    topic_guides/**
