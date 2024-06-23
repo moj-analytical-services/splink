@@ -35,7 +35,6 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
-  custom_dir: docs/overrides
 plugins:
   - mknotebooks:
       tag_remove_configs:
@@ -56,7 +55,6 @@ plugins:
   - charts
 hooks:
   - docs/hooks/__init__.py
-
 markdown_extensions:
   - abbr
   - attr_list
@@ -89,7 +87,6 @@ markdown_extensions:
   - footnotes
   - neoteroi.cards
 nav:
-  - Home: "index.md"
   - Getting Started: "getting_started.md"
   - Tutorial:
       - Introduction: "demos/tutorials/00_Tutorial_Introduction.ipynb"
@@ -121,25 +118,24 @@ nav:
         - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
   - API Docs:
     - Introduction: "api_docs/api_docs_index.md"
-    - API:
-      - Linker:
-        - Training: "api_docs/training.md"
-        - Visualisations: "api_docs/visualisations.md"
-        - Inference: "api_docs/inference.md"
-        - Clustering: "api_docs/clustering.md"
-        - Evaluation: "api_docs/evaluation.md"
-        - Table Management: "api_docs/table_management.md"
-        - Miscellaneous functions: "api_docs/misc.md"
-      - Comparisons Library:
-          - Comparison Template Library: "api_docs/comparison_template_library.md"
-          - Comparison Library: "api_docs/comparison_library.md"
-          - Comparison Level Library: "api_docs/comparison_level_library.md"
-      - Other:
-          - Exploratory: "api_docs/exploratory.md"
-          - Blocking rule creator: "api_docs/blocking.md"
-          - Blocking analysis: "api_docs/blocking_analysis.md"
-          - SplinkDataFrame: "api_docs/splink_dataframe.md"
-          - EM Training Session API: "api_docs/em_training_session.md"
+    - Linker:
+      - Training: "api_docs/training.md"
+      - Visualisations: "api_docs/visualisations.md"
+      - Inference: "api_docs/inference.md"
+      - Clustering: "api_docs/clustering.md"
+      - Evaluation: "api_docs/evaluation.md"
+      - Table Management: "api_docs/table_management.md"
+      - Miscellaneous functions: "api_docs/misc.md"
+    - Comparisons Library:
+        - Comparison Template Library: "api_docs/comparison_template_library.md"
+        - Comparison Library: "api_docs/comparison_library.md"
+        - Comparison Level Library: "api_docs/comparison_level_library.md"
+    - Other:
+        - Exploratory: "api_docs/exploratory.md"
+        - Blocking rule creator: "api_docs/blocking.md"
+        - Blocking analysis: "api_docs/blocking_analysis.md"
+        - SplinkDataFrame: "api_docs/splink_dataframe.md"
+        - EM Training Session API: "api_docs/em_training_session.md"
   - Topic Guides:
     - Introduction: "topic_guides/topic_guides_index.md"
     - Record Linkage Theory:
@@ -148,15 +144,14 @@ nav:
       - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linked Data as Graphs: "topic_guides/theory/linked_data_as_graphs.md"
     - Linkage Models in Splink:
+      - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
+      - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
+      - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
       - Splink's SQL backends - Spark, DuckDB etc:
         - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
         - PostgreSQL: "topic_guides/splink_fundamentals/backends/postgres.md"
-      - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
-      - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
-      - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Data Preparation:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
-
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
@@ -170,7 +165,17 @@ nav:
         - Choosing string comparators: "topic_guides/comparisons/choosing_comparators.ipynb"
         - Phonetic algorithms: "topic_guides/comparisons/phonetic.md"
         - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
-
+    - Evaluation:
+      - Overview: "topic_guides/evaluation/overview.md"
+      - Model: "topic_guides/evaluation/model.md"
+      - Edges (Links):
+        - Overview: "topic_guides/evaluation/edge_overview.md"
+        - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
+        - Clerical Labelling: "topic_guides/evaluation/labelling.md"
+      - Clusters:
+        - Overview: "topic_guides/evaluation/clusters/overview.md"
+        - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
+        - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
     - Charts Gallery:
       - "charts/index.md"
       - Exploratory Analysis:
@@ -223,3 +228,4 @@ extra:
 exclude_docs: |
     blog/**
     demos/**
+    api_docs/**

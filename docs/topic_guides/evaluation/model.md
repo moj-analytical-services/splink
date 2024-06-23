@@ -6,7 +6,7 @@ The parameters in a trained Splink model determine the match probability (Splink
 
 The final model is summarised in the [match weights chart](../../charts/match_weights_chart.ipynb) with each bar in the chart signifying the match weight (i.e. the amount of evidence for or against a match) for each comparison level in your model.
 
-If, after some investigation, you still can't make sense of some of the match weights, take a look at the corresponding $m$ and $u$ values generated to see if they themselves make sense. These can be viewed in the [m u parameters chart](https://moj-analytical-services.github.io/splink/charts/m_u_parameters_chart.html).
+If, after some investigation, you still can't make sense of some of the match weights, take a look at the corresponding $m$ and $u$ values generated to see if they themselves make sense. These can be viewed in the [m u parameters chart](../../charts/m_u_parameters_chart.ipynb).
 
 !!! info ""
 
@@ -19,12 +19,18 @@ The behaviour of a model during training can offer some insight into its utility
 
 Stability of model training can be seen in the Expectation Maximisation stage (for $m$ training):
 
-- Stability across EM training sessions can be seen through the [parameter estimates chart](https://moj-analytical-services.github.io/splink/charts/parameter_estimate_comparisons_chart.html)
+- Stability across EM training sessions can be seen through the [parameter estimates chart](../../charts/parameter_estimate_comparisons_chart.ipynb)
 
-- Stability within each session is indicated by the speed of convergence of the algorithm. This is shown in the terminal output during training. In general, the fewer iterations required to converge the better.
+- Stability within each session is indicated by the speed of convergence of the algorithm. This is shown in the terminal output during training. In general, the fewer iterations required to converge the better.  You can also access convergence charts on the [EM training session object](../../api_docs/em_training_session.md)
 
-??? info "Example of convergence output"
-    ![](./image/convergence.png)
+    ```python
+    training_session = linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name", "surname")
+    )
+    training_session.match_weights_interactive_history_chart()
+    ```
+
+
 
 ## In summary
 
