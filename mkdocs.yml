@@ -199,6 +199,35 @@ nav:
         - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
       - Model Evaluation:
         - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+  - Contributing:
+      - "dev_guides/index.md"
+      - Contributing to Splink:
+        - Contributor Guide: "dev_guides/CONTRIBUTING.md"
+        - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
+        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
+        - Testing: "dev_guides/changing_splink/testing.md"
+        - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
+        - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
+        - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+        - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
+      - How Splink works:
+        - Understanding and debugging Splink: "dev_guides/debug_modes.md"
+        - Transpilation using sqlglot: "dev_guides/transpilation.md"
+        - Performance and caching:
+          - Caching and pipelining: "dev_guides/caching.md"
+          - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
+        - Comparison and comparison level libraries:
+          - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
+          - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
+        - Charts:
+          - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
+          - Building new charts: "dev_guides/charts/building_charts.ipynb"
+        - User-Defined Functions: "dev_guides/udfs.md"
+        - Settings Validation:
+          - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
+          - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
+        - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
+
   - How Splink works:
     - User-Defined Functions: "dev_guides/udfs.md"
 extra_css:
@@ -229,3 +258,4 @@ exclude_docs: |
     blog/**
     demos/**
     api_docs/**
+    topic_guides/**

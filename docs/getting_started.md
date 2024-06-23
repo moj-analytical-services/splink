@@ -111,3 +111,6 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials
 
 You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.html). Each has a corresponding Google Colab link to run the notebook in your browser.
 
+## Getting help
+
+If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
