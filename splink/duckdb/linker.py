@@ -30,7 +30,7 @@ class DuckDBDataFrame(SplinkDataFrame):
     def columns(self) -> list[InputColumn]:
         if not hasattr(self, "_columns_cache"):
             result = self.linker._con.execute(
-                f"DESCRIBE {self.physical_name}"
+                f"DESCRIBE (select * from {self.physical_name} limit 1)"
             ).fetchall()
             self._columns_cache = [
                 InputColumn(col[0], sql_dialect="duckdb") for col in result
