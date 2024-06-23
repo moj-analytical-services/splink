@@ -44,7 +44,12 @@ plugins:
       post_date_format: long
       archive: false
   - search
-  - mknotebooks
+  - mknotebooks:
+      tag_remove_configs:
+        remove_input_tags:
+          - hide_input
+        remove_all_outputs_tags:
+          - hide_output
   - tags
   - mkdocstrings:
       default_handler: python
