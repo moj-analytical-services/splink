@@ -18,22 +18,21 @@ Splink tests can be broadly categorised into three sets:
 
 ### Running tests locally
 
-To run tests locally, simply run:
+To run tests locally against duckdb only (the default) run:
 ```sh
-python3 -m pytest tests/
-```
-or alternatively
-```sh
-pytest tests/
+poetry run pytest tests/
 ```
 
 To run a single test file, append the filename to the `tests/` folder call, for example:
+
 ```sh
-pytest tests/test_u_train.py
+poetry run pytest tests/test_u_train.py
 ```
+
 or for a single test, additionally append the test name after a pair of colons, as:
+
 ```sh
-pytest tests/test_u_train.py::test_u_train_multilink
+poetry run pytest tests/test_u_train.py::test_u_train_multilink
 ```
 
 ??? tip "Further useful pytest options"
@@ -43,7 +42,7 @@ pytest tests/test_u_train.py::test_u_train_multilink
     * `-v` for verbose mode, where each test instance will be displayed on a separate line with status
     * `-q` for quiet mode, where output is extremely minimal
     * `-x` to fail on first error/failure rather than continuing to run all selected tests
-        * 
+        *
     * `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
 
     For instance usage might be:
@@ -67,21 +66,21 @@ pytest tests/test_u_train.py::test_u_train_multilink
 
 You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](https://docs.pytest.org/en/latest/example/markers.html).
 
-If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml).
+If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml), and see also the [decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py) file.
 
 The available options are:
 
 ##### Run core tests
 Option for running only the backend-independent 'core' tests:
 
-* `pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
+* `poetry run pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
 
 ##### Run tests on a specific backend
 Options for running tests on one backend only - this includes tests written [specifically for that backend](#tests-for-specific-backends), as well as [backend-agnostic tests](#backend-agnostic-testing) supported for that backend.
 
-* `pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
+* `poetry run pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
     * & similarly for other dialects
-* `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
+* `poetry run pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
     * & similarly for other dialects
 
 ##### Run tests across multiple backends
@@ -98,7 +97,7 @@ pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 
 ??? tip "Running tests against a specific version of Python"
 
-    Testing Splink against a specific version of Python, especially newer versions not included in our GitHub Actions, is vital for identifying compatibility issues 
+    Testing Splink against a specific version of Python, especially newer versions not included in our GitHub Actions, is vital for identifying compatibility issues
     early and reviewing errors reported by users.
 
     If you're a conda user, you can create a isolated environment according to the
@@ -173,32 +172,22 @@ def test_feature_that_works_for_all_backends(test_helpers, dialect, some_other_t
     helper = test_helpers[dialect]
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("first_name"),
+        ],
+    )
+    linker = helper.Linker(
+        df,
+        settings,
+        **helper.extra_linker_args(),
+    )
 
-    settings_dict = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": ["l.city = r.city", "l.surname = r.surname", "l.dob = r.dob"],
-        "comparisons": [
-            helper.cl.exact_match("city"),
-            helper.cl.levenshtein_at_thresholds("first_name", [1, 2]),
-            helper.cl.levenshtein_at_thresholds("surname"),
-            {
-                "output_column_name": "email",
-                "comparison_description": "Email",
-                "comparison_levels": [
-                    helper.cll.null_level("email"),
-                    helper.cll.exact_match_level("email"),
-                    helper.cll.levenshtein_level("email", 2),
-                    {
-                        "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
-                        "label_for_charts": "email first character matches",
-                    },
-                    helper.cll.else_level(),
-                ]
-            }
-        ]
-    }
-
-    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 
     # and then some actual testing logic
 ```
@@ -246,56 +235,31 @@ Each helper has the same set of methods and properties, which encapsulate _all_ 
 
 Here we are now actually using a method of the test helper - in this case we are loading a table from a csv to the database and returning it in a form suitable for passing to a Splink linker.
 
-
-```py linenums="12" hl_lines="2 3 4"
-    "comparisons": [
-        helper.cl.exact_match("city"),
-        helper.cl.levenshtein_at_thresholds("first_name", [1, 2]),
-        helper.cl.levenshtein_at_thresholds("surname"),
-        {
-            "output_column_name": "email",
-```
-We reference the dialect-specific [comparison library](../../comparison_library.html) as `helper.cl`,
-
-```py linenums="16" hl_lines="5 6 7 12"
-    {
-        "output_column_name": "email",
-        "comparison_description": "Email",
-        "comparison_levels": [
-            helper.cll.null_level("email"),
-            helper.cll.exact_match_level("email"),
-            helper.cll.levenshtein_level("email", 2),
-            {
-                "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
-                "label_for_charts": "email first character matches",
-            }
-            helper.cll.else_level(),
-        ]
-    }
-```
-and the dialect-specific [comparison level library](../../comparison_level_library.html) as `helper.cll`.
-
-```py linenums="23" hl_lines="2"
-    {
-        "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
-        "label_for_charts": "email first character matches",
-    },
-```
-We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering, so we should avoid any unusual functions that are not likely to be universal.
-
-```py linenums="33"
+Finally we instantiate the linker, passing any default set of extra arguments provided by the helper, which some dialects require.
+```py linenums="18"
     linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 ```
-Finally we instantiate the linker, passing any default set of extra arguments provided by the helper, which some dialects require.
+
 
 From this point onwards we will be working with the instantiated `linker`, and so will not need to refer to `helper` any more - the rest of the test can be written as usual.
 
 #### Excluding some backends
 
-Now let's have a small look at a similar example - only this time we are going to exclude the `sqlite` backend, as the test relies on features not directly available for that backend. In this example that will be the SQL function `split_part` which does not exist in the `sqlite` dialect.
+Now let's consider an example in which we wanted to test a `ComparisonLevel` that included the `split_part` function which does not exist in the `sqlite` dialect. We assume that this particular comparison level is crucial for the test to make sense, otherwise we would rewrite this line to make it run universally. When you come to [run the tests](#running-tests-locally), this test will not run on the `sqlite` backend.
+
+```
+{
+    "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
+    "label_for_charts": "email local-part matches",
+}
+```
+
+
 
 !!! warning Reminder
     Tests should be made available to the widest range of backends possible. Only exclude backends if features not shared by all backends are crucial to the test-logic - otherwise consider rewriting things so that all backends are covered.
+
+We therefore want to exclude `sqlite` backend, as the test relies on features not directly available for that backend, which we can do as follows:
 
 ```py linenums="1"
 from tests.decorator import mark_with_dialects_excluding
@@ -305,32 +269,6 @@ def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_
     helper = test_helpers[dialect]
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    settings_dict = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": ["l.city = r.city", "l.surname = r.surname", "l.dob = r.dob"],
-        "comparisons": [
-            helper.cl.exact_match("city"),
-            helper.cl.levenshtein_at_thresholds("first_name", [1, 2]),
-            helper.cl.levenshtein_at_thresholds("surname"),
-            {
-                "output_column_name": "email",
-                "comparison_description": "Email",
-                "comparison_levels": [
-                    helper.cll.null_level("email"),
-                    helper.cll.exact_match_level("email"),
-                    helper.cll.levenshtein_level("email", 2),
-                    {
-                        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
-                        "label_for_charts": "email local-part matches",
-                    },
-                    helper.cll.else_level(),
-                ]
-            }
-        ]
-    }
-
-    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 
     # and then some actual testing logic
 ```
@@ -342,13 +280,6 @@ def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_
 ```
 As above this marks the test it decorates with the appropriate custom `pytest` marks, but in this case it ensures that it will be run with tests for each dialect **excluding `sqlite`**. Again `dialect` is passed as a parameter, and the test will run in turn for each value of `dialect` **except for `sqlite`**.
 
-```py linenums="23" hl_lines="2"
-    {
-        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
-        "label_for_charts": "email local-part matches",
-    }
-```
-This line is why we cannot allow `sqlite` for this test - we make use of the function `split_part` which is not available in the `sqlite` dialect, hence its exclusion. We suppose that this particular comparison level is crucial for the test to make sense, otherwise we would rewrite this line to make it run universally. When you come to [run the tests](#running-tests-locally), this test will not run on the `sqlite` backend.
 
 If you need to exclude _multiple_ dialects this is also possible - just pass each as an argument. For example, to decorate a test that is not supported on `spark` _or_ `sqlite`, use the decorator `@mark_with_dialects_excluding("sqlite", "spark")`.
 
