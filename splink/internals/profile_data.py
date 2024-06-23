@@ -236,7 +236,7 @@ def profile_columns(
 
     Returns:
         altair.Chart or dict: A visualization or JSON specification describing the
-         profiling charts.
+        profiling charts.
 
     Note:
         - The `linker` object should be an instance of the initiated linker.

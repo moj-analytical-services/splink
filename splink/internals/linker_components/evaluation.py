@@ -279,7 +279,7 @@ class LinkerEvalution:
         include_false_positives=True,
         include_false_negatives=True,
         threshold=0.5,
-    ):
+    ) -> SplinkDataFrame:
         """Generate a dataframe containing false positives and false negatives
         based on the comparison between the splink match probability and the
         labels column.  A label column is a column in the input dataset that contains

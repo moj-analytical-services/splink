@@ -151,7 +151,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 ??? info "F-Score in Splink"
 
     - F-Score is a (non-default) output of `accuracy_chart_from_labels_table`. There is the option to include $F_{1}$, $F_{0.5}$ and $F_{2}$ scores. Check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
-    - F-Scores ($F_{1}$, $F_{0.5}$ and $F_{2}$) can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
+    - F-Scores ($F_{1}$, $F_{0.5}$ and $F_{2}$) can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](../../api_docs/evaluation.html#splink.internals.linker_components.evaluation.LinkerEvalution.accuracy_analysis_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 
