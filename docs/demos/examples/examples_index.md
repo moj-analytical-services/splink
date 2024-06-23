@@ -16,58 +16,58 @@ This section provides a series of examples to help you get started with Splink. 
 
 ##### Entity type: Persons
 
-[Deduplicating 50,000 records of realistic data based on historical persons](./duckdb/deduplicate_50k_synthetic.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/deduplicate_50k_synthetic.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/deduplicate_50k_synthetic.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Deduplicating 50,000 records of realistic data based on historical persons](./duckdb/deduplicate_50k_synthetic.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/link_only.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Using the `link_only` setting to link, but not dedupe, two datasets](./duckdb/link_only.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/real_time_record_linkage.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Real time record linkage](./duckdb/real_time_record_linkage.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Accuracy analysis and ROC charts using a ground truth (cluster) column](./duckdb/accuracy_analysis_from_labels_column.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/pairwise_labels.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Estimating m probabilities from pairwise labels](./duckdb/pairwise_labels.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/deterministic_dedupe.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Deduplicating 50,000 records with Deterministic Rules](./duckdb/deterministic_dedupe.ipynb)
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/febrl3.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Deduplicating the febrl3 dataset](./duckdb/febrl3.ipynb). Note this dataset comes from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), as referenced in A.2 [here](https://arxiv.org/pdf/2008.04443.pdf) and replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
 </a>
 
-[Using the `link_only` setting to link, but not dedupe, two datasets](./duckdb/link_only.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/link_only.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Real time record linkage](./duckdb/real_time_record_linkage.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/real_time_record_linkage.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Accuracy analysis and ROC charts using a ground truth (cluster) column](./duckdb/accuracy_analysis_from_labels_column.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Estimating m probabilities from pairwise labels](./duckdb/pairwise_labels.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/pairwise_labels.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Deduplicating 50,000 records with Deterministic Rules](./duckdb/deterministic_dedupe.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/deterministic_dedupe.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Deduplicating the febrl3 dataset](./duckdb/febrl3.ipynb). Note this dataset comes from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), as referenced in A.2 [here](https://arxiv.org/pdf/2008.04443.pdf) and replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html). <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/febrl3.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
-
-[Linking the febrl4 datasets](./duckdb/febrl4.ipynb). As above, these datasets are from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html). <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/febrl4.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/febrl4.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Linking the febrl4 datasets](./duckdb/febrl4.ipynb). As above, these datasets are from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
 </a>
 
 ##### Entity type: Financial transactions
 
-[Linking financial transactions](./duckdb/transactions.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/transactions.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/duckdb/transactions.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+</a> [Linking financial transactions](./duckdb/transactions.ipynb)
 
 ### :simple-apachespark: PySpark examples
 
-[Deduplication of a small dataset using PySpark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/spark/deduplicate_1k_synthetic.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/spark/deduplicate_1k_synthetic.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+</a> [Deduplication of a small dataset using PySpark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb)
 
 ### :simple-amazonaws: Athena examples
 
-[Deduplicating 50,000 records of realistic data based on historical persons](./athena/deduplicate_50k_synthetic.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/athena/deduplicate_50k_synthetic.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/athena/deduplicate_50k_synthetic.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+</a> [Deduplicating 50,000 records of realistic data based on historical persons](./athena/deduplicate_50k_synthetic.ipynb)
 
 ### :simple-sqlite: SQLite examples
 
-[Deduplicating 50,000 records of realistic data based on historical persons](./sqlite/deduplicate_50k_synthetic.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/sqlite/deduplicate_50k_synthetic.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/sqlite/deduplicate_50k_synthetic.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+</a> [Deduplicating 50,000 records of realistic data based on historical persons](./sqlite/deduplicate_50k_synthetic.ipynb)

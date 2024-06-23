@@ -37,11 +37,11 @@ class LinkerEvalution:
 
     def prediction_errors_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
+        labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
+        include_false_positives: bool = True,
+        include_false_negatives: bool = True,
+        threshold: float = 0.5,
+    ) -> SplinkDataFrame:
         """Generate a dataframe containing false positives and false negatives
         based on the comparison between the clerical_match_score in the labels
         table compared with the splink predicted match probability
@@ -275,11 +275,11 @@ class LinkerEvalution:
 
     def prediction_errors_from_labels_column(
         self,
-        label_colname,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
+        label_colname: str,
+        include_false_positives: bool = True,
+        include_false_negatives: bool = True,
+        threshold: float = 0.5,
+    ) -> SplinkDataFrame:
         """Generate a dataframe containing false positives and false negatives
         based on the comparison between the splink match probability and the
         labels column.  A label column is a column in the input dataset that contains

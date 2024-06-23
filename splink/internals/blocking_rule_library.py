@@ -175,17 +175,19 @@ def block_on(
     [here](https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html)
 
     Args:
-        col_names (list[str]): A list of input columns or sql conditions
+        col_names_or_exprs: A list of input columns or SQL conditions
             you wish to create blocks on.
         salting_partitions (optional, int): Whether to add salting
             to the blocking rule. More information on salting can
-            be found within the docs. Salting is only valid for Spark.
+            be found within the docs.
+        arrays_to_explode (optional, List[str]): List of arrays to explode
+            before applying the blocking rule.
 
     Examples:
         ``` python
         from splink import block_on
-        block_on("first_name")  # check for exact matches on first name
-        block_on("substr(surname,1,2)", "surname")
+        br_1 = block_on("first_name")
+        br_2 = block_on("substr(surname,1,2)", "surname")
         ```
 
     """

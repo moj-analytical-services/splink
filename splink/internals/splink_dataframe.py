@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from splink.internals.input_column import InputColumn
 
@@ -96,7 +96,7 @@ class SplinkDataFrame(ABC):
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
         self.db_api.remove_splinkdataframe_from_cache(self)
 
-    def as_record_dict(self, limit=None):
+    def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
 
         This can be computationally expensive if the dataframe is large.
@@ -122,7 +122,7 @@ class SplinkDataFrame(ABC):
 
         Args:
             limit (int, optional): If provided, return this number of rows (equivalent
-            to a limit statement in SQL). Defaults to None, meaning return all rows
+                to a limit statement in SQL). Defaults to None, meaning return all rows
 
         Examples:
             ```py

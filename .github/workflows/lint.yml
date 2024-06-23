@@ -28,5 +28,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root --only linting
 
-      - name: Run Ruff formatting
-        run: poetry run ruff check --output-format=full
+      - name: Run Ruff linting
+        run: poetry run ruff check . --output-format=full
+
+      - name: Run Ruff formatting check
+        run: poetry run ruff format --check .

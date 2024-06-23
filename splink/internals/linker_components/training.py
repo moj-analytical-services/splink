@@ -159,14 +159,14 @@ class LinkerTraining:
 
         Args:
             max_pairs (int): The maximum number of pairwise record comparisons to
-            sample. Larger will give more accurate estimates
-            but lead to longer runtimes.  In our experience at least 1e9 (one billion)
-            gives best results but can take a long time to compute. 1e7 (ten million)
-            is often adequate whilst testing different model specifications, before
-            the final model is estimated.
+                sample. Larger will give more accurate estimates but lead to longer
+                runtimes.  In our experience at least 1e9 (one billion) gives best
+                results but can take a long time to compute. 1e7 (ten million)
+                is often adequate whilst testing different model specifications, before
+                the final model is estimated.
             seed (int): Seed for random sampling. Assign to get reproducible u
-            probabilities. Note, seed for random sampling is only supported for
-            DuckDB and Spark, for Athena and SQLite set to None.
+                probabilities. Note, seed for random sampling is only supported for
+                DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
             ```py
@@ -278,9 +278,8 @@ class LinkerTraining:
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
                 probabilities after each iteration. Defaults to True.
-            populate_probability_two_random_records_match_from_trained_values
-                (bool, optional): If True, derive this parameter from
-                the blocked value. Defaults to False.
+            populate_probability_two_random_records_match_from_trained_values (bool,optional): If
+                True, derive this parameter from the blocked value. Defaults to False.
 
         Examples:
             ```py
@@ -298,7 +297,7 @@ class LinkerTraining:
             EMTrainingSession:  An object containing information about the training
                 session such as how parameters changed during the iteration history
 
-        """
+        """  # noqa: E501
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
         pipeline = CTEPipeline()

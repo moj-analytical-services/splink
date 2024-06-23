@@ -707,7 +707,7 @@ class DistanceInKMLevel(ComparisonLevelCreator):
             km_threshold (int): The total distance in kilometers to evaluate your
                 comparisons against
             not_null (bool): If true, ensure no attempt is made to compute this if
-              any inputs are null. This is only necessary if you are not
+                any inputs are null. This is only necessary if you are not
                 capturing nulls elsewhere in your comparison level.
 
         """

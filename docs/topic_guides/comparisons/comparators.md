@@ -23,7 +23,7 @@ For guidance on how to choose the most suitable string comparator, and associate
 
 !!! info "At a glance"
     **Useful for:** Data entry errors e.g. character miskeys.</br>
-    **Splink comparison functions:** [levenshtein_level()](../../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [levenshtein_at_thresholds()](../../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsBase)</br>
+    **Splink comparison functions:** [levenshtein_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.LevenshteinLevel) and [levenshtein_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.LevenshteinAtThresholds)</br>
     **Returns:** An integer (lower is more similar).</br>
 
 ##### Description
@@ -79,7 +79,7 @@ duckdb.sql("SELECT levenshtein('CAKE', 'ACKE')").df().iloc[0,0]
 
 !!! info "At a glance"
     **Useful for:** Data entry errors e.g. character transpositions and miskeys</br>
-    **Splink comparison functions:** [damerau_levenshtein_level()](../../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [damerau_levenshtein_at_thresholds()](../../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsBase)</br>
+    **Splink comparison functions:** [damerau_levenshtein_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevel) and [damerau_levenshtein_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholds)</br>
     **Returns:** An integer (lower is more similar).</br>
 
 ##### Description
@@ -135,7 +135,7 @@ duckdb.sql("SELECT damerau_levenshtein('CAKE', 'ACKE')").df().iloc[0,0]
 
 !!! info "At a glance"
     **Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers</br>
-    **Splink comparison functions:**  [jaro_level()](../../comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [jaro_at_thresholds()](../../comparison_library.md#splink.comparison_library.JaroAtThresholdsBase)</br>
+    **Splink comparison functions:**  [jaro_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaroLevel) and [jaro_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.JaroAtThresholds)</br>
     **Returns:**  A score between 0 and 1 (higher is more similar)</br>
 
 ##### Description
@@ -192,7 +192,7 @@ duckdb.sql("SELECT jaro_similarity('MARTHA', 'MARHTA')").df().iloc[0,0]
 
 !!! info "At a glance"
     **Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names</br>
-    **Splink comparison functions:** [jaro_winkler_level()](../../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [jaro_winkler_at_thresholds()](../../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsBase)</br>
+    **Splink comparison functions:** [jaro_winkler_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevel) and [jaro_winkler_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.JaroWinklerAtThresholds)</br>
     **Returns:**  A score between 0 and 1 (higher is more similar).</br>
 
 
@@ -245,7 +245,7 @@ duckdb.sql("SELECT jaro_winkler_similarity('MARTHA', 'MARHTA')").df().iloc[0,0]
 
 !!! info "At a glance"
     **Useful for:**</br>
-    **Splink comparison functions:** [jaccard_level()](../../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()]</br>(../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)
+    **Splink comparison functions:** [jaccard_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaccardLevel) and [jaccard_at_thresholds()]</br>(../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)
     **Returns:**  A score between 0 and 1 (higher is more similar).</br>
 
 

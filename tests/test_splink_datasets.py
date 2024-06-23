@@ -1,4 +1,5 @@
 import splink.internals.comparison_library as cl
+from splink import SettingsCreator, block_on
 from splink.internals.datasets import splink_datasets
 
 
@@ -8,12 +9,20 @@ def test_datasets_basic_link(test_helpers):
     helper = test_helpers["duckdb"]
 
     df = splink_datasets.fake_1000
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("first_name"),
+            block_on("surname"),
+        ],
+    )
     linker = helper.Linker(
         df,
-        {
-            "link_type": "dedupe_only",
-            "comparisons": [cl.ExactMatch("first_name"), cl.ExactMatch("surname")],
-        },
+        settings,
         **helper.extra_linker_args(),
     )
     linker.inference.predict()

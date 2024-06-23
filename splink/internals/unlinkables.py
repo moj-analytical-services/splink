@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
 
-def unlinkables_data(linker: Linker) -> dict[str, Any]:
+def unlinkables_data(linker: Linker) -> list[dict[str, Any]]:
     """Generate data displaying the proportion of records that are "unlinkable"
     for a given splink score threshold and model parameters. These are records that,
     even when compared with themselves, do not contain enough information to confirm

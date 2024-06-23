@@ -95,4 +95,4 @@ else:
     return "Assign to category: All other"
 ```
 
-In the [next section](./customising_comparisons.html), we will see how to define these `Comparison`s and `ComparisonLevel`s in Splink.
+In the [next section](./customising_comparisons.md), we will see how to define these `Comparison`s and `ComparisonLevel`s in Splink.

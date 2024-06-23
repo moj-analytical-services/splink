@@ -13,6 +13,9 @@ theme:
     - content.tabs.link
     - content.tooltips
     - header.autohide
+    - search.highlight
+    - search.share
+    - search.suggest
     - navigation.indexes
     - navigation.footer
     - content.action.edit
@@ -37,23 +40,33 @@ theme:
         name: Switch to light mode
   custom_dir: docs/overrides
 plugins:
-  - mknotebooks:
-      tag_remove_configs:
-        remove_input_tags:
-          - hide_input
-        remove_all_outputs_tags:
-          - hide_output
   - blog:
       post_date_format: long
       archive: false
+  - search
+  - mknotebooks
+  - tags
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
-          options:
+          rendering:
             show_source: false
-            docstring_style: google
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
   - charts
+  - mkdocs-video:
+      is_video: True
+      video_autoplay: false
+  - git-committers:
+      repository: moj-analytical-services/splink
+      branch: master
+  - rss:
+      match_path: blog/posts/.*
+      date_from_meta:
+        as_creation: date
 hooks:
   - docs/hooks/__init__.py
 
@@ -89,7 +102,6 @@ markdown_extensions:
   - footnotes
   - neoteroi.cards
 nav:
-  - Home: "index.md"
   - Getting Started: "getting_started.md"
   - Tutorial:
       - Introduction: "demos/tutorials/00_Tutorial_Introduction.ipynb"
@@ -121,25 +133,25 @@ nav:
         - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
   - API Docs:
     - Introduction: "api_docs/api_docs_index.md"
-    - API:
-      - Linker:
-        - Training: "api_docs/training.md"
-        - Visualisations: "api_docs/visualisations.md"
-        - Inference: "api_docs/inference.md"
-        - Clustering: "api_docs/clustering.md"
-        - Evaluation: "api_docs/evaluation.md"
-        - Table Management: "api_docs/table_management.md"
-        - Miscellaneous functions: "api_docs/misc.md"
-      - Comparisons Library:
-          - Comparison Template Library: "api_docs/comparison_template_library.md"
-          - Comparison Library: "api_docs/comparison_library.md"
-          - Comparison Level Library: "api_docs/comparison_level_library.md"
-      - Other:
-          - Exploratory: "api_docs/exploratory.md"
-          - Blocking rule creator: "api_docs/blocking.md"
-          - Blocking analysis: "api_docs/blocking_analysis.md"
-          - SplinkDataFrame: "api_docs/splink_dataframe.md"
-          - EM Training Session API: "api_docs/em_training_session.md"
+    - Linker:
+      - Training: "api_docs/training.md"
+      - Visualisations: "api_docs/visualisations.md"
+      - Inference: "api_docs/inference.md"
+      - Clustering: "api_docs/clustering.md"
+      - Evaluation: "api_docs/evaluation.md"
+      - Table Management: "api_docs/table_management.md"
+      - Miscellaneous functions: "api_docs/misc.md"
+    - Comparisons Library:
+        - Comparison Library: "api_docs/comparison_library.md"
+        - Comparison Level Library: "api_docs/comparison_level_library.md"
+    - Other:
+        - Exploratory: "api_docs/exploratory.md"
+        - Blocking rule creator: "api_docs/blocking.md"
+        - Blocking analysis: "api_docs/blocking_analysis.md"
+        - SplinkDataFrame: "api_docs/splink_dataframe.md"
+        - EM Training Session API: "api_docs/em_training_session.md"
+        - SplinkDatasets: "api_docs/datasets.md"
+        - Settings Dict: "api_docs/settings_dict_guide.md"
   - Topic Guides:
     - Introduction: "topic_guides/topic_guides_index.md"
     - Record Linkage Theory:
@@ -148,15 +160,14 @@ nav:
       - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linked Data as Graphs: "topic_guides/theory/linked_data_as_graphs.md"
     - Linkage Models in Splink:
+      - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
+      - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
+      - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
       - Splink's SQL backends - Spark, DuckDB etc:
         - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
         - PostgreSQL: "topic_guides/splink_fundamentals/backends/postgres.md"
-      - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
-      - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
-      - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
     - Data Preparation:
       - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
-
     - Blocking:
       - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
       - Computational Performance: "topic_guides/blocking/performance.md"
@@ -170,14 +181,24 @@ nav:
         - Choosing string comparators: "topic_guides/comparisons/choosing_comparators.ipynb"
         - Phonetic algorithms: "topic_guides/comparisons/phonetic.md"
         - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
-
+    - Evaluation:
+      - Overview: "topic_guides/evaluation/overview.md"
+      - Model: "topic_guides/evaluation/model.md"
+      - Edges (Links):
+        - Overview: "topic_guides/evaluation/edge_overview.md"
+        - Edge Metrics: "topic_guides/evaluation/edge_metrics.md"
+        - Clerical Labelling: "topic_guides/evaluation/labelling.md"
+      - Clusters:
+        - Overview: "topic_guides/evaluation/clusters/overview.md"
+        - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
+        - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
     - Charts Gallery:
       - "charts/index.md"
       - Exploratory Analysis:
         - completeness chart: "charts/completeness_chart.ipynb"
         - profile columns: "charts/profile_columns.ipynb"
       - Blocking:
-        - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+        - cumulative num comparisons from blocking rules chart: "charts/cumulative_comparisons_to_be_scored_from_blocking_rules_chart.ipynb"
       - Similarity analysis:
         - Comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
         - Comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
@@ -193,9 +214,37 @@ nav:
       - Clustering:
         - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
       - Model Evaluation:
-        - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
-  - How Splink works:
-    - User-Defined Functions: "dev_guides/udfs.md"
+        - accuracy chart from labels table: "charts/accuracy_analysis_from_labels_table.ipynb"
+        - threshold selection tool: charts/threshold_selection_tool_from_labels_table.ipynb
+  - Contributing:
+      - "dev_guides/index.md"
+      - Contributing to Splink:
+        - Contributor Guide: "dev_guides/CONTRIBUTING.md"
+        - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
+        - Building your local environment: "dev_guides/changing_splink/building_env_locally.md"
+        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
+        - Testing: "dev_guides/changing_splink/testing.md"
+        - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
+        - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
+        - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+        - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
+
+      - How Splink works:
+        - Understanding and debugging Splink: "dev_guides/debug_modes.md"
+        - Transpilation using sqlglot: "dev_guides/transpilation.md"
+        - Performance and caching:
+          - Caching and pipelining: "dev_guides/caching.md"
+          - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
+        - Charts:
+          - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
+          - Building new charts: "dev_guides/charts/building_charts.ipynb"
+        - User-Defined Functions: "dev_guides/udfs.md"
+        - Settings Validation:
+          - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
+          - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
+        - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
+  - Blog:
+    - blog/index.md
 extra_css:
 - css/custom.css
 - css/neoteroi-mkdocs.css
@@ -220,6 +269,3 @@ extra:
     - icon: fontawesome/solid/rss
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
-exclude_docs: |
-    blog/**
-    demos/**
