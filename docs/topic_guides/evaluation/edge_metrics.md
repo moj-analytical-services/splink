@@ -46,7 +46,7 @@ The confusion matrix shows **counts** of each link type, but we are generally mo
 
 ### Accuracy
 
-The simplest metric is 
+The simplest metric is
 
 $$\textsf{Accuracy} = \frac{\textsf{True Positives}+\textsf{True Negatives}}{\textsf{All Predictions}}$$
 
@@ -54,7 +54,7 @@ This measures the proportion of correct classifications (of any kind). This may 
 
 ??? info "Accuracy in Splink"
 
-    - Accuracy is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Accuracy is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - Accuracy can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
@@ -73,7 +73,7 @@ $$\textsf{Recall} = \frac{\textsf{True Positives}}{\textsf{All Positives}} = \fr
 
 ??? info "Recall in Splink"
 
-    - Recall is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Recall is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - Recall can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
     - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documentation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
@@ -89,7 +89,7 @@ $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} 
 
 ??? info "Specificity in Splink"
 
-    - Specificity is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Specificity is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - Specificity can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
@@ -102,7 +102,7 @@ $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Posi
 
 ??? info "Precision in Splink"
 
-    - Precision is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Precision is a (default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - Precision can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
     - The interaction between Precision and Recall can be viewed with the `precision_recall_chart_from_labels_table` method. Check out the [API Documentation](../../linker.md#precision_recall_chart_from_labels_table) and [Chart Gallery](../../charts/precision_recall_chart_from_labels_table.ipynb) to learn more.
@@ -115,12 +115,12 @@ $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{Al
 
 ??? info "Negative Predictive Value in Splink"
 
-    - Negative Predictive Value is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - Negative Predictive Value is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - Negative Predictive Value can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
 
-!!! warning 
+!!! warning
 
     Each of these metrics looks at just one row or column of the confusion matrix. A model cannot be meaningfully summarised by just one of these performance measures.
 
@@ -130,7 +130,7 @@ $$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{Al
 
 ## Composite Metrics for Linkage
 
-This section contains composite metrics i.e. combinations of metrics that can been derived from the confusion matrix (Precision, Recall, Specificity and Negative Predictive Value). 
+This section contains composite metrics i.e. combinations of metrics that can been derived from the confusion matrix (Precision, Recall, Specificity and Negative Predictive Value).
 
 Any comparison of two records has a number of possible outcomes (True Positives, False Positives etc.), each of which has a different impact on your specific use case. It is very rare that a single metric defines the desired behaviour of a model. Therefore, evaluating performance with a composite metric (or a combination of metrics) is advised.
 
@@ -150,7 +150,7 @@ Other popular versions of the F score are $F_{2}$ (Recall twice as important as 
 
 ??? info "F-Score in Splink"
 
-    - F-Score is a (non-default) output of `accuracy_chart_from_labels_table`. There is the option to include $F_{1}$, $F_{0.5}$ and $F_{2}$ scores. Check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - F-Score is a (non-default) output of `accuracy_chart_from_labels_table`. There is the option to include $F_{1}$, $F_{0.5}$ and $F_{2}$ scores. Check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - F-Scores ($F_{1}$, $F_{0.5}$ and $F_{2}$) can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
@@ -171,11 +171,11 @@ Note: all metrics are given equal weighting.
 
 ??? info "$P_{4}$ in Splink"
 
-    - $P_{4}$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+    - $P_{4}$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - $P_{4}$ can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 
-### Matthews Correlation Coefficient 
+### Matthews Correlation Coefficient
 
 The [Matthews Correlation Coefficient ($\phi$)](https://en.wikipedia.org/wiki/Phi_coefficient) is a measure of how correlation between predictions and actual observations.
 
@@ -183,8 +183,8 @@ $$ \phi = \sqrt{\textsf{Recall} \cdot \textsf{Specificity} \cdot \textsf{Precisi
 
 ??? info "Matthews Correlation Coefficient ($\phi$) in Splink"
 
-    
-    - $\phi$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_chart_from_labels_table.ipynb) to learn more.
+
+    - $\phi$ is a (non-default) output of `accuracy_chart_from_labels_table` check out the [API Documentation](../../linker.md#splink.linker.Linker.accuracy_chart_from_labels_table) and [Chart Gallery](../../charts/accuracy_analysis_from_labels_table.ipynb) to learn more.
     - $\phi$ can be calculated and output in tabular format in Splink using labels as a column in your linking datasets, or labels as a separate table. To try this yourself, check out the [`truth_space_table_from_labels_column`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_column)
     and [`truth_space_table_from_labels_table`](https://moj-analytical-services.github.io/splink/linkerqa.html#splink.linker.Linker.truth_space_table_from_labels_table) methods, respectively.
 

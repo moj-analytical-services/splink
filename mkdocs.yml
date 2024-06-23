@@ -214,7 +214,7 @@ nav:
       - Clustering:
         - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
       - Model Evaluation:
-        - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+        - accuracy chart from labels table: "charts/accuracy_analysis_from_labels_table.ipynb"
         - threshold selection tool: charts/threshold_selection_tool_from_labels_table.ipynb
   - Contributing:
       - "dev_guides/index.md"

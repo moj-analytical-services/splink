@@ -93,7 +93,7 @@
     {
     "title": "`accuracy chart from labels table`",
     "image": "./img/accuracy_chart_from_labels_table.png",
-    "url": "./accuracy_chart_from_labels_table.ipynb"
+    "url": "./accuracy_analysis_from_labels_table.ipynb"
     },
     {
     "title": "`threshold_selection_tool from labels table`",
@@ -144,7 +144,7 @@
   {
     "title": "`accuracy chart from labels table`",
     "image": "./img/accuracy_chart_from_labels_table.png",
-    "url": "./accuracy_chart_from_labels_table.ipynb"
+    "url": "./accuracy_analysis_from_labels_table.ipynb"
   },
   {
     "title": "`cluster studio dashboard`",
@@ -172,9 +172,9 @@
     "url": "./completeness_chart.ipynb"
   },
   {
-    "title": "`cumulative num comparisons from blocking rules chart`",
+    "title": "`cumulative comparisons from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
-    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+    "url": "./cumulative_comparisons_to_be_scored_from_blocking_rules_chart.ipynb"
   },
   {
     "title": "`m u parameters chart`",
