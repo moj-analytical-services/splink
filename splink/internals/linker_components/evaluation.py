@@ -41,7 +41,7 @@ class LinkerEvalution:
         include_false_positives=True,
         include_false_negatives=True,
         threshold=0.5,
-    ):
+    ) -> SplinkDataFrame:
         """Generate a dataframe containing false positives and false negatives
         based on the comparison between the clerical_match_score in the labels
         table compared with the splink predicted match probability

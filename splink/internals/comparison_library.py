@@ -504,8 +504,8 @@ class DistanceInKMAtThresholds(ComparisonCreator):
         - Anything else (i.e. the distance between coordinates are > 10km apart)
 
         Args:
-            lat_col(str): The name of the latitude column to compare.
-            long_col(str): The name of the longitude column to compare.
+            lat_col (str): The name of the latitude column to compare.
+            long_col (str): The name of the longitude column to compare.
             km_thresholds (iterable[float] | float): The km threshold(s) for the
                 distance levels.
         """
@@ -548,12 +548,13 @@ class CustomComparison(ComparisonCreator):
         Represents a comparison of the data with custom supplied levels.
 
         Args:
-            output_col_name (str): The column name to use to refer to this comparison
+            output_column_name (str): The column name to use to refer to this comparison
             comparison_levels (list): A list of some combination of
                 `ComparisonLevelCreator` objects, or dicts. These represent the
                 similarity levels assessed by the comparison, in order of decreasing
                 specificity
-            description (str, optional): An optional description of the comparison
+            comparison_description (str, optional): An optional description of the
+                comparison
         """
 
         self._output_column_name = output_column_name
