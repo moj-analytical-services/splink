@@ -28,10 +28,14 @@ class DuckDBDataFrame(SplinkDataFrame):
 
     @property
     def columns(self) -> list[InputColumn]:
-        d = self.as_record_dict(1)[0]
-
-        col_strings = list(d.keys())
-        return [InputColumn(c, sql_dialect="duckdb") for c in col_strings]
+        if not hasattr(self, "_columns_cache"):
+            result = self.linker._con.execute(
+                f"DESCRIBE {self.physical_name}"
+            ).fetchall()
+            self._columns_cache = [
+                InputColumn(col[0], sql_dialect="duckdb") for col in result
+            ]
+        return self._columns_cache
 
     def validate(self):
         pass
