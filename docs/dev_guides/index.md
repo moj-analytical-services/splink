@@ -5,9 +5,7 @@ hide:
 
 # Contributing to Splink
 
-We encourage contributions from all users. Whether it be adding a feature, fixing a bug or fixing typos in our documentation we are extremely appreciative of the input of external contributors. Splink would not be as good without it!
 
-## Contributing to Splink
 
 Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](./CONTRIBUTING.md).
 
