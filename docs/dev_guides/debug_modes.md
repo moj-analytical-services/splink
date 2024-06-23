@@ -2,11 +2,11 @@
 
 Splink contains tooling to help developers understand the underlying computations, how caching and pipelining is working, and debug problems.
 
-There are two main mechanisms: `debug_mode`, and setting different logging levels
+There are two main mechanisms: `_debug_mode`, and setting different logging levels
 
 ## Debug mode
 
-You can turn on debug mode by setting `linker.debug_mode = True`.
+You can turn on debug mode by setting `linker._debug_mode = True`.
 
 This has the following effects:
 
