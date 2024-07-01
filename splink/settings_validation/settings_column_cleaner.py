@@ -5,7 +5,7 @@ import re
 from copy import deepcopy
 from functools import reduce
 from operator import and_
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List
 
 import sqlglot
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..settings import Settings
+    from ..splink_dataframe import SplinkDataFrame
 
 
 def remove_suffix(c):
@@ -28,7 +29,7 @@ def find_columns_not_in_input_dfs(
     does not apply any cleaning to the input column(s).
     """
     # the key to use when producing our warning logs
-    if type(columns_to_check) == str:
+    if isinstance(columns_to_check, str):
         columns_to_check = [columns_to_check]
 
     return {col for col in columns_to_check if col not in valid_input_dataframe_columns}
@@ -81,7 +82,9 @@ def clean_list_of_column_names(col_list: List[InputColumn]):
     return set((c.unquote().name for c in col_list))
 
 
-def clean_user_input_columns(input_columns: dict, return_as_single_column: bool = True):
+def clean_user_input_columns(
+    input_columns: Dict[str, "SplinkDataFrame"], return_as_single_column: bool = True
+):
     """A dictionary containing all input dataframes and the columns located
     within.
 
@@ -104,11 +107,11 @@ class SettingsColumnCleaner:
     cleaned up settings columns and SQL strings.
     """
 
-    def __init__(self, settings_object: Settings, input_columns: dict):
+    def __init__(self, settings_object: Settings, splink_input_table_dfs: dict):
         self.sql_dialect = settings_object._sql_dialect
         self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(
-            input_columns.items(), return_as_single_column=True
+            splink_input_table_dfs.items(), return_as_single_column=True
         )
 
     @property

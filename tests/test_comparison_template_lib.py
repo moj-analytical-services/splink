@@ -5,11 +5,10 @@ import splink.duckdb.comparison_template_library as ctld
 import splink.spark.comparison_template_library as ctls
 from splink.duckdb.linker import DuckDBLinker
 from splink.spark.linker import SparkLinker
+from tests.decorator import mark_with_dialects_excluding
 
 
 ## date_comparison
-
-
 @pytest.mark.parametrize(
     ("ctl"),
     [
@@ -486,14 +485,11 @@ def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
-@pytest.mark.parametrize(
-    ("ctl", "Linker"),
-    [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Email Comparison Template Test"),
-        pytest.param(ctls, SparkLinker, id="Spark Email Comparison Template Test"),
-    ],
-)
-def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
+@mark_with_dialects_excluding("sqlite", "postgres")
+def test_email_comparison_levels(test_helpers, dialect, test_gamma_assert):
+    helper = test_helpers[dialect]
+    ctl = helper.ctl
+
     col_name = "email"
 
     df = pd.DataFrame(
@@ -527,11 +523,8 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
         ],
     }
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-
-    linker = Linker(df, settings)
+    df = helper.convert_frame(df)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_output = linker.predict().as_pandas_dataframe()
 
     # Check individual IDs are assigned to the correct gamma values

@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Dict, List
 
 import pandas as pd
 import pytest
@@ -9,7 +10,7 @@ from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.blocking_rule_library import block_on
 from splink.duckdb.comparison_library import levenshtein_at_thresholds
 from splink.duckdb.linker import DuckDBLinker
-from splink.exceptions import ErrorLogger
+from splink.exceptions import ErrorLogger, InvalidSplinkInput
 from splink.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
     InvalidTableNamesLogGenerator,
@@ -20,7 +21,8 @@ from splink.settings_validation.log_invalid_columns import (
     validate_table_names,
 )
 from splink.settings_validation.valid_types import (
-    log_comparison_errors,
+    _check_input_dataframes_for_single_comparison_column,
+    _log_comparison_errors,
     validate_comparison_levels,
 )
 
@@ -140,6 +142,30 @@ expected_city_comparison_errors = (
         ],
     },
 )
+
+
+class MockSplinkDataFrame:
+    def __init__(self, columns: List["MockInputColumn"]):
+        self.columns = columns
+
+
+class MockInputColumn:
+    def __init__(self, name: str):
+        self.name = name
+
+    def unquote(self):
+        return self
+
+
+@pytest.fixture
+def mock_input_columns():
+    def _mock(columns_dict: Dict[str, List[str]]):
+        return {
+            key: MockSplinkDataFrame([MockInputColumn(col) for col in columns])
+            for key, columns in columns_dict.items()
+        }
+
+    return _mock
 
 
 @pytest.mark.parametrize(
@@ -379,7 +405,7 @@ def test_comparison_validation():
         }
     )
 
-    log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
+    _log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
 
     # Init the error logger. This is normally handled in
     # `log_comparison_errors`, but here we want to capture the
@@ -413,3 +439,23 @@ def test_comparison_validation():
         else:
             with pytest.raises(e, match=txt):
                 raise errors[n]
+
+
+@pytest.mark.parametrize(
+    "input_columns_dict",
+    [
+        {
+            "df1": ["first_name", "surname", "source_dataset", "unique_id"],
+            "df2": ["first_name", "surname", "source_dataset", "unique_id"],
+            "df3": ["first_name", "source_dataset", "unique_id"],
+        },
+        {"df1": ["abcde", "source_dataset", "unique_id"]},
+    ],
+)
+def test_input_datasetest_input_datasets_with_insufficient_columnsts_validation(
+    mock_input_columns, input_columns_dict
+):
+    input_columns = mock_input_columns(input_columns_dict)
+
+    with pytest.raises(InvalidSplinkInput):
+        _check_input_dataframes_for_single_comparison_column(input_columns)

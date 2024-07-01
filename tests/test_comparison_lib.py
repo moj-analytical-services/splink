@@ -78,7 +78,7 @@ def test_set_to_lowercase_parameter():
 
     df = pd.DataFrame(data)
 
-    linker = DuckDBLinker(df, settings)
+    linker = DuckDBLinker(df, settings, validate_settings=False)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

@@ -1,17 +1,29 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 
 from ..comparison import Comparison
 from ..comparison_level import ComparisonLevel
-from ..exceptions import ComparisonSettingsException, ErrorLogger, InvalidDialect
+from ..default_from_jsonschema import default_value_from_schema
+from ..exceptions import (
+    ComparisonSettingsException,
+    ErrorLogger,
+    InvalidDialect,
+    InvalidSplinkInput,
+)
+from .settings_column_cleaner import clean_user_input_columns
 from .settings_validation_log_strings import (
+    construct_single_dataframe_log_str,
     create_incorrect_dialect_import_log_string,
     create_invalid_comparison_level_log_string,
     create_invalid_comparison_log_string,
     create_no_comparison_levels_error_log_string,
 )
+
+if TYPE_CHECKING:
+    from ..splink_dataframe import SplinkDataFrame
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +36,40 @@ def extract_sql_dialect_from_cll(cll):
 
 
 def _validate_dialect(settings_dialect: str, linker_dialect: str, linker_type: str):
-    # settings_dialect = self.linker._settings_obj._sql_dialect
-    # linker_dialect = self.linker._sql_dialect
-    # linker_type = self.linker.__class__.__name__
     if settings_dialect != linker_dialect:
         raise ValueError(
             f"Incompatible SQL dialect! `settings` dictionary uses "
             f"dialect {settings_dialect}, but expecting "
             f"'{linker_dialect}' for Linker of type `{linker_type}`"
         )
+
+
+def _check_input_dataframes_for_single_comparison_column(
+    input_columns: Dict[str, "SplinkDataFrame"],
+    source_dataset_column_name: str = None,
+    unique_id_column_name: str = None,
+):
+    if source_dataset_column_name is None:
+        source_dataset_column_name = default_value_from_schema(
+            "source_dataset_column_name", "root"
+        )
+    if unique_id_column_name is None:
+        unique_id_column_name = default_value_from_schema(
+            "unique_id_column_name", "root"
+        )
+
+    input_columns = clean_user_input_columns(
+        input_columns.items(), return_as_single_column=False
+    )
+
+    required_cols = (source_dataset_column_name, unique_id_column_name)
+
+    # Loop and exit if any dataframe has only possible comparison column
+    for columns in input_columns.values():
+        unique_columns = set(columns) - set(required_cols)
+
+        if len(unique_columns) == 1:
+            raise InvalidSplinkInput(construct_single_dataframe_log_str(input_columns))
 
 
 def validate_comparison_levels(
@@ -53,38 +90,10 @@ def validate_comparison_levels(
         # If no error is found, append won't do anything
         error_logger.log_error(evaluate_comparison_dtype_and_contents(c_dict))
         error_logger.log_error(
-            evaluate_comparisons_for_imports_from_incorrect_dialects(
-                c_dict, linker_dialect
-            )
+            check_comparison_imported_for_correct_dialect(c_dict, linker_dialect)
         )
 
     return error_logger
-
-
-def log_comparison_errors(comparisons, linker_dialect):
-    """
-    Log any errors arising from `validate_comparison_levels`.
-    """
-
-    # Check for empty inputs - Expecting None or []
-    if not comparisons:
-        return
-
-    error_logger = ErrorLogger()
-
-    error_logger = validate_comparison_levels(error_logger, comparisons, linker_dialect)
-
-    # Raise and log any errors identified
-    plural_this = "this" if len(error_logger.raw_errors) == 1 else "these"
-    comp_hyperlink_txt = (
-        f"\nFor more info on how to construct comparisons and avoid {plural_this} "
-        "error, please visit:\n"
-        "https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html"
-    )
-
-    error_logger.raise_and_log_all_errors(
-        exception=ComparisonSettingsException, additional_txt=comp_hyperlink_txt
-    )
 
 
 def check_comparison_level_types(
@@ -146,9 +155,7 @@ def evaluate_comparison_dtype_and_contents(comparison_dict):
     return check_comparison_level_types(comp_levels, comp_str)
 
 
-def evaluate_comparisons_for_imports_from_incorrect_dialects(
-    comparison_dict, sql_dialect
-):
+def check_comparison_imported_for_correct_dialect(comparison_dict, sql_dialect):
     """
     Given a comparison_dict, assess whether the sql dialect is valid for
     your selected linker.
@@ -198,3 +205,29 @@ def evaluate_comparisons_for_imports_from_incorrect_dialects(
             comp_str, sorted(invalid_dialects)
         )
         return InvalidDialect(error_message)
+
+
+def _log_comparison_errors(comparisons: List[Comparison], linker_dialect: str):
+    """
+    Log any errors arising from various comparison validation checks.
+    """
+
+    # Check for empty inputs - Expecting None or []
+    if not comparisons:
+        return
+
+    error_logger = ErrorLogger()
+
+    error_logger = validate_comparison_levels(error_logger, comparisons, linker_dialect)
+
+    # Raise and log any errors identified
+    plural_this = "this" if len(error_logger.raw_errors) == 1 else "these"
+    comp_hyperlink_txt = (
+        f"\nFor more info on how to construct comparisons and avoid {plural_this} "
+        "error, please visit:\n"
+        "https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html"
+    )
+
+    error_logger.raise_and_log_all_errors(
+        exception=ComparisonSettingsException, additional_txt=comp_hyperlink_txt
+    )

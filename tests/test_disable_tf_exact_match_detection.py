@@ -4,7 +4,6 @@ from splink.settings import Settings
 
 
 def test_disable_tf_exact_match_detection():
-
     settings = Settings({"link_type": "dedupe_only"})
 
     comparison_normal_dict = {

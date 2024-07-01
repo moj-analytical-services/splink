@@ -36,6 +36,10 @@ class SplinkDeprecated(DeprecationWarning):
     pass
 
 
+class InvalidSplinkInput(SplinkException):
+    pass
+
+
 class InvalidDialect(SplinkException):
     pass
 
