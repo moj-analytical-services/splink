@@ -122,3 +122,97 @@ def test_array_intersect(pg_engine):
         assert set(int_result) == set(expected)
         # should check we don't have duplicates
         assert len(int_result) == len(expected)
+
+
+@mark_with_dialects_including("postgres")
+def test_jaro_winkler_similarity(pg_engine):
+    linker = PostgresLinker(
+        [],
+        engine=pg_engine,
+    )
+    df = pd.DataFrame(
+        [
+            {"s1": "foo", "s2": "  foo", "expected": 0.51},
+            {"s1": "", "s2": "a", "expected": 0.0},
+            {"s1": "aaapppp", "s2": "", "expected": 0.0},
+            {"s1": "frog", "s2": "fog", "expected": 0.93},
+            {"s1": "fly", "s2": "ant", "expected": 0.0},
+            {"s1": "elephant", "s2": "hippo", "expected": 0.44},
+            {"s1": "hippo", "s2": "elephant", "expected": 0.44},
+            {"s1": "hippo", "s2": "zzzzzzzz", "expected": 0.0},
+            {"s1": "hello", "s2": "hallo", "expected": 0.88},
+        ]
+    )
+    linker.register_table(df, "jw_similarity_vals")
+    sql = """
+    SELECT jaro_winkler_similarity("s1", "s2") AS similarity FROM jw_similarity_vals
+    """
+    frame = linker._execute_sql_against_backend(
+        sql, "dummy_name", "test_jw_similarity_table"
+    ).as_pandas_dataframe()
+
+    for similarity_result, expected in zip(frame["similarity"], df["expected"]):
+        assert abs(similarity_result - expected) < 0.01
+
+
+@mark_with_dialects_including("postgres")
+def test_damerau_levenshtein(pg_engine):
+    linker = PostgresLinker(
+        [],
+        engine=pg_engine,
+    )
+    df = pd.DataFrame(
+        [
+            {"s1": "out", "s2": "out", "expected": 0},
+            {"s1": "three", "s2": "there", "expected": 1},
+            {"s1": "potion", "s2": "option", "expected": 1},
+            {"s1": "letter", "s2": "lettre", "expected": 1},
+            {"s1": "three", "s2": "there", "expected": 1},
+            {"s1": "out", "s2": "to", "expected": 2},
+            {"s1": "to", "s2": "out", "expected": 2},
+            {"s1": "laos", "s2": "also", "expected": 2},
+            {"s1": "tomato", "s2": "otamot", "expected": 3},
+            {"s1": "abcdefg", "s2": "bacedgf", "expected": 3},
+        ]
+    )
+    linker.register_table(df, "dl_similarity_vals")
+    sql = """
+    SELECT damerau_levenshtein("s1", "s2") AS distance FROM dl_similarity_vals
+    """
+    frame = linker._execute_sql_against_backend(
+        sql, "dummy_name", "test_dl_similarity_table"
+    ).as_pandas_dataframe()
+
+    for distance_result, expected in zip(frame["distance"], df["expected"]):
+        assert distance_result == expected
+
+
+@mark_with_dialects_including("postgres")
+def test_jaro_similarity(pg_engine):
+    linker = PostgresLinker(
+        [],
+        engine=pg_engine,
+    )
+    df = pd.DataFrame(
+        [
+            {"s1": "foo", "s2": "  foo", "expected": 0.51},
+            {"s1": "", "s2": "a", "expected": 0.0},
+            {"s1": "aaapppp", "s2": "", "expected": 0.0},
+            {"s1": "frog", "s2": "fog", "expected": 0.92},
+            {"s1": "fly", "s2": "ant", "expected": 0.0},
+            {"s1": "elephant", "s2": "hippo", "expected": 0.44},
+            {"s1": "hippo", "s2": "elephant", "expected": 0.44},
+            {"s1": "hippo", "s2": "zzzzzzzz", "expected": 0.0},
+            {"s1": "hello", "s2": "hallo", "expected": 0.87},
+        ]
+    )
+    linker.register_table(df, "jw_similarity_vals")
+    sql = """
+    SELECT jaro_similarity("s1", "s2") AS similarity FROM jw_similarity_vals
+    """
+    frame = linker._execute_sql_against_backend(
+        sql, "dummy_name", "test_similarity_table"
+    ).as_pandas_dataframe()
+
+    for similarity_result, expected in zip(frame["similarity"], df["expected"]):
+        assert abs(similarity_result - expected) < 0.01
