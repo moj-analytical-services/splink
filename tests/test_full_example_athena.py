@@ -27,7 +27,8 @@ try:
 except:  # noqa
     # If InvalidTable cannot be imported, we need to create a temp value
     # to prevent an ImportError
-    class InvalidTable(Exception): ...
+    class InvalidTable(Exception):
+        ...
 
     # An import error is equivalent to a missing AWS connection
     aws_connection_valid = False
