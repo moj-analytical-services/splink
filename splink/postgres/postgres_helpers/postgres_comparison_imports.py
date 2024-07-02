@@ -67,6 +67,10 @@ class PostgresComparisonProperties(PostgresBase):
         return levenshtein_level
 
     @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
+
+    @property
     def _jaro_level(self):
         return jaro_level
 
@@ -142,7 +146,7 @@ class damerau_levenshtein_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return self._damerau_levenshtein_level
+        return damerau_levenshtein_level
 
 
 class distance_function_at_thresholds(

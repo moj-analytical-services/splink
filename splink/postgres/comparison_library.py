@@ -6,6 +6,8 @@ from .postgres_helpers.postgres_comparison_imports import (  # noqa: F401
     distance_in_km_at_thresholds,
     else_level,
     exact_match,
+    jaro_at_thresholds,
+    jaro_winkler_at_thresholds,
     levenshtein_at_thresholds,
     null_level,
 )
