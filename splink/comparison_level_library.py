@@ -684,6 +684,12 @@ class JaroLevelBase(DistanceFunctionLevelBase):
                 import splink.sqlite.comparison_level_library as cll
                 cll.jaro_level("name", 0.9)
                 ```
+            === ":simple-sqlite: Postgres"
+                Comparison level with jaro score greater than 0.9
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.jaro_level("name", 0.9)
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -758,6 +764,12 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
                 Comparison level with jaro-winkler score greater than 0.9
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
+                cll.jaro_winkler_level("name", 0.9)
+                ```
+            === ":simple-sqlite: Postgres"
+                Comparison level with jaro-winkler score greater than 0.9
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
                 ```
 
