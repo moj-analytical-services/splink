@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from typing import Sequence
@@ -46,6 +47,8 @@ class AthenaAPI(DatabaseAPI):
             self.output_filepath = output_filepath
         else:
             self.output_filepath = "splink_warehouse"
+
+        self.ctas_query_info = {}
 
         # TODO: How to run this check without the input_tables?
         # Run a quick check against our inputs to check if they
@@ -206,19 +209,34 @@ class AthenaAPI(DatabaseAPI):
         ctas_metadata.update(out_locs)
         return ctas_metadata
 
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-        self._delete_table_from_database(physical_name)
-        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
-        sql = sql.replace("FLOAT", "double").replace("float", "double")
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        self.delete_table_from_database(physical_name)
+        # This is a hack because execute_sql_against_backend
+        # needs the physical name but the _execute_sql_against_backend
+        # method just takes a  string
+        return json.dumps(
+            {
+                "physical_name": physical_name,
+                "sql": sql,
+            }
+        )
+
+    def _execute_sql_against_backend(self, sql):
+        sql_dict = json.loads(sql)
+        physical_name = sql_dict["physical_name"]
+        sql_query = sql_dict["sql"]
+        sql_query = sqlglot_transform_sql(
+            sql_query, cast_concat_as_varchar, dialect="presto"
+        )
+        sql_query = sql_query.replace("FLOAT", "double").replace("float", "double")
 
         # create our table on athena and extract the metadata information
-        query_metadata = self._create_table(sql, physical_name=physical_name)
+        query_metadata = self._create_table(sql_query, physical_name=physical_name)
         # append our metadata locations
         query_metadata = self._extract_ctas_metadata(query_metadata)
         self.ctas_query_info.update({physical_name: query_metadata})
 
-        output_obj = self.table_to_splink_dataframe(templated_name, physical_name)
-        return output_obj
+        return query_metadata
 
     @property
     def accepted_df_dtypes(self):
