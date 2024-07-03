@@ -116,9 +116,6 @@ def completeness_chart(
             none, all columns will be computed. Default to None.
         table_names_for_chart: A list of names.  Must be the same length as
             table_or_tables.
-
-
-        ```
     """
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)

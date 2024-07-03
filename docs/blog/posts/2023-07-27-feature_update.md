@@ -34,7 +34,7 @@ Note: If True, the EM algorithm ignores term frequency adjustments during the it
 
 ## :gift: Out-of-the-box Comparisons
 
-Splink now contains lots of new out-of-the-box comparisons for [dates](../../comparison_template_library.md#splink.comparison_template_library.DateComparisonBase), [names](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase), [postcodes](../../comparison_template_library.md#splink.comparison_template_library.PostcodeComparisonBase) etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models.
+Splink now contains lots of new out-of-the-box comparisons for dates, names, postcodes etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models.
 
 For example, a Comparison for `"first_name"` can now be written as:
 
@@ -44,7 +44,7 @@ import splink.duckdb.comparison_template_library as ctl
 first_name_comparison = ctl.name_comparison("first_name")
 ```
 
-Check out these new functions in the [CTL Topic Guide](../../topic_guides/comparisons/comparison_templates.ipynb) and [CTL Documentation](../../comparison_template_library.md).
+Check out these new functions in the [Topic Guide](../../topic_guides/comparisons/out_of_the_box_comparisons.ipynb) and [Documentation](../../api_docs/comparison_library.md).
 
 ## :simple-adblock: Blocking Rule Library
 

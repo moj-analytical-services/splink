@@ -63,7 +63,7 @@ class LinkerVisualisations:
         """
         return self._linker._settings_obj.match_weights_chart()
 
-    def m_u_parameters_chart(self):
+    def m_u_parameters_chart(self) -> ChartReturnType:
         """Display a chart of the m and u parameters of the linkage model
 
         Examples:
