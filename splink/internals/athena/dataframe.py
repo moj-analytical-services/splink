@@ -41,7 +41,7 @@ class AthenaDataFrame(SplinkDataFrame):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         # Delete the table from s3 and your database
-        table_deleted = self.db_api.drop_table_from_database_if_exists(
+        table_deleted = self.db_api._drop_table_from_database_if_exists(
             self.physical_name
         )
         if delete_s3_data and table_deleted:
@@ -52,7 +52,7 @@ class AthenaDataFrame(SplinkDataFrame):
         force_non_splink_table: bool = False,
         delete_s3_data: bool = True,
     ):
-        self.drop_table_from_database(
+        self._drop_table_from_database(
             force_non_splink_table=force_non_splink_table, delete_s3_data=delete_s3_data
         )
         self.db_api.remove_splinkdataframe_from_cache(self)
