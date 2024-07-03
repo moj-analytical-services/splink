@@ -5,7 +5,7 @@ sqlglot==1.23.1
 pytest==7.0.1
 pytest-benchmark==3.4.1
 tabulate==0.8.9
-pyspark==3.1.2
+pyspark==3.2.2
 rapidfuzz==2.0.2
 # sha256: 6bfffc374e5bda33f8e39628702af52124ab4e5946727f7fda9bb05ffaf97c63
 lzstring==1.0.4
