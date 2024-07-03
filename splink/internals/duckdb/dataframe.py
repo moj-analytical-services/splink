@@ -4,6 +4,8 @@ import logging
 import os
 from typing import TYPE_CHECKING
 
+from pandas import DataFrame as pd_DataFrame
+
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -41,7 +43,7 @@ class DuckDBDataFrame(SplinkDataFrame):
             .to_dict(orient="records")
         )
 
-    def as_pandas_dataframe(self, limit=None):
+    def as_pandas_dataframe(self, limit: int = None) -> pd_DataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

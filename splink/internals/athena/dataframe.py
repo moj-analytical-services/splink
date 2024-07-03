@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import numpy as np
 import awswrangler as wr
+import numpy as np
+from pandas import DataFrame as pd_DataFrame
+
 from ..input_column import InputColumn
 from ..splink_dataframe import SplinkDataFrame
 
@@ -34,13 +36,13 @@ class AthenaDataFrame(SplinkDataFrame):
 
     def _drop_table_from_database(
         self, force_non_splink_table: bool = False, delete_s3_data: bool = True
-    ):
+    ) -> None:
         # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         # Delete the table from s3 and your database
-        table_deleted = self.db_api.drop_table_from_database_if_exists(
+        table_deleted = self.db_api._drop_table_from_database_if_exists(
             self.physical_name
         )
         if delete_s3_data and table_deleted:
@@ -50,15 +52,15 @@ class AthenaDataFrame(SplinkDataFrame):
         self,
         force_non_splink_table: bool = False,
         delete_s3_data: bool = True,
-    ):
-        self.drop_table_from_database(
+    ) -> None:
+        self._drop_table_from_database(
             force_non_splink_table=force_non_splink_table, delete_s3_data=delete_s3_data
         )
         self.db_api.remove_splinkdataframe_from_cache(self)
 
     def _check_drop_folder_created_by_splink(
         self, force_non_splink_table: bool = False
-    ):
+    ) -> None:
         filepath = self.db_api.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
@@ -92,7 +94,7 @@ class AthenaDataFrame(SplinkDataFrame):
                 "if this error persists."
             )
 
-    def as_pandas_dataframe(self, limit: Optional[int] = None):
+    def as_pandas_dataframe(self, limit: Optional[int] = None) -> pd_DataFrame:
         sql = f"""
         select *
         from {self.physical_name}
@@ -111,7 +113,7 @@ class AthenaDataFrame(SplinkDataFrame):
         )
         return out_df
 
-    def as_record_dict(self, limit: Optional[int] = None):
+    def as_record_dict(self, limit: Optional[int] = None) -> list[Dict[str, Any]]:
         out_df = self.as_pandas_dataframe(limit)
         out_df = out_df.fillna(np.nan).replace([np.nan], [None])
         return out_df.to_dict(orient="records")

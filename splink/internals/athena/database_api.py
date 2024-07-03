@@ -1,27 +1,28 @@
 from __future__ import annotations
 
+import json
 import logging
-from typing import Sequence
-
 import os
-import pandas as pd
-import boto3
+from typing import Any, Sequence
+
 import awswrangler as wr
+import boto3
+import pandas as pd
 
 from ..database_api import AcceptableInputTableType, DatabaseAPI
 from ..dialects import AthenaDialect
 from ..sql_transform import sqlglot_transform_sql
-from .dataframe import AthenaDataFrame
 from .athena_helpers.athena_transforms import cast_concat_as_varchar
 from .athena_helpers.athena_utils import (
-    _garbage_collection,
     _verify_athena_inputs,
 )
+from .dataframe import AthenaDataFrame
 
 logger = logging.getLogger(__name__)
 
 
-class AthenaAPI(DatabaseAPI):
+# Dict because there's not really a 'tablish' type in Athena
+class AthenaAPI(DatabaseAPI[dict[str, Any]]):
     sql_dialect = AthenaDialect()
 
     def __init__(
@@ -48,6 +49,8 @@ class AthenaAPI(DatabaseAPI):
         else:
             self.output_filepath = "splink_warehouse"
 
+        self.ctas_query_info: dict[str, Any] = {}
+
         # TODO: How to run this check without the input_tables?
         # Run a quick check against our inputs to check if they
         # exist in the database
@@ -73,11 +76,11 @@ class AthenaAPI(DatabaseAPI):
     def change_output_filepath(self, new_filepath):
         self.output_filepath = new_filepath
 
-    def get_schema_info(self, input_table: str):
+    def get_schema_info(self, input_table: str) -> list[str]:
         t = input_table.split(".")
         return t if len(t) > 1 else [self.output_schema, input_table]
 
-    def _check_table_exists(self, db: str, tb: str):
+    def _check_table_exists(self, db: str, tb: str) -> None:
         # A quick function to check if a table exists
         # and spit out a warning if it is not found.
         table_exists = wr.catalog.does_table_exist(
@@ -123,7 +126,7 @@ class AthenaAPI(DatabaseAPI):
 
         self.ctas_query_info.pop(physical_name)
 
-    def _delete_table_from_database(self, name):
+    def delete_table_from_database(self, name):
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)
@@ -207,19 +210,34 @@ class AthenaAPI(DatabaseAPI):
         ctas_metadata.update(out_locs)
         return ctas_metadata
 
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-        self._delete_table_from_database(physical_name)
-        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
-        sql = sql.replace("FLOAT", "double").replace("float", "double")
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        self.delete_table_from_database(physical_name)
+        # This is a hack because execute_sql_against_backend
+        # needs the physical name but the _execute_sql_against_backend
+        # method just takes a  string
+        return json.dumps(
+            {
+                "physical_name": physical_name,
+                "sql": sql,
+            }
+        )
+
+    def _execute_sql_against_backend(self, sql):
+        sql_dict = json.loads(sql)
+        physical_name = sql_dict["physical_name"]
+        sql_query = sql_dict["sql"]
+        sql_query = sqlglot_transform_sql(
+            sql_query, cast_concat_as_varchar, dialect="presto"
+        )
+        sql_query = sql_query.replace("FLOAT", "double").replace("float", "double")
 
         # create our table on athena and extract the metadata information
-        query_metadata = self._create_table(sql, physical_name=physical_name)
+        query_metadata = self._create_table(sql_query, physical_name=physical_name)
         # append our metadata locations
         query_metadata = self._extract_ctas_metadata(query_metadata)
         self.ctas_query_info.update({physical_name: query_metadata})
 
-        output_obj = self.table_to_splink_dataframe(templated_name, physical_name)
-        return output_obj
+        return query_metadata
 
     @property
     def accepted_df_dtypes(self):
@@ -234,7 +252,10 @@ class AthenaAPI(DatabaseAPI):
         return accepted_df_dtypes
 
     def load_from_file(self, file_path: str) -> str:
-        pass
+        raise NotImplementedError(
+            "Loading from file is not supported for Athena. "
+            "Please use the `table` method to load data."
+        )
 
     def process_input_tables(
         self, input_tables: Sequence[AcceptableInputTableType]
@@ -243,5 +264,3 @@ class AthenaAPI(DatabaseAPI):
         return [
             self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
         ]
-
-    # TODO: Garbage collection for Athena
