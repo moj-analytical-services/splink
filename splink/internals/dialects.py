@@ -504,3 +504,7 @@ class AthenaDialect(SplinkDialect):
     @property
     def infinity_expression(self):
         return "infinity()"
+
+    @property
+    def levenshtein_function_name(self):
+        return "levenshtein_distance"
