@@ -4,8 +4,9 @@ import logging
 import os
 from typing import TYPE_CHECKING, Optional
 
-import numpy as np
 import awswrangler as wr
+import numpy as np
+
 from ..input_column import InputColumn
 from ..splink_dataframe import SplinkDataFrame
 

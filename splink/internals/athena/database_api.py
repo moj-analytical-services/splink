@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Sequence
 
-import os
-import pandas as pd
-import boto3
 import awswrangler as wr
+import boto3
+import pandas as pd
 
 from ..database_api import AcceptableInputTableType, DatabaseAPI
 from ..dialects import AthenaDialect
 from ..sql_transform import sqlglot_transform_sql
-from .dataframe import AthenaDataFrame
 from .athena_helpers.athena_transforms import cast_concat_as_varchar
 from .athena_helpers.athena_utils import (
-    _garbage_collection,
     _verify_athena_inputs,
 )
+from .dataframe import AthenaDataFrame
 
 logger = logging.getLogger(__name__)
 
