@@ -149,14 +149,30 @@ class BlockingRule:
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
+        # selects = []
+        # selects.append(unique_id_input_column.l_name_as_l)
+        # if source_dataset_input_column:
+        #     selects.append(source_dataset_input_column.l_name_as_l)
+        # selects.append(unique_id_input_column.r_name_as_r)
+        # if source_dataset_input_column:
+        #     selects.append(source_dataset_input_column.r_name_as_r)
+
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
+        # select_expr = ", ".join(selects)
+
         sql = f"""
             select
-            {sql_select_expr}
-            , '{self.match_key}' as match_key
-            {probability}
+            '{self.match_key}' as match_key,
+            {uid_l_expr} as join_key_l,
+            {uid_r_expr} as join_key_r
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -557,7 +573,6 @@ def block_using_rules_sqls(
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
-    columns_to_select_sql: str,
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     set_match_probability_to_one: bool = False,
@@ -601,8 +616,6 @@ def block_using_rules_sqls(
             input_tablename_l=input_tablename_l,
             input_tablename_r=input_tablename_r,
             where_condition=where_condition,
-            probability=probability,
-            sql_select_expr=columns_to_select_sql,
         )
         br_sqls.append(sql)
 
