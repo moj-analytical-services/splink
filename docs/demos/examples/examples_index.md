@@ -62,8 +62,7 @@ This section provides a series of examples to help you get started with Splink. 
 
 ### :simple-amazonaws: Athena examples
 
-<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/splink4_dev/docs/demos/examples/athena/deduplicate_50k_synthetic.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+
 </a> [Deduplicating 50,000 records of realistic data based on historical persons](./athena/deduplicate_50k_synthetic.ipynb)
 
 ### :simple-sqlite: SQLite examples
