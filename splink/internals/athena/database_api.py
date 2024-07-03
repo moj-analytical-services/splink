@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Sequence
+from typing import Any, Sequence
 
 import awswrangler as wr
 import boto3
@@ -21,7 +21,8 @@ from .dataframe import AthenaDataFrame
 logger = logging.getLogger(__name__)
 
 
-class AthenaAPI(DatabaseAPI):
+# Dict because there's not really a 'tablish' type in Athena
+class AthenaAPI(DatabaseAPI[dict[str, Any]]):
     sql_dialect = AthenaDialect()
 
     def __init__(
@@ -48,7 +49,7 @@ class AthenaAPI(DatabaseAPI):
         else:
             self.output_filepath = "splink_warehouse"
 
-        self.ctas_query_info = {}
+        self.ctas_query_info: dict[str, Any] = {}
 
         # TODO: How to run this check without the input_tables?
         # Run a quick check against our inputs to check if they
@@ -75,11 +76,11 @@ class AthenaAPI(DatabaseAPI):
     def change_output_filepath(self, new_filepath):
         self.output_filepath = new_filepath
 
-    def get_schema_info(self, input_table: str):
+    def get_schema_info(self, input_table: str) -> list[str]:
         t = input_table.split(".")
         return t if len(t) > 1 else [self.output_schema, input_table]
 
-    def _check_table_exists(self, db: str, tb: str):
+    def _check_table_exists(self, db: str, tb: str) -> None:
         # A quick function to check if a table exists
         # and spit out a warning if it is not found.
         table_exists = wr.catalog.does_table_exist(
@@ -251,7 +252,10 @@ class AthenaAPI(DatabaseAPI):
         return accepted_df_dtypes
 
     def load_from_file(self, file_path: str) -> str:
-        pass
+        raise NotImplementedError(
+            "Loading from file is not supported for Athena. "
+            "Please use the `table` method to load data."
+        )
 
     def process_input_tables(
         self, input_tables: Sequence[AcceptableInputTableType]
@@ -260,5 +264,3 @@ class AthenaAPI(DatabaseAPI):
         return [
             self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
         ]
-
-    # TODO: Garbage collection for Athena
