@@ -122,7 +122,7 @@ class AthenaAPI(DatabaseAPI):
 
         self.ctas_query_info.pop(physical_name)
 
-    def _delete_table_from_database(self, name):
+    def delete_table_from_database(self, name):
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)
