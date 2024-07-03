@@ -500,3 +500,7 @@ class AthenaDialect(SplinkDialect):
             return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
+
+    @property
+    def infinity_expression(self):
+        return "infinity()"
