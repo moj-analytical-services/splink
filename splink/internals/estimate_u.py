@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
@@ -178,7 +178,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     if repartition_after_blocking:
         pipeline = pipeline.break_lineage(db_api)
 
-    sql = compute_comparison_vector_values_sql(
+    sql = compute_comparison_vector_values_sqls(
         settings_obj._columns_to_select_for_comparison_vector_values
     )
 

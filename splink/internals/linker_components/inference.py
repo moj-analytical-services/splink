@@ -11,7 +11,7 @@ from splink.internals.blocking import (
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.find_matches_to_new_records import (
@@ -250,15 +250,14 @@ class LinkerInference:
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
-        sql = compute_comparison_vector_values_sql(
+        sqls = compute_comparison_vector_values_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
         )
 
-        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-        return self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._linker._settings_obj,
@@ -386,7 +385,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(
+        sql = compute_comparison_vector_values_sqls(
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values
         )
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -496,7 +495,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(
+        sql = compute_comparison_vector_values_sqls(
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values
         )
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")

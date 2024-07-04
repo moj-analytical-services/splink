@@ -12,7 +12,7 @@ from splink.internals.blocking import (
 )
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
@@ -553,7 +553,7 @@ class Linker:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sql(
+        sql = compute_comparison_vector_values_sqls(
             self._settings_obj._columns_to_select_for_comparison_vector_values
         )
 

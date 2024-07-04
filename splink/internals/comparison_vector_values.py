@@ -9,7 +9,8 @@ from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sq
 logger = logging.getLogger(__name__)
 
 
-def compute_comparison_vector_values_sql(
+def compute_comparison_vector_values_sqls(
+    columns_to_select_for_blocking: List[str],
     columns_to_select_for_comparison_vector_values: list[str],
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
@@ -21,28 +22,44 @@ def compute_comparison_vector_values_sql(
     See [the fastlink paper](https://imai.fas.harvard.edu/research/files/linkage.pdf)
     for more details of what is meant by comparison vectors.
     """
-    select_cols_expr = ",".join(columns_to_select_for_comparison_vector_values)
 
-    if include_clerical_match_score:
-        clerical_match_score = ", clerical_match_score"
-    else:
-        clerical_match_score = ""
+    sqls = []
 
     if source_dataset_input_column:
         unique_id_columns = [source_dataset_input_column, unique_id_input_column]
     else:
         unique_id_columns = [unique_id_input_column]
 
+    select_cols_expr = ", \n".join(columns_to_select_for_blocking)
+
     uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
     uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
-    sql = f"""
-    select *
+    sql = sql = f"""
+    select {select_cols_expr}, b.match_key
     from __splink__df_concat_with_tf as l
     inner join __splink__df_blocked as b
     on {uid_l_expr} = b.join_key_l
     inner join __splink__df_concat_with_tf as r
     on {uid_r_expr} = b.join_key_r
+
+
     """
 
-    return sql
+    sqls.append({"sql": sql, "output_table_name": "__splink__blocked_with_cols"})
+
+    select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
+
+    if include_clerical_match_score:
+        clerical_match_score = ", clerical_match_score"
+    else:
+        clerical_match_score = ""
+
+    sql = f"""
+    select {select_cols_expr} {clerical_match_score}
+    from __splink__blocked_with_cols
+    """
+
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_comparison_vectors"})
+
+    return sqls

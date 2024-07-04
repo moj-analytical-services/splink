@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
@@ -30,7 +30,7 @@ def estimate_m_from_pairwise_labels(linker: "Linker", table_name: str) -> None:
 
     pipeline.enqueue_list_of_sqls(sqls)
 
-    sql = compute_comparison_vector_values_sql(
+    sql = compute_comparison_vector_values_sqls(
         linker._settings_obj._columns_to_select_for_comparison_vector_values
     )
 
