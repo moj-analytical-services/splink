@@ -376,7 +376,6 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         input_tablename_r=blocking_input_tablename_r,
         blocking_rules=blocking_rules,
         link_type=link_type,
-        set_match_probability_to_one=True,
         unique_id_input_column=unique_id_input_column,
         source_dataset_input_column=source_dataset_input_column,
     )
