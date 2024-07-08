@@ -145,6 +145,7 @@ class EMTrainingSession:
                 needs_matchkey_column=False,
             )
         )
+
         self.core_model_settings = core_model_settings
         # initial params get inserted in training
         self._core_model_settings_history: List[CoreModelSettings] = []
@@ -201,24 +202,20 @@ class EMTrainingSession:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        # repartition after blocking only exists on the SparkAPI
-        repartition_after_blocking = getattr(
-            self.db_api, "repartition_after_blocking", False
+        blocked_pairs = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+
+        sqls = compute_comparison_vector_values_sqls(
+            orig_settings._columns_to_select_for_blocking,
+            self.columns_to_select_for_comparison_vector_values,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
         )
 
-        if repartition_after_blocking:
-            df_blocked = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            nodes_with_tf = (
-                self._original_linker._intermediate_table_cache.get_with_logging(
-                    "__splink__df_concat_with_tf"
-                )
-            )
-            pipeline = CTEPipeline([nodes_with_tf, df_blocked])
-
-        sql = compute_comparison_vector_values_sqls(
-            self.columns_to_select_for_comparison_vector_values
-        )
-        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_list_of_sqls(sqls)
         return self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     def _train(self, cvv: SplinkDataFrame = None) -> CoreModelSettings:
