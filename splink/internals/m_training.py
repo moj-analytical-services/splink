@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
@@ -53,7 +53,7 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    sql = compute_comparison_vector_values_sql(
+    sql = compute_comparison_vector_values_sqls(
         settings_obj._columns_to_select_for_comparison_vector_values
     )
 

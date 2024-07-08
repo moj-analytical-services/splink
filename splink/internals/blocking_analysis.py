@@ -393,7 +393,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         select
         count(*) as row_count,
         match_key
-        from __splink__df_blocked
+        from __splink__blocked_id_pairs
         group by match_key
         order by cast(match_key as int) asc
     """

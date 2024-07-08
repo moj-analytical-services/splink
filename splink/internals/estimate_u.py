@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sql,
+    compute_comparison_vector_values_sqls,
 )
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
@@ -172,17 +172,20 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
     pipeline.enqueue_list_of_sqls(sql_infos)
+    blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    # repartition after blocking only exists on the SparkLinker
-    repartition_after_blocking = getattr(linker, "repartition_after_blocking", False)
-    if repartition_after_blocking:
-        pipeline = pipeline.break_lineage(db_api)
+    pipeline = CTEPipeline([blocked_pairs, df_sample])
 
-    sql = compute_comparison_vector_values_sql(
-        settings_obj._columns_to_select_for_comparison_vector_values
+    sqls = compute_comparison_vector_values_sqls(
+        settings_obj._columns_to_select_for_blocking,
+        settings_obj._columns_to_select_for_comparison_vector_values,
+        input_tablename_l="__splink__df_concat_sample",
+        input_tablename_r="__splink__df_concat_sample",
+        source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
 
-    pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    pipeline.enqueue_list_of_sqls(sqls)
 
     sql = """
     select *, cast(0.0 as float8) as match_probability
