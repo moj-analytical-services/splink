@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.blocking import (
@@ -217,6 +218,8 @@ class LinkerInference:
         else:
             pipeline = enqueue_df_concat_with_tf(self._linker, pipeline)
 
+        start_time = time.time()
+
         blocking_input_tablename_l = "__splink__df_concat_with_tf"
         blocking_input_tablename_r = "__splink__df_concat_with_tf"
 
@@ -264,6 +267,8 @@ class LinkerInference:
             )
 
             pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+            blocking_time = time.time() - start_time
+            logger.info(f"Blocking time: {blocking_time:.2f} seconds")
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
@@ -284,6 +289,10 @@ class LinkerInference:
         pipeline.enqueue_list_of_sqls(sqls)
 
         predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        predict_time = time.time() - start_time
+        logger.info(f"Predict time: {predict_time:.2f} seconds")
+
         self._linker._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
