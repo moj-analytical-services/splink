@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.expectation_maximisation import (
     compute_new_parameters_sql,
@@ -47,17 +47,25 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
         input_tablename_r="__splink__df_concat_with_tf",
         blocking_rules=[BlockingRule(f"l.{label_colname} = r.{label_colname}")],
         link_type=settings_obj._link_type,
-        columns_to_select_sql=", ".join(settings_obj._columns_to_select_for_blocking),
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    sql = compute_comparison_vector_values_sqls(
-        settings_obj._columns_to_select_for_comparison_vector_values
+    blocked_pairs = training_linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+
+    sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+        training_linker._settings_obj._columns_to_select_for_blocking,
+        training_linker._settings_obj._columns_to_select_for_comparison_vector_values,
+        input_tablename_l="__splink__df_concat_with_tf",
+        input_tablename_r="__splink__df_concat_with_tf",
+        source_dataset_input_column=training_linker._settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=training_linker._settings_obj.column_info_settings.unique_id_input_column,
     )
 
-    pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    pipeline.enqueue_list_of_sqls(sqls)
 
     sql = """
     select *, cast(1.0 as float8) as match_probability

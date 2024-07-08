@@ -13,7 +13,7 @@ from splink.internals.charts import (
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.input_column import InputColumn
@@ -203,7 +203,7 @@ class EMTrainingSession:
 
         pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
 
-        sqls = compute_comparison_vector_values_sqls(
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             orig_settings._columns_to_select_for_blocking,
             self.columns_to_select_for_comparison_vector_values,
             input_tablename_l="__splink__df_concat_with_tf",

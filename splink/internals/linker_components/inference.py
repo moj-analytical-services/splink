@@ -11,7 +11,7 @@ from splink.internals.blocking import (
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.find_matches_to_new_records import (
@@ -137,7 +137,7 @@ class LinkerInference:
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
-        sqls = compute_comparison_vector_values_sqls(
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             "*",
             input_tablename_l="__splink__df_concat_with_tf",
@@ -259,7 +259,7 @@ class LinkerInference:
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
-        sqls = compute_comparison_vector_values_sqls(
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
             input_tablename_l="__splink__df_concat_with_tf",
@@ -358,7 +358,7 @@ class LinkerInference:
 
         pipeline = CTEPipeline([nodes_with_tf, new_records_df])
         if len(blocking_rule_list) == 0:
-            blocking_rule_list = [BlockingRule("1=1")]
+            blocking_rule_list = ["1=1"]
 
         blocking_rule_list = [
             to_blocking_rule_creator(br).get_blocking_rule(
@@ -423,7 +423,7 @@ class LinkerInference:
             out_tablename="__splink__df_new_records_with_tf",
         )
 
-        sqls = compute_comparison_vector_values_sqls(
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
             input_tablename_l="__splink__df_concat_with_tf",
@@ -558,7 +558,7 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sqls = compute_comparison_vector_values_sqls(
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
             input_tablename_l="__splink__compare_two_records_left_with_tf_uid_fix",

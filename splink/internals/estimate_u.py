@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
@@ -175,7 +175,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
 
     pipeline = CTEPipeline([blocked_pairs, df_sample])
 
-    sqls = compute_comparison_vector_values_sqls(
+    sqls = compute_comparison_vector_values_from_id_pairs_sqls(
         settings_obj._columns_to_select_for_blocking,
         settings_obj._columns_to_select_for_comparison_vector_values,
         input_tablename_l="__splink__df_concat_sample",

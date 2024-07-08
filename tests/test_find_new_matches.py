@@ -63,8 +63,10 @@ def test_tf_tables_init_works(test_helpers, dialect):
         linker.table_management.compute_tf_table("first_name")
 
         # Running without _df_concat_with_tf
-        linker.__deepcopy__(None).inference.find_matches_to_new_records(
-            [record], blocking_rules=[], match_weight_threshold=-10000
+        linker.inference.find_matches_to_new_records(
+            [record],
+            blocking_rules=[],
+            match_weight_threshold=-10000,
         )
 
         # Trial for if _df_concat_with_tf already exists...

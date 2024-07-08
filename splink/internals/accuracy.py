@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.blocking import BlockingRule
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_sql,
 )
 from splink.internals.misc import calculate_cartesian
 from splink.internals.pipeline import CTEPipeline
@@ -407,7 +407,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     )
 
     sql_info = {
-        "sql": compute_comparison_vector_values_sqls(
+        "sql": compute_comparison_vector_values_sql(
             linker._settings_obj._columns_to_select_for_comparison_vector_values,
             include_clerical_match_score=True,
         ),

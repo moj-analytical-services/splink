@@ -12,7 +12,7 @@ from splink.internals.blocking import (
 )
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_sqls,
+    compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
@@ -547,17 +547,24 @@ class Linker:
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[blocking_rule],
             link_type="self_link",
-            columns_to_select_sql=", ".join(settings._columns_to_select_for_blocking),
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sqls(
-            self._settings_obj._columns_to_select_for_comparison_vector_values
-        )
+        blocked_pairs = self._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            settings._columns_to_select_for_blocking,
+            settings._columns_to_select_for_comparison_vector_values,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sql_infos = predict_from_comparison_vectors_sqls(
             unique_id_input_columns=uid_cols,
