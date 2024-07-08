@@ -441,8 +441,6 @@ class ExplodingBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
         if self.exploded_id_pair_table is None:
             raise ValueError(
@@ -455,20 +453,20 @@ class ExplodingBlockingRule(BlockingRule):
             source_dataset_input_column, unique_id_input_column
         )
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         exploded_id_pair_table = self.exploded_id_pair_table
         sql = f"""
             select
-                {sql_select_expr},
-                '{self.match_key}' as match_key
-                {probability}
+                '{self.match_key}' as match_key,
+                {uid_l_expr} as join_key_l,
+                {uid_r_expr} as join_key_r
             from {exploded_id_pair_table.physical_name} as pairs
             left join {input_tablename_l} as l
-                on pairs.{unique_id_col.name_l}={id_expr_l}
+                on pairs.{unique_id_col.name_l}={uid_l_expr}
             left join {input_tablename_r} as r
-                on pairs.{unique_id_col.name_r}={id_expr_r}
+                on pairs.{unique_id_col.name_r}={uid_r_expr}
         """
         return sql
 
