@@ -161,6 +161,7 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
+        materialied_blocked_pairs: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -182,6 +183,8 @@ class LinkerInference:
                 for in the settings object.  If False, this will be
                 computed as part of one possibly gigantic CTE
                 pipeline.   Defaults to True
+            materialied_blocked_pairs: In the blocking phase, materialise the table
+                of pairs of records that will be scored
 
         Examples:
             ```py
@@ -255,9 +258,12 @@ class LinkerInference:
 
         pipeline.enqueue_list_of_sqls(sqls)
 
-        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        if materialied_blocked_pairs:
+            blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+                pipeline
+            )
 
-        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+            pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
