@@ -154,6 +154,7 @@ class LinkerInference:
         deterministic_link_df.metadata["is_deterministic_link"] = True
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+        blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return deterministic_link_df
 
@@ -296,6 +297,8 @@ class LinkerInference:
         self._linker._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+        if materialied_blocked_pairs:
+            blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return predictions
 
@@ -470,6 +473,8 @@ class LinkerInference:
             original_blocking_rules
         )
         self._linker._settings_obj._link_type = original_link_type
+
+        blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return predictions
 
