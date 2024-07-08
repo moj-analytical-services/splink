@@ -311,7 +311,7 @@ def test_u_train_multilink(test_helpers, dialect):
     linker = helper.Linker(
         dfs,
         settings,
-        input_table_aliases=["a", "b", "c", "d"],
+        input_table_aliases=["e", "f", "g", "h"],
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
