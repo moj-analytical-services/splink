@@ -124,15 +124,24 @@ class LinkerInference:
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
         )
 
-        columns_to_select = self._linker._settings_obj._columns_to_select_for_blocking
-        sql_select_expr = ", ".join(columns_to_select)
-
         sqls = block_using_rules_sqls(
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
-            columns_to_select_sql=sql_select_expr,
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+
+        sqls = compute_comparison_vector_values_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            "*",
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
         )
