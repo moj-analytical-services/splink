@@ -304,20 +304,28 @@ class SaltedBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
         sqls = []
         exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
             source_dataset_input_column, unique_id_input_column
         )
+
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
         for salt in range(self.salting_partitions):
             salt_condition = self._salting_condition(salt)
             sql = f"""
             select
-            {sql_select_expr}
-            , '{self.match_key}' as match_key
-            {probability}
+            '{self.match_key}' as match_key,
+            {uid_l_expr} as join_key_l,
+            {uid_r_expr} as join_key_r
+
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -620,6 +628,7 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
+    sql = sql + " ORDER BY 1"
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
 

@@ -269,11 +269,13 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
+            r"__splink__df_blocked",
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives.*",
             r"__splink__df_neighbours",
+            r"__splink__df_connected_components_df",
             r"__splink__df_connected_components_df",
         ]
 
