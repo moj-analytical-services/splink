@@ -239,6 +239,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_concat_with_tf_sample",
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
+            r"__splink__blocked_id_pairs",
         ]
 
         num_partitions = self.num_partitions_on_repartition
@@ -259,6 +260,9 @@ class SparkAPI(DatabaseAPI[spark_df]):
         if re.fullmatch(r"__splink__df_concat_with_tf", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
 
+        if re.fullmatch(r"__splink__blocked_id_pairs", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
             spark_df = spark_df.repartition(num_partitions)
 
@@ -275,6 +279,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_representatives.*",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
+            r"__splink__blocked_id_pairs",
         ]
 
         if re.fullmatch(r"|".join(regex_to_persist), templated_name):
@@ -308,6 +313,10 @@ class SparkAPI(DatabaseAPI[spark_df]):
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
                 )
+
+        if templated_name == "__splink__blocked_id_pairs":
+            spark_df = spark_df.repartition(self.num_partitions_on_repartition)
+
         return spark_df
 
     def _set_default_break_lineage_method(self):
