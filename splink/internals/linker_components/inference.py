@@ -235,15 +235,11 @@ class LinkerInference:
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
         )
 
-        columns_to_select = self._linker._settings_obj._columns_to_select_for_blocking
-        sql_select_expr = ", ".join(columns_to_select)
-
         sqls = block_using_rules_sqls(
             input_tablename_l=blocking_input_tablename_l,
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
             link_type=link_type,
-            columns_to_select_sql=sql_select_expr,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
         )
@@ -487,23 +483,30 @@ class LinkerInference:
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
+        source_dataset_ic = (
+            self._linker._settings_obj.column_info_settings.source_dataset_input_column
+        )
+        uid_ic = self._linker._settings_obj.column_info_settings.unique_id_input_column
+
         sqls = block_using_rules_sqls(
             input_tablename_l="__splink__compare_two_records_left_with_tf",
             input_tablename_r="__splink__compare_two_records_right_with_tf",
             blocking_rules=[BlockingRule("1=1")],
             link_type=self._linker._settings_obj._link_type,
-            columns_to_select_sql=", ".join(
-                self._linker._settings_obj._columns_to_select_for_blocking
-            ),
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            source_dataset_input_column=source_dataset_ic,
+            unique_id_input_column=uid_ic,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = compute_comparison_vector_values_sqls(
-            self._linker._settings_obj._columns_to_select_for_comparison_vector_values
+        sqls = compute_comparison_vector_values_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            source_dataset_input_column=source_dataset_ic,
+            unique_id_input_column=uid_ic,
         )
-        pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        pipeline.enqueue_list_of_sqls(sqls)
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
             self._linker._settings_obj,

@@ -167,7 +167,6 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         input_tablename_r=input_tablename_sample_r,
         blocking_rules=settings_obj._blocking_rules_to_generate_predictions,
         link_type=linker._settings_obj._link_type,
-        columns_to_select_sql=", ".join(settings_obj._columns_to_select_for_blocking),
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )

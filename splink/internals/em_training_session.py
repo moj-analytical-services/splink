@@ -194,9 +194,6 @@ class EMTrainingSession:
             input_tablename_r="__splink__df_concat_with_tf",
             blocking_rules=[self._blocking_rule_for_training],
             link_type=orig_settings._link_type,
-            columns_to_select_sql=", ".join(
-                orig_settings._columns_to_select_for_blocking
-            ),
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
         )
