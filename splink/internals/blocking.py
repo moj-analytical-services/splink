@@ -569,7 +569,6 @@ def block_using_rules_sqls(
     link_type: "LinkTypeLiteralType",
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
-    set_match_probability_to_one: bool = False,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -593,13 +592,6 @@ def block_using_rules_sqls(
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
-
-    # For Blocking rules for deterministic rules, add a match probability
-    # column with all probabilities set to 1.
-    if set_match_probability_to_one:
-        probability = ", 1.00 as match_probability"
-    else:
-        probability = ""
 
     br_sqls = []
 

@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from splink.internals.block_from_labels import block_from_labels
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_from_id_pairs_sqls,
     compute_comparison_vector_values_sql,
 )
 from splink.internals.expectation_maximisation import (
