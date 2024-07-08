@@ -149,14 +149,20 @@ class BlockingRule:
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
         sql = f"""
             select
-            {sql_select_expr}
-            , '{self.match_key}' as match_key
-            {probability}
+            '{self.match_key}' as match_key,
+            {uid_l_expr} as join_key_l,
+            {uid_r_expr} as join_key_r
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -288,9 +294,15 @@ class SaltedBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
         sqls = []
         exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
             source_dataset_input_column, unique_id_input_column
@@ -299,9 +311,9 @@ class SaltedBlockingRule(BlockingRule):
             salt_condition = self._salting_condition(salt)
             sql = f"""
             select
-            {sql_select_expr}
-            , '{self.match_key}' as match_key
-            {probability}
+            '{self.match_key}' as match_key,
+            {uid_l_expr} as join_key_l,
+            {uid_r_expr} as join_key_r
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -429,8 +441,6 @@ class ExplodingBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
-        probability: str,
-        sql_select_expr: str,
     ) -> str:
         if self.exploded_id_pair_table is None:
             raise ValueError(
@@ -443,20 +453,20 @@ class ExplodingBlockingRule(BlockingRule):
             source_dataset_input_column, unique_id_input_column
         )
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
+        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
+        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
         exploded_id_pair_table = self.exploded_id_pair_table
         sql = f"""
             select
-                {sql_select_expr},
-                '{self.match_key}' as match_key
-                {probability}
+                '{self.match_key}' as match_key,
+                {uid_l_expr} as join_key_l,
+                {uid_r_expr} as join_key_r
             from {exploded_id_pair_table.physical_name} as pairs
             left join {input_tablename_l} as l
-                on pairs.{unique_id_col.name_l}={id_expr_l}
+                on pairs.{unique_id_col.name_l}={uid_l_expr}
             left join {input_tablename_r} as r
-                on pairs.{unique_id_col.name_r}={id_expr_r}
+                on pairs.{unique_id_col.name_r}={uid_r_expr}
         """
         return sql
 
@@ -557,10 +567,8 @@ def block_using_rules_sqls(
     input_tablename_r: str,
     blocking_rules: List[BlockingRule],
     link_type: "LinkTypeLiteralType",
-    columns_to_select_sql: str,
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
-    set_match_probability_to_one: bool = False,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -585,13 +593,6 @@ def block_using_rules_sqls(
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
 
-    # For Blocking rules for deterministic rules, add a match probability
-    # column with all probabilities set to 1.
-    if set_match_probability_to_one:
-        probability = ", 1.00 as match_probability"
-    else:
-        probability = ""
-
     br_sqls = []
 
     for br in blocking_rules:
@@ -601,13 +602,11 @@ def block_using_rules_sqls(
             input_tablename_l=input_tablename_l,
             input_tablename_r=input_tablename_r,
             where_condition=where_condition,
-            probability=probability,
-            sql_select_expr=columns_to_select_sql,
         )
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
 
-    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
+    sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
     return sqls

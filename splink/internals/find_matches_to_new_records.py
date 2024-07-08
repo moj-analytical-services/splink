@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from splink.internals.pipeline import CTEPipeline
 
@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 
 def add_unique_id_and_source_dataset_cols_if_needed(
-    linker: "Linker", new_records_df: "SplinkDataFrame", pipeline: CTEPipeline
+    linker: "Linker",
+    new_records_df: "SplinkDataFrame",
+    pipeline: CTEPipeline,
+    in_tablename: str,
+    out_tablename: str,
+    uid_str: Optional[str] = None,
 ) -> CTEPipeline:
     input_cols: list[InputColumn] = new_records_df.columns
     cols: list[str] = [c.unquote().name for c in input_cols]
@@ -32,12 +37,18 @@ def add_unique_id_and_source_dataset_cols_if_needed(
         sql_dialect=linker._settings_obj._sql_dialect,
     )
     uid_col_name = uid_col.unquote().name
+
+    if uid_str is not None:
+        id_literal = uid_str
+    else:
+        id_literal = "no_id_provided"
+
     if uid_col_name not in cols:
-        uid_sel_sql = f", 'no_id_provided' as {uid_col.name}"
+        uid_sel_sql = f", '{id_literal}' as {uid_col.name}"
 
     sql = f"""
         select * {sds_sel_sql} {uid_sel_sql}
-        from  __splink__df_new_records_with_tf_before_uid_fix
+        from  {in_tablename}
         """
-    pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf")
+    pipeline.enqueue_sql(sql, out_tablename)
     return pipeline

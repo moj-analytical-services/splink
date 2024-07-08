@@ -78,14 +78,20 @@ def test_u_train_link_only(test_helpers, dialect):
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.Linker(
+        [df_l, df_r],
+        settings,
+        input_table_aliases=["l", "r"],
+        **helper.extra_linker_args(),
+    )
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
+    # Check that no records are blocked to records in the same source dataset
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
 
     pipeline = CTEPipeline()
@@ -147,7 +153,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
     """
 
     pipeline = CTEPipeline()
@@ -265,14 +271,19 @@ def test_u_train_multilink(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.Linker(
+        dfs,
+        settings,
+        input_table_aliases=["a", "b", "c", "d"],
+        **helper.extra_linker_args(),
+    )
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
 
     pipeline = CTEPipeline()
@@ -297,14 +308,19 @@ def test_u_train_multilink(test_helpers, dialect):
 
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.Linker(
+        dfs,
+        settings,
+        input_table_aliases=["e", "f", "g", "h"],
+        **helper.extra_linker_args(),
+    )
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
 
     pipeline = CTEPipeline()

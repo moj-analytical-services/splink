@@ -350,11 +350,6 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
-    input_columns = [source_dataset_input_column, unique_id_input_column]
-    sql_select_expr = ",".join(
-        [item for c in input_columns if c is not None for item in c.l_r_names_as_l_r]
-    )
-
     blocking_input_tablename_l = "__splink__df_concat"
 
     blocking_input_tablename_r = "__splink__df_concat"
@@ -381,10 +376,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         input_tablename_r=blocking_input_tablename_r,
         blocking_rules=blocking_rules,
         link_type=link_type,
-        set_match_probability_to_one=True,
         unique_id_input_column=unique_id_input_column,
         source_dataset_input_column=source_dataset_input_column,
-        columns_to_select_sql=sql_select_expr,
     )
 
     pipeline.enqueue_list_of_sqls(sqls)
@@ -393,7 +386,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         select
         count(*) as row_count,
         match_key
-        from __splink__df_blocked
+        from __splink__blocked_id_pairs
         group by match_key
         order by cast(match_key as int) asc
     """
