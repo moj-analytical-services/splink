@@ -150,14 +150,6 @@ class BlockingRule:
         input_tablename_r: str,
         where_condition: str,
     ) -> str:
-        # selects = []
-        # selects.append(unique_id_input_column.l_name_as_l)
-        # if source_dataset_input_column:
-        #     selects.append(source_dataset_input_column.l_name_as_l)
-        # selects.append(unique_id_input_column.r_name_as_r)
-        # if source_dataset_input_column:
-        #     selects.append(source_dataset_input_column.r_name_as_r)
-
         if source_dataset_input_column:
             unique_id_columns = [source_dataset_input_column, unique_id_input_column]
         else:
@@ -165,8 +157,6 @@ class BlockingRule:
 
         uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
         uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
-
-        # select_expr = ", ".join(selects)
 
         sql = f"""
             select
