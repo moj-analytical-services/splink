@@ -270,6 +270,7 @@ class LinkerInference:
             pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
             blocking_time = time.time() - start_time
             logger.info(f"Blocking time: {blocking_time:.2f} seconds")
+            start_time = time.time()
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
