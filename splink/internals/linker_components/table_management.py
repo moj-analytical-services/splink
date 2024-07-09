@@ -114,7 +114,7 @@ class LinkerTableManagement:
         self._linker._intermediate_table_cache.invalidate_cache()
 
     def register_table_input_nodes_concat_with_tf(
-        self, input_data: AcceptableInputTableType, overwrite=False
+        self, input_data: AcceptableInputTableType, overwrite: bool = False
     ) -> SplinkDataFrame:
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
         you want to re-use e.g. that you created in a previous run.
