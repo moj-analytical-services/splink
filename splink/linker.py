@@ -36,24 +36,25 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
+    SaltedBlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
+    materialise_exploded_id_tables,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
     completeness_chart,
-    confusion_matrix_chart,
     cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
     missingness_chart,
     parameter_estimate_comparisons,
     precision_recall_chart,
     roc_chart,
+    threshold_selection_tool,
     unlinkables_chart,
     waterfall_chart,
 )
-from .cluster_metrics import _size_density_sql
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -65,6 +66,7 @@ from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
+from .edge_metrics import compute_edge_metrics
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
@@ -72,6 +74,11 @@ from .find_brs_with_comparison_counts_below_threshold import (
     find_blocking_rules_below_threshold_comparison_count,
 )
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
+from .graph_metrics import (
+    GraphMetricsResults,
+    _node_degree_sql,
+    _size_density_centralisation_sql,
+)
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
@@ -220,16 +227,6 @@ class Linker:
 
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
-        if not isinstance(settings_dict, (dict, type(None))):
-            # Run if you've entered a filepath
-            # feed it a blank settings dictionary
-            self._setup_settings_objs(None)
-            self.load_settings(settings_dict)
-        else:
-            self._validate_settings_components(settings_dict)
-            settings_dict = deepcopy(settings_dict)
-            self._setup_settings_objs(settings_dict)
-
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_table_or_tables,
             input_table_aliases,
@@ -240,8 +237,8 @@ class Linker:
             homogenised_tables, homogenised_aliases
         )
 
-        self._validate_input_dfs()
-        self._validate_settings(validate_settings)
+        self._setup_settings_objs(deepcopy(settings_dict), validate_settings)
+
         self._em_training_sessions = []
 
         self._find_new_matches_mode = False
@@ -322,14 +319,14 @@ class Linker:
 
     @property
     def _cache_uid(self):
-        if self._settings_dict:
+        if getattr(self, "_settings_dict", None):
             return self._settings_obj._cache_uid
         else:
             return self._cache_uid_no_settings
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        if self._settings_dict:
+        if getattr(self, "_settings_dict", None):
             self._settings_obj._cache_uid = value
         else:
             self._cache_uid_no_settings = value
@@ -471,25 +468,22 @@ class Linker:
 
         return homogenised_tables, homogenised_aliases
 
-    def _setup_settings_objs(self, settings_dict):
-        # Setup the linker class's required settings
-        self._settings_dict = settings_dict
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
-
-        if settings_dict is None:
-            self._cache_uid_no_settings = ascii_uid(8)
-        else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
-            settings_dict["linker_uid"] = uid
+    def _setup_settings_objs(self, settings_dict, validate_settings: bool = True):
+        # Always sets a default cache uid -> _cache_uid_no_settings
+        self._cache_uid = ascii_uid(8)
 
         if settings_dict is None:
             self._settings_obj_ = None
-        else:
-            self._settings_obj_ = Settings(settings_dict)
+            return
+
+        if not isinstance(settings_dict, (str, dict)):
+            raise ValueError(
+                "Invalid settings object supplied. Ensure this is either "
+                "None, a dictionary or a filepath to a settings object saved "
+                "as a json file."
+            )
+
+        self.load_settings(settings_dict, validate_settings)
 
     def _check_for_valid_settings(self):
         if (
@@ -503,23 +497,13 @@ class Linker:
         else:
             return True
 
-    def _validate_settings_components(self, settings_dict):
-        # Vaidate our settings after plugging them through
-        # `Settings(<settings>)`
-        if settings_dict is None:
-            return
-
-        log_comparison_errors(
-            # null if not in dict - check using value is ignored
-            settings_dict.get("comparisons", None),
-            self._sql_dialect,
-        )
-
     def _validate_settings(self, validate_settings):
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if not self._check_for_valid_settings():
             return
+
+        self._validate_input_dfs()
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
@@ -1136,27 +1120,23 @@ class Linker:
             settings_dict = json.loads(p.read_text())
 
         # Store the cache ID so it can be reloaded after cache invalidation
-        cache_id = self._cache_uid
-        # So we don't run into any issues with generated tables having
-        # invalid columns as settings have been tweaked, invalidate
-        # the cache and allow these tables to be recomputed.
+        cache_uid = self._cache_uid
 
-        # This is less efficient, but triggers infrequently and ensures we don't
-        # run into issues where the defaults used conflict with the actual values
-        # supplied in settings.
-
-        # This is particularly relevant with `source_dataset`, which appears within
-        # concat_with_tf.
+        # Invalidate the cache if anything currently exists. If the settings are
+        # changing, our charts, tf tables, etc may need changing.
         self.invalidate_cache()
 
-        # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
-        settings_dict["sql_dialect"] = settings_dict.get(
-            "sql_dialect", self._sql_dialect
-        )
-        self._settings_dict = settings_dict
+        self._settings_dict = settings_dict  # overwrite or add
+
+        # Get the SQL dialect from settings_dict or use the default
+        sql_dialect = settings_dict.get("sql_dialect", self._sql_dialect)
+        settings_dict["sql_dialect"] = sql_dialect
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
+
+        # Check the user's comparisons (if they exist)
+        log_comparison_errors(settings_dict.get("comparisons"), sql_dialect)
         self._settings_obj_ = Settings(settings_dict)
-        self._validate_input_dfs()
+        # Check the final settings object
         self._validate_settings(validate_settings)
 
     def load_model(self, model_path: Path):
@@ -1428,10 +1408,15 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
-        return self._execute_sql_pipeline([concat_with_tf])
+
+        deterministic_link_df = self._execute_sql_pipeline([concat_with_tf])
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+        return deterministic_link_df
 
     def estimate_u_using_random_sampling(
         self, max_pairs: int = None, seed: int = None, *, target_rows=None
@@ -1652,14 +1637,23 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
+        # Check it's a BlockingRule (not a SaltedBlockingRule, ExlpodingBlockingRule)
+        # and raise error if not specfically a BlockingRule
+        blocking_rule = blocking_rule_to_obj(blocking_rule)
+        if type(blocking_rule) not in (BlockingRule, SaltedBlockingRule):
+            raise TypeError(
+                "EM blocking rules must be plain blocking rules, not "
+                "salted or exploding blocking rules"
+            )
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
-                self._settings_obj._get_comparison_by_output_column_name(n)
-                if isinstance(n, str)
-                else n
+                (
+                    self._settings_obj._get_comparison_by_output_column_name(n)
+                    if isinstance(n, str)
+                    else n
+                )
                 for n in comparisons_to_deactivate
             ]
             if comparison_levels_to_reverse_blocking_rule is None:
@@ -1751,6 +1745,10 @@ class Linker:
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
 
+        # If exploded blocking rules exist, we need to materialise
+        # the tables of ID pairs
+        exploding_br_with_id_tables = materialise_exploded_id_tables(self)
+
         sqls = block_using_rules_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -1776,6 +1774,9 @@ class Linker:
 
         predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
+
+        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
+
         return predictions
 
     def find_matches_to_new_records(
@@ -2101,52 +2102,197 @@ class Linker:
             pairwise_formatting,
             filter_pairwise_format_for_clusters,
         )
+        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
         return cc
 
-    def _compute_cluster_metrics(
+    def _compute_metrics_nodes(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         threshold_match_probability: float,
-    ):
-        """Generates a table containing cluster metrics and returns a Splink dataframe
-
-        Args:
-            df_predict (SplinkDataFrame): The results of `linker.predict()`
-            df_clustered (SplinkDataFrame): The outputs of
-                `linker.cluster_pairwise_predictions_at_threshold()`
-            threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability above this
-                threshold.
-
-        Returns:
-            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
-            cluster metrics
-
+    ) -> SplinkDataFrame:
         """
+        Internal function for computing node-level metrics.
 
-        # Get unique id columns
+        Accepts outputs of `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of node metrics.
+
+        Node metrics produced:
+        * node_degree (absolute number of neighbouring nodes)
+
+        Output table has a single row per input node, along with the cluster id (as
+        assigned in `linker.cluster_pairwise_at_threshold()`) and the metric
+        node_degree:
+        |-------------------------------------------------|
+        | composite_unique_id | cluster_id  | node_degree |
+        |---------------------|-------------|-------------|
+        | s1-__-10001         | s1-__-10001 | 6           |
+        | s1-__-10002         | s1-__-10001 | 4           |
+        | s1-__-10003         | s1-__-10003 | 2           |
+        ...
+        """
         uid_cols = self._settings_obj._unique_id_input_columns
-        # Create unique id for left-hand edges
+        # need composite unique ids
         composite_uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-        # Create unique id for clusters
+        composite_uid_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
-        sqls = _size_density_sql(
+        sqls = _node_degree_sql(
             df_predict,
             df_clustered,
-            threshold_match_probability,
             composite_uid_edges_l,
+            composite_uid_edges_r,
             composite_uid_clusters,
+            threshold_match_probability,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_node_metrics = self._execute_sql_pipeline()
+
+        df_node_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
+        return df_node_metrics
+
+    def _compute_metrics_edges(
+        self,
+        df_node_metrics: SplinkDataFrame,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing edge-level metrics.
+
+        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
+        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
+        and produces a table of edge metrics.
+
+        Uses `igraph` under-the-hood for calculations
+
+        Edge metrics produced:
+        * is_bridge (is the edge a bridge?)
+
+        Output table has a single row per edge, and the metric is_bridge:
+        |-------------------------------------------------------------|
+        | composite_unique_id_l | composite_unique_id_r   | is_bridge |
+        |-----------------------|-------------------------|-----------|
+        | s1-__-10001           | s1-__-10003             | True      |
+        | s1-__-10001           | s1-__-10005             | False     |
+        | s1-__-10005           | s1-__-10009             | False     |
+        | s1-__-10021           | s1-__-10024             | True      |
+        ...
+        """
+        df_edge_metrics = compute_edge_metrics(
+            self, df_node_metrics, df_predict, df_clustered, threshold_match_probability
+        )
+        df_edge_metrics.metadata[
+            "threshold_match_probability"
+        ] = threshold_match_probability
+        return df_edge_metrics
+
+    def _compute_metrics_clusters(
+        self,
+        df_node_metrics: SplinkDataFrame,
+    ) -> SplinkDataFrame:
+        """
+        Internal function for computing cluster-level metrics.
+
+        Accepts output of `linker._compute_node_metrics()` (which has the relevant
+        information from `linker.predict() and
+        `linker.cluster_pairwise_at_threshold()`), produces a table of cluster metrics.
+
+        Cluster metrics produced:
+        * n_nodes (aka cluster size, number of nodes in cluster)
+        * n_edges (number of edges in cluster)
+        * density (number of edges normalised wrt maximum possible number)
+        * cluster_centralisation (average absolute deviation from maximum node_degree
+            normalised wrt maximum possible value)
+
+        Output table has a single row per cluster, along with the cluster metrics
+        listed above
+        |--------------------------------------------------------------------|
+        | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
+        |-------------|---------|---------|---------|------------------------|
+        | s1-__-10006 | 4       | 4       | 0.66667 | 0.6666                 |
+        | s1-__-10008 | 6       | 5       | 0.33333 | 0.4                    |
+        | s1-__-10013 | 11      | 19      | 0.34545 | 0.3111                 |
+        ...
+        """
+
+        sqls = _size_density_centralisation_sql(
+            df_node_metrics,
         )
 
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         df_cluster_metrics = self._execute_sql_pipeline()
-
+        df_cluster_metrics.metadata[
+            "threshold_match_probability"
+        ] = df_node_metrics.metadata["threshold_match_probability"]
         return df_cluster_metrics
+
+    def compute_graph_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        *,
+        threshold_match_probability: float = None,
+    ) -> GraphMetricsResults:
+        """
+        Generates tables containing graph metrics (for nodes, edges and clusters),
+        and returns a data class of Splink dataframes
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            threshold_match_probability (float, optional): Filter the pairwise match
+                predictions to include only pairwise comparisons with a
+                match_probability at or above this threshold. If not provided, the value
+                will be taken from metadata on `df_clustered`. If no such metadata is
+                available, this value _must_ be provided.
+
+        Returns:
+            GraphMetricsResult: A data class containing SplinkDataFrames
+            of cluster IDs and selected node, edge or cluster metrics.
+                attribute "nodes" for nodes metrics table
+                attribute "edges" for edge metrics table
+                attribute "clusters" for cluster metrics table
+
+        """
+        if threshold_match_probability is None:
+            threshold_match_probability = df_clustered.metadata.get(
+                "threshold_match_probability", None
+            )
+            # we may not have metadata if clusters have been manually registered, or
+            # read in from a format that does not include it
+            if threshold_match_probability is None:
+                raise TypeError(
+                    "As `df_clustered` has no threshold metadata associated to it, "
+                    "to compute graph metrics you must provide "
+                    "`threshold_match_probability` manually"
+                )
+        df_node_metrics = self._compute_metrics_nodes(
+            df_predict, df_clustered, threshold_match_probability
+        )
+        df_edge_metrics = self._compute_metrics_edges(
+            df_node_metrics,
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+        )
+        # don't need edges as information is baked into node metrics
+        df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
+
+        return GraphMetricsResults(
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
+        )
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
@@ -2540,14 +2686,14 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
 
-    def confusion_matrix_from_labels_table(
+    def threshold_selection_tool_from_labels_table(
         self,
-        labels_splinkdataframe_or_table_name,
+        labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        match_weight_range=[-15, 15],
+        add_metrics: list = [],
     ):
-        """Generate an interactive confusion matrix from labelled (ground truth) data.
+        """Generate an accuracy chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
         as a table with your database:
@@ -2574,25 +2720,36 @@ class Linker:
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the chart. Defaults to None.
-            match_weight_range (list(float), optional): minimum and maximum thresholds
-                to include in chart output. Defaults to [-15,15].
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
-            === ":simple-duckdb: DuckDB"
-                ```py
-                labels = pd.read_csv("my_labels.csv")
-                linker.register_table(labels, "labels")
-                linker.confusion_matrix_from_labels_table("labels")
-                ```
-            === ":simple-apachespark: Spark"
-                ```py
-                labels = spark.read.csv("my_labels.csv", header=True)
-                labels.createDataFrame("labels")
-                linker.confusion_matrix_from_labels_table("labels")
-                ```
+            ```py
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
+            ```
 
         Returns:
             altair.Chart: An altair chart
         """
+
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
 
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
@@ -2604,11 +2761,8 @@ class Linker:
             threshold_actual=threshold_actual,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
-
         recs = df_truth_space.as_record_dict()
-        a, b = match_weight_range
-        recs = [r for r in recs if a < r["truth_threshold"] < b]
-        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
+        return threshold_selection_tool(recs, add_metrics=add_metrics)
 
     def prediction_errors_from_labels_table(
         self,
@@ -2814,12 +2968,12 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
 
-    def confusion_matrix_from_labels_column(
+    def threshold_selection_tool_from_labels_column(
         self,
-        labels_column_name,
+        labels_column_name: str,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        match_weight_range=[-15, 15],
+        add_metrics: list = [],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2834,16 +2988,36 @@ class Linker:
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the chart. Defaults to None.
-            match_weight_range (list(float), optional): minimum and maximum thresholds
-                to include in chart output. Defaults to [-15,15].
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.confusion_matrix_from_labels_column("ground_truth")
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
             ```
 
         Returns:
             altair.Chart: An altair chart
         """
+
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
 
         df_truth_space = truth_space_table_from_labels_column(
             self,
@@ -2851,11 +3025,8 @@ class Linker:
             threshold_actual=threshold_actual,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
-
         recs = df_truth_space.as_record_dict()
-        a, b = match_weight_range
-        recs = [r for r in recs if a < r["truth_threshold"] < b]
-        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
+        return threshold_selection_tool(recs, add_metrics=add_metrics)
 
     def prediction_errors_from_labels_column(
         self,
@@ -2909,7 +3080,9 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: list[dict], filter_nulls=True):
+    def waterfall_chart(
+        self, records: list[dict], filter_nulls=True, remove_sensitive_data=False
+    ):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -2929,6 +3102,9 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+            remove_sensitive_data (bool, optional): When True, The waterfall chart will
+                contain match weights only, and all of the (potentially sensitive) data
+                from the input tables will be removed prior to the chart being created.
 
 
         Returns:
@@ -2937,7 +3113,9 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(records, self._settings_obj, filter_nulls)
+        return waterfall_chart(
+            records, self._settings_obj, filter_nulls, remove_sensitive_data
+        )
 
     def unlinkables_chart(
         self,
@@ -3455,6 +3633,7 @@ class Linker:
         cluster_names: list = None,
         overwrite: bool = False,
         return_html_as_string=False,
+        _df_cluster_metrics: SplinkDataFrame = None,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -3464,8 +3643,8 @@ class Linker:
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
-            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
-                `random`.
+            sampling_method (str, optional): `random`, `by_cluster_size` or
+                `lowest_density_clusters`. Defaults to `random`.
             sample_size (int, optional): Number of clusters to show in the dahboard.
                 Defaults to 10.
             cluster_ids (list): The IDs of the clusters that will be displayed in the
@@ -3505,6 +3684,7 @@ class Linker:
             cluster_ids=cluster_ids,
             overwrite=overwrite,
             cluster_names=cluster_names,
+            _df_cluster_metrics=_df_cluster_metrics,
         )
 
         if return_html_as_string:
@@ -3643,6 +3823,11 @@ class Linker:
         will be recomputed.
         This is useful, for example, if the input data tables have changed.
         """
+
+        # Nothing to delete
+        if len(self._intermediate_table_cache) == 0:
+            return
+
         # Before Splink executes a SQL command, it checks the cache to see
         # whether a table already exists with the name of the output table
 
@@ -3936,3 +4121,10 @@ class Linker:
                     "suggested_blocking_rules_as_splink_brs"
                 ].iloc[0]
                 return suggestion
+
+    def _explode_arrays_sql(
+        self, tbl_name, columns_to_explode, other_columns_to_retain
+    ):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
+        )

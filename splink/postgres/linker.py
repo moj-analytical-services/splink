@@ -30,7 +30,7 @@ class PostgresDataFrame(SplinkDataFrame):
         FROM information_schema.columns
         WHERE table_name = '{self.physical_name}';
         """
-        res = self.linker._run_sql_execution(sql).fetchall()
+        res = self.linker._run_sql_execution(sql).mappings().all()
         cols = [r["column_name"] for r in res]
 
         return [InputColumn(c, sql_dialect="postgres") for c in cols]
@@ -50,7 +50,7 @@ class PostgresDataFrame(SplinkDataFrame):
         WHERE table_name = '{self.physical_name}';
         """
 
-        res = self.linker._run_sql_execution(sql).fetchall()
+        res = self.linker._run_sql_execution(sql).mappings().all()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the postgres db provided.\n"
@@ -133,7 +133,7 @@ class PostgresLinker(Linker):
     def _run_sql_execution(
         self, final_sql: str, templated_name: str = None, physical_name: str = None
     ):
-        with self._engine.connect() as con:
+        with self._engine.begin() as con:
             res = con.execute(text(final_sql))
         return res
 
@@ -210,7 +210,7 @@ class PostgresLinker(Linker):
         WHERE table_name = '{table_name}';
         """
 
-        rec = self._run_sql_execution(sql).fetchall()
+        rec = self._run_sql_execution(sql).mappings().all()
         return len(rec) > 0
 
     def _delete_table_from_database(self, name):

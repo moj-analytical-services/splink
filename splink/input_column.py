@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, replace
 
 import sqlglot
@@ -106,7 +106,7 @@ class SqlglotColumnTreeBuilder:
 
         # If the raw string parses to a valid signature, use it
         try:
-            tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
+            tree = sqlglot.parse_one(input_str, read=sqlglot_dialect)
         except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:
@@ -123,7 +123,7 @@ class SqlglotColumnTreeBuilder:
         q_s, q_e = _get_dialect_quotes(sqlglot_dialect)
         input_str = add_quotes_to_column_name(input_str, q_s, q_e)
         try:
-            tree = sqlglot.parse_one(input_str, dialect=sqlglot_dialect)
+            tree = sqlglot.parse_one(input_str, read=sqlglot_dialect)
         except (sqlglot.ParseError, sqlglot.TokenError):
             pass
         else:
@@ -216,20 +216,20 @@ class InputColumn:
         )
 
     def unquote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=False)
         self_copy.col_builder = b
         return self_copy
 
     def quote(self) -> InputColumn:
-        self_copy = deepcopy(self)
+        self_copy = copy(self)
         b = replace(self_copy.col_builder, quoted=True)
         self_copy.col_builder = b
         return self_copy
 
     @property
     def as_base_dialect(self) -> InputColumn:
-        input_column_copy = deepcopy(self)
+        input_column_copy = copy(self)
         input_column_copy.sql_dialect = None
         return input_column_copy
 

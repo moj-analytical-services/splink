@@ -6,7 +6,8 @@
 [![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
-
+> [!IMPORTANT]
+> Development has begun on Splink 4 on the `splink4_dev` branch.  Splink 3 is in maintenance mode and we are no longer accepting new features. We welcome contributions to Splink 4. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/04/02/splink-3-updates-and-splink-4-development-announcement---april-2024.html).
 
 # Fast, accurate and scalable probabilistic data linkage
 
@@ -20,7 +21,7 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 🎓 **Unsupervised Learning:** No training data is required for model training.  
 📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.  
 
-Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
+Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
 ## What does Splink do?
 
@@ -38,7 +39,7 @@ and clusters these links to produce an estimated person ID:
 
 ## What data does Splink work best with?
 
-Before using Splink, input data should be standardized, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
+Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
 
 Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
@@ -70,39 +71,33 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
+### Installing Splink for Specific Backends
+
+
+For projects requiring specific backends, Splink offers optional installations for **Spark**, **Athena**, and **PostgreSQL**. These can be installed by appending the backend name in brackets to the pip install command:
+```sh
+pip install 'splink[{backend}]'
+```
+
+Should you require a version of Splink without **DuckDB**, see our section on [DuckDBLess Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation).
+
 <details>
-<summary><h3>Additional installation methods</h3></summary>
+<summary><i>Click here for backend-specific installation commands</i></summary>
 
-<br>
-
-### Backend Specific Installs
-From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your `pip install`.
-
-**Note** that **SQLite** and **DuckDB** come packaged with Splink and do not need to be optionally installed.
-
-Backends supported by optional installs:
-
-**Spark**
+#### Spark
 ```sh
 pip install 'splink[spark]'
 ```
 
-**Athena**
+#### Athena
 ```sh
 pip install 'splink[athena]'
 ```
 
-**PostgreSQL**
+#### PostgreSQL
 ```sh
 pip install 'splink[postgres]'
 ```
-
-<br>
-
-### DuckDBLess Splink
-Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
-> [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
-
 </details>
 
 ## Quickstart
@@ -158,23 +153,29 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Charts Gallery
 
-You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
+You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](https://moj-analytical-services.github.io/splink/charts/index.html).
 
 ## Support
 
 To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
+## Use Cases
+
+To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs.
+
 ## Awards
 
-🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+❓ Future of Government Awards 2023: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
-🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
+🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
 🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
 
 🥈 Analysis in Government Awards 2022: Innovative Methods - [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
-🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
+🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+
+🥇 MoJ Data and Analytical Services Directorate (DASD) Awards 2020: Innovation and Impact - Winner
 
 
 ## Citation

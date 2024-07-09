@@ -5,11 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [3.9.15] - 2024-05-18
+
+### Fixed
+
+- Activates `higher_is_more_similar` kwarg in `cl.distance_function_at_thresholds`, see [here](https://github.com/moj-analytical-services/splink/pull/2116)
+- `linker.save_model_to_json()` now correctly serialises `tf_minimum_u_value` and reloads. See [here](https://github.com/moj-analytical-services/splink/pull/2122).
+- Performance improvements on code geenration, see [here](https://github.com/moj-analytical-services/splink/pull/2212)
+
+## [3.9.14] - 2024-03-25
+
+### Fixed
+
+- `IndexError: List index out of range` error due to API change `SQLGlot>=23.0.0`, see [here](https://github.com/moj-analytical-services/splink/pull/2079)
+
+### Added
+
+- Ability to override detection of exact match level for tf adjustments. See [here](https://gist.github.com/RobinL/6e11c04aa1204ac3e7452eddd778ab4f) for example.
+- Added method for computing graph metrics ([#2027](https://github.com/moj-analytical-services/splink/pull/2027))
+
+## [3.9.13] - 2024-03-04
+
+- Support for Databricks Runtime 13.x+
+
+### Fixed
+
+- Bug that prevented `sqlglot <= 17.0.0` from working properly ([#1996](https://github.com/moj-analytical-services/splink/pull/1996))
+- Fixed issues relating to duckdb 0.10.1 ([#1999](https://github.com/moj-analytical-services/splink/pull/1999))
+- Update sqlglot compatibility to support latest version ([#1998](https://github.com/moj-analytical-services/splink/pull/1998))
+
+## [3.9.12] - 2024-01-30
+
+### Fixed
+
+- Support `sqlalchemy >= 2.0.0` ([#1908](https://github.com/moj-analytical-services/splink/pull/1908))
+
+## [3.9.11] - 2024-01-17
+
+### Added
+
+- Ability to block on array columns by specifying `arrays_to_explode` in your blocking rule. ([#1692](https://github.com/moj-analytical-services/splink/pull/1692))
+- Added ability to sample by density in cluster studio by @zslade in ([#1754](https://github.com/moj-analytical-services/splink/pull/1754))
 
 ### Changed
 
+- Splink now fully parallelises data linkage when using DuckDB ([#1796](https://github.com/moj-analytical-services/splink/pull/1796))
+
 ### Fixed
+
+- Allow salting in EM training ([#1832](https://github.com/moj-analytical-services/splink/pull/1832))
 
 ## [3.9.10] - 2023-12-07
 
@@ -20,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed issue with  `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
+- Fixed issue with `_source_dataset_col` and `_source_dataset_input_column` ([#1731](https://github.com/moj-analytical-services/splink/pull/1731))
 - Delete cached tables before resetting the cache ([#1752](https://github.com/moj-analytical-services/splink/pull/1752)
 
 ## [3.9.9] - 2023-11-14
@@ -57,7 +101,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.10...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.14...HEAD
+[3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14
+[3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
+[3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
+[3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11
 [3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...3.9.10
 [3.9.9]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...3.9.9
 [3.9.8]: https://github.com/moj-analytical-services/splink/compare/v3.9.7...v3.9.8

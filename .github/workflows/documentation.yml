@@ -5,6 +5,15 @@ on:
     branches:
       - master
 
+  pull_request:
+    branches:
+      - master
+    paths:
+      # files that affect the docs build:
+      - docs/**
+      - CONTRIBUTING.md
+      - mkdocs.yml
+
   workflow_dispatch:
 
 jobs:
@@ -19,6 +28,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v4
@@ -39,6 +49,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
+          version: '1.7.0'
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -78,7 +89,7 @@ jobs:
           name: generated_files
           path: docs/includes/generated_files
 
-  deploy:
+  build:
     runs-on: ubuntu-latest
     needs: generate-files
     steps:
@@ -95,13 +106,54 @@ jobs:
           name: generated_files
           path: docs/includes/generated_files
 
-      - name: Preprocess markdown include files
-        run: python3 scripts/preprocess_markdown_includes.py
-
       - run: tree docs/
-      - run: pip install --upgrade pip
-      - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
+      - name: install docs dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/docs-requirements.txt
 
+      - name: build documentation
+        run: mkdocs build
+
+      - name: check links
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          fail: true
+          args: --offline site/ --verbose './**/*.html'
+
+      - name: Upload built site
+        uses: actions/upload-artifact@v3
+        with:
+          name: built_site
+          path: site
+
+      # some environment info:
       - run: pip freeze
       - run: mkdocs --version
-      - run: tree docs/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    # we only deplot on push to master
+    # this job doesn't run if this is triggered by a PR
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: built_site
+          path: site
+
+      - name: commit and force-push to gh-pages branch
+        run: |
+          pip install ghp-import==2.1.0
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          ghp-import -opfm "Update docs from commit ${{ github.sha }}" site

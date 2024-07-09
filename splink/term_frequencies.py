@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(input_column: InputColumn):
-    input_column = input_column.unquote().name.replace(" ", "_")
-    return f"__splink__df_tf_{input_column}"
+    column_name_str = input_column.unquote().name.replace(" ", "_")
+    return f"__splink__df_tf_{column_name_str}"
 
 
 def term_frequencies_for_single_column_sql(
@@ -56,7 +56,7 @@ def _join_tf_to_input_df_sql(linker: Linker):
         select_cols.append(f"{tbl}.{tf_col}")
 
     select_cols.insert(0, "__splink__df_concat.*")
-    select_cols = ", ".join(select_cols)
+    select_cols_str = ", ".join(select_cols)
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
@@ -72,12 +72,12 @@ def _join_tf_to_input_df_sql(linker: Linker):
     #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name)
     #     for col in tf_cols
     # ]
-    left_joins = " ".join(left_joins)
+    left_joins_str = " ".join(left_joins)
 
     sql = f"""
-    select {select_cols}
+    select {select_cols_str }
     from __splink__df_concat
-    {left_joins}
+    {left_joins_str}
     """
 
     return sql
@@ -195,7 +195,7 @@ def comparison_level_to_tf_chart_data(cl: dict):
 def tf_adjustment_chart(
     linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
 ):
-    # Data for chart
+
     c = linker._settings_obj._get_comparison_by_output_column_name(col)
     c = c._as_detailed_records
 
@@ -237,7 +237,9 @@ def tf_adjustment_chart(
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
 
-    vals_not_included = [val for val in vals_to_include if val not in df["value"]]
+    vals_not_included = [
+        val for val in vals_to_include if val not in df["value"].values
+    ]
     if vals_not_included:
         warnings.warn(
             f"Values {vals_not_included} from `vals_to_include` were not found in "

@@ -1,0 +1,818 @@
+{
+    "config": {
+        "view": {
+            "continuousWidth": 300,
+            "continuousHeight": 300,
+            "discreteHeight": {
+                "step": 150
+            },
+            "discreteWidth": {
+                "step": 150
+            }
+        },
+        "concat": {
+            "spacing": 40
+        },
+        "axis": {
+            "gridWidth": 0.5,
+            "labelFontSize": 12,
+            "titleFontSize": 16
+        },
+        "axisX": {
+            "offset": 20,
+            "format": "+.0f",
+            "values": {
+                "expr": "[-25,-20,-15,-10,-5,0,5,10,15,20,25]"
+            },
+            "grid": false
+        },
+        "axisY": {
+            "titleFontSize": 16,
+            "title": "Match probability threshold"
+        }
+    },
+    "title": {
+        "text": "Match Threshold Selection Tool",
+        "fontSize": 28,
+        "subtitleFontSize": 14,
+        "subtitleFontStyle": "italic",
+        "subtitle": [
+            "Hover over either line graph to show Confusion Matrix (bottom left) and selected performance metrics (right).",
+            "",
+            "Click a legend value to show a specific evaluation metric. Shift + Click to show multiple metrics"
+        ],
+        "anchor": "middle",
+        "baseline": "line-bottom"
+    },
+    "hconcat": [
+        {
+            "vconcat": [
+                {
+                    "description": "Match weight vs probability",
+                    "layer": [
+                        {
+                            "layer": [
+                                {
+                                    "mark": {
+                                        "type": "rule"
+                                    },
+                                    "encoding": {
+                                        "x": {
+                                            "field": "truth_threshold",
+                                            "type": "quantitative",
+                                            "title": null,
+                                            "axis": {
+                                                "orient": "bottom"
+                                            },
+                                            "scale": {
+                                                "nice": false
+                                            }
+                                        },
+                                        "opacity": {
+                                            "condition": {
+                                                "param": "threshold",
+                                                "value": 0.3,
+                                                "empty": false
+                                            },
+                                            "value": 0
+                                        }
+                                    },
+                                    "params": [
+                                        {
+                                            "name": "threshold",
+                                            "select": {
+                                                "type": "point",
+                                                "encodings": [
+                                                    "x"
+                                                ],
+                                                "fields": [
+                                                    "truth_threshold"
+                                                ],
+                                                "nearest": true,
+                                                "on": "mouseover",
+                                                "toggle": false
+                                            },
+                                            "value": null
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "rule"
+                                    },
+                                    "encoding": {
+                                        "y": {
+                                            "field": "match_probability",
+                                            "type": "quantitative",
+                                            "title": " ",
+                                            "axis": {
+                                                "orient": "right"
+                                            }
+                                        },
+                                        "opacity": {
+                                            "condition": {
+                                                "param": "threshold",
+                                                "value": 0.3,
+                                                "empty": false
+                                            },
+                                            "value": 0
+                                        }
+                                    },
+                                    "params": [
+                                        {
+                                            "name": "prob",
+                                            "select": {
+                                                "type": "point",
+                                                "encodings": [
+                                                    "y"
+                                                ],
+                                                "fields": [
+                                                    "match_probability"
+                                                ],
+                                                "nearest": true,
+                                                "on": "mouseover",
+                                                "toggle": false
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "layer": [
+                                {
+                                    "mark": {
+                                        "type": "text",
+                                        "fontSize": 14,
+                                        "fontWeight": "bold",
+                                        "xOffset": 25,
+                                        "yOffset": 10
+                                    },
+                                    "encoding": {
+                                        "text": {
+                                            "aggregate": "min",
+                                            "field": "truth_threshold",
+                                            "format": "+.2f"
+                                        },
+                                        "y": {
+                                            "field": "match_probability",
+                                            "type": "quantitative",
+                                            "title": "Match probability threshold",
+                                            "axis": {
+                                                "orient": "left"
+                                            }
+                                        }
+                                    },
+                                    "transform": [
+                                        {
+                                            "filter": {
+                                                "param": "threshold",
+                                                "empty": false
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "text",
+                                        "fontSize": 14,
+                                        "xOffset": -25,
+                                        "yOffset": -10
+                                    },
+                                    "encoding": {
+                                        "text": {
+                                            "aggregate": "min",
+                                            "field": "match_probability",
+                                            "format": ".3f"
+                                        }
+                                    },
+                                    "transform": [
+                                        {
+                                            "filter": {
+                                                "param": "threshold",
+                                                "empty": false
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "line",
+                                        "color": "red",
+                                        "opacity": 0.5
+                                    }
+                                },
+                                {
+                                    "mark": {
+                                        "type": "line",
+                                        "color": "green",
+                                        "opacity": 0.5,
+                                        "strokeWidth": 3
+                                    },
+                                    "transform": [
+                                        {
+                                            "filter": "datum.truth_threshold >= threshold.truth_threshold"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "point",
+                                        "color": "green",
+                                        "size": 100
+                                    },
+                                    "encoding": {
+                                        "opacity": {
+                                            "condition": {
+                                                "param": "threshold",
+                                                "value": 1,
+                                                "empty": false
+                                            },
+                                            "value": 0
+                                        }
+                                    }
+                                }
+                            ],
+                            "encoding": {
+                                "y": {
+                                    "field": "match_probability",
+                                    "type": "quantitative",
+                                    "title": "Match probability threshold",
+                                    "axis": {
+                                        "titlePadding": 10,
+                                        "orient": "left"
+                                    }
+                                },
+                                "x": {
+                                    "field": "truth_threshold",
+                                    "type": "quantitative",
+                                    "title": "Match weight threshold",
+                                    "axis": {
+                                        "orient": "top"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "mark": {
+                                "type": "text",
+                                "x": 0,
+                                "y": "height",
+                                "yOffset": 10,
+                                "align": "left",
+                                "text": "Non-match",
+                                "color": "red",
+                                "fontSize": 12
+                            },
+                            "data": {
+                                "values": [
+                                    {}
+                                ]
+                            }
+                        },
+                        {
+                            "mark": {
+                                "type": "text",
+                                "x": "width",
+                                "y": 0,
+                                "yOffset": -10,
+                                "align": "right",
+                                "text": "Match",
+                                "color": "green",
+                                "fontSize": 12,
+                                "fontWeight": "bold"
+                            },
+                            "data": {
+                                "values": [
+                                    {}
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "hconcat": [
+                        {
+                            "description": "Confusion matrix",
+                            "layer": [
+                                {
+                                    "mark": {
+                                        "type": "rect",
+                                        "opacity": 0.5
+                                    },
+                                    "encoding": {
+                                        "color": {
+                                            "field": "count",
+                                            "legend": null,
+                                            "scale": {
+                                                "scheme": "reds",
+                                                "zero": true
+                                            },
+                                            "type": "quantitative"
+                                        }
+                                    },
+                                    "transform": [
+                                        {
+                                            "filter": "datum.predicted == 0"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "rect",
+                                        "opacity": 0.5
+                                    },
+                                    "encoding": {
+                                        "color": {
+                                            "field": "count",
+                                            "legend": null,
+                                            "scale": {
+                                                "scheme": "greens",
+                                                "zero": true
+                                            },
+                                            "type": "quantitative"
+                                        }
+                                    },
+                                    "transform": [
+                                        {
+                                            "filter": "datum.predicted == 1"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "mark": {
+                                        "type": "text",
+                                        "fontSize": 14,
+                                        "yOffset": -40
+                                    },
+                                    "encoding": {
+                                        "color": {
+                                            "condition": [
+                                                {
+                                                    "test": "datum.predicted==1 && datum.actual==1",
+                                                    "value": "darkgreen"
+                                                },
+                                                {
+                                                    "test": "datum.predicted==0 && datum.actual==0",
+                                                    "value": "darkred"
+                                                }
+                                            ],
+                                            "value": "black"
+                                        },
+                                        "opacity": {
+                                            "condition": {
+                                                "test": "datum.predicted != datum.actual",
+                                                "value": 1
+                                            },
+                                            "value": 0.5
+                                        },
+                                        "text": {
+                                            "field": "confusion_label",
+                                            "type": "nominal"
+                                        }
+                                    }
+                                },
+                                {
+                                    "mark": {
+                                        "type": "text",
+                                        "fontSize": 28,
+                                        "fontWeight": "bold",
+                                        "yOffset": 10
+                                    },
+                                    "encoding": {
+                                        "color": {
+                                            "condition": [
+                                                {
+                                                    "test": "datum.predicted==1 && datum.actual==1",
+                                                    "value": "darkgreen"
+                                                },
+                                                {
+                                                    "test": "datum.predicted==0 && datum.actual==0",
+                                                    "value": "darkred"
+                                                }
+                                            ],
+                                            "value": "black"
+                                        },
+                                        "text": {
+                                            "field": "count",
+                                            "format": ",",
+                                            "type": "nominal"
+                                        }
+                                    }
+                                }
+                            ],
+                            "encoding": {
+                                "x": {
+                                    "field": "actual",
+                                    "type": "nominal",
+                                    "title": "Actual",
+                                    "axis": {
+                                        "domain": false,
+                                        "labelAngle": 0,
+                                        "labelExpr": "datum.label == 1 ? 'Match' : 'Non-match'",
+                                        "labelFontSize": 18,
+                                        "labelPadding": 10,
+                                        "orient": "top",
+                                        "ticks": false,
+                                        "titleAngle": 0,
+                                        "titleFontSize": 20
+                                    },
+                                    "sort": "-x"
+                                },
+                                "y": {
+                                    "field": "predicted",
+                                    "type": "nominal",
+                                    "title": "Predicted",
+                                    "axis": {
+                                        "domain": false,
+                                        "labelExpr": "datum.label == 1 ? 'Match' : 'Non-match'",
+                                        "labelFontSize": 18,
+                                        "labelPadding": 10,
+                                        "ticks": false,
+                                        "titleAngle": 0,
+                                        "titleFontSize": 20,
+                                        "titlePadding": -30
+                                    },
+                                    "sort": "-y"
+                                }
+                            },
+                            "resolve": {
+                                "scale": {
+                                    "color": "independent"
+                                }
+                            },
+                            "transform": [
+                                {
+                                    "filter": {
+                                        "or": [
+                                            {
+                                                "param": "threshold",
+                                                "empty": false
+                                            },
+                                            {
+                                                "and": [
+                                                    {
+                                                        "param": "threshold",
+                                                        "empty": true
+                                                    },
+                                                    "datum.truth_threshold == datum.median_threshold"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "transform": [
+                        {
+                            "fold": [
+                                "tp",
+                                "tn",
+                                "fp",
+                                "fn"
+                            ],
+                            "as": [
+                                "label",
+                                "count"
+                            ]
+                        },
+                        {
+                            "calculate": "datum.label === 'tp' ? 'True Positive (TP)' : datum.label === 'tn' ? 'True Negative (TN)' : datum.label === 'fp' ? 'False Positive (FP)' : 'False Negative (FN)'",
+                            "as": "confusion_label"
+                        },
+                        {
+                            "calculate": "datum.label === 'tp' || datum.label === 'fp' ? 1 : 0",
+                            "as": "predicted"
+                        },
+                        {
+                            "calculate": "datum.label === 'tp' || datum.label === 'fn' ? 1 : 0",
+                            "as": "actual"
+                        },
+                        {
+                            "joinaggregate": [
+                                {
+                                    "op": "median",
+                                    "field": "truth_threshold",
+                                    "as": "median_threshold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "width": 500,
+            "height": 700,
+            "description": "Accuracy chart",
+            "layer": [
+                {
+                    "layer": [
+                        {
+                            "mark": {
+                                "type": "point",
+                                "size": 100
+                            },
+                            "encoding": {
+                                "x": {
+                                    "field": "truth_threshold",
+                                    "title": "Match weight threshold",
+                                    "axis": {
+                                        "orient": "top"
+                                    }
+                                },
+                                "opacity": {
+                                    "condition": {
+                                        "param": "threshold",
+                                        "value": 1,
+                                        "empty": false
+                                    },
+                                    "value": 0
+                                },
+                                "tooltip": [
+                                    {
+                                        "field": "truth_threshold",
+                                        "format": ".3f",
+                                        "title": "Match weight threshold",
+                                        "type": "quantitative"
+                                    },
+                                    {
+                                        "field": "match_probability",
+                                        "format": ".3%",
+                                        "title": "Match probability threshold",
+                                        "type": "quantitative"
+                                    },
+                                    {
+                                        "field": "precision",
+                                        "format": ".4f",
+                                        "title": "Precision",
+                                        "type": "quantitative"
+                                    },
+                                    {
+                                        "field": "recall",
+                                        "format": ".4f",
+                                        "title": "Recall (TPR)",
+                                        "type": "quantitative"
+                                    },
+                                    {
+                                        "field": "fp_rate",
+                                        "format": ".4f",
+                                        "title": "FPR",
+                                        "type": "quantitative"
+                                    }
+                                ]
+                            },
+                            "transform": [
+                                {
+                                    "filter": {
+                                        "param": "metric",
+                                        "empty": true
+                                    }
+                                }
+                            ],
+                            "params": [
+                                {
+                                    "name": "metric",
+                                    "select": {
+                                        "type": "point",
+                                        "fields": [
+                                            "metric"
+                                        ]
+                                    },
+                                    "value": [
+                                        {
+                                            "metric": "precision"
+                                        },
+                                        {
+                                            "metric": "recall"
+                                        }
+                                    ],
+                                    "bind": "legend"
+                                },
+                                {
+                                    "name": "threshold",
+                                    "select": {
+                                        "type": "point",
+                                        "encodings": [
+                                            "x"
+                                        ],
+                                        "fields": [
+                                            "truth_threshold"
+                                        ],
+                                        "nearest": true,
+                                        "on": "mouseover",
+                                        "toggle": false
+                                    },
+                                    "value": null
+                                }
+                            ]
+                        },
+                        {
+                            "mark": {
+                                "type": "line"
+                            },
+                            "encoding": {
+                                "x": {
+                                    "field": "truth_threshold",
+                                    "title": null,
+                                    "axis": {
+                                        "orient": "bottom"
+                                    }
+                                },
+                                "opacity": {
+                                    "condition": {
+                                        "param": "metric",
+                                        "value": 1
+                                    },
+                                    "value": 0.1
+                                }
+                            }
+                        }
+                    ],
+                    "encoding": {
+                        "color": {
+                            "field": "metric",
+                            "type": "nominal",
+                            "sort": [
+                                "precision",
+                                "recall"
+                            ],
+                            "title": [
+                                "Performance",
+                                "Metric"
+                            ],
+                            "legend": {
+                                "labelExpr": "__mapping__[datum.value]",
+                                "orient": "none",
+                                "legendX": 800,
+                                "legendY": 160,
+                                "labelFontSize": 14,
+                                "titleFontSize": 16,
+                                "titlePadding": 15,
+                                "padding": 10,
+                                "fillColor": "whitesmoke"
+                            }
+                        },
+                        "x": {
+                            "type": "quantitative",
+                            "field": "truth_threshold"
+                        },
+                        "y": {
+                            "field": "value",
+                            "type": "quantitative",
+                            "axis": {
+                                "labelFontSize": 12,
+                                "title": "Performance metric score",
+                                "titleFontSize": 18,
+                                "titlePadding": 10,
+                                "values": {
+                                    "expr": "[0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]"
+                                }
+                            },
+                            "scale": {
+                                "domain": [
+                                    0.5,
+                                    1
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "layer": [
+                        {
+                            "mark": {
+                                "type": "rule",
+                                "color": "gray"
+                            },
+                            "encoding": {
+                                "x": {
+                                    "field": "truth_threshold",
+                                    "type": "quantitative",
+                                    "title": null
+                                }
+                            }
+                        },
+                        {
+                            "layer": [
+                                {
+                                    "mark": {
+                                        "type": "rect",
+                                        "fill": "whitesmoke",
+                                        "x": 200,
+                                        "x2": 10,
+                                        "yOffset": -20,
+                                        "y2Offset": 20
+                                    },
+                                    "encoding": {
+                                        "y2": {
+                                            "field": "score_index"
+                                        }
+                                    }
+                                },
+                                {
+                                    "mark": {
+                                        "type": "text",
+                                        "align": "right",
+                                        "baseline": "middle",
+                                        "fontSize": 16,
+                                        "x": 200,
+                                        "xOffset": -10
+                                    }
+                                }
+                            ],
+                            "encoding": {
+                                "color": {
+                                    "field": "metric",
+                                    "sort": [
+                                        "precision",
+                                        "recall"
+                                    ]
+                                },
+                                "text": {
+                                    "field": "y_text"
+                                },
+                                "y": {
+                                    "field": "score_index",
+                                    "type": "quantitative"
+                                }
+                            },
+                            "transform": [
+                                {
+                                    "filter": {
+                                        "param": "metric",
+                                        "empty": true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "mark": {
+                                "type": "text",
+                                "fontSize": 14,
+                                "fontWeight": "bold",
+                                "y": 0,
+                                "yOffset": -10,
+                                "xOffset": 20
+                            },
+                            "encoding": {
+                                "text": {
+                                    "condition": {
+                                        "param": "threshold",
+                                        "aggregate": "min",
+                                        "empty": false,
+                                        "field": "truth_threshold",
+                                        "format": "+.2f",
+                                        "type": "nominal"
+                                    },
+                                    "value": ""
+                                },
+                                "x": {
+                                    "field": "truth_threshold",
+                                    "type": "quantitative"
+                                }
+                            }
+                        }
+                    ],
+                    "transform": [
+                        {
+                            "filter": {
+                                "param": "threshold",
+                                "empty": false
+                            }
+                        }
+                    ]
+                }
+            ],
+            "transform": [
+                {
+                    "fold": [
+                        "precision",
+                        "recall"
+                    ],
+                    "as": [
+                        "metric",
+                        "value"
+                    ]
+                },
+                {
+                    "calculate": "0.6375 - 0.025*indexof(__metrics__, datum.metric)",
+                    "as": "score_index"
+                },
+                {
+                    "calculate": "__mapping__[datum.metric]",
+                    "as": "metric_text"
+                },
+                {
+                    "calculate": "datum.metric_text + ' = ' + format(datum.value, ',.3g')",
+                    "as": "y_text"
+                }
+            ]
+        }
+    ],
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.14.1.json",
+    "data": {
+        "values": []
+    }
+}

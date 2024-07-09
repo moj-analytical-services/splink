@@ -179,7 +179,6 @@ def test_profile_using_spark(df_spark):
 
 
 def test_profile_null_columns(caplog):
-
     df = pd.DataFrame(
         [
             {"unique_id": 1, "test_1": 1, "test_2": None},

@@ -11,7 +11,7 @@ Below we run through an example of how to address each of these drivers.
 
 One way to reduce the number of comparisons being considered within a model is to apply strict blocking rules. However, this can have a significant impact on the how well the Splink model works.
 
-In reality, we recommend getting a model up and running with strict Blocking Rules and incrementally loosening them to see the impact on the runtime and quality of the results. By starting with strict blocking rules, the linking process will run faster which will means you can iterate through model versions more quickly.
+In reality, we recommend getting a model up and running with strict Blocking Rules and incrementally loosening them to see the impact on the runtime and quality of the results. By starting with strict blocking rules, the linking process will run faster which means you can iterate through model versions more quickly.
 
 ??? example "Example - Incrementally loosening Prediction Blocking Rules"
 
@@ -41,7 +41,7 @@ In reality, we recommend getting a model up and running with strict Blocking Rul
 
 While the number of pairwise comparisons is important for reducing the computation, it is also helpful to consider the efficiency of the Blocking Rules. There are a number of ways to define subsets of records (i.e. "blocks"), but they are not all computationally efficient.
 
-From a performance prespective, here we consider two classes of blocking rule:
+From a performance perspective, here we consider two classes of blocking rule:
 
 - Equi-join conditions
 - Filter conditions

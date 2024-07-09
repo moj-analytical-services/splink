@@ -43,7 +43,7 @@ class DateComparisonBase(Comparison):
         `col_name` with preselected defaults.
 
         The default arguments will give a comparison with comparison levels:\n
-        - Exact match (1st of January only)\n
+        - Exact match (on 1st of January only)\n
         - Exact match (all other dates)\n
         - Damerau-Levenshtein distance <= 1\n
         - Date difference <= 1 year\n

@@ -28,10 +28,14 @@ class DuckDBDataFrame(SplinkDataFrame):
 
     @property
     def columns(self) -> list[InputColumn]:
-        d = self.as_record_dict(1)[0]
-
-        col_strings = list(d.keys())
-        return [InputColumn(c, sql_dialect="duckdb") for c in col_strings]
+        if not hasattr(self, "_columns_cache"):
+            result = self.linker._con.execute(
+                f"DESCRIBE (select * from {self.physical_name} limit 1)"
+            ).fetchall()
+            self._columns_cache = [
+                InputColumn(col[0], sql_dialect="duckdb") for col in result
+            ]
+        return self._columns_cache
 
     def validate(self):
         pass
@@ -222,7 +226,7 @@ class DuckDBLinker(Linker):
         return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
-        self._con.execute(final_sql)
+        self._con.sql(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
@@ -319,3 +323,23 @@ class DuckDBLinker(Linker):
             new_con = duckdb.connect(database=output_path)
             new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()
+
+    def _explode_arrays_sql(
+        self, tbl_name, columns_to_explode, other_columns_to_retain
+    ):
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        # base case
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"unnest({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+            other_columns_to_retain.append(column_to_explode)
+            return f"""select {','.join(cols_to_select)}
+                from ({self._explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501

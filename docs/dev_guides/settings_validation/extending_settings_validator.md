@@ -1,71 +1,38 @@
-## Expanding the Settings Validator
+# Enhancing the Settings Validator
 
-If a validation check is currently missing, you might want to expand the existing validation codebase.
+## Overview of Current Validation Checks
 
-Before adding any code, it's essential to determine whether the checks you want to include fit into any of the general validation categories already in place.
+Below is a summary of the key validation checks currently implemented by our settings validator. For detailed information, please refer to the source code:
 
-In summary, the following validation checks are currently carried out:
+- **Blocking Rules and Comparison Levels Validation**: Ensures that the user’s blocking rules and comparison levels are correctly [imported from the designated library](https://github.com/moj-analytical-services/splink/pull/1579), and that they contain the necessary details for effective use within the Splink.
+- **Column Existence Verification**: [Verifies the presence of columns](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py) specified in the user’s settings across all input dataframes, preventing errors due to missing data fields.
+- **Miscellaneous Checks**: Conducts a range of additional checks aimed at providing clear and informative error messages, facilitating smoother user experiences when deviations from typical Splink usage are detected.
 
-* Verifying that the user's blocking rules and comparison levels have been [imported from the correct library](https://github.com/moj-analytical-services/splink/pull/1579) and contain sufficient information for Splink model usage.
-* [Performing column lookups](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py) to ensure that columns specified in the user's settings dictionary exist within **all** of the user's input dataframes.
-* Various miscellaneous checks designed to generate more informative error messages for the user if they happen to employ Splink in an unintended manner.
+### Extending Validation Logic
 
-If you plan to introduce checks that differ from those currently in place, it's advisable to create a new script within `splink/settings_validation`.
+If you are introducing new validation checks that deviate from the existing ones, please incorporate them as functions within a new script located in the [`splink/settings_validation` directory](https://github.com/moj-analytical-services/splink/tree/master/splink/settings_validation). This ensures that all validation logic is centrally managed and easily maintainable.
 
 <hr>
 
-## Splink Exceptions and Warnings
+## Error handling and logging
 
-While working on extending the settings validation tools suite, it's important to consider how we notify users when they've included invalid settings or features.
+Error handling and logging in the settings validator takes the following forms:
 
-Exception handling and warnings should be integrated into your validation functions to either halt the program or inform the user when errors occur, raising informative error messages as needed.
+- **Raising INFO level logs** - These are raised when the settings validator detects an issue with the user's settings dictionary. These logs are intended to provide the user with information on how to rectify the issue, but should not halt the program.
+- **Raising single exceptions** - Raise a built-in Python or Splink exception in response to finding an error.
+- **Concurrently raising multiple exceptions** - In some instances, it makes sense to raise multiple errors simultaneously, so as not to disrupt the program. This is achieved using the `ErrorLogger` class.
 
-### Warnings in Splink
+The first two use standard Python logging and exception handling. The third is a custom class, covered in more detail below.
 
-Warnings should be employed when you want to alert the user that an included setting might lead to unintended consequences, allowing the user to decide if it warrants further action.
+You should look to use whichever makes the most sense given your requirements.
 
-This could be applicable in scenarios such as:
+### Raising multiple exceptions concurrently
 
-* Parsing SQL where the potential for failure or incorrect column parsing exists.
-* Situations where the user is better positioned to determine whether the issue should be treated as an error, like when dealing with exceptionally high values for [probability_two_random_records_match](https://github.com/moj-analytical-services/splink/blob/master/splink/files/settings_jsonschema.json#L29).
+Raising multiple exceptions simultaneously provides users with faster and more manageable feedback, avoiding the tedious back-and-forth that typically occurs when errors are reported and addressed one at a time.
 
-Implementing warnings is straightforward and involves creating a logger instance within your script, followed by a warning call.
+To enable the logging of multiple errors in a single check, the [`ErrorLogger`](https://github.com/moj-analytical-services/splink/blob/master/splink/exceptions.py) class can be utilised. This is designed to operate similarly to a list, allowing the storing of errors using the `append` method.
 
-??? note "Warnings in practice:"
-    ```py
-    import logging
-    logger = logging.getLogger(__name__)
-
-    logger.warning("My warning message")
-    ```
-
-    Which will print:
-
-    > `My warning message`
-
-    to both the console and your log file.
-
-### Splink Exceptions
-
-Exceptions should be raised when you want the program to halt due to an unequivocal error.
-
-In addition to the built-in exception types, such as [SyntaxError](https://docs.python.org/3/library/exceptions.html#SyntaxError), we have several Splink-specific exceptions available for use.
-
-These exceptions serve to raise issues specific to Splink or to customize exception behavior. For instance, you can specify a message prefix by modifying the constructor of an exception, as exemplified in the [ComparisonSettingsException](https://github.com/moj-analytical-services/splink/blob/f7c155c27ccf3c906c92180411b527a4cfd1111b/splink/exceptions.py#L14).
-
-It's crucial to also consider how to inform the user that such behavior is not permitted. For guidelines on crafting effective error messages, refer to [How to Write Good Error Messages](https://uxplanet.org/how-to-write-good-error-messages-858e4551cd4).
-
-For a comprehensive list of exceptions native to Splink, visit [the exceptions.py script](https://github.com/moj-analytical-services/splink/blob/master/splink/exceptions.py).
-
-#### Raising Multiple Exceptions
-
-Raising multiple errors sequentially without disrupting the program, is a feature we commonly wish to implement across the validation steps.
-
-In numerous instances, it makes sense to wait until all checks have been performed before raising exceptions captured to the user in one go.
-
-To enable the logging of multiple errors in a singular check, or across multiple checks, an [`ErrorLogger`](https://github.com/moj-analytical-services/splink/blob/settings_validation_refactor_and_improved_logging/splink/exceptions.py#L34) class is available for use.
-
-The `ErrorLogger` operates in a similar way to working with a list, allowing you to add additional errors using the `append` method. Once you've logged all of your errors, you can raise them with the `raise_and_log_all_errors` method.
+Once all errors have been logged, you can raise them with the `raise_and_log_all_errors` method. This will raise an exception of your choice and report all stored errors to the user.
 
 ??? note "`ErrorLogger` in practice"
     ```py
@@ -86,102 +53,82 @@ The `ErrorLogger` operates in a similar way to working with a list, allowing you
 
 <hr>
 
-## Expanding our Miscellaneous Checks
+## Expanding miscellaneous checks
 
-Miscellaneous checks should typically be added as standalone functions. These functions can then be integrated into the linker's startup process for validation.
+Miscellaneous checks should be added as standalone functions within an appropriate check inside `splink/settings_validation`. These functions can then be integrated into the linker's startup process for validation.
 
-In most cases, you have more flexibility in how you structure your solutions. You can place the checks in a script that corresponds to the specific checks being performed, or, if one doesn't already exist, create a new script with a descriptive name.
+An example of a miscellaneous check is the [`validate_dialect`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/valid_types.py#L26) function. This assesses whether the settings dialect aligns with the linker's dialect.
 
-A prime example of a miscellaneous check is [`validate_dialect`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/valid_types.py#L31), which assesses whether the settings dialect aligns with the linker's dialect.
-
-<hr>
-
-## Additional Comparison and Blocking Rule Checks
-
-If your checks pertain to comparisons or blocking rules, most of these checks are currently implemented within the [valid_types.py](https://github.com/moj-analytical-services/splink/blob/32e66db1c8c0bed54682daf9a6fea8ef4ed79ab4/splink/settings_validation/valid_types.py) script.
-
-Currently, comparison and blocking rule checks are organised in a modular format.
-
-To expand the current suite of tests, you should:
-
-1. Create a function to inspect the presence of the error you're evaluating.
-2. Define an error message that you intend to add to the `ErrorLogger` class.
-3. Integrate these elements into either the [`validate_comparison_levels`](https://github.com/moj-analytical-services/splink/blob/32e66db1c8c0bed54682daf9a6fea8ef4ed79ab4/splink/settings_validation/valid_types.py#L43) function (or something similar), which appends any detected errors to an `ErrorLogger`.
-4. Finally, work out where this function should live in the setup process of the linker object. Typically, you should look to add these checks before any processing of the settings dictionary is performed.
-
-The above steps are set to change as we are looking to refactor our settings object.
+This is then injected into the `_validate_settings` method within our linker, as seen [here](https://github.com/moj-analytical-services/splink/blob/master/splink/linker.py#L500).
 
 <hr>
 
-## Checking that columns exist
+## Additional comparison and blocking rule checks
+
+Comparison and Blocking Rule checks can be found within the [`valid_types.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/valid_types.py#L26) script.
+
+These checks currently interface with the `ErrorLogger` class which is used to store and raise multiple errors simultaneously (see above).
+
+If you wish to expand the current set of tests, it is advised that you incorporate any new checks into either [`log_comparison_errors`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/valid_types.py#L64) or `_validate_settings` (mentioned above).
+
+<hr>
+
+## Checking for the existence of user specified columns
+
+Column and SQL validation is performed within [`log_invalid_columns.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/log_invalid_columns.py).
+
+The aim of this script is to check that the columns specified by the user exist within the input dataframe(s). If any invalid columns are found, the script will log this with the user.
 
 Should you need to include extra checks to assess the validity of columns supplied by a user, your primary focus should be on the [column_lookups.py](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py) script.
 
-There are currently three classes employed to construct the current log strings. These can be extended to perform additional column checks.
+There are two main classes within this script that can be used or extended to perform additional column checks:
 
 ??? note "`InvalidCols`"
-    `InvalidCols` is a NamedTuple, used to construct the bulk of our log strings. This accepts a list of columns and the type of error, producing a complete log string when requested.
+    [`InvalidCols`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/settings_validation_log_strings.py) is a `NamedTuple`, used to construct the bulk of our log strings. This accepts a list of columns and the type of error, producing a complete log string when requested.
 
-    In practice, this is used as follows:
+    For simplicity, there are three partial implementations to cover the most common cases:
+    - `MissingColumnsLogGenerator` - missing column identified.
+    - `InvalidTableNamesLogGenerator` - table name entered by the user is missing or invalid.
+    - `InvalidColumnSuffixesLogGenerator` - `_l` and `_r` suffixes are missing or invalid.
+
+    In practice, this can be used as follows:
     ```py
-    # Store the invalid columns and why they're invalid
-    my_invalid_cols = InvalidCols("invalid_cols", ["first_col", "second_col"])
+    # Store our invalid columns
+    my_invalid_cols = MissingColumnsLogGenerator(["first_col", "second_col"])
     # Construct the corresponding log string
     my_invalid_cols.construct_log_string()
     ```
 
-??? note "`InvalidColValidator`"
-    `InvalidColValidator` houses a series of validation checks to evaluate whether the column(s) contained within either a SQL string or a user's raw input string, are present within the underlying dataframes.
-
-    To achieve this, it employs a range of cleaning functions to standardise our column inputs and conducts a series of checks on these cleaned columns. It utilises `InvalidCols` tuples to log any identified invalid columns.
-
-    It inherits from our the `SettingsValidator` class.
-
 ??? note "`InvalidColumnsLogger`"
-    The principal logging class for our invalid column checks.
+    `InvalidColumnsLogger` takes in a series of cleansed columns from your settings object (see [`SettingsColumnCleaner`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/settings_column_cleaner.py#L101)) and runs a series of validation checks to assess whether the column(s) are present within the underlying dataframes.
 
-    This class primarily calls our builder functions outlined in `InvalidColValidator`, constructing a series of log strings for output to both the console and the user's log file (if it exists).
+    Any invalid columns are stored in an `InvalidCols` instance (see above), which is then used to construct a log string.
 
+    Logs are output to the user at the `INFO` level.
 
-To extend the column checks, you simply need to add an additional validation method to the [`InvalidColValidator`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L15) class, followed by an extension of the [`InvalidColumnsLogger`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L164).
+To extend the column checks, you simply need to add an additional validation method to the [`InvalidColumnsLogger`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/log_invalid_columns.py#L171C7-L171C27) class. Checks must be added as a new method and then called within `construct_output_logs`.
 
-### A Practical Example of a Column Check
+## Single column, multi-column and SQL checks
 
-For an example of column checks in practice, see [`validate_uid`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L195).
+### Single and multi-column
 
-Here, we call `validate_settings_column`, checking whether the unique ID column submitted by the user is valid. The output of this call yields either an `InvalidCols` tuple, or `None`.
+Single and multi-column checks are relatively straightforward. Assuming you have a clean set of columns, you can leverage the [`check_for_missing_settings_column`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/log_invalid_columns.py#L56) function.
 
-From there, we can use the built-in log constructor [`construct_generic_settings_log_string`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L329C27-L329C27) to construct and print the required logs. Where the output above was `None`, nothing is logged.
+This expects the following arguments:
+* **settings_id**: the name of the settings ID. This is only used for logging and does not necessarily need to match the true ID.
+* **settings_column_to_check**: the column(s) you wish to validate.
+* **valid_input_dataframe_columns**: the cleaned columns from your **all** input dataframes.
 
-If your checks aren't part of the initial settings check (say you want to assess additional columns found in blocking rules supplied at a later stage by the user), you should add a new method to `InvalidColumnsLogger`, similar in functionality to [`construct_output_logs`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L319).
+### Checking columns in SQL statements
 
-However, it is worth noting that not all checks are performed on a simple string columns. Where you require checks to be performed on SQL strings, there's an additional step required, outlined below.
+Checking SQL statements is a little more complex, given the need to parse SQL in order to extract your column names.
 
-### Single Column Checks
+To do this, you can leverage the [`check_for_missing_or_invalid_columns_in_sql_strings`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/log_invalid_columns.py#L73) function.
 
-To review single columns, [`validate_settings_column`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L144) should be used. This takes in a `setting_id` (analogous to the title you want to give your log string) and a list of columns to be checked.
+This expects the following arguments:
+* **sql_dialect**: The SQL dialect used by the linker.
+* **sql_strings**: A list of SQL strings.
+* **valid_input_dataframe_columns**: The list of columns identified in your input dataframe(s).
+* additional_validation_checks: Functions used to check for other issues with the parsed SQL string, namely, table name and column suffix validation.
 
-A working example of this in practice can be found in the section above.
-
-### Checking Columns in SQL statements
-
-For raw SQL statements, you should make use of the [`validate_columns_in_sql_strings`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L102) method.
-
-This takes in a list of SQL strings and spits out a list of `InvalidCols` tuples, depending on the checks you ask it to perform.
-
-Should you need more control, the process is similar to that of the single column case, just with an additional parsing step.
-
-Parsing is handled by [`parse_columns_in_sql`](https://github.com/moj-analytical-services/splink/blob/master/splink/parse_sql.py#L45). This will spit out a list of column names that were identified by sqlglot.
-
-> Note that as this is handled by SQLglot, it's not always 100% accurate. For our purposes though, its flexibility is unparalleled and allows us to more easily and efficiently extract column names.
-
-Once your columns have been parsed, you can again run a series of lookups against your input dataframe(s). This is identical to the steps outlined in the **Single Column Checks** section.
-
-You may also wish to perform additional checks on the columns, to assess whether they contain valid prefixes, suffixes or some other quality of the column.
-
-Additional checks can be passed to [`validate_columns_in_sql_strings`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L102) and should be specified as methods in the `InvalidColValidator` class.
-
-See [validate_blocking_rules](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/column_lookups.py#L209) for a practical example where we loop through each blocking rule, parse it and then assess whether it:
-
-1. Contains a valid list of columns
-2. Each column contains a valid table prefix.
+_NB: for nested SQL statements, you'll need to add an additional loop. See [`check_comparison_for_missing_or_invalid_sql_strings`](https://github.com/moj-analytical-services/splink/blob/master/splink/settings_validation/log_invalid_columns.py#L140) for more details._

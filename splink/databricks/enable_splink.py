@@ -1,4 +1,9 @@
+import logging
+import os
+
 from splink.spark.jar_location import similarity_jar_location
+
+logger = logging.getLogger(__name__)
 
 
 def enable_splink(spark):
@@ -14,6 +19,7 @@ def enable_splink(spark):
     """
     sc = spark.sparkContext
     _jar_path = similarity_jar_location()
+
     JavaURI = sc._jvm.java.net.URI
     JavaJarId = sc._jvm.com.databricks.libraries.JavaJarId
     ManagedLibraryId = sc._jvm.com.databricks.libraries.ManagedLibraryId
@@ -24,11 +30,38 @@ def enable_splink(spark):
     converters = sc._jvm.scala.collection.JavaConverters
 
     JarURI = JavaURI.create("file:" + _jar_path)
-    lib = JavaJarId(
-        JarURI,
-        ManagedLibraryId.defaultOrganization(),
-        NoVersionModule.simpleString(),
-    )
+    optionClass = getattr(sc._jvm.scala, "Option$")
+    optionModule = getattr(optionClass, "MODULE$")
+
+    dbr_version = float(os.environ.get("DATABRICKS_RUNTIME_VERSION"))
+
+    try:
+        if dbr_version >= 14:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+                optionModule.apply(None),
+                optionModule.apply(None),
+                optionModule.apply(None),
+            )
+        elif dbr_version >= 13:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+                optionModule.apply(None),
+                optionModule.apply(None),
+            )
+        else:
+            lib = JavaJarId(
+                JarURI,
+                ManagedLibraryId.defaultOrganization(),
+                NoVersionModule.simpleString(),
+            )
+    except Exception as e:
+        logger.warn("failed to enable similarity jar functions for Databricks", e)
+
     libSeq = converters.asScalaBufferConverter((lib,)).asScala().toSeq()
 
     context = DatabricksILoop.getSharedDriverContextIfExists().get()

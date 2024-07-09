@@ -18,13 +18,20 @@ class SplinkDataFrame:
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name: str, physical_name: str, linker: Linker):
+    def __init__(
+        self,
+        templated_name: str,
+        physical_name: str,
+        linker: Linker,
+        metadata: dict = None,
+    ):
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
         self._target_schema = "splink"
         self.created_by_splink = False
         self.sql_used_to_create = None
+        self.metadata = metadata or {}
 
     @property
     def columns(self):
@@ -35,7 +42,7 @@ class SplinkDataFrame:
         cols = self.columns
         return [c.name for c in cols]
 
-    def validate():
+    def validate(self):
         pass
 
     @property
