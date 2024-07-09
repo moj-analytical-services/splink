@@ -57,17 +57,10 @@ plugins:
         python:
           rendering:
             show_source: false
-  - git-revision-date-localized:
-      enable_creation_date: true
-      type: timeago
-      fallback_to_build_date: true
   - charts
   - mkdocs-video:
       is_video: True
       video_autoplay: false
-  - git-committers:
-      repository: moj-analytical-services/splink
-      branch: master
   - rss:
       match_path: blog/posts/.*
       date_from_meta:
@@ -157,7 +150,7 @@ nav:
         - EM Training Session API: "api_docs/em_training_session.md"
         - SplinkDatasets: "api_docs/datasets.md"
         - Settings Dict: "api_docs/settings_dict_guide.md"
-  - Topic Guides:
+  - User Guide:
     - Introduction: "topic_guides/topic_guides_index.md"
     - Record Linkage Theory:
       - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
@@ -197,6 +190,13 @@ nav:
         - Overview: "topic_guides/evaluation/clusters/overview.md"
         - Graph metrics: "topic_guides/evaluation/clusters/graph_metrics.md"
         - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
+    - Performance:
+      - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
+      - Spark Performance:
+          - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
+          - Salting blocking rules: "topic_guides/performance/salting.md"
+      - DuckDB Performance:
+          - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
     - Charts Gallery:
       - "charts/index.md"
       - Exploratory Analysis:

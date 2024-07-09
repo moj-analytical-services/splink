@@ -66,7 +66,7 @@ To address this issue, the [Settings Validator](../../dev_guides/settings_valida
 
 ## :simple-adblock: Blocking Rule Library (Improved)
 
-In our [previous blog](../posts/2023-12-06-feature_update.md#no_entry_sign-drop-support-for-python-37) we introduced the Blocking Rule Library (BRL) built upon the `exact_match_rule` function. When testing this functionality we found it pretty verbose, particularly when blocking on multiple columns, so figured we could do better. From Splink v3.9.6 we introduced the `block_on` function to supersede `exact_match_rule`.
+In our [previous blog](../posts/2023-12-06-feature_update.md) we introduced the Blocking Rule Library (BRL) built upon the `exact_match_rule` function. When testing this functionality we found it pretty verbose, particularly when blocking on multiple columns, so figured we could do better. From Splink v3.9.6 we introduced the `block_on` function to supersede `exact_match_rule`.
 
 For example, a block on `first_name` and `surname` now looks like:
 

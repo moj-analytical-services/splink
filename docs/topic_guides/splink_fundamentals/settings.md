@@ -85,9 +85,9 @@ The `"comparisons"` define the features to be compared between records: `"first_
 
 ```py linenums="10"
     comparisons=[
-        ctl.NameComparison("first_name"),
-        ctl.NameComparison("surname"),
-        ctl.DateComparison(
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.DateComparison(
             "dob",
             input_is_string=True,
             datetime_metrics=["month", "year"],
@@ -97,11 +97,11 @@ The `"comparisons"` define the features to be compared between records: `"first_
             ],
         ),
         cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-        ctl.EmailComparison("email"),
+        cl.EmailComparison("email"),
     ],
 ```
 
-Using functions from the [comparison template library](../comparisons//comparison_templates.ipynb) and [comparison library](../comparisons/customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
+Using functions from the [comparison library](../comparisons/customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
 
 
 

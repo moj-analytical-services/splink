@@ -80,9 +80,9 @@ dbapi = PostgresAPI(engine=engine, other_schemas_to_search=["my_data_schema_1", 
 Splink makes use of Postgres' user-defined functions in order to operate, which are defined in the [schema created by Splink](#schemas) when you create the linker. These functions are all defined using SQL, and are:
 
 * `log2` - required for core Splink functionality
-* `datediff` - for [the datediff comparison level](../../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
-* `ave_months_between` - for [the datediff comparison level](../../../comparison_level_library.md#splink.comparison_level_library.DatediffLevelBase)
-* `array_intersect` - for [the array intersect comparison level](../../../comparison_level_library.md#splink.comparison_level_library.ArrayIntersectLevelBase)
+* `datediff` - for [the datediff comparison level](../../../api_docs/comparison_level_library.md)
+* `ave_months_between` - for [the datediff comparison level](../../../api_docs/comparison_level_library.md)
+* `array_intersect` - for [the array intersect comparison level](../../../api_docs/comparison_level_library.md)
 
 !!! information Note
     The information below is only relevant if you are planning on [making changes to Splink](../../../dev_guides/index.md). If you are only intending to _use_ Splink with Postgres, you do not need to read any further.
