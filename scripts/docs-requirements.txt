@@ -12,9 +12,7 @@ mkdocstrings-python
 mkdocstrings-python-legacy
 mkdocs-click
 jinja2==3.0.3
-mkdocs-git-revision-date-localized-plugin
 mkdocs-charts-plugin
 neoteroi-mkdocs
 mkdocs-video
-mkdocs-git-committers-plugin-2
 mkdocs-rss-plugin

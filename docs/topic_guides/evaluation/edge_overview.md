@@ -32,7 +32,7 @@ As you are checking real examples, you will often come across cases that have no
 
 ## Choosing a Threshold
 
-Threshold selection is a key decision point within a linkage pipeline. One of the major benefits of probabilistic linkage versus a deterministic (i.e. rules-based) approach is the ability to choose the amount of evidence required for two records to be considered a match (i.e. a threshold). 
+Threshold selection is a key decision point within a linkage pipeline. One of the major benefits of probabilistic linkage versus a deterministic (i.e. rules-based) approach is the ability to choose the amount of evidence required for two records to be considered a match (i.e. a threshold).
 
 When you have decided on the metrics that are important for your use case, you can use the [Threshold Selection Tool](../../charts/threshold_selection_tool_from_labels_table.ipynb) to get a first estimate for what your threshold should be.
 
@@ -42,12 +42,12 @@ When you have decided on the metrics that are important for your use case, you c
 
 Once you have an initial threshold, you can use [Comparison Viewer Dashboard](../../charts/comparison_viewer_dashboard.ipynb) to look at records on either side of your threshold to check whether the threshold makes intuitive sense.
 
-From here, we recommend an iterative process of tweaking your threshold based on your spot checking then looking at the impact that this has on your overall edge metrics. Other tools that can be useful during this iterative process include the [Precision-Recall Chart](../../charts/precision_recall_chart_from_labels_table.ipynb), the [ROC Chart](../../charts/roc_chart_from_labels_table.ipynb) as well as [spot checking where the model has gone wrong](../../demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb). 
+From here, we recommend an iterative process of tweaking your threshold based on your spot checking then looking at the impact that this has on your overall edge metrics. Another tools that can be useful is spot checking where your model has gone wrong using [`prediction_errors_from_labels_table`](../../api_docs/evaluation.md) as demoed in the [accuracy analysis demo](../../demos//examples/duckdb/accuracy_analysis_from_labels_column.ipynb).
 
 
 ## In Summary
 
-Evaluating the edges (links) of a linkage model depends on your use case. Defining what "good" looks like is a key step, which then allows you to choose a relevant metric (or metrics) for measuring success. 
+Evaluating the edges (links) of a linkage model depends on your use case. Defining what "good" looks like is a key step, which then allows you to choose a relevant metric (or metrics) for measuring success.
 
 Your desired metric should help give an initial estimation for a linkage threshold, then you can use spot checking to help settle on a final threshold.
 

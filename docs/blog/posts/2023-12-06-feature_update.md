@@ -8,7 +8,7 @@ categories:
 
 # Splink Updates - December 2023
 
-Welcome to the second installment of the Splink Blog! 
+Welcome to the second installment of the Splink Blog!
 
 Here are some of the highlights from the second half of 2023, and a taste of what is in store for 2024!
 
@@ -18,7 +18,7 @@ Latest Splink version: [v3.9.10](https://github.com/moj-analytical-services/spli
 
 ## :bar_chart: Charts Gallery
 
-The Splink docs site now has a [Charts Gallery](../../charts/index.md) to show off all of the charts that come out-of-the-box with Splink to make linking easier. 
+The Splink docs site now has a [Charts Gallery](../../charts/index.md) to show off all of the charts that come out-of-the-box with Splink to make linking easier.
 
 [![](../posts/img/charts_gallery.png){ width="400" }](../../charts/index.md)
 
@@ -40,7 +40,7 @@ Two of our latest additions are:
 
 When evaluating any classification model, a confusion matrix is a useful tool for summarising performance by representing counts of true positive, true negative, false positive, and false negative predictions.
 
-Splink now has its own [confusion matrix chart](../../charts/threshold_selection_tool_from_labels_table.ipynb) to show how model performance changes with a given match weight threshold. 
+Splink now has its own [confusion matrix chart](../../charts/threshold_selection_tool_from_labels_table.ipynb) to show how model performance changes with a given match weight threshold.
 
 [![](./img/confusion_matrix.png){ width="400" }](../../charts/threshold_selection_tool_from_labels_table.ipynb)
 
@@ -48,7 +48,7 @@ Note, labelled data is required to generate this chart.
 
 ### :material-table: Completeness Chart
 
-When linking multiple datasets together, one of the most important factors for a successful linkage is the number of common fields across the datasets. 
+When linking multiple datasets together, one of the most important factors for a successful linkage is the number of common fields across the datasets.
 
 Splink now has the [completeness chart](../../charts/completeness_chart.ipynb) which gives a simple view of how well populated fields are across datasets.
 
@@ -57,7 +57,7 @@ Splink now has the [completeness chart](../../charts/completeness_chart.ipynb) w
 
 ## :clipboard: Settings Validation
 
-The [Settings dictionary](../../settings_dict_guide.md) is central to everything in Splink. It defines everything from the SQL dialect of your backend to how features are compared in Splink model. 
+The [Settings dictionary](../../api_docs/settings_dict_guide.md) is central to everything in Splink. It defines everything from the SQL dialect of your backend to how features are compared in Splink model.
 
 A common sticking point with users is how easy it is to make small errors when defining the Settings dictionary, resulting in unhelpful error messages.
 
@@ -72,7 +72,7 @@ For example, a block on `first_name` and `surname` now looks like:
 
 ```py
 from splink.duckdb.blocking_rule_library import block_on
-block_on(["first_name", "surname"])  
+block_on(["first_name", "surname"])
 ```
 
 as opposed to
@@ -85,7 +85,7 @@ brl.and_(
 )
 ```
 
-All of the [tutorials](../../demos/tutorials/03_Blocking.ipynb), [example notebooks](../../demos/examples/examples_index.md) and [API docs](../../blocking_rule_library.md) have been updated to use `block_on`.
+All of the [tutorials](../../demos/tutorials/03_Blocking.ipynb), [example notebooks](../../demos/examples/examples_index.md) and docs have been updated to use `block_on`.
 
 ## :electric_plug: Backend Specific Installs
 

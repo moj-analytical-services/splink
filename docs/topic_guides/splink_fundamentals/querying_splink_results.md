@@ -77,8 +77,7 @@ df_predict.to_csv("splink_predictions.csv", overwrite=True)
 ### Creating a `SplinkDataFrame`
 
 
-You can  create a `SplinkDataFrame` for any table in your database. You will need to already have a [linker](../../linker.md)
-to manage interactions with the database:
+You can  create a `SplinkDataFrame` for any table in your database. You will need to already have a `linker` to manage interactions with the database:
 ```python
 import pandas as pd
 import duckdb
