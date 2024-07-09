@@ -33,7 +33,7 @@ def enable_splink(spark):
     optionClass = getattr(sc._jvm.scala, "Option$")
     optionModule = getattr(optionClass, "MODULE$")
 
-    dbr_version = float(os.environ.get("DATABRICKS_RUNTIME_VERSION"))
+    dbr_version = float(os.environ.get("DATABRICKS_RUNTIME_VERSION", "0.0"))
 
     try:
         if dbr_version >= 14:
