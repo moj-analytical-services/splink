@@ -14,6 +14,8 @@ tags:
       members_order: source
       inherited_members: false
       merge_init_into_class: true
+      filters:
+        - "!^create_sql$"  # Exclude the create_sql method
 
 ## Configuring comparisons
 

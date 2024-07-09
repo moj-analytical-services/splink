@@ -41,7 +41,7 @@ linker = DuckDBLinker(
 Each attribute of `splink_datasets` is a dataset available for use, which exists as a pandas `DataFrame`.
 These datasets are not packaged directly with Splink, but instead are downloaded only when they are requested.
 Once requested they are cached for future use.
-The cache can be cleared using [`splink_dataset_utils`](#splink_dataset_utils-object),
+The cache can be cleared using `splink_dataset_utils` (see below),
 which also contains information on available datasets, and which have already been cached.
 
 ### Available datasets

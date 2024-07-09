@@ -96,7 +96,7 @@ where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 ## :octicons-duplicate-24: Reduced duplication in Comparison libraries
 
-Historically, importing of the comparison libraries ([CL](../../comparison_library.md), [CTL](../../comparison_template_library.md), [CLL](../../comparison_level_library.md)) has included declaring the backend twice. For example:
+Historically, importing of the comparison libraries has included declaring the backend twice. For example:
 
 ```py
 import splink.duckdb.duckdb_comparison_level_library as cll
@@ -118,7 +118,7 @@ df = splink_datasets.fake_1000
 ```
 returns the fake 1000 row dataset that is used in the Splink [tutorial](../../demos/tutorials/00_Tutorial_Introduction.ipynb).
 
-For more information check out the in-built datasets [Documentation](../../datasets.md).
+For more information check out the in-built datasets [Documentation](../../api_docs/datasets.md).
 
 ## :material-regex: Regular Expressions in Comparisons
 
@@ -150,7 +150,7 @@ Some of the improvements include:
 
 * More Topic Guides covering things such as [Record Linkage Theory](https://moj-analytical-services.github.io/splink/topic_guides/theory/record_linkage.html), [Guidance on Splink's backends](https://moj-analytical-services.github.io/splink/topic_guides/backends/backends.html) and [String Fuzzy Matching](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/choosing_comparators.html).
 * A [Contributors Guide](../../dev_guides/CONTRIBUTING.md) to make contributing to Splink even easier. If you are interested in getting involved in open source, check the guide out!
-* Adding tables to the Comparison [libraries documentation](../../comparison_level_library.md) to show the functions available for each SQL backend.
+* Adding tables to the Comparison [libraries documentation](../../api_docs/comparison_level_library.md) to show the functions available for each SQL backend.
 
 Thanks to everyone who filled out our [feedback survey](https://forms.gle/4S9PJgFX7opE9ggu9). If you have any more feedback or ideas for how we can make the docs better please do let us know by [raising an issue](https://github.com/moj-analytical-services/splink/issues), [starting a discussion](https://github.com/moj-analytical-services/splink/discussions) or filling out the survey.
 

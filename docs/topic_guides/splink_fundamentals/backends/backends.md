@@ -135,7 +135,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
 ### :simple-sqlite: SQLite
 
 [**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](../../comparisons/comparators.md) functions.
-However, the following are available for Splink users as python [user-defined functions (UDFs)](../../../dev_guides/udfs.html#sqlite)  which are automatically registered when calling `SQLiteAPI()`
+However, the following are available for Splink users as python [user-defined functions (UDFs)](../../../dev_guides/udfs.md#sqlite)  which are automatically registered when calling `SQLiteAPI()`
 
 * `levenshtein`
 * `damerau_levenshtein`

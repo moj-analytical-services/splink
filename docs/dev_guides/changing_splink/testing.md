@@ -145,7 +145,7 @@ Splink utilises [GitHub actions](https://docs.github.com/en/actions) to run test
 
 * The full test suite is run separately against several different python versions
 * The [example notebooks](../../demos/examples/examples_index.md) are checked to ensure they run without error
-* The [tutorial notebooks](../../demos/tutorials/00_Tutorial_Introduction.html) are checked to ensure they run without error
+* The [tutorial notebooks](../../demos/tutorials/00_Tutorial_Introduction.ipynb) are checked to ensure they run without error
 
 ## Writing tests
 

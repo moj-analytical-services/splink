@@ -113,18 +113,25 @@ class LinkerTableManagement:
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
 
-    def register_table_input_nodes_concat_with_tf(self, input_data, overwrite=False):
+    def register_table_input_nodes_concat_with_tf(
+        self, input_data: AcceptableInputTableType, overwrite: bool = False
+    ) -> SplinkDataFrame:
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
-        you want to re-use e.g. that you created in a previous run
+        you want to re-use e.g. that you created in a previous run.
 
-        This method allowed you to register this table in the Splink cache
-        so it will be used rather than Splink computing this table anew.
+        This method allows you to register this table in the Splink cache so it will be
+        used rather than Splink computing this table anew.
 
         Args:
-            input_data: The data you wish to register. This can be either a dictionary,
-                pandas dataframe, pyarrow table or a spark dataframe.
+            input_data (AcceptableInputTableType): The data you wish to register. This
+                can be either a dictionary, pandas dataframe, pyarrow table or a spark
+                dataframe.
             overwrite (bool): Overwrite the table in the underlying database if it
-                exists
+                exists.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
         """
 
         table_name_physical = "__splink__df_concat_with_tf_" + self._linker._cache_uid
