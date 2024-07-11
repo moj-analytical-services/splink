@@ -49,16 +49,42 @@ class LinkerTraining:
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
 
+        This method counts the number of matches found using deterministic rules and
+        divides by the total number of possible record comparisons. The recall of the
+        deterministic rules is used to adjust this proportion up to reflect missed
+        matches, providing an estimate of the probability that two random records from
+        the input data are a match.
+
+        Note that if more than one deterministic rule is provided, any duplicate
+        pairs are automatically removed, so you do not need to worry about double
+        counting.
+
         See [here](https://github.com/moj-analytical-services/splink/issues/462)
-        for discussion of methodology
+        for discussion of methodology.
 
         Args:
             deterministic_matching_rules (list): A list of deterministic matching
-                rules that should be designed to admit very few (none if possible)
-                false positives
-            recall (float): A guess at the recall the deterministic matching rules
-                will attain.  i.e. what proportion of true matches will be recovered
-                by these deterministic rules
+                rules designed to admit very few (preferably no) false positives.
+            recall (float): An estimate of the recall the deterministic matching
+                rules will achieve, i.e., the proportion of all true matches these
+                rules will recover.
+            max_rows_limit (int): Maximum number of rows to consider during estimation.
+                Defaults to 1e9.
+
+        Examples:
+            ```py
+            deterministic_rules = [
+                block_on("forename", "dob"),
+                "l.forename = r.forename and levenshtein(r.surname, l.surname) <= 2",
+                block_on("email")
+            ]
+            linker.training.estimate_probability_two_random_records_match(
+                deterministic_rules, recall=0.8
+            )
+            ```
+        Returns:
+            Nothing: Updates the estimated parameter within the linker object and
+                returns nothing.
         """
 
         if (recall > 1) or (recall <= 0):
@@ -144,7 +170,7 @@ class LinkerTraining:
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
-        The u parameters represent the proportion of record comparisons that fall
+        The u parameters estimate the proportion of record comparisons that fall
         into each comparison level amongst truly non-matching records.
 
         This procedure takes a sample of the data and generates the cartesian
@@ -170,12 +196,12 @@ class LinkerTraining:
 
         Examples:
             ```py
-            linker.estimate_u_using_random_sampling(1e8)
+            linker.training.estimate_u_using_random_sampling(max_pairs=1e8)
             ```
 
         Returns:
-            None: Updates the estimated u parameters within the linker object
-            and returns nothing.
+            Nothing: Updates the estimated u parameters within the linker object and
+                returns nothing.
         """
         if max_pairs == 1e6:
             # keep default value small so as not to take too long, but warn users
@@ -206,24 +232,24 @@ class LinkerTraining:
 
         By default, the m probabilities are estimated, but not the u probabilities,
         because good estimates for the u probabilities can be obtained from
-        `linker.estimate_u_using_random_sampling()`.  You can change this by setting
-        `fix_u_probabilities` to False.
+        `linker.training.estimate_u_using_random_sampling()`.  You can change this by
+        setting `fix_u_probabilities` to False.
 
         The blocking rule provided is used to generate pairwise record comparisons.
         Usually, this should be a blocking rule that results in a dataframe where
-        matches are between about 1% and 99% of the comparisons.
+        matches are between about 1% and 99% of the blocked comparisons.
 
         By default, m parameters are estimated for all comparisons except those which
         are included in the blocking rule.
 
-        For example, if the blocking rule is `l.first_name = r.first_name`, then
-        parameter esimates will be made for all comparison except those which use
+        For example, if the blocking rule is `block_on("first_name")`, then
+        parameter estimates will be made for all comparison except those which use
         `first_name` in their sql_condition
 
-        By default, the probability two random records match is estimated for the
-        blocked data, and then the m and u parameters for the columns specified in the
-        blocking rules are used to estiamte the global probability two random records
-        match.
+        By default, the probability two random records match is allowed to vary
+        during EM estimation, but is not saved back to the model.  See
+        [this PR](https://github.com/moj-analytical-services/splink/pull/734) for
+        the rationale.
 
         To control which comparisons should have their parameter estimated, and the
         process of 'reversing out' the global probability two random records match, the
@@ -234,10 +260,14 @@ class LinkerTraining:
         Examples:
             Default behaviour
             ```py
-            br_training = "l.first_name = r.first_name and l.dob = r.dob"
-            linker.training.estimate_parameters_using_expectation_maximisation(br_training)
+            br_training = block_on("first_name", "dob")
+            linker.training.estimate_parameters_using_expectation_maximisation(
+                br_training
+            )
             ```
+
             Specify which comparisons to deactivate
+
             ```py
             br_training = "l.dmeta_first_name = r.dmeta_first_name"
             settings_obj = linker._settings_obj
@@ -255,8 +285,8 @@ class LinkerTraining:
                 generate pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
-                all comaprisons except those included in the blocking rule.  If
-                comparisons_to_deactivate are provided, spink will instead
+                all comparisons except those included in the blocking rule.  If
+                comparisons_to_deactivate are provided, Splink will instead
                 estimate m parameters for all comparison except those specified
                 in the comparisons_to_deactivate list.  This list can either contain
                 the output_column_name of the Comparison as a string, or Comparison
@@ -278,19 +308,16 @@ class LinkerTraining:
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
                 probabilities after each iteration. Defaults to True.
-            populate_probability_two_random_records_match_from_trained_values (bool,optional): If
+            populate_prob... (bool,optional): The full name of this parameter is
+                populate_probability_two_random_records_match_from_trained_values. If
                 True, derive this parameter from the blocked value. Defaults to False.
 
         Examples:
             ```py
-            blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
-            linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
-            ```
-            or using pre-built rules
-            ```py
-            from splink.duckdb.blocking_rule_library import block_on
-            blocking_rule = block_on(["first_name", "surname"])
-            linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            blocking_rule = block_on("first_name", "surname")
+            linker.training.estimate_parameters_using_expectation_maximisation(
+                blocking_rule
+            )
             ```
 
         Returns:
@@ -366,11 +393,12 @@ class LinkerTraining:
         return em_training_session
 
     def estimate_m_from_pairwise_labels(self, labels_splinkdataframe_or_table_name):
-        """Estimate the m parameters of the linkage model from a dataframe of pairwise
-        labels.
+        """Estimate the m probabilities of the linkage model from a dataframe of
+        pairwise labels.
 
         The table of labels should be in the following format, and should
         be registered with your database:
+
         |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|
         |----------------|-----------|----------------|-----------|
         |df_1            |1          |df_2            |2          |
@@ -390,10 +418,12 @@ class LinkerTraining:
         Examples:
             ```py
             pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
+
             linker.table_management.register_table(
                 pairwise_labels, "labels", overwrite=True
             )
-            linker.estimate_m_from_pairwise_labels("labels")
+
+            linker.training.estimate_m_from_pairwise_labels("labels")
             ```
         """
         labels_tablename = self._linker._get_labels_tablename_from_input(
@@ -429,7 +459,7 @@ class LinkerTraining:
             ```
 
         Returns:
-            None: Updates the estimated m parameters within the linker object.
+            Nothing: Updates the estimated m parameters within the linker object.
         """
 
         # Ensure this has been run on the main linker so that it can be used by
