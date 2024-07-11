@@ -126,7 +126,7 @@ class LinkerVisualisations:
             linker.visualisations.match_weights_histogram(df_predict)
             ```
         Returns:
-            altair.Chart: An altair chart object.
+            altair_chart: An Altair chart
 
         """
         df = histogram_data(self._linker, df_predict, target_bins)
@@ -151,7 +151,7 @@ class LinkerVisualisations:
                 to False.
 
         Examples:
-            ``py
+            ```py
             linker.training.estimate_parameters_using_expectation_maximisation(
                 blocking_rule=block_on("first_name"),
             )
@@ -162,6 +162,9 @@ class LinkerVisualisations:
 
             linker.visualisations.parameter_estimate_comparisons_chart()
             ```
+
+        Returns:
+            altair_chart: An Altair chart
 
         """
         records = self._linker._settings_obj._parameter_estimates_as_records
@@ -201,8 +204,13 @@ class LinkerVisualisations:
                 sfrequency adjustments.
                 Defaults to None.
 
+        Examples:
+            ```py
+            linker.visualisations.tf_adjustment_chart("first_name")
+            ```
+
         Returns:
-            altair.Chart: An altair chart
+            altair_chart: An Altair chart
         """
 
         # Comparisons with TF adjustments
@@ -244,15 +252,15 @@ class LinkerVisualisations:
 
         Examples:
             ```py
-            df = linker.predict(threshold_match_weight=2)
+            df = linker.inference.predict(threshold_match_weight=2)
             records = df.as_record_dict(limit=10)
-            linker.waterfall_chart(records)
+            linker.visualisations.waterfall_chart(records)
             ```
 
         Args:
             records (List[dict]): Usually be obtained from `df.as_record_dict(limit=n)`
                 where `df` is a SplinkDataFrame.
-            filter_nulls (bool, optional): Whether the visualiation shows null
+            filter_nulls (bool, optional): Whether the visualisation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
             remove_sensitive_data (bool, optional): When True, The waterfall chart will
@@ -261,7 +269,7 @@ class LinkerVisualisations:
 
 
         Returns:
-            altair.Chart: An altair chart
+            altair_chart: An Altair chart
 
         """
         self._linker._raise_error_if_necessary_waterfall_columns_not_computed()
@@ -295,11 +303,14 @@ class LinkerVisualisations:
         Examples:
             ```py
             df_predictions = linker.predict()
-            linker.comparison_viewer_dashboard(df_predictions, "scv.html", True, 2)
+            linker.visualisations.comparison_viewer_dashboard(
+                df_predictions, "scv.html", True, 2
+            )
             ```
 
             Optionally, in Jupyter, you can display the results inline
             Otherwise you can just load the html file in your browser
+
             ```py
             from IPython.display import IFrame
             IFrame(src="./scv.html", width="100%", height=1200)
@@ -363,14 +374,19 @@ class LinkerVisualisations:
 
         Examples:
             ```py
-            df_p = linker.predict()
-            df_c = linker.cluster_pairwise_predictions_at_threshold(df_p, 0.5)
+            df_p = linker.inference.predict()
+            df_c = linker.visualisations.cluster_pairwise_predictions_at_threshold(
+                df_p, 0.5
+            )
+
             linker.cluster_studio_dashboard(
                 df_p, df_c, [0, 4, 7], "cluster_studio.html"
             )
             ```
+
             Optionally, in Jupyter, you can display the results inline
             Otherwise you can just load the html file in your browser
+
             ```py
             from IPython.display import IFrame
             IFrame(src="./cluster_studio.html", width="100%", height=1200)
