@@ -34,6 +34,42 @@ if TYPE_CHECKING:
 class LinkerVisualisations:
     """Visualisations to help you understand and diagnose your linkage model.
     Accessed via `linker.visualisations`.
+
+    Most of the visualisations return an [altair.Chart](https://altair-viz.github.io/user_guide/generated/toplevel/altair.Chart.html)
+    object, meaning it can be saved an manipulated using Altair.
+
+    For example:
+
+    ```py
+
+    altair_chart = linker.visualisations.match_weights_chart()
+
+    # Save to various formats
+    altair_chart.save("mychart.png")
+    altair_chart.save("mychart.html")
+    altair_chart.save("mychart.svg")
+    altair_chart.save("mychart.json")
+
+    # Get chart spec as dict
+    altair_chart.to_dict()
+    ```
+
+
+    To save the chart as a self-contained html file with all scripts
+    inlined so it can be viewed offline:
+
+    ```py
+    from splink.internals.charts import save_offline_chart
+    c = linker.visualisations.match_weights_chart()
+    save_offline_chart(c.to_dict(), "test_chart.html")
+    ```
+
+    View resultant html file in Jupyter (or just load it in your browser)
+
+    ```py
+    from IPython.display import IFrame
+    IFrame(src="./test_chart.html", width=1000, height=500)
+    ```
     """
 
     def __init__(self, linker: Linker):
@@ -44,22 +80,11 @@ class LinkerVisualisations:
 
         Examples:
             ```py
-            linker.match_weights_chart()
+            altair_chart = linker.visualisations.match_weights_chart()
+            altair_chart.save("mychart.png")
             ```
-            To view offline (if you don't have an internet connection):
-            ```py
-            from splink.charts import save_offline_chart
-            c = linker.match_weights_chart()
-            save_offline_chart(c.to_dict(), "test_chart.html")
-            ```
-            View resultant html file in Jupyter (or just load it in your browser)
-            ```py
-            from IPython.display import IFrame
-            IFrame(src="./test_chart.html", width=1000, height=500)
-            ```
-
         Returns:
-            An Altair chart object.
+            altair_chart: An Altair chart
         """
         return self._linker._settings_obj.match_weights_chart()
 
@@ -68,22 +93,12 @@ class LinkerVisualisations:
 
         Examples:
             ```py
-            linker.m_u_parameters_chart()
-            ```
-            To view offline (if you don't have an internet connection):
-            ```py
-            from splink.charts import save_offline_chart
-            c = linker.match_weights_chart()
-            save_offline_chart(c.to_dict(), "test_chart.html")
-            ```
-            View resultant html file in Jupyter (or just load it in your browser)
-            ```py
-            from IPython.display import IFrame
-            IFrame(src="./test_chart.html", width=1000, height=500)
+            altair_chart = linker.visualisations.m_u_parameters_chart()
+            altair_chart.save("mychart.png")
             ```
 
         Returns:
-            altair.Chart: An altair chart
+            altair_chart: An altair chart
         """
 
         return self._linker._settings_obj.m_u_parameters_chart()
@@ -99,13 +114,17 @@ class LinkerVisualisations:
         `df_predict`
 
         Args:
-            df_predict (SplinkDataFrame): Output of `linker.predict()`
+            df_predict (SplinkDataFrame): Output of `linker.inference.predict()`
             target_bins (int, optional): Target number of bins in histogram. Defaults to
                 30.
             width (int, optional): Width of output. Defaults to 600.
             height (int, optional): Height of output chart. Defaults to 250.
 
-
+        Examples:
+            ```py
+            df_predict = linker.inference.predict(threshold_match_weight=-2)
+            linker.visualisations.match_weights_histogram(df_predict)
+            ```
         Returns:
             altair.Chart: An altair chart object.
 
@@ -130,6 +149,19 @@ class LinkerVisualisations:
                 to True.
             include_u (bool, optional): Show different estimates of u values. Defaults
                 to False.
+
+        Examples:
+            ``py
+            linker.training.estimate_parameters_using_expectation_maximisation(
+                blocking_rule=block_on("first_name"),
+            )
+
+            linker.training.estimate_parameters_using_expectation_maximisation(
+                blocking_rule=block_on("surname"),
+            )
+
+            linker.visualisations.parameter_estimate_comparisons_chart()
+            ```
 
         """
         records = self._linker._settings_obj._parameter_estimates_as_records
