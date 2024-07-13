@@ -53,7 +53,7 @@ class LinkerInference:
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
-        `blocking_rules_to_generate_predictions` in the settings dictionary to
+        `blocking_rules_to_generate_predictions` in your settings to
         generate pairwise record comparisons.
 
         For deterministic linkage, this should be a list of blocking rules which
@@ -65,29 +65,21 @@ class LinkerInference:
         Examples:
 
             ```py
-            from splink.linker import Linker
-            from splink.duckdb.database_api import DuckDBAPI
-
-            db_api = DuckDBAPI()
-
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
+            settings = SettingsCreator(
+                link_type="dedupe_only",
+                blocking_rules_to_generate_predictions=[
+                    block_on("first_name", "surname"),
+                    block_on("dob", "first_name"),
                 ],
-                "comparisons": []
-            }
-            >>>
-            linker = Linker(df, settings, db_api)
-            df = linker.deterministic_link()
+            )
+
+            linker = Linker(df, settings, database_api=db_api)
+            splink_df = linker.inference.deterministic_link()
             ```
 
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
         """
         pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.
