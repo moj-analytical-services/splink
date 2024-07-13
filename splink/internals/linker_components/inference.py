@@ -317,11 +317,14 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            # Pre-compute tf tables for any tables with
+            linker = Linker(df, "saved_settings.json", database_api=db_api)
+
+            # You should load or pre-compute tf tables for any tables with
             # term frequency adjustments
             linker.table_management.compute_tf_table("first_name")
+            # OR
+            linker.table_management.register_term_frequency_lookup(df, "first_name")
+
             record = {'unique_id': 1,
                 'first_name': "John",
                 'surname': "Smith",
@@ -480,9 +483,31 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            linker.compare_two_records(record_left, record_right)
+            linker = Linker(df, "saved_settings.json", database_api=db_api)
+
+            # You should load or pre-compute tf tables for any tables with
+            # term frequency adjustments
+            linker.table_management.compute_tf_table("first_name")
+            # OR
+            linker.table_management.register_term_frequency_lookup(df, "first_name")
+
+            record_1 = {'unique_id': 1,
+                'first_name': "John",
+                'surname': "Smith",
+                'dob': "1971-05-24",
+                'city': "London",
+                'email': "john@smith.net"
+                }
+
+            record_2 = {'unique_id': 1,
+                'first_name': "Jon",
+                'surname': "Smith",
+                'dob': "1971-05-23",
+                'city': "London",
+                'email': "john@smith.net"
+                }
+            df = linker.inference.compare_two_records(record_1, record_2)
+
             ```
 
         Returns:
