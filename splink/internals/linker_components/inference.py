@@ -53,7 +53,7 @@ class LinkerInference:
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
-        `blocking_rules_to_generate_predictions` in the settings dictionary to
+        `blocking_rules_to_generate_predictions` in your settings to
         generate pairwise record comparisons.
 
         For deterministic linkage, this should be a list of blocking rules which
@@ -65,29 +65,21 @@ class LinkerInference:
         Examples:
 
             ```py
-            from splink.linker import Linker
-            from splink.duckdb.database_api import DuckDBAPI
-
-            db_api = DuckDBAPI()
-
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
+            settings = SettingsCreator(
+                link_type="dedupe_only",
+                blocking_rules_to_generate_predictions=[
+                    block_on("first_name", "surname"),
+                    block_on("dob", "first_name"),
                 ],
-                "comparisons": []
-            }
-            >>>
-            linker = Linker(df, settings, db_api)
-            df = linker.deterministic_link()
+            )
+
+            linker = Linker(df, settings, database_api=db_api)
+            splink_df = linker.inference.deterministic_link()
             ```
 
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
         """
         pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.
@@ -163,13 +155,13 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
-        materialied_blocked_pairs: bool = True,
+        materialise_blocked_pairs: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
 
         Uses the blocking rules specified in the
-        `blocking_rules_to_generate_predictions` of the settings dictionary to
+        `blocking_rules_to_generate_predictions` key of the settings to
         generate the pairwise comparisons.
 
         Args:
@@ -183,23 +175,18 @@ class LinkerInference:
                 will materialise the table containing the input nodes (rows)
                 joined to any term frequencies which have been asked
                 for in the settings object.  If False, this will be
-                computed as part of one possibly gigantic CTE
-                pipeline.   Defaults to True
-            materialied_blocked_pairs: In the blocking phase, materialise the table
+                computed as part of a large CTE pipeline.   Defaults to True
+            materialise_blocked_pairs: In the blocking phase, materialise the table
                 of pairs of records that will be scored
 
         Examples:
             ```py
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            df = linker.predict(threshold_match_probability=0.95)
-            df.as_pandas_dataframe(limit=5)
+            linker = linker(df, "saved_settings.json", database_api=db_api)
+            splink_df = linker.inference.predict(threshold_match_probability=0.95)
+            splink_df.as_pandas_dataframe(limit=5)
             ```
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
-
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
         """
 
         pipeline = CTEPipeline()
@@ -262,7 +249,7 @@ class LinkerInference:
 
         pipeline.enqueue_list_of_sqls(sqls)
 
-        if materialied_blocked_pairs:
+        if materialise_blocked_pairs:
             blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(
                 pipeline
             )
@@ -298,7 +285,7 @@ class LinkerInference:
         self._linker._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
-        if materialied_blocked_pairs:
+        if materialise_blocked_pairs:
             blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return predictions
@@ -330,11 +317,14 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            # Pre-compute tf tables for any tables with
+            linker = Linker(df, "saved_settings.json", database_api=db_api)
+
+            # You should load or pre-compute tf tables for any tables with
             # term frequency adjustments
             linker.table_management.compute_tf_table("first_name")
+            # OR
+            linker.table_management.register_term_frequency_lookup(df, "first_name")
+
             record = {'unique_id': 1,
                 'first_name': "John",
                 'surname': "Smith",
@@ -493,9 +483,31 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            linker.compare_two_records(record_left, record_right)
+            linker = Linker(df, "saved_settings.json", database_api=db_api)
+
+            # You should load or pre-compute tf tables for any tables with
+            # term frequency adjustments
+            linker.table_management.compute_tf_table("first_name")
+            # OR
+            linker.table_management.register_term_frequency_lookup(df, "first_name")
+
+            record_1 = {'unique_id': 1,
+                'first_name': "John",
+                'surname': "Smith",
+                'dob': "1971-05-24",
+                'city': "London",
+                'email': "john@smith.net"
+                }
+
+            record_2 = {'unique_id': 1,
+                'first_name': "Jon",
+                'surname': "Smith",
+                'dob': "1971-05-23",
+                'city': "London",
+                'email': "john@smith.net"
+                }
+            df = linker.inference.compare_two_records(record_1, record_2)
+
             ```
 
         Returns:
