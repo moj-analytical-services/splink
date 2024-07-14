@@ -97,9 +97,9 @@ class LinkerClustering:
         """
         Internal function for computing node-level metrics.
 
-        Accepts outputs of `linker.predict()` and
-        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
-        and produces a table of node metrics.
+        Accepts outputs of `linker.inference.predict()` and
+        `linker.clustering.cluster_pairwise_at_threshold()`, along with the clustering 
+        threshold and produces a table of node metrics.
 
         Node metrics produced:
         * node_degree (absolute number of neighbouring nodes)
@@ -107,6 +107,7 @@ class LinkerClustering:
         Output table has a single row per input node, along with the cluster id (as
         assigned in `linker.cluster_pairwise_at_threshold()`) and the metric
         node_degree:
+
         |-------------------------------------------------|
         | composite_unique_id | cluster_id  | node_degree |
         |---------------------|-------------|-------------|
@@ -153,9 +154,10 @@ class LinkerClustering:
         """
         Internal function for computing edge-level metrics.
 
-        Accepts outputs of `linker._compute_node_metrics()`, `linker.predict()` and
-        `linker.cluster_pairwise_at_threshold()`, along with the clustering threshold
-        and produces a table of edge metrics.
+        Accepts outputs of `linker._compute_node_metrics()`, 
+        `linker.inference.predict()` and 
+        `linker.clustering.cluster_pairwise_at_threshold()`, along with the clustering 
+        threshold and produces a table of edge metrics.
 
         Uses `igraph` under-the-hood for calculations
 
@@ -193,7 +195,8 @@ class LinkerClustering:
 
         Accepts output of `linker._compute_node_metrics()` (which has the relevant
         information from `linker.predict() and
-        `linker.cluster_pairwise_at_threshold()`), produces a table of cluster metrics.
+        `linker.clustering.cluster_pairwise_at_threshold()`), produces a table of 
+        cluster metrics.
 
         Cluster metrics produced:
         * n_nodes (aka cluster size, number of nodes in cluster)
@@ -238,9 +241,9 @@ class LinkerClustering:
         and returns a data class of Splink dataframes
 
         Args:
-            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_predict (SplinkDataFrame): The results of `linker.inference.predict()`
             df_clustered (SplinkDataFrame): The outputs of
-                `linker.cluster_pairwise_predictions_at_threshold()`
+                `linker.clustering.cluster_pairwise_predictions_at_threshold()`
             threshold_match_probability (float, optional): Filter the pairwise match
                 predictions to include only pairwise comparisons with a
                 match_probability at or above this threshold. If not provided, the value
