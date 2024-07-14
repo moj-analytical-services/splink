@@ -207,6 +207,7 @@ class LinkerClustering:
 
         Output table has a single row per cluster, along with the cluster metrics
         listed above
+        
         |--------------------------------------------------------------------|
         | cluster_id  | n_nodes | n_edges | density | cluster_centralisation |
         |-------------|---------|---------|---------|------------------------|
