@@ -41,9 +41,9 @@ class LinkerClustering:
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
-        """Clusters the pairwise match predictions that result from `linker.predict()`
-        into groups of connected record using the connected components graph clustering
-        algorithm
+        """Clusters the pairwise match predictions that result from 
+        `linker.inference.predict()` into groups of connected record using the connected 
+        components graph clustering algorithm
 
         Records with an estimated `match_probability` at or above
         `threshold_match_probability` are considered to be a match (i.e. they represent
@@ -51,17 +51,13 @@ class LinkerClustering:
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
-            threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or
-                above this threshold. This dataframe is then fed into the clustering
-                algorithm.
+            threshold_match_probability (float): Pairwise comparisons with a 
+                `match_probability` at or above this threshold are matched
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
-                If this is set to false, the output will be a list of all IDs, clustered
-                into groups based on the desired match threshold.
             filter_pairwise_format_for_clusters (bool): If pairwise formatting has been
-                selected, whether to output all columns found within linker.predict(),
-                or just return clusters.
+                selected, whether to output all pairs, or only those belonging to a 
+                cluster of size 2 or greater.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
