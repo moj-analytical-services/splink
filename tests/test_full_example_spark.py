@@ -163,6 +163,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     Linker(df_spark, settings=path, database_api=spark_api)
 
 
+@mark_with_dialects_including("spark")
 def test_link_only(spark, df_spark, spark_api):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
