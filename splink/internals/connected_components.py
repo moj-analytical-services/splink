@@ -386,7 +386,7 @@ def _exit_query(
             {representatives_name} as repr_l
                 on {uid_concat_l} = repr_l.node_id
             left join
-            {representatives} as repr_r
+            {representatives_name} as repr_r
                 on {uid_concat_r} = repr_r.node_id
             {filter_cond}
             order by
