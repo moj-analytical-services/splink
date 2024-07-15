@@ -7,7 +7,8 @@
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
 > [!IMPORTANT]
-> Development has begun on Splink 4 on the `splink4_dev` branch.  Splink 3 is in maintenance mode and we are no longer accepting new features. We welcome contributions to Splink 4. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/04/02/splink-3-updates-and-splink-4-development-announcement---april-2024.html).
+> 🎉 Splink 4 is nearing release! We'd love your feedback - try it by installing the [prerelease](https://pypi.org/project/splink/4.0.0.dev7/). Examples of new syntax are [here](https://robinl.github.io/splink/demos/examples/examples_index.html) and a blog about our aims is [here](https://moj-analytical-services.github.io/splink/blog/2024/04/02/splink-3-updates-and-splink-4-development-announcement---april-2024.html) 🎉
+
 
 # Fast, accurate and scalable probabilistic data linkage
 
@@ -15,11 +16,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.  
-🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required for model training.  
-📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.  
+⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.
+🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.
+🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+🎓 **Unsupervised Learning:** No training data is required for model training.
+📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.
 
 Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
