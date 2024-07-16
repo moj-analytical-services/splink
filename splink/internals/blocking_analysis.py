@@ -763,6 +763,7 @@ def n_largest_blocks(
     blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
+    n_largest: int = 5,
 ):
     blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.name
@@ -771,7 +772,7 @@ def n_largest_blocks(
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
 
     sqls = _count_comparisons_from_n_largest_blocks_pre_filter_conditions_sqls(
-        splink_df_dict, blocking_rule_as_br, link_type, db_api
+        splink_df_dict, blocking_rule_as_br, link_type, db_api, n_largest=n_largest
     )
     pipeline = CTEPipeline()
     pipeline.enqueue_list_of_sqls(sqls)
