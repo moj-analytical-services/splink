@@ -182,7 +182,7 @@ class DateComparisonBase(Comparison):
             )
 
             if m_probability_1st_january:
-                comparison_level["m_probability"] = m_probability_1st_january
+                comparison_level.m_probability = m_probability_1st_january
             if term_frequency_adjustments:
                 comparison_level["tf_adjustment_column"] = col_name
             comparison_levels.append(comparison_level)
