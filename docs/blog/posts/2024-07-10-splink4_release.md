@@ -20,11 +20,13 @@ To get started quickly with Splink 4, checkout the [examples](../../demos/exampl
 
 - **User Experience**:  We have revamped all aspects of the user-facing API.  Functionality is easier to find, better named and better organised.
 
-- **Autocomplete everywhere**: All functions, most notably the settings object, have been rewritten to ensure autocomplete (IntelliSense/code completion) works.  This means you no longer need to remember the specific name of the wide range of configuration options - a key like `blocking_rules_to_generate_predictions` will autocomplete.  Where settings such as `link_type` have a predefined list of valid options, these will also autocomplete.
-
 - **Faster and more scalable**  Our testing suggests that the internal changes have made Splink 4 significantly more scalable. Our testing also suggests Splink 4 is faster than Splink 3 for many workloads.  This is in addition to [dramatic speedups](https://github.com/moj-analytical-services/splink/pull/1796) that were integrated into Splink 3 in January, meaning Splink is now 5x faster for a typical workload on a modern laptop than it was in November 2023.  We welcome any feedback from users about speed and scalability, as it's hard for us to test the full range of scenarios.
 
 - **Improved backend code quality** The Splink 4 codebase represents a big refactor to focus on code quality.  It should now be easier to contribute, and quicker and easier for the team to fix bugs.
+
+- **Autocomplete everywhere**: All functions, most notably the settings object, have been rewritten to ensure autocomplete (IntelliSense/code completion) works.  This means you no longer need to remember the specific name of the wide range of configuration options - a key like `blocking_rules_to_generate_predictions` will autocomplete.  Where settings such as `link_type` have a predefined list of valid options, these will also autocomplete.
+
+  ![Autocomplete example](https://github.com/user-attachments/assets/305b53ee-d11a-4104-b45f-e5b96db3c973)
 
 ## Smaller enhancements
 
