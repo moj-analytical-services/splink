@@ -10,11 +10,11 @@ categories:
 
 We're pleased to release Splink 4, which is more scalable and easier to use than Splink 3.
 
-The improvements we've made to the user experience mean that Splink 4 syntax is not backwards compatible, so Splink 3 scripts will need to be adjusted to work in Splink 4.  However, the model serialisation format is unchanged, so models saved from Splink 3 in `.json` format can be imported into Splink 4.
-
 Version 4 is recommended to all new users.   For existing users, there has been no change to the statistical methodology - Splink 3 and Splink 4 will give the same results, so there's no urgency to upgrade existing pipelines.
 
-To get started quickly with Splink 4, checkout the [examples](../../demos//examples/examples_index.md).  You can see how things have changed by comparing them to the [Splink 3 examples](TODO).
+The improvements we've made to the user experience mean that Splink 4 syntax is not backwards compatible, so Splink 3 scripts will need to be adjusted to work in Splink 4.  However, the model serialisation format is unchanged, so models saved from Splink 3 in `.json` format can be imported into Splink 4.
+
+To get started quickly with Splink 4, checkout the [examples](../../demos/examples/examples_index.md).  You can see how things have changed by comparing them to the [Splink 3 examples](https://moj-analytical-services.github.io/splink3_legacy_docs/demos/examples/examples_index.html).
 
 ## Main enhancements
 
