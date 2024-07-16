@@ -36,6 +36,17 @@ jobs:
           python-version: 3.9.10
 
       #----------------------------------------------
+      #       Install GLIBC - error occured 2024-06-01 on ubuntu-latest with python3.9
+      #       Temporary as ubuntu-latest could change or a different python version could 
+      #       change this current error.
+      #----------------------------------------------
+      - name: Install GLIBC
+        
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6
+
+      #----------------------------------------------
       #  -- save a few section by caching poetry --
       #----------------------------------------------
       - name: Load cached Poetry installation

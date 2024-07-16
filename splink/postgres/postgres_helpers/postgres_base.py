@@ -62,3 +62,15 @@ class PostgresBase(DialectBase):
     @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
+
+    @property
+    def _damerau_levenshtein_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def _jaro_name(self):
+        return "jaro_similarity"
+
+    @property
+    def _jaro_winkler_name(self):
+        return "jaro_winkler_similarity"

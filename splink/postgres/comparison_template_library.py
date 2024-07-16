@@ -1,13 +1,7 @@
-# The Comparison Template Library is not currently implemented
-# for Postgres due to limited string matching capability in
-# cll.comparison_level_library
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-logger.warn(
-    "The Comparison Template Library is not currently implemented "
-    "for Postgres due to limited string matching capability in "
-    "`cll.comparison_level_library`"
+from .postgres_helpers.postgres_comparison_imports import (  # noqa: F401
+    date_comparison,
+    email_comparison,
+    forename_surname_comparison,
+    name_comparison,
+    postcode_comparison,
 )
