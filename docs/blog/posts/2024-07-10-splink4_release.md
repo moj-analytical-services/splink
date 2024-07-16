@@ -10,7 +10,7 @@ categories:
 
 We're pleased to release Splink 4, which is more scalable and easier to use than Splink 3.
 
-The improvement we've made to the user experience mean that Splink 4 syntax is not backwards compatible, so Splink 3 scripts will need to be adjusted to work in Splink 4.  However, the model serialisation format is unchanged, so models saved from Splink 3 in `.json` format can be imported into Splink 4.
+The improvements we've made to the user experience mean that Splink 4 syntax is not backwards compatible, so Splink 3 scripts will need to be adjusted to work in Splink 4.  However, the model serialisation format is unchanged, so models saved from Splink 3 in `.json` format can be imported into Splink 4.
 
 Version 4 is recommended to all new users.   For existing users, there has been no change to the statistical methodology - Splink 3 and Splink 4 will give the same results, so there's no urgency to upgrade existing pipelines.
 
@@ -51,4 +51,6 @@ For users wishing to familiarise themselves with Splink 4, we recommend the easi
 
 You may also find the following screenshot useful, which shows the diff of a fairly standard Splink 3 workflow that has been rewritten in Splink 4.
 
-[TODO: Screenshot of diff]
+![image](https://github.com/user-attachments/assets/7fe7c9e7-1a22-4744-a5ad-281d540a8deb)
+
+You can find the corresponding code [here](https://github.com/RobinL/temp_3_to_4/pull/1/files).
