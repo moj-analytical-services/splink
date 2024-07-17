@@ -666,7 +666,7 @@ def n_largest_blocks(
     link_type: user_input_link_type_options,
     db_api: DatabaseAPISubClass,
     n_largest: int = 5,
-):
+) -> "SplinkDataFrame":
     blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.name
     )
