@@ -359,60 +359,29 @@ def _cc_create_unique_id_cols(
 
 
 def _exit_query(
-    pairwise_mode: bool,
-    df_predict: SplinkDataFrame,
     representatives: SplinkDataFrame,
     concat_with_tf: SplinkDataFrame,
     uid_cols: list[InputColumn],
-    pairwise_filter: bool,
 ) -> str:
     representatives_name = representatives.physical_name
     concat_with_tf_name = concat_with_tf.physical_name
 
-    if pairwise_mode:
-        df_predict_name = df_predict.physical_name
-        uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
-        uid_concat_r = _composite_unique_id_from_edges_sql(uid_cols, "r", "n")
+    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
 
-        filter_cond = "where cluster_id_l = cluster_id_r" if pairwise_filter else ""
+    return f"""
+        select
+            c.representative as cluster_id, n.*
+        from {representatives_name} as c
 
-        return f"""
-            select
-                n.*,
-                repr_l.representative as cluster_id_l,
-                repr_r.representative as cluster_id_r
-            from {df_predict_name} as n
-            left join
-            {representatives_name} as repr_l
-                on {uid_concat_l} = repr_l.node_id
-            left join
-            {representatives_name} as repr_r
-                on {uid_concat_r} = repr_r.node_id
-            {filter_cond}
-            order by
-                cluster_id_l, cluster_id_r
-        """
-
-    else:
-        uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
-
-        return f"""
-            select
-                c.representative as cluster_id, n.*
-            from {representatives_name} as c
-
-            left join {concat_with_tf_name} as n
-            on {uid_concat} = c.node_id
-        """
+        left join {concat_with_tf_name} as n
+        on {uid_concat} = c.node_id
+    """
 
 
 def solve_connected_components(
     linker: "Linker",
     edges_table: SplinkDataFrame,
-    df_predict: SplinkDataFrame,
     concat_with_tf: SplinkDataFrame,
-    pairwise_output: bool = False,
-    filter_pairwise_format_for_clusters: bool = False,
     _generated_graph: bool = False,
 ) -> SplinkDataFrame:
     """Connected Components main algorithm.
@@ -531,12 +500,9 @@ def solve_connected_components(
     uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
 
     exit_query = _exit_query(
-        pairwise_mode=pairwise_output,
-        df_predict=df_predict,
         representatives=representatives,
         concat_with_tf=concat_with_tf,
         uid_cols=uid_cols,
-        pairwise_filter=filter_pairwise_format_for_clusters,
     )
     pipeline = CTEPipeline([representatives])
     pipeline.enqueue_sql(exit_query, "__splink__df_representatives")
