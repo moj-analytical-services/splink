@@ -77,9 +77,11 @@ class ComparisonCreator(ABC):
 
         if self.term_frequency_adjustments:
             for cl in comparison_levels:
-                # TODO: Check that the column name a 'pure' column name and
-                # not a column expression with transforms applied
-                if cl.is_exact_match_level:
+                if (
+                    hasattr(cl, "col_expression")
+                    and cl.col_expression.is_pure_column_or_column_reference
+                    and cl.is_exact_match_level
+                ):
                     cl.term_frequency_adjustments = True
 
         if self.m_probabilities:
