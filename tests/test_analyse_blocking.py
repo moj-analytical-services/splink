@@ -5,6 +5,7 @@ from splink.blocking_analysis import (
     count_comparisons_from_blocking_rule,
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
     cumulative_comparisons_to_be_scored_from_blocking_rules_data,
+    n_largest_blocks,
 )
 from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_rule_library import CustomRule, Or, block_on
@@ -623,4 +624,193 @@ def test_chart(test_helpers, dialect):
         link_type="dedupe_only",
         db_api=db_api,
         unique_id_column_name="unique_id",
+    )
+
+
+@mark_with_dialects_excluding()
+def test_n_largest_blocks(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+            {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+            {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
+            {"unique_id": 4, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
+            {"unique_id": 5, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+            {"unique_id": 6, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+        ]
+    )
+
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+            {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+            {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
+            {"unique_id": 4, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+            {"unique_id": 5, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
+        ]
+    )
+
+    df_3 = pd.DataFrame(
+        [
+            {"unique_id": 1, "name1": "John", "name2": "Smith", "dob": "2019-01-03"},
+        ]
+    )
+
+    db_api = DuckDBAPI()
+
+    n_largest_dedupe_only = n_largest_blocks(
+        table_or_tables=df_1,
+        blocking_rule=block_on("name1", "substr(name2,1,1)"),
+        link_type="dedupe_only",
+        db_api=db_api,
+    ).as_pandas_dataframe()
+
+    sql = """
+    with
+    a as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from df_1
+    group by key_0, key_1
+    ),
+
+    b as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from df_1
+    group by key_0, key_1)
+
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    from a inner join b
+    on a.key_0 = b.key_0 and a.key_1 = b.key_1
+    order by block_count desc
+    """
+    n_largest_manual_dedupe_only = duckdb.sql(sql).df()
+
+    pd.testing.assert_frame_equal(n_largest_dedupe_only, n_largest_manual_dedupe_only)
+
+    n_largest_link_and_dedupe = n_largest_blocks(
+        table_or_tables=[df_1, df_2],
+        blocking_rule=block_on("name1", "substr(name2,1,1)"),
+        link_type="link_and_dedupe",
+        db_api=db_api,
+    ).as_pandas_dataframe()
+
+    sql = """
+    with
+    a as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2)
+    group by key_0, key_1
+    ),
+
+    b as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2)
+    group by key_0, key_1)
+
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    from a inner join b
+    on a.key_0 = b.key_0 and a.key_1 = b.key_1
+    order by block_count desc
+    """
+    n_largest_manual_link_and_dedupe = duckdb.sql(sql).df()
+
+    pd.testing.assert_frame_equal(
+        n_largest_link_and_dedupe, n_largest_manual_link_and_dedupe
+    )
+
+    n_largest_link_only = n_largest_blocks(
+        table_or_tables=[df_1, df_2],
+        blocking_rule=block_on("name1", "substr(name2,1,1)"),
+        link_type="link_only",
+        db_api=db_api,
+    ).as_pandas_dataframe()
+
+    sql = """
+    with
+    a as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from df_1
+    group by key_0, key_1
+    ),
+
+    b as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from df_2
+    group by key_0, key_1)
+
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    from a inner join b
+    on a.key_0 = b.key_0 and a.key_1 = b.key_1
+    order by block_count desc
+    """
+    n_largest_manual_link_only = duckdb.sql(sql).df()
+
+    pd.testing.assert_frame_equal(n_largest_link_only, n_largest_manual_link_only)
+
+    n_largest_link_only_3 = n_largest_blocks(
+        table_or_tables=[df_1, df_2, df_3],
+        blocking_rule=block_on("name1", "substr(name2,1,1)"),
+        link_type="link_only",
+        db_api=db_api,
+    ).as_pandas_dataframe()
+
+    sql = """
+    with
+    a as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2 union all select * from df_3)
+    group by key_0, key_1
+    ),
+
+    b as (
+    select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2 union all select * from df_3)
+    group by key_0, key_1)
+
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    from a inner join b
+    on a.key_0 = b.key_0 and a.key_1 = b.key_1
+    order by block_count desc
+    """
+    n_largest_manual_link_only_3 = duckdb.sql(sql).df()
+
+    pd.testing.assert_frame_equal(n_largest_link_only_3, n_largest_manual_link_only_3)
+
+    n_largest_link_and_dedupe_inverted = n_largest_blocks(
+        table_or_tables=[df_1, df_2],
+        blocking_rule="l.name1 = r.name2 and l.name2 = r.name1",
+        link_type="link_and_dedupe",
+        db_api=db_api,
+    ).as_pandas_dataframe()
+
+    sql = """
+    with
+    a as (
+    select name1 as key_0, name2 as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2)
+    group by key_0, key_1
+    ),
+
+    b as (
+    select name2 as key_0, name1 as key_1, count(*) as c
+    from (select * from df_1 union all select * from df_2)
+    group by key_0, key_1)
+
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    from a inner join b
+    on a.key_0 = b.key_0 and a.key_1 = b.key_1
+    order by block_count desc
+    """
+    n_largest_manual_link_and_dedupe_inverted = duckdb.sql(sql).df()
+
+    pd.testing.assert_frame_equal(
+        n_largest_link_and_dedupe_inverted.sort_values(["key_0", "key_1"]).reset_index(
+            drop=True
+        ),
+        n_largest_manual_link_and_dedupe_inverted.sort_values(
+            ["key_0", "key_1"]
+        ).reset_index(drop=True),
     )
