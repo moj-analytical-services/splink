@@ -543,7 +543,31 @@ def count_comparisons_from_blocking_rule(
     compute_post_filter_count: bool = True,
     max_rows_limit: int = int(1e9),
 ) -> dict[str, Union[int, str]]:
-    """TODO: Add docstring here"""
+    """Analyse a blocking rule to understand the number of comparisons it will generate.
+
+    Read more about the definition of pre and post filter conditions
+    [here]("https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions")
+
+    Args:
+        table_or_tables (dataframe, str): Input data
+        blocking_rule (Union[BlockingRuleCreator, str, Dict[str, Any]]): The blocking
+            rule to analyse
+        link_type (user_input_link_type_options): The link type - "link_only",
+            "dedupe_only" or "link_and_dedupe"
+        db_api (DatabaseAPISubClass): Database API
+        unique_id_column_name (str, optional):  Defaults to "unique_id".
+        source_dataset_column_name (Optional[str], optional):  Defaults to None.
+        compute_post_filter_count (bool, optional): Whether to use a slower methodology
+            to calculate how many comparisons will be generated post filter conditions.
+            Defaults to True.
+        max_rows_limit (int, optional): Calculation of post filter counts will only
+            proceed if the fast method returns a value below this limit. Defaults
+            to int(1e9).
+
+    Returns:
+        dict[str, Union[int, str]]: A dictionary containing the results
+    """
+
     # Ensure what's been passed in is a BlockingRuleCreator
     blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.name
@@ -667,6 +691,28 @@ def n_largest_blocks(
     db_api: DatabaseAPISubClass,
     n_largest: int = 5,
 ) -> "SplinkDataFrame":
+    """Find the values responsible for creating the largest blocks of records.
+
+    For example, when blocking on first name and surname, the 'John Smith' block
+    might be the largest block of records.  In cases where values are highly skewed
+    a few values may be resonsible for generating a large proportion of all comparisons.
+    This function helps you find the culprit values.
+
+    The analysis is performed pre filter conditions, read more about what this means
+    [here]("https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions")
+
+    Args:
+        table_or_tables (dataframe, str): Input data
+        blocking_rule (Union[BlockingRuleCreator, str, Dict[str, Any]]): The blocking
+            rule to analyse
+        link_type (user_input_link_type_options): The link type - "link_only",
+            "dedupe_only" or "link_and_dedupe"
+        db_api (DatabaseAPISubClass): Database API
+        n_largest (int, optional): How many rows to return. Defaults to 5.
+
+    Returns:
+        SplinkDataFrame: A dataframe containing the n_largest blocks
+    """
     blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.name
     )

@@ -24,6 +24,7 @@ This section contains reference material for the modules and functions within Sp
 
 #### Other
 - [Exploratory](./exploratory.md)
+- [Blocking Analysis](./blocking_analysis.md)
 - [Blocking](./blocking.md)
 - [SplinkDataFrame](./splink_dataframe.md)
 - [EM Training Session API](./em_training_session.md)
