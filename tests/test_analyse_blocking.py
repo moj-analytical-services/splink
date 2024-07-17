@@ -807,6 +807,10 @@ def test_n_largest_blocks(test_helpers, dialect):
     n_largest_manual_link_and_dedupe_inverted = duckdb.sql(sql).df()
 
     pd.testing.assert_frame_equal(
-        n_largest_link_and_dedupe_inverted.sort_values(["key_0", "key_1"]),
-        n_largest_manual_link_and_dedupe_inverted.sort_values(["key_0", "key_1"]),
+        n_largest_link_and_dedupe_inverted.sort_values(["key_0", "key_1"]).reset_index(
+            drop=True
+        ),
+        n_largest_manual_link_and_dedupe_inverted.sort_values(
+            ["key_0", "key_1"]
+        ).reset_index(drop=True),
     )
