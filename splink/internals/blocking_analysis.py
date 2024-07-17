@@ -448,7 +448,7 @@ def _count_comparisons_generated_from_blocking_rule(
     pipeline.enqueue_list_of_sqls(sqls)
 
     sql = """
-    select cast(sum(block_count) as integer) as count_of_pairwise_comparisons_generated
+    select cast(sum(block_count) as int128) as count_of_pairwise_comparisons_generated
     from __splink__block_counts
     """
 
