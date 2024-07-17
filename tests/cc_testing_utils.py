@@ -61,7 +61,6 @@ def run_cc_implementation(linker, predict_df):
     cc = solve_connected_components(
         linker,
         predict_df,
-        df_predict=None,
         concat_with_tf=concat_with_tf,
         _generated_graph=True,
     ).as_pandas_dataframe()

@@ -38,8 +38,6 @@ class LinkerClustering:
         self,
         df_predict: SplinkDataFrame,
         threshold_match_probability: Optional[float] = None,
-        pairwise_formatting: bool = False,
-        filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
         """Clusters the pairwise match predictions that result from
         `linker.inference.predict()` into groups of connected record using the connected
@@ -53,11 +51,6 @@ class LinkerClustering:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Pairwise comparisons with a
                 `match_probability` at or above this threshold are matched
-            pairwise_formatting (bool): Whether to output the pairwise match predictions
-                from linker.predict() with cluster IDs.
-            filter_pairwise_format_for_clusters (bool): If pairwise formatting has been
-                selected, whether to output all pairs, or only those belonging to a
-                cluster of size 2 or greater.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -79,10 +72,7 @@ class LinkerClustering:
         cc = solve_connected_components(
             self._linker,
             edges_table,
-            df_predict,
             nodes_with_tf,
-            pairwise_formatting,
-            filter_pairwise_format_for_clusters,
         )
         cc.metadata["threshold_match_probability"] = threshold_match_probability
 
