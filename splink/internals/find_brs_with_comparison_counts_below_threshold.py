@@ -91,6 +91,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     current_combination: List[str] = None,
     already_visited: Set[frozenset[str]] = None,
     results: List[Dict[str, str]] = None,
+    max_results: Optional[int] = None,
 ) -> List[Dict[str, str]]:
     """
     Recursively search combinations of fields to find ones that result in a count less
@@ -155,6 +156,9 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     if results is None:
         results = []
 
+    if max_results is not None and len(results) >= max_results:
+        return results
+
     if len(current_combination) == len(all_columns):
         return results  # All fields included, meaning we're at a leaf so exit recursion
 
@@ -187,6 +191,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
                 next_combination,
                 already_visited,
                 results,
+                max_results=max_results,
             )
     else:
         row = _generate_output_combinations_table_row(
@@ -197,6 +202,12 @@ def _search_tree_for_blocking_rules_below_threshold_count(
         )
         results.append(row)
 
+        b_cols = row["blocking_columns_sanitised"]
+        count = f"{row['comparison_count']:,.0f}"
+        logger.info(
+            f"--\nFound BR with blocking columns: {b_cols}\nComparison count: {count}"
+        )
+
     return results
 
 
@@ -204,6 +215,7 @@ def find_blocking_rules_below_threshold_comparison_count(
     linker: "Linker",
     max_comparisons_per_rule: int,
     column_expressions: Optional[Sequence[str | InputColumn]] = None,
+    max_results: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Finds blocking rules which return a comparison count below a given threshold.
@@ -224,6 +236,8 @@ def find_blocking_rules_below_threshold_comparison_count(
             by the ComparisonLevels of the Linker. Column expressions can be SQL
             expressions, not just column names i.e. 'substr(surname, 1,1)' is a valid
             entry in this list.
+        max_results (int, optional): Maximum number of results to return. Defaults to
+            None
 
     Returns:
         pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
@@ -244,7 +258,10 @@ def find_blocking_rules_below_threshold_comparison_count(
             column_expressions_as_strings.append(c)
 
     results = _search_tree_for_blocking_rules_below_threshold_count(
-        linker, column_expressions_as_strings, max_comparisons_per_rule
+        linker,
+        column_expressions_as_strings,
+        max_comparisons_per_rule,
+        max_results=max_results,
     )
 
     if not results:

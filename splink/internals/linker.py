@@ -597,10 +597,10 @@ class Linker:
         return labels_tablename
 
     def _find_blocking_rules_below_threshold(
-        self, max_comparisons_per_rule, blocking_expressions=None
+        self, max_comparisons_per_rule, blocking_expressions=None, max_results=None
     ):
         return find_blocking_rules_below_threshold_comparison_count(
-            self, max_comparisons_per_rule, blocking_expressions
+            self, max_comparisons_per_rule, blocking_expressions, max_results
         )
 
     def _detect_blocking_rules_for_prediction(
