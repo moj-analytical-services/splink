@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 class LinkerEvalution:
     """Evaluate the performance of a Splink model.  Accessed via
-    `linker.evaluation`.
+    `linker.evaluation`
     """
 
     def __init__(self, linker: Linker):
@@ -40,11 +40,11 @@ class LinkerEvalution:
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         include_false_positives: bool = True,
         include_false_negatives: bool = True,
-        threshold: float = 0.5,
+        threshold_match_probability: float = 0.5,
     ) -> SplinkDataFrame:
-        """Generate a dataframe containing false positives and false negatives
-        based on the comparison between the clerical_match_score in the labels
-        table compared with the splink predicted match probability
+        """Find false positives and false negatives based on the comparison between the
+        clerical_match_score in the labels table compared with the splink predicted
+        match probability
 
         Args:
             labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
@@ -65,7 +65,7 @@ class LinkerEvalution:
             labels_tablename,
             include_false_positives,
             include_false_negatives,
-            threshold,
+            threshold_match_probability,
         )
 
     def accuracy_analysis_from_labels_column(
