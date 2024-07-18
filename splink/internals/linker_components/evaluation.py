@@ -43,16 +43,35 @@ class LinkerEvalution:
         threshold_match_probability: float = 0.5,
     ) -> SplinkDataFrame:
         """Find false positives and false negatives based on the comparison between the
-        clerical_match_score in the labels table compared with the splink predicted
+        `clerical_match_score` in the labels table compared with the splink predicted
         match probability
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database using
+
+        `labels_table = linker.table_management.register_labels_table(my_df)`
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
 
         Args:
             labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
                 containing labels in the database
             include_false_positives (bool, optional): Defaults to True.
             include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
+            threshold_match_probability (float, optional): Threshold probability
+                above which a prediction considered to be a match. Defaults to 0.5.
+
+        Examples:
+            ```py
+            labels_table = linker.table_management.register_labels_table(df_labels)
+
+            linker.evaluation.prediction_errors_from_labels_table(
+               labels_table, include_false_negatives=True, include_false_positives=False
+            ).as_pandas_dataframe()
+            ```
 
         Returns:
             SplinkDataFrame:  Table containing false positives and negatives
@@ -72,7 +91,7 @@ class LinkerEvalution:
         self,
         labels_column_name: str,
         *,
-        threshold_actual: float = 0.5,
+        threshold_match_probability: float = 0.5,
         match_weight_round_to_nearest: float = 0.1,
         output_type: Literal[
             "threshold_selection", "roc", "precision_recall", "table", "accuracy"
@@ -96,10 +115,11 @@ class LinkerEvalution:
 
         Args:
             labels_column_name (str): Column name containing labels in the input table
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
+            threshold_match_probability (float, optional): Where the
+                `clerical_match_score` provided by the user is a probability rather
+                than binary, this value is used as the threshold to classify
+                `clerical_match_score`s as binary matches or non matches.
+                Defaults to 0.5.
             match_weight_round_to_nearest (float, optional): When provided, thresholds
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
@@ -121,7 +141,7 @@ class LinkerEvalution:
             ```
 
         Returns:
-            altair.Chart: An altair chart
+            chart: An altair chart
         """  # noqa: E501
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
@@ -140,7 +160,7 @@ class LinkerEvalution:
         df_truth_space = truth_space_table_from_labels_column(
             self._linker,
             labels_column_name,
-            threshold_actual=threshold_actual,
+            threshold_actual=threshold_match_probability,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
             positives_not_captured_by_blocking_rules_scored_as_zero=positives_not_captured_by_blocking_rules_scored_as_zero,
         )
@@ -166,7 +186,7 @@ class LinkerEvalution:
         self,
         labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         *,
-        threshold_actual: float = 0.5,
+        threshold_match_probability: float = 0.5,
         match_weight_round_to_nearest: float = 0.1,
         output_type: Literal[
             "threshold_selection", "roc", "precision_recall", "table", "accuracy"
@@ -204,10 +224,11 @@ class LinkerEvalution:
         Args:
             labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
                 containing labels in the database
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
+            threshold_match_probability (float, optional): Where the
+                `clerical_match_score` provided by the user is a probability rather
+                than binary, this value is used as the threshold to classify
+                `clerical_match_score`s as binary matches or non matches.
+                Defaults to 0.5.
             match_weight_round_to_nearest (float, optional): When provided, thresholds
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
@@ -252,7 +273,7 @@ class LinkerEvalution:
         df_truth_space = truth_space_table_from_labels_table(
             self._linker,
             labels_tablename,
-            threshold_actual=threshold_actual,
+            threshold_actual=threshold_match_probability,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
         recs = df_truth_space.as_record_dict()
@@ -278,7 +299,7 @@ class LinkerEvalution:
         label_colname: str,
         include_false_positives: bool = True,
         include_false_negatives: bool = True,
-        threshold: float = 0.5,
+        threshold_match_probability: float = 0.5,
     ) -> SplinkDataFrame:
         """Generate a dataframe containing false positives and false negatives
         based on the comparison between the splink match probability and the
@@ -292,6 +313,15 @@ class LinkerEvalution:
             threshold (float, optional): Threshold above which a score is considered
                 to be a match. Defaults to 0.5.
 
+        Examples:
+            ```py
+            linker.evaluation.prediction_errors_from_labels_column(
+                "ground_truth_cluster",
+                include_false_negatives=True,
+                include_false_positives=False
+            ).as_pandas_dataframe()
+            ```
+
         Returns:
             SplinkDataFrame:  Table containing false positives and negatives
         """
@@ -300,7 +330,7 @@ class LinkerEvalution:
             label_colname,
             include_false_positives,
             include_false_negatives,
-            threshold,
+            threshold_match_probability,
         )
 
     def unlinkables_chart(
@@ -323,17 +353,12 @@ class LinkerEvalution:
             as_dict (bool, optional): If True, return a dict version of the chart.
 
         Examples:
-            For the simplest code pipeline, load a pre-trained model
-            and run this against the test data.
+            After estimating the parameters of the model, run:
+
             ```py
-            from splink.datasets import splink_datasets
-            df = splink_datasets.fake_1000
-            linker = DuckDBLinker(df)
-            linker.load_settings("saved_settings.json")
-            linker.unlinkables_chart()
+            linker.evaluation.unlinkables_chart()
             ```
-            For more complex code pipelines, you can run an entire pipeline
-            that estimates your m and u values, before `unlinkables_chart().
+
 
         Returns:
             altair.Chart: An altair chart
