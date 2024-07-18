@@ -446,7 +446,7 @@ def prediction_errors_from_labels_table(
     labels_tablename: str,
     include_false_positives: bool = True,
     include_false_negatives: bool = True,
-    threshold: float = 0.5,
+    threshold_match_probability: float = 0.5,
 ) -> SplinkDataFrame:
     pipeline = CTEPipeline()
     nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
@@ -457,13 +457,13 @@ def prediction_errors_from_labels_table(
     pipeline.enqueue_list_of_sqls(sqls)
 
     false_positives = f"""
-    (clerical_match_score < {threshold} and
-    match_probability > {threshold})
+    (clerical_match_score < {threshold_match_probability} and
+    match_probability > {threshold_match_probability})
     """
 
     false_negatives = f"""
-    (clerical_match_score > {threshold} and
-    match_probability < {threshold})
+    (clerical_match_score > {threshold_match_probability} and
+    match_probability < {threshold_match_probability})
     """
 
     where_conditions = []
