@@ -6,8 +6,8 @@ from splink.internals.datasets import splink_datasets
 from splink.internals.linker import Linker
 from splink.internals.settings_creator import SettingsCreator
 
-# The following is a workaround for the fact that dependencies of postgres, spark
-# and duckdb may not be installed, but we don't want this to prevent import
+# The following is a workaround for the fact that dependencies of particular backends
+# may not be installed, but we don't want this to prevent import
 # of the other backends.
 
 # This enables auto-complete to be used to import the various DBAPIs
@@ -15,7 +15,6 @@ from splink.internals.settings_creator import SettingsCreator
 # without importing them at runtime
 if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
-    from splink.internals.postgres.database_api import PostgresAPI
     from splink.internals.spark.database_api import SparkAPI
 
 
@@ -30,12 +29,8 @@ def __getattr__(name):
             from splink.internals.duckdb.database_api import DuckDBAPI
 
             return DuckDBAPI
-        elif name == "PostgresAPI":
-            from splink.internals.postgres.database_api import PostgresAPI
-
-            return PostgresAPI
     except ImportError as err:
-        if name in ["SparkAPI", "DuckDBAPI", "PostgresAPI"]:
+        if name in ["SparkAPI", "DuckDBAPI"]:
             raise ImportError(
                 f"{name} cannot be imported because its dependencies are not "
                 "installed. Please `pip install` the required package(s) as "
@@ -52,9 +47,7 @@ __all__ = [
     "ColumnExpression",
     "DuckDBAPI",
     "Linker",
-    "PostgresAPI",
     "SettingsCreator",
     "SparkAPI",
     "splink_datasets",
-    "SQLiteAPI",
 ]
