@@ -42,34 +42,6 @@ def test_clear_error_when_empty_block():
         )
 
 
-def test_em_manual_deactivate():
-    data = [
-        {"unique_id": 1, "name": "Amanda", "surname": "Smith"},
-        {"unique_id": 2, "name": "Robin", "surname": "Jones"},
-        {"unique_id": 3, "name": "Robyn", "surname": "Williams"},
-        {"unique_id": 4, "name": "David", "surname": "Green"},
-        {"unique_id": 5, "name": "Eve", "surname": "Pope"},
-        {"unique_id": 6, "name": "Amanda", "surname": "Anderson"},
-    ]
-    df = pd.DataFrame(data)
-
-    settings = {
-        "link_type": "dedupe_only",
-        "comparisons": [
-            cl.LevenshteinAtThresholds("name", 1),
-            cl.ExactMatch("surname"),
-        ],
-        "blocking_rules_to_generate_predictions": ["l.name = r.name"],
-    }
-
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, database_api=db_api)
-    linker.training.estimate_parameters_using_expectation_maximisation(
-        "l.name = r.name", comparisons_to_deactivate=["name"]
-    )
-
-
 def test_estimate_without_term_frequencies():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
