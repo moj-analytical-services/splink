@@ -11,7 +11,6 @@ from splink.internals.charts import (
     probability_two_random_records_match_iteration_chart,
 )
 from splink.internals.comparison import Comparison
-from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
@@ -57,8 +56,6 @@ class EMTrainingSession:
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
-        comparisons_to_deactivate: list[Comparison] = None,
-        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
     ):
         logger.info("\n----- Starting EM training session -----\n")
@@ -77,20 +74,13 @@ class EMTrainingSession:
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies
 
-        if comparison_levels_to_reverse_blocking_rule:
-            # TODO: atm this branch probably makes no sense. What would user pass?
-            # self._comparison_levels_to_reverse_blocking_rule = (
-            #     comparison_levels_to_reverse_blocking_rule
-            # )
-            raise ValueError("This path is broken for now.")
-        else:
-            self._comparison_levels_to_reverse_blocking_rule: list[
-                ComparisonAndLevelDict
-            ] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
-                sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
-                comparisons=core_model_settings.comparisons,
-            )
+        self._comparison_levels_to_reverse_blocking_rule: list[
+            ComparisonAndLevelDict
+        ] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
+            blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
+            sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
+            comparisons=core_model_settings.comparisons,
+        )
 
         # batch together fixed probabilities rather than keep hold of the bools
         self.training_fixed_probabilities: set[str] = {
@@ -104,19 +94,16 @@ class EMTrainingSession:
         }
 
         # Remove comparison columns which are either 'used up' by the blocking rules
-        # or alternatively, if the user has manually provided a list to remove,
-        # use this instead
-        if not comparisons_to_deactivate:
-            comparisons_to_deactivate = []
-            br_cols = get_columns_used_from_sql(
-                blocking_rule_for_training.blocking_rule_sql,
-                self.db_api.sql_dialect.sqlglot_name,
-            )
-            for cc in core_model_settings.comparisons:
-                cc_cols = cc._input_columns_used_by_case_statement
-                cc_cols = [c.input_name for c in cc_cols]
-                if set(br_cols).intersection(cc_cols):
-                    comparisons_to_deactivate.append(cc)
+        comparisons_to_deactivate = []
+        br_cols = get_columns_used_from_sql(
+            blocking_rule_for_training.blocking_rule_sql,
+            self.db_api.sql_dialect.sqlglot_name,
+        )
+        for cc in core_model_settings.comparisons:
+            cc_cols = cc._input_columns_used_by_case_statement
+            cc_cols = [c.input_name for c in cc_cols]
+            if set(br_cols).intersection(cc_cols):
+                comparisons_to_deactivate.append(cc)
         cc_names_to_deactivate = [
             cc.output_column_name for cc in comparisons_to_deactivate
         ]

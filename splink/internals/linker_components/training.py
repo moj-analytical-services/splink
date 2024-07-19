@@ -12,8 +12,6 @@ from splink.internals.blocking_analysis import (
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
-from splink.internals.comparison import Comparison
-from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.estimate_u import estimate_u_values
 from splink.internals.m_from_labels import estimate_m_from_pairwise_labels
@@ -220,8 +218,6 @@ class LinkerTraining:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: Union[str, BlockingRuleCreator],
-        comparisons_to_deactivate: list[Comparison] = None,
-        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         estimate_without_term_frequencies: bool = False,
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities: bool = False,
@@ -251,12 +247,6 @@ class LinkerTraining:
         [this PR](https://github.com/moj-analytical-services/splink/pull/734) for
         the rationale.
 
-        To control which comparisons should have their parameter estimated, and the
-        process of 'reversing out' the global probability two random records match, the
-        user may specify `comparisons_to_deactivate` and
-        `comparison_levels_to_reverse_blocking_rule`.   This is useful, for example
-        if you block on the dmetaphone of a column but match on the original column.
-
         Examples:
             Default behaviour
             ```py
@@ -266,37 +256,9 @@ class LinkerTraining:
             )
             ```
 
-            Specify which comparisons to deactivate
-
-            ```py
-            br_training = "l.dmeta_first_name = r.dmeta_first_name"
-            settings_obj = linker._settings_obj
-            comp = settings_obj._get_comparison_by_output_column_name("first_name")
-            dmeta_level = comp._get_comparison_level_by_comparison_vector_value(1)
-            linker.training.estimate_parameters_using_expectation_maximisation(
-                br_training,
-                comparisons_to_deactivate=["first_name"],
-                comparison_levels_to_reverse_blocking_rule=[dmeta_level],
-            )
-            ```
-
         Args:
             blocking_rule (BlockingRuleCreator | str): The blocking rule used to
                 generate pairwise record comparisons.
-            comparisons_to_deactivate (list, optional): By default, splink will
-                analyse the blocking rule provided and estimate the m parameters for
-                all comparisons except those included in the blocking rule.  If
-                comparisons_to_deactivate are provided, Splink will instead
-                estimate m parameters for all comparison except those specified
-                in the comparisons_to_deactivate list.  This list can either contain
-                the output_column_name of the Comparison as a string, or Comparison
-                objects.  Defaults to None.
-            comparison_levels_to_reverse_blocking_rule (list, optional): By default,
-                splink will analyse the blocking rule provided and adjust the
-                global probability two random records match to account for the matches
-                specified in the blocking rule. If provided, this argument will overrule
-                this default behaviour. The user must provide a list of ComparisonLevel
-                objects.  Defaults to None.
             estimate_without_term_frequencies (bool, optional): If True, the iterations
                 of the EM algorithm ignore any term frequency adjustments and only
                 depend on the comparison vectors. This allows the EM algorithm to run
@@ -341,28 +303,6 @@ class LinkerTraining:
                 "salted or exploding blocking rules"
             )
 
-        if comparisons_to_deactivate:
-            # If user provided a string, convert to Comparison object
-            comparisons_to_deactivate = [
-                (
-                    self._linker._settings_obj._get_comparison_by_output_column_name(n)
-                    if isinstance(n, str)
-                    else n
-                )
-                for n in comparisons_to_deactivate
-            ]
-            if comparison_levels_to_reverse_blocking_rule is None:
-                logger.warning(
-                    "\nWARNING: \n"
-                    "You have provided comparisons_to_deactivate but not "
-                    "comparison_levels_to_reverse_blocking_rule.\n"
-                    "If comparisons_to_deactivate is provided, then "
-                    "you usually need to provide corresponding "
-                    "comparison_levels_to_reverse_blocking_rule "
-                    "because each comparison to deactivate is effectively treated "
-                    "as an exact match."
-                )
-
         em_training_session = EMTrainingSession(
             self._linker,
             db_api=self._linker._db_api,
@@ -372,9 +312,7 @@ class LinkerTraining:
             unique_id_input_columns=self._linker._settings_obj.column_info_settings.unique_id_input_columns,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
-            fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
-            comparisons_to_deactivate=comparisons_to_deactivate,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa 501
+            fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
