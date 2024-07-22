@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - master
+      - splink4_dev
     paths:
       # files that affect the docs build:
       - docs/**
@@ -63,7 +64,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref != 'refs/pull/*'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/setup-python@v4
         with:
