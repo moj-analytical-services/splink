@@ -24,7 +24,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker = Linker(
         df,
         settings_dict,
-        database_api=db_api,
+        db_api=db_api,
     )
 
     count_comparisons_from_blocking_rule(
@@ -121,7 +121,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     path = os.path.join(tmp_path, "model.json")
     linker.misc.save_model_to_json(path)
 
-    Linker(df, path, database_api=db_api)
+    Linker(df, path, db_api=db_api)
 
 
 @mark_with_dialects_including("postgres")
@@ -136,7 +136,7 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     linker = Linker(
         table_name,
-        database_api=db_api,
+        db_api=db_api,
         settings=settings_dict,
     )
     linker.inference.predict()

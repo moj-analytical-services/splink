@@ -76,7 +76,7 @@ def test_splink_converges_to_known_params():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(in_df, settings, database_api=db_api)
+    linker = Linker(in_df, settings, db_api=db_api)
 
     settings_obj = linker._settings_obj
 

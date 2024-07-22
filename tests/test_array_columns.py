@@ -13,7 +13,7 @@ from tests.literal_utils import (
 @mark_with_dialects_excluding("sqlite", "spark")
 def test_array_comparison_1(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["database_api"]
+    db_api = helper.extra_linker_args()["db_api"]
 
     test_spec = ComparisonTestSpec(
         cl.ArrayIntersectAtSizes("arr", [4, 3, 2, 1]),

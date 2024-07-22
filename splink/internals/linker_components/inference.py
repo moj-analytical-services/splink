@@ -73,7 +73,7 @@ class LinkerInference:
                 ],
             )
 
-            linker = Linker(df, settings, database_api=db_api)
+            linker = Linker(df, settings, db_api=db_api)
             splink_df = linker.inference.deterministic_link()
             ```
 
@@ -181,7 +181,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = linker(df, "saved_settings.json", database_api=db_api)
+            linker = linker(df, "saved_settings.json", db_api=db_api)
             splink_df = linker.inference.predict(threshold_match_probability=0.95)
             splink_df.as_pandas_dataframe(limit=5)
             ```
@@ -317,7 +317,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = Linker(df, "saved_settings.json", database_api=db_api)
+            linker = Linker(df, "saved_settings.json", db_api=db_api)
 
             # You should load or pre-compute tf tables for any tables with
             # term frequency adjustments
@@ -483,7 +483,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = Linker(df, "saved_settings.json", database_api=db_api)
+            linker = Linker(df, "saved_settings.json", db_api=db_api)
 
             # You should load or pre-compute tf tables for any tables with
             # term frequency adjustments

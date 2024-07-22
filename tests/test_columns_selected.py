@@ -62,7 +62,7 @@ def test_regression(tmp_path):
                 output_schema="splink_in_duckdb",
             )
 
-            linker = Linker(df.copy(), settings_dict, database_api=db_api)
+            linker = Linker(df.copy(), settings_dict, db_api=db_api)
 
             linker.inference.predict()
 
@@ -123,6 +123,6 @@ def test_discussion_example(tmp_path):
 
             db_api = DuckDBAPI()
 
-            linker = Linker(df.copy(), settings_dict, database_api=db_api)
+            linker = Linker(df.copy(), settings_dict, db_api=db_api)
 
             linker.inference.predict()

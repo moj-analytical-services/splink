@@ -28,7 +28,7 @@ class TestHelper(ABC):
 
     def extra_linker_args(self):
         # create fresh api each time
-        return {"database_api": self.DatabaseAPI(**self.db_api_args())}
+        return {"db_api": self.DatabaseAPI(**self.db_api_args())}
 
     @property
     def date_format(self):

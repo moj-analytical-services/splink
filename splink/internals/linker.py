@@ -74,7 +74,7 @@ class Linker:
         self,
         input_table_or_tables: str | list[str],
         settings: SettingsCreator | dict[str, Any] | Path | str,
-        database_api: DatabaseAPISubClass,
+        db_api: DatabaseAPISubClass,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,
@@ -133,7 +133,7 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self._db_api = database_api
+        self._db_api = db_api
 
         # TODO: temp hack for compat
         self._intermediate_table_cache: CacheDictWithLogging = (
@@ -155,7 +155,7 @@ class Linker:
         # Maybe overwrite it here and incompatibilities have to be dealt with
         # by comparisons/ blocking rules etc??
         self._settings_obj = settings_creator.get_settings(
-            database_api.sql_dialect.name
+            db_api.sql_dialect.name
         )
 
         # TODO: Add test of what happens if the db_api is for a different backend

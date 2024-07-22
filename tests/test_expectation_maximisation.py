@@ -29,7 +29,7 @@ def test_clear_error_when_empty_block():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.training.estimate_parameters_using_expectation_maximisation(
@@ -56,11 +56,11 @@ def test_estimate_without_term_frequencies():
 
     db_api = DuckDBAPI()
 
-    linker_0 = Linker(df, settings, database_api=db_api)
+    linker_0 = Linker(df, settings, db_api=db_api)
 
     db_api = DuckDBAPI()
 
-    linker_1 = Linker(df, settings, database_api=db_api)
+    linker_1 = Linker(df, settings, db_api=db_api)
 
     session_fast = linker_0.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",

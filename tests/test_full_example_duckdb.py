@@ -53,7 +53,7 @@ def test_full_example_duckdb(tmp_path):
     linker = Linker(
         df,
         settings=settings_dict,
-        database_api=db_api,
+        db_api=db_api,
         # output_schema="splink_in_duckdb",
     )
 
@@ -131,9 +131,9 @@ def test_full_example_duckdb(tmp_path):
     linker.misc.save_model_to_json(path)
 
     db_api = DuckDBAPI()
-    linker_2 = Linker(df, settings=simple_settings, database_api=db_api)
+    linker_2 = Linker(df, settings=simple_settings, db_api=db_api)
 
-    linker_2 = Linker(df, database_api=db_api, settings=path)
+    linker_2 = Linker(df, db_api=db_api, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -182,7 +182,7 @@ def test_link_only(input, source_l, source_r):
     settings["source_dataset_column_name"] = "source_dataset"
 
     db_api = DuckDBAPI()
-    linker = Linker(input, settings, database_api=db_api)
+    linker = Linker(input, settings, db_api=db_api)
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -226,7 +226,7 @@ def test_duckdb_load_from_file(df):
     linker = Linker(
         df,
         settings,
-        database_api=db_api,
+        db_api=db_api,
     )
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
@@ -237,7 +237,7 @@ def test_duckdb_load_from_file(df):
     linker = Linker(
         [df, df],
         settings,
-        database_api=db_api,
+        db_api=db_api,
         input_table_aliases=["testing1", "testing2"],
     )
 
@@ -269,7 +269,7 @@ def test_duckdb_arrow_array():
             "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
-        database_api=db_api,
+        db_api=db_api,
     )
     df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
@@ -314,7 +314,7 @@ def test_small_example_duckdb(tmp_path):
     }
 
     db_api = DuckDBAPI()
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"

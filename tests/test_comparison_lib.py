@@ -31,7 +31,7 @@ def test_distance_function_comparison():
     }
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
 
     df_pred = linker.inference.predict().as_pandas_dataframe()
 
@@ -84,7 +84,7 @@ def test_set_to_lowercase():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
