@@ -7,7 +7,11 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.exceptions import SplinkException
 
 from .comparison import Comparison
-from .comparison_level_creator import ComparisonLevelCreator, unsupplied_option
+from .comparison_level_creator import (
+    ComparisonLevelCreator,
+    UnsuppliedNoneOr,
+    unsupplied_option,
+)
 
 
 class ComparisonCreator(ABC):
@@ -147,9 +151,9 @@ class ComparisonCreator(ABC):
     def configure(
         self,
         *,
-        term_frequency_adjustments: bool = unsupplied_option,
-        m_probabilities: List[float] = unsupplied_option,
-        u_probabilities: List[float] = unsupplied_option,
+        term_frequency_adjustments: UnsuppliedNoneOr[bool] = unsupplied_option,
+        m_probabilities: UnsuppliedNoneOr[List[float]] = unsupplied_option,
+        u_probabilities: UnsuppliedNoneOr[List[float]] = unsupplied_option,
     ) -> "ComparisonCreator":
         """
         Configure the comparison creator with options that are common to all

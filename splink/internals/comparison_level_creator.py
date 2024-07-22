@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from inspect import signature
-from typing import Any, final
+from typing import Any, TypeVar, Union, final
 
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.dialects import SplinkDialect
@@ -12,12 +12,19 @@ from .comparison_level import ComparisonLevel
 
 class _UnsuppliedOption:
     _instance: "_UnsuppliedOption" | None = None
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_UnsuppliedOption, cls).__new__(cls)
         return cls._instance
 
+
 unsupplied_option = _UnsuppliedOption()
+
+T = TypeVar("T")
+# type alias - either the specified type, _UnsuppliedOption, or None
+UnsuppliedNoneOr = Union[T, _UnsuppliedOption, None]
+
 
 class ComparisonLevelCreator(ABC):
     # off by default - only a small subset should have tf adjustments
@@ -65,14 +72,14 @@ class ComparisonLevelCreator(ABC):
     def configure(
         self,
         *,
-        m_probability: float = unsupplied_option,
-        u_probability: float = unsupplied_option,
-        tf_adjustment_column: str = unsupplied_option,
-        tf_adjustment_weight: float = unsupplied_option,
-        tf_minimum_u_value: float = unsupplied_option,
-        is_null_level: bool = unsupplied_option,
-        label_for_charts: str = unsupplied_option,
-        disable_tf_exact_match_detection: bool = unsupplied_option,
+        m_probability: UnsuppliedNoneOr[float] = unsupplied_option,
+        u_probability: UnsuppliedNoneOr[float] = unsupplied_option,
+        tf_adjustment_column: UnsuppliedNoneOr[str] = unsupplied_option,
+        tf_adjustment_weight: UnsuppliedNoneOr[float] = unsupplied_option,
+        tf_minimum_u_value: UnsuppliedNoneOr[float] = unsupplied_option,
+        is_null_level: UnsuppliedNoneOr[bool] = unsupplied_option,
+        label_for_charts: UnsuppliedNoneOr[str] = unsupplied_option,
+        disable_tf_exact_match_detection: UnsuppliedNoneOr[bool] = unsupplied_option,
     ) -> "ComparisonLevelCreator":
         """
         Configure the comparison level with options which are common to all
