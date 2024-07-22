@@ -430,3 +430,18 @@ def test_comparison_level_reconfigure():
     # turn tf adjustments off again
     exact_match_without_tf = exact_match_with_tf.configure(tf_adjustment_column=None)
     assert_tf_adjustments_on_off(exact_match_without_tf, tf_adjustments_on=False)
+
+
+def test_sequential_configurations():
+    # want to check that configurations don't forget about previously-set options
+    em_with_m = cl.ExactMatch("col").configure(m_probabilities=[0.8, 0.2])
+    assert em_with_m.m_probabilities == [0.8, 0.2]
+    assert not em_with_m.term_frequency_adjustments
+
+    em_with_m.configure(term_frequency_adjustments=True)
+    assert em_with_m.term_frequency_adjustments
+    assert em_with_m.m_probabilities == [0.8, 0.2]
+
+    em_with_m.configure(m_probabilities=[0.9, 0.1])
+    assert em_with_m.m_probabilities == [0.9, 0.1]
+    assert em_with_m.term_frequency_adjustments
