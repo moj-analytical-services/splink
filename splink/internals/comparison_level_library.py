@@ -256,8 +256,11 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 tf_adjustment_column=self.col_expression.raw_sql_expression,
                 tf_adjustment_weight=1.0,
             )
-
-        # TODO: how to 'turn off'?? configure doesn't currently allow
+        else:
+            self.configure(
+                tf_adjustment_column=None,
+                tf_adjustment_weight=None,
+            )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
