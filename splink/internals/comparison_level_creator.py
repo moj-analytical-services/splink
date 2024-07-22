@@ -10,6 +10,15 @@ from splink.internals.dialects import SplinkDialect
 from .comparison_level import ComparisonLevel
 
 
+class _UnsuppliedOption:
+    _instance: "_UnsuppliedOption" | None = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(_UnsuppliedOption, cls).__new__(cls)
+        return cls._instance
+
+unsupplied_option = _UnsuppliedOption()
+
 class ComparisonLevelCreator(ABC):
     # off by default - only a small subset should have tf adjustments
     term_frequency_adjustments = False
@@ -56,14 +65,14 @@ class ComparisonLevelCreator(ABC):
     def configure(
         self,
         *,
-        m_probability: float = None,
-        u_probability: float = None,
-        tf_adjustment_column: str = None,
-        tf_adjustment_weight: float = None,
-        tf_minimum_u_value: float = None,
-        is_null_level: bool = None,
-        label_for_charts: str = None,
-        disable_tf_exact_match_detection: bool = None,
+        m_probability: float = unsupplied_option,
+        u_probability: float = unsupplied_option,
+        tf_adjustment_column: str = unsupplied_option,
+        tf_adjustment_weight: float = unsupplied_option,
+        tf_minimum_u_value: float = unsupplied_option,
+        is_null_level: bool = unsupplied_option,
+        label_for_charts: str = unsupplied_option,
+        disable_tf_exact_match_detection: bool = unsupplied_option,
     ) -> "ComparisonLevelCreator":
         """
         Configure the comparison level with options which are common to all
@@ -71,29 +80,47 @@ class ComparisonLevelCreator(ABC):
         specification of a comparison level.  These options are usually not
         needed, but are available for advanced users.
 
+        All options have default options set initially. Any call to `.configure()`
+        will set any options that are supplied. Any subsequent calls to `.configure()`
+        will not override these values with defaults; to override values you must
+        explicitly provide a value.
+
+        Generally speaking only a single call (at most) to `.configure()` should
+        be required.
 
         Args:
             m_probability (float, optional): The m probability for this
-                comparison level. Defaults to None, meaning it is not set.
+                comparison level.
+                Default is equivalent to None, in which case a default initial value
+                will be provided for this level.
             u_probability (float, optional): The u probability for this
-                comparison level. Defaults to None, meaning it is not set.
+                comparison level.
+                Default is equivalent to None, in which case a default initial value
+                will be provided for this level.
             tf_adjustment_column (str, optional): Make term frequency adjustments for
-                this comparison level using this input column. Defaults to None,
-                meaning term-frequency adjustments will not be applied for this level.
+                this comparison level using this input column.
+                Default is equivalent to None, meaning that term-frequency adjustments
+                will not be applied for this level.
             tf_adjustment_weight (float, optional): Make term frequency adjustments
-                for this comparison level using this weight. Defaults to None,
-                meaning term-frequency adjustments are fully-weighted if turned on.
+                for this comparison level using this weight.
+                Default is equivalent to None, meaning term-frequency adjustments are
+                fully-weighted if turned on.
             tf_minimum_u_value (float, optional): When term frequency adjustments are
                 turned on, where the term frequency adjustment implies a u value below
-                this value, use this minimum value instead. Defaults to None, meaning
-                no minimum value.
+                this value, use this minimum value instead.
+                Defaults is equivalent to None, meaning no minimum value.
             is_null_level (bool, optional): If true, m and u values will not be
                 estimated and instead the match weight will be zero for this column.
-                Defaults to None, equivalent to False.
+                Default is equivalent to False.
             label_for_charts (str, optional): If provided, a custom label that will
-                be used for this level in any charts. Defaults to None, in which case
-                a default label will be provided.
-
+                be used for this level in any charts.
+                Default is equivalent to None, in which case a default label will be
+                provided for this level.
+            disable_tf_exact_match_detection (bool, optional): If true, if term
+                frequency adjustments are set, the corresponding adjustment will be
+                made using the u-value for _this_ level, rather than the usual case
+                where it is the u-value of the exact match level in the same comparison.
+                Default is equivalent to False.
         Returns:
             ComparisonLevelCreator: The instance of the ComparisonLevelCreator class
                 with the updated configuration.
@@ -101,7 +128,7 @@ class ComparisonLevelCreator(ABC):
         args = locals()
         del args["self"]
         for k, v in args.items():
-            if v is not None:
+            if v is not unsupplied_option:
                 setattr(self, k, v)
 
         return self
