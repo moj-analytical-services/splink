@@ -154,9 +154,7 @@ class Linker:
         # or overwrite it with the db api dialect?
         # Maybe overwrite it here and incompatibilities have to be dealt with
         # by comparisons/ blocking rules etc??
-        self._settings_obj = settings_creator.get_settings(
-            db_api.sql_dialect.name
-        )
+        self._settings_obj = settings_creator.get_settings(db_api.sql_dialect.name)
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
