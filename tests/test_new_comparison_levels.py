@@ -6,6 +6,8 @@ import pytest
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.comparison_creator import ComparisonCreator
+from splink.internals.comparison_level_creator import ComparisonLevelCreator
 
 from .decorator import mark_with_dialects_excluding
 
@@ -378,3 +380,53 @@ def test_cl_configure():
     with pytest.raises(ValueError):
         # too few probabilities
         cl.LevenshteinAtThresholds("col", [1, 2]).configure(u_probabilities=[0.5, 0.5])
+
+
+def test_comparison_reconfigure():
+    def assert_tf_adjustments_on_off(
+        comparison: ComparisonCreator, tf_adjustments_on: bool = False
+    ) -> None:
+        levels = comparison.get_configured_comparison_levels()
+        # the comparisons in this test should have null, then exact:
+        exact_match_comparison_level = levels[1]
+        # check we _really_ have an exact match level
+        assert exact_match_comparison_level.is_exact_match_level
+
+        cl_dict = exact_match_comparison_level.create_level_dict("duckdb")
+        if tf_adjustments_on:
+            assert "tf_adjustment_column" in cl_dict
+        else:
+            assert "tf_adjustment_column" not in cl_dict
+
+    plain_comparison = cl.LevenshteinAtThresholds("col")
+    assert_tf_adjustments_on_off(plain_comparison, tf_adjustments_on=False)
+
+    comp_with_tf = plain_comparison.configure(term_frequency_adjustments=True)
+    assert_tf_adjustments_on_off(comp_with_tf, tf_adjustments_on=True)
+
+    # turn tf adjustments off again
+    comp_without_tf = comp_with_tf.configure(term_frequency_adjustments=False)
+    assert_tf_adjustments_on_off(comp_without_tf, tf_adjustments_on=False)
+
+
+def test_comparison_level_reconfigure():
+    def assert_tf_adjustments_on_off(
+        comparison_level: ComparisonLevelCreator, tf_adjustments_on: bool = False
+    ) -> None:
+        cl_dict = comparison_level.create_level_dict("duckdb")
+        if tf_adjustments_on:
+            assert "tf_adjustment_column" in cl_dict
+        else:
+            assert "tf_adjustment_column" not in cl_dict
+
+    exact_match_comparison_level = cll.ExactMatchLevel("col")
+    assert_tf_adjustments_on_off(exact_match_comparison_level, tf_adjustments_on=False)
+
+    exact_match_with_tf = exact_match_comparison_level.configure(
+        tf_adjustment_column="col"
+    )
+    assert_tf_adjustments_on_off(exact_match_with_tf, tf_adjustments_on=True)
+
+    # turn tf adjustments off again
+    exact_match_without_tf = exact_match_with_tf.configure(tf_adjustment_column=None)
+    assert_tf_adjustments_on_off(exact_match_without_tf, tf_adjustments_on=False)
