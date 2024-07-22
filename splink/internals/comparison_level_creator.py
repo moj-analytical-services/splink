@@ -82,8 +82,8 @@ class ComparisonLevelCreator(ABC):
 
         All options have default options set initially. Any call to `.configure()`
         will set any options that are supplied. Any subsequent calls to `.configure()`
-        will not override these values with defaults; to override values you must
-        explicitly provide a value.
+        will not override these values with defaults; to override values you must must
+        explicitly provide a value corresponding to the default.
 
         Generally speaking only a single call (at most) to `.configure()` should
         be required.

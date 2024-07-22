@@ -152,18 +152,32 @@ class ComparisonCreator(ABC):
         u_probabilities: List[float] = unsupplied_option,
     ) -> "ComparisonCreator":
         """
-        Configure the comparison creator with m and u probabilities. The first
+        Configure the comparison creator with options that are common to all
+        comparisons.
+
+        For m and u probabilities, the first
         element in the list corresponds to the first comparison level, usually
         an exact match level. Subsequent elements correspond comparison to
         levels in sequential order, through to the last element which is usually
         the 'ELSE' level.
 
+        All options have default options set initially. Any call to `.configure()`
+        will set any options that are supplied. Any subsequent calls to `.configure()`
+        will not override these values with defaults; to override values you must
+        explicitly provide a value corresponding to the default.
+
+        Generally speaking only a single call (at most) to `.configure()` should
+        be required.
+
         Args:
             term_frequency_adjustments (bool, optional): Whether term frequency
                 adjustments are switched on for this comparison. Only applied
-                to exact match levels. Default: False
+                to exact match levels.
+                Default corresponds to False.
             m_probabilities (list, optional): List of m probabilities
+                Default corresponds to None.
             u_probabilities (list, optional): List of u probabilities
+                Default corresponds to None.
 
         Example:
             ```py
