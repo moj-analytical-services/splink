@@ -49,7 +49,7 @@ Conceptually, there are no major changes in Splink 4. Splink 4 code follows the 
 
 That said, there have been significant changes to the syntax and a reorganisation of functions.
 
-For users wishing to familiarise themselves with Splink 4, we recommend the easiest way is to compare and contrast the new [examples](../../demos/examples/examples_index.md) with their [Splink 3 equivalents](TODO).
+For users wishing to familiarise themselves with Splink 4, we recommend the easiest way is to compare and contrast the new [examples](../../demos/examples/examples_index.md) with their [Splink 3 equivalents](https://moj-analytical-services.github.io/splink3_legacy_docs/demos/examples/examples_index.html).
 
 You may also find the following screenshot useful, which shows the diff of a fairly standard Splink 3 workflow that has been rewritten in Splink 4.
 
