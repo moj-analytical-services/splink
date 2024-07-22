@@ -7,7 +7,7 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.exceptions import SplinkException
 
 from .comparison import Comparison
-from .comparison_level_creator import ComparisonLevelCreator
+from .comparison_level_creator import ComparisonLevelCreator, unsupplied_option
 
 
 class ComparisonCreator(ABC):
@@ -147,9 +147,9 @@ class ComparisonCreator(ABC):
     def configure(
         self,
         *,
-        term_frequency_adjustments: bool = False,
-        m_probabilities: List[float] = None,
-        u_probabilities: List[float] = None,
+        term_frequency_adjustments: bool = unsupplied_option,
+        m_probabilities: List[float] = unsupplied_option,
+        u_probabilities: List[float] = unsupplied_option,
     ) -> "ComparisonCreator":
         """
         Configure the comparison creator with m and u probabilities. The first
@@ -177,9 +177,16 @@ class ComparisonCreator(ABC):
             ```
 
         """
-        self.term_frequency_adjustments = term_frequency_adjustments
-        self.m_probabilities = m_probabilities
-        self.u_probabilities = u_probabilities
+        configurables = {
+            "term_frequency_adjustments": term_frequency_adjustments,
+            "m_probabilities": m_probabilities,
+            "u_probabilities": u_probabilities,
+        }
+
+        for attribute_name, attribute_value in configurables.items():
+            if attribute_value is not unsupplied_option:
+                setattr(self, attribute_name, attribute_value)
+
         return self
 
     @property
