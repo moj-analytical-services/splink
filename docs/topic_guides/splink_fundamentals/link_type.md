@@ -26,7 +26,7 @@ settings = SettingsCreator(
     link_type= "dedupe_only",
 )
 
-linker = Linker(df, settings, database_api=dbapi, )
+linker = Linker(df, settings, db_api=dbapi, )
 ```
 
 ## Link only
@@ -43,7 +43,7 @@ settings = SettingsCreator(
 linker = Linker(
     [df_1, df_2, df_n],
     settings,
-    database_api=dbapi,
+    db_api=dbapi,
     input_table_aliases=["name1", "name2", "name3"],
 )
 ```
@@ -64,7 +64,7 @@ settings = SettingsCreator(
 linker = Linker(
     [df_1, df_2, df_n],
     settings,
-    database_api=dbapi,
+    db_api=dbapi,
     input_table_aliases=["name1", "name2", "name3"],
 )
 ```

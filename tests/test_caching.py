@@ -33,7 +33,7 @@ def test_cache_id(tmp_path):
     # Test saving and loading a model
     db_api = DuckDBAPI()
 
-    linker = Linker(df, get_settings_dict(), database_api=db_api)
+    linker = Linker(df, get_settings_dict(), db_api=db_api)
 
     prior = linker._settings_obj._cache_uid
 
@@ -42,7 +42,7 @@ def test_cache_id(tmp_path):
 
     db_api = DuckDBAPI()
 
-    linker_2 = Linker(df, path, database_api=db_api)
+    linker_2 = Linker(df, path, db_api=db_api)
 
     assert linker_2._settings_obj._cache_uid == prior
 
@@ -52,7 +52,7 @@ def test_cache_id(tmp_path):
     settings["linker_uid"] = random_uid
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker_uid = linker._cache_uid
     assert linker_uid == random_uid
 
@@ -62,7 +62,7 @@ def test_cache_only_splink_dataframes():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._intermediate_table_cache["new_table"] = DuckDBDataFrame(
         "template", "__splink__dummy_frame", linker
     )
@@ -82,7 +82,7 @@ def test_cache_access_df_concat(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -114,7 +114,7 @@ def test_cache_access_compute_tf_table(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -134,7 +134,7 @@ def test_invalidate_cache(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
 
     with patch.object(
@@ -184,7 +184,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -201,7 +201,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
 
     db_api = DuckDBAPI()
 
-    new_linker = Linker(df, settings, database_api=db_api)
+    new_linker = Linker(df, settings, db_api=db_api)
     new_linker._debug_mode = debug_mode
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
@@ -232,7 +232,7 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
 
     with patch.object(
@@ -253,7 +253,7 @@ def test_cache_register_compute_tf_table(debug_mode):
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     linker._debug_mode = debug_mode
 
     with patch.object(

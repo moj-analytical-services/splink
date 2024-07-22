@@ -33,7 +33,7 @@ dbapi = PostgresAPI(engine=engine)
 linker = Linker(
     "my_data_table,
     settings_dict,
-    database_api=db_api,
+    db_api=db_api,
 )
 ```
 
@@ -49,7 +49,7 @@ dbapi = PostgresAPI(engine=engine)
 linker = Linker(
     df,
     settings_dict,
-    database_api=db_api,
+    db_api=db_api,
 )
 ```
 

@@ -92,7 +92,7 @@ con.sql("CREATE TABLE number_table AS SELECT * FROM df_numbers")
 db_api = DuckDBAPI(connection=con)
 df = splink_datasets.fake_1000
 
-linker = Linker(df, settings=SettingsCreator(link_type="dedupe_only"), database_api=db_api)
+linker = Linker(df, settings=SettingsCreator(link_type="dedupe_only"), db_api=db_api)
 splink_df = linker.table_management.register_table("number_table", "a_templated_name")
 splink_df.as_pandas_dataframe()
 ```

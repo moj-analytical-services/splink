@@ -226,7 +226,7 @@ def test_haversine_level():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, input_table_aliases="test", database_api=db_api)
+    linker = Linker(df, settings, input_table_aliases="test", db_api=db_api)
     df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

@@ -15,7 +15,7 @@ def test_splink_2_predict():
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
@@ -62,7 +62,7 @@ def test_splink_2_predict_sqlite():
     settings_dict = get_settings_dict()
 
     db_api = SQLiteAPI(con)
-    linker = Linker("fake_data_1", settings_dict, database_api=db_api)
+    linker = Linker("fake_data_1", settings_dict, db_api=db_api)
 
     df_e = linker.inference.predict().as_pandas_dataframe()
 
@@ -84,7 +84,7 @@ def test_splink_2_em_fixed_u():
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -132,7 +132,7 @@ def test_splink_2_em_no_fix():
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -190,7 +190,7 @@ def test_lambda():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings_dict, database_api=db_api)
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     ma = linker.inference.predict().as_pandas_dataframe()
     f1 = ma["unique_id_l"] == 924

@@ -27,7 +27,7 @@ def test_full_example_sqlite(tmp_path):
     linker = Linker(
         "input_df_tablename",
         settings_dict,
-        database_api=db_api,
+        db_api=db_api,
         input_table_aliases="fake_data_1",
     )
 

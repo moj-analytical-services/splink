@@ -25,12 +25,12 @@ class SplinkDataFrame(ABC):
         self,
         templated_name: str,
         physical_name: str,
-        database_api: DatabaseAPI[Any],
+        db_api: DatabaseAPI[Any],
         metadata: dict[str, Any] = None,
     ):
         self.templated_name = templated_name
         self.physical_name = physical_name
-        self.db_api = database_api
+        self.db_api = db_api
         self._target_schema = "splink"
         self.created_by_splink = False
         self.sql_used_to_create: str | None = None

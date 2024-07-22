@@ -37,7 +37,7 @@ def test_size_density_dedupe():
     }
     db_api = DuckDBAPI()
 
-    linker = Linker(df_1, settings, database_api=db_api)
+    linker = Linker(df_1, settings, db_api=db_api)
 
     df_predict = linker.inference.predict()
     df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -75,7 +75,7 @@ def test_size_density_link():
         [df_1, df_2],
         settings,
         input_table_aliases=["df_left", "df_right"],
-        database_api=db_api,
+        db_api=db_api,
     )
 
     df_predict = linker.inference.predict()

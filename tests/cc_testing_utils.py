@@ -38,7 +38,7 @@ def register_cc_df(G):
     db_api = DuckDBAPI()
 
     linker = Linker(
-        df_concat, settings_dict, input_table_aliases=table_name, database_api=db_api
+        df_concat, settings_dict, input_table_aliases=table_name, db_api=db_api
     )
 
     # re-register under our required name to run the CC function

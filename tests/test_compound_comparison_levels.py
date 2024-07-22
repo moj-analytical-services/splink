@@ -120,7 +120,7 @@ def test_compound_comparison_level():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
     all_cols_match_level = linker._settings_obj.comparisons[1].comparison_levels[1]
     assert all_cols_match_level._is_exact_match
     assert set(all_cols_match_level._exact_match_colnames) == {
@@ -218,6 +218,6 @@ def test_complex_compound_comparison_level():
     }
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, database_api=db_api)
+    linker = Linker(df, settings, db_api=db_api)
 
     linker.training.estimate_parameters_using_expectation_maximisation("1=1")

@@ -117,7 +117,7 @@ def test_dedupe_only():
     linker = Linker(
         df_one,
         settings,
-        database_api=db_api,
+        db_api=db_api,
         set_up_basic_logging=False,
     )
     logging.getLogger("splink").setLevel(1)
@@ -170,7 +170,7 @@ def test_link_and_dedupe():
     linker = Linker(
         [df_one, df_two],
         settings,
-        database_api=db_api,
+        db_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
@@ -226,7 +226,7 @@ def test_link_only_two():
     linker = Linker(
         [df_one, df_two],
         settings,
-        database_api=db_api,
+        db_api=db_api,
         input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
@@ -283,7 +283,7 @@ def test_link_only_three():
     linker = Linker(
         [df_one, df_two, df_three],
         settings,
-        database_api=db_api,
+        db_api=db_api,
         input_table_aliases=["df_one", "df_two", "df_three"],
         set_up_basic_logging=False,
     )
