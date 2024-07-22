@@ -20,7 +20,7 @@ The number of pairs of records to compare grows using the formula $\frac{n\left(
 
 For example, a dataset of 1 million input records would generate around 500 billion pairwise record comparisons.
 
-So, when datasets get bigger the amount of computational resource gets extremely large (and costly). In reality, we try and reduce the amount of computation required using **blocking**.
+So, when datasets get bigger the computation could get infeasibly large. We use **blocking** to reduce the scale of the computation to something more tractible.
 
 ## Blocking
 
