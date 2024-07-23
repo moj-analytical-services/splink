@@ -69,7 +69,6 @@ class ComparisonCreator(ABC):
         # create levels - let them raise errors if there are issues
         self.create_comparison_levels()
 
-    # TODO: property?
     @abstractmethod
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         pass

@@ -214,7 +214,6 @@ class DuckDBDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    # TODO: roll out to other dialects, at least for now
     @property
     def infinity_expression(self):
         return "cast('infinity' as float8)"

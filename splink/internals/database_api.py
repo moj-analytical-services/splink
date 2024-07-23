@@ -78,7 +78,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 f"\n\nError was: {e}"
             ) from e
 
-    # TODO: rename this?
     @final
     def _sql_to_splink_dataframe(
         self, sql: str, templated_name: str, physical_name: str
@@ -138,9 +137,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         use_cache: bool = True,
     ) -> SplinkDataFrame:
         # differences from _sql_to_splink_dataframe:
-        # this _calculates_ physical name, and
-        # handles debug_mode
-        # TODO: also maybe caching? but maybe that is even lower down
+        # this _calculates_ physical name, handles debug_mode,
+        # and checks cache before querying
         to_hash = (sql + self._cache_uid).encode("utf-8")
         hash = hashlib.sha256(to_hash).hexdigest()[:9]
         # Ensure hash is valid sql table name
@@ -339,9 +337,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """
         input_tables = ensure_is_list(input_tables)
         return input_tables
-
-    # should probably also be responsible for cache
-    # TODO: stick this in a cache-api that lives on this
 
     def remove_splinkdataframe_from_cache(
         self, splink_dataframe: SplinkDataFrame

@@ -15,7 +15,6 @@ def _ensure_is_comparison_level_creator(
     if isinstance(cl, dict):
         from .comparison_level_library import CustomLevel
 
-        # TODO: proper dict => level method
         return CustomLevel(**cl)
     if isinstance(cl, ComparisonLevelCreator):
         return cl
