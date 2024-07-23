@@ -310,8 +310,8 @@ class LinkerEvalution:
             label_colname (str): Name of labels column in input data
             include_false_positives (bool, optional): Defaults to True.
             include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
+            threshold_match_probability (float, optional): Threshold above which a score
+                is considered to be a match. Defaults to 0.5.
 
         Examples:
             ```py

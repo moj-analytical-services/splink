@@ -6,9 +6,6 @@
 [![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
-> [!IMPORTANT]
-> Development has begun on Splink 4 on the `splink4_dev` branch.  Splink 3 is in maintenance mode and we are no longer accepting new features. We welcome contributions to Splink 4. Read more on our latest [blog](https://moj-analytical-services.github.io/splink/blog/2024/03/19/splink4.html).
-
 # Fast, accurate and scalable probabilistic data linkage
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets that lack unique identifiers.
