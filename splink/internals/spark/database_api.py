@@ -34,20 +34,15 @@ class SparkAPI(DatabaseAPI[spark_df]):
         break_lineage_method=None,
         catalog=None,
         database=None,
-        # TODO: what to do about repartitions:
         repartition_after_blocking=False,
         num_partitions_on_repartition=None,
         register_udfs_automatically=True,
     ):
         super().__init__()
-        # TODO: revise logic as necessary!
         self.break_lineage_method = break_lineage_method
 
         # these properties will be needed whenever spark is _actually_ set up
         self.repartition_after_blocking = repartition_after_blocking
-
-        # TODO: hmmm breaking this flow. Lazy spark ??
-
         self.spark = spark_session
 
         if num_partitions_on_repartition:
@@ -60,11 +55,6 @@ class SparkAPI(DatabaseAPI[spark_df]):
         if register_udfs_automatically:
             self._register_udfs_from_jar()
 
-        # TODO: also need to think about where these live:
-        # self._drop_splink_cached_tables()
-        # self._check_ansi_enabled_if_converting_dates()
-
-        # TODO: (ideally) set things up so databricks can inherit from this
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             enable_splink(self.spark)
