@@ -43,8 +43,7 @@ class LinkerTableManagement:
 
             Real time linkage
             ```py
-            linker = Linker(df, db_api)
-            linker.load_settings("saved_settings.json")
+            linker = Linker(df, settings="saved_settings.json", db_api=db_api)
             linker.table_management.compute_tf_table("surname")
             linker.compare_two_records(record_left, record_right)
             ```
