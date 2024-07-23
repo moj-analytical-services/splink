@@ -50,22 +50,9 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
         cl.DateOfBirthComparison(
             "date_of_birth",
             input_is_string=True,
-            separate_1st_january=True,
             invalid_dates_as_null=True,
         ),
         tests=[
-            LiteralTestValues(
-                {"date_of_birth_l": "1990-01-01", "date_of_birth_r": "1990-01-01"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
-            LiteralTestValues(
-                {"date_of_birth_l": "2012-01-01", "date_of_birth_r": "2012-02-02"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
-            LiteralTestValues(
-                {"date_of_birth_l": "1985-03-11", "date_of_birth_r": "1985-01-01"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
             LiteralTestValues(
                 {"date_of_birth_l": "1990-05-20", "date_of_birth_r": "1990-05-20"},
                 expected_gamma_val=5,  # Exact match
@@ -98,21 +85,8 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
         cl.DateOfBirthComparison(
             ColumnExpression("dob").try_parse_date(),
             input_is_string=False,
-            separate_1st_january=True,
         ),
         tests=[
-            LiteralTestValues(
-                {"dob_l": "1990-01-01", "dob_r": "1990-01-01"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
-            LiteralTestValues(
-                {"dob_l": "2012-01-01", "dob_r": "2012-02-02"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
-            LiteralTestValues(
-                {"dob_l": "1985-03-11", "dob_r": "1985-01-01"},
-                expected_gamma_val=6,  # Exact match on year (1st of January only)
-            ),
             LiteralTestValues(
                 {"dob_l": "1990-05-20", "dob_r": "1990-05-20"},
                 expected_gamma_val=5,  # Exact match
@@ -168,7 +142,6 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers, test_gamma_asser
         cl.DateOfBirthComparison(
             "date_of_birth",
             input_is_string=True,
-            separate_1st_january=False,
             datetime_thresholds=[1, 2, 5],
             datetime_metrics=["day", "month", "year"],
         ),
