@@ -10,6 +10,8 @@ categories:
 
 We're pleased to release Splink 4, which is more scalable and easier to use than Splink 3.
 
+For the uninitiated, [Splink](../../index.md) is a free and open source library for record linkage and deduplication at scale, capable of deduplicating 100 million records+, that is [widely used](../../index.md#use-cases) and has been downloaded over 8 million times.
+
 Version 4 is recommended to all new users.   For existing users, there has been no change to the statistical methodology. Version 3 and 4 will give the same results, so there's no urgency to upgrade existing pipelines.
 
 The improvements we've made to the user experience mean that Splink 4 syntax is not backwards compatible, so Splink 3 scripts will need to be adjusted to work in Splink 4.  However, the model serialisation format is unchanged, so models saved from Splink 3 in `.json` format can be imported into Splink 4.
