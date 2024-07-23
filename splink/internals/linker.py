@@ -112,10 +112,12 @@ class Linker:
                 database) for link_only or link_and_dedupe.  For some linkers, such as
                 the DuckDBLinker and the SparkLinker, it's also possible to pass in
                 dataframes (Pandas and Spark respectively) rather than strings.
-            settings_dict (dict | Path, optional): A Splink settings dictionary, or a
-                path to a json defining a settingss dictionary or pre-trained model.
-                If not provided when the object is created, can later be added using
-                `linker.load_settings()` or `linker.load_model()` Defaults to None.
+            settings_dict (dict | Path | str): A Splink settings dictionary,
+                or a path (either as a pathlib.Path object, or a string) to a json file
+                defining a settings dictionary or pre-trained model.
+            db_api (DatabaseAPI): A `DatabaseAPI` object, which manages interactions
+                with the database. You can import these for use from
+                `splink.backends.{your_backend}`
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to

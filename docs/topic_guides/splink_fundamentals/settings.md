@@ -416,7 +416,8 @@ where the `m_probability` and `u_probability` values here are then used to gener
 When using a pre-trained model, you can read in the model from a json and recreate the linker object to make new pairwise predictions. For example:
 
 ```py
-linker = DuckDBLinker(new_df,
+linker = Linker(
+    new_df,
     settings="./path/to/model.json",
     db_api=db_api
 )

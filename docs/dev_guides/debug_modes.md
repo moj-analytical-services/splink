@@ -44,7 +44,7 @@ Note that by default Splink sets the [logging level to `INFO` on initialisation]
 
 ```python
 import logging
-linker = DuckDBLinker(df, settings, set_up_basic_logging=False)
+linker = Linker(df, settings, db_api, set_up_basic_logging=False)
 
 # This must come AFTER the linker is intialised, because the logging level
 # will be set to INFO
@@ -61,5 +61,5 @@ logging.basicConfig(format="%(message)s")
 splink_logger = logging.getLogger("splink")
 splink_logger.setLevel(logging.INFO)
 
-linker = DuckDBLinker(df, settings, set_up_basic_logging=False)
+linker = Linker(df, settings, db_api, set_up_basic_logging=False)
 ```

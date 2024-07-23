@@ -25,9 +25,10 @@ For a cluster with 10 CPUs, that outputs about 8GB of data in parquet format, th
 spark.conf.set("spark.default.parallelism", "50")
 spark.conf.set("spark.sql.shuffle.partitions", "50")
 
-linker = SparkLinker(
+linker = Linker(
     person_standardised_nodes,
     settings,
+    db_api=spark_api,
     break_lineage_method="parquet",
     num_partitions_on_repartition=80,
 )
@@ -45,9 +46,10 @@ Splink will automatically break lineage in sensible places. We have found in pra
 You can do this using the `break_lineage_method` parameter as follows:
 
 ```
-linker = SparkLinker(
+linker = Linker(
     person_standardised_nodes,
     settings,
+    db_api=db_api,
     break_lineage_method="parquet"
 )
 
@@ -78,7 +80,7 @@ In general, increasing parallelism will make Spark 'chunk' your job into a large
 
 ## Repartition after blocking
 
-For some jobs, setting `repartition_after_blocking=True` when you initialise the `SparkLinker` may improve performance.
+For some jobs, setting `repartition_after_blocking=True` when you initialise the `SparkAPI` may improve performance.
 
 ## Salting
 

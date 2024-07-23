@@ -23,7 +23,9 @@ class LinkerMisc:
     ) -> dict[str, Any]:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_model()`.
+        The model can later be loaded into a new linker using
+        `Linker(df, settings="path/to/model.json", db_api=db_api).
+
         The settings dict is also returned in case you want to save it a different way.
 
         Examples:
