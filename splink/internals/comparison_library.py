@@ -615,7 +615,6 @@ class DateOfBirthComparison(ComparisonCreator):
             "year",
         ],
         datetime_format: str = None,
-        separate_1st_january: bool = False,
         invalid_dates_as_null: bool = True,
     ):
         """
@@ -644,10 +643,6 @@ class DateOfBirthComparison(ComparisonCreator):
                 Metrics for date differences. Defaults to ["month", "year", "year"].
             datetime_format (str, optional): The datetime format used to cast strings
                 to dates.  Only used if input is a string.
-            separate_1st_january (bool, optional): Used for when date of birth is
-                sometimes recorded as 1st of Jan when only the year is known / If True,
-                a level is included for for a  match on the year where at least one
-                side of the match is a date on the the 1st of January.
             invalid_dates_as_null (bool, optional): If True, treat invalid dates as null
                 as opposed to allowing e.g. an exact or levenshtein match where one side
                 or both are an invalid date.  Only used if input is a string.  Defaults
@@ -672,8 +667,6 @@ class DateOfBirthComparison(ComparisonCreator):
 
         self.datetime_format = datetime_format
 
-        self.separate_1st_january = separate_1st_january
-
         self.input_is_string = input_is_string
         self.invalid_dates_as_null = invalid_dates_as_null
 
@@ -692,36 +685,6 @@ class DateOfBirthComparison(ComparisonCreator):
         levels: list[ComparisonLevelCreator] = [
             cll.NullLevel(null_col),
         ]
-
-        if self.input_is_string:
-            date_as_iso_string = self.datetime_parse_function(
-                self.datetime_format
-            ).cast_to_string()
-        else:
-            date_as_iso_string = self.col_expression.cast_to_string()
-
-        if self.separate_1st_january:
-            level = cll.And(
-                cll.Or(
-                    cll.LiteralMatchLevel(
-                        date_as_iso_string.substr(6, 5),
-                        literal_value="01-01",
-                        literal_datatype="string",
-                        side_of_comparison="left",
-                    ),
-                    cll.LiteralMatchLevel(
-                        date_as_iso_string.substr(6, 5),
-                        literal_value="01-01",
-                        literal_datatype="string",
-                        side_of_comparison="right",
-                    ),
-                ),
-                cll.ExactMatchLevel(date_as_iso_string.substr(0, 4)),
-            )
-
-            level.configure(label_for_charts="Exact match on year, 1st Jan only")
-
-            levels.append(level)
 
         levels.append(
             cll.ExactMatchLevel(self.col_expression).configure(
