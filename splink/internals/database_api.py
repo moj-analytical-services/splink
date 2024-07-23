@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import random
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -47,8 +46,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
-        # TODO: replace this:
-        self._cache_uid: str = str(random.choice(range(10000)))
+        self._cache_uid: str = ascii_uid(8)
 
     @final
     def _log_and_run_sql_execution(
