@@ -244,24 +244,18 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         num_partitions = self.num_partitions_on_repartition
 
-        # TODO: why regex not == ?
-        if re.fullmatch(r"__splink__df_predict", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition)
-
-        if re.fullmatch(r"__splink__df_representatives", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
-
-        if re.fullmatch(r"__splink__df_neighbours", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__df_concat_with_tf_sample", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__df_concat_with_tf", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__blocked_id_pairs", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+        if templated_name == "__splink__df_predict":
+            num_partitions = math.ceil(num_partitions)
+        elif templated_name == "__splink__df_representatives":
+            num_partitions = math.ceil(num_partitions / 6)
+        elif templated_name == "__splink__df_neighbours":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__df_concat_with_tf_sample":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__df_concat_with_tf":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__blocked_id_pairs":
+            num_partitions = math.ceil(num_partitions / 6)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
             spark_df = spark_df.repartition(num_partitions)
