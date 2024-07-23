@@ -194,7 +194,7 @@ For a more detailed explanation on phonetic transformation algorithms, see the [
 
 ### Example
 
-There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the `DuckDBLinker`. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
+There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the `Linker`. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
 
 ```python
 import pandas as pd

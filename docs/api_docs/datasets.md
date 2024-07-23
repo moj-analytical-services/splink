@@ -17,8 +17,9 @@ df = splink_datasets.fake_1000
 which you can then use to set up a linker:
 ```py
 from splink splink_datasets, Linker, DuckDBAPI, SettingsCreator
+
 df = splink_datasets.fake_1000
-linker = DuckDBLinker(
+linker = Linker(
     df,
     SettingsCreator(
         link_type="dedupe_only",
@@ -26,7 +27,8 @@ linker = DuckDBLinker(
             cl.exact_match("first_name"),
             cl.exact_match("surname"),
         ],
-    )
+    ),
+    db_api=DuckDBAPI()
 )
 ```
 
