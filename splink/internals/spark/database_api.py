@@ -34,20 +34,15 @@ class SparkAPI(DatabaseAPI[spark_df]):
         break_lineage_method=None,
         catalog=None,
         database=None,
-        # TODO: what to do about repartitions:
         repartition_after_blocking=False,
         num_partitions_on_repartition=None,
         register_udfs_automatically=True,
     ):
         super().__init__()
-        # TODO: revise logic as necessary!
         self.break_lineage_method = break_lineage_method
 
         # these properties will be needed whenever spark is _actually_ set up
         self.repartition_after_blocking = repartition_after_blocking
-
-        # TODO: hmmm breaking this flow. Lazy spark ??
-
         self.spark = spark_session
 
         if num_partitions_on_repartition:
@@ -60,11 +55,6 @@ class SparkAPI(DatabaseAPI[spark_df]):
         if register_udfs_automatically:
             self._register_udfs_from_jar()
 
-        # TODO: also need to think about where these live:
-        # self._drop_splink_cached_tables()
-        # self._check_ansi_enabled_if_converting_dates()
-
-        # TODO: (ideally) set things up so databricks can inherit from this
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             enable_splink(self.spark)
@@ -244,24 +234,18 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         num_partitions = self.num_partitions_on_repartition
 
-        # TODO: why regex not == ?
-        if re.fullmatch(r"__splink__df_predict", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition)
-
-        if re.fullmatch(r"__splink__df_representatives", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
-
-        if re.fullmatch(r"__splink__df_neighbours", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__df_concat_with_tf_sample", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__df_concat_with_tf", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
-
-        if re.fullmatch(r"__splink__blocked_id_pairs", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+        if templated_name == "__splink__df_predict":
+            num_partitions = math.ceil(num_partitions)
+        elif templated_name == "__splink__df_representatives":
+            num_partitions = math.ceil(num_partitions / 6)
+        elif templated_name == "__splink__df_neighbours":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__df_concat_with_tf_sample":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__df_concat_with_tf":
+            num_partitions = math.ceil(num_partitions / 4)
+        elif templated_name == "__splink__blocked_id_pairs":
+            num_partitions = math.ceil(num_partitions / 6)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
             spark_df = spark_df.repartition(num_partitions)

@@ -296,11 +296,10 @@ class LinkerTraining:
             self._linker._sql_dialect
         )
 
-        if type(blocking_rule_obj) not in (BlockingRule, SaltedBlockingRule):
-            # TODO: seems a mismatch between message and type re: SaltedBlockingRule
+        if not isinstance(blocking_rule_obj, (BlockingRule, SaltedBlockingRule)):
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
-                "salted or exploding blocking rules"
+                "exploding blocking rules"
             )
 
         em_training_session = EMTrainingSession(
