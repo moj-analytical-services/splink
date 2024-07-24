@@ -27,14 +27,14 @@ theme:
   favicon: "img/favicon.ico"
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: teal
+      accent: purple
       toggle:
         icon: material/toggle-switch
         name: Switch to dark mode
     - scheme: slate
-      primary: purple
-      accent: red
+      primary: teal
+      accent: purple
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
