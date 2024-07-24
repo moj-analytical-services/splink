@@ -69,6 +69,18 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: print hello
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: built_site
+          path: site
+
+      - name: commit and force-push to gh-pages branch
         run: |
-          echo "Hello, world!"
+          pip install ghp-import==2.1.0
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          ghp-import -opfm "Update docs from commit ${{ github.sha }}" site
