@@ -8,7 +8,6 @@ on:
   pull_request:
     branches:
       - master
-      - splink4_dev
     paths:
       # files that affect the docs build:
       - docs/**
