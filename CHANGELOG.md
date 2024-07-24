@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleaesed
+## Unreleased
+
+## [4.0.0] - 2024-07-24
+
+Major release - see our [blog](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html) for what's changed
+
+
+## [3.9.15] - 2024-06-18
 
 ### Fixed
 
