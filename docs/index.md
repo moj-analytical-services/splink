@@ -8,10 +8,14 @@ hide:
 <img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink: data linkage at scale. (Splink logo)." style="max-width: 500px;">
 </p>
 
+!!! info
+
+    🎉 Splink 4 has been released! Examples of new syntax are [here](./demos/examples/examples_index.md) and a release announcement is [here](./blog/posts/2024-07-10-splink4_release.md).
+
+
 # Fast, accurate and scalable probabilistic data linkage
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
-
 
 [Get Started with Splink](./getting_started.md){ .md-button .md-button--primary }
 
