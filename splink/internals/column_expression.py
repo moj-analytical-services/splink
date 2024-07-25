@@ -28,6 +28,7 @@ class ColumnExpression:
     Dialect agnostic.  Execution is delayed until the dialect is known.
 
     For example:
+        ```py
         from splink.column_expression import ColumnExpression
         col = (
             ColumnExpression("first_name")
@@ -36,10 +37,11 @@ class ColumnExpression:
         )
 
         ExactMatchLevel(col)
+        ```
 
     Note that this will typically be created without a dialect, and the dialect
-    will later be populated when the ColumnExpression is passed via a comparison
-    level creator into a linker.
+    will later be populated when the `ColumnExpression` is passed via a comparison
+    level creator into a `Linker`.
     """
 
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
@@ -62,14 +64,16 @@ class ColumnExpression:
         elif isinstance(str_or_column_expression, str):
             return ColumnExpression(str_or_column_expression)
 
-    def parse_input_string(self, dialect: SplinkDialect) -> str:
+    def _parse_input_string(self, dialect: SplinkDialect) -> str:
         """
-        The input into an ColumnExpression can be
-            - a column name or column reference e.g. first_name, first name
-            - a sql expression e.g. UPPER(first_name), first_name || surname
+        Returns the SQL expression of the input as a string
+
+        The input into a `ColumnExpression` can be
+            - a column name or column reference e.g. `first_name, first name`
+            - a sql expression e.g. `UPPER(first_name)`, `first_name || surname`
 
         In the former case, we do not expect the user to have escaped the column name
-        with identifier quotes (see also InputColumn).
+        with identifier quotes (see also `InputColumn`).
 
         In the later case, we expect the expression to be valid sql in the dialect
         that the user will specify in their linker.
@@ -136,6 +140,7 @@ class ColumnExpression:
         """
         Applies a substring transform to the input expression of a given length
         starting from a specified index.
+
         Args:
             start (int): The starting index of the substring.
             length (int): The length of the substring.
@@ -205,6 +210,12 @@ class ColumnExpression:
         return dialect.try_parse_date(name, date_format=date_format)
 
     def try_parse_date(self, date_format: str = None) -> "ColumnExpression":
+        """Applies a 'try parse date' transform to the input expression.
+
+        Args:
+            date_format (str, optional): The date format to attempt to parse.
+                Defaults to None, meaning the dialect-specific default format is used.
+        """
         clone = self._clone()
         op = partial(
             clone._try_parse_date_dialected,
@@ -223,6 +234,12 @@ class ColumnExpression:
         return dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
 
     def try_parse_timestamp(self, timestamp_format: str = None) -> "ColumnExpression":
+        """Applies a 'try parse timestamp' transform to the input expression.
+
+        Args:
+            timestamp_format (str, optional): The timestamp format to attempt to parse.
+                Defaults to None, meaning the dialect-specific default format is used.
+        """
         clone = self._clone()
         op = partial(
             clone._try_parse_timestamp_dialected,
@@ -234,12 +251,12 @@ class ColumnExpression:
 
     @property
     def name(self) -> str:
-        sql_expression = self.parse_input_string(self.sql_dialect)
+        sql_expression = self._parse_input_string(self.sql_dialect)
         return self.apply_operations(sql_expression, self.sql_dialect)
 
     @property
     def name_l(self) -> str:
-        sql_expression = self.parse_input_string(self.sql_dialect)
+        sql_expression = self._parse_input_string(self.sql_dialect)
 
         base_name = add_suffix_to_all_column_identifiers(
             sql_expression, "_l", self.sql_dialect.sqlglot_name
@@ -248,7 +265,7 @@ class ColumnExpression:
 
     @property
     def name_r(self) -> str:
-        sql_expression = self.parse_input_string(self.sql_dialect)
+        sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_suffix_to_all_column_identifiers(
             sql_expression, "_r", self.sql_dialect.sqlglot_name
         )
@@ -256,7 +273,7 @@ class ColumnExpression:
 
     @property
     def l_name(self) -> str:
-        sql_expression = self.parse_input_string(self.sql_dialect)
+        sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_table_to_all_column_identifiers(
             sql_expression, "l", self.sql_dialect.sqlglot_name
         )
@@ -264,7 +281,7 @@ class ColumnExpression:
 
     @property
     def r_name(self) -> str:
-        sql_expression = self.parse_input_string(self.sql_dialect)
+        sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_table_to_all_column_identifiers(
             sql_expression, "r", self.sql_dialect.sqlglot_name
         )
