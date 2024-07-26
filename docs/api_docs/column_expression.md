@@ -11,7 +11,8 @@ In comparisons, you may wish to consider expressions which are not simply column
 For instance, you may have a `forename` column, but in your comparison you may wish to also use the values in this column transformed all to lowercase, or just the first three letters of the name, or perhaps both of these transformations together.
 
 If it is feasible to do so, then it may be best to derive a new column containing the transformed data.
-TODO: expand
+Particularly if it is an expensive calculation, or you wish to refer to it many times, deriving the column once on your input data may well be preferable, as it is cheaper than doing so directly in comparisons where each input record may need to be processed many times.
+However, there may be situations where you don't wish to derive a new column, perhaps for large data where you have many such transformations, or when you are experimenting with different models.
 
 This is where a `ColumnExpression` may be used. It represents some SQL expression, which may be a column, or some more complicated construct,
 to which you can also apply zero or more transformations. These are lazily evaluated, and in particular will not be tied to a specific SQL dialect until they are put (via [settings](./settings_dict_guide.md) into a linker).
