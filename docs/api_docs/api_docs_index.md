@@ -28,6 +28,7 @@ This section contains reference material for the modules and functions within Sp
 - [Blocking](./blocking.md)
 - [SplinkDataFrame](./splink_dataframe.md)
 - [EM Training Session API](./em_training_session.md)
+- [Column Expression API](./column_expression.md)
 
 
 ## In-built datasets

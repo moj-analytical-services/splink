@@ -1,7 +1,7 @@
 ---
 tags:
   - API
-  - comparisons
+  - blocking
 ---
 # Documentation for`block_on`
 
