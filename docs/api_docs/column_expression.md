@@ -7,8 +7,8 @@ tags:
 
 # Column Expressions
 
-In comparisons, you may wish to consider expressions which are not simply columns of your input table.
-For instance, you may have a `forename` column, but in your comparison you may wish to also use the values in this column transformed all to lowercase, or just the first three letters of the name, or perhaps both of these transformations together.
+In [comparisons](../topic_guides/comparisons/comparisons_and_comparison_levels.md), you may wish to consider expressions which are not simply columns of your input table.
+For instance you may have a `forename` column in your data, but when comparing records you may wish to also use the values in this column transformed all to lowercase, or just the first three letters of the name, or perhaps both of these transformations taken together.
 
 If it is feasible to do so, then it may be best to derive a new column containing the transformed data.
 Particularly if it is an expensive calculation, or you wish to refer to it many times, deriving the column once on your input data may well be preferable, as it is cheaper than doing so directly in comparisons where each input record may need to be processed many times.
