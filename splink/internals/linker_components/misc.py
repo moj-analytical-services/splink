@@ -30,7 +30,7 @@ class LinkerMisc:
 
         Examples:
             ```py
-            linker.save_model_to_json("my_settings.json", overwrite=True)
+            linker.misc.save_model_to_json("my_settings.json", overwrite=True)
             ```
         Args:
             out_path (str, optional): File path for json file. If None, don't save to
@@ -60,7 +60,7 @@ class LinkerMisc:
             ```py
             linker = Linker(df, settings, db_api)
             df_predict = linker.predict()
-            linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+            linker.misc.query_sql(f"select * from {df_predict.physical_name} limit 10")
             ```
 
         Args:
