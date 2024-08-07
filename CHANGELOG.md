@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Completeness chart now works correectly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
+
 ## [4.0.0] - 2024-07-24
 
 Major release - see our [blog](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html) for what's changed
