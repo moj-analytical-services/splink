@@ -32,3 +32,27 @@ def test_completeness_chart_mismatched_columns(dialect, test_helpers):
 
     with raises(SplinkException):
         completeness_chart([df_l, df_r], db_api)
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_completeness_chart_complex_columns(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "first_name": ["Arnie", None, "Carla", "Debbie", None],
+            "surname": [None, None, None, None, "Everett"],
+            "city_arr": [
+                ["London", "Leeds"],
+                ["Birmingham"],
+                None,
+                ["Leeds", "Manchester"],
+                None,
+            ],
+        }
+    )
+    df = helper.convert_frame(df)
+    # check completeness when we have more complicated column constructs, such as
+    # indexing into array columns
+    completeness_chart(df, db_api, cols=["first_name", "surname", "city_arr[0]"])
