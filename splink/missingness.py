@@ -83,7 +83,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
             count(*) as total_rows_inc_nulls,
             cast(count({col})*1.0/count(*) as float) as completeness
         from {input_tablename}
-        group by source_dataset
+        group by {source_name}
         order by count(*) desc)
         """
         sqls.append(sql)
