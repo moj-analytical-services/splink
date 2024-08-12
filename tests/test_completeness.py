@@ -53,9 +53,10 @@ def test_completeness_chart_complex_columns(dialect, test_helpers):
         }
     )
     df = helper.convert_frame(df)
+    first = helper.arrays_from
     # check completeness when we have more complicated column constructs, such as
     # indexing into array columns
-    completeness_chart(df, db_api, cols=["first_name", "surname", "city_arr[0]"])
+    completeness_chart(df, db_api, cols=["first_name", "surname", f"city_arr[{first}]"])
 
 
 @mark_with_dialects_excluding("sqlite")
