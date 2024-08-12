@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Completeness chart now works correectly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
+- Completeness chart now works correctly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
+- Completeness chart works even if you have a `source_dataset` column ([#2323](https://github.com/moj-analytical-services/splink/pull/2323))
+
 
 ## [4.0.0] - 2024-07-24
 
