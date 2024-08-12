@@ -92,6 +92,7 @@ class SparkTestHelper(TestHelper):
     def arrays_from(self) -> int:
         return 0
 
+
 class SQLiteTestHelper(TestHelper):
     _frame_counter = 0
 
