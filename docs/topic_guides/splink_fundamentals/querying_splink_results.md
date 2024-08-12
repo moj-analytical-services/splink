@@ -51,12 +51,12 @@ from ranked
 where row_number = 1
 """
 
-df_query_result = linker.query_sql(sql)  # pandas dataframe
+df_query_result = linker.misc.query_sql(sql)  # pandas dataframe
 ```
 
-Note that `linker.query_sql` will return a pandas dataframe by default, but you can instead return a `SplinkDataFrame` as follows:
+Note that `linker.misc.query_sql` will return a pandas dataframe by default, but you can instead return a `SplinkDataFrame` as follows:
 ```python
-df_query_result = linker.query_sql(sql, output_type='splink_df')
+df_query_result = linker.misc.query_sql(sql, output_type='splink_df')
 ```
 
 ### Saving results
