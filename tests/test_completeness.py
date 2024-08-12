@@ -56,3 +56,13 @@ def test_completeness_chart_complex_columns(dialect, test_helpers):
     # check completeness when we have more complicated column constructs, such as
     # indexing into array columns
     completeness_chart(df, db_api, cols=["first_name", "surname", "city_arr[0]"])
+
+
+@mark_with_dialects_excluding("sqlite")
+def test_completeness_chart_source_dataset(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df_pd["source_dataset"] = "fake_1000"
+    df = helper.convert_frame(df_pd)
+    completeness_chart(df, db_api)
