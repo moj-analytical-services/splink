@@ -90,7 +90,7 @@ $$\textsf{Specificity} = \frac{\textsf{True Negatives}}{\textsf{All Negatives}} 
 
 The Positive Predictive Value (Precision), is the proportion of predicted matches which are true matches.
 
-$$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Negatives}}$$
+$$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Positives}} = \frac{\textsf{True Positives}}{\textsf{True Positives} + \textsf{False Positives}}$$
 
 ??? info "Precision in Splink"
 
@@ -100,7 +100,8 @@ $$\textsf{Precision} = \frac{\textsf{True Positives}}{\textsf{All Predicted Posi
 
 The Negative Predictive Value is the proportion of predicted non-matches which are true non-matches.
 
-$$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{All Predicted Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Positives}}$$
+$$\textsf{Negative Predictive Value} = \frac{\textsf{True Negatives}}{\textsf{All Predicted Negatives}} = \frac{\textsf{True Negatives}}{\textsf{True Negatives} + \textsf{False Negatives}}$$
+
 
 ??? info "Negative Predictive Value in Splink"
 
