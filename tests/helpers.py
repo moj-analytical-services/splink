@@ -44,6 +44,10 @@ class TestHelper(ABC):
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
 
+    @property
+    def arrays_from(self) -> int:
+        return 1
+
 
 class DuckDBTestHelper(TestHelper):
     @property
@@ -83,6 +87,10 @@ class SparkTestHelper(TestHelper):
         df = self.spark.read.parquet(path)
         df.persist()
         return df
+
+    @property
+    def arrays_from(self) -> int:
+        return 0
 
 
 class SQLiteTestHelper(TestHelper):

@@ -29,17 +29,24 @@ def completeness_data(
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
+    # use an internal name for source_dataset, as if it already exists in dataframe
+    # we may run into ambiguous column issues. This name unlikely to clash
+    internal_source_colname = "__completeness_source_dataset"
+
     # In the case of a single input dataframe, a source_dataset column
     # will not have been created, create one
     first_df = next(iter(splink_df_dict.values()))
     if len(splink_df_dict) == 1:
         sql = f"""
-        select '{first_df.physical_name}' as source_dataset, *
+        select '{first_df.physical_name}' as {internal_source_colname}, *
         from __splink__df_concat
         """
 
     else:
-        sql = "select * from __splink__df_concat"
+        sql = (
+            f"select *, source_dataset AS {internal_source_colname} "
+            f"from __splink__df_concat"
+        )
 
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_source_dataset")
 
@@ -56,13 +63,13 @@ def completeness_data(
 
         sql = f"""
         (select
-            source_dataset,
+            {internal_source_colname} AS source_dataset,
             '{unquoted_col}' as column_name,
             count(*) - count({quoted_col}) as total_null_rows,
             count(*) as total_rows_inc_nulls,
             cast(count({quoted_col})*1.0/count(*) as float) as completeness
         from __splink__df_concat_with_source_dataset
-        group by source_dataset
+        group by {internal_source_colname}
         order by count(*) desc)
         """
         sqls.append(sql)
