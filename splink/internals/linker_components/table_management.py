@@ -145,6 +145,28 @@ class LinkerTableManagement:
         return splink_dataframe
 
     def register_table_predict(self, input_data, overwrite=False):
+        """Register a pre-computed version of the prediction table for use in Splink.
+
+        This method allows you to register a pre-computed prediction table in the Splink
+        cache so it will be used rather than Splink computing the table anew.
+
+        Examples:
+            ```py
+            predict_df = pd.read_parquet("path/to/predict_df.parquet")
+            linker.table_management.register_table_predict(predict_df)
+            ```
+
+        Args:
+            input_data (AcceptableInputTableType): The data you wish to register. This
+                can be either a dictionary, pandas dataframe, pyarrow table, or a spark
+                dataframe.
+            overwrite (bool, optional): Overwrite the table in the underlying database
+                if it exists. Defaults to False.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the table created by the SQL
+                pipeline.
+        """
         table_name_physical = "__splink__df_predict_" + self._linker._cache_uid
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
