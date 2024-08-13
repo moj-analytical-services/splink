@@ -231,12 +231,6 @@ class InputColumn:
         return self_copy
 
     @property
-    def as_base_dialect(self) -> InputColumn:
-        input_column_copy = copy(self)
-        input_column_copy.sql_dialect = None
-        return input_column_copy
-
-    @property
     def name(self) -> str:
         return self.col_builder.sql
 
