@@ -170,9 +170,12 @@ class InputColumn:
     def __init__(
         self,
         raw_column_name_or_column_reference: str,
+        *,
         column_info_settings: ColumnInfoSettings = None,
-        sql_dialect: str = None,
+        sql_dialect: str,
     ):
+        # TODO: the sql_dialect is the sqlglot name.
+        # Might need to be more careful with this
         self.column_info_settings = copy(column_info_settings)
 
         self.register_dialect(sql_dialect)
@@ -189,7 +192,7 @@ class InputColumn:
             )
         )
 
-    def register_dialect(self, sql_dialect: str | None) -> None:
+    def register_dialect(self, sql_dialect: str) -> None:
         if self.column_info_settings is not None:
             column_info_sql_dialect = self.column_info_settings.sql_dialect
             if sql_dialect is not None:
@@ -226,12 +229,6 @@ class InputColumn:
         b = replace(self_copy.col_builder, quoted=True)
         self_copy.col_builder = b
         return self_copy
-
-    @property
-    def as_base_dialect(self) -> InputColumn:
-        input_column_copy = copy(self)
-        input_column_copy.sql_dialect = None
-        return input_column_copy
 
     @property
     def name(self) -> str:

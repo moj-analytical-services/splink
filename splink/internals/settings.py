@@ -300,11 +300,16 @@ class Settings:
                     get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
                 )
 
-            used_by_brs = [InputColumn(c) for c in used_by_brs]
+            used_by_brs = [
+                InputColumn(c, sql_dialect=self._sql_dialect) for c in used_by_brs
+            ]
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
-            already_used = [InputColumn(c) for c in already_used_names]
+            already_used = [
+                InputColumn(c, sql_dialect=self._sql_dialect)
+                for c in already_used_names
+            ]
             already_used_names = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used_names))
