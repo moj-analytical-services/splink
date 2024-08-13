@@ -170,8 +170,9 @@ class InputColumn:
     def __init__(
         self,
         raw_column_name_or_column_reference: str,
+        *,
         column_info_settings: ColumnInfoSettings = None,
-        sql_dialect: str = None,
+        sql_dialect: str,
     ):
         self.column_info_settings = copy(column_info_settings)
 
