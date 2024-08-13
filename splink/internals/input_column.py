@@ -174,6 +174,8 @@ class InputColumn:
         column_info_settings: ColumnInfoSettings = None,
         sql_dialect: str,
     ):
+        # TODO: the sql_dialect is the sqlglot name.
+        # Might need to be more careful with this
         self.column_info_settings = copy(column_info_settings)
 
         self.register_dialect(sql_dialect)
@@ -190,7 +192,7 @@ class InputColumn:
             )
         )
 
-    def register_dialect(self, sql_dialect: str | None) -> None:
+    def register_dialect(self, sql_dialect: str) -> None:
         if self.column_info_settings is not None:
             column_info_sql_dialect = self.column_info_settings.sql_dialect
             if sql_dialect is not None:
