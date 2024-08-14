@@ -51,7 +51,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             self.set_default_num_partitions_on_repartition_if_missing()
 
         self._set_splink_datastore(catalog, database)
- 
+
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             enable_splink(self.spark)
