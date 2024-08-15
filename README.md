@@ -5,6 +5,7 @@
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
+[![codecov](https://codecov.io/gh/RobinL/splink/branch/master/graph/badge.svg)](https://codecov.io/gh/RobinL/splink)
 
 
 > [!IMPORTANT]
