@@ -52,12 +52,12 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         self._set_splink_datastore(catalog, database)
 
-        if register_udfs_automatically:
-            self._register_udfs_from_jar()
-
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             enable_splink(self.spark)
+
+        if register_udfs_automatically:
+            self._register_udfs_from_jar()
 
         self._set_default_break_lineage_method()
 
