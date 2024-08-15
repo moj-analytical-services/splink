@@ -155,7 +155,7 @@ class LinkerTableManagement:
             predict_df = pd.read_parquet("path/to/predict_df.parquet")
             predict_as_splinkdataframe = linker.table_management.register_table_predict(predict_df)
             clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
-                predictions_sdf, threshold_match_probability=0.75
+                predict_as_splinkdataframe, threshold_match_probability=0.75
             )
             ```
 
