@@ -153,7 +153,10 @@ class LinkerTableManagement:
         Examples:
             ```py
             predict_df = pd.read_parquet("path/to/predict_df.parquet")
-            linker.table_management.register_table_predict(predict_df)
+            predict_as_splinkdataframe = linker.table_management.register_table_predict(predict_df)
+            clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                predict_as_splinkdataframe, threshold_match_probability=0.75
+            )
             ```
 
         Args:
@@ -166,7 +169,7 @@ class LinkerTableManagement:
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the SQL
                 pipeline.
-        """
+        """  # noqa: E501
         table_name_physical = "__splink__df_predict_" + self._linker._cache_uid
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
