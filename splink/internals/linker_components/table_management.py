@@ -186,6 +186,37 @@ class LinkerTableManagement:
             column_info_settings=self._linker._settings_obj.column_info_settings,
             sql_dialect=self._linker._settings_obj._sql_dialect,
         )
+        """
+        Register a pre-computed term frequency lookup table for a given column.
+
+        This method allows you to register a term frequency table in the Splink
+        cache for a specific column. This table will then be used during linkage
+        rather than computing the term frequency table anew.
+
+        Args:
+            input_data (AcceptableInputTableType): The data representing the term
+                frequency table. This can be either a dictionary, pandas dataframe,
+                pyarrow table, or a spark dataframe.
+            col_name (str): The name of the column for which the term frequency
+                lookup table is being registered.
+            overwrite (bool, optional): Overwrite the table in the underlying
+                database if it exists. Defaults to False.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the registered term
+            frequency table.
+
+        Examples:
+            ```py
+            tf_table = [
+                {"first_name": "Theodore", "tf_first_name": 0.012},
+                {"first_name": "Alfie", "tf_first_name": 0.013},
+            ]
+            tf_df = pd.DataFrame(tf_table)
+            linker.table_management.register_term_frequency_lookup(tf_df,
+                                                                    "first_name")
+            ```
+        """
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._linker._cache_uid}"
         splink_dataframe = self.register_table(
