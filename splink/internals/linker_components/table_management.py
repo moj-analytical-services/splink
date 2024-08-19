@@ -191,7 +191,7 @@ class LinkerTableManagement:
 
         This method allows you to register a term frequency table in the Splink
         cache for a specific column. This table will then be used during linkage
-        rather than computing the term frequency table anew.
+        rather than computing the term frequency table anew from your input data.
 
         Args:
             input_data (AcceptableInputTableType): The data representing the term
@@ -209,8 +209,8 @@ class LinkerTableManagement:
         Examples:
             ```py
             tf_table = [
-                {"first_name": "Theodore", "tf_first_name": 0.012},
-                {"first_name": "Alfie", "tf_first_name": 0.013},
+                {"first_name": "theodore", "tf_first_name": 0.012},
+                {"first_name": "alfie", "tf_first_name": 0.013},
             ]
             tf_df = pd.DataFrame(tf_table)
             linker.table_management.register_term_frequency_lookup(tf_df,
