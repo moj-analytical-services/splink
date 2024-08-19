@@ -99,8 +99,8 @@ Use the special `:temporary:` connection built into Splink that creates a tempor
 
 ```python
 
-linker = DuckDBLinker(
-    df, settings, connection=":temporary:"
+linker = Linker(
+    df, settings, DuckDBAPI(connection=":temporary:")
 )
 ```
 
@@ -108,8 +108,8 @@ Use an on-disk database:
 
 ```python
 con = duckdb.connect(database='my-db.duckdb')
-linker = DuckDBLinker(
-    df, settings, connection=con
+linker = Linker(
+    df, settings, DuckDBAPI(connection=con)
 )
 ```
 
@@ -119,8 +119,8 @@ Use an in-memory database, but ensure it can spill to disk:
 con = duckdb.connect(":memory:")
 
 con.execute("SET temp_directory='/path/to/temp';")
-linker = DuckDBLinker(
-    df, settings, connection=con
+linker = Linker(
+    df, settings, DuckDBAPI(connection=con)
 )
 ```
 

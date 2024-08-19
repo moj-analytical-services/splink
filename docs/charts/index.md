@@ -3,22 +3,16 @@
 ## Exploratory Analysis
 
 ::cards::
-[
-  {
-    "title": "`completeness chart`",
-    "image": "./img/completeness_chart.png",
-    "url": "./completeness_chart.ipynb"
-  },
-  {
-    "title": "`missingness chart`",
-    "image": "./img/missingness_chart.png",
-    "url": "./missingness_chart.ipynb"
-  },
-  {
+[{
     "title": "`profile columns`",
     "image": "./img/profile_columns.png",
     "url": "./profile_columns.ipynb"
   },
+  {
+    "title": "`completeness chart`",
+    "image": "./img/completeness_chart.png",
+    "url": "./completeness_chart.ipynb"
+  }
 ]
 ::/cards::
 
@@ -27,10 +21,10 @@
 ::cards::
 [
     {
-    "title": "`cumulative num comparisons from blocking rules chart`",
+    "title": "`cumulative comparisons to be scored from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
-    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
-    },
+    "url": "./cumulative_comparisons_to_be_scored_from_blocking_rules_chart.ipynb"
+    }
 ]
 ::/cards::
 
@@ -52,7 +46,7 @@
     "title": "`phonetic match chart`",
     "image": "./img/phonetic_match_chart.png",
     "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
-    },
+    }
 ]
 ::/cards::
 
@@ -86,7 +80,7 @@
     "title": "`unlinkables chart`",
     "image": "./img/unlinkables_chart.png",
     "url": "./unlinkables_chart.ipynb"
-    },  
+    }
 ]
 ::/cards::
 
@@ -99,23 +93,13 @@
     {
     "title": "`accuracy chart from labels table`",
     "image": "./img/accuracy_chart_from_labels_table.png",
-    "url": "./accuracy_chart_from_labels_table.ipynb"
-    },
-    {
-    "title": "`precision recall chart from labels table`",
-    "image": "./img/precision_recall_chart_from_labels_table.png",
-    "url": "./precision_recall_chart_from_labels_table.ipynb"
-    },
-    {
-    "title": "`roc chart from labels table`",
-    "image": "./img/roc_chart_from_labels_table.png",
-    "url": "./roc_chart_from_labels_table.ipynb"
+    "url": "./accuracy_analysis_from_labels_table.ipynb"
     },
     {
     "title": "`threshold_selection_tool from labels table`",
     "image": "./img/threshold_selection_tool_from_labels_table.png",
     "url": "./threshold_selection_tool_from_labels_table.ipynb"
-    },
+    }
 ]
 ::/cards::
 
@@ -132,7 +116,7 @@
     "title": "`waterfall chart`",
     "image": "./img/waterfall_chart.png",
     "url": "./waterfall_chart.ipynb"
-    },   
+    }
 ]
 ::/cards::
 
@@ -160,7 +144,7 @@
   {
     "title": "`accuracy chart from labels table`",
     "image": "./img/accuracy_chart_from_labels_table.png",
-    "url": "./accuracy_chart_from_labels_table.ipynb"
+    "url": "./accuracy_analysis_from_labels_table.ipynb"
   },
   {
     "title": "`cluster studio dashboard`",
@@ -188,9 +172,9 @@
     "url": "./completeness_chart.ipynb"
   },
   {
-    "title": "`cumulative num comparisons from blocking rules chart`",
+    "title": "`cumulative comparisons from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
-    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+    "url": "./cumulative_comparisons_to_be_scored_from_blocking_rules_chart.ipynb"
   },
   {
     "title": "`m u parameters chart`",
@@ -203,11 +187,6 @@
     "url": "./match_weights_chart.ipynb"
   },
   {
-    "title": "`missingness chart`",
-    "image": "./img/missingness_chart.png",
-    "url": "./missingness_chart.ipynb"
-  },
-  {
     "title": "`parameter estimate comparisons chart`",
     "image": "./img/parameter_estimate_comparisons_chart.png",
     "url": "./parameter_estimate_comparisons_chart.ipynb"
@@ -218,19 +197,9 @@
     "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
   },
   {
-    "title": "`precision recall chart from labels table`",
-    "image": "./img/precision_recall_chart_from_labels_table.png",
-    "url": "./precision_recall_chart_from_labels_table.ipynb"
-  },
-  {
     "title": "`profile columns`",
     "image": "./img/profile_columns.png",
     "url": "./profile_columns.ipynb"
-  },
-  {
-    "title": "`roc chart from labels table`",
-    "image": "./img/roc_chart_from_labels_table.png",
-    "url": "./roc_chart_from_labels_table.ipynb"
   },
   {
     "title": "`tf adjustment chart`",

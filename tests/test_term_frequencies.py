@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.linker import DuckDBLinker
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 
 def get_data():
@@ -79,8 +80,9 @@ def test_tf_basic():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
-    df_predict = linker.predict()
+    db_api = DuckDBAPI(connection=":memory:")
+    linker = Linker(data, settings, db_api=db_api)
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -115,8 +117,9 @@ def test_tf_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
-    df_predict = linker.predict()
+    db_api = DuckDBAPI(connection=":memory:")
+    linker = Linker(data, settings, db_api=db_api)
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -151,8 +154,10 @@ def test_weight():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
-    df_predict = linker.predict()
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(data, settings, db_api=db_api)
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]
@@ -200,8 +205,10 @@ def test_weightand_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(data, settings, connection=":memory:")
-    df_predict = linker.predict()
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(data, settings, db_api=db_api)
+    df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
     bf_no_adj = results["London"]["bf_city"]

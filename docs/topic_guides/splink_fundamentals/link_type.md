@@ -19,99 +19,34 @@ This guide shows how to specify the settings dictionary and initialise the linke
 
 The `dedupe_only` link type expects the user to provide a single input table, and is specified as follows
 
-=== ":simple-duckdb: DuckDB"
-    ``` python
-    from splink.duckdb.linker import DuckDBLinker
+``` python
+from splink import SettingsCreator
 
-    settings = {
-        "link_type": "dedupe_only",
-        # etc.
-    }
-    linker = DuckDBLinker(df, settings)
-    ```
-=== ":simple-apachespark: Spark"
-    ``` python
-    from splink.spark.linker import SparkLinker
+settings = SettingsCreator(
+    link_type= "dedupe_only",
+)
 
-    settings = {
-        "link_type": "dedupe_only",
-        # etc.
-    }
-    linker = SparkLinker(df, settings)
-    ```
-=== ":simple-amazonaws: Athena"
-    ``` python
-    from splink.athena.linker import AthenaLinker
-
-    settings = {
-        "link_type": "dedupe_only",
-        # etc.
-    }
-    linker = AthenaLinker(df, settings)
-    ```
-=== ":simple-sqlite: SQLite"
-    ``` python
-    from splink.sqlite.linker import SQLiteLinker
-
-    settings = {
-        "link_type": "dedupe_only",
-        # etc.
-    }
-    linker = SQLiteLinker(df, settings)
-    ```
+linker = Linker(df, settings, db_api=dbapi, )
+```
 
 ## Link only
 
 The `link_only` link type expects the user to provide a list of input tables, and is specified as follows:
 
-=== ":simple-duckdb: DuckDB"
-    ``` python
-    from splink.duckdb.linker import DuckDBLinker
+``` python
+from splink import SettingsCreator
 
-    settings = {
-        "link_type": "link_only",
-        # etc.
-        }
+settings = SettingsCreator(
+    link_type= "link_only",
+)
 
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = DuckDBLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-apachespark: Spark"
-    ``` python
-    from splink.spark.linker import SparkLinker
-
-    settings = {
-        "link_type": "link_only",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = SparkLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-amazonaws: Athena"
-    ``` python
-    from splink.athena.linker import AthenaLinker
-
-    settings = {
-        "link_type": "link_only",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = AthenaLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-sqlite: SQLite"
-    ``` python
-    from splink.sqlite.linker import SQLiteLinker
-
-    settings = {
-        "link_type": "link_only",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = SQLiteLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
+linker = Linker(
+    [df_1, df_2, df_n],
+    settings,
+    db_api=dbapi,
+    input_table_aliases=["name1", "name2", "name3"],
+)
+```
 
 The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
 
@@ -119,53 +54,19 @@ The `input_table_aliases` argument is optional and are used to label the tables 
 
 The `link_and_dedupe` link type expects the user to provide a list of input tables, and is specified as follows:
 
-=== ":simple-duckdb: DuckDB"
-    ``` python
-    from splink.duckdb.linker import DuckDBLinker
+``` python
+from splink import SettingsCreator
 
-    settings = {
-        "link_type": "link_and_dedupe",
-        # etc.
-        }
+settings = SettingsCreator(
+    link_type= "link_and_dedupe",
+)
 
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = DuckDBLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-apachespark: Spark"
-    ``` python
-    from splink.spark.linker import SparkLinker
-
-    settings = {
-        "link_type": "link_and_dedupe",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = SparkLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-amazonaws: Athena"
-    ``` python
-    from splink.athena.linker import AthenaLinker
-
-    settings = {
-        "link_type": "link_and_dedupe",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = AthenaLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
-=== ":simple-sqlite: SQLite"
-    ``` python
-    from splink.sqlite.linker import SQLiteLinker
-
-    settings = {
-        "link_type": "link_and_dedupe",
-        # etc.
-        }
-
-    input_aliases = ["table_1", "table_2", "table_3"]
-    linker = SQLiteLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
-    ```
+linker = Linker(
+    [df_1, df_2, df_n],
+    settings,
+    db_api=dbapi,
+    input_table_aliases=["name1", "name2", "name3"],
+)
+```
 
 The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.

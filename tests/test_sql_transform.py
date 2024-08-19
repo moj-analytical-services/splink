@@ -1,9 +1,10 @@
 import sqlglot
 
-from splink.athena.athena_helpers.athena_transforms import cast_concat_as_varchar
-from splink.input_column import InputColumn
-from splink.spark.spark_helpers.custom_spark_dialect import Dialect  # noqa 401
-from splink.sql_transform import (
+from splink.internals.athena.athena_helpers.athena_transforms import (
+    cast_concat_as_varchar,
+)
+from splink.internals.input_column import InputColumn
+from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
 )
@@ -90,7 +91,7 @@ def test_set_numeric_as_double():
 
 
 def test_add_pref_and_suffix():
-    dull = InputColumn("dull")
+    dull = InputColumn("dull", sql_dialect="duckdb")
     dull_l_r = ['"l"."dull" AS "dull_l"', '"r"."dull" AS "dull_r"']
     assert dull.l_r_names_as_l_r == dull_l_r
 
@@ -99,7 +100,7 @@ def test_add_pref_and_suffix():
     tf_dull_l_r = ['"l"."tf_dull" AS "tf_dull_l"', '"r"."tf_dull" AS "tf_dull_r"']
     assert dull.l_r_tf_names_as_l_r == tf_dull_l_r
 
-    ll = InputColumn("lat['long']")
+    ll = InputColumn("lat['long']", sql_dialect="duckdb")
     assert ll.name_l == "\"lat_l\"['long']"
 
     ll_tf_l_r = [
@@ -109,7 +110,7 @@ def test_add_pref_and_suffix():
 
     assert ll.l_r_tf_names_as_l_r == ll_tf_l_r
 
-    group = InputColumn("cluster")
+    group = InputColumn("cluster", sql_dialect="duckdb")
     assert group.name_l == '"cluster_l"'
     assert group.bf_name == '"bf_cluster"'
     group_l_r_names = ['"l"."cluster" AS "cluster_l"', '"r"."cluster" AS "cluster_r"']
@@ -123,5 +124,5 @@ def test_add_pref_and_suffix():
 
     cols = ["unique_id", "SUR name", "cluster"]
     out_cols = ['"unique_id"', '"SUR name"', '"cluster"']
-    cols_class = [InputColumn(c) for c in cols]
+    cols_class = [InputColumn(c, sql_dialect="duckdb") for c in cols]
     assert [c.name for c in cols_class] == out_cols

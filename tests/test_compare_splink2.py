@@ -1,22 +1,25 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.linker import DuckDBLinker
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.spark.linker import SparkLinker
-from splink.sqlite.linker import SQLiteLinker
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
+from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.internals.sqlite.database_api import SQLiteAPI
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 
 
 def test_splink_2_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
@@ -29,11 +32,12 @@ def test_splink_2_predict():
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
-def test_splink_2_predict_spark(df_spark):
+@mark_with_dialects_including("spark")
+def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
-    linker = SparkLinker(df_spark, settings_dict)
+    linker = Linker(df_spark, settings_dict, spark_api)
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
     f1 = df_e["unique_id_l"] == "479"
     f2 = df_e["unique_id_r"] == "481"
     actual_record = df_e[f1 & f2]
@@ -45,6 +49,7 @@ def test_splink_2_predict_spark(df_spark):
     assert expected_match_weight == pytest.approx(actual_match_weight)
 
 
+@mark_with_dialects_including("sqlite")
 def test_splink_2_predict_sqlite():
     import sqlite3
 
@@ -56,13 +61,10 @@ def test_splink_2_predict_sqlite():
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
 
-    linker = SQLiteLinker(
-        "fake_data_1",
-        settings_dict,
-        connection=con,
-    )
+    db_api = SQLiteAPI(con)
+    linker = Linker("fake_data_1", settings_dict, db_api=db_api)
 
-    df_e = linker.predict().as_pandas_dataframe()
+    df_e = linker.inference.predict().as_pandas_dataframe()
 
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
@@ -74,21 +76,25 @@ def test_splink_2_predict_sqlite():
 
     assert expected_match_weight == pytest.approx(actual_match_weight)
 
-    linker.estimate_parameters_using_expectation_maximisation("l.dob=r.dob")
+    linker.training.estimate_parameters_using_expectation_maximisation("l.dob=r.dob")
 
 
 def test_splink_2_em_fixed_u():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
         "tests/datasets/splink2_proportion_of_matches_history_fixed_u.csv"
     )
 
-    training_session = linker.estimate_parameters_using_expectation_maximisation(
-        "l.surname = r.surname"
+    training_session = (
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            "l.surname = r.surname"
+        )
     )
     actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
 
@@ -124,15 +130,19 @@ def test_splink_2_em_fixed_u():
 def test_splink_2_em_no_fix():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings_dict, db_api=db_api)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
         "tests/datasets/splink2_proportion_of_matches_history_no_fix.csv"
     )
 
-    training_session = linker.estimate_parameters_using_expectation_maximisation(
-        "l.surname = r.surname", fix_u_probabilities=False
+    training_session = (
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            "l.surname = r.surname", fix_u_probabilities=False
+        )
     )
     actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
 
@@ -178,16 +188,20 @@ def test_lambda():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
 
-    ma = linker.predict().as_pandas_dataframe()
+    linker = Linker(df, settings_dict, db_api=db_api)
+
+    ma = linker.inference.predict().as_pandas_dataframe()
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
     ma[f1 & f2]
     # actual_record
     ma["match_probability"].mean()
-    training_session = linker.estimate_parameters_using_expectation_maximisation(
-        "l.dob = r.dob", fix_u_probabilities=False
+    training_session = (
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            "l.dob = r.dob", fix_u_probabilities=False
+        )
     )
     pd.DataFrame(training_session._lambda_history_records)
 
@@ -211,7 +225,7 @@ def test_lambda():
     )
 
     for cc in linker._settings_obj.comparisons:
-        if cc._output_column_name not in ("first_name", "surname"):
+        if cc.output_column_name not in ("first_name", "surname"):
             cl = cc._get_comparison_level_by_comparison_vector_value(1)
             cl.m_probability = 0.9
             cl.u_probability = 0.1
@@ -221,10 +235,12 @@ def test_lambda():
 
     linker._settings_obj._probability_two_random_records_match = glo
 
-    training_session = linker.estimate_parameters_using_expectation_maximisation(
-        "l.first_name = r.first_name and l.surname = r.surname",
-        fix_u_probabilities=False,
-        populate_probability_two_random_records_match_from_trained_values=True,
+    training_session = (
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            "l.first_name = r.first_name and l.surname = r.surname",
+            fix_u_probabilities=False,
+            populate_probability_two_random_records_match_from_trained_values=True,
+        )
     )
 
     # linker._settings_obj.match_weights_chart()

@@ -14,41 +14,31 @@ tags:
 
 Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently (e.g. "Stephen" vs "Steven"). These algorithms to give another type of fuzzy match and are often generated in the [Feature Engineering](../data_preparation/feature_engineering.md#phonetic-transformations) step of record linkage.
 
-Once generated, phonetic matches can be used within [comparisons & comparison levels](customising_comparisons.ipynb) and [blocking rules](../blocking/blocking_rules.md).
-
-E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
+Once generated, phonetic matches can be used within [comparisons & comparison levels](../comparisons//customising_comparisons.ipynb) and [blocking rules](../blocking/blocking_rules.md).
 
 
-=== ":simple-duckdb: DuckDB"
-    ```python
-    import splink.duckdb.comparison_template_library as ctl
+```python
+import splink.comparison_library as cl
 
-    first_name_comparison = ctl.name_comparison(
-                            "first_name",
-                            phonetic_col_name = "first_name_dm")
-    print(first_name_comparison.human_readable_description)
-    ```
-=== ":simple-apachespark: Spark"
-    ```python
-    import splink.spark.comparison_template_library as ctl
+first_name_comparison = cl.NameComparison(
+                        "first_name",
+                        dmeta_col_name= "first_name_dm")
+print(first_name_comparison.human_readable_description)
+```
 
-    first_name_comparison = ctl.name_comparison(
-                            "first_name",
-                            phonetic_col_name = "first_name_dm")
-    print(first_name_comparison.human_readable_description)
-    ```
+```
+Comparison 'NameComparison' of "first_name" and "first_name_dm".
+Similarity is assessed using the following ComparisonLevels:
 
-> Comparison 'Exact match vs. First_Name within Levenshtein threshold 1 vs. First_Name within Damerau-Levenshtein threshold 1 vs. First_Name within Jaro-Winkler thresholds 0.9, 0.8 vs. anything else' of "first_name".
->
-> Similarity is assessed using the following ComparisonLevels:
->
->    - 'Null' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
->    - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
->    - 'Exact match first_name_dm' with SQL rule: "first_name_dm_l" = "first_name_dm_r"
->    - 'Damerau_levenshtein <= 1' with SQL rule: damerau_levenshtein("first_name_l", "first_name_r") <= 1
->    - 'Jaro_winkler_similarity >= 0.9' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.9
->    - 'Jaro_winkler_similarity >= 0.8' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.8
->    - 'All other comparisons' with SQL rule: ELSE
+    - 'first_name is NULL' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
+    - 'Exact match on first_name' with SQL rule: "first_name_l" = "first_name_r"
+    - 'Jaro-Winkler distance of first_name >= 0.92' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.92
+    - 'Jaro-Winkler distance of first_name >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
+    - 'Array intersection size >= 1' with SQL rule: array_length(list_intersect("first_name_dm_l", "first_name_dm_r")) >= 1
+    - 'Jaro-Winkler distance of first_name >= 0.7' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.7
+    - 'All other comparisons' with SQL rule: ELSE
+```
+
 
 <hr>
 

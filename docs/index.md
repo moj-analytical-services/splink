@@ -8,10 +8,14 @@ hide:
 <img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink: data linkage at scale. (Splink logo)." style="max-width: 500px;">
 </p>
 
+!!! info
+
+    🎉 Splink 4 has been released! Examples of new syntax are [here](./demos/examples/examples_index.md) and a release announcement is [here](./blog/posts/2024-07-10-splink4_release.md).
+
+
 # Fast, accurate and scalable probabilistic data linkage
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
-
 
 [Get Started with Splink](./getting_started.md){ .md-button .md-button--primary }
 
@@ -19,11 +23,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
-🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
-📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.<br>
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.<br>
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.<br>
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.<br>
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.<br>
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -53,7 +57,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Support
 
-To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./dev_guides/CONTRIBUTING.md).
+If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
 
 ## Use Cases
 
@@ -88,8 +92,6 @@ Here is a list of some of our known users and their use cases:
 Sadly, we don't hear about the majority of our users or what they are working on. If you have a use case and it is not shown here please [add it to the list](https://github.com/moj-analytical-services/splink/edit/master/docs/index.md)!
 
 ## Awards
-
-❓ Future of Government Awards 2023: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 

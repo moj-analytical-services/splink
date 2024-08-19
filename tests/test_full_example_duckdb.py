@@ -6,9 +6,12 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.internals.comparison_level_library as cll
+import splink.internals.comparison_library as cl
+from splink.blocking_analysis import count_comparisons_from_blocking_rule
+from splink.exploratory import completeness_chart, profile_columns
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -17,6 +20,10 @@ from .linker_utils import (
     _test_write_functionality,
     register_roc_data,
 )
+
+simple_settings = {
+    "link_type": "dedupe_only",
+}
 
 
 @mark_with_dialects_including("duckdb")
@@ -27,72 +34,81 @@ def test_full_example_duckdb(tmp_path):
 
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
-    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][1] = cl.JaccardAtThresholds("SUR name")
 
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
+    )
+
+    linker = Linker(
         df,
-        connection=os.path.join(tmp_path, "duckdb.db"),
-        output_schema="splink_in_duckdb",
-    )
-    linker.load_settings(settings_dict)
-
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
+        settings=settings_dict,
+        db_api=db_api,
+        # output_schema="splink_in_duckdb",
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"SUR name"',
             'first_name || "SUR name"',
             "concat(city, first_name)",
-        ]
+        ],
     )
-    linker.missingness_chart()
-    linker.compute_tf_table("city")
-    linker.compute_tf_table("first_name")
+    completeness_chart(df, db_api)
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
-    linker.estimate_probability_two_random_records_match(
+    linker.table_management.compute_tf_table("city")
+    linker.table_management.compute_tf_table("first_name")
+
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
+    linker.training.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
     df_e = df_predict.as_pandas_dataframe(limit=5)
     records = df_e.to_dict(orient="records")
-    linker.waterfall_chart(records)
+    linker.visualisations.waterfall_chart(records)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
-    linker.threshold_selection_tool_from_labels_table("labels")
 
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
-    linker.cluster_studio_dashboard(
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
+
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         sampling_method="by_cluster_size",
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
@@ -106,19 +122,18 @@ def test_full_example_duckdb(tmp_path):
         "cluster": 10000,
     }
 
-    linker.find_matches_to_new_records(
+    linker.inference.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_model_to_json(path)
+    linker.misc.save_model_to_json(path)
 
-    linker_2 = DuckDBLinker(df)
-    linker_2.load_model(path)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
-    DuckDBLinker(df, settings_dict=path)
+    db_api = DuckDBAPI()
+    linker_2 = Linker(df, settings=simple_settings, db_api=db_api)
+
+    linker_2 = Linker(df, db_api=db_api, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -166,11 +181,9 @@ def test_link_only(input, source_l, source_r):
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
 
-    linker = DuckDBLinker(
-        input,
-        settings,
-    )
-    df_predict = linker.predict().as_pandas_dataframe()
+    db_api = DuckDBAPI()
+    linker = Linker(input, settings, db_api=db_api)
+    df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
     assert set(df_predict.source_dataset_l.values) == source_l
@@ -209,22 +222,26 @@ def test_link_only(input, source_l, source_r):
 def test_duckdb_load_from_file(df):
     settings = get_settings_dict()
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         df,
         settings,
+        db_api=db_api,
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 3167
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
 
     settings["link_type"] = "link_only"
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         [df, df],
         settings,
+        db_api=db_api,
         input_table_aliases=["testing1", "testing2"],
     )
 
-    assert len(linker.predict().as_pandas_dataframe()) == 7257
+    assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
 
 
 @mark_with_dialects_including("duckdb")
@@ -243,16 +260,18 @@ def test_duckdb_arrow_array():
     # {"uid": 1, "a": ['james', 'john'], "b": 1},
     #     ]
 
-    linker = DuckDBLinker(
+    db_api = DuckDBAPI()
+    linker = Linker(
         array_data,
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
-            "comparisons": [cl.exact_match("b")],
+            "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
+        db_api=db_api,
     )
-    df = linker.deterministic_link().as_pandas_dataframe()
+    df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
 
 
@@ -271,34 +290,37 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_pattern=".*"),
-                    cll.exact_match_level("full_name", term_frequency_adjustments=True),
-                    cll.columns_reversed_level(
-                        "first_name", "surname", tf_adjustment_column="full_name"
+                    cll.NullLevel("full_name", valid_string_pattern=".*"),
+                    cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
+                    cll.ColumnsReversedLevel("first_name", "surname").configure(
+                        tf_adjustment_column="full_name"
                     ),
-                    cll.exact_match_level(
-                        "first_name", term_frequency_adjustments=True
-                    ),
-                    cll.else_level(),
+                    cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
+                    cll.ElseLevel(),
                 ],
             },
-            cl.damerau_levenshtein_at_thresholds(
-                "dob", 2, term_frequency_adjustments=True
+            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
+                term_frequency_adjustments=True
             ),
-            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
+            cl.JaroAtThresholds("email", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.JaroWinklerAtThresholds("city", 0.9).configure(
+                term_frequency_adjustments=True
+            ),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(df, settings_dict)
+    db_api = DuckDBAPI()
+    linker = Linker(df, settings_dict, db_api=db_api)
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.predict()
+    linker.inference.predict()

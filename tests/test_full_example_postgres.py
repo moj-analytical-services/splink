@@ -1,9 +1,14 @@
 import os
 
 import pandas as pd
-import pytest
 
-from splink.postgres.linker import PostgresLinker
+from splink.blocking_analysis import (
+    count_comparisons_from_blocking_rule,
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+from splink.exploratory import completeness_chart, profile_columns
+from splink.internals.linker import Linker
+from splink.internals.postgres.database_api import PostgresAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -15,72 +20,86 @@ def test_full_example_postgres(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
 
-    linker = PostgresLinker(
+    db_api = PostgresAPI(engine=pg_engine)
+    linker = Linker(
         df,
-        engine=pg_engine,
+        settings_dict,
+        db_api=db_api,
     )
-    linker.load_settings(settings_dict)
 
-    linker.count_num_comparisons_from_blocking_rule(
-        'l.first_name = r.first_name and l."surname" = r."surname"'
+    count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
-    linker.cumulative_num_comparisons_from_blocking_rules_chart(
-        [
+
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+        table_or_tables=df,
+        blocking_rules=[
             "l.first_name = r.first_name",
             "l.surname = r.surname",
             "l.city = r.city",
-        ]
+        ],
+        link_type="dedupe_only",
+        db_api=db_api,
+        unique_id_column_name="unique_id",
     )
 
-    linker.profile_columns(
+    profile_columns(
+        df,
+        db_api,
         [
             "first_name",
             '"surname"',
             'first_name || "surname"',
             "concat(city, first_name)",
-        ]
+        ],
     )
-    linker.missingness_chart()
-    linker.compute_tf_table("city")
-    linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-    linker.estimate_probability_two_random_records_match(
+    completeness_chart(df, db_api=db_api)
+
+    linker.table_management.compute_tf_table("city")
+    linker.table_management.compute_tf_table("first_name")
+
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    # try missingness chart again now that concat_with_tf is precomputed
-    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."surname" = r."surname"'
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
+    df_predict = linker.inference.predict()
 
-    linker.comparison_viewer_dashboard(
+    linker.visualisations.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_postgres.html"), True, 2
     )
 
     df_e = df_predict.as_pandas_dataframe(limit=5)
     records = df_e.to_dict(orient="records")
-    linker.waterfall_chart(records)
+    linker.visualisations.waterfall_chart(records)
 
     register_roc_data(linker)
-    linker.roc_chart_from_labels_table("labels")
-    linker.threshold_selection_tool_from_labels_table("labels")
 
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
-    linker.cluster_studio_dashboard(
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
+
+    linker.visualisations.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         sampling_method="by_cluster_size",
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    linker.unlinkables_chart(source_dataset="Testing")
+    linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
     _test_table_registration(linker)
 
@@ -94,17 +113,15 @@ def test_full_example_postgres(tmp_path, pg_engine):
         "cluster": 10000,
     }
 
-    linker.find_matches_to_new_records(
+    linker.inference.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path)
+    linker.misc.save_model_to_json(path)
 
-    linker_2 = PostgresLinker(df, engine=pg_engine)
-    linker_2.load_settings(path)
-    linker_2.load_settings_from_json(path)
+    Linker(df, path, db_api=db_api)
 
 
 @mark_with_dialects_including("postgres")
@@ -116,17 +133,10 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
 
     settings_dict = get_settings_dict()
 
-    linker = PostgresLinker(
+    db_api = PostgresAPI(engine=pg_engine)
+    linker = Linker(
         table_name,
-        engine=pg_engine,
-        settings_dict=settings_dict,
+        db_api=db_api,
+        settings=settings_dict,
     )
-    linker.predict()
-
-
-@mark_with_dialects_including("postgres")
-def test_error_no_connection():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # get an error as we don't pass a connection
-    with pytest.raises(ValueError):
-        PostgresLinker(df)
+    linker.inference.predict()

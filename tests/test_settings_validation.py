@@ -1,16 +1,16 @@
 import logging
-import re
 
 import pandas as pd
 import pytest
 
-from splink.comparison import Comparison
-from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
-from splink.duckdb.blocking_rule_library import block_on
-from splink.duckdb.comparison_library import levenshtein_at_thresholds
-from splink.duckdb.linker import DuckDBLinker
-from splink.exceptions import ErrorLogger
-from splink.settings_validation.log_invalid_columns import (
+from splink.internals.blocking_rule_library import block_on
+from splink.internals.comparison_library import (
+    CustomComparison,
+    LevenshteinAtThresholds,
+)
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
+from splink.internals.settings_validation.log_invalid_columns import (
     InvalidColumnSuffixesLogGenerator,
     InvalidTableNamesLogGenerator,
     MissingColumnsLogGenerator,
@@ -18,10 +18,6 @@ from splink.settings_validation.log_invalid_columns import (
     check_for_missing_or_invalid_columns_in_sql_strings,
     check_for_missing_settings_column,
     validate_table_names,
-)
-from splink.settings_validation.valid_types import (
-    log_comparison_errors,
-    validate_comparison_levels,
 )
 
 from .basic_settings import get_settings_dict
@@ -84,7 +80,7 @@ blocking_rule_test_cases = {
     'dmetaphone(c."surname", r."surname")': [
         InvalidTableNamesLogGenerator({"c.surname"})
     ],
-    block_on(["left", "right"]).blocking_rule_sql: [
+    block_on("left", "right").get_blocking_rule("duckdb").blocking_rule_sql: [
         MissingColumnsLogGenerator({"left", "right"})
     ],
 }
@@ -218,9 +214,9 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
         check_comparison_for_missing_or_invalid_sql_strings(
             sql_dialect="duckdb",
             comparisons_to_check=[
-                Comparison(email_comparison_to_check),
-                Comparison(city_comparison_to_check),
-                levenshtein_at_thresholds("first_name"),
+                CustomComparison(**email_comparison_to_check).get_comparison("duckdb"),
+                CustomComparison(**city_comparison_to_check).get_comparison("duckdb"),
+                LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
             valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         )
@@ -242,11 +238,13 @@ def test_settings_validation_logs(caplog):
     settings["unique_id_column_name"] = "abcde"
     settings["additional_columns_to_retain"] = ["abcde"]
     settings["blocking_rules_to_generate_predictions"] = ["l.abcde = z.abcde"]
-    settings["comparisons"][3] = levenshtein_at_thresholds("abcde")
+    settings["comparisons"][3] = LevenshteinAtThresholds("abcde")
 
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
-        DuckDBLinker(DF, settings, validate_settings=True)
+        db_api = DuckDBAPI()
+
+        Linker(DF, settings, validate_settings=True, db_api=db_api)
 
         # Define expected log segments
         expected_log_segments = [
@@ -276,140 +274,3 @@ def test_settings_validation_logs(caplog):
         # Check each expected log segment in the captured logs
         for header, error in expected_log_segments:
             assert header in caplog.text and error in caplog.text
-
-
-def test_settings_validation_on_2_to_3_converter():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    # Trial with settings converter
-    sql_custom_name = """
-    case
-        when (col_1 is null or col_1_r is null) and
-                (surname_l is null or surname_r is null)  then -1
-        when forename_l = forename_r and surname_l = surname_r then 3
-        when forename_l = forename_r then 2
-        when surname_l = surname_r then 1
-        else 0
-    end
-    """
-    settings = {
-        "link_type": "dedupe_only",
-        "comparison_columns": [
-            {
-                "custom_name": "name_inversion_forname",
-                "case_expression": sql_custom_name,
-                "custom_columns_used": ["forename", "surname"],
-                "num_levels": 4,
-            },
-        ],
-        "blocking_rules": ["l.first_name = r.first_name"],
-    }
-
-    converted = convert_settings_from_v2_to_v3(settings)
-    DuckDBLinker(
-        df,
-        converted,
-    )
-
-
-def test_validate_sql_dialect():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
-
-    with pytest.raises(Exception) as excinfo:
-        DuckDBLinker(
-            df,
-            settings,
-        )
-    assert str(excinfo.value) == (
-        "Incompatible SQL dialect! `settings` dictionary uses dialect "
-        "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
-    )
-
-
-def test_comparison_validation():
-    import splink.athena.comparison_level_library as ath_cll
-    import splink.duckdb.comparison_level_library as cll
-    import splink.duckdb.comparison_library as cl
-    import splink.spark.comparison_level_library as sp_cll
-    from splink.exceptions import InvalidDialect
-    from splink.spark.comparison_library import exact_match
-
-    # Check blank settings aren't flagged
-    # Trimmed settings (settings w/ only the link type, for example)
-    # are tested elsewhere.
-    DuckDBLinker(
-        pd.DataFrame({"a": [1, 2, 3]}),
-    )
-
-    settings = get_settings_dict()
-
-    # Contents aren't tested as of yet
-    email_no_comp_level = {"comparison_lvls": []}
-    # cll instead of cl
-    email_cc = cll.exact_match_level("email")
-    settings["comparisons"][3] = email_cc
-    # random str
-    settings["comparisons"][4] = "help"
-    # missing key dict key and replaced w/ `comparison_lvls`
-    settings["comparisons"].append(email_no_comp_level)
-    # Check invalid import is detected
-    settings["comparisons"].append(exact_match("test"))
-    # mismashed comparison
-    settings["comparisons"].append(
-        {
-            "comparison_levels": [
-                sp_cll.null_level("test"),
-                # Invalid Spark cll
-                ath_cll.exact_match_level("test"),
-                cll.else_level(),
-            ]
-        }
-    )
-    # a comparison containing another comparison
-    settings["comparisons"].append(
-        {
-            "comparison_levels": [
-                cll.null_level("test"),
-                # Invalid Spark cll
-                cl.exact_match("test"),
-                cll.else_level(),
-            ]
-        }
-    )
-
-    log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
-
-    # Init the error logger. This is normally handled in
-    # `log_comparison_errors`, but here we want to capture the
-    # errors instead of logging.
-    error_logger = ErrorLogger()
-    error_logger = validate_comparison_levels(
-        error_logger, settings["comparisons"], "duckdb"
-    )
-
-    # Check our errors are raised
-    errors = error_logger.raw_errors
-    # -3 as we have three valid comparisons
-    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
-
-    # These errors are raised in the order they are defined in the settings
-    expected_errors = (
-        (TypeError, "is a comparison level"),
-        (TypeError, "is of an invalid data type."),
-        (SyntaxError, "missing the required `comparison_levels`"),
-        (InvalidDialect, "within its comparison levels - spark."),
-        (InvalidDialect, re.compile(r".*(presto.*spark|spark.*presto).*")),
-        (TypeError, "contains the following invalid levels"),
-    )
-
-    for n, (e, txt) in enumerate(expected_errors):
-        if isinstance(txt, re.Pattern):
-            # If txt is a compiled regular expression, use re.search
-            with pytest.raises(e) as exc_info:
-                raise errors[n]
-            assert txt.search(str(exc_info.value)), f"Regex did not match for error {n}"
-        else:
-            with pytest.raises(e, match=txt):
-                raise errors[n]

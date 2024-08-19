@@ -1,13 +1,9 @@
 import duckdb
 import pandas as pd
-import sqlglot
-from sqlglot.expressions import CTE, Identifier, TableAlias
 
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
-)
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.internals.comparison_library import ExactMatch, LevenshteinAtThresholds
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 
 def get_duckdb_table_names_as_list(con):
@@ -26,19 +22,21 @@ def test_cache_tracking_works():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [ExactMatch("name").configure(term_frequency_adjustments=True)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.inference.predict()
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is True
 
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.inference.predict()
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
     )
@@ -46,22 +44,25 @@ def test_cache_tracking_works():
     cache.reset_executed_queries_tracker()
     cache.reset_queries_retrieved_from_cache_tracker()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
+
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
     )
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.inference.predict()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
     )
 
-    linker.invalidate_cache()
+    linker.table_management.invalidate_cache()
     cache.reset_executed_queries_tracker()
     cache.reset_queries_retrieved_from_cache_tracker()
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.inference.predict()
+    # Triggers adding to queries retrieved from cache
+    linker.inference.predict()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is True
     assert (
-        cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is False
+        cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
     )
 
 
@@ -83,15 +84,21 @@ def test_cache_used_when_registering_nodes_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
-    linker.register_table_input_nodes_concat_with_tf(splink__df_concat_with_tf)
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.table_management.register_table_input_nodes_concat_with_tf(
+        splink__df_concat_with_tf
+    )
+    linker.inference.predict()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
     assert (
         cache.is_in_queries_retrieved_from_cache("__splink__df_concat_with_tf") is True
@@ -130,70 +137,47 @@ def test_cache_used_when_registering_tf_tables():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name", term_frequency_adjustments=True),
-            exact_match("surname", term_frequency_adjustments=True),
+            ExactMatch("first_name").configure(term_frequency_adjustments=True),
+            ExactMatch("surname").configure(term_frequency_adjustments=True),
         ],
         "blocking_rules_to_generate_predictions": ["l.surname = r.surname"],
     }
 
     # First test do not register any tf tables
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
 
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.inference.predict()
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    # Both tf tables should have been calculated
-    assert "__splink__df_tf_first_name" in cte_table_aliases_used
-    assert "__splink__df_tf_surname" in cte_table_aliases_used
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
     # Then try the same after registering surname tf table
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
-    linker.register_term_frequency_lookup(surname_tf_table, "surname")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.table_management.register_term_frequency_lookup(surname_tf_table, "surname")
+    linker.inference.predict()
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    assert "__splink__df_tf_first_name" in cte_table_aliases_used
-    assert "__splink__df_tf_surname" not in cte_table_aliases_used
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
     # Then try the same after registering both
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
-    linker.register_term_frequency_lookup(surname_tf_table, "surname")
-    linker.register_term_frequency_lookup(first_name_tf_table, "first_name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    linker.table_management.register_term_frequency_lookup(surname_tf_table, "surname")
+    linker.table_management.register_term_frequency_lookup(
+        first_name_tf_table, "first_name"
+    )
+    linker.inference.predict()
 
-    # Get table names generated using CTEs
-    sql = cache["__splink__df_concat_with_tf"].sql_used_to_create
-    tree = sqlglot.parse_one(sql)
-
-    cte_table_aliases_used = []
-    for cte in tree.find_all(CTE):
-        ta = cte.find(TableAlias)
-        table_alias_name = ta.find(Identifier).args["this"]
-        cte_table_aliases_used.append(table_alias_name)
-
-    assert "__splink__df_tf_first_name" not in cte_table_aliases_used
-    assert "__splink__df_tf_surname" not in cte_table_aliases_used
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_first_name")
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_surname")
 
 
 def test_cache_invalidation():
@@ -206,29 +190,33 @@ def test_cache_invalidation():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
 
-    linker.compute_tf_table("name")
+    linker.table_management.compute_tf_table("name")
     len_before = len(cache.executed_queries)
-    linker.compute_tf_table("name")
+    linker.table_management.compute_tf_table("name")
     len_after = len(cache.executed_queries)
 
     # If cache not invalidated, cache should be used
     assert len_before == len_after
     assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
 
-    linker.compute_tf_table("name")
+    linker.table_management.compute_tf_table("name")
     len_before = len(cache.executed_queries)
-    linker.invalidate_cache()
-    linker.compute_tf_table("name")
+    linker.table_management.invalidate_cache()
+    linker.table_management.compute_tf_table("name")
     len_after = len(cache.executed_queries)
     # If cache is invalidated, an additional query should have been executed
     assert len_before + 1 == len_after
@@ -249,21 +237,23 @@ def test_table_deletions():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_table", settings, connection=con)
+    db_api = DuckDBAPI(connection=con)
 
-    table_names_before = set(get_duckdb_table_names_as_list(linker._con))
+    linker = Linker("my_table", settings, db_api=db_api)
 
-    linker.compute_tf_table("name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
+
+    linker.table_management.compute_tf_table("name")
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e4)
 
     # # The database should be empty except for the original non-splink table
-    linker.delete_tables_created_by_splink_from_db()
+    linker.table_management.delete_tables_created_by_splink_from_db()
 
-    table_names_after = set(get_duckdb_table_names_as_list(linker._con))
+    table_names_after = set(get_duckdb_table_names_as_list(db_api._con))
     assert table_names_before == table_names_after
     assert table_names_after == set(["my_table"])
 
@@ -294,26 +284,32 @@ def test_table_deletions_with_preregistered():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            levenshtein_at_thresholds("name", 2, term_frequency_adjustments=True)
+            LevenshteinAtThresholds("name", 2).configure(
+                term_frequency_adjustments=True
+            )
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker("my_data_table", settings, connection=con)
-    linker.register_table_input_nodes_concat_with_tf("my_nodes_with_tf_table")
+    db_api = DuckDBAPI(connection=con)
 
-    table_names_before = set(get_duckdb_table_names_as_list(linker._con))
+    linker = Linker("my_data_table", settings, db_api=db_api)
+    linker.table_management.register_table_input_nodes_concat_with_tf(
+        "my_nodes_with_tf_table"
+    )
 
-    linker.compute_tf_table("name")
-    linker.estimate_u_using_random_sampling(target_rows=1e4)
+    table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
+
+    linker.table_management.compute_tf_table("name")
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e4)
     # Note we shouldn't have executed a __splink__df_concat_with_tf query
 
     cache = linker._intermediate_table_cache
     assert not cache.is_in_executed_queries("__splink__df_concat_with_tf")
 
-    linker.delete_tables_created_by_splink_from_db()
+    linker.table_management.delete_tables_created_by_splink_from_db()
 
-    table_names_after = set(get_duckdb_table_names_as_list(linker._con))
+    table_names_after = set(get_duckdb_table_names_as_list(db_api._con))
 
     assert table_names_before == table_names_after
 
@@ -328,20 +324,22 @@ def test_single_deletion():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
 
-    tf_table = linker.compute_tf_table("name")
+    tf_table = linker.table_management.compute_tf_table("name")
     table_name = tf_table.physical_name
     # Check it is in the cache and database
-    assert table_name in get_duckdb_table_names_as_list(linker._con)
+    assert table_name in get_duckdb_table_names_as_list(db_api._con)
     assert "__splink__df_tf_name" in cache
 
     tf_table.drop_table_from_database_and_remove_from_cache()
     # Check it is no longer in the cache or database
-    assert table_name not in get_duckdb_table_names_as_list(linker._con)
+    assert table_name not in get_duckdb_table_names_as_list(db_api._con)
     assert "__splink__df_tf_name" not in cache

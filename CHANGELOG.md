@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.9.15] - 2024-05-18
+## Unreleased
+
+### Fixed
+
+- Completeness chart now works correctly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
+- Completeness chart works even if you have a `source_dataset` column ([#2323](https://github.com/moj-analytical-services/splink/pull/2323))
+
+
+## [4.0.0] - 2024-07-24
+
+Major release - see our [blog](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html) for what's changed
+
+
+## [3.9.15] - 2024-06-18
 
 ### Fixed
 

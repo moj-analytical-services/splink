@@ -1,7 +1,9 @@
 import pandas as pd
+import pytest
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
+import splink.internals.comparison_library as cl
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 # ground truth:
 # true matches ALWAYS match on gender
@@ -121,18 +123,20 @@ def test_m_u_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.exact_match("tm_partial"),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.ExactMatch("tm_partial"),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker.estimate_probability_two_random_records_match(
-        "l.true_match_id = r.true_match_id", recall=1.0
+    linker = Linker(df, settings, db_api=db_api)
+
+    linker.training.estimate_probability_two_random_records_match(
+        ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
@@ -140,30 +144,32 @@ def test_m_u_charts():
 
     assert linker._settings_obj.comparisons[1].comparison_levels[1].u_probability == 0.0
 
-    linker.match_weights_chart()
+    linker.visualisations.match_weights_chart()
 
 
 def test_parameter_estimate_charts():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("gender"),
-            cl.levenshtein_at_thresholds("first_name", [1]),
-            cl.levenshtein_at_thresholds("surname", [1]),
+            cl.ExactMatch("gender"),
+            cl.LevenshteinAtThresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker.estimate_probability_two_random_records_match(
-        "l.true_match_id = r.true_match_id", recall=1.0
+    linker = Linker(df, settings, db_api=db_api)
+
+    linker.training.estimate_probability_two_random_records_match(
+        ["l.true_match_id = r.true_match_id"], recall=1.0
     )
 
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
     )
-    linker.estimate_parameters_using_expectation_maximisation(
+    linker.training.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
@@ -177,17 +183,40 @@ def test_parameter_estimate_charts():
     ]
     assert 1.0 in exact_gender_m_estimates
 
-    linker.parameter_estimate_comparisons_chart()
+    linker.visualisations.parameter_estimate_comparisons_chart()
 
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
             # no observations of levenshtein == 1 in this data
-            cl.levenshtein_at_thresholds("gender", [1]),
-            cl.levenshtein_at_thresholds("first_name", [1]),
+            cl.LevenshteinAtThresholds("gender", [1]),
+            cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
-    linker = DuckDBLinker(df, settings)
-    linker.estimate_u_using_random_sampling(1e6)
+    db_api = DuckDBAPI()
 
-    linker.parameter_estimate_comparisons_chart()
+    linker = Linker(df, settings, db_api=db_api)
+    linker.training.estimate_u_using_random_sampling(1e6)
+
+    linker.visualisations.parameter_estimate_comparisons_chart()
+
+
+def test_tf_adjustment_chart():
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("gender").configure(term_frequency_adjustments=True),
+            cl.LevenshteinAtThresholds("first_name", [1]).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.LevenshteinAtThresholds("surname", [1]),
+        ],
+    }
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
+    linker.visualisations.tf_adjustment_chart("gender")
+    linker.visualisations.tf_adjustment_chart("first_name")
+
+    with pytest.raises(ValueError):
+        linker.visualisations.tf_adjustment_chart("surname")

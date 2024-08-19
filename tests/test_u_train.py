@@ -3,7 +3,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from splink.estimate_u import _proportion_sample_size_link_only
+import splink.internals.comparison_library as cl
+from splink.internals.estimate_u import _proportion_sample_size_link_only
+from splink.internals.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
 
 
@@ -22,14 +24,14 @@ def test_u_train(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
     df_linker = helper.convert_frame(df)
 
     linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
@@ -69,25 +71,32 @@ def test_u_train_link_only(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker = helper.Linker(
+        [df_l, df_r],
+        settings,
+        input_table_aliases=["l", "r"],
+        **helper.extra_linker_args(),
+    )
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
+    # Check that no records are blocked to records in the same source dataset
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -125,7 +134,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.exact_match("name")],
+        "comparisons": [cl.ExactMatch("name")],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -138,17 +147,18 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         input_table_aliases=["_a", "_b"],
         **helper.extra_linker_args(),
     )
-    linker.debug_mode = True
+    linker._debug_mode = True
 
-    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
+    linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
     """
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -257,23 +267,28 @@ def test_u_train_multilink(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker = helper.Linker(
+        dfs,
+        settings,
+        input_table_aliases=["a", "b", "c", "d"],
+        **helper.extra_linker_args(),
+    )
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -293,19 +308,24 @@ def test_u_train_multilink(test_helpers, dialect):
 
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker = helper.Linker(
+        dfs,
+        settings,
+        input_table_aliases=["e", "f", "g", "h"],
+        **helper.extra_linker_args(),
+    )
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
-    SELECT COUNT(*) AS count FROM __splink__df_blocked
-    WHERE source_dataset_l = source_dataset_r
+    SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
+    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
     """
 
-    self_table_count = linker._sql_to_splink_dataframe_checking_cache(
-        check_blocking_sql, "__splink__df_blocked_same_table_count"
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(check_blocking_sql, "__splink__df_blocked_same_table_count")
+    self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database_and_remove_from_cache()
@@ -332,16 +352,16 @@ def test_seed_u_outputs(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
+        "comparisons": [cl.LevenshteinAtThresholds("first_name", 2)],
     }
 
     linker_1 = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_2 = helper.Linker(df, settings, **helper.extra_linker_args())
     linker_3 = helper.Linker(df, settings, **helper.extra_linker_args())
 
-    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
-    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+    linker_1.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
 
     assert (
         linker_1._settings_obj._parameter_estimates_as_records

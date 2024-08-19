@@ -35,37 +35,60 @@ import re
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
-from splink.em_training_session import EMTrainingSession
-from splink.predict import predict_from_comparison_vectors_sqls
+import splink.comparison_library as cl
+from splink import DuckDBAPI, Linker, SettingsCreator
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.em_training_session import EMTrainingSession
+from splink.internals.exceptions import SplinkException
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.predict import predict_from_comparison_vectors_sqls_using_settings
 
 
 def test_splink_converges_to_known_params():
     df = pd.read_csv("./tests/datasets/known_params_comparison_vectors.csv")
-    df.head()
+    rec = [
+        {
+            "unique_id": 1,
+            "col_1": "a",
+            "col_2": "b",
+            "col_3": "c",
+            "true_match": 1,
+        },
+    ]
+    in_df = pd.DataFrame(rec)
 
-    settings = {
-        "link_type": "dedupe_only",
-        "comparisons": [
-            cl.exact_match("col_1"),
-            cl.exact_match("col_2"),
-            cl.exact_match("col_3"),
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("col_1"),
+            cl.ExactMatch("col_2"),
+            cl.ExactMatch("col_3"),
         ],
-        "max_iterations": 200,
-        "em_convergence": 0.00001,
-        "additional_columns_to_retain": ["true_match", "true_match_probability"],
-        "retain_intermediate_calculation_columns": False,
-        "retain_matching_columns": False,
-        "linker_uid": "abc",
-    }
+        max_iterations=200,
+        em_convergence=0.00001,
+        additional_columns_to_retain=["true_match", "true_match_probability"],
+        retain_intermediate_calculation_columns=False,
+        retain_matching_columns=False,
+        linker_uid="abc",
+    )
 
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
+
+    linker = Linker(in_df, settings, db_api=db_api)
+
+    settings_obj = linker._settings_obj
+
+    # We want to 'inject' the pre-computed comparison vectors into the linker
 
     em_training_session = EMTrainingSession(
         linker,
-        "1=1",
+        db_api=db_api,
+        blocking_rule_for_training="1=1",
+        core_model_settings=settings_obj.core_model_settings,
+        training_settings=settings_obj.training_settings,
+        unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
         fix_u_probabilities=False,
         fix_m_probabilities=False,
         fix_probability_two_random_records_match=False,
@@ -77,20 +100,23 @@ def test_splink_converges_to_known_params():
     # We can then register a table with that name
     try:
         em_training_session._comparison_vectors()
-    except Exception as e:
+    except SplinkException as e:
         pattern = r"__splink__df_comparison_vectors_[a-f0-9]{9}"
 
         cvv_hashed_tablename = re.search(pattern, str(e)).group()
 
-    linker.register_table(df, cvv_hashed_tablename)
+    cvv_table = db_api.register_table(df, cvv_hashed_tablename)
+    cvv_table.templated_name = "__splink__df_comparison_vectors"
 
-    em_training_session._train()
+    core_model_settings = em_training_session._train(cvv_table)
+    linker._settings_obj.core_model_settings = core_model_settings
+    linker._em_training_sessions.append(em_training_session)
 
     linker._populate_m_u_from_trained_values()
 
     linker._populate_probability_two_random_records_match_from_trained_values()
 
-    linker.match_weights_chart()
+    linker.visualisations.match_weights_chart()
 
     cv = DuckDBDataFrame(
         "__splink__df_comparison_vectors",
@@ -98,18 +124,15 @@ def test_splink_converges_to_known_params():
         linker,
     )
 
-    sqls = predict_from_comparison_vectors_sqls(
+    pipeline = CTEPipeline([cv])
+    sqls = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         sql_infinity_expression=linker._infinity_expression,
     )
+    pipeline.enqueue_list_of_sqls(sqls)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    predictions = linker._execute_sql_pipeline([cv])
+    predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     predictions_df = predictions.as_pandas_dataframe()
-
-    from pandas.testing import assert_series_equal
 
     assert_series_equal(
         predictions_df["match_probability"],

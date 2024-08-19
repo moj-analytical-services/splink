@@ -2,11 +2,11 @@
 
 Splink contains tooling to help developers understand the underlying computations, how caching and pipelining is working, and debug problems.
 
-There are two main mechanisms: `debug_mode`, and setting different logging levels
+There are two main mechanisms: `_debug_mode`, and setting different logging levels
 
 ## Debug mode
 
-You can turn on debug mode by setting `linker.debug_mode = True`.
+You can turn on debug mode by setting `linker._debug_mode = True`.
 
 This has the following effects:
 
@@ -44,7 +44,7 @@ Note that by default Splink sets the [logging level to `INFO` on initialisation]
 
 ```python
 import logging
-linker = DuckDBLinker(df, settings, set_up_basic_logging=False)
+linker = Linker(df, settings, db_api, set_up_basic_logging=False)
 
 # This must come AFTER the linker is intialised, because the logging level
 # will be set to INFO
@@ -61,5 +61,5 @@ logging.basicConfig(format="%(message)s")
 splink_logger = logging.getLogger("splink")
 splink_logger.setLevel(logging.INFO)
 
-linker = DuckDBLinker(df, settings, set_up_basic_logging=False)
+linker = Linker(df, settings, db_api, set_up_basic_logging=False)
 ```

@@ -52,11 +52,14 @@ Equi-joins are simply equality conditions between records, e.g.
 
 `l.first_name = r.first_name`
 
-These equality-based blocking rules are extremely efficient and can be executed quickly, even on very large datasets.
+Equality-based blocking rules can be executed efficiently by SQL engines in the sense that the engine is able to create only the record pairs that satisfy the blocking rule. The engine does **not** have to create all possible record pairs and then filter out the pairs that do not satisfy the blocking rule.  This is in contrast to filter conditions (see below), where the engine has to create a larger set of comparisons and then filter it down.
 
-Equality-based blocking rules should be considered the default method for defining blocking rules and form the basis of the [Blocking Rules Library](../../blocking_rule_library.md). For example, the above example can be written as:
+Due to this efficiency advantage, equality-based blocking rules should be considered the default method for defining blocking rules. For example, the above example can be written as:
 
-`brl.block_on("first_name")`
+```
+from splink import block_on
+block_on("first_name")
+```
 
 
 ### Filter Conditions
@@ -65,20 +68,37 @@ Filter conditions refer to any Blocking Rule that isn't a simple equality betwee
 
 `levenshtein(l.surname, r.surname) < 3`
 
-Similarity based blocking rules, such as the example above, are inefficient as the `levenshtein` function needs to be evaluated for all possible record comparisons before filtering out the pairs that do not satisfy the filter condition.
+Blocking rules which use similarity or distance functions, such as the example above, are inefficient as the `levenshtein` function needs to be evaluated for all possible record comparisons before filtering out the pairs that do not satisfy the filter condition.
 
 
 ### Combining Blocking Rules Efficiently
 
 Just as how Blocking Rules can impact on performance, so can how they are combined. The most efficient Blocking Rules combinations are "AND" statements. E.g.
 
+`block_on("first_name", "surname")`
+
+which is equivalent to
+
 `l.first_name = r.first_name AND l.surname = r.surname`
 
-"OR" statements are not as efficient and should be used sparingly. E.g.
+"OR" statements are extremely inefficient and should almost never be used. E.g.
 
 `l.first_name = r.first_name OR l.surname = r.surname`
 
 In most SQL engines, an `OR` condition within a blocking rule will result in all possible record comparisons being generated.  That is, the whole blocking rule becomes a filter condition rather than an equi-join condition, so these should be avoided.  For further information, see [here](https://github.com/moj-analytical-services/splink/discussions/1417#discussioncomment-6420575).
+
+Instead of the `OR` condition being included in the blocking rule, instead, provide two blocking rules to Splink.  This will achieve the desired outcome of generating all comparisons where either the first name or surname match.
+
+```py
+SettingsCreator(
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name"),
+        block_on("surname")
+    ]
+)
+```
+
+
 
 ??? note "Spark-specific Further Reading"
 

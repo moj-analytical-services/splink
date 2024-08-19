@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker
-from splink.exceptions import EMTrainingException
+import splink.internals.comparison_library as cl
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.exceptions import EMTrainingException
+from splink.internals.linker import Linker
 
 
 def test_clear_error_when_empty_block():
@@ -20,19 +21,23 @@ def test_clear_error_when_empty_block():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.levenshtein_at_thresholds("name", 1),
-            cl.exact_match("surname"),
+            cl.LevenshteinAtThresholds("name", 1),
+            cl.ExactMatch("surname"),
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(df, settings)
-    linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-    linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
+    db_api = DuckDBAPI()
+
+    linker = Linker(df, settings, db_api=db_api)
+    linker._debug_mode = True
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        "l.name = r.name"
+    )
     # No record pairs for which surname matches, so we should get a nice handled error
     with pytest.raises(EMTrainingException):
-        linker.estimate_parameters_using_expectation_maximisation(
+        linker.training.estimate_parameters_using_expectation_maximisation(
             "l.surname = r.surname"
         )
 
@@ -43,21 +48,25 @@ def test_estimate_without_term_frequencies():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("email"),
         ],
     }
 
-    linker_0 = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker_1 = DuckDBLinker(df, settings)
+    linker_0 = Linker(df, settings, db_api=db_api)
 
-    session_fast = linker_0.estimate_parameters_using_expectation_maximisation(
+    db_api = DuckDBAPI()
+
+    linker_1 = Linker(df, settings, db_api=db_api)
+
+    session_fast = linker_0.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
         estimate_without_term_frequencies=True,
     )
-    session_slow = linker_1.estimate_parameters_using_expectation_maximisation(
+    session_slow = linker_1.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
         estimate_without_term_frequencies=False,
     )

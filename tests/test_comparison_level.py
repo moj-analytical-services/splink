@@ -1,17 +1,15 @@
 from pytest import mark, raises
 
-from splink.comparison_level import ComparisonLevel
+from splink.internals.comparison_level import ComparisonLevel
 
 from .decorator import mark_with_dialects_excluding
 
 
 def make_comparison_level(sql_condition, dialect):
     return ComparisonLevel(
-        {
-            "sql_condition": sql_condition,
-            "label_for_charts": "nice_informative_label",
-        },
-        sql_dialect=dialect,
+        sql_condition=sql_condition,
+        label_for_charts="nice_informative_label",
+        sqlglot_dialect_name=dialect,
     )
 
 
@@ -82,4 +80,4 @@ def test_exact_match_colnames_for_non_exact_matchy_levels(sql_condition, dialect
     # _exact_match_colnames should have an error if it is
     # not actually an exact match level
     with raises(ValueError):
-        lev._exact_match_colnames
+        lev._exact_match_colnames  # noqa: B018

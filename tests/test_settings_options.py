@@ -2,6 +2,10 @@ import os
 
 import pandas as pd
 
+import splink.internals.comparison_library as cl
+from splink import block_on
+from splink.internals.linker import Linker
+
 from .decorator import mark_with_dialects_excluding
 
 
@@ -30,15 +34,18 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
     settings = {
         "link_type": "link_and_dedupe",
         "blocking_rules_to_generate_predictions": [
-            "l.city = r.city AND l.dob = r.dob",
-            "l.first_name = r.first_name and l.surname = r.surname",
+            block_on("city", "dob"),
+            """l.first_name = r.first_name
+            and l.surname = r.surname
+            and substr(l.first_name, 1, 1) = 'j'
+            """,
         ],
         "comparisons": [
-            helper.cl.exact_match("first_name"),
-            helper.cl.exact_match("surname"),
-            helper.cl.exact_match("city"),
-            helper.cl.exact_match("email"),
-            helper.cl.exact_match("dob"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+            cl.ExactMatch("email"),
+            cl.ExactMatch("dob"),
         ],
         "retain_intermediate_calculation_columns": True,
         "retain_matching_columns": True,
@@ -50,14 +57,20 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
         "term_frequency_adjustment_column_prefix": "term_freq__",
         "comparison_vector_value_column_prefix": "cvv__",
     }
-    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = Linker([df_l, df_r], settings, **helper.extra_linker_args())
     # run through a few common operations to check functioning
-    linker.estimate_probability_two_random_records_match("l.dob = r.dob", 0.5)
-    linker.estimate_u_using_random_sampling(2e4)
-    linker.estimate_parameters_using_expectation_maximisation("l.dob = r.dob")
-    df_predict = linker.predict(0.1)
-    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
-    linker.comparison_viewer_dashboard(df_predict, os.path.join(tmp_path, "csv.html"))
-    linker.cluster_studio_dashboard(
+    linker.training.estimate_probability_two_random_records_match(
+        ["l.dob = r.dob"], 0.5
+    )
+    linker.training.estimate_u_using_random_sampling(2e4)
+    linker.training.estimate_parameters_using_expectation_maximisation("l.dob = r.dob")
+    df_predict = linker.inference.predict(0.1)
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, 0.1
+    )
+    linker.visualisations.comparison_viewer_dashboard(
+        df_predict, os.path.join(tmp_path, "csv.html")
+    )
+    linker.visualisations.cluster_studio_dashboard(
         df_predict, df_clusters, os.path.join(tmp_path, "csd.html")
     )

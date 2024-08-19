@@ -3,7 +3,7 @@ from functools import partial
 
 import pytest
 
-from splink.input_column import InputColumn, _get_dialect_quotes
+from splink.internals.input_column import InputColumn, _get_dialect_quotes
 
 
 @dataclass
@@ -20,7 +20,7 @@ class ColumnTestCase:
     input_column: str
     name_out: str
     alias: str
-    sql_dialect: str  # Assuming sql_dialect is passed as an argument
+    sql_dialect: str
 
     def __post_init__(self):
         # Retrieve dialect quotes
@@ -45,7 +45,7 @@ class ColumnTestCase:
 
 
 def test_input_column():
-    c = InputColumn("my_col")
+    c = InputColumn("my_col", sql_dialect="duckdb")
     assert c.name == '"my_col"'
     # Check we only unquote for a given column building instance
     assert c.unquote().name == "my_col"
@@ -56,12 +56,12 @@ def test_input_column():
     # Removes quotes for table name, column name and the alias
     assert c.unquote().l_tf_name_as_l == "l.tf_my_col AS tf_my_col_l"
 
-    c = InputColumn("SUR name")
+    c = InputColumn("SUR name", sql_dialect="duckdb")
     assert c.name == '"SUR name"'
     assert c.name_r == '"SUR name_r"'
     assert c.r_name_as_r == '"r"."SUR name" AS "SUR name_r"'
 
-    c = InputColumn("col['lat']")
+    c = InputColumn("col['lat']", sql_dialect="duckdb")
 
     identifier = """
     "col"['lat']
@@ -183,16 +183,16 @@ def test_illegal_names_error():
         "my test column",
     )
     for name in odd_but_legal_names:
-        InputColumn(name).name_l
+        InputColumn(name, sql_dialect="duckdb").name_l  # noqa: B018
 
     # Check some illegal names we want to raise ParserErrors
     illegal_names = ('sur "name"', '"sur" name', '"sur" name[0]', "sur \"name\"['lat']")
     for name in illegal_names:
         with pytest.raises((ValueError)):
-            InputColumn(name)
+            InputColumn(name, sql_dialect="duckdb")
 
     # TokenError
     token_errors = ('"sur" name"', 'sur"name')
     for name in token_errors:
         with pytest.raises(ValueError):
-            InputColumn(name)
+            InputColumn(name, sql_dialect="duckdb")

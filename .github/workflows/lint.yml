@@ -1,25 +1,22 @@
-name: Lint
-on: [pull_request]
-
-env:
-  PYTHON_VERSION: "3.12.1"
+name: autoruff
+on:
+  pull_request:
+    branches:
+      - master
+      - "**dev"
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
+    name: Lint with Ruff using Python 3.12.1
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/checkout@v4
 
       - name: Install poetry using pipx
-        run: |
-          pipx install poetry
-          pipx ensurepath
+        run: pipx install poetry && pipx ensurepath
 
       - uses: actions/setup-python@v5
         with:
@@ -31,5 +28,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root --only linting
 
-      - name: Lint Python files with ruff
-        run: poetry run ruff --show-source .
+      - name: Run Ruff linting
+        run: poetry run ruff check . --output-format=full
+
+      - name: Run Ruff formatting check
+        run: poetry run ruff format --check .

@@ -41,33 +41,7 @@ conda install -c conda-forge splink
         pip install 'splink[postgres]'
         ```
 
-??? "DuckDB-less Installation"
-    ### DuckDB-less Installation
-    Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
 
-    To start, install the latest released version of Splink from PyPI without any dependencies using:
-    ```shell
-    pip install splink --no-deps
-    ```
-
-    Then, to install the remaining requirements, download the following `requirements.txt` from our github repository using:
-    ```shell
-    github_url="https://raw.githubusercontent.com/moj-analytical-services/splink/master/scripts/duckdbless_requirements.txt"
-    output_file="splink_requirements.txt"
-
-    # Download the file from GitHub using curl
-    curl -o "$output_file" "$github_url"
-    ```
-
-    Or, if you're either unable to download it directly from github or you'd rather create the file manually, simply:
-
-    1. Create a file called `splink_requirements.txt`
-    2. Copy and paste the contents from our [duckdbless requirements file](https://github.com/moj-analytical-services/splink/blob/master/scripts/duckdbless_requirements.txt) into your file.
-
-    Finally, run the following command within your virtual environment to install the remaining Splink dependencies:
-    ```shell
-    pip install -r splink_requirements.txt
-    ```
 
 ## :rocket: Quickstart
 
@@ -77,64 +51,66 @@ To get a basic Splink model up and running, use the following code. It demonstra
 2. Use the parameter estimates to identify duplicate records
 3. Use clustering to generate an estimated unique person ID.
 
-For more detailed tutorial, please see [section below](#tutorial).
-
 ???+ note "Simple Splink Model Example"
     ```py
-    from splink.duckdb.linker import DuckDBLinker
-    import splink.duckdb.comparison_library as cl
-    import splink.duckdb.comparison_template_library as ctl
-    from splink.duckdb.blocking_rule_library import block_on
-    from splink.datasets import splink_datasets
+    import splink.comparison_library as cl
+    from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+
+    db_api = DuckDBAPI()
 
     df = splink_datasets.fake_1000
 
-    settings = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [
-            block_on("first_name"),
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.NameComparison("first_name"),
+            cl.JaroAtThresholds("surname"),
+            cl.DateOfBirthComparison(
+                "dob",
+                input_is_string=True,
+            ),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.EmailComparison("email"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("first_name", "dob"),
             block_on("surname"),
-        ],
-        "comparisons": [
-            ctl.name_comparison("first_name"),
-            ctl.name_comparison("surname"),
-            ctl.date_comparison("dob", cast_strings_to_date=True),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            ctl.email_comparison("email", include_username_fuzzy_level=False),
-        ],
-    }
+        ]
+    )
 
-    linker = DuckDBLinker(df, settings)
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker = Linker(df, settings, db_api)
 
-    blocking_rule_for_training = block_on(["first_name", "surname"])
+    linker.training.estimate_probability_two_random_records_match(
+        [block_on("first_name", "surname")],
+        recall=0.7,
+    )
 
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule_for_training = block_on("substr(dob, 1, 4)")  # block on year
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name", "surname")
+    )
 
+    linker.training.estimate_parameters_using_expectation_maximisation(block_on("email"))
 
-    pairwise_predictions = linker.predict()
+    pairwise_predictions = linker.inference.predict(threshold_match_weight=-5)
 
-    clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-    clusters.as_pandas_dataframe(limit=5)
+    clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        pairwise_predictions, 0.95
+    )
+
+    df_clusters = clusters.as_pandas_dataframe(limit=5)
     ```
 
-## :link: Tutorials
 
-You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials/00_Tutorial_Introduction.ipynb).
+## Tutorials
 
-## :material-video: Videos
+You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials/00_Tutorial_Introduction.ipynb). Each has a corresponding Google Colab link to run the notebook in your browser.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/msz3T741KQI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+## Example Notebooks
 
-## :simple-jupyter: Example Notebooks
+You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md). Each has a corresponding Google Colab link to run the notebook in your browser.
 
-You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
+## Getting help
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
-
-## :bar_chart: Charts Gallery
-
-You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
+If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).

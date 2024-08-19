@@ -4,8 +4,12 @@ import networkx as nx
 import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
-from splink.connected_components import solve_connected_components
-from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
+from splink.internals.connected_components import solve_connected_components
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.linker import Linker
+from splink.internals.pipeline import CTEPipeline
+from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -31,29 +35,32 @@ def register_cc_df(G):
     table_name = "__splink__df_predict_graph"
     # this registers our table under __splink__df__{table_name}
     # but our cc function actively looks for "__splink__df_predict"
-    linker = DuckDBLinker(df_concat, settings_dict, input_table_aliases=table_name)
+    db_api = DuckDBAPI()
+
+    linker = Linker(
+        df_concat, settings_dict, input_table_aliases=table_name, db_api=db_api
+    )
 
     # re-register under our required name to run the CC function
-    linker.register_table(df_concat, table_name, overwrite=True)
+    linker.table_management.register_table(df_concat, table_name, overwrite=True)
 
     df_nodes = pd.DataFrame({"unique_id": G.nodes})
-    linker.register_table_input_nodes_concat_with_tf(df_nodes)
+    linker.table_management.register_table_input_nodes_concat_with_tf(df_nodes)
 
     # add our prediction df to our list of created tables
-    predict_df = DuckDBDataFrame(table_name, table_name, linker)
+    predict_df = DuckDBDataFrame(table_name, table_name, db_api)
 
-    return predict_df
+    return linker, predict_df
 
 
-def run_cc_implementation(predict_df):
-    linker = predict_df.linker
-    concat_with_tf = linker._initialise_df_concat_with_tf()
+def run_cc_implementation(linker, predict_df):
+    pipeline = CTEPipeline()
+    concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
 
     # finally, run our connected components algorithm
     cc = solve_connected_components(
         linker,
         predict_df,
-        df_predict=None,
         concat_with_tf=concat_with_tf,
         _generated_graph=True,
     ).as_pandas_dataframe()
@@ -64,7 +71,7 @@ def run_cc_implementation(predict_df):
 
 def benchmark_cc_implementation(linker_df):
     # add a schema so we don't need to re-register our df
-    linker_df.linker._con.execute(
+    linker_df.db_api._con.execute(
         """
         create schema if not exists con_comp;
         set schema 'con_comp';
@@ -72,7 +79,7 @@ def benchmark_cc_implementation(linker_df):
     )
 
     df = run_cc_implementation(linker_df)
-    linker_df.linker._con.execute("drop schema con_comp cascade")
+    linker_df.db_api._con.execute("drop schema con_comp cascade")
 
     return df
 

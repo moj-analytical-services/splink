@@ -10,37 +10,21 @@ tags:
 ---
 # String Comparators
 
-A Splink model contains a collection of `Comparisons` and `ComparisonLevels` organised in a hierarchy.  For example:
 
-```
-Data Linking Model
-├─-- Comparison: Date of birth
-│    ├─-- ComparisonLevel: Exact match
-│    ├─-- ComparisonLevel: Up to one character difference
-│    ├─-- ComparisonLevel: Up to three character difference
-│    ├─-- ComparisonLevel: All other
-├─-- Comparison: Name
-│    ├─-- ComparisonLevel: Exact match on first name and surname
-│    ├─-- ComparisonLevel: Exact match on first name
-│    ├─-- etc.
-```
-
-For more detail on how comparisons are constructed, see the dedicated [topic guide](customising_comparisons.ipynb) as well as fuller descriptions of [`Comparisons`](../../comparison.md) and [`Comparison Levels`](../../comparison_level.md). 
-
-Within `Comparisons` it is useful for different `Comparison Levels` to allow for different styles (and levels) fuzzy match. Each of these `Comparison Levels` indicates a different class of match between two records and therefore a different type (and amount) of evidence for or against the two records being a match. Once these `Comparison Levels` have been defined, the Splink model is trained to estimate the Match Weight to assign to each `Comparison Level`.
-
-There are a number of string comparator functions available in Splink that allow fuzzy matching for strings within `Comparisons` and `Comparison Levels`. For each of these fuzzy matching functions, below you will find explanations of how they work, worked examples and recommendations for the types of data they are useful for.
+There are a number of string comparator functions available in Splink that allow fuzzy matching for strings within [`Comparisons`](../comparisons/comparisons_and_comparison_levels.md) and [`Comparison Levels`](../comparisons/comparisons_and_comparison_levels.md). For each of these fuzzy matching functions, below you will find explanations of how they work, worked examples and recommendations for the types of data they are useful for.
 
 For guidance on how to choose the most suitable string comparator, and associated threshold, see the dedicated [topic guide](./choosing_comparators.ipynb).
+
+
 
 <hr>
 
 ## Levenshtein Distance
 
-!!! info "At a glance" 
-    **Useful for:** Data entry errors e.g. character miskeys.  
-    **Splink comparison functions:** [`levenshtein_level()`](../../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [`levenshtein_at_thresholds()`](../../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsBase)  
-    **Returns:** An integer (lower is more similar).
+!!! info "At a glance"
+    **Useful for:** Data entry errors e.g. character miskeys.</br>
+    **Splink comparison functions:** [levenshtein_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.LevenshteinLevel) and [levenshtein_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.LevenshteinAtThresholds)</br>
+    **Returns:** An integer (lower is more similar).</br>
 
 ##### Description
 Levenshtein distance, also known as edit distance, is a measure of the difference between two strings. It represents the minimum number of **insertions**, **deletions**, or **substitutions** of characters required to transform one string into the other.
@@ -50,7 +34,7 @@ Or, as a formula,
 $$\textsf{Levenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
 \text{insertion , }
 \text{deletion , }
-\text{substitution} 
+\text{substitution}
 \end{array} \rbrace $$
 
 ##### Examples
@@ -63,7 +47,7 @@ $$\textsf{Levenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
     - Substitute "E" in "SITTEN" with "I" to get "SITTIN."
     - Insert "G" after "N" in "SITTIN" to get "SITTING."
 
-    Therefore, 
+    Therefore,
 
     $$\textsf{Levenshtein}(\texttt{KITTEN}, \texttt{SITTING}) = 3$$
 
@@ -74,18 +58,18 @@ $$\textsf{Levenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
     - Substitute "C" in "CAKE" with "A" to get "AAKE."
     - substitute the second "A" in "AAKE" with "C" to get "ACKE."
 
-    Therefore, 
+    Therefore,
 
     $$\textsf{Levenshtein}(\texttt{CAKE}, \texttt{ACKE}) = 2$$
 
 
 ##### Sample code
 
-You can test out the Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
+You can test out the Levenshtein distance as follows:
 
 ```python
-import jellyfish
-levenshtein_distance("CAKE", "ACKE")
+import duckdb
+duckdb.sql("SELECT levenshtein('CAKE', 'ACKE')").df().iloc[0,0]
 ```
 > 2
 
@@ -93,10 +77,10 @@ levenshtein_distance("CAKE", "ACKE")
 
 ## Damerau-Levenshtein Distance
 
-!!! info "At a glance" 
-    **Useful for:** Data entry errors e.g. character transpositions and miskeys  
-    **Splink comparison functions:** [`damerau_levenshtein_level()`](../../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [`damerau_levenshtein_at_thresholds()`](../../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsBase)  
-    **Returns:** An integer (lower is more similar).
+!!! info "At a glance"
+    **Useful for:** Data entry errors e.g. character transpositions and miskeys</br>
+    **Splink comparison functions:** [damerau_levenshtein_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevel) and [damerau_levenshtein_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholds)</br>
+    **Returns:** An integer (lower is more similar).</br>
 
 ##### Description
 Damerau-Levenshtein distance is a variation of [Levenshtein distance](#levenshtein-distance) that also includes transposition operations, which are the interchange of adjacent characters. This distance measures the minimum number of operations required to transform one string into another by allowing **insertions**, **deletions**, **substitutions**, and **transpositions** of characters.
@@ -105,7 +89,7 @@ Or, as a formula,
 
 $$\textsf{DamerauLevenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
 \text{insertion , }
-\text{deletion , } 
+\text{deletion , }
 \text{substitution , }
 \text{transposition}
 \end{array} \rbrace $$
@@ -120,7 +104,7 @@ $$\textsf{DamerauLevenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
     - Substitute "E" in "SITTEN" with "I" to get "SITTIN".
     - Insert "G" after "T" in "SITTIN" to get "SITTING".
 
-    Therefore, 
+    Therefore,
 
     $$\textsf{DamerauLevenshtein}(\texttt{KITTEN}, \texttt{SITTING}) = 3$$
 
@@ -130,17 +114,17 @@ $$\textsf{DamerauLevenshtein}(s_1, s_2) = \min \lbrace \begin{array}{l}
 
     - Transpose "C" and "A" in "CAKE" with "A" to get "ACKE."
 
-    Therefore, 
+    Therefore,
 
     $$\textsf{DamerauLevenshtein}(\texttt{CAKE}, \texttt{ACKE}) = 1$$
 
 ##### Sample code
 
-You can test out the Damerau-Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
+You can test out the Damerau-Levenshtein distance as follows:
 
 ```python
-import jellyfish
-damerau_levenshtein_distance("CAKE", "ACKE")
+import duckdb
+duckdb.sql("SELECT damerau_levenshtein('CAKE', 'ACKE')").df().iloc[0,0]
 ```
 > 1
 
@@ -149,10 +133,10 @@ damerau_levenshtein_distance("CAKE", "ACKE")
 
 ## Jaro Similarity
 
-!!! info "At a glance" 
-    **Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers  
-    **Splink comparison functions:**  [`jaro_level()`](../../comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [`jaro_at_thresholds()`](../../comparison_library.md#splink.comparison_library.JaroAtThresholdsBase)  
-    **Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance"
+    **Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers</br>
+    **Splink comparison functions:**  [jaro_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaroLevel) and [jaro_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.JaroAtThresholds)</br>
+    **Returns:**  A score between 0 and 1 (higher is more similar)</br>
 
 ##### Description
 Jaro similarity is a measure of similarity between two strings. It takes into account the number and order of matching characters, as well as the number of transpositions needed to make the strings identical.
@@ -194,11 +178,11 @@ where:
 
 ##### Sample code
 
-You can test out the Jaro similarity between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
+You can test out the Jaro similarity as follows:
 
 ```python
-import jellyfish
-jellyfish.jaro_similarity("MARTHA", "AMRTHA")
+import duckdb
+duckdb.sql("SELECT jaro_similarity('MARTHA', 'MARHTA')").df().iloc[0,0]
 ```
 > 0.944
 
@@ -206,10 +190,10 @@ jellyfish.jaro_similarity("MARTHA", "AMRTHA")
 
 ## Jaro-Winkler Similarity
 
-!!! info "At a glance" 
-    **Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names  
-    **Splink comparison functions:** [`jaro_winkler_level()`](../../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [`jaro_winkler_at_thresholds()`](../../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsBase)  
-    **Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance"
+    **Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names</br>
+    **Splink comparison functions:** [jaro_winkler_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevel) and [jaro_winkler_at_thresholds()](../../api_docs/comparison_library.md#splink.comparison_library.JaroWinklerAtThresholds)</br>
+    **Returns:**  A score between 0 and 1 (higher is more similar).</br>
 
 
 ##### Description
@@ -219,7 +203,7 @@ The Jaro-Winkler similarity is calculated as follows:
 
 $$\textsf{JaroWinkler}(s_1, s_2) = \textsf{Jaro}(s_1, s_2) + p \cdot l \cdot (1 - \textsf{Jaro}(s_1, s_2))$$
 
-where:  
+where:
 - $\textsf{Jaro}(s_1, s_2)$ is the [Jaro similarity](#jaro-similarity) between the two strings
 - $l$ is the length of the common prefix between the two strings, up to a maximum of four characters
 - $p$ is a prefix scale factor, commonly set to 0.1.
@@ -233,7 +217,7 @@ where:
 
     $$\textsf{Jaro-Winkler}(\texttt{MARTHA}, \texttt{MARHTA}) = 0.944 + 0.1 \cdot 3 \cdot (1 - 0.944) = 0.9612$$
 
-    The Jaro-Winkler similarity is slightly higher than the Jaro similarity, due to the matching prefix. 
+    The Jaro-Winkler similarity is slightly higher than the Jaro similarity, due to the matching prefix.
 
 ??? example  "**"MARTHA" vs "AMRTHA":**"
 
@@ -247,11 +231,11 @@ where:
 
 ##### Sample code
 
-You can test out the Jaro similarity between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
+You can test out the Jaro similarity as follows:
 
 ```python
-import jellyfish
-jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA")
+import duckdb
+duckdb.sql("SELECT jaro_winkler_similarity('MARTHA', 'MARHTA')").df().iloc[0,0]
 ```
 > 0.9612
 
@@ -259,10 +243,10 @@ jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA")
 
 ## Jaccard Similarity
 
-!!! info "At a glance" 
-    **Useful for:**   
-    **Splink comparison functions:** [`jaccard_level()`](../../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [`jaccard_at_thresholds()`](../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)  
-    **Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance"
+    **Useful for:**</br>
+    **Splink comparison functions:** [jaccard_level()](../../api_docs/comparison_level_library.md#splink.comparison_level_library.JaccardLevel) and [jaccard_at_thresholds()]</br>(../../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)
+    **Returns:**  A score between 0 and 1 (higher is more similar).</br>
 
 
 ##### Description
@@ -274,14 +258,14 @@ where A and B are two strings, and |A| and |B| represent their cardinalities (i.
 
 In practice, Jaccard is more useful with strings that can be split up into multiple words as opposed to characters within a single word or string. E.g. tokens within addresses:
 
-**Address 1**: {"flat", "2", "123", "high", "street", "London", "sw1", "1ab"}
+**Address 1**: {"flat", "2", "123", "high", "street", "london", "sw1", "1ab"}
 
-**Address 2**: {"2", "high", "street", "London", "sw1a", "1ab"},
+**Address 2**: {"2", "high", "street", "london", "sw1a", "1ab"},
 
-where: 
+where:
 
-- there are 9 unique tokens across the addresses: "flat", "2", "123", "high", "street", "London", "sw1", "sw1a", "1ab"  
-- there are 5 tokens found in both addresses: "2", "high", "street", "London", "1ab"
+- there are 9 unique tokens across the addresses: "flat", "2", "123", "high", "street", "london", "sw1", "sw1a", "1ab"
+- there are 5 tokens found in both addresses: "2", "high", "street", "london", "1ab"
 
 We calculate the Jaccard similarity using the formula:
 
@@ -289,7 +273,7 @@ $$\textsf{Jaccard}(\textrm{Address1}, \textrm{Address2})=\frac{5}{9}=0.5556$$
 
 However, this functionality is not currently implemented within Splink
 
-##### Examples 
+##### Examples
 
 ??? example  "**"DUCK" vs "LUCK"**"
 

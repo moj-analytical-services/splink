@@ -8,7 +8,7 @@ tags:
 
 ## Problem Statement
 
-A common shortcoming of the Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. One of the starkest examples is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1.
+A shortcoming of the basic Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. A stark example is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1.
 
 ![](../../img/term_frequency/gender-distribution.png){width="800"}
 
@@ -78,44 +78,42 @@ We can also see these match weights and TF adjustments summarised using a chart 
 
 Depending on how you compose your Splink settings, TF adjustments can be applied to a specific comparison level in different ways:
 
-### Comparison (template) library functions
+### ComparisonLibrary and ComparisonTemplateLibrary functions
 
 ```py
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
+import splink.comparison_library as cl
+import splink.comparison_template_library as ctl
 
-sex_comparison = cl.exact_match("sex",
-  term_frequency_adjustments = True
-)
+sex_comparison = cl.ExactMatch("sex").configure(term_frequency_adjustments=True)
 
-name_comparison = cl.distance_function_at_thresholds("name",
-  distance_function_name = 'jaccard',
-  distance_threshold_or_thresholds = [0.9, 0.7],
-  term_frequency_adjustments = True
-)
+name_comparison = cl.JaroWinklerAtThresholds(
+    "name",
+    score_threshold_or_thresholds=[0.9, 0.8],
+).configure(term_frequency_adjustments=True)
 
-dob_comparison = ctl.date_comparison("date_of_birth",
-  term_frequency_adjustments = True
+email_comparison = ctl.EmailComparison("email").configure(
+    term_frequency_adjustments=True,
 )
 ```
 
 ### Comparison level library functions
 
 ```py
-import splink.duckdb.comparison_level_library as cll
+import splink.comparison_level_library as cll
 
-name_comparison = {
-    "output_column_name": "name",
-    "comparison_description": "Full name",
-    "comparison_levels": [
-        cll.null_level("full_name"),
-        cll.exact_match_level("full_name", term_frequency_adjustments = True),
-        cll.columns_reversed_level("first_name", "surname",
-          tf_adjustment_column = "surname"
+name_comparison = cl.CustomComparison(
+    output_column_name="name",
+    comparison_description="Full name",
+    comparison_levels=[
+        cll.NullLevel("full_name"),
+        cll.ExactMatchLevel("full_name").configure(tf_adjustment_column="full_name"),
+        cll.ColumnsReversedLevel("first_name", "surname").configure(
+            tf_adjustment_column="surname"
         ),
         cll.else_level(),
     ],
-}
+)
+
 ```
 
 ### Providing a detailed spec as a dictionary
@@ -159,32 +157,33 @@ Each comparison level can be adjusted on the basis of a specified column. In the
 One example could be **ethnicity**, often provided in codes as a letter (W/M/B/A/O - the ethnic group) and a number. Without TF adjustments, an ethnicity comparison might have 3 levels - exact match, match on ethnic group (`LEFT(ethnicity,1)`), no match. By creating a derived column `ethnic_group = LEFT(ethnicity,1)` we can apply TF adjustments to both levels.
 
 ```py
-ethnicity_comparison = {
-    "output_column_name": "ethnicity",
-    "comparison_description": "Self-defined ethnicity",
-    "comparison_levels": [
-        cll.null_level("ethnicity"),
-        cll.exact_match_level("ethnicity", term_frequency_adjustments = True),
-        cll.exact_match_level("ethnic_group", term_frequency_adjustments = True),
+ethnicity_comparison = cl.CustomComparison(
+    output_column_name="ethnicity",
+    comparison_description="Self-defined ethnicity",
+    comparison_levels=[
+        cll.NullLevel("ethnicity"),
+        cll.ExactMatchLevel("ethnicity").configure(tf_adjustment_column="ethnicity"),
+        cll.ExactMatchLevel("ethnic_group").configure(tf_adjustment_column="ethnic_group"),
         cll.else_level(),
     ],
-}
+)
 ```
 
 A more critical example would be a **full name** comparison that uses separate **first name** and **surname** columns. Previous implementations would apply TF adjustments to each name component independently, so “John Smith” would be adjusted down for the common name “John” and then again for the common name “Smith”. However, the frequencies of names are not generally independent (e.g. “Mohammed Khan” is a relatively common full name despite neither name occurring frequently). A simple full name comparison could therefore be structured as follows:
 
 ```py
-name_comparison = {
-    "output_column_name": "name",
-    "comparison_description": "Full name",
-    "comparison_levels": [
-        cll.null_level("full_name"),
-        cll.exact_match_level("full_name", term_frequency_adjustments = True),
-        cll.exact_match_level("first_name", term_frequency_adjustments = True),
-        cll.exact_match_level("surname", term_frequency_adjustments = True),
+name_comparison = cl.CustomComparison(
+    output_column_name="name",
+    comparison_description="Full name",
+    comparison_levels=[
+        cll.NullLevel("full_name"),
+        cll.ExactMatchLevel("full_name").configure(tf_adjustment_column="full_name"),
+        cll.ExactMatchLevel("first_name").configure(tf_adjustment_column="first_name"),
+        cll.ExactMatchLevel("surname").configure(tf_adjustment_column="surname"),
         cll.else_level(),
     ],
-}
+)
+
 ```
 
 ### Fuzzy matches

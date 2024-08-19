@@ -6,8 +6,9 @@
 [![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
+
 > [!IMPORTANT]
-> 🎉 Splink 4 is nearing release! We'd love your feedback - try it by installing the [prerelease](https://pypi.org/project/splink/4.0.0.dev7/). Examples of new syntax are [here](https://robinl.github.io/splink/demos/examples/examples_index.html) and a blog about our aims is [here](https://moj-analytical-services.github.io/splink/blog/2024/04/02/splink-3-updates-and-splink-4-development-announcement---april-2024.html) 🎉
+> 🎉 Splink 4 has been released! Examples of new syntax are [here](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) and a release announcement is [here](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html).
 
 
 # Fast, accurate and scalable probabilistic data linkage
@@ -40,19 +41,16 @@ and clusters these links to produce an estimated person ID:
 
 ## What data does Splink work best with?
 
-Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
-
 Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
-High correlation occurs when the value of a column is highly constrained (predictable) from the value of another column. For example, a 'city' field is almost perfectly correlated with 'postcode'. Gender is highly correlated with 'first name'. Correlation is particularly problematic if **all** of your input columns are highly correlated.
+High correlation occurs when one column is highly predictable from another - for instance, city can be predicted from postcode.  Correlation is particularly problematic if **all** of your input columns are highly correlated.
 
 Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
 ## Documentation
 
-The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink/tree/master/docs/demos), or by clicking the following Binder link:
+The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/), including a [tutorial](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html) and [examples](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) that can be run in the browser.
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Ftutorials%2F00_Tutorial_Introduction.ipynb)
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. The [Splink documentation site](https://moj-analytical-services.github.io/splink/topic_guides/fellegi_sunter.html) and a [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
 
@@ -108,43 +106,56 @@ The following code demonstrates how to estimate the parameters of a deduplicatio
 For more detailed tutorial, please see [here](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html).
 
 ```py
-from splink.duckdb.linker import DuckDBLinker
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
-from splink.duckdb.blocking_rule_library import block_on
-from splink.datasets import splink_datasets
+import splink.comparison_library as cl
+import splink.comparison_template_library as ctl
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+
+db_api = DuckDBAPI()
 
 df = splink_datasets.fake_1000
 
-settings = {
-    "link_type": "dedupe_only",
-    "blocking_rules_to_generate_predictions": [
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    comparisons=[
+        cl.JaroWinklerAtThresholds("first_name", [0.9, 0.7]),
+        cl.JaroAtThresholds("surname", [0.9, 0.7]),
+        ctl.DateComparison(
+            "dob",
+            input_is_string=True,
+            datetime_metrics=["year", "month"],
+            datetime_thresholds=[1, 1],
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        ctl.EmailComparison("email"),
+    ],
+    blocking_rules_to_generate_predictions=[
         block_on("first_name"),
         block_on("surname"),
-    ],
-    "comparisons": [
-        ctl.name_comparison("first_name"),
-        ctl.name_comparison("surname"),
-        ctl.date_comparison("dob", cast_strings_to_date=True),
-        cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email", include_username_fuzzy_level=False),
-    ],
-}
+    ]
+)
 
-linker = DuckDBLinker(df, settings)
-linker.estimate_u_using_random_sampling(max_pairs=1e6)
+linker = Linker(df, settings, db_api)
 
-blocking_rule_for_training = block_on(["first_name", "surname"])
+linker.training.estimate_probability_two_random_records_match(
+    [block_on("first_name", "surname")],
+    recall=0.7,
+)
 
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = block_on("dob")
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
+linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("first_name", "surname")
+)
 
-pairwise_predictions = linker.predict()
+linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
 
-clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-clusters.as_pandas_dataframe(limit=5)
+pairwise_predictions = linker.inference.predict(threshold_match_weight=-10)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    pairwise_predictions, 0.95
+)
+
+df_clusters = clusters.as_pandas_dataframe(limit=5)
 ```
 
 ## Videos
@@ -152,21 +163,16 @@ clusters.as_pandas_dataframe(limit=5)
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
 
-## Charts Gallery
-
-You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](https://moj-analytical-services.github.io/splink/charts/index.html).
 
 ## Support
 
-To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Guide](./CONTRIBUTING.md).
 
 ## Use Cases
 
 To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs.
 
 ## Awards
-
-❓ Future of Government Awards 2023: Open Source Creation - [Shortlisted, result to be announced shortly](https://futureofgovernment.com/en)
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 

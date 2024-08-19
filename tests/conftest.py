@@ -2,7 +2,8 @@ import logging
 
 import pytest
 
-from splink.spark.jar_location import similarity_jar_location
+from splink.internals.spark.database_api import SparkAPI
+from splink.internals.spark.jar_location import similarity_jar_location
 
 # ruff: noqa: F401
 # imported fixtures:
@@ -62,6 +63,12 @@ def _make_spark():
 def spark():
     spark = _make_spark()
     yield spark
+
+
+# TODO: align this with test_helper
+@pytest.fixture(scope="function")
+def spark_api(spark):
+    yield SparkAPI(spark_session=spark, num_partitions_on_repartition=1)
 
 
 @pytest.fixture(scope="module")

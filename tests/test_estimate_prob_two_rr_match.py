@@ -34,7 +34,7 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
 
     # Test dedupe only
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
 
@@ -44,7 +44,7 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
 
     # Test recall works
     deterministic_rules = ["l.first_name = r.first_name and l.surname = r.surname"]
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=0.9
     )
 
@@ -87,7 +87,7 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
 
     # Test dedupe only
     linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
 
@@ -127,7 +127,7 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
 
     # Test dedupe only
     linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
 
@@ -196,7 +196,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
 
@@ -207,7 +207,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
 
     # if we define all record pairs to be a match, then the probability should be 1
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
     prob = linker._settings_obj._probability_two_random_records_match
@@ -274,7 +274,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
 
@@ -285,7 +285,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     assert pytest.approx(prob) == 10 / 171
 
     linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
-    linker.estimate_probability_two_random_records_match(
+    linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
     prob = linker._settings_obj._probability_two_random_records_match
@@ -352,19 +352,19 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     with pytest.raises(ValueError):
         # all comparisons matches using this rule, so we must have perfect recall
         # using recall = 80% is inconsistent, so should get an error
-        linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=0.8
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.first_name = r.first_name"], recall=0.8
         )
     check_range(linker._settings_obj._probability_two_random_records_match)
 
     # matching on city gives 6 matches out of 15, so recall must be at least 6/15
     recall_min_city = 6 / 15
     with pytest.raises(ValueError):
-        linker.estimate_probability_two_random_records_match(
-            "l.city = r.city", recall=(recall_min_city - 1e-6)
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.city = r.city"], recall=(recall_min_city - 1e-6)
         )
-    linker.estimate_probability_two_random_records_match(
-        "l.city = r.city", recall=recall_min_city
+    linker.training.estimate_probability_two_random_records_match(
+        ["l.city = r.city"], recall=recall_min_city
     )
     check_range(linker._settings_obj._probability_two_random_records_match)
 
@@ -372,8 +372,8 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     # this gives a linkage model that always predicts match_probability as 0,
     # so should give a warning at this stage
     with caplog.at_level(logging.WARNING):
-        linker.estimate_probability_two_random_records_match(
-            "l.surname = r.surname", recall=0.7
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.surname = r.surname"], recall=0.7
         )
         assert "WARNING:" in caplog.text
     check_range(linker._settings_obj._probability_two_random_records_match)
@@ -381,22 +381,22 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     # this gives prob as 1, so again should get a warning
     # as we have a trivial linkage model
     with caplog.at_level(logging.WARNING):
-        linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=1.0
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.first_name = r.first_name"], recall=1.0
         )
         assert "WARNING:" in caplog.text
     check_range(linker._settings_obj._probability_two_random_records_match)
 
     # check we get errors if we pass bogus values for recall
     with pytest.raises(ValueError):
-        linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=0.0
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.first_name = r.first_name"], recall=0.0
         )
     with pytest.raises(ValueError):
-        linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=1.2
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.first_name = r.first_name"], recall=1.2
         )
     with pytest.raises(ValueError):
-        linker.estimate_probability_two_random_records_match(
-            "l.first_name = r.first_name", recall=-0.4
+        linker.training.estimate_probability_two_random_records_match(
+            ["l.first_name = r.first_name"], recall=-0.4
         )

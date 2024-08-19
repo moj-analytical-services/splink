@@ -1,7 +1,8 @@
 import pandas as pd
 
-from splink.duckdb.comparison_library import levenshtein_at_thresholds
-from splink.duckdb.linker import DuckDBLinker
+from splink.internals.comparison_library import LevenshteinAtThresholds
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
 
 
 def test_m_train():
@@ -16,14 +17,16 @@ def test_m_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
     # Train from label column
-    linker = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker.estimate_m_from_label_column("cluster")
+    linker = Linker(df, settings, db_api=db_api)
+
+    linker.training.estimate_m_from_label_column("cluster")
     cc_name = linker._settings_obj.comparisons[0]
 
     cl_exact = cc_name._get_comparison_level_by_comparison_vector_value(2)
@@ -50,10 +53,12 @@ def test_m_train():
             val["unique_id_l"] = uid_r
             val["unique_id_r"] = uid_l
 
-    linker_pairwise = DuckDBLinker(df, settings)
+    db_api = DuckDBAPI()
 
-    linker_pairwise.register_table(df_labels, "labels")
-    linker_pairwise.estimate_m_from_pairwise_labels("labels")
+    linker_pairwise = Linker(df, settings, db_api=db_api)
+
+    linker_pairwise.table_management.register_table(df_labels, "labels")
+    linker_pairwise.training.estimate_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 
     cl_exact = cc_name._get_comparison_level_by_comparison_vector_value(2)
