@@ -181,13 +181,7 @@ class LinkerTableManagement:
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        input_col = InputColumn(
-            col_name,
-            column_info_settings=self._linker._settings_obj.column_info_settings,
-            sql_dialect=self._linker._settings_obj._sql_dialect,
-        )
-        """
-        Register a pre-computed term frequency lookup table for a given column.
+        """Register a pre-computed term frequency lookup table for a given column.
 
         This method allows you to register a term frequency table in the Splink
         cache for a specific column. This table will then be used during linkage
@@ -217,6 +211,13 @@ class LinkerTableManagement:
                                                                     "first_name")
             ```
         """
+
+        input_col = InputColumn(
+            col_name,
+            column_info_settings=self._linker._settings_obj.column_info_settings,
+            sql_dialect=self._linker._settings_obj._sql_dialect,
+        )
+
         table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._linker._cache_uid}"
         splink_dataframe = self.register_table(
