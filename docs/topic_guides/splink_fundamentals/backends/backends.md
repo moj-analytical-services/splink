@@ -126,7 +126,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, PostgresAPI
 
-    linker = Linker(your_args. SQLiteAPI)
+    linker = Linker(your_args. PostgresAPI)
 
     ```
 
