@@ -1,7 +1,15 @@
 import inspect
 
+import splink.comparison_level_library as cll
 import splink.comparison_library as cl
-from splink import DuckDBAPI, Linker, splink_datasets
+import splink.exploratory as exploratory  # Importing the exploratory module
+from splink import (  # Include block_on import
+    DuckDBAPI,
+    Linker,
+    block_on,
+    blocking_analysis,
+    splink_datasets,
+)
 from splink.internals.settings_creator import SettingsCreator
 
 # Mock objects for instantiation, replace with real ones if available
@@ -58,6 +66,17 @@ def extract_class_docstrings_from_module(module):
     return docstrings
 
 
+# Function to extract docstrings from specified functions in a module
+def extract_function_docstrings(module, function_names):
+    docstrings = {}
+    for func_name in function_names:
+        func_obj = getattr(module, func_name, None)
+        if callable(func_obj):
+            docstring = inspect.getdoc(func_obj)
+            docstrings[func_name] = docstring if docstring else "No docstring available"
+    return docstrings
+
+
 # Saving the docstrings to a text file
 def save_docstrings(docstrings, filename="docstrings.txt"):
     with open(filename, "w", encoding="utf-8") as file:
@@ -74,8 +93,26 @@ if __name__ == "__main__":
     # Extract docstrings for all public classes in comparison_library
     comparison_docstrings = extract_class_docstrings_from_module(cl)
 
-    # Combine both sets of docstrings
-    all_docstrings = {**linker_docstrings, **comparison_docstrings}
+    # Extract docstrings for all public classes in comparison_level_library
+    comparison_level_docstrings = extract_class_docstrings_from_module(cll)
+
+    # Extract docstrings for specified functions in the exploratory module
+    exploratory_functions = ["completeness_chart", "profile_columns"]
+    exploratory_docstrings = extract_function_docstrings(
+        exploratory, exploratory_functions
+    )
+
+    # Extract docstring for block_on function
+    block_on_docstring = {"block_on": inspect.getdoc(block_on)}
+
+    # Combine all sets of docstrings
+    all_docstrings = {
+        **linker_docstrings,
+        **comparison_docstrings,
+        **comparison_level_docstrings,
+        **exploratory_docstrings,
+        **block_on_docstring,  # Include block_on docstring
+    }
 
     # Save to file
     save_docstrings(all_docstrings, "docstrings.txt")
