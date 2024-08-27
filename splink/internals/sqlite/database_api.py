@@ -46,6 +46,8 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
                     "See https://moj-analytical-services.github.io/splink/"
                     "topic_guides/backends.html#sqlite for more information"
                 ) from e
+        else:
+            return
 
         def wrap_func_with_str(func):
             def wrapped_func(str_l, str_r):
