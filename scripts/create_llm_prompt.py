@@ -1,4 +1,7 @@
 import inspect
+import os
+
+import nbformat
 
 import splink.blocking_analysis as blocking_analysis
 import splink.comparison_level_library as cll
@@ -6,6 +9,34 @@ import splink.comparison_library as cl
 import splink.exploratory as exploratory
 from splink import DuckDBAPI, Linker, block_on, splink_datasets
 from splink.internals.settings_creator import SettingsCreator
+
+
+# Function to extract content from input cells of type Python or Markdown
+def extract_notebook_content(notebook_path):
+    with open(notebook_path, "r", encoding="utf-8") as f:
+        nb = nbformat.read(f, as_version=4)
+
+    extracted_content = ""
+    for cell in nb.cells:
+        if cell.cell_type in ["code", "markdown"]:
+            extracted_content += cell.source + "\n\n"
+    return extracted_content
+
+
+# Function to traverse the directories and process .ipynb files
+def extract_and_append_notebook_content(base_dir, docstring_filename):
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if file.endswith(".ipynb"):
+                notebook_path = os.path.join(root, file)
+                print(f"Processing {notebook_path}...")
+                content = extract_notebook_content(notebook_path)
+
+                with open(docstring_filename, "a", encoding="utf-8") as f:
+                    f.write(f"Contents of {notebook_path}:\n")
+                    f.write(content)
+                    f.write("\n\n")
+
 
 # Mock objects for instantiation, replace with real ones if available
 mock_settings = SettingsCreator(
@@ -184,4 +215,11 @@ if __name__ == "__main__":
             "../docs/api_docs/datasets.md",
         ],
     )
+
+    # Add new part to extract and append content from notebooks
+    demos_examples_dir = "../docs/demos/examples"
+    demos_tutorials_dir = "../docs/demos/tutorials"
+
+    extract_and_append_notebook_content(demos_examples_dir, "docstrings.txt")
+    extract_and_append_notebook_content(demos_tutorials_dir, "docstrings.txt")
     print("Docstrings extracted, saved, and guides appended to docstrings.txt")
