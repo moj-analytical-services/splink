@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Completeness chart now works correctly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
 - Completeness chart works even if you have a `source_dataset` column ([#2323](https://github.com/moj-analytical-services/splink/pull/2323))
+- `SQLiteAPI` can now be instantiated without error when opting not to register custom UDFs  ([#2342](https://github.com/moj-analytical-services/splink/pull/2342))
+- Splink now runs properly when working in read-only filesystems ([#2357](https://github.com/moj-analytical-services/splink/pull/2357))
 
 
 ## [4.0.0] - 2024-07-24
