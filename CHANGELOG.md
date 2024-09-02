@@ -114,7 +114,9 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.14...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.0...HEAD
+[4.0.0]: https://github.com/moj-analytical-services/splink/compare/3.9.15...4.0.0
+[3.9.15]: https://github.com/moj-analytical-services/splink/compare/3.9.14...3.9.15
 [3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14
 [3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
 [3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
