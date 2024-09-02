@@ -13,7 +13,7 @@ def cast_as_double_edit(self, expression):
     """
     datatype = self.sql(expression, "to")
     if datatype.lower() == "double":
-        if expression.this.key == "literal":
+        if expression.this.key == "literal" and expression.name != "Infinity":
             return f"{expression.name}D"
 
     return expression.sql(dialect="spark")
