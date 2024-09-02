@@ -149,7 +149,6 @@ class _SplinkDataSetsMeta(type):
     cache_dir = _cache_dir
 
     def __new__(cls, clsname, bases, attrs, datasets):
-        cls.cache_dir.mkdir(exist_ok=True)
         attributes = {}
         repr_text = "splink_datasets object with datasets:"
         for dataset_meta in datasets:
@@ -185,6 +184,7 @@ class _SplinkDataSetsMeta(type):
         cls, dataset_name, url, rows, unique_entities, description, data_format
     ):
         def lazyload_data(self):
+            cls.cache_dir.mkdir(exist_ok=True)
             file_loc = cls.cache_dir / f"{dataset_name}.{data_format}"
             if not cls.datafile_exists(file_loc):
                 print(f"downloading: {url}")  # noqa: T201
