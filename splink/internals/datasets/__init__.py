@@ -9,6 +9,8 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
+from .splink_datasets import splink_datasets
+
 _DATASETDIR = Path(__file__).parent
 
 _valid_formats = ("csv", "parquet")
@@ -276,6 +278,8 @@ class _SplinkDataSetLabels(metaclass=_SplinkDataSetsMeta, datasets=_labels):
 
 
 # these two singleton objects are the only user-facing portion:
-splink_datasets = _SplinkDataSets()
-splink_dataset_labels = _SplinkDataSetLabels()
+# splink_datasets = _SplinkDataSets()
+# splink_dataset_labels = _SplinkDataSetLabels()
 splink_dataset_utils = _SplinkDataUtils()
+
+__all__ = ["splink_datasets"]
