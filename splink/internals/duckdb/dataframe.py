@@ -4,6 +4,7 @@ import logging
 import os
 from typing import TYPE_CHECKING
 
+from duckdb import DuckDBPyRelation
 from pandas import DataFrame as pd_DataFrame
 
 from splink.internals.input_column import InputColumn
@@ -49,6 +50,13 @@ class DuckDBDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         return self.db_api._execute_sql_against_backend(sql).to_df()
+
+    def as_duckdbpyrelation(self, limit: int = None) -> DuckDBPyRelation:
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        return self.db_api._execute_sql_against_backend(sql)
 
     def to_parquet(self, filepath, overwrite=False):
         if not overwrite:

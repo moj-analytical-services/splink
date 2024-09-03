@@ -306,9 +306,11 @@ class Linker:
         input_tables: Sequence[AcceptableInputTableType],
         input_aliases: Optional[str | List[str]],
     ) -> Dict[str, SplinkDataFrame]:
+        input_tables_list = ensure_is_list(input_tables)
+
         if input_aliases is None:
             input_table_aliases = [
-                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
+                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables_list)
             ]
             overwrite = True
         else:

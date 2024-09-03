@@ -1,5 +1,6 @@
 import os
 
+import duckdb
 import pandas as pd
 import pyarrow as pa
 import pyarrow.csv as pa_csv
@@ -8,10 +9,9 @@ import pytest
 
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.exploratory import completeness_chart, profile_columns
-from splink.internals.duckdb.database_api import DuckDBAPI
-from splink.internals.linker import Linker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -198,10 +198,6 @@ def test_link_only(input, source_l, source_r):
             id="DuckDB link from pandas df",
         ),
         pytest.param(
-            "./tests/datasets/fake_1000_from_splink_demos.csv",
-            id="DuckDB load from file",
-        ),
-        pytest.param(
             pa.Table.from_pandas(
                 pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
             ),
@@ -219,7 +215,7 @@ def test_link_only(input, source_l, source_r):
     ],
 )
 @mark_with_dialects_including("duckdb")
-def test_duckdb_load_from_file(df):
+def test_duckdb_load_different_tablish_types(df):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
@@ -323,4 +319,19 @@ def test_small_example_duckdb(tmp_path):
     blocking_rule = "l.dob = r.dob"
     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
+    linker.inference.predict()
+
+
+@mark_with_dialects_including("duckdb")
+def test_duckdb_input_is_duckdbpyrelation():
+    df1 = duckdb.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df2 = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings = SettingsCreator(
+        link_type="link_and_dedupe",
+        comparisons=[cl.ExactMatch("first_name")],
+        blocking_rules_to_generate_predictions=[block_on("first_name", "surname")],
+    )
+    db_api = DuckDBAPI(connection=":default:")
+    linker = Linker([df1, df2], settings, db_api)
     linker.inference.predict()

@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Sequence
+from typing import Any
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 
-from ..database_api import AcceptableInputTableType, DatabaseAPI
+from ..database_api import DatabaseAPI
 from ..dialects import AthenaDialect
 from ..sql_transform import sqlglot_transform_sql
 from .athena_helpers.athena_transforms import cast_concat_as_varchar
@@ -250,17 +250,3 @@ class AthenaAPI(DatabaseAPI[dict[str, Any]]):
         except ImportError:
             pass
         return accepted_df_dtypes
-
-    def load_from_file(self, file_path: str) -> str:
-        raise NotImplementedError(
-            "Loading from file is not supported for Athena. "
-            "Please use the `table` method to load data."
-        )
-
-    def process_input_tables(
-        self, input_tables: Sequence[AcceptableInputTableType]
-    ) -> Sequence[AcceptableInputTableType]:
-        input_tables = super().process_input_tables(input_tables)
-        return [
-            self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
-        ]
