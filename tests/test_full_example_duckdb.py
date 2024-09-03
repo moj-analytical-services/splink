@@ -336,6 +336,6 @@ def test_duckdb_input_is_duckdbpyrelation():
         comparisons=[cl.ExactMatch("first_name")],
         blocking_rules_to_generate_predictions=[block_on("first_name", "surname")],
     )
-    db_api = DuckDBAPI()
+    db_api = DuckDBAPI(":default:")
     linker = Linker([df1, df2], settings, db_api)
     linker.inference.predict()
