@@ -281,5 +281,6 @@ class _SplinkDataSetLabels(metaclass=_SplinkDataSetsMeta, datasets=_labels):
 # splink_datasets = _SplinkDataSets()
 # splink_dataset_labels = _SplinkDataSetLabels()
 splink_dataset_utils = _SplinkDataUtils()
+splink_dataset_labels = None
 
 __all__ = ["splink_datasets"]

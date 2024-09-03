@@ -17,26 +17,27 @@ def datafile_exists(file_loc):
     return file_loc.is_file()
 
 
-def dataset_property(att):
-    ds_meta = att()
+def dataset_property(metadata_method):
+    ds_meta = metadata_method(None)
     dataset_name = ds_meta.dataset_name
     url = ds_meta.url
     data_format = ds_meta.data_format
 
-    def lazyload_data(self) -> pd.DataFrame:
+    def lazyload_data(self):
         file_loc = _cache_dir / f"{dataset_name}.{data_format}"
+        data_source: Path | io.BytesIO
         if not datafile_exists(file_loc):
             print(f"downloading: {url}")  # noqa: T201
             data = urlopen(url)
             print("")  # noqa: T201
 
-            data_stream = io.BytesIO(data.read())
+            data_source = io.BytesIO(data.read())
             _cache_dir.mkdir(exist_ok=True)
             with open(file_loc, "bw+") as write_file:
-                write_file.write(data_stream.getvalue())
-            data_stream.seek(0)
+                write_file.write(data_source.getvalue())
+            data_source.seek(0)
         else:
-            data_stream = file_loc
+            data_source = file_loc
 
         read_function = {
             "csv": pd.read_csv,
@@ -48,14 +49,14 @@ def dataset_property(att):
             raise ValueError(
                 f"Error retrieving dataset {dataset_name} - invalid format!"
             )
-        return read_function(data_stream)
+        return read_function(data_source)
 
     return lazyload_data
 
 class SplinkDataSets:
     @property
     @dataset_property
-    def fake_1000():
+    def fake_1000(self):
         """
         Fake 1000 from splink demos.
         Records are 250 simulated people, with different numbers of duplicates, labelled.
@@ -67,7 +68,7 @@ class SplinkDataSets:
 
     @property
     @dataset_property
-    def historical_50k():
+    def historical_50k(self):
         """
         The data is based on historical persons scraped from wikidata.
         Duplicate records are introduced with a variety of errors.
