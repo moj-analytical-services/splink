@@ -1,7 +1,6 @@
 import os
 import tempfile
 import uuid
-from pathlib import Path
 
 import duckdb
 
@@ -26,7 +25,7 @@ def validate_duckdb_connection(connection, logger):
 
     connection = connection.lower()
 
-    if connection in [":memory:", ":temporary:"]:
+    if connection in [":memory:", ":temporary:", ":default:"]:
         return
 
     suffixes = (".duckdb", ".db")
@@ -49,15 +48,3 @@ def create_temporary_duckdb_connection(self):
     path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
     con = duckdb.connect(database=path, read_only=False)
     return con
-
-
-def duckdb_load_from_file(path: str) -> str:
-    file_functions = {
-        ".csv": f"read_csv_auto('{path}')",
-        ".parquet": f"read_parquet('{path}')",
-    }
-    file_ext = Path(path).suffix
-    if file_ext in file_functions.keys():
-        return file_functions[file_ext]
-    else:
-        return path
