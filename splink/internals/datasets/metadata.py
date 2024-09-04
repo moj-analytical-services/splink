@@ -127,7 +127,7 @@ datasets = {
     "febrl4a": _ds_febrl4a,
     "febrl4b": _ds_febrl4b,
     "transactions_origin": _ds_transactions_origin,
-    "transactions_destinations": _ds_transactions_destination,
+    "transactions_destination": _ds_transactions_destination,
 }
 dataset_labels = {
     "fake_1000": _dsl_fake_1000,
