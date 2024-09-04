@@ -4,7 +4,7 @@ import os
 import warnings
 
 from .metadata import dataset_labels, datasets
-from .splink_datasets import _cache_dir
+from .splink_datasets import datasets_cache_dir
 
 
 class SplinkDataUtils:
@@ -12,7 +12,7 @@ class SplinkDataUtils:
         pass
 
     def _list_downloaded_data_files(self):
-        return os.listdir(_cache_dir)
+        return os.listdir(datasets_cache_dir)
 
     def _trim_suffix(self, filename):
         return filename.split(".")[0]
@@ -61,7 +61,7 @@ class SplinkDataUtils:
                 )
         for f in self._list_downloaded_data_files():
             if self._trim_suffix(f) in datasets:
-                os.remove(_cache_dir / f)
+                os.remove(datasets_cache_dir / f)
 
 
 splink_dataset_utils = SplinkDataUtils()

@@ -8,9 +8,9 @@ import pandas as pd
 
 from .metadata import dataset_labels, datasets
 
-_DATASETDIR = Path(__file__).parent
+DATASETDIR = Path(__file__).parent
 
-_cache_dir = _DATASETDIR / "__splinkdata_cache__"
+datasets_cache_dir = DATASETDIR / "__splinkdata_cache__"
 
 
 def datafile_exists(file_loc):
@@ -27,7 +27,7 @@ def dataset_property(metadata_method):
         if dataset_name in self._in_memory_data:
             return self._in_memory_data[dataset_name]
 
-        file_loc = _cache_dir / f"{dataset_name}.{data_format}"
+        file_loc = datasets_cache_dir / f"{dataset_name}.{data_format}"
         data_source: Path | io.BytesIO
         if not datafile_exists(file_loc):
             print(f"downloading: {url}")  # noqa: T201
@@ -36,7 +36,7 @@ def dataset_property(metadata_method):
 
             data_source = io.BytesIO(data.read())
             try:
-                _cache_dir.mkdir(exist_ok=True)
+                datasets_cache_dir.mkdir(exist_ok=True)
                 with open(file_loc, "bw+") as write_file:
                     write_file.write(data_source.getvalue())
             except PermissionError:
