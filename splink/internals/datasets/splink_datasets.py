@@ -32,9 +32,12 @@ def dataset_property(metadata_method):
             print("")  # noqa: T201
 
             data_source = io.BytesIO(data.read())
-            _cache_dir.mkdir(exist_ok=True)
-            with open(file_loc, "bw+") as write_file:
-                write_file.write(data_source.getvalue())
+            try:
+                _cache_dir.mkdir(exist_ok=True)
+                with open(file_loc, "bw+") as write_file:
+                    write_file.write(data_source.getvalue())
+            except PermissionError:
+                pass
             data_source.seek(0)
         else:
             data_source = file_loc
