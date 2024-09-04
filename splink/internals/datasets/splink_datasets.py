@@ -6,7 +6,7 @@ from urllib.request import urlopen
 
 import pandas as pd
 
-from .metadata import datasets
+from .metadata import dataset_labels, datasets
 
 _DATASETDIR = Path(__file__).parent
 
@@ -91,5 +91,22 @@ class SplinkDataSets:
         return datasets["historical_50k"]
 
 
+class SplinkDataSetLabels:
+    def __init__(self):
+        self._in_memory_data = {}
+
+    @property
+    @dataset_property
+    def fake_1000_labels(self):
+        """
+        Clerical labels for fake_1000.
+
+        Columns:
+        unique_id_l, source_dataset_l, unique_id_r, source_dataset_r, clerical_match_score
+        """  # NOQA: E501
+        return dataset_labels["fake_1000"]
+
+
 # these two singleton objects are the only user-facing portion:
 splink_datasets = SplinkDataSets()
+splink_dataset_labels = SplinkDataSetLabels()

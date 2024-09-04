@@ -30,7 +30,6 @@ _splink_datasets_data_dir = (
 _ds_fake_1000 = _DataSetMetaData(
     "fake_1000",
     f"{_splink_datasets_data_dir}/fake_1000.csv",
-    # hard code metadata to avoid needing to download to build docs
     "1,000",
     "250",
     (
@@ -42,7 +41,6 @@ _ds_fake_1000 = _DataSetMetaData(
 _ds_historical_50k = _DataSetMetaData(
     "historical_50k",
     f"{_splink_datasets_data_dir}/historical_figures_with_errors_50k.parquet",
-    # hard code metadata to avoid needing to download to build docs
     "50,000",
     "5,156",
     (
@@ -54,7 +52,6 @@ _ds_historical_50k = _DataSetMetaData(
 _ds_febrl3 = _DataSetMetaData(
     "febrl3",
     f"{_splink_datasets_data_dir}/febrl/dataset3.csv",
-    # hard code metadata to avoid needing to download to build docs
     "5,000",
     "2,000",
     (
@@ -67,7 +64,6 @@ _ds_febrl3 = _DataSetMetaData(
 _ds_febrl4a = _DataSetMetaData(
     "febrl4a",
     f"{_splink_datasets_data_dir}/febrl/dataset4a.csv",
-    # hard code metadata to avoid needing to download to build docs
     "5,000",
     "5,000",
     (
@@ -79,7 +75,6 @@ _ds_febrl4a = _DataSetMetaData(
 _ds_febrl4b = _DataSetMetaData(
     "febrl4b",
     f"{_splink_datasets_data_dir}/febrl/dataset4b.csv",
-    # hard code metadata to avoid needing to download to build docs
     "5,000",
     "5,000",
     (
@@ -91,7 +86,6 @@ _ds_febrl4b = _DataSetMetaData(
 _ds_transactions_origin = _DataSetMetaData(
     "transactions_origin",
     f"{_splink_datasets_data_dir}/transactions_origin.parquet",
-    # hard code metadata to avoid needing to download to build docs
     "45,326",
     "45,326",
     (
@@ -105,7 +99,6 @@ _ds_transactions_origin = _DataSetMetaData(
 _ds_transactions_destination = _DataSetMetaData(
     "transactions_destination",
     f"{_splink_datasets_data_dir}/transactions_destination.parquet",
-    # hard code metadata to avoid needing to download to build docs
     "45,326",
     "45,326",
     (
@@ -119,6 +112,14 @@ _ds_transactions_destination = _DataSetMetaData(
     "parquet",
 )
 
+_dsl_fake_1000 = _DataSetMetaData(
+    "fake_1000_labels",
+    f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
+    "3,176",
+    "NA",
+    ("Clerical labels for fake_1000"),
+)
+
 datasets = {
     "fake_1000": _ds_fake_1000,
     "historical_50k": _ds_historical_50k,
@@ -127,4 +128,7 @@ datasets = {
     "febrl4b": _ds_febrl4b,
     "transactions_origin": _ds_transactions_origin,
     "transactions_destinations": _ds_transactions_destination,
+}
+dataset_labels = {
+    "fake_1000": _dsl_fake_1000,
 }
