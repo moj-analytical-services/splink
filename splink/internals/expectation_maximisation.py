@@ -169,7 +169,7 @@ def populate_m_u_from_lookup(
 ) -> None:
     cl = comparison_level
 
-    if not cl._m_is_fixed and "m" not in training_fixed_probabilities:
+    if not cl._fix_m_probability and "m" not in training_fixed_probabilities:
         try:
             m_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value
@@ -188,7 +188,7 @@ def populate_m_u_from_lookup(
                 cl._m_warning_sent = True
         cl.m_probability = m_probability
 
-    if not cl._u_is_fixed and "u" not in training_fixed_probabilities:
+    if not cl._fix_u_probability and "u" not in training_fixed_probabilities:
         try:
             u_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value

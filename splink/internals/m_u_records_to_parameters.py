@@ -53,6 +53,9 @@ def append_u_probability_to_comparison_level_trained_probabilities(
 ) -> None:
     cl = comparison_level
 
+    if cl._fix_u_probability:
+        return
+
     try:
         u_probability = m_u_records_lookup[output_column_name][
             cl.comparison_vector_value
