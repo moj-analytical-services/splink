@@ -24,6 +24,9 @@ def dataset_property(metadata_method):
     data_format = ds_meta.data_format
 
     def lazyload_data(self):
+        if dataset_name in self._in_memory_data:
+            return self._in_memory_data[dataset_name]
+
         file_loc = _cache_dir / f"{dataset_name}.{data_format}"
         data_source: Path | io.BytesIO
         if not datafile_exists(file_loc):
@@ -52,11 +55,17 @@ def dataset_property(metadata_method):
             raise ValueError(
                 f"Error retrieving dataset {dataset_name} - invalid format!"
             )
-        return read_function(data_source)
+        df = read_function(data_source)
+        self._in_memory_data[dataset_name] = df
+        return df
 
     return lazyload_data
 
+
 class SplinkDataSets:
+    def __init__(self):
+        self._in_memory_data = {}
+
     @property
     @dataset_property
     def fake_1000(self):
