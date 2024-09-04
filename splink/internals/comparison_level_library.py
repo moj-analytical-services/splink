@@ -793,6 +793,45 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         return f"Array intersection size >= {self.min_intersection}"
 
 
+class ArrayIntersectPercentage(ComparisonLevelCreator):
+    def __init__(self, col_name: str | ColumnExpression, percentage_threshold: int):
+        """Represents a comparison level where the difference between two array
+        sizes is within a specified percentage threshold.
+
+        Args:
+            col_name (str): Input column name
+            percentage_threshold (int): The threshold percentage to use
+                to assess similarity e.g. 0.1 for 10%.
+        """
+        if not 0 <= percentage_threshold <= 1:
+            raise ValueError("percentage_threshold must be between 0 and 1")
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.percentage_threshold = percentage_threshold
+
+    @unsupported_splink_dialects(["sqlite"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        if hasattr(sql_dialect, "array_intersect"):
+            return sql_dialect.array_intersect(self)
+
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
+
+        sqlglot_base_dialect_sql = f"""
+            ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r)) / 
+            GREATEST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))
+                >= {self.percentage_threshold}
+                """
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
+
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
+
+
 class PercentageDifferenceLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, percentage_threshold: float):
         """
