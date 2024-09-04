@@ -37,7 +37,7 @@ def dataset_property(metadata_method):
             data_source = io.BytesIO(data.read())
             try:
                 datasets_cache_dir.mkdir(exist_ok=True)
-                with open(file_loc, "bw+") as write_file:
+                with open(file_loc, "wb+") as write_file:
                     write_file.write(data_source.getvalue())
             except PermissionError:
                 pass
