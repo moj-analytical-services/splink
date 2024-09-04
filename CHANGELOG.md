@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SQLiteAPI` can now be instantiated without error when opting not to register custom UDFs  ([#2342](https://github.com/moj-analytical-services/splink/pull/2342))
 - Splink now runs properly when working in read-only filesystems ([#2357](https://github.com/moj-analytical-services/splink/pull/2357))
 - Infinite Bayes factor no longer causes SQL error in `Spark` ([#2372](https://github.com/moj-analytical-services/splink/pull/2372))
+- `splink_datasets` is now functional in read-only filesystems ([#2378](https://github.com/moj-analytical-services/splink/pull/2378))
 
 
 ## [4.0.0] - 2024-07-24
