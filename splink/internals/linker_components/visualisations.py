@@ -75,8 +75,11 @@ class LinkerVisualisations:
     def __init__(self, linker: Linker):
         self._linker = linker
 
-    def match_weights_chart(self) -> ChartReturnType:
+    def match_weights_chart(self, as_dict: bool = False) -> ChartReturnType:
         """Display a chart of the (partial) match weights of the linkage model
+
+        Args:
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -86,10 +89,13 @@ class LinkerVisualisations:
         Returns:
             altair_chart: An Altair chart
         """
-        return self._linker._settings_obj.match_weights_chart()
+        return self._linker._settings_obj.match_weights_chart(as_dict)
 
-    def m_u_parameters_chart(self) -> ChartReturnType:
+    def m_u_parameters_chart(self, as_dict: bool = False) -> ChartReturnType:
         """Display a chart of the m and u parameters of the linkage model
+
+        Args:
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -101,7 +107,7 @@ class LinkerVisualisations:
             altair_chart: An altair chart
         """
 
-        return self._linker._settings_obj.m_u_parameters_chart()
+        return self._linker._settings_obj.m_u_parameters_chart(as_dict)
 
     def match_weights_histogram(
         self,
@@ -109,6 +115,7 @@ class LinkerVisualisations:
         target_bins: int = 30,
         width: int = 600,
         height: int = 250,
+        as_dict: bool = False,
     ) -> ChartReturnType:
         """Generate a histogram that shows the distribution of match weights in
         `df_predict`
@@ -119,6 +126,7 @@ class LinkerVisualisations:
                 30.
             width (int, optional): Width of output. Defaults to 600.
             height (int, optional): Height of output chart. Defaults to 250.
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -131,10 +139,12 @@ class LinkerVisualisations:
         """
         df = histogram_data(self._linker, df_predict, target_bins)
         recs = df.as_record_dict()
-        return match_weights_histogram(recs, width=width, height=height)
+        return match_weights_histogram(
+            recs, width=width, height=height, as_dict=as_dict
+        )
 
     def parameter_estimate_comparisons_chart(
-        self, include_m: bool = True, include_u: bool = False
+        self, include_m: bool = True, include_u: bool = False, as_dict: bool = False
     ) -> ChartReturnType:
         """Show a chart that shows how parameter estimates have differed across
         the different estimation methods you have used.
@@ -149,6 +159,7 @@ class LinkerVisualisations:
                 to True.
             include_u (bool, optional): Show different estimates of u values. Defaults
                 to False.
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -177,7 +188,7 @@ class LinkerVisualisations:
 
         records = [r for r in records if r["m_or_u"] in to_retain]
 
-        return parameter_estimate_comparisons(records)
+        return parameter_estimate_comparisons(records, as_dict)
 
     def tf_adjustment_chart(
         self,
@@ -203,6 +214,7 @@ class LinkerVisualisations:
             vals_to_include (list, optional): Specific values for which to show term
                 sfrequency adjustments.
                 Defaults to None.
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -243,6 +255,7 @@ class LinkerVisualisations:
         records: list[dict[str, Any]],
         filter_nulls: bool = True,
         remove_sensitive_data: bool = False,
+        as_dict: bool = False,
     ) -> ChartReturnType:
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
@@ -266,6 +279,7 @@ class LinkerVisualisations:
             remove_sensitive_data (bool, optional): When True, The waterfall chart will
                 contain match weights only, and all of the (potentially sensitive) data
                 from the input tables will be removed prior to the chart being created.
+            as_dict (bool, optional): If True, return the chart as a dictionary.
 
 
         Returns:
@@ -275,7 +289,11 @@ class LinkerVisualisations:
         self._linker._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return waterfall_chart(
-            records, self._linker._settings_obj, filter_nulls, remove_sensitive_data
+            records,
+            self._linker._settings_obj,
+            filter_nulls,
+            remove_sensitive_data,
+            as_dict,
         )
 
     def comparison_viewer_dashboard(
