@@ -139,6 +139,8 @@ class ComparisonLevel:
         m_probability: float = None,
         u_probability: float = None,
         disable_tf_exact_match_detection: bool = False,
+        fix_m_probability: bool = False,
+        fix_u_probability: bool = False,
     ):
         self._sqlglot_dialect_name = sqlglot_dialect_name
 
@@ -156,6 +158,9 @@ class ComparisonLevel:
         self._u_probability: float | None | str = u_probability
         self.default_m_probability: float | None = None
         self.default_u_probability: float | None = None
+
+        self._fix_m_probability = fix_m_probability
+        self._fix_u_probability = fix_u_probability
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison

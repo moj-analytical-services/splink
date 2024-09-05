@@ -189,6 +189,8 @@ class CustomLevel(ComparisonLevelCreator):
                 "tf_minimum_u_value",
                 "label_for_charts",
                 "disable_tf_exact_match_detection",
+                "fix_m_probability",
+                "fix_u_probability",
             )
             # split dict in two depending whether or not entries are 'configurables'
             configurables = {

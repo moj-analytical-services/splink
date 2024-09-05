@@ -491,9 +491,9 @@ class Linker:
 
         for cc in ccs:
             for cl in cc._comparison_levels_excluding_null:
-                if cl._has_estimated_u_values:
+                if cl._has_estimated_u_values and not cl._fix_u_probability:
                     cl.u_probability = cl._trained_u_median
-                if cl._has_estimated_m_values:
+                if cl._has_estimated_m_values and not cl._fix_m_probability:
                     cl.m_probability = cl._trained_m_median
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
