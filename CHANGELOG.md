@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - When using DuckDB, you can now pass `duckdb.DuckDBPyRelation`s as input tables to the `Linker` ([#2375](https://github.com/moj-analytical-services/splink/pull/2375))
 - It's now possible to fix values for `m` and `u` probabilities in the settings such that they are not updated/changed during training.  ([#2379](https://github.com/moj-analytical-services/splink/pull/2379))
+- All charts can now be returned as vega lite spec dictionaries ([#2361](https://github.com/moj-analytical-services/splink/pull/2361))
 
 ### Fixed
 
