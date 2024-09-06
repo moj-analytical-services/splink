@@ -123,6 +123,7 @@ nav:
         - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
+        - Cookbook: "demos/examples/duckdb/cookbook.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
