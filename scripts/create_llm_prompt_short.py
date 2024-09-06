@@ -55,7 +55,7 @@ def extract_and_append_md_content(md_files, output_filename):
 
 # Main execution
 if __name__ == "__main__":
-    output_filename = "llm_prompt_short.txt"
+    output_filename = "llm_context_short.txt"
 
     # Extract and save Python code from notebooks in the specified directories
     demos_examples_dir = "../docs/demos/examples"
