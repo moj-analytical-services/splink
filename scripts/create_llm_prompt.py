@@ -27,16 +27,22 @@ def extract_notebook_content(notebook_path):
 # Function to traverse the directories and process .ipynb files
 def extract_and_append_notebook_content(base_dir, docstring_filename):
     for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if file.endswith(".ipynb"):
-                notebook_path = os.path.join(root, file)
-                print(f"Processing {notebook_path}...")
-                content = extract_notebook_content(notebook_path)
+        # Remove .ipynb_checkpoints from dirs to prevent it from being searched
+        dirs[:] = [d for d in dirs if d != ".ipynb_checkpoints"]
 
-                with open(docstring_filename, "a", encoding="utf-8") as f:
-                    f.write(f"Contents of {notebook_path}:\n")
-                    f.write(content)
-                    f.write("\n\n")
+        for file in files:
+            if file.endswith(".ipynb") and not file.endswith("-checkpoint.ipynb"):
+                notebook_path = os.path.join(root, file)
+                if ".ipynb_checkpoints" not in notebook_path:
+                    print(f"Processing {notebook_path}...")
+                    content = extract_notebook_content(notebook_path)
+
+                    with open(docstring_filename, "a", encoding="utf-8") as f:
+                        f.write(f"Contents of {notebook_path}:\n")
+                        f.write(content)
+                        f.write("\n\n")
+                else:
+                    print(f"Skipping checkpoint file: {notebook_path}")
 
 
 # Mock objects for instantiation, replace with real ones if available
@@ -134,7 +140,7 @@ def extract_all_function_docstrings_from_module(module):
 
 
 def save_docstrings_with_append(
-    docstrings, docstring_filename="docstrings.txt", append_filenames=None
+    docstrings, docstring_filename="llm_context_long.txt", append_filenames=None
 ):
     append_content = ""
     if append_filenames:
@@ -143,14 +149,73 @@ def save_docstrings_with_append(
                 append_content += append_file.read() + "\n\n"
 
     with open(docstring_filename, "w", encoding="utf-8") as file:
+        # Organize docstrings into sections
+        sections = {
+            "Linker Methods": [],
+            "Comparison Methods": [],
+            "Comparison Level Methods": [],
+            "Exploratory Functions": [],
+            "Blocking Functions": [],
+            "SplinkDataFrame Methods": [],
+            "EMTrainingSession Methods": [],
+            "Other Methods": [],
+        }
+
         for method_path, docstring in docstrings.items():
-            print(f"Outputting docstring for: {method_path}")
-            file.write(f"{method_path}:\n")
-            file.write(f"{docstring}\n\n")
+            if method_path.startswith("Linker."):
+                sections["Linker Methods"].append((method_path, docstring))
+            elif method_path in comparison_docstrings:
+                sections["Comparison Methods"].append((method_path, docstring))
+            elif method_path in comparison_level_docstrings:
+                sections["Comparison Level Methods"].append((method_path, docstring))
+            elif method_path in exploratory_docstrings:
+                sections["Exploratory Functions"].append((method_path, docstring))
+            elif (
+                method_path in blocking_analysis_docstrings or method_path == "block_on"
+            ):
+                sections["Blocking Functions"].append((method_path, docstring))
+            elif method_path.startswith("DuckDBDataFrame."):
+                sections["SplinkDataFrame Methods"].append((method_path, docstring))
+            elif method_path.startswith("EMTrainingSession."):
+                sections["EMTrainingSession Methods"].append((method_path, docstring))
+            else:
+                sections["Other Methods"].append((method_path, docstring))
+
+        # Write sections to file and print to console
+        for section_name, section_docstrings in sections.items():
+            if section_docstrings:
+                file.write(f"## {section_name}\n\n")
+                print(f"\nOutputting docstrings for: {section_name}")
+                for method_path, docstring in section_docstrings:
+                    print(f"  {method_path}")
+                    file.write(f"{method_path}:\n")
+                    file.write(f"{docstring}\n\n")
+                file.write("\n")
 
         if append_content:
             file.write("\n\n")
             file.write(append_content)
+
+    print(
+        "\nDocstrings extracted, saved, and organized into sections in llm_context_long.txt"
+    )
+
+
+# Function to extract and append content from specified Markdown files
+def extract_and_append_md_content(md_files, docstring_filename):
+    for md_file in md_files:
+        full_path = os.path.join("..", md_file.lstrip("/"))
+        if os.path.exists(full_path):
+            print(f"Appending content from {full_path}...")
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            with open(docstring_filename, "a", encoding="utf-8") as f:
+                f.write(f"\n\nContents of {md_file}:\n")
+                f.write(content)
+                f.write("\n\n")
+        else:
+            print(f"Warning: File {full_path} not found.")
 
 
 # Main execution
@@ -213,7 +278,7 @@ if __name__ == "__main__":
     print("Extracting and saving docstrings...")
     save_docstrings_with_append(
         all_docstrings,
-        "docstrings.txt",
+        "llm_context_long.txt",
         append_filenames=[
             "../docs/api_docs/settings_dict_guide.md",
             "../docs/api_docs/datasets.md",
@@ -224,6 +289,24 @@ if __name__ == "__main__":
     demos_examples_dir = "../docs/demos/examples"
     demos_tutorials_dir = "../docs/demos/tutorials"
 
-    extract_and_append_notebook_content(demos_examples_dir, "docstrings.txt")
-    extract_and_append_notebook_content(demos_tutorials_dir, "docstrings.txt")
-    print("Docstrings extracted, saved, and guides appended to docstrings.txt")
+    extract_and_append_notebook_content(demos_examples_dir, "llm_context_long.txt")
+    extract_and_append_notebook_content(demos_tutorials_dir, "llm_context_long.txt")
+
+    # New part: Append content from specified Markdown files
+    mds_to_append = [
+        "/docs/index.md",
+        "/docs/getting_started.md",
+        "/docs/topic_guides/splink_fundamentals/settings.md",
+        "/docs/topic_guides/splink_fundamentals/backends/backends.md",
+        "/docs/topic_guides/blocking/blocking_rules.md",
+        "/docs/topic_guides/blocking/model_training.md",
+        "/docs/topic_guides/blocking/performance.md",
+        "/docs/topic_guides/comparisons/comparisons_and_comparison_levels.md",
+        "/docs/topic_guides/performance/performance_evaluation.md",
+        "/docs/api_docs/settings_dict_guide.md",
+    ]
+    extract_and_append_md_content(mds_to_append, "llm_context_long.txt")
+
+    print(
+        "Docstrings extracted, saved, and all specified content appended to llm_context_long.txt"
+    )

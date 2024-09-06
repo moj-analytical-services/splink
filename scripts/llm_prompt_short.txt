@@ -1,0 +1,2398 @@
+Python code from ../docs/demos/examples/sqlite/deduplicate_50k_synthetic.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+# !pip install rapidfuzz
+
+import pandas as pd
+
+from splink import splink_datasets
+
+pd.options.display.max_rows = 1000
+# reduce size of dataset to make things run faster
+df = splink_datasets.historical_50k.sample(5000)
+
+from splink.backends.sqlite import SQLiteAPI
+from splink.exploratory import profile_columns
+
+db_api = SQLiteAPI()
+profile_columns(
+    df, db_api, column_expressions=["first_name", "postcode_fake", "substr(dob, 1,4)"]
+)
+
+from splink import block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+blocking_rules =  [block_on("first_name", "surname"),
+        block_on("surname", "dob"),
+        block_on("first_name", "dob"),
+        block_on("postcode_fake", "first_name")]
+
+db_api = SQLiteAPI()
+
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    blocking_rules=blocking_rules,
+    db_api=db_api,
+    link_type="dedupe_only"
+)
+
+import splink.comparison_library as cl
+from splink import Linker
+
+settings = {
+    "link_type": "dedupe_only",
+    "blocking_rules_to_generate_predictions": [
+        block_on("first_name", "surname"),
+        block_on("surname", "dob"),
+        block_on("first_name", "dob"),
+        block_on("postcode_fake", "first_name"),
+
+    ],
+    "comparisons": [
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.DamerauLevenshteinAtThresholds("dob", [1, 2]).configure(
+            term_frequency_adjustments=True
+        ),
+        cl.DamerauLevenshteinAtThresholds("postcode_fake", [1, 2]),
+        cl.ExactMatch("birth_place").configure(term_frequency_adjustments=True),
+        cl.ExactMatch(
+            "occupation",
+        ).configure(term_frequency_adjustments=True),
+    ],
+    "retain_matching_columns": True,
+    "retain_intermediate_calculation_columns": True,
+    "max_iterations": 10,
+    "em_convergence": 0.01,
+}
+
+linker = Linker(df, settings, db_api=db_api)
+
+linker.training.estimate_probability_two_random_records_match(
+    [
+        "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",
+        "substr(l.first_name,1,2) = substr(r.first_name,1,2) and l.surname = r.surname and substr(l.postcode_fake,1,2) = substr(r.postcode_fake,1,2)",
+        "l.dob = r.dob and l.postcode_fake = r.postcode_fake",
+    ],
+    recall=0.6,
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+training_blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+training_session_names = linker.training.estimate_parameters_using_expectation_maximisation(
+    training_blocking_rule, estimate_without_term_frequencies=True
+)
+
+training_blocking_rule = "l.dob = r.dob"
+training_session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    training_blocking_rule, estimate_without_term_frequencies=True
+)
+
+linker.visualisations.match_weights_chart()
+
+linker.evaluation.unlinkables_chart()
+
+df_predict = linker.inference.predict()
+df_e = df_predict.as_pandas_dataframe(limit=5)
+df_e
+
+
+records_to_plot = df_e.to_dict(orient="records")
+linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predict, threshold_match_probability=0.95
+)
+
+linker.visualisations.cluster_studio_dashboard(
+    df_predict,
+    clusters,
+    "dashboards/50k_cluster.html",
+    sampling_method="by_cluster_size",
+    overwrite=True,
+)
+
+from IPython.display import IFrame
+
+IFrame(src="./dashboards/50k_cluster.html", width="100%", height=1200)
+
+linker.evaluation.accuracy_analysis_from_labels_column(
+    "cluster", output_type="roc", match_weight_round_to_nearest=0.02
+)
+
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster",
+    threshold_match_probability=0.999,
+    include_false_negatives=False,
+    include_false_positives=True,
+).as_record_dict()
+linker.visualisations.waterfall_chart(records)
+
+# Some of the false negatives will be because they weren't detected by the blocking rules
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster",
+    threshold_match_probability=0.5,
+    include_false_negatives=True,
+    include_false_positives=False,
+).as_record_dict(limit=50)
+
+linker.visualisations.waterfall_chart(records)
+
+
+
+Python code from ../docs/demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import splink_datasets
+
+df = splink_datasets.fake_1000
+df.head(2)
+
+from splink import SettingsCreator, Linker, block_on, DuckDBAPI
+
+import splink.comparison_library as cl
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name"),
+        block_on("surname"),
+        block_on("dob"),
+        block_on("email"),
+    ],
+    comparisons=[
+        cl.ForenameSurnameComparison("first_name", "surname"),
+        cl.DateOfBirthComparison(
+            "dob",
+            input_is_string=True,
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+db_api = DuckDBAPI()
+linker = Linker(df, settings, db_api=db_api)
+deterministic_rules = [
+    "l.first_name = r.first_name and levenshtein(r.dob, l.dob) <= 1",
+    "l.surname = r.surname and levenshtein(r.dob, l.dob) <= 1",
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    "l.email = r.email",
+]
+
+linker.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.7
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=5)
+
+session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("dob"), estimate_without_term_frequencies=True
+)
+session_email = linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("email"), estimate_without_term_frequencies=True
+)
+session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("first_name", "surname"), estimate_without_term_frequencies=True
+)
+
+linker.evaluation.accuracy_analysis_from_labels_column(
+    "cluster", output_type="table"
+).as_pandas_dataframe(limit=5)
+
+linker.evaluation.accuracy_analysis_from_labels_column("cluster", output_type="roc")
+
+linker.evaluation.accuracy_analysis_from_labels_column(
+    "cluster",
+    output_type="threshold_selection",
+    threshold_match_probability=0.5,
+    add_metrics=["f1"],
+)
+
+# Plot some false positives
+linker.evaluation.prediction_errors_from_labels_column(
+    "cluster", include_false_negatives=True, include_false_positives=True
+).as_pandas_dataframe(limit=5)
+
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster", include_false_negatives=True, include_false_positives=True
+).as_record_dict(limit=5)
+
+linker.visualisations.waterfall_chart(records)
+
+
+
+Python code from ../docs/demos/examples/duckdb/quick_and_dirty_persons.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink.datasets import splink_datasets
+
+df = splink_datasets.historical_50k
+df.head(5)
+
+from splink import block_on, SettingsCreator
+import splink.comparison_library as cl
+
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("full_name"),
+        block_on("substr(full_name,1,6)", "dob", "birth_place"),
+        block_on("dob", "birth_place"),
+        block_on("postcode_fake"),
+    ],
+    comparisons=[
+        cl.ForenameSurnameComparison(
+            "first_name",
+            "surname",
+            forename_surname_concat_col_name="first_and_surname",
+        ),
+        cl.DateOfBirthComparison(
+            "dob",
+            input_is_string=True,
+        ),
+        cl.LevenshteinAtThresholds("postcode_fake", 2),
+        cl.JaroWinklerAtThresholds("birth_place", 0.9).configure(
+            term_frequency_adjustments=True
+        ),
+        cl.ExactMatch("occupation").configure(term_frequency_adjustments=True),
+    ],
+)
+
+from splink import Linker, DuckDBAPI
+
+
+linker = Linker(df, settings, db_api=DuckDBAPI(), set_up_basic_logging=False)
+deterministic_rules = [
+    "l.full_name = r.full_name",
+    "l.postcode_fake = r.postcode_fake and l.dob = r.dob",
+]
+
+linker.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.6
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=2e6)
+
+results = linker.inference.predict(threshold_match_probability=0.9)
+
+results.as_pandas_dataframe(limit=5)
+
+
+
+Python code from ../docs/demos/examples/duckdb/pairwise_labels.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink.datasets import splink_dataset_labels
+
+pairwise_labels = splink_dataset_labels.fake_1000_labels
+
+# Choose labels indicating a match
+pairwise_labels = pairwise_labels[pairwise_labels["clerical_match_score"] == 1]
+pairwise_labels
+
+from splink import splink_datasets
+
+df = splink_datasets.fake_1000
+df.head(2)
+
+import splink.comparison_library as cl
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name"),
+        block_on("surname"),
+    ],
+    comparisons=[
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.DateOfBirthComparison(
+            "dob",
+            input_is_string=True,
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, db_api=DuckDBAPI(), set_up_basic_logging=False)
+deterministic_rules = [
+    "l.first_name = r.first_name and levenshtein(r.dob, l.dob) <= 1",
+    "l.surname = r.surname and levenshtein(r.dob, l.dob) <= 1",
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    "l.email = r.email",
+]
+
+linker.training.estimate_probability_two_random_records_match(deterministic_rules, recall=0.7)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+# Register the pairwise labels table with the database, and then use it to estimate the m values
+labels_df = linker.table_management.register_labels_table(pairwise_labels, overwrite=True)
+linker.training.estimate_m_from_pairwise_labels(labels_df)
+
+
+# If the labels table already existing in the dataset you could run
+# linker.training.estimate_m_from_pairwise_labels("labels_tablename_here")
+
+training_blocking_rule = block_on("first_name")
+linker.training.estimate_parameters_using_expectation_maximisation(training_blocking_rule)
+
+linker.visualisations.parameter_estimate_comparisons_chart()
+
+linker.visualisations.match_weights_chart()
+
+
+
+Python code from ../docs/demos/examples/duckdb/link_only.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import splink_datasets
+
+df = splink_datasets.fake_1000
+
+# Split a simple dataset into two, separate datasets which can be linked together.
+df_l = df.sample(frac=0.5)
+df_r = df.drop(df_l.index)
+
+df_l.head(2)
+
+import splink.comparison_library as cl
+
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on
+
+settings = SettingsCreator(
+    link_type="link_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name"),
+        block_on("surname"),
+    ],
+    comparisons=[
+        cl.NameComparison(
+            "first_name",
+        ),
+        cl.NameComparison("surname"),
+        cl.DateOfBirthComparison(
+            "dob",
+            input_is_string=True,
+            invalid_dates_as_null=True,
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+)
+
+linker = Linker(
+    [df_l, df_r],
+    settings,
+    db_api=DuckDBAPI(),
+    input_table_aliases=["df_left", "df_right"],
+)
+
+from splink.exploratory import completeness_chart
+
+completeness_chart(
+    [df_l, df_r],
+    cols=["first_name", "surname", "dob", "city", "email"],
+    db_api=DuckDBAPI(),
+    table_names_for_chart=["df_left", "df_right"],
+)
+
+
+deterministic_rules = [
+    "l.first_name = r.first_name and levenshtein(r.dob, l.dob) <= 1",
+    "l.surname = r.surname and levenshtein(r.dob, l.dob) <= 1",
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    block_on("email"),
+]
+
+
+linker.training.estimate_probability_two_random_records_match(deterministic_rules, recall=0.7)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
+
+session_dob = linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
+session_email = linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("email")
+)
+session_first_name = linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("first_name")
+)
+
+results = linker.inference.predict(threshold_match_probability=0.9)
+
+results.as_pandas_dataframe(limit=5)
+
+
+
+Python code from ../docs/demos/examples/duckdb/transactions.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+
+df_origin = splink_datasets.transactions_origin
+df_destination = splink_datasets.transactions_destination
+
+display(df_origin.head(2))
+display(df_destination.head(2))
+
+from splink.exploratory import profile_columns
+
+db_api = DuckDBAPI()
+profile_columns(
+    [df_origin, df_destination],
+    db_api=db_api,
+    column_expressions=[
+        "memo",
+        "transaction_date",
+        "amount",
+    ],
+)
+
+from splink import DuckDBAPI, block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+# Design blocking rules that allow for differences in transaction date and amounts
+blocking_rule_date_1 = """
+    strftime(l.transaction_date, '%Y%m') = strftime(r.transaction_date, '%Y%m')
+    and substr(l.memo, 1,3) = substr(r.memo,1,3)
+    and l.amount/r.amount > 0.7   and l.amount/r.amount < 1.3
+"""
+
+# Offset by half a month to ensure we capture case when the dates are e.g. 31st Jan and 1st Feb
+blocking_rule_date_2 = """
+    strftime(l.transaction_date+15, '%Y%m') = strftime(r.transaction_date, '%Y%m')
+    and substr(l.memo, 1,3) = substr(r.memo,1,3)
+    and l.amount/r.amount > 0.7   and l.amount/r.amount < 1.3
+"""
+
+blocking_rule_memo = block_on("substr(memo,1,9)")
+
+blocking_rule_amount_1 = """
+round(l.amount/2,0)*2 = round(r.amount/2,0)*2 and yearweek(r.transaction_date) = yearweek(l.transaction_date)
+"""
+
+blocking_rule_amount_2 = """
+round(l.amount/2,0)*2 = round((r.amount+1)/2,0)*2 and yearweek(r.transaction_date) = yearweek(l.transaction_date + 4)
+"""
+
+blocking_rule_cheat = block_on("unique_id")
+
+
+brs = [
+    blocking_rule_date_1,
+    blocking_rule_date_2,
+    blocking_rule_memo,
+    blocking_rule_amount_1,
+    blocking_rule_amount_2,
+    blocking_rule_cheat,
+]
+
+
+db_api = DuckDBAPI()
+
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=[df_origin, df_destination],
+    blocking_rules=brs,
+    db_api=db_api,
+    link_type="link_only"
+)
+
+# Full settings for linking model
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+
+comparison_amount = {
+    "output_column_name": "amount",
+    "comparison_levels": [
+        cll.NullLevel("amount"),
+        cll.ExactMatchLevel("amount"),
+        cll.PercentageDifferenceLevel("amount", 0.01),
+        cll.PercentageDifferenceLevel("amount", 0.03),
+        cll.PercentageDifferenceLevel("amount", 0.1),
+        cll.PercentageDifferenceLevel("amount", 0.3),
+        cll.ElseLevel(),
+    ],
+    "comparison_description": "Amount percentage difference",
+}
+
+# The date distance is one sided becaause transactions should only arrive after they've left
+# As a result, the comparison_template_library date difference functions are not appropriate
+within_n_days_template = "transaction_date_r - transaction_date_l <= {n} and transaction_date_r >= transaction_date_l"
+
+comparison_date = {
+    "output_column_name": "transaction_date",
+    "comparison_levels": [
+        cll.NullLevel("transaction_date"),
+        {
+            "sql_condition": within_n_days_template.format(n=1),
+            "label_for_charts": "1 day",
+        },
+        {
+            "sql_condition": within_n_days_template.format(n=4),
+            "label_for_charts": "<=4 days",
+        },
+        {
+            "sql_condition": within_n_days_template.format(n=10),
+            "label_for_charts": "<=10 days",
+        },
+        {
+            "sql_condition": within_n_days_template.format(n=30),
+            "label_for_charts": "<=30 days",
+        },
+        cll.ElseLevel(),
+    ],
+    "comparison_description": "Transaction date days apart",
+}
+
+
+settings = SettingsCreator(
+    link_type="link_only",
+    probability_two_random_records_match=1 / len(df_origin),
+    blocking_rules_to_generate_predictions=[
+        blocking_rule_date_1,
+        blocking_rule_date_2,
+        blocking_rule_memo,
+        blocking_rule_amount_1,
+        blocking_rule_amount_2,
+        blocking_rule_cheat,
+    ],
+    comparisons=[
+        comparison_amount,
+        cl.LevenshteinAtThresholds("memo", [2, 6, 10]),
+        comparison_date,
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(
+    [df_origin, df_destination],
+    settings,
+    input_table_aliases=["__ori", "_dest"],
+    db_api=db_api,
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+linker.training.estimate_parameters_using_expectation_maximisation(block_on("memo"))
+
+session = linker.training.estimate_parameters_using_expectation_maximisation(block_on("amount"))
+
+linker.visualisations.match_weights_chart()
+
+df_predict = linker.inference.predict(threshold_match_probability=0.001)
+
+linker.visualisations.comparison_viewer_dashboard(
+    df_predict, "dashboards/comparison_viewer_transactions.html", overwrite=True
+)
+from IPython.display import IFrame
+
+IFrame(
+    src="./dashboards/comparison_viewer_transactions.html", width="100%", height=1200
+)
+
+pred_errors = linker.evaluation.prediction_errors_from_labels_column(
+    "ground_truth", include_false_positives=True, include_false_negatives=False
+)
+linker.visualisations.waterfall_chart(pred_errors.as_record_dict(limit=5))
+
+pred_errors = linker.evaluation.prediction_errors_from_labels_column(
+    "ground_truth", include_false_positives=False, include_false_negatives=True
+)
+linker.visualisations.waterfall_chart(pred_errors.as_record_dict(limit=5))
+
+
+
+Python code from ../docs/demos/examples/duckdb/deterministic_dedupe.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+import pandas as pd
+
+from splink import splink_datasets
+
+pd.options.display.max_rows = 1000
+df = splink_datasets.historical_50k
+df.head()
+
+from splink import DuckDBAPI, block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+db_api = DuckDBAPI()
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    blocking_rules=[
+        block_on("first_name", "surname", "dob"),
+        block_on("surname", "dob", "postcode_fake"),
+        block_on("first_name", "dob", "occupation"),
+    ],
+    db_api=db_api,
+    link_type="dedupe_only",
+)
+
+from splink import Linker, SettingsCreator
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name", "surname", "dob"),
+        block_on("surname", "dob", "postcode_fake"),
+        block_on("first_name", "dob", "occupation"),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, db_api=db_api)
+
+
+df_predict = linker.inference.deterministic_link()
+df_predict.as_pandas_dataframe().head()
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predict, threshold_match_probability=1
+)
+
+clusters.as_pandas_dataframe(limit=5)
+
+linker.visualisations.cluster_studio_dashboard(
+    df_predict,
+    clusters,
+    "dashboards/50k_deterministic_cluster.html",
+    sampling_method="by_cluster_size",
+    overwrite=True,
+)
+
+from IPython.display import IFrame
+
+IFrame(src="./dashboards/50k_deterministic_cluster.html", width="100%", height=1200)
+
+
+
+Python code from ../docs/demos/examples/duckdb/deduplicate_50k_synthetic.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import splink_datasets
+
+df = splink_datasets.historical_50k
+
+df.head()
+
+from splink import DuckDBAPI
+from splink.exploratory import profile_columns
+
+db_api = DuckDBAPI()
+profile_columns(df, db_api, column_expressions=["first_name", "substr(surname,1,2)"])
+
+from splink import DuckDBAPI, block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+blocking_rules = [
+    block_on("substr(first_name,1,3)", "substr(surname,1,4)"),
+    block_on("surname", "dob"),
+    block_on("first_name", "dob"),
+    block_on("postcode_fake", "first_name"),
+    block_on("postcode_fake", "surname"),
+    block_on("dob", "birth_place"),
+    block_on("substr(postcode_fake,1,3)", "dob"),
+    block_on("substr(postcode_fake,1,3)", "first_name"),
+    block_on("substr(postcode_fake,1,3)", "surname"),
+    block_on("substr(first_name,1,2)", "substr(surname,1,2)", "substr(dob,1,4)"),
+]
+
+db_api = DuckDBAPI()
+
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    blocking_rules=blocking_rules,
+    db_api=db_api,
+    link_type="dedupe_only",
+)
+
+import splink.comparison_library as cl
+
+from splink import Linker, SettingsCreator
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=blocking_rules,
+    comparisons=[
+        cl.ForenameSurnameComparison(
+            "first_name",
+            "surname",
+            forename_surname_concat_col_name="first_name_surname_concat",
+        ),
+        cl.DateOfBirthComparison(
+            "dob", input_is_string=True
+        ),
+        cl.PostcodeComparison("postcode_fake"),
+        cl.ExactMatch("birth_place").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("occupation").configure(term_frequency_adjustments=True),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+# Needed to apply term frequencies to first+surname comparison
+df["first_name_surname_concat"] = df["first_name"] + " " + df["surname"]
+linker = Linker(df, settings, db_api=db_api)
+
+linker.training.estimate_probability_two_random_records_match(
+    [
+        "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",
+        "substr(l.first_name,1,2) = substr(r.first_name,1,2) and l.surname = r.surname and substr(l.postcode_fake,1,2) = substr(r.postcode_fake,1,2)",
+        "l.dob = r.dob and l.postcode_fake = r.postcode_fake",
+    ],
+    recall=0.6,
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=5e6)
+
+training_blocking_rule = block_on("first_name", "surname")
+training_session_names = (
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        training_blocking_rule, estimate_without_term_frequencies=True
+    )
+)
+
+training_blocking_rule = block_on("dob")
+training_session_dob = (
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        training_blocking_rule, estimate_without_term_frequencies=True
+    )
+)
+
+linker.visualisations.match_weights_chart()
+
+linker.evaluation.unlinkables_chart()
+
+df_predict = linker.inference.predict()
+df_e = df_predict.as_pandas_dataframe(limit=5)
+df_e
+
+records_to_plot = df_e.to_dict(orient="records")
+linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predict, threshold_match_probability=0.95
+)
+
+from IPython.display import IFrame
+
+linker.visualisations.cluster_studio_dashboard(
+    df_predict,
+    clusters,
+    "dashboards/50k_cluster.html",
+    sampling_method="by_cluster_size",
+    overwrite=True,
+)
+
+
+IFrame(src="./dashboards/50k_cluster.html", width="100%", height=1200)
+
+linker.evaluation.accuracy_analysis_from_labels_column(
+    "cluster", output_type="accuracy", match_weight_round_to_nearest=0.02
+)
+
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster",
+    threshold_match_probability=0.999,
+    include_false_negatives=False,
+    include_false_positives=True,
+).as_record_dict()
+linker.visualisations.waterfall_chart(records)
+
+# Some of the false negatives will be because they weren't detected by the blocking rules
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster",
+    threshold_match_probability=0.5,
+    include_false_negatives=True,
+    include_false_positives=False,
+).as_record_dict(limit=50)
+
+linker.visualisations.waterfall_chart(records)
+
+
+
+Python code from ../docs/demos/examples/duckdb/febrl4.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import splink_datasets
+
+df_a = splink_datasets.febrl4a
+df_b = splink_datasets.febrl4b
+
+
+def prepare_data(data):
+    data = data.rename(columns=lambda x: x.strip())
+    data["cluster"] = data["rec_id"].apply(lambda x: "-".join(x.split("-")[:2]))
+    data["date_of_birth"] = data["date_of_birth"].astype(str).str.strip()
+    data["soc_sec_id"] = data["soc_sec_id"].astype(str).str.strip()
+    data["postcode"] = data["postcode"].astype(str).str.strip()
+    return data
+
+
+dfs = [prepare_data(dataset) for dataset in [df_a, df_b]]
+
+display(dfs[0].head(2))
+display(dfs[1].head(2))
+
+from splink import DuckDBAPI, Linker, SettingsCreator
+
+basic_settings = SettingsCreator(
+    unique_id_column_name="rec_id",
+    link_type="link_only",
+    # NB as we are linking one-one, we know the probability that a random pair will be a match
+    # hence we could set:
+    # "probability_two_random_records_match": 1/5000,
+    # however we will not specify this here, as we will use this as a check that
+    # our estimation procedure returns something sensible
+)
+
+linker = Linker(dfs, basic_settings, db_api=DuckDBAPI())
+
+from splink.exploratory import completeness_chart
+
+completeness_chart(dfs, db_api=DuckDBAPI())
+
+from splink.exploratory import profile_columns
+
+profile_columns(dfs, db_api=DuckDBAPI(), column_expressions=["given_name", "surname"])
+
+from splink import DuckDBAPI, block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+blocking_rules = [
+    block_on("given_name", "surname"),
+    # A blocking rule can also be an aribtrary SQL expression
+    "l.given_name = r.surname and l.surname = r.given_name",
+    block_on("date_of_birth"),
+    block_on("soc_sec_id"),
+    block_on("state", "address_1"),
+    block_on("street_number", "address_1"),
+    block_on("postcode"),
+]
+
+
+db_api = DuckDBAPI()
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=dfs,
+    blocking_rules=blocking_rules,
+    db_api=db_api,
+    link_type="link_only",
+    unique_id_column_name="rec_id",
+    source_dataset_column_name="source_dataset",
+)
+
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
+
+
+# the simple model only considers a few columns, and only two comparison levels for each
+simple_model_settings = SettingsCreator(
+    unique_id_column_name="rec_id",
+    link_type="link_only",
+    blocking_rules_to_generate_predictions=blocking_rules,
+    comparisons=[
+        cl.ExactMatch("given_name").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("surname").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("street_number").configure(term_frequency_adjustments=True),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+# the detailed model considers more columns, using the information we saw in the exploratory phase
+# we also include further comparison levels to account for typos and other differences
+detailed_model_settings = SettingsCreator(
+    unique_id_column_name="rec_id",
+    link_type="link_only",
+    blocking_rules_to_generate_predictions=blocking_rules,
+    comparisons=[
+        cl.NameComparison("given_name").configure(term_frequency_adjustments=True),
+        cl.NameComparison("surname").configure(term_frequency_adjustments=True),
+        cl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            datetime_format="%Y%m%d",
+            invalid_dates_as_null=True,
+        ),
+        cl.DamerauLevenshteinAtThresholds("soc_sec_id", [1, 2]),
+        cl.ExactMatch("street_number").configure(term_frequency_adjustments=True),
+        cl.DamerauLevenshteinAtThresholds("postcode", [1, 2]).configure(
+            term_frequency_adjustments=True
+        ),
+        # we don't consider further location columns as they will be strongly correlated with postcode
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+
+linker_simple = Linker(dfs, simple_model_settings, db_api=DuckDBAPI())
+linker_detailed = Linker(dfs, detailed_model_settings, db_api=DuckDBAPI())
+
+deterministic_rules = [
+    block_on("soc_sec_id"),
+    block_on("given_name", "surname", "date_of_birth"),
+]
+
+linker_detailed.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.8
+)
+
+# We generally recommend setting max pairs higher (e.g. 1e7 or more)
+# But this will run faster for the purpose of this demo
+linker_detailed.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+session_dob = (
+    linker_detailed.training.estimate_parameters_using_expectation_maximisation(
+        block_on("date_of_birth"), estimate_without_term_frequencies=True
+    )
+)
+session_pc = (
+    linker_detailed.training.estimate_parameters_using_expectation_maximisation(
+        block_on("postcode"), estimate_without_term_frequencies=True
+    )
+)
+
+session_dob.m_u_values_interactive_history_chart()
+
+linker_detailed.visualisations.parameter_estimate_comparisons_chart()
+
+linker_simple.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.8
+)
+linker_simple.training.estimate_u_using_random_sampling(max_pairs=1e7)
+session_ssid = (
+    linker_simple.training.estimate_parameters_using_expectation_maximisation(
+        block_on("given_name"), estimate_without_term_frequencies=True
+    )
+)
+session_pc = linker_simple.training.estimate_parameters_using_expectation_maximisation(
+    block_on("street_number"), estimate_without_term_frequencies=True
+)
+linker_simple.visualisations.parameter_estimate_comparisons_chart()
+
+# import json
+# we can have a look at the full settings if we wish, including the values of our estimated parameters:
+# print(json.dumps(linker_detailed._settings_obj.as_dict(), indent=2))
+# we can also get a handy summary of of the model in an easily readable format if we wish:
+# print(linker_detailed._settings_obj.human_readable_description)
+# (we suppress output here for brevity)
+
+linker_simple.visualisations.match_weights_chart()
+
+linker_detailed.visualisations.match_weights_chart()
+
+# linker_simple.m_u_parameters_chart()
+linker_detailed.visualisations.m_u_parameters_chart()
+
+linker_simple.evaluation.unlinkables_chart()
+
+linker_detailed.evaluation.unlinkables_chart()
+
+predictions = linker_detailed.inference.predict(threshold_match_probability=0.2)
+df_predictions = predictions.as_pandas_dataframe()
+df_predictions.head(5)
+
+linker_detailed.evaluation.accuracy_analysis_from_labels_column(
+    "cluster", output_type="accuracy"
+)
+
+clusters = linker_detailed.clustering.cluster_pairwise_predictions_at_threshold(
+    predictions, threshold_match_probability=0.99
+)
+df_clusters = clusters.as_pandas_dataframe().sort_values("cluster_id")
+df_clusters.groupby("cluster_id").size().value_counts()
+
+df_predictions["cluster_l"] = df_predictions["rec_id_l"].apply(
+    lambda x: "-".join(x.split("-")[:2])
+)
+df_predictions["cluster_r"] = df_predictions["rec_id_r"].apply(
+    lambda x: "-".join(x.split("-")[:2])
+)
+df_true_links = df_predictions[
+    df_predictions["cluster_l"] == df_predictions["cluster_r"]
+].sort_values("match_probability")
+
+records_to_view = 3
+linker_detailed.visualisations.waterfall_chart(
+    df_true_links.head(records_to_view).to_dict(orient="records")
+)
+
+df_non_links = df_predictions[
+    df_predictions["cluster_l"] != df_predictions["cluster_r"]
+].sort_values("match_probability", ascending=False)
+linker_detailed.visualisations.waterfall_chart(
+    df_non_links.head(records_to_view).to_dict(orient="records")
+)
+
+# we need to append a full name column to our source data frames
+# so that we can use it for term frequency adjustments
+dfs[0]["full_name"] = dfs[0]["given_name"] + "_" + dfs[0]["surname"]
+dfs[1]["full_name"] = dfs[1]["given_name"] + "_" + dfs[1]["surname"]
+
+
+extended_model_settings = {
+    "unique_id_column_name": "rec_id",
+    "link_type": "link_only",
+    "blocking_rules_to_generate_predictions": blocking_rules,
+    "comparisons": [
+        {
+            "output_column_name": "Full name",
+            "comparison_levels": [
+                {
+                    "sql_condition": "(given_name_l IS NULL OR given_name_r IS NULL) and (surname_l IS NULL OR surname_r IS NULL)",
+                    "label_for_charts": "Null",
+                    "is_null_level": True,
+                },
+                # full name match
+                cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
+                # typos - keep levels across full name rather than scoring separately
+                cll.JaroWinklerLevel("full_name", 0.9),
+                cll.JaroWinklerLevel("full_name", 0.7),
+                # name switched
+                cll.ColumnsReversedLevel("given_name", "surname"),
+                # name switched + typo
+                {
+                    "sql_condition": "jaro_winkler_similarity(given_name_l, surname_r) + jaro_winkler_similarity(surname_l, given_name_r) >= 1.8",
+                    "label_for_charts": "switched + jaro_winkler_similarity >= 1.8",
+                },
+                {
+                    "sql_condition": "jaro_winkler_similarity(given_name_l, surname_r) + jaro_winkler_similarity(surname_l, given_name_r) >= 1.4",
+                    "label_for_charts": "switched + jaro_winkler_similarity >= 1.4",
+                },
+                # single name match
+                cll.ExactMatchLevel("given_name", term_frequency_adjustments=True),
+                cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
+                # single name cross-match
+                {
+                    "sql_condition": "given_name_l = surname_r OR surname_l = given_name_r",
+                    "label_for_charts": "single name cross-matches",
+                },  # single name typos
+                cll.JaroWinklerLevel("given_name", 0.9),
+                cll.JaroWinklerLevel("surname", 0.9),
+                # the rest
+                cll.ElseLevel(),
+            ],
+        },
+        cl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            datetime_format="%Y%m%d",
+            invalid_dates_as_null=True,
+        ),
+        {
+            "output_column_name": "Social security ID",
+            "comparison_levels": [
+                cll.NullLevel("soc_sec_id"),
+                cll.ExactMatchLevel("soc_sec_id", term_frequency_adjustments=True),
+                cll.DamerauLevenshteinLevel("soc_sec_id", 1),
+                cll.DamerauLevenshteinLevel("soc_sec_id", 2),
+                cll.ElseLevel(),
+            ],
+        },
+        {
+            "output_column_name": "Street number",
+            "comparison_levels": [
+                cll.NullLevel("street_number"),
+                cll.ExactMatchLevel("street_number", term_frequency_adjustments=True),
+                cll.DamerauLevenshteinLevel("street_number", 1),
+                cll.ElseLevel(),
+            ],
+        },
+        {
+            "output_column_name": "Postcode",
+            "comparison_levels": [
+                cll.NullLevel("postcode"),
+                cll.ExactMatchLevel("postcode", term_frequency_adjustments=True),
+                cll.DamerauLevenshteinLevel("postcode", 1),
+                cll.DamerauLevenshteinLevel("postcode", 2),
+                cll.ElseLevel(),
+            ],
+        },
+        # we don't consider further location columns as they will be strongly correlated with postcode
+    ],
+    "retain_intermediate_calculation_columns": True,
+}
+
+# train
+linker_advanced = Linker(dfs, extended_model_settings, db_api=DuckDBAPI())
+linker_advanced.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.8
+)
+# We recommend increasing target rows to 1e8 improve accuracy for u
+# values in full name comparison, as we have subdivided the data more finely
+
+# Here, 1e7 for speed
+linker_advanced.training.estimate_u_using_random_sampling(max_pairs=1e7)
+
+session_dob = (
+    linker_advanced.training.estimate_parameters_using_expectation_maximisation(
+        "l.date_of_birth = r.date_of_birth", estimate_without_term_frequencies=True
+    )
+)
+
+session_pc = (
+    linker_advanced.training.estimate_parameters_using_expectation_maximisation(
+        "l.postcode = r.postcode", estimate_without_term_frequencies=True
+    )
+)
+
+linker_advanced.visualisations.parameter_estimate_comparisons_chart()
+
+linker_advanced.visualisations.match_weights_chart()
+
+predictions_adv = linker_advanced.inference.predict()
+df_predictions_adv = predictions_adv.as_pandas_dataframe()
+clusters_adv = linker_advanced.clustering.cluster_pairwise_predictions_at_threshold(
+    predictions_adv, threshold_match_probability=0.99
+)
+df_clusters_adv = clusters_adv.as_pandas_dataframe().sort_values("cluster_id")
+df_clusters_adv.groupby("cluster_id").size().value_counts()
+
+
+
+Python code from ../docs/demos/examples/duckdb/real_time_record_linkage.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install ipywidgets
+# !pip install splink
+# !jupyter nbextension enable --py widgetsnbextension
+
+import urllib.request
+import json
+from pathlib import Path
+from splink import Linker, DuckDBAPI, block_on, SettingsCreator, splink_datasets
+
+df = splink_datasets.fake_1000
+
+url = "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/demo_settings/real_time_settings.json"
+
+with urllib.request.urlopen(url) as u:
+    settings = json.loads(u.read().decode())
+
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+
+linker.visualisations.waterfall_chart(
+    linker.inference.predict().as_record_dict(limit=2)
+)
+
+record_1 = {
+    "unique_id": 1,
+    "first_name": "Lucas",
+    "surname": "Smith",
+    "dob": "1984-01-02",
+    "city": "London",
+    "email": "lucas.smith@hotmail.com",
+}
+
+record_2 = {
+    "unique_id": 2,
+    "first_name": "Lucas",
+    "surname": "Smith",
+    "dob": "1983-02-12",
+    "city": "Machester",
+    "email": "lucas.smith@hotmail.com",
+}
+
+linker._settings_obj._retain_intermediate_calculation_columns = True
+
+
+# To `compare_two_records` the linker needs to compute term frequency tables
+# If you have precomputed tables, you can linker.register_term_frequency_lookup()
+linker.table_management.compute_tf_table("first_name")
+linker.table_management.compute_tf_table("surname")
+linker.table_management.compute_tf_table("dob")
+linker.table_management.compute_tf_table("city")
+linker.table_management.compute_tf_table("email")
+
+
+df_two = linker.inference.compare_two_records(record_1, record_2)
+df_two.as_pandas_dataframe()
+
+import ipywidgets as widgets
+from IPython.display import display
+
+
+fields = ["unique_id", "first_name", "surname", "dob", "email", "city"]
+
+left_text_boxes = []
+right_text_boxes = []
+
+inputs_to_interactive_output = {}
+
+for f in fields:
+    wl = widgets.Text(description=f, value=str(record_1[f]))
+    left_text_boxes.append(wl)
+    inputs_to_interactive_output[f"{f}_l"] = wl
+    wr = widgets.Text(description=f, value=str(record_2[f]))
+    right_text_boxes.append(wr)
+    inputs_to_interactive_output[f"{f}_r"] = wr
+
+b1 = widgets.VBox(left_text_boxes)
+b2 = widgets.VBox(right_text_boxes)
+ui = widgets.HBox([b1, b2])
+
+
+def myfn(**kwargs):
+    my_args = dict(kwargs)
+
+    record_left = {}
+    record_right = {}
+
+    for key, value in my_args.items():
+        if value == "":
+            value = None
+        if key.endswith("_l"):
+            record_left[key[:-2]] = value
+        elif key.endswith("_r"):
+            record_right[key[:-2]] = value
+
+    # Assuming 'linker' is defined earlier in your code
+    linker._settings_obj._retain_intermediate_calculation_columns = True
+
+    df_two = linker.inference.compare_two_records(record_left, record_right)
+
+    recs = df_two.as_pandas_dataframe().to_dict(orient="records")
+
+    display(linker.visualisations.waterfall_chart(recs, filter_nulls=False))
+
+
+out = widgets.interactive_output(myfn, inputs_to_interactive_output)
+
+display(ui, out)
+
+record = {
+    "unique_id": 123987,
+    "first_name": "Robert",
+    "surname": "Alan",
+    "dob": "1971-05-24",
+    "city": "London",
+    "email": "robert255@smith.net",
+}
+
+
+df_inc = linker.inference.find_matches_to_new_records(
+    [record], blocking_rules=[]
+).as_pandas_dataframe()
+df_inc.sort_values("match_weight", ascending=False)
+
+@widgets.interact(
+    first_name="Robert",
+    surname="Alan",
+    dob="1971-05-24",
+    city="London",
+    email="robert255@smith.net",
+)
+def interactive_link(first_name, surname, dob, city, email):
+    record = {
+        "unique_id": 123987,
+        "first_name": first_name,
+        "surname": surname,
+        "dob": dob,
+        "city": city,
+        "email": email,
+        "group": 0,
+    }
+
+    for key in record.keys():
+        if type(record[key]) == str:
+            if record[key].strip() == "":
+                record[key] = None
+
+    df_inc = linker.inference.find_matches_to_new_records(
+        [record], blocking_rules=[f"(true)"]
+    ).as_pandas_dataframe()
+    df_inc = df_inc.sort_values("match_weight", ascending=False)
+    recs = df_inc.to_dict(orient="records")
+
+    display(linker.visualisations.waterfall_chart(recs, filter_nulls=False))
+
+linker.visualisations.match_weights_chart()
+
+
+
+Python code from ../docs/demos/examples/duckdb/febrl3.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink.datasets import splink_datasets
+
+df = splink_datasets.febrl3
+
+df = df.rename(columns=lambda x: x.strip())
+
+df["cluster"] = df["rec_id"].apply(lambda x: "-".join(x.split("-")[:2]))
+
+df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
+df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
+
+df.head(2)
+
+df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
+df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
+
+df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
+df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
+
+from splink import DuckDBAPI, Linker, SettingsCreator
+
+# TODO:  Allow missingness to be analysed without a linker
+settings = SettingsCreator(
+    unique_id_column_name="rec_id",
+    link_type="dedupe_only",
+)
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+
+from splink.exploratory import completeness_chart
+
+completeness_chart(df, db_api=DuckDBAPI())
+
+from splink.exploratory import profile_columns
+
+profile_columns(df, db_api=DuckDBAPI(), column_expressions=["given_name", "surname"])
+
+from splink import DuckDBAPI, block_on
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+blocking_rules = [
+    block_on("soc_sec_id"),
+    block_on("given_name"),
+    block_on("surname"),
+    block_on("date_of_birth"),
+    block_on("postcode"),
+]
+
+db_api = DuckDBAPI()
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    blocking_rules=blocking_rules,
+    db_api=db_api,
+    link_type="dedupe_only",
+    unique_id_column_name="rec_id",
+)
+
+import splink.comparison_library as cl
+
+from splink import Linker
+
+settings = SettingsCreator(
+    unique_id_column_name="rec_id",
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=blocking_rules,
+    comparisons=[
+        cl.NameComparison("given_name"),
+        cl.NameComparison("surname"),
+        cl.DateOfBirthComparison(
+            "date_of_birth",
+            input_is_string=True,
+            datetime_format="%Y%m%d",
+        ),
+        cl.DamerauLevenshteinAtThresholds("soc_sec_id", [2]),
+        cl.ExactMatch("street_number").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("postcode").configure(term_frequency_adjustments=True),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+
+from splink import block_on
+
+deterministic_rules = [
+    block_on("soc_sec_id"),
+    block_on("given_name", "surname", "date_of_birth"),
+    "l.given_name = r.surname and l.surname = r.given_name and l.date_of_birth = r.date_of_birth",
+]
+
+linker.training.estimate_probability_two_random_records_match(
+    deterministic_rules, recall=0.9
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+em_blocking_rule_1 = block_on("date_of_birth")
+session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    em_blocking_rule_1
+)
+
+em_blocking_rule_2 = block_on("postcode")
+session_postcode = linker.training.estimate_parameters_using_expectation_maximisation(
+    em_blocking_rule_2
+)
+
+linker.visualisations.match_weights_chart()
+
+results = linker.inference.predict(threshold_match_probability=0.2)
+
+linker.evaluation.accuracy_analysis_from_labels_column(
+    "cluster", match_weight_round_to_nearest=0.1, output_type="accuracy"
+)
+
+pred_errors_df = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster"
+).as_pandas_dataframe()
+len(pred_errors_df)
+pred_errors_df.head()
+
+records = linker.evaluation.prediction_errors_from_labels_column(
+    "cluster"
+).as_record_dict(limit=10)
+linker.visualisations.waterfall_chart(records)
+
+
+
+Python code from ../docs/demos/examples/spark/deduplicate_1k_synthetic.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+# !pip install pyspark
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+
+from splink.backends.spark import similarity_jar_location
+
+conf = SparkConf()
+# This parallelism setting is only suitable for a small toy example
+conf.set("spark.driver.memory", "12g")
+conf.set("spark.default.parallelism", "8")
+conf.set("spark.sql.codegen.wholeStage", "false")
+
+
+# Add custom similarity functions, which are bundled with Splink
+# documented here: https://github.com/moj-analytical-services/splink_scalaudfs
+path = similarity_jar_location()
+conf.set("spark.jars", path)
+
+sc = SparkContext.getOrCreate(conf=conf)
+
+spark = SparkSession(sc)
+spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
+
+# Disable warnings for pyspark - you don't need to include this
+import warnings
+
+spark.sparkContext.setLogLevel("ERROR")
+warnings.simplefilter("ignore", UserWarning)
+
+from splink import splink_datasets
+
+pandas_df = splink_datasets.fake_1000
+
+df = spark.createDataFrame(pandas_df)
+
+import splink.comparison_library as cl
+from splink import Linker, SettingsCreator, SparkAPI, block_on
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    comparisons=[
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.LevenshteinAtThresholds(
+            "dob"
+        ),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name"),
+        "l.surname = r.surname",  # alternatively, you can write BRs in their SQL form
+    ],
+    retain_intermediate_calculation_columns=True,
+    em_convergence=0.01,
+)
+
+linker = Linker(df, settings, db_api=SparkAPI(spark_session=spark))
+deterministic_rules = [
+    "l.first_name = r.first_name and levenshtein(r.dob, l.dob) <= 1",
+    "l.surname = r.surname and levenshtein(r.dob, l.dob) <= 1",
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    "l.email = r.email",
+]
+
+linker.training.estimate_probability_two_random_records_match(deterministic_rules, recall=0.6)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=5e5)
+
+training_blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+training_session_fname_sname = (
+    linker.training.estimate_parameters_using_expectation_maximisation(training_blocking_rule)
+)
+
+training_blocking_rule = "l.dob = r.dob"
+training_session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    training_blocking_rule
+)
+
+results = linker.inference.predict(threshold_match_probability=0.9)
+
+spark_df = results.as_spark_dataframe().show()
+
+
+
+Python code from ../docs/demos/examples/athena/deduplicate_50k_synthetic.ipynb:
+import boto3
+
+boto3_session = boto3.Session(region_name="eu-west-1")
+
+# Set the output bucket and the additional filepath to write outputs to
+############################################
+# EDIT THESE BEFORE ATTEMPTING TO RUN THIS #
+############################################
+
+from splink.backends.athena import AthenaAPI
+
+
+bucket = "MYTESTBUCKET"
+database = "MYTESTDATABASE"
+filepath = "MYTESTFILEPATH"  # file path inside of your bucket
+
+aws_filepath = f"s3://{bucket}/{filepath}"
+db_api = AthenaAPI(
+    boto3_session,
+    output_bucket=bucket,
+    output_database=database,
+    output_filepath=filepath,
+)
+
+import splink.comparison_library as cl
+from splink import block_on
+
+from splink import Linker, SettingsCreator, splink_datasets
+
+df = splink_datasets.historical_50k
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name", "surname"),
+        block_on("surname", "dob"),
+    ],
+    comparisons=[
+        cl.ExactMatch("first_name").configure(term_frequency_adjustments=True),
+        cl.LevenshteinAtThresholds("surname", [1, 3]),
+        cl.LevenshteinAtThresholds("dob", [1, 2]),
+        cl.LevenshteinAtThresholds("postcode_fake", [1, 2]),
+        cl.ExactMatch("birth_place").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("occupation").configure(term_frequency_adjustments=True),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+from splink.exploratory import profile_columns
+
+profile_columns(df, db_api, column_expressions=["first_name", "substr(surname,1,2)"])
+
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+from splink import block_on
+
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    db_api=db_api,
+    blocking_rules=[block_on("first_name", "surname"), block_on("surname", "dob")],
+    link_type="dedupe_only",
+)
+
+import splink.comparison_library as cl
+
+
+from splink import Linker, SettingsCreator
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name", "surname"),
+        block_on("surname", "dob"),
+    ],
+    comparisons=[
+        cl.ExactMatch("first_name").configure(term_frequency_adjustments=True),
+        cl.LevenshteinAtThresholds("surname", [1, 3]),
+        cl.LevenshteinAtThresholds("dob", [1, 2]),
+        cl.LevenshteinAtThresholds("postcode_fake", [1, 2]),
+        cl.ExactMatch("birth_place").configure(term_frequency_adjustments=True),
+        cl.ExactMatch("occupation").configure(term_frequency_adjustments=True),
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, db_api=db_api)
+
+linker.training.estimate_probability_two_random_records_match(
+    [
+        block_on("first_name", "surname", "dob"),
+        block_on("substr(first_name,1,2)", "surname", "substr(postcode_fake, 1,2)"),
+        block_on("dob", "postcode_fake"),
+    ],
+    recall=0.6,
+)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=5e6)
+
+blocking_rule = block_on("first_name", "surname")
+training_session_names = (
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
+)
+
+blocking_rule = block_on("dob")
+training_session_dob = (
+    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
+)
+
+linker.visualisations.match_weights_chart()
+
+linker.evaluation.unlinkables_chart()
+
+df_predict = linker.inference.predict()
+df_e = df_predict.as_pandas_dataframe(limit=5)
+df_e
+
+records_to_plot = df_e.to_dict(orient="records")
+linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predict, threshold_match_probability=0.95
+)
+
+linker.visualisations.cluster_studio_dashboard(
+    df_predict,
+    clusters,
+    "dashboards/50k_cluster.html",
+    sampling_method="by_cluster_size",
+    overwrite=True,
+)
+
+from IPython.display import IFrame
+
+IFrame(src="./dashboards/50k_cluster.html", width="100%", height=1200)
+
+
+
+Python code from ../docs/demos/tutorials/03_Blocking.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import DuckDBAPI, block_on, splink_datasets
+
+df = splink_datasets.fake_1000
+
+from splink.blocking_analysis import count_comparisons_from_blocking_rule
+
+db_api = DuckDBAPI()
+
+br = block_on("substr(first_name, 1,1)", "surname")
+
+counts = count_comparisons_from_blocking_rule(
+    table_or_tables=df,
+    blocking_rule=br,
+    link_type="dedupe_only",
+    db_api=db_api,
+)
+
+counts
+
+br = "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2"
+
+counts = count_comparisons_from_blocking_rule(
+    table_or_tables=df,
+    blocking_rule= br,
+    link_type="dedupe_only",
+    db_api=db_api,
+)
+counts
+
+from splink.blocking_analysis import n_largest_blocks
+
+result = n_largest_blocks(    table_or_tables=df,
+    blocking_rule= block_on("city", "first_name"),
+    link_type="dedupe_only",
+    db_api=db_api,
+    n_largest=3
+    )
+
+result.as_pandas_dataframe()
+
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+blocking_rules_for_analysis = [
+    block_on("substr(first_name, 1,1)", "surname"),
+    block_on("surname"),
+    block_on("email"),
+    block_on("city", "first_name"),
+    "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2",
+]
+
+
+cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    table_or_tables=df,
+    blocking_rules=blocking_rules_for_analysis,
+    db_api=db_api,
+    link_type="dedupe_only",
+)
+
+from splink.exploratory import profile_columns
+
+profile_columns(df, column_expressions=["city || left(first_name,1)"], db_api=db_api)
+
+
+
+Python code from ../docs/demos/tutorials/07_Evaluation.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+# Rerun our predictions to we're ready to view the charts
+import pandas as pd
+
+from splink import DuckDBAPI, Linker, splink_datasets
+
+pd.options.display.max_columns = 1000
+
+db_api = DuckDBAPI()
+df = splink_datasets.fake_1000
+
+import json
+import urllib
+
+from splink import block_on
+
+url = "https://raw.githubusercontent.com/moj-analytical-services/splink/847e32508b1a9cdd7bcd2ca6c0a74e547fb69865/docs/demos/demo_settings/saved_model_from_demo.json"
+
+with urllib.request.urlopen(url) as u:
+    settings = json.loads(u.read().decode())
+
+# The data quality is very poor in this dataset, so we need looser blocking rules
+# to achieve decent recall
+settings["blocking_rules_to_generate_predictions"] = [
+    block_on("first_name"),
+    block_on("city"),
+    block_on("email"),
+    block_on("dob"),
+]
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+df_predictions = linker.inference.predict(threshold_match_probability=0.01)
+
+from splink.datasets import splink_dataset_labels
+
+df_labels = splink_dataset_labels.fake_1000_labels
+labels_table = linker.table_management.register_labels_table(df_labels)
+df_labels.head(5)
+
+splink_df = linker.evaluation.prediction_errors_from_labels_table(
+    labels_table, include_false_negatives=True, include_false_positives=False
+)
+false_negatives = splink_df.as_record_dict(limit=5)
+linker.visualisations.waterfall_chart(false_negatives)
+
+# Note I've picked a threshold match probability of 0.01 here because otherwise
+# in this simple example there are no false positives
+splink_df = linker.evaluation.prediction_errors_from_labels_table(
+    labels_table, include_false_negatives=False, include_false_positives=True, threshold_match_probability=0.01
+)
+false_postives = splink_df.as_record_dict(limit=5)
+linker.visualisations.waterfall_chart(false_postives)
+
+linker.evaluation.accuracy_analysis_from_labels_table(
+    labels_table, output_type="threshold_selection", add_metrics=["f1"]
+)
+
+linker.evaluation.accuracy_analysis_from_labels_table(labels_table, output_type="roc")
+
+roc_table = linker.evaluation.accuracy_analysis_from_labels_table(
+    labels_table, output_type="table"
+)
+roc_table.as_pandas_dataframe(limit=5)
+
+linker.evaluation.unlinkables_chart()
+
+
+
+Python code from ../docs/demos/tutorials/00_Tutorial_Introduction.ipynb:
+
+
+Python code from ../docs/demos/tutorials/02_Exploratory_analysis.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import  splink_datasets
+
+df = splink_datasets.fake_1000
+df = df.drop(columns=["cluster"])
+df.head(5)
+
+from splink.exploratory import completeness_chart
+from splink import DuckDBAPI
+db_api = DuckDBAPI()
+completeness_chart(df, db_api=db_api)
+
+from splink.exploratory import profile_columns
+
+profile_columns(df, db_api=DuckDBAPI(), top_n=10, bottom_n=5)
+
+
+
+Python code from ../docs/demos/tutorials/01_Prerequisites.ipynb:
+
+
+Python code from ../docs/demos/tutorials/04_Estimating_model_parameters.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+# Begin by reading in the tutorial data again
+from splink import splink_datasets
+
+df = splink_datasets.fake_1000
+
+import splink.comparison_library as cl
+
+city_comparison = cl.LevenshteinAtThresholds("city", 2)
+print(city_comparison.get_comparison("duckdb").human_readable_description)
+
+email_comparison = cl.EmailComparison("email")
+print(email_comparison.get_comparison("duckdb").human_readable_description)
+
+from splink import Linker, SettingsCreator, block_on, DuckDBAPI
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    comparisons=[
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.LevenshteinAtThresholds("dob", 1),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name", "city"),
+        block_on("surname"),
+
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+
+deterministic_rules = [
+    block_on("first_name", "dob"),
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    block_on("email")
+]
+
+linker.training.estimate_probability_two_random_records_match(deterministic_rules, recall=0.7)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+training_blocking_rule = block_on("first_name", "surname")
+training_session_fname_sname = (
+    linker.training.estimate_parameters_using_expectation_maximisation(training_blocking_rule)
+)
+
+training_blocking_rule = block_on("dob")
+training_session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    training_blocking_rule
+)
+
+linker.visualisations.match_weights_chart()
+
+linker.visualisations.m_u_parameters_chart()
+
+linker.visualisations.parameter_estimate_comparisons_chart()
+
+settings = linker.misc.save_model_to_json(
+    "../demo_settings/saved_model_from_demo.json", overwrite=True
+)
+
+linker.evaluation.unlinkables_chart()
+
+
+
+Python code from ../docs/demos/tutorials/05_Predicting_results.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+from splink import Linker, DuckDBAPI, splink_datasets
+
+import pandas as pd
+
+pd.options.display.max_columns = 1000
+
+db_api = DuckDBAPI()
+df = splink_datasets.fake_1000
+
+import json
+import urllib
+
+url = "https://raw.githubusercontent.com/moj-analytical-services/splink/847e32508b1a9cdd7bcd2ca6c0a74e547fb69865/docs/demos/demo_settings/saved_model_from_demo.json"
+
+with urllib.request.urlopen(url) as u:
+    settings = json.loads(u.read().decode())
+
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+
+df_predictions = linker.inference.predict(threshold_match_probability=0.2)
+df_predictions.as_pandas_dataframe(limit=5)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predictions, threshold_match_probability=0.5
+)
+clusters.as_pandas_dataframe(limit=10)
+
+sql = f"""
+select *
+from {df_predictions.physical_name}
+limit 2
+"""
+linker.misc.query_sql(sql)
+
+
+
+Python code from ../docs/demos/tutorials/06_Visualising_predictions.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install splink
+
+# Rerun our predictions to we're ready to view the charts
+from splink import Linker, DuckDBAPI, splink_datasets
+
+import pandas as pd
+
+pd.options.display.max_columns = 1000
+
+db_api = DuckDBAPI()
+df = splink_datasets.fake_1000
+
+import json
+import urllib
+
+url = "https://raw.githubusercontent.com/moj-analytical-services/splink/847e32508b1a9cdd7bcd2ca6c0a74e547fb69865/docs/demos/demo_settings/saved_model_from_demo.json"
+
+with urllib.request.urlopen(url) as u:
+    settings = json.loads(u.read().decode())
+
+
+linker = Linker(df, settings, db_api=DuckDBAPI())
+df_predictions = linker.inference.predict(threshold_match_probability=0.2)
+
+records_to_view = df_predictions.as_record_dict(limit=5)
+linker.visualisations.waterfall_chart(records_to_view, filter_nulls=False)
+
+linker.visualisations.comparison_viewer_dashboard(df_predictions, "scv.html", overwrite=True)
+
+# You can view the scv.html file in your browser, or inline in a notbook as follows
+from IPython.display import IFrame
+
+IFrame(src="./scv.html", width="100%", height=1200)
+
+df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predictions, threshold_match_probability=0.5
+)
+
+linker.visualisations.cluster_studio_dashboard(
+    df_predictions,
+    df_clusters,
+    "cluster_studio.html",
+    sampling_method="by_cluster_size",
+    overwrite=True,
+)
+
+# You can view the scv.html file in your browser, or inline in a notbook as follows
+from IPython.display import IFrame
+
+IFrame(src="./cluster_studio.html", width="100%", height=1000)
+
+
+
+Python code from ../docs/demos/tutorials/.ipynb_checkpoints/04_Estimating_model_parameters-checkpoint.ipynb:
+
+
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install git+https://github.com/moj-analytical-services/splink.git@splink4_dev
+
+# Begin by reading in the tutorial data again
+from splink import splink_datasets
+
+df = splink_datasets.fake_1000
+
+import splink.comparison_library as cl
+
+city_comparison = cl.LevenshteinAtThresholds("city", 2)
+print(city_comparison.get_comparison("duckdb").human_readable_description)
+
+email_comparison = cl.EmailComparison("email")
+print(email_comparison.get_comparison("duckdb").human_readable_description)
+
+from splink import Linker, SettingsCreator, block_on, DuckDBAPI
+
+settings = SettingsCreator(
+    link_type="dedupe_only",
+    comparisons=[
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.LevenshteinAtThresholds("dob", 1),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        cl.EmailComparison("email"),
+    ],
+    blocking_rules_to_generate_predictions=[
+        block_on("first_name", "city"),
+        block_on("surname"),
+
+    ],
+    retain_intermediate_calculation_columns=True,
+)
+
+linker = Linker(df, settings, database_api=DuckDBAPI())
+
+deterministic_rules = [
+    block_on("first_name", "dob"),
+    "l.first_name = r.first_name and levenshtein(r.surname, l.surname) <= 2",
+    block_on("email")
+]
+
+linker.training.estimate_probability_two_random_records_match(deterministic_rules, recall=0.7)
+
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+training_blocking_rule = block_on("first_name", "surname")
+training_session_fname_sname = (
+    linker.training.estimate_parameters_using_expectation_maximisation(training_blocking_rule)
+)
+
+training_blocking_rule = block_on("dob")
+training_session_dob = linker.training.estimate_parameters_using_expectation_maximisation(
+    training_blocking_rule
+)
+
+linker.visualisations.match_weights_chart()
+
+linker.visualisations.m_u_parameters_chart()
+
+settings = linker.misc.save_model_to_json(
+    "../demo_settings/saved_model_from_demo.json", overwrite=True
+)
+
+linker.evaluation.unlinkables_chart()
+
+
+
+Python code from ../docs/demos/tutorials/.ipynb_checkpoints/05_Predicting_results-checkpoint.ipynb:
+# Uncomment and run this cell if you're running in Google Colab.
+# !pip install git+https://github.com/moj-analytical-services/splink.git@splink4_dev
+
+from splink import Linker, DuckDBAPI, splink_datasets
+
+import pandas as pd
+
+pd.options.display.max_columns = 1000
+
+db_api = DuckDBAPI()
+df = splink_datasets.fake_1000
+
+import json
+import urllib
+
+url = "https://raw.githubusercontent.com/moj-analytical-services/splink/847e32508b1a9cdd7bcd2ca6c0a74e547fb69865/docs/demos/demo_settings/saved_model_from_demo.json"
+
+with urllib.request.urlopen(url) as u:
+    settings = json.loads(u.read().decode())
+
+
+linker = Linker(df, settings, database_api=DuckDBAPI())
+
+df_predictions = linker.inference.predict(threshold_match_probability=0.2)
+df_predictions.as_pandas_dataframe(limit=5)
+
+clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+    df_predictions, threshold_match_probability=0.5
+)
+clusters.as_pandas_dataframe(limit=10)
+
+sql = f"""
+select *
+from {df_predictions.physical_name}
+limit 2
+"""
+linker.misc.query_sql(sql)
+
+
+
+
+
+Contents of /docs/index.md:
+---
+hide:
+  - navigation
+  - toc
+---
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink: data linkage at scale. (Splink logo)." style="max-width: 500px;">
+</p>
+
+!!! info
+
+    🎉 Splink 4 has been released! Examples of new syntax are [here](./demos/examples/examples_index.md) and a release announcement is [here](./blog/posts/2024-07-10-splink4_release.md).
+
+
+# Fast, accurate and scalable probabilistic data linkage
+
+Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
+
+[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary }
+
+<hr>
+
+## Key Features
+
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.<br>
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.<br>
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.<br>
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.<br>
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.<br>
+
+Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
+
+## What does Splink do?
+
+Consider the following records that lack a unique person identifier:
+
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_1.drawio.png)
+
+Splink predicts which rows link together:
+
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_2.drawio.png)
+
+and clusters these links to produce an estimated person ID:
+
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_3.drawio.png)
+
+## What data does Splink work best with?
+
+Before using Splink, input data should be standardised, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
+
+Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
+
+High correlation occurs when the value of a column is highly constrained (predictable) from the value of another column. For example, a 'city' field is almost perfectly correlated with 'postcode'. Gender is highly correlated with 'first name'. Correlation is particularly problematic if **all** of your input columns are highly correlated.
+
+Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
+
+## Support
+
+If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
+
+## Use Cases
+
+Here is a list of some of our known users and their use cases:
+
+=== "Public Sector (UK)"
+
+	- [Ministry of Justice](https://www.gov.uk/government/organisations/ministry-of-justice) created [linked datasets (combining courts, prisons and probation data)](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) for use by researchers as part of the [Data First programme](https://www.gov.uk/guidance/ministry-of-justice-data-first)
+	- [Office for National Statistics](https://www.ons.gov.uk/)'s [Business Index](https://unece.org/sites/default/files/2023-04/ML2023_S1_UK_Breton_A.pdf) (formerly the Inter Departmental Business Register), [Demographic Index](https://uksa.statisticsauthority.gov.uk/wp-content/uploads/2023/02/EAP182-Quality-work-for-Demographic-Index-MDQA.pdf) and the [2021 Census](https://github.com/Data-Linkage/Splink-census-linkage/blob/main/SplinkCaseStudy.pdf)
+	- [Lewisham Council](https://lewisham.gov.uk/) (London) [identified and auto-enrolled over 500 additional eligible families](https://lewisham.gov.uk/articles/news/extra-funding-for-lewisham-schools-in-pilot-data-project) to receive Free School Meals
+	- [London Office of Technology and Innovation](https://loti.london/) created a dashboard to help [better measure and reduce rough sleeping](https://loti.london/projects/rough-sleeping-insights-project/) across London
+	- [Competition and Markets Authority](https://www.gov.uk/government/organisations/competition-and-markets-authority) identified ['Persons with Significant Control' and estimated ownership groups](https://assets.publishing.service.gov.uk/media/626ab6c4d3bf7f0e7f9d5a9b/220426_Annex_-State_of_Competition_Appendices_FINAL.pdf) across companies
+	- [Office for Health Improvement and Disparities](https://www.gov.uk/government/organisations/office-for-health-improvement-and-disparities) linked Health and Justice data to [assess the pathways between probation and specialist alcohol and drug treatment services](https://www.gov.uk/government/statistics/pathways-between-probation-and-addiction-treatment-in-england#:~:text=Details,of%20Health%20and%20Social%20Care) as part of the [Better Outcomes through Linked Data programme](https://www.gov.uk/government/publications/ministry-of-justice-better-outcomes-through-linked-data-bold)
+	- [Ministry of Defence](https://www.gov.uk/government/organisations/ministry-of-defence) recently launched their [Veteran's Card system](https://www.gov.uk/government/news/hm-armed-forces-veteran-cards-will-officially-launch-in-the-new-year-following-a-successful-assessment-from-the-central-digital-and-data-office) which uses Splink to verify applicants against historic records. This project was shortlisted for the [Civil Service Awards](https://www.civilserviceawards.com/creative-solutions-award/)
+ 	- [Gateshead Council](https://www.gateshead.gov.uk/), in partnership with the [National Innovation Centre for Data](https://www.nicd.org.uk/) are creating a [single view of debt](https://nicd.org.uk/knowledge-hub/an-end-to-end-guide-to-overcoming-unique-identifier-challenges-with-splink)
+
+=== "Public Sector (International)"
+
+	- The German Federal Statistical Office ([Destatis](https://www.destatis.de/EN/Home/_node.html)) uses Splink to conduct projects in linking register-based census data.
+	- [Chilean Ministry of Health](https://www.gob.cl/en/ministries/ministry-of-health/) and [University College London](https://www.ucl.ac.uk/) have [assessed the access to immunisation programs among the migrant population](https://ijpds.org/article/view/2348)
+	- [Florida Cancer Registry](https://www.floridahealth.gov/diseases-and-conditions/cancer/cancer-registry/index.html), published a [feasibility study](https://scholar.googleusercontent.com/scholar?q=cache:sADwxy-D75IJ:scholar.google.com/+splink+florida&hl=en&as_sdt=0,5) which showed Splink was faster and more accurate than alternatives
+	- [Catalyst Cooperative](https://catalyst.coop)'s [Public Utility Data Liberation Project](https://github.com/catalyst-cooperative/pudl) links public financial and operational data from electric utilities for use by US climate advocates, policymakers, and researchers seeking to accelerate the transition away from fossil fuels.
+
+=== "Academia"
+
+	- [Stanford University](https://www.stanford.edu/) investigated the impact of [receiving government assistance has on political attitudes](https://www.cambridge.org/core/journals/american-political-science-review/article/abs/does-receiving-government-assistance-shape-political-attitudes-evidence-from-agricultural-producers/39552BC5A496EAB6CB484FCA51C6AF21)
+	- [Bern University](https://arbor.bfh.ch/) researched how [Active Learning can be applied to Biomedical Record Linkage](https://ebooks.iospress.nl/doi/10.3233/SHTI230545)
+
+=== "Other"
+	- [Marie Curie](https://podcasts.apple.com/gb/podcast/unlocking-data-at-marie-curie/id1724979056?i=1000649964922) have used Splink to build a single customer view on fundraising data which has been a "huge success [...] the tooling is just so much better. [...] The power of being able to select, plug in, configure and train a tool versus writing code. It's just mind boggling actually."  Amongst other benefits, the system is expected to "dramatically reduce manual reporting efforts previously required". See also the blog post [here](https://esynergy.co.uk/our-work/marie-curie/).
+
+Sadly, we don't hear about the majority of our users or what they are working on. If you have a use case and it is not shown here please [add it to the list](https://github.com/moj-analytical-services/splink/edit/master/docs/index.md)!
+
+## Awards
+
+🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
+
+🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+
+🥈 Analysis in Government Awards 2022: Innovative Methods - [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+
+🥇 Analysis in Government Awards 2020: Innovative Methods - [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+
+🥇 Ministry of Justice Data and Analytical Services Directorate (DASD) Awards 2020: Innovation and Impact - Winner
+
+
+## Citation
+
+If you use Splink in your research, we'd be grateful for a citation as follows:
+
+```BibTeX
+@article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
+	title        = {Splink: Free software for probabilistic record linkage at scale.},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom and Kennedy, Ross and Bond, Andrew},
+	year         = 2022,
+	month        = {Aug.},
+	journal      = {International Journal of Population Data Science},
+	volume       = 7,
+	number       = 3,
+	doi          = {10.23889/ijpds.v7i3.1794},
+	url          = {https://ijpds.org/article/view/1794},
+}
+```
+
+## Acknowledgements
+
+We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing the initial funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
+
+We are extremely grateful to professors Katie Harron, James Doidge and Peter Christen for their expert advice and guidance in the development of Splink. We are also very grateful to colleagues at the UK's Office for National Statistics for their expert advice and peer review of this work. Any errors remain our own.
+
+
+
+
+Contents of /docs/getting_started.md:
+---
+hide:
+  - navigation
+---
+
+# Getting Started
+
+## :material-download: Install
+Splink supports python 3.8+.
+
+To obtain the latest released version of Splink you can install from PyPI using pip:
+```shell
+pip install splink
+```
+
+or if you prefer, you can instead install Splink using conda:
+```shell
+conda install -c conda-forge splink
+```
+
+??? "Backend Specific Installs"
+    ### Backend Specific Installs
+    From Splink v3.9.7, packages required by specific Splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
+
+    **Note** that SQLite and DuckDB come packaged with Splink and do not need to be optionally installed.
+
+    The following backends are supported:
+
+    === ":simple-apachespark: Spark"
+        ```sh
+        pip install 'splink[spark]'
+        ```
+
+    === ":simple-amazonaws: Athena"
+        ```sh
+        pip install 'splink[athena]'
+        ```
+
+    === ":simple-postgresql: PostgreSQL"
+        ```sh
+        pip install 'splink[postgres]'
+        ```
+
+
+
+## :rocket: Quickstart
+
+To get a basic Splink model up and running, use the following code. It demonstrates how to:
+
+1. Estimate the parameters of a deduplication model
+2. Use the parameter estimates to identify duplicate records
+3. Use clustering to generate an estimated unique person ID.
+
+???+ note "Simple Splink Model Example"
+    ```py
+    import splink.comparison_library as cl
+    from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+
+    db_api = DuckDBAPI()
+
+    df = splink_datasets.fake_1000
+
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.NameComparison("first_name"),
+            cl.JaroAtThresholds("surname"),
+            cl.DateOfBirthComparison(
+                "dob",
+                input_is_string=True,
+            ),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+            cl.EmailComparison("email"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("first_name", "dob"),
+            block_on("surname"),
+        ]
+    )
+
+    linker = Linker(df, settings, db_api)
+
+    linker.training.estimate_probability_two_random_records_match(
+        [block_on("first_name", "surname")],
+        recall=0.7,
+    )
+
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name", "surname")
+    )
+
+    linker.training.estimate_parameters_using_expectation_maximisation(block_on("email"))
+
+    pairwise_predictions = linker.inference.predict(threshold_match_weight=-5)
+
+    clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        pairwise_predictions, 0.95
+    )
+
+    df_clusters = clusters.as_pandas_dataframe(limit=5)
+    ```
+
+
+## Tutorials
+
+You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials/00_Tutorial_Introduction.ipynb). Each has a corresponding Google Colab link to run the notebook in your browser.
+
+## Example Notebooks
+
+You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md). Each has a corresponding Google Colab link to run the notebook in your browser.
+
+## Getting help
+
+If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
+
