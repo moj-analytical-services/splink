@@ -1,4 +1,5 @@
 import inspect
+import logging
 import os
 
 import nbformat
@@ -49,11 +50,13 @@ mock_settings = SettingsCreator(
 )  # or pass a real settings object
 mock_db_api = DuckDBAPI()  # or pass a real database API subclass instance
 
-# Instantiate the Linker object
+logging.getLogger("splink").setLevel(logging.ERROR)
+
 linker = Linker(
     input_table_or_tables=splink_datasets.fake_1000,  # replace with real input
     settings=mock_settings,
     db_api=mock_db_api,
+    set_up_basic_logging=False,
 )
 
 # Run inference to get SplinkDataFrame object
@@ -141,10 +144,10 @@ def save_docstrings_with_append(
 
     with open(docstring_filename, "w", encoding="utf-8") as file:
         for method_path, docstring in docstrings.items():
+            print(f"Outputting docstring for: {method_path}")
             file.write(f"{method_path}:\n")
             file.write(f"{docstring}\n\n")
 
-        # Append additional content if available
         if append_content:
             file.write("\n\n")
             file.write(append_content)
@@ -207,6 +210,7 @@ if __name__ == "__main__":
     }
 
     # Save to file and append the contents of the settings_dict_guide.md and datasets.md
+    print("Extracting and saving docstrings...")
     save_docstrings_with_append(
         all_docstrings,
         "docstrings.txt",
