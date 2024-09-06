@@ -34,7 +34,7 @@ def extract_and_append_notebook_content(base_dir, docstring_filename):
             if file.endswith(".ipynb") and not file.endswith("-checkpoint.ipynb"):
                 notebook_path = os.path.join(root, file)
                 if ".ipynb_checkpoints" not in notebook_path:
-                    print(f"Processing {notebook_path}...")
+                    print(f"Processing {notebook_path}...")  # NOQA: T201
                     content = extract_notebook_content(notebook_path)
 
                     with open(docstring_filename, "a", encoding="utf-8") as f:
@@ -42,7 +42,7 @@ def extract_and_append_notebook_content(base_dir, docstring_filename):
                         f.write(content)
                         f.write("\n\n")
                 else:
-                    print(f"Skipping checkpoint file: {notebook_path}")
+                    print(f"Skipping checkpoint file: {notebook_path}")  # NOQA: T201
 
 
 # Mock objects for instantiation, replace with real ones if available
@@ -89,7 +89,6 @@ def extract_instance_method_docstrings(instance):
     return docstrings
 
 
-# Function to extract all public methods from the specified submodules of the Linker class instance
 def extract_method_docstrings(linker_instance, submodule_list):
     docstrings = {}
     for submodule_name in submodule_list:
@@ -106,7 +105,6 @@ def extract_method_docstrings(linker_instance, submodule_list):
     return docstrings
 
 
-# Function to extract docstrings from the __init__ methods of all public classes in a module
 def extract_class_docstrings_from_module(module):
     docstrings = {}
     for name, obj in inspect.getmembers(module, inspect.isclass):
@@ -185,9 +183,9 @@ def save_docstrings_with_append(
         for section_name, section_docstrings in sections.items():
             if section_docstrings:
                 file.write(f"## {section_name}\n\n")
-                print(f"\nOutputting docstrings for: {section_name}")
+                print(f"\nOutputting docstrings for: {section_name}")  # NOQA: T201
                 for method_path, docstring in section_docstrings:
-                    print(f"  {method_path}")
+                    print(f"  {method_path}")  # NOQA: T201
                     file.write(f"{method_path}:\n")
                     file.write(f"{docstring}\n\n")
                 file.write("\n")
@@ -196,8 +194,9 @@ def save_docstrings_with_append(
             file.write("\n\n")
             file.write(append_content)
 
-    print(
-        "\nDocstrings extracted, saved, and organized into sections in llm_context_long.txt"
+    print(  # NOQA: T201
+        "\nDocstrings extracted, saved, and organized into sections in "
+        "llm_context_long.txt"
     )
 
 
@@ -206,7 +205,7 @@ def extract_and_append_md_content(md_files, docstring_filename):
     for md_file in md_files:
         full_path = os.path.join("..", md_file.lstrip("/"))
         if os.path.exists(full_path):
-            print(f"Appending content from {full_path}...")
+            print(f"Appending content from {full_path}...")  # NOQA: T201
             with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
@@ -215,7 +214,7 @@ def extract_and_append_md_content(md_files, docstring_filename):
                 f.write(content)
                 f.write("\n\n")
         else:
-            print(f"Warning: File {full_path} not found.")
+            print(f"Warning: File {full_path} not found.")  # NOQA: T201
 
 
 # Main execution
@@ -270,12 +269,12 @@ if __name__ == "__main__":
         **exploratory_docstrings,
         **block_on_docstring,
         **blocking_analysis_docstrings,
-        **splink_data_frame_docstrings,  # Include SplinkDataFrame methods docstrings
-        **em_training_session_docstrings,  # Include EM training session methods docstrings
+        **splink_data_frame_docstrings,
+        **em_training_session_docstrings,
     }
 
     # Save to file and append the contents of the settings_dict_guide.md and datasets.md
-    print("Extracting and saving docstrings...")
+    print("Extracting and saving docstrings...")  # NOQA: T201
     save_docstrings_with_append(
         all_docstrings,
         "llm_context_long.txt",
@@ -307,6 +306,7 @@ if __name__ == "__main__":
     ]
     extract_and_append_md_content(mds_to_append, "llm_context_long.txt")
 
-    print(
-        "Docstrings extracted, saved, and all specified content appended to llm_context_long.txt"
+    print(  # NOQA: T201
+        "Docstrings extracted, saved, and all specified content "
+        "appended to llm_context_long.txt"
     )

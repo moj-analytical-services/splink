@@ -25,7 +25,7 @@ def extract_and_append_notebook_code(base_dir, output_filename):
             if file.endswith(".ipynb") and not file.endswith("-checkpoint.ipynb"):
                 notebook_path = os.path.join(root, file)
                 if ".ipynb_checkpoints" not in notebook_path:
-                    print(f"Processing {notebook_path}...")
+                    print(f"Processing {notebook_path}...")  # noqa: T201
                     code = extract_notebook_code(notebook_path)
 
                     with open(output_filename, "a", encoding="utf-8") as f:
@@ -33,7 +33,7 @@ def extract_and_append_notebook_code(base_dir, output_filename):
                         f.write(code)
                         f.write("\n\n")
                 else:
-                    print(f"Skipping checkpoint file: {notebook_path}")
+                    print(f"Skipping checkpoint file: {notebook_path}")  # noqa: T201
 
 
 # Function to extract and append content from specified Markdown files
@@ -41,7 +41,7 @@ def extract_and_append_md_content(md_files, output_filename):
     for md_file in md_files:
         full_path = os.path.join("..", md_file.lstrip("/"))
         if os.path.exists(full_path):
-            print(f"Appending content from {full_path}...")
+            print(f"Appending content from {full_path}...")  # noqa: T201
             with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
@@ -50,7 +50,7 @@ def extract_and_append_md_content(md_files, output_filename):
                 f.write(content)
                 f.write("\n\n")
         else:
-            print(f"Warning: File {full_path} not found.")
+            print(f"Warning: File {full_path} not found.")  # noqa: T201
 
 
 # Main execution
@@ -71,6 +71,7 @@ if __name__ == "__main__":
     ]
     extract_and_append_md_content(mds_to_append, output_filename)
 
-    print(
-        "Python code from notebooks and markdown content extracted and saved to extracted_python_code_and_markdown.txt"
+    print(  # noqa: T201
+        "Python code from notebooks and markdown content extracted and saved to "
+        "extracted_python_code_and_markdown.txt"
     )
