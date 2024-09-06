@@ -48,6 +48,10 @@ This section provides a series of examples to help you get started with Splink. 
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Linking the febrl4 datasets](./duckdb/febrl4.ipynb). As above, these datasets are from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
 </a>
 
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/techniques.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Cookbook of various Splink techniques](./duckdb/techniques.ipynb)
+
 ##### Entity type: Financial transactions
 
 <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/transactions.ipynb">
