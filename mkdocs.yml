@@ -123,6 +123,7 @@ nav:
         - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
+        - Cookbook: "demos/examples/duckdb/cookbook.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
@@ -274,3 +275,9 @@ extra:
     - icon: fontawesome/solid/rss
       link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
   new: Recently added
+exclude_docs: |
+  dev_guides/**
+  charts/**
+  blog/**
+  api_docs/**
+  topic_guides/**
