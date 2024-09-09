@@ -109,7 +109,7 @@ class ColumnExpression:
 
     def apply_operations(self, name: str, sql_dialect: SplinkDialect) -> str:
         for op in self.operations:
-            name = op(name=name, dialect=sql_dialect)
+            name = op(name=name, sql_dialect=sql_dialect)
         return name
 
     def _lower_dialected(self, name: str, sql_dialect: SplinkDialect) -> str:

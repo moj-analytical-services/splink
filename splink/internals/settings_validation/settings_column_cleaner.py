@@ -125,7 +125,7 @@ class SettingsColumnCleaner:
     def __init__(
         self, settings_object: Settings, input_columns: dict[str, SplinkDataFrame]
     ):
-        self.sql_dialect = settings_object._sql_dialect
+        self.sql_dialect = settings_object._sql_dialect_str
         self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(
             input_columns, return_as_single_column=True

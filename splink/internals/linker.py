@@ -285,7 +285,7 @@ class Linker:
 
     # TODO: rename these!
     @property
-    def _sql_dialect(self) -> str:
+    def _sql_dialect_str(self) -> str:
         return self._db_api.sql_dialect.sql_dialect_str
 
     @property
@@ -335,8 +335,8 @@ class Linker:
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
-            settings_dialect=self._settings_obj._sql_dialect,
-            linker_dialect=self._sql_dialect,
+            settings_dialect=self._settings_obj._sql_dialect_str,
+            linker_dialect=self._sql_dialect_str,
             linker_type=self.__class__.__name__,
         )
 

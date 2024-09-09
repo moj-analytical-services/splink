@@ -213,7 +213,7 @@ class Settings:
         # Validate against schema before processing
         # validate_settings_against_schema(settings_dict)
 
-        self._sql_dialect = sql_dialect
+        self._sql_dialect_str = sql_dialect
         self._sqlglot_dialect = SplinkDialect.from_string(sql_dialect).sqlglot_dialect
         self._link_type = link_type
 
@@ -588,7 +588,7 @@ class Settings:
                 self._retain_intermediate_calculation_columns
             ),
             "additional_columns_to_retain": self._additional_col_names_to_retain,
-            "sql_dialect": self._sql_dialect,
+            "sql_dialect": self._sql_dialect_str,
             "linker_uid": self._cache_uid,
             **self.training_settings.as_dict(),
             **self.column_info_settings.as_dict(),
@@ -699,7 +699,7 @@ class Settings:
     def salting_required(self):
         # see https://github.com/duckdb/duckdb/discussions/9710
         # in duckdb to parallelise we need salting
-        if self._sql_dialect == "duckdb":
+        if self._sql_dialect_str == "duckdb":
             return True
 
         for br in self._blocking_rules_to_generate_predictions:
