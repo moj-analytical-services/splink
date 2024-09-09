@@ -92,7 +92,7 @@ class BlockingRule:
             )
         self.blocking_rule_sql = blocking_rule_sql
         self.preceding_rules: List[BlockingRule] = []
-        self.sqlglot_dialect = sqlglot_dialect
+        self._sqlglot_dialect = sqlglot_dialect
 
     @property
     def sqlglot_dialect(self):

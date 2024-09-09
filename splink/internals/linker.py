@@ -289,17 +289,17 @@ class Linker:
         return self._db_api.sql_dialect.sql_dialect_str
 
     @property
-    def _sql_dialect_object(self) -> SplinkDialect:
+    def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
 
     @property
     def _infinity_expression(self):
-        return self._sql_dialect_object.infinity_expression
+        return self._sql_dialect.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
-        return self._sql_dialect_object.random_sample_sql(
+        return self._sql_dialect.random_sample_sql(
             proportion, sample_size, seed=seed, table=table, unique_id=unique_id
         )
 
