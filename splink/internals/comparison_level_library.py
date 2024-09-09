@@ -25,9 +25,9 @@ def unsupported_splink_dialects(
     def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
         @wraps(func)
         def wrapper(self: T, splink_dialect: SplinkDialect) -> str:
-            if splink_dialect.splink_dialect_str in unsupported_dialects:
+            if splink_dialect.sql_dialect_str in unsupported_dialects:
                 raise ValueError(
-                    f"Dialect {splink_dialect.splink_dialect_str} is not supported "
+                    f"Dialect {splink_dialect.sql_dialect_str} is not supported "
                     f"for {self.__class__.__name__}"
                 )
             return func(self, splink_dialect)

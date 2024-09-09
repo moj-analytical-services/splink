@@ -289,7 +289,7 @@ def test_custom_dialect_no_string_lookup():
     class TestDialectNoLookup(SplinkDialect):
         # missing _dialect_name_for_factory!
         @property
-        def splink_dialect_str(self):
+        def sql_dialect_str(self):
             return "test_dialect"
 
         @property
@@ -313,7 +313,7 @@ def test_custom_dialect_duplicate_string_lookup():
         _dialect_name_for_factory = "duckdb"
 
         @property
-        def splink_dialect_str(self):
+        def sql_dialect_str(self):
             return "test_dialect"
 
         @property
@@ -340,7 +340,7 @@ def test_valid_custom_dialect():
         _dialect_name_for_factory = "valid_test_dialect"
 
         @property
-        def splink_dialect_str(self):
+        def sql_dialect_str(self):
             return "test_dialect"
 
         @property

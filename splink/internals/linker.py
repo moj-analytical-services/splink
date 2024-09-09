@@ -157,7 +157,7 @@ class Linker:
         # Maybe overwrite it here and incompatibilities have to be dealt with
         # by comparisons/ blocking rules etc??
         self._settings_obj = settings_creator.get_settings(
-            db_api.sql_dialect.splink_dialect_str
+            db_api.sql_dialect.sql_dialect_str
         )
 
         # TODO: Add test of what happens if the db_api is for a different backend
@@ -286,7 +286,7 @@ class Linker:
     # TODO: rename these!
     @property
     def _sql_dialect(self) -> str:
-        return self._db_api.sql_dialect.splink_dialect_str
+        return self._db_api.sql_dialect.sql_dialect_str
 
     @property
     def _sql_dialect_object(self) -> SplinkDialect:

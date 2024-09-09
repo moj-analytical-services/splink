@@ -326,18 +326,20 @@ def _get_dialect_quotes(dialect):
     if dialect is None:
         return start, end
     try:
-        sqlglot_dialect: Type[sqlglot.Dialect] = sqlglot.Dialect[dialect.lower()]
+        sqlglot_dialect_obj: Type[sqlglot.Dialect] = sqlglot.Dialect[dialect.lower()]
     except KeyError:
         return start, end
-    return _get_sqlglot_dialect_quotes(sqlglot_dialect)
+    return _get_sqlglot_dialect_quotes(sqlglot_dialect_obj)
 
 
-def _get_sqlglot_dialect_quotes(dialect: Type[sqlglot.Dialect]) -> tuple[str, str]:
+def _get_sqlglot_dialect_quotes(
+    sqlglot_dialect_obj: Type[sqlglot.Dialect],
+) -> tuple[str, str]:
     try:
-        start = dialect.IDENTIFIER_START
-        end = dialect.IDENTIFIER_END
+        start = sqlglot_dialect_obj.IDENTIFIER_START
+        end = sqlglot_dialect_obj.IDENTIFIER_END
     except AttributeError:
         # For sqlglot < 16.0.0
-        start = dialect.identifier_start  # type: ignore [attr-defined]
-        end = dialect.identifier_end  # type: ignore [attr-defined]
+        start = sqlglot_dialect_obj.identifier_start  # type: ignore [attr-defined]
+        end = sqlglot_dialect_obj.identifier_end  # type: ignore [attr-defined]
     return start, end
