@@ -128,8 +128,7 @@ class ComparisonLevel:
     def __init__(
         self,
         sql_condition: str,
-        # TODO: do we want dialect or just dialect name?
-        sqlglot_dialect_name: str,
+        sqlglot_dialect: str,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -142,7 +141,7 @@ class ComparisonLevel:
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
     ):
-        self._sqlglot_dialect_name = sqlglot_dialect_name
+        self.sqlglot_dialect = sqlglot_dialect
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -181,11 +180,6 @@ class ComparisonLevel:
         return copy(self)
 
     @property
-    def sql_dialect(self):
-        # TODO: align name with attribute
-        return self._sqlglot_dialect_name
-
-    @property
     def is_null_level(self) -> bool:
         return self._is_null_level
 
@@ -201,7 +195,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._tf_adjustment_column
         if val:
-            return InputColumn(val, sqlglot_dialect=self.sql_dialect)
+            return InputColumn(val, sqlglot_dialect=self.sqlglot_dialect)
         else:
             return None
 
@@ -411,7 +405,7 @@ class ComparisonLevel:
         sql = self.sql_condition
         if self._is_else_level:
             return True
-        dialect = self.sql_dialect
+        dialect = self.sqlglot_dialect
         try:
             sqlglot.parse_one(sql, read=dialect)
         except sqlglot.ParseError as e:
@@ -426,7 +420,9 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition, dialect=self.sql_dialect)
+        cols = get_columns_used_from_sql(
+            self.sql_condition, dialect=self.sqlglot_dialect
+        )
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -439,7 +435,7 @@ class ComparisonLevel:
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
 
-            input_cols.append(InputColumn(c, sqlglot_dialect=self.sql_dialect))
+            input_cols.append(InputColumn(c, sqlglot_dialect=self.sqlglot_dialect))
 
         return input_cols
 
@@ -477,7 +473,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sql_dialect
+            self.sql_condition.lower(), read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 
@@ -490,7 +486,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sql_dialect
+            self.sql_condition.lower(), read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 

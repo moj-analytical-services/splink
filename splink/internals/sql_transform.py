@@ -38,12 +38,12 @@ def _remove_table_prefix(node):
 
 
 def move_l_r_table_prefix_to_column_suffix(
-    blocking_rule: str, dialect: str = None
+    blocking_rule: str, sqlglot_dialect: str = None
 ) -> str:
-    expression_tree = sqlglot.parse_one(blocking_rule, read=dialect)
+    expression_tree = sqlglot.parse_one(blocking_rule, read=sqlglot_dialect)
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
-    return transformed_tree.sql(dialect=dialect)
+    return transformed_tree.sql(dialect=sqlglot_dialect)
 
 
 def add_quotes_and_table_prefix(syntax_tree, table_name):
