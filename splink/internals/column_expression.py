@@ -17,7 +17,7 @@ from splink.internals.sql_transform import (
 
 
 class ColumnExpressionOperation(Protocol):
-    def __call__(self, name: str, dialect: SplinkDialect) -> str: ...
+    def __call__(self, name: str, sql_dialect: SplinkDialect) -> str: ...
 
 
 class ColumnExpression:
@@ -64,7 +64,7 @@ class ColumnExpression:
         elif isinstance(str_or_column_expression, str):
             return ColumnExpression(str_or_column_expression)
 
-    def _parse_input_string(self, dialect: SplinkDialect) -> str:
+    def _parse_input_string(self, sql_dialect: SplinkDialect) -> str:
         """
         Returns the SQL expression of the input as a string
 
@@ -83,7 +83,7 @@ class ColumnExpression:
             return self.raw_sql_expression
 
         return SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
-            self.raw_sql_expression, dialect.sqlglot_dialect
+            self.raw_sql_expression, sql_dialect.sqlglot_dialect
         ).sql
 
     @property
@@ -107,14 +107,14 @@ class ColumnExpression:
 
         return self.raw_sql_is_pure_column_or_column_reference
 
-    def apply_operations(self, name: str, dialect: SplinkDialect) -> str:
+    def apply_operations(self, name: str, sql_dialect: SplinkDialect) -> str:
         for op in self.operations:
-            name = op(name=name, dialect=dialect)
+            name = op(name=name, dialect=sql_dialect)
         return name
 
-    def _lower_dialected(self, name: str, dialect: SplinkDialect) -> str:
+    def _lower_dialected(self, name: str, sql_dialect: SplinkDialect) -> str:
         lower_sql = sqlglot.parse_one("lower(___col___)").sql(
-            dialect=dialect.sqlglot_dialect
+            dialect=sql_dialect.sqlglot_dialect
         )
 
         return lower_sql.replace("___col___", name)
@@ -128,10 +128,10 @@ class ColumnExpression:
         return clone
 
     def _substr_dialected(
-        self, name: str, start: int, end: int, dialect: SplinkDialect
+        self, name: str, start: int, end: int, sql_dialect: SplinkDialect
     ) -> str:
         substr_sql = sqlglot.parse_one(f"substring(___col___, {start}, {end})").sql(
-            dialect=dialect.sqlglot_dialect
+            dialect=sql_dialect.sqlglot_dialect
         )
 
         return substr_sql.replace("___col___", name)
@@ -151,9 +151,9 @@ class ColumnExpression:
 
         return clone
 
-    def _cast_to_string_dialected(self, name: str, dialect: SplinkDialect) -> str:
+    def _cast_to_string_dialected(self, name: str, sql_dialect: SplinkDialect) -> str:
         cast_sql = sqlglot.parse_one("cast(___col___ as string)").sql(
-            dialect=dialect.sqlglot_dialect
+            dialect=sql_dialect.sqlglot_dialect
         )
         return cast_sql.replace("___col___", name)
 
@@ -172,11 +172,11 @@ class ColumnExpression:
         name: str,
         pattern: str,
         capture_group: int,
-        dialect: SplinkDialect,
+        sql_dialect: SplinkDialect,
     ) -> str:
         # must use dialect specific functions because sqlglot doesn't yet support the
         # position (capture group) arg
-        return dialect.regex_extract(
+        return sql_dialect.regex_extract(
             name,
             pattern=pattern,
             capture_group=capture_group,
@@ -204,10 +204,10 @@ class ColumnExpression:
     def _try_parse_date_dialected(
         self,
         name: str,
-        dialect: SplinkDialect,
+        sql_dialect: SplinkDialect,
         date_format: str = None,
     ) -> str:
-        return dialect.try_parse_date(name, date_format=date_format)
+        return sql_dialect.try_parse_date(name, date_format=date_format)
 
     def try_parse_date(self, date_format: str = None) -> "ColumnExpression":
         """Applies a 'try parse date' transform to the input expression.
@@ -228,10 +228,10 @@ class ColumnExpression:
     def _try_parse_timestamp_dialected(
         self,
         name: str,
-        dialect: SplinkDialect,
+        sql_dialect: SplinkDialect,
         timestamp_format: str = None,
     ) -> str:
-        return dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
+        return sql_dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
 
     def try_parse_timestamp(self, timestamp_format: str = None) -> "ColumnExpression":
         """Applies a 'try parse timestamp' transform to the input expression.
