@@ -294,7 +294,9 @@ def _select_found_by_blocking_rules(linker: "Linker") -> str:
 
     if brs:
         br_strings = [
-            move_l_r_table_prefix_to_column_suffix(b.blocking_rule_sql, b.sql_dialect)
+            move_l_r_table_prefix_to_column_suffix(
+                b.blocking_rule_sql, b.sqlglot_dialect
+            )
             for b in brs
         ]
         wrapped_br_strings = [f"(coalesce({b}, false))" for b in br_strings]

@@ -101,7 +101,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
     sql = vertically_concatenate_sql(
         input_tables=db_api.register_multiple_tables(dfs),
         salting_required=False,
-        source_dataset_input_column=InputColumn("source_dataset", sql_dialect="duckdb"),
+        source_dataset_input_column=InputColumn(
+            "source_dataset", sqlglot_dialect="duckdb"
+        ),
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 

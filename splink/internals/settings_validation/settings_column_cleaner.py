@@ -141,7 +141,7 @@ class SettingsColumnCleaner:
     def uid(self):
         uid_as_tree = InputColumn(
             self._settings_obj.column_info_settings.unique_id_column_name,
-            sql_dialect=self.sql_dialect,
+            sqlglot_dialect=self.sql_dialect,
         )
         return clean_list_of_column_names([uid_as_tree])
 

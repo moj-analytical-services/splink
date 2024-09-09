@@ -29,7 +29,7 @@ class PostgresDataFrame(SplinkDataFrame):
         res = self.db_api._execute_sql_against_backend(sql).mappings().all()
         cols = [r["column_name"] for r in res]
 
-        return [InputColumn(c, sql_dialect="postgres") for c in cols]
+        return [InputColumn(c, sqlglot_dialect="postgres") for c in cols]
 
     def validate(self):
         if not isinstance(self.physical_name, str):

@@ -26,7 +26,7 @@ class SparkDataFrame(SplinkDataFrame):
         spark_df = self.db_api._execute_sql_against_backend(sql)
 
         col_strings = list(spark_df.columns)
-        return [InputColumn(c, sql_dialect="spark") for c in col_strings]
+        return [InputColumn(c, sqlglot_dialect="spark") for c in col_strings]
 
     def validate(self):
         pass

@@ -172,13 +172,13 @@ class InputColumn:
         raw_column_name_or_column_reference: str,
         *,
         column_info_settings: ColumnInfoSettings = None,
-        sql_dialect: str,
+        sqlglot_dialect: str,
     ):
         # TODO: the sql_dialect is the sqlglot name.
         # Might need to be more careful with this
         self.column_info_settings = copy(column_info_settings)
 
-        self.register_dialect(sql_dialect)
+        self.register_dialect(sqlglot_dialect)
 
         # Handle the case that the column name is a sql keyword like 'group'
         self.input_name: str = self._quote_if_sql_keyword(
@@ -192,20 +192,20 @@ class InputColumn:
             )
         )
 
-    def register_dialect(self, sql_dialect: str) -> None:
+    def register_dialect(self, sqlglot_dialect: str) -> None:
         if self.column_info_settings is not None:
-            column_info_sql_dialect = self.column_info_settings.sql_dialect
-            if sql_dialect is not None:
-                if sql_dialect != column_info_sql_dialect:
+            column_info_sql_dialect = self.column_info_settings.sqlglot_dialect
+            if sqlglot_dialect is not None:
+                if sqlglot_dialect != column_info_sql_dialect:
                     raise ValueError(
-                        f"Mismatched dialect in `InputColumn`: {sql_dialect=}, "
+                        f"Mismatched dialect in `InputColumn`: {sqlglot_dialect=}, "
                         f"but `column_info_settings` has dialect: "
                         f"'{column_info_sql_dialect}'"
                     )
             else:
-                sql_dialect = column_info_sql_dialect
+                sqlglot_dialect = column_info_sql_dialect
 
-        self.sql_dialect = sql_dialect
+        self.sql_dialect = sqlglot_dialect
 
     @property
     def _bf_prefix(self):

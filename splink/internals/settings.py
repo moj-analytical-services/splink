@@ -38,7 +38,7 @@ class ColumnInfoSettings:
     unique_id_column_name: str
     _source_dataset_column_name: str
     _source_dataset_column_name_is_required: str
-    sql_dialect: str
+    sqlglot_dialect: str
 
     @property
     def source_dataset_column_name(self):
@@ -53,7 +53,7 @@ class ColumnInfoSettings:
             return InputColumn(
                 self._source_dataset_column_name,
                 column_info_settings=self,
-                sql_dialect=self.sql_dialect,
+                sqlglot_dialect=self.sqlglot_dialect,
             )
         else:
             return None
@@ -63,7 +63,7 @@ class ColumnInfoSettings:
         return InputColumn(
             self.unique_id_column_name,
             column_info_settings=self,
-            sql_dialect=self.sql_dialect,
+            sqlglot_dialect=self.sqlglot_dialect,
         )
 
     @property
@@ -74,14 +74,14 @@ class ColumnInfoSettings:
             col = InputColumn(
                 source_dataset_column_name,
                 column_info_settings=self,
-                sql_dialect=self.sql_dialect,
+                sqlglot_dialect=self.sqlglot_dialect,
             )
             cols.append(col)
 
         col = InputColumn(
             self.unique_id_column_name,
             column_info_settings=self,
-            sql_dialect=self.sql_dialect,
+            sqlglot_dialect=self.sqlglot_dialect,
         )
         cols.append(col)
 
@@ -220,7 +220,7 @@ class Settings:
             # TODO: if we want this to keep in-sync with link type, can put logic in
             # link_type setter
             _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
-            sql_dialect=sql_dialect,
+            sqlglot_dialect=sql_dialect,
         )
 
         comps = []
@@ -297,17 +297,17 @@ class Settings:
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
                 used_by_brs.extend(
-                    get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
+                    get_columns_used_from_sql(br.blocking_rule_sql, br.sqlglot_dialect)
                 )
 
             used_by_brs = [
-                InputColumn(c, sql_dialect=self._sql_dialect) for c in used_by_brs
+                InputColumn(c, sqlglot_dialect=self._sql_dialect) for c in used_by_brs
             ]
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
             already_used = [
-                InputColumn(c, sql_dialect=self._sql_dialect)
+                InputColumn(c, sqlglot_dialect=self._sql_dialect)
                 for c in already_used_names
             ]
             already_used_names = [c.unquote().name for c in already_used]
@@ -325,7 +325,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sql_dialect=self._sql_dialect,
+                sqlglot_dialect=self._sql_dialect,
             )
             for c in cols
         ]
@@ -342,7 +342,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sql_dialect=self._sql_dialect,
+                sqlglot_dialect=self._sql_dialect,
             )
             for c in list(cols)
         ]

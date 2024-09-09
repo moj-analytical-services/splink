@@ -131,7 +131,7 @@ class ComparisonCreator(ABC):
         for the end user - otherwise they'd need to import a SplinkDialect"""
         return Comparison(
             **self.create_comparison_dict(sql_dialect_str),
-            sqlglot_dialect_name=sql_dialect_str,
+            sqlglot_dialect=sql_dialect_str,
         )
 
     @final

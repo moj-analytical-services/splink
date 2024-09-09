@@ -226,7 +226,7 @@ def _process_unique_id_columns(
     source_dataset_column_name: Optional[str],
     splink_df_dict: dict[str, "SplinkDataFrame"],
     link_type: backend_link_type_options,
-    sql_dialect_name: str,
+    sqglot_dialect: str,
 ) -> Tuple[Optional[InputColumn], InputColumn]:
     # Various options:
     # In the dedupe_only case we do need a source dataset column. If it is provided,
@@ -242,12 +242,12 @@ def _process_unique_id_columns(
         if source_dataset_column_name is None:
             return (
                 None,
-                InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+                InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
             )
         else:
             return (
-                InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
-                InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+                InputColumn(source_dataset_column_name, sqlglot_dialect=sqglot_dialect),
+                InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
             )
 
     if link_type in ("link_only", "link_and_dedupe") and len(splink_df_dict) == 1:
@@ -266,13 +266,13 @@ def _process_unique_id_columns(
 
     if source_dataset_column_name is None:
         return (
-            InputColumn("source_dataset", sql_dialect=sql_dialect_name),
-            InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+            InputColumn("source_dataset", sqlglot_dialect=sqglot_dialect),
+            InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
         )
     else:
         return (
-            InputColumn(source_dataset_column_name, sql_dialect=sql_dialect_name),
-            InputColumn(unique_id_column_name, sql_dialect=sql_dialect_name),
+            InputColumn(source_dataset_column_name, sqlglot_dialect=sqglot_dialect),
+            InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
         )
 
 

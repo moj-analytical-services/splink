@@ -83,7 +83,7 @@ class BlockingRule:
         sqlglot_dialect: str = None,
     ):
         if sqlglot_dialect:
-            self._sql_dialect = sqlglot_dialect
+            self._sqlglot_dialect = sqlglot_dialect
 
         # Temporarily just to see if tests still pass
         if not isinstance(blocking_rule_sql, str):
@@ -95,8 +95,8 @@ class BlockingRule:
         self.sqlglot_dialect = sqlglot_dialect
 
     @property
-    def sql_dialect(self):
-        return None if not hasattr(self, "_sql_dialect") else self._sql_dialect
+    def sqlglot_dialect(self):
+        return None if not hasattr(self, "_sql_dialect") else self._sqlglot_dialect
 
     @property
     def match_key(self):
@@ -238,7 +238,7 @@ class BlockingRule:
         output = {}
 
         output["blocking_rule"] = self.blocking_rule_sql
-        output["sql_dialect"] = self.sql_dialect
+        output["sql_dialect"] = self.sqlglot_dialect
 
         return output
 
@@ -495,7 +495,7 @@ def materialise_exploded_id_tables(
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
         arrays_to_explode_quoted = [
-            InputColumn(colname, sql_dialect=db_api.sql_dialect.splink_dialect_str)
+            InputColumn(colname, sqlglot_dialect=db_api.sql_dialect.splink_dialect_str)
             .quote()
             .name
             for colname in br.array_columns_to_explode

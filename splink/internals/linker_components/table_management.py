@@ -69,7 +69,7 @@ class LinkerTableManagement:
         input_col = InputColumn(
             column_name,
             column_info_settings=self._linker._settings_obj.column_info_settings,
-            sql_dialect=self._linker._settings_obj._sql_dialect,
+            sqlglot_dialect=self._linker._settings_obj._sql_dialect,
         )
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._linker._intermediate_table_cache
@@ -215,7 +215,7 @@ class LinkerTableManagement:
         input_col = InputColumn(
             col_name,
             column_info_settings=self._linker._settings_obj.column_info_settings,
-            sql_dialect=self._linker._settings_obj._sql_dialect,
+            sqlglot_dialect=self._linker._settings_obj._sql_dialect,
         )
 
         table_name_templated = colname_to_tf_tablename(input_col)
