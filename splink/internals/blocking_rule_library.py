@@ -59,13 +59,13 @@ class CustomRule(BlockingRuleCreator):
             # if we are told it is one dialect, but try to create comparison level
             # of another, try to translate with sqlglot
             if sql_dialect != base_dialect:
-                base_dialect_sqlglot_name = base_dialect.sqlglot_name
+                base_dialect_sqlglot_name = base_dialect.sqlglot_dialect
 
                 # as default, translate condition into our dialect
                 try:
                     sql_condition = _translate_sql_string(
                         sql_condition,
-                        sql_dialect.sqlglot_name,
+                        sql_dialect.sqlglot_dialect,
                         base_dialect_sqlglot_name,
                     )
                 # if we hit a sqlglot error, assume users knows what they are doing,

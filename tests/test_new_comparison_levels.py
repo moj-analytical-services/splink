@@ -289,11 +289,11 @@ def test_custom_dialect_no_string_lookup():
     class TestDialectNoLookup(SplinkDialect):
         # missing _dialect_name_for_factory!
         @property
-        def name(self):
+        def splink_dialect_str(self):
             return "test_dialect"
 
         @property
-        def sqlglot_name(self):
+        def sqlglot_dialect(self):
             return "duckdb"
 
     # the existence of TestDialectNoLookup should not impact our ability
@@ -313,11 +313,11 @@ def test_custom_dialect_duplicate_string_lookup():
         _dialect_name_for_factory = "duckdb"
 
         @property
-        def name(self):
+        def splink_dialect_str(self):
             return "test_dialect"
 
         @property
-        def sqlglot_name(self):
+        def sqlglot_dialect(self):
             return "duckdb"
 
     # should get an error as level doesn't know which 'duckdb' we mean
@@ -340,11 +340,11 @@ def test_valid_custom_dialect():
         _dialect_name_for_factory = "valid_test_dialect"
 
         @property
-        def name(self):
+        def splink_dialect_str(self):
             return "test_dialect"
 
         @property
-        def sqlglot_name(self):
+        def sqlglot_dialect(self):
             return "duckdb"
 
         # helper for tests that allows SplinkDialect to forget about this dialect

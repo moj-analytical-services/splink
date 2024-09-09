@@ -96,7 +96,7 @@ class LinkerTraining:
         for br in deterministic_matching_rules:
             blocking_rules.append(
                 to_blocking_rule_creator(br).get_blocking_rule(
-                    self._linker._db_api.sql_dialect.name
+                    self._linker._db_api.sql_dialect.splink_dialect_str
                 )
             )
 

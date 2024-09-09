@@ -371,7 +371,7 @@ class LinkerInference:
 
         blocking_rule_list = [
             to_blocking_rule_creator(br).get_blocking_rule(
-                self._linker._db_api.sql_dialect.name
+                self._linker._db_api.sql_dialect.splink_dialect_str
             )
             for br in blocking_rule_list
         ]

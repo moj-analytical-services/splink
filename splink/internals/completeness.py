@@ -53,7 +53,7 @@ def completeness_data(
     if cols is None:
         cols_as_input_col = first_df.columns
     else:
-        sqlglot_dialect = db_api.sql_dialect.sqlglot_name
+        sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
         cols_as_input_col = [InputColumn(c, sql_dialect=sqlglot_dialect) for c in cols]
 
     sqls = []

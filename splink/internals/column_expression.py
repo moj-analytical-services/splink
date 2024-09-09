@@ -83,7 +83,7 @@ class ColumnExpression:
             return self.raw_sql_expression
 
         return SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
-            self.raw_sql_expression, dialect.sqlglot_name
+            self.raw_sql_expression, dialect.sqlglot_dialect
         ).sql
 
     @property
@@ -114,7 +114,7 @@ class ColumnExpression:
 
     def _lower_dialected(self, name: str, dialect: SplinkDialect) -> str:
         lower_sql = sqlglot.parse_one("lower(___col___)").sql(
-            dialect=dialect.sqlglot_name
+            dialect=dialect.sqlglot_dialect
         )
 
         return lower_sql.replace("___col___", name)
@@ -131,7 +131,7 @@ class ColumnExpression:
         self, name: str, start: int, end: int, dialect: SplinkDialect
     ) -> str:
         substr_sql = sqlglot.parse_one(f"substring(___col___, {start}, {end})").sql(
-            dialect=dialect.sqlglot_name
+            dialect=dialect.sqlglot_dialect
         )
 
         return substr_sql.replace("___col___", name)
@@ -153,7 +153,7 @@ class ColumnExpression:
 
     def _cast_to_string_dialected(self, name: str, dialect: SplinkDialect) -> str:
         cast_sql = sqlglot.parse_one("cast(___col___ as string)").sql(
-            dialect=dialect.sqlglot_name
+            dialect=dialect.sqlglot_dialect
         )
         return cast_sql.replace("___col___", name)
 
@@ -259,7 +259,7 @@ class ColumnExpression:
         sql_expression = self._parse_input_string(self.sql_dialect)
 
         base_name = add_suffix_to_all_column_identifiers(
-            sql_expression, "_l", self.sql_dialect.sqlglot_name
+            sql_expression, "_l", self.sql_dialect.sqlglot_dialect
         )
         return self.apply_operations(base_name, self.sql_dialect)
 
@@ -267,7 +267,7 @@ class ColumnExpression:
     def name_r(self) -> str:
         sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_suffix_to_all_column_identifiers(
-            sql_expression, "_r", self.sql_dialect.sqlglot_name
+            sql_expression, "_r", self.sql_dialect.sqlglot_dialect
         )
         return self.apply_operations(base_name, self.sql_dialect)
 
@@ -275,7 +275,7 @@ class ColumnExpression:
     def l_name(self) -> str:
         sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_table_to_all_column_identifiers(
-            sql_expression, "l", self.sql_dialect.sqlglot_name
+            sql_expression, "l", self.sql_dialect.sqlglot_dialect
         )
         return self.apply_operations(base_name, self.sql_dialect)
 
@@ -283,7 +283,7 @@ class ColumnExpression:
     def r_name(self) -> str:
         sql_expression = self._parse_input_string(self.sql_dialect)
         base_name = add_table_to_all_column_identifiers(
-            sql_expression, "r", self.sql_dialect.sqlglot_name
+            sql_expression, "r", self.sql_dialect.sqlglot_dialect
         )
         return self.apply_operations(base_name, self.sql_dialect)
 

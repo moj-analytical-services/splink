@@ -25,9 +25,9 @@ def unsupported_splink_dialects(
     def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
         @wraps(func)
         def wrapper(self: T, splink_dialect: SplinkDialect) -> str:
-            if splink_dialect.name in unsupported_dialects:
+            if splink_dialect.splink_dialect_str in unsupported_dialects:
                 raise ValueError(
-                    f"Dialect {splink_dialect.name} is not supported "
+                    f"Dialect {splink_dialect.splink_dialect_str} is not supported "
                     f"for {self.__class__.__name__}"
                 )
             return func(self, splink_dialect)
@@ -148,13 +148,13 @@ class CustomLevel(ComparisonLevelCreator):
             # if we are told it is one dialect, but try to create comparison level
             # of another, try to translate with sqlglot
             if sql_dialect != base_dialect:
-                base_dialect_sqlglot_name = base_dialect.sqlglot_name
+                base_dialect_sqlglot_name = base_dialect.sqlglot_dialect
 
                 # as default, translate condition into our dialect
                 try:
                     sql_condition = _translate_sql_string(
                         sql_condition,
-                        sql_dialect.sqlglot_name,
+                        sql_dialect.sqlglot_dialect,
                         base_dialect_sqlglot_name,
                     )
                 # if we hit a sqlglot error, assume users knows what they are doing,
@@ -301,7 +301,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
-        dialect = sql_dialect.sqlglot_name
+        dialect = sql_dialect.sqlglot_dialect
         lit = self.literal_value_undialected
 
         if self.literal_datatype == "string":
@@ -668,7 +668,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
             f"<= {self.time_threshold_seconds}"
         )
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
         translated = _translate_sql_string(
             sqlglot_base_dialect_sql, sqlglot_dialect_name
         )
@@ -774,7 +774,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         if hasattr(sql_dialect, "array_intersect"):
             return sql_dialect.array_intersect(self)
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
 
         sqlglot_base_dialect_sql = f"""
             ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r))

@@ -77,11 +77,13 @@ def _generate_blocking_rule(
     are provided as as string"""
 
     if len(cols_as_string) == 0:
-        br: BlockingRuleCreator = CustomRule("1=1", db_api.sql_dialect.name)
+        br: BlockingRuleCreator = CustomRule(
+            "1=1", db_api.sql_dialect.splink_dialect_str
+        )
     else:
         br = block_on(*cols_as_string)
 
-    return br.get_blocking_rule(db_api.sql_dialect.name)
+    return br.get_blocking_rule(db_api.sql_dialect.splink_dialect_str)
 
 
 def _search_tree_for_blocking_rules_below_threshold_count(

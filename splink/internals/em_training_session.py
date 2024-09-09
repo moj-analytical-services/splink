@@ -78,7 +78,7 @@ class EMTrainingSession:
             ComparisonAndLevelDict
         ] = Settings._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
             blocking_rule_sql=blocking_rule_for_training.blocking_rule_sql,
-            sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_name,
+            sqlglot_dialect_name=self.db_api.sql_dialect.sqlglot_dialect,
             comparisons=core_model_settings.comparisons,
         )
 
@@ -97,7 +97,7 @@ class EMTrainingSession:
         comparisons_to_deactivate = []
         br_cols = get_columns_used_from_sql(
             blocking_rule_for_training.blocking_rule_sql,
-            self.db_api.sql_dialect.sqlglot_name,
+            self.db_api.sql_dialect.sqlglot_dialect,
         )
         for cc in core_model_settings.comparisons:
             cc_cols = cc._input_columns_used_by_case_statement

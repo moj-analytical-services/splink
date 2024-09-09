@@ -462,10 +462,10 @@ def _count_comparisons_generated_from_blocking_rule(
     pre_filter_total_df.drop_table_from_database_and_remove_from_cache()
 
     def add_l_r(sql, table_name):
-        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_name)
+        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_dialect)
         for node in tree.find_all(sqlglot.expressions.Column):
             node.set("table", table_name)
-        return tree.sql(dialect=db_api.sql_dialect.sqlglot_name)
+        return tree.sql(dialect=db_api.sql_dialect.sqlglot_dialect)
 
     equi_join_conditions = [
         add_l_r(i, "l") + " = " + add_l_r(j, "r")
@@ -570,7 +570,7 @@ def count_comparisons_from_blocking_rule(
 
     # Ensure what's been passed in is a BlockingRuleCreator
     blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-        db_api.sql_dialect.name
+        db_api.sql_dialect.splink_dialect_str
     )
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
@@ -580,7 +580,7 @@ def count_comparisons_from_blocking_rule(
         source_dataset_column_name,
         splink_df_dict,
         link_type,
-        db_api.sql_dialect.name,
+        db_api.sql_dialect.splink_dialect_str,
     )
 
     return _count_comparisons_generated_from_blocking_rule(
@@ -615,7 +615,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     blocking_rules_as_br: List[BlockingRule] = []
     for br in blocking_rules:
         blocking_rules_as_br.append(
-            to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+            to_blocking_rule_creator(br).get_blocking_rule(
+                db_api.sql_dialect.splink_dialect_str
+            )
         )
 
     source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
@@ -623,7 +625,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         source_dataset_column_name,
         splink_df_dict,
         link_type,
-        db_api.sql_dialect.name,
+        db_api.sql_dialect.splink_dialect_str,
     )
 
     return _cumulative_comparisons_to_be_scored_from_blocking_rules(
@@ -657,7 +659,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     blocking_rules_as_br: List[BlockingRule] = []
     for br in blocking_rules:
         blocking_rules_as_br.append(
-            to_blocking_rule_creator(br).get_blocking_rule(db_api.sql_dialect.name)
+            to_blocking_rule_creator(br).get_blocking_rule(
+                db_api.sql_dialect.splink_dialect_str
+            )
         )
 
     source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
@@ -665,7 +669,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         source_dataset_column_name,
         splink_df_dict,
         link_type,
-        db_api.sql_dialect.name,
+        db_api.sql_dialect.splink_dialect_str,
     )
 
     pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
@@ -714,7 +718,7 @@ def n_largest_blocks(
         SplinkDataFrame: A dataframe containing the n_largest blocks
     """
     blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-        db_api.sql_dialect.name
+        db_api.sql_dialect.splink_dialect_str
     )
 
     splink_df_dict = db_api.register_multiple_tables(table_or_tables)
