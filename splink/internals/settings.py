@@ -13,6 +13,7 @@ from splink.internals.blocking import (
 from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
+from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -38,7 +39,11 @@ class ColumnInfoSettings:
     unique_id_column_name: str
     _source_dataset_column_name: str
     _source_dataset_column_name_is_required: str
-    sqlglot_dialect: str
+    sql_dialect: str
+
+    @property
+    def sqlglot_dialect(self):
+        return SplinkDialect.from_string(self.sql_dialect).sqlglot_dialect
 
     @property
     def source_dataset_column_name(self):
@@ -209,6 +214,7 @@ class Settings:
         # validate_settings_against_schema(settings_dict)
 
         self._sql_dialect = sql_dialect
+        self._sqlglot_dialect = SplinkDialect.from_string(sql_dialect).sqlglot_dialect
         self._link_type = link_type
 
         self.column_info_settings = ColumnInfoSettings(
@@ -220,7 +226,7 @@ class Settings:
             # TODO: if we want this to keep in-sync with link type, can put logic in
             # link_type setter
             _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
-            sqlglot_dialect=sql_dialect,
+            sql_dialect=self._sqlglot_dialect,
         )
 
         comps = []
@@ -301,13 +307,14 @@ class Settings:
                 )
 
             used_by_brs = [
-                InputColumn(c, sqlglot_dialect=self._sql_dialect) for c in used_by_brs
+                InputColumn(c, sqlglot_dialect=self._sqlglot_dialect)
+                for c in used_by_brs
             ]
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
             already_used = [
-                InputColumn(c, sqlglot_dialect=self._sql_dialect)
+                InputColumn(c, sqlglot_dialect=self._sqlglot_dialect)
                 for c in already_used_names
             ]
             already_used_names = [c.unquote().name for c in already_used]
@@ -325,7 +332,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sqlglot_dialect=self._sql_dialect,
+                sqlglot_dialect=self._sqlglot_dialect,
             )
             for c in cols
         ]
@@ -342,7 +349,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sqlglot_dialect=self._sql_dialect,
+                sqlglot_dialect=self._sqlglot_dialect,
             )
             for c in list(cols)
         ]
@@ -503,7 +510,7 @@ class Settings:
     # TODO: is this the most logical place for this to live now it's static?
     @staticmethod
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
-        blocking_rule_sql: str, sqlglot_dialect_name: str, comparisons: List[Comparison]
+        blocking_rule_sql: str, sqlglot_dialect: str, comparisons: List[Comparison]
     ) -> list[ComparisonAndLevelDict]:
         """
         If we block on (say) first name and surname, then all blocked comparisons are
@@ -526,7 +533,7 @@ class Settings:
         blocking_exact_match_columns = set(
             get_columns_used_from_sql(
                 blocking_rule_sql,
-                dialect=sqlglot_dialect_name,
+                sqlglot_dialect=sqlglot_dialect,
             )
         )
 

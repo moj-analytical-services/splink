@@ -194,7 +194,7 @@ class InputColumn:
 
     def register_dialect(self, sqlglot_dialect: str) -> None:
         if self.column_info_settings is not None:
-            column_info_sql_dialect = self.column_info_settings.sqlglot_dialect
+            column_info_sql_dialect = self.column_info_settings.sql_dialect
             if sqlglot_dialect is not None:
                 if sqlglot_dialect != column_info_sql_dialect:
                     raise ValueError(

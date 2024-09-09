@@ -421,7 +421,7 @@ class ComparisonLevel:
             return []
 
         cols = get_columns_used_from_sql(
-            self.sql_condition, dialect=self.sqlglot_dialect
+            self.sql_condition, sqlglot_dialect=self.sqlglot_dialect
         )
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]

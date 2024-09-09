@@ -4,10 +4,10 @@ import sqlglot
 import sqlglot.expressions as exp
 
 
-def sqlglot_transform_sql(sql, func, dialect=None):
-    syntax_tree = sqlglot.parse_one(sql, read=dialect)
+def sqlglot_transform_sql(sql, func, sqlglot_dialect=None):
+    syntax_tree = sqlglot.parse_one(sql, read=sqlglot_dialect)
     transformed_tree = syntax_tree.transform(func)
-    return transformed_tree.sql(dialect)
+    return transformed_tree.sql(sqlglot_dialect)
 
 
 def _add_l_or_r_to_identifier(node: exp.Expression) -> exp.Expression:

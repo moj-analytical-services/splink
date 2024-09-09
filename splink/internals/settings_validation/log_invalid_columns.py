@@ -81,7 +81,7 @@ def check_for_missing_settings_column(
 
 
 def check_for_missing_or_invalid_columns_in_sql_strings(
-    sql_dialect: str,
+    sqlglot_dialect: str,
     sql_strings: Iterable[str],
     valid_input_dataframe_columns: Iterable[str],
     additional_validation_checks: list[Validator] = [],
@@ -106,7 +106,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
     for sql_string in sql_strings:
         # `parse_columns_in_sql` also checks if our sql string is parseable
         identified_columns_in_sql = parse_columns_in_sql(
-            sql_string, sql_dialect=sql_dialect
+            sql_string, sqlglot_dialect=sqlglot_dialect
         )
         if not identified_columns_in_sql:
             continue
@@ -122,7 +122,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
         missing_columns = clean_and_find_columns_not_in_input_dfs(
             valid_input_dataframe_columns=valid_input_dataframe_columns,
             sqlglot_tree_columns_to_check=identified_columns_in_sql,
-            sql_dialect=sql_dialect,
+            sql_dialect=sqlglot_dialect,
         )
         if missing_columns:
             missing_columns_log_gen = MissingColumnsLogGenerator(missing_columns)
@@ -148,7 +148,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
 
 
 def check_comparison_for_missing_or_invalid_sql_strings(
-    sql_dialect: str,
+    sqlglot_dialect: str,
     comparisons_to_check: Iterable[Comparison],
     valid_input_dataframe_columns: Iterable[str],
 ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
@@ -165,7 +165,7 @@ def check_comparison_for_missing_or_invalid_sql_strings(
         ]
 
         invalid_comparison_levels = check_for_missing_or_invalid_columns_in_sql_strings(
-            sql_dialect=sql_dialect,
+            sqlglot_dialect=sqlglot_dialect,
             sql_strings=comparison_level_sql_strings,
             valid_input_dataframe_columns=valid_input_dataframe_columns,
             additional_validation_checks=[validate_column_suffixes],
@@ -203,7 +203,7 @@ class InvalidColumnsLogger:
 
     def validate_blocking_rules(self) -> dict[str, list[InvalidColumnsLogGenerator]]:
         return check_for_missing_or_invalid_columns_in_sql_strings(
-            sql_dialect=self.cleaned_settings_values.sql_dialect,
+            sqlglot_dialect=self.cleaned_settings_values.sql_dialect,
             sql_strings=self.cleaned_settings_values.blocking_rules,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
             additional_validation_checks=[validate_table_names],
@@ -213,7 +213,7 @@ class InvalidColumnsLogger:
         self,
     ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
         return check_comparison_for_missing_or_invalid_sql_strings(
-            sql_dialect=self.cleaned_settings_values.sql_dialect,
+            sqlglot_dialect=self.cleaned_settings_values.sql_dialect,
             comparisons_to_check=self.cleaned_settings_values.comparisons,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )
