@@ -169,10 +169,14 @@ class SplinkDialect(ABC):
 
 
 class DuckDBDialect(SplinkDialect):
-    _dialect_name_for_factory = "duckdb"
+    _dialect_name_for_factory = "flubdb"
 
     @property
     def sql_dialect_str(self):
+        return "flubdb"
+
+    @property
+    def sqlglot_dialect(self):
         return "duckdb"
 
     @property
