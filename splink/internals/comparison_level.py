@@ -261,6 +261,8 @@ class ComparisonLevel:
                 f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
+        else:
+            return ""
 
     @property
     def _u_probability_description(self) -> str:
@@ -277,6 +279,8 @@ class ComparisonLevel:
                 f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
+        else:
+            return ""
 
     def _add_trained_u_probability(self, val, desc="no description given"):
         self._trained_u_probabilities.append(
