@@ -39,9 +39,9 @@ class ComparisonLevelTestSpec:
         else:
             return self.comparison_level_or_class
 
-    def get_sql(self, sqlglot_name):
+    def get_sql(self, sqlglot_dialect):
         sql = self.comparison_level_creator.get_comparison_level(
-            sqlglot_name
+            sqlglot_dialect
         ).sql_condition
 
         return f"select {sql} as in_level from __splink__test_table"
@@ -83,8 +83,8 @@ class ComparisonTestSpec:
         else:
             return self.comparison_level_or_class
 
-    def get_sql(self, sqlglot_name):
-        c = self.comparison_creator.get_comparison(sqlglot_name)
+    def get_sql(self, sqlglot_dialect):
+        c = self.comparison_creator.get_comparison(sqlglot_dialect)
         sqls = [cl._when_then_comparison_vector_value_sql for cl in c.comparison_levels]
         sql = " ".join(sqls)
         sql = f"CASE {sql} END "
@@ -107,17 +107,17 @@ def run_tests_with_args(
     tests = (
         test_spec.tests
     )  # Assuming tests are now a list of LiteralTestValues objects
-    sqlglot_name = db_api.sql_dialect.sqlglot_name
+    sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
     for test in tests:
         if test.sql_dialects:
-            if sqlglot_name not in test.sql_dialects:
+            if sqlglot_dialect not in test.sql_dialects:
                 continue
         if test.keyword_arg_overrides:
             test_spec.keyword_arg_overrides = test.keyword_arg_overrides
         else:
             test_spec.keyword_arg_overrides = {}
 
-        sql = test_spec.get_sql(sqlglot_name)
+        sql = test_spec.get_sql(sqlglot_dialect)
 
         # Adjust to the structure of LiteralTestValues
 
