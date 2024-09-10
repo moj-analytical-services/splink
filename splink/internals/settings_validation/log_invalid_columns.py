@@ -203,7 +203,7 @@ class InvalidColumnsLogger:
 
     def validate_blocking_rules(self) -> dict[str, list[InvalidColumnsLogGenerator]]:
         return check_for_missing_or_invalid_columns_in_sql_strings(
-            sqlglot_dialect=self.cleaned_settings_values.sql_dialect,
+            sqlglot_dialect=self.cleaned_settings_values.sqlglot_dialect,
             sql_strings=self.cleaned_settings_values.blocking_rules,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
             additional_validation_checks=[validate_table_names],
@@ -213,7 +213,7 @@ class InvalidColumnsLogger:
         self,
     ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
         return check_comparison_for_missing_or_invalid_sql_strings(
-            sqlglot_dialect=self.cleaned_settings_values.sql_dialect,
+            sqlglot_dialect=self.cleaned_settings_values.sqlglot_dialect,
             comparisons_to_check=self.cleaned_settings_values.comparisons,
             valid_input_dataframe_columns=self.cleaned_settings_values.input_columns,
         )

@@ -125,7 +125,7 @@ class SettingsColumnCleaner:
     def __init__(
         self, settings_object: Settings, input_columns: dict[str, SplinkDataFrame]
     ):
-        self.sql_dialect = settings_object._sql_dialect_str
+        self.sqlglot_dialect = settings_object._sqlglot_dialect
         self._settings_obj = settings_object
         self.input_columns = clean_user_input_columns(
             input_columns, return_as_single_column=True
@@ -141,7 +141,7 @@ class SettingsColumnCleaner:
     def uid(self):
         uid_as_tree = InputColumn(
             self._settings_obj.column_info_settings.unique_id_column_name,
-            sqlglot_dialect=self.sql_dialect,
+            sqlglot_dialect=self.sqlglot_dialect,
         )
         return clean_list_of_column_names([uid_as_tree])
 

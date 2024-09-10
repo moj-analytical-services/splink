@@ -226,7 +226,7 @@ class Settings:
             # TODO: if we want this to keep in-sync with link type, can put logic in
             # link_type setter
             _source_dataset_column_name_is_required=self._get_source_dataset_column_name_is_required(),
-            sql_dialect=self._sqlglot_dialect,
+            sql_dialect=self._sql_dialect_str,
         )
 
         comps = []

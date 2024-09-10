@@ -188,13 +188,13 @@ class InputColumn:
         self.col_builder: SqlglotColumnTreeBuilder = (
             SqlglotColumnTreeBuilder.from_raw_column_name_or_column_reference(
                 raw_column_name_or_column_reference,
-                sqlglot_dialect=self.sql_dialect,
+                sqlglot_dialect=self.sqlglot_dialect,
             )
         )
 
     def register_dialect(self, sqlglot_dialect: str) -> None:
         if self.column_info_settings is not None:
-            column_info_sql_dialect = self.column_info_settings.sql_dialect
+            column_info_sql_dialect = self.column_info_settings.sqlglot_dialect
             if sqlglot_dialect is not None:
                 if sqlglot_dialect != column_info_sql_dialect:
                     raise ValueError(
@@ -205,7 +205,7 @@ class InputColumn:
             else:
                 sqlglot_dialect = column_info_sql_dialect
 
-        self.sql_dialect = sqlglot_dialect
+        self.sqlglot_dialect = sqlglot_dialect
 
     @property
     def _bf_prefix(self):
@@ -305,7 +305,7 @@ class InputColumn:
     def _quote_if_sql_keyword(self, name: str) -> str:
         if name not in {"group", "index"}:
             return name
-        start, end = _get_dialect_quotes(self.sql_dialect)
+        start, end = _get_dialect_quotes(self.sqlglot_dialect)
         return start + name + end
 
     def __repr__(self):
