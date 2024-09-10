@@ -538,7 +538,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         blocking_rule = BlockingRule(
-            f"{uid_l} = {uid_r}", sql_dialect_str=self._sql_dialect
+            f"{uid_l} = {uid_r}", sql_dialect_str=self._sql_dialect.sql_dialect_str
         )
 
         pipeline = CTEPipeline()
@@ -573,7 +573,6 @@ class Linker:
         sql_infos = predict_from_comparison_vectors_sqls(
             unique_id_input_columns=uid_cols,
             core_model_settings=self._settings_obj.core_model_settings,
-            sql_dialect=self._sql_dialect,
             sql_infinity_expression=self._infinity_expression,
         )
         for sql_info in sql_infos:

@@ -199,7 +199,7 @@ class LinkerInference:
         # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
         if (
             materialise_after_computing_term_frequencies
-            or self._linker._sql_dialect == "duckdb"
+            or self._linker._sql_dialect.sql_dialect_str == "duckdb"
         ):
             df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
             pipeline = CTEPipeline([df_concat_with_tf])

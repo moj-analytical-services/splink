@@ -23,7 +23,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
     return predict_from_comparison_vectors_sqls(
         unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
         core_model_settings=settings_obj.core_model_settings,
-        sql_dialect=settings_obj._sql_dialect_str,
         threshold_match_probability=threshold_match_probability,
         threshold_match_weight=threshold_match_weight,
         retain_matching_columns=settings_obj._retain_matching_columns,
@@ -39,7 +38,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
 def predict_from_comparison_vectors_sqls(
     unique_id_input_columns: List[InputColumn],
     core_model_settings: CoreModelSettings,
-    sql_dialect: str,
     threshold_match_probability: float = None,
     threshold_match_weight: float = None,
     # by default we keep off everything we don't necessarily need
