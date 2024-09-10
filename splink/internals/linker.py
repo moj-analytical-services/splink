@@ -538,7 +538,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         blocking_rule = BlockingRule(
-            f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect
+            f"{uid_l} = {uid_r}", sql_dialect_str=self._sql_dialect
         )
 
         pipeline = CTEPipeline()

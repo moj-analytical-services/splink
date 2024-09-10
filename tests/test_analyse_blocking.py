@@ -602,11 +602,11 @@ def test_analyse_blocking_fast_methodology_edge_cases():
 
 def test_blocking_rule_accepts_different_dialects():
     br = "l.first_name = r.first_name"
-    br = BlockingRule(br, sqlglot_dialect="spark")
+    br = BlockingRule(br, sql_dialect_str="spark")
     assert br._equi_join_conditions == [("first_name", "first_name")]
 
     br = "l.`hi THERE` = r.`hi THERE`"
-    br = BlockingRule(br, sqlglot_dialect="spark")
+    br = BlockingRule(br, sql_dialect_str="spark")
 
     assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
 
