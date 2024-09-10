@@ -247,20 +247,34 @@ class ComparisonLevel:
         self._u_probability = value
 
     @property
-    def _m_probability_description(self):
+    def _m_probability_description(self) -> str:
+        if self.is_null_level:
+            return ""
         if self.m_probability is not None:
+            percentage = self.m_probability * 100
+            one_in_n = (
+                1 / self.m_probability if self.m_probability > 0 else float("inf")
+            )
             return (
                 "Amongst matching record comparisons, "
-                f"{self.m_probability:.2%} of records are in the "
+                f"{percentage:.4g}% of records (i.e. one in "
+                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
 
     @property
-    def _u_probability_description(self):
+    def _u_probability_description(self) -> str:
+        if self.is_null_level:
+            return ""
         if self.u_probability is not None:
+            percentage = self.u_probability * 100
+            one_in_n = (
+                1 / self.u_probability if self.u_probability > 0 else float("inf")
+            )
             return (
                 "Amongst non-matching record comparisons, "
-                f"{self.u_probability:.2%} of records are in the "
+                f"{percentage:.4g}% of records (i.e. one in "
+                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
 
@@ -381,38 +395,6 @@ class ComparisonLevel:
             return (
                 f"{text} {self._num_fmt_dp_or_sf(mult)} times "
                 "less likely to be a match"
-            )
-
-    @property
-    def _m_probability_description(self):
-        if self.is_null_level:
-            return ""
-        if self.m_probability is not None:
-            percentage = self.m_probability * 100
-            one_in_n = (
-                1 / self.m_probability if self.m_probability > 0 else float("inf")
-            )
-            return (
-                "Amongst matching record comparisons, "
-                f"{percentage:.4g}% of records (i.e. one in "
-                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
-                f"{self.label_for_charts.lower()} comparison level"
-            )
-
-    @property
-    def _u_probability_description(self):
-        if self.is_null_level:
-            return ""
-        if self.u_probability is not None:
-            percentage = self.u_probability * 100
-            one_in_n = (
-                1 / self.u_probability if self.u_probability > 0 else float("inf")
-            )
-            return (
-                "Amongst non-matching record comparisons, "
-                f"{percentage:.4g}% of records (i.e. one in "
-                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
-                f"{self.label_for_charts.lower()} comparison level"
             )
 
     @property
