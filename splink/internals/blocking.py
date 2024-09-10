@@ -498,7 +498,7 @@ def materialise_exploded_id_tables(
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
         arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect=db_api.sql_dialect.sql_dialect_str)
+            InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sql_dialect_str)
             .quote()
             .name
             for colname in br.array_columns_to_explode

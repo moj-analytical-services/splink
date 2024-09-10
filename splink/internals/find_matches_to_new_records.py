@@ -34,7 +34,7 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     uid_col = InputColumn(
         uid_col_name,
         column_info_settings=linker._settings_obj.column_info_settings,
-        sqlglot_dialect=linker._settings_obj._sql_dialect_str,
+        sqlglot_dialect_str=linker._settings_obj._sql_dialect_str,
     )
     uid_col_name = uid_col.unquote().name
 

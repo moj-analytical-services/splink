@@ -58,7 +58,7 @@ class ColumnInfoSettings:
             return InputColumn(
                 self._source_dataset_column_name,
                 column_info_settings=self,
-                sqlglot_dialect=self.sqlglot_dialect,
+                sqlglot_dialect_str=self.sqlglot_dialect,
             )
         else:
             return None
@@ -68,7 +68,7 @@ class ColumnInfoSettings:
         return InputColumn(
             self.unique_id_column_name,
             column_info_settings=self,
-            sqlglot_dialect=self.sqlglot_dialect,
+            sqlglot_dialect_str=self.sqlglot_dialect,
         )
 
     @property
@@ -79,14 +79,14 @@ class ColumnInfoSettings:
             col = InputColumn(
                 source_dataset_column_name,
                 column_info_settings=self,
-                sqlglot_dialect=self.sqlglot_dialect,
+                sqlglot_dialect_str=self.sqlglot_dialect,
             )
             cols.append(col)
 
         col = InputColumn(
             self.unique_id_column_name,
             column_info_settings=self,
-            sqlglot_dialect=self.sqlglot_dialect,
+            sqlglot_dialect_str=self.sqlglot_dialect,
         )
         cols.append(col)
 
@@ -307,14 +307,14 @@ class Settings:
                 )
 
             used_by_brs = [
-                InputColumn(c, sqlglot_dialect=self._sqlglot_dialect)
+                InputColumn(c, sqlglot_dialect_str=self._sqlglot_dialect)
                 for c in used_by_brs
             ]
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
             already_used = [
-                InputColumn(c, sqlglot_dialect=self._sqlglot_dialect)
+                InputColumn(c, sqlglot_dialect_str=self._sqlglot_dialect)
                 for c in already_used_names
             ]
             already_used_names = [c.unquote().name for c in already_used]
@@ -332,7 +332,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sqlglot_dialect=self._sqlglot_dialect,
+                sqlglot_dialect_str=self._sqlglot_dialect,
             )
             for c in cols
         ]
@@ -349,7 +349,7 @@ class Settings:
             InputColumn(
                 c,
                 column_info_settings=self.column_info_settings,
-                sqlglot_dialect=self._sqlglot_dialect,
+                sqlglot_dialect_str=self._sqlglot_dialect,
             )
             for c in list(cols)
         ]

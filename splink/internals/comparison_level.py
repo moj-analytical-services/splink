@@ -195,7 +195,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._tf_adjustment_column
         if val:
-            return InputColumn(val, sqlglot_dialect=self.sqlglot_dialect)
+            return InputColumn(val, sqlglot_dialect_str=self.sqlglot_dialect)
         else:
             return None
 
@@ -435,7 +435,7 @@ class ComparisonLevel:
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
 
-            input_cols.append(InputColumn(c, sqlglot_dialect=self.sqlglot_dialect))
+            input_cols.append(InputColumn(c, sqlglot_dialect_str=self.sqlglot_dialect))
 
         return input_cols
 

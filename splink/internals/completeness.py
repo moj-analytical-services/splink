@@ -55,7 +55,7 @@ def completeness_data(
     else:
         sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
         cols_as_input_col = [
-            InputColumn(c, sqlglot_dialect=sqlglot_dialect) for c in cols
+            InputColumn(c, sqlglot_dialect_str=sqlglot_dialect) for c in cols
         ]
 
     sqls = []

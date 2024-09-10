@@ -242,12 +242,14 @@ def _process_unique_id_columns(
         if source_dataset_column_name is None:
             return (
                 None,
-                InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
+                InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
             )
         else:
             return (
-                InputColumn(source_dataset_column_name, sqlglot_dialect=sqglot_dialect),
-                InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
+                InputColumn(
+                    source_dataset_column_name, sqlglot_dialect_str=sqglot_dialect
+                ),
+                InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
             )
 
     if link_type in ("link_only", "link_and_dedupe") and len(splink_df_dict) == 1:
@@ -266,13 +268,13 @@ def _process_unique_id_columns(
 
     if source_dataset_column_name is None:
         return (
-            InputColumn("source_dataset", sqlglot_dialect=sqglot_dialect),
-            InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
+            InputColumn("source_dataset", sqlglot_dialect_str=sqglot_dialect),
+            InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
         )
     else:
         return (
-            InputColumn(source_dataset_column_name, sqlglot_dialect=sqglot_dialect),
-            InputColumn(unique_id_column_name, sqlglot_dialect=sqglot_dialect),
+            InputColumn(source_dataset_column_name, sqlglot_dialect_str=sqglot_dialect),
+            InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
         )
 
 

@@ -33,7 +33,7 @@ class ColumnTestCase:
 
         # Format input_column with the formatted name
         name = self.input_column.format(q=dialect_quotes)
-        self.input_column = InputColumn(name, sqlglot_dialect=self.sql_dialect)
+        self.input_column = InputColumn(name, sqlglot_dialect_str=self.sql_dialect)
 
     def expected_name(self, prefix: str, suffix: str):
         return self.name_out.format(prefix=prefix, suffix=suffix)
@@ -45,7 +45,7 @@ class ColumnTestCase:
 
 
 def test_input_column():
-    c = InputColumn("my_col", sqlglot_dialect="duckdb")
+    c = InputColumn("my_col", sqlglot_dialect_str="duckdb")
     assert c.name == '"my_col"'
     # Check we only unquote for a given column building instance
     assert c.unquote().name == "my_col"
@@ -56,12 +56,12 @@ def test_input_column():
     # Removes quotes for table name, column name and the alias
     assert c.unquote().l_tf_name_as_l == "l.tf_my_col AS tf_my_col_l"
 
-    c = InputColumn("SUR name", sqlglot_dialect="duckdb")
+    c = InputColumn("SUR name", sqlglot_dialect_str="duckdb")
     assert c.name == '"SUR name"'
     assert c.name_r == '"SUR name_r"'
     assert c.r_name_as_r == '"r"."SUR name" AS "SUR name_r"'
 
-    c = InputColumn("col['lat']", sqlglot_dialect="duckdb")
+    c = InputColumn("col['lat']", sqlglot_dialect_str="duckdb")
 
     identifier = """
     "col"['lat']
@@ -75,7 +75,7 @@ def test_input_column():
 
     assert c.unquote().name == "col['lat']"
 
-    c = InputColumn("first name", sqlglot_dialect="spark")
+    c = InputColumn("first name", sqlglot_dialect_str="spark")
     assert c.name == "`first name`"
 
 
@@ -183,16 +183,16 @@ def test_illegal_names_error():
         "my test column",
     )
     for name in odd_but_legal_names:
-        InputColumn(name, sqlglot_dialect="duckdb").name_l  # noqa: B018
+        InputColumn(name, sqlglot_dialect_str="duckdb").name_l  # noqa: B018
 
     # Check some illegal names we want to raise ParserErrors
     illegal_names = ('sur "name"', '"sur" name', '"sur" name[0]', "sur \"name\"['lat']")
     for name in illegal_names:
         with pytest.raises((ValueError)):
-            InputColumn(name, sqlglot_dialect="duckdb")
+            InputColumn(name, sqlglot_dialect_str="duckdb")
 
     # TokenError
     token_errors = ('"sur" name"', 'sur"name')
     for name in token_errors:
         with pytest.raises(ValueError):
-            InputColumn(name, sqlglot_dialect="duckdb")
+            InputColumn(name, sqlglot_dialect_str="duckdb")
