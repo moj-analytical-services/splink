@@ -2,82 +2,105 @@ import pandas as pd
 
 import splink.comparison_library as cl
 import splink.internals.comparison_level_library as cll
-from splink.comparison_library import CustomComparison
-from splink.internals.comparison_level_library import (
-    ColumnsReversedLevel,
-    ElseLevel,
-    ExactMatchLevel,
-    NullLevel,
-)
-from tests.literal_utils import run_comparison_vector_value_tests
+from splink import ColumnExpression
+from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_level_tests
 
 from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-def test_column_reversal(test_helpers, dialect):
+def test_columns_reversed_level(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
 
-    comparison = CustomComparison(
-        comparison_description="full_name",
-        comparison_levels=[
-            NullLevel("full_name"),
-            ExactMatchLevel("full_name"),
-            ColumnsReversedLevel("forename", "surname"),
-            ElseLevel(),
-        ],
-    )
-
     test_cases = [
         {
-            "comparison": comparison,
+            "description": "Basic ColumnsReversedLevel, not symmetrical",
+            "level": cll.ColumnsReversedLevel("forename", "surname"),
             "inputs": [
                 {
-                    "full_name_l": "John Smith",
-                    "full_name_r": "John Smith",
-                    "forename_l": "John",
-                    "forename_r": "John",
-                    "surname_l": "Smith",
-                    "surname_r": "Smith",
-                    "expected_value": 2,
-                    "expected_label": "Exact match on full_name",
-                },
-                {
-                    "full_name_l": "John Smith",
-                    "full_name_r": "Smith John",
                     "forename_l": "John",
                     "forename_r": "Smith",
                     "surname_l": "Smith",
                     "surname_r": "John",
-                    "expected_value": 1,
-                    "expected_label": "Match on reversed cols: forename and surname (one direction)",  # noqa: E501
+                    "expected": True,
                 },
                 {
-                    "full_name_l": "Rob Jones",
-                    "full_name_r": "Rob Jones",
-                    "forename_l": "Rob",
-                    "forename_r": "Rob",
-                    "surname_l": "Jones",
-                    "surname_r": "Jones",
-                    "expected_value": 2,
-                    "expected_label": "Exact match on full_name",
+                    "forename_l": "Smith",
+                    "forename_r": "John",
+                    "surname_l": "John",
+                    "surname_r": "Smith",
+                    "expected": True,
                 },
                 {
-                    "full_name_l": "John Smith",
-                    "full_name_r": "Jane Doe",
                     "forename_l": "John",
-                    "forename_r": "Jane",
+                    "forename_r": "John",
                     "surname_l": "Smith",
-                    "surname_r": "Doe",
-                    "expected_value": 0,
-                    "expected_label": "All other comparisons",
+                    "surname_r": "Smith",
+                    "expected": False,
+                },
+            ],
+        },
+        {
+            "description": "ColumnsReversedLevel with symmetrical=True",
+            "level": cll.ColumnsReversedLevel("forename", "surname", symmetrical=True),
+            "inputs": [
+                {
+                    "forename_l": "John",
+                    "forename_r": "Smith",
+                    "surname_l": "Smith",
+                    "surname_r": "John",
+                    "expected": True,
+                },
+                {
+                    "forename_l": "Smith",
+                    "forename_r": "John",
+                    "surname_l": "John",
+                    "surname_r": "Smith",
+                    "expected": True,
+                },
+                {
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                    "expected": False,
+                },
+            ],
+        },
+        {
+            "description": "ColumnsReversedLevel with ColumnExpression",
+            "level": cll.ColumnsReversedLevel(
+                ColumnExpression("forename").lower(),
+                ColumnExpression("surname").lower(),
+            ),
+            "inputs": [
+                {
+                    "forename_l": "John",
+                    "forename_r": "SMITH",
+                    "surname_l": "Smith",
+                    "surname_r": "JOHN",
+                    "expected": True,
+                },
+                {
+                    "forename_l": "JOHN",
+                    "forename_r": "smith",
+                    "surname_l": "SMITH",
+                    "surname_r": "john",
+                    "expected": True,
+                },
+                {
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                    "expected": False,
                 },
             ],
         },
     ]
 
-    run_comparison_vector_value_tests(test_cases, db_api)
+    run_is_in_level_tests(test_cases, db_api)
 
 
 @mark_with_dialects_excluding()
