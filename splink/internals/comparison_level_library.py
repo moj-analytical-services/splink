@@ -818,6 +818,8 @@ class ArraySubsetLevel(ComparisonLevelCreator):
         sqlglot_dialect_name = sql_dialect.sqlglot_name
 
         sqlglot_base_dialect_sql = """
+            LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))<>0
+            AND
             ARRAY_SIZE(
             ARRAY_INTERSECT(___col____l, ___col____r)) /
             LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))
