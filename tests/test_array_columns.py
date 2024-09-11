@@ -1,74 +1,102 @@
 import pytest
 
-import splink.internals.comparison_library as cl
+from splink.comparison_library import ArrayIntersectAtSizes
+from splink.internals.testing import comparison_vector_value
 from tests.decorator import mark_with_dialects_excluding
-from tests.literal_utils import (
-    ComparisonTestSpec,
-    LiteralTestValues,
-    run_tests_with_args,
-)
 
 
-# No SQLite - no array comparisons in library
 @mark_with_dialects_excluding("sqlite", "spark")
 def test_array_comparison_1(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
 
-    test_spec = ComparisonTestSpec(
-        cl.ArrayIntersectAtSizes("arr", [4, 3, 2, 1]),
-        tests=[
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "D"]},
-                expected_gamma_val=4,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "Z"]},
-                expected_gamma_val=3,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B"], "arr_r": ["A", "B", "C", "D"]},
-                expected_gamma_val=2,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["X", "Y", "Z"]},
-                expected_gamma_val=0,
-            ),
-        ],
-    )
-    run_tests_with_args(test_spec, db_api)
+    test_cases = [
+        {
+            "comparison": ArrayIntersectAtSizes("arr", [4, 3, 2, 1]),
+            "inputs": [
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected_value": 4,
+                    "expected_label": "Array intersection size >= 4",
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "Z"],
+                    "expected_value": 3,
+                    "expected_label": "Array intersection size >= 3",
+                },
+                {
+                    "arr_l": ["A", "B"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected_value": 2,
+                    "expected_label": "Array intersection size >= 2",
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+            ],
+        },
+        {
+            "comparison": ArrayIntersectAtSizes("arr", [4, 1]),
+            "inputs": [
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected_value": 2,
+                    "expected_label": "Array intersection size >= 4",
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "Z"],
+                    "expected_value": 1,
+                    "expected_label": "Array intersection size >= 1",
+                },
+                {
+                    "arr_l": ["A", "B"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected_value": 1,
+                    "expected_label": "Array intersection size >= 1",
+                },
+                {
+                    "arr_l": ["A"],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+            ],
+        },
+    ]
 
-    test_spec = ComparisonTestSpec(
-        cl.ArrayIntersectAtSizes("arr", [4, 1]),
-        tests=[
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "D"]},
-                expected_gamma_val=2,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "Z"]},
-                expected_gamma_val=1,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B"], "arr_r": ["A", "B", "C", "D"]},
-                expected_gamma_val=1,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A"], "arr_r": ["X", "Y", "Z"]},
-                expected_gamma_val=0,
-            ),
-            # This fails with postgres because it can't infer the type of
-            # the empty array (is it an array of char, int etc.)
-            # LiteralTestValues(
-            #     {"arr_l": [], "arr_r": ["X", "Y", "Z"]},
-            #     expected_gamma_val=0,
-            # ),
-        ],
-    )
-    run_tests_with_args(test_spec, db_api)
+    for case in test_cases:
+        inputs = [
+            {
+                k: v
+                for k, v in input_data.items()
+                if k not in ["expected_value", "expected_label"]
+            }
+            for input_data in case["inputs"]
+        ]
+        expected_values = [
+            input_data["expected_value"] for input_data in case["inputs"]
+        ]
+        expected_labels = [
+            input_data["expected_label"] for input_data in case["inputs"]
+        ]
 
-    # check we get an error if we try to pass -ve sizes
+        results = comparison_vector_value(case["comparison"], inputs, db_api)
+
+        for result, expected_value, expected_label in zip(
+            results, expected_values, expected_labels
+        ):
+            assert result["comparison_vector_value"] == expected_value
+            assert result["label_for_charts"] == expected_label
+
+    # Test for ValueError with negative sizes
     with pytest.raises(ValueError):
-        cl.ArrayIntersectAtSizes("postcode", [-1, 2]).get_comparison(
+        ArrayIntersectAtSizes("postcode", [-1, 2]).get_comparison(
             db_api.sql_dialect.sqlglot_name
         )
