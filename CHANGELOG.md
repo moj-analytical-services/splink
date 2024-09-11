@@ -9,7 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Match weight and m and u probabilities charts now have improved tooltips ([#2392](https://github.com/moj-analytical-services/splink/pull/2392))
+
+### Fixed
+
+- Fixed issue where `ColumnsReversedLevel` required equality on both columns ([#2395](https://github.com/moj-analytical-services/splink/pull/2395))
+
+## [4.0.1] - 2024-09-06
+
+### Added
+
 - When using DuckDB, you can now pass `duckdb.DuckDBPyRelation`s as input tables to the `Linker` ([#2375](https://github.com/moj-analytical-services/splink/pull/2375))
+- It's now possible to fix values for `m` and `u` probabilities in the settings such that they are not updated/changed during training.  ([#2379](https://github.com/moj-analytical-services/splink/pull/2379))
+- All charts can now be returned as vega lite spec dictionaries ([#2361](https://github.com/moj-analytical-services/splink/pull/2361))
+
 
 ### Fixed
 

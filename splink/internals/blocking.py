@@ -448,25 +448,13 @@ class ExplodingBlockingRule(BlockingRule):
                 " called."
             )
 
-        unique_id_col = unique_id_input_column
-        unique_id_input_columns = combine_unique_id_input_columns(
-            source_dataset_input_column, unique_id_input_column
-        )
-
-        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
-
         exploded_id_pair_table = self.exploded_id_pair_table
         sql = f"""
             select
                 '{self.match_key}' as match_key,
-                {uid_l_expr} as join_key_l,
-                {uid_r_expr} as join_key_r
-            from {exploded_id_pair_table.physical_name} as pairs
-            left join {input_tablename_l} as l
-                on pairs.{unique_id_col.name_l}={uid_l_expr}
-            left join {input_tablename_r} as r
-                on pairs.{unique_id_col.name_r}={uid_r_expr}
+                {unique_id_input_column.name_l} as join_key_l,
+                {unique_id_input_column.name_r} as join_key_r
+            from {exploded_id_pair_table.physical_name}
         """
         return sql
 

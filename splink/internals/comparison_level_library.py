@@ -189,6 +189,8 @@ class CustomLevel(ComparisonLevelCreator):
                 "tf_minimum_u_value",
                 "label_for_charts",
                 "disable_tf_exact_match_detection",
+                "fix_m_probability",
+                "fix_u_probability",
             )
             # split dict in two depending whether or not entries are 'configurables'
             configurables = {
@@ -331,16 +333,23 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self,
         col_name_1: Union[str, ColumnExpression],
         col_name_2: Union[str, ColumnExpression],
+        symmetrical: bool = False,
     ):
         """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
 
+        By default, col_l = col_r.  If the symmetrical argument is True, then
+        col_l = col_r AND col_r = col_l.
+
         Args:
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
+            symmetrical (bool): If True, equality is required in in both directions.
+                Default is False.
         """
         self.col_expression_1 = ColumnExpression.instantiate_if_str(col_name_1)
         self.col_expression_2 = ColumnExpression.instantiate_if_str(col_name_2)
+        self.symmetrical = symmetrical
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression_1.sql_dialect = sql_dialect
@@ -348,14 +357,18 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         col_1 = self.col_expression_1
         col_2 = self.col_expression_2
 
-        return (
-            f"{col_1.name_l} = {col_2.name_r} " f"AND {col_1.name_r} = {col_2.name_l}"
-        )
+        if self.symmetrical:
+            return (
+                f"{col_1.name_l} = {col_2.name_r} AND {col_1.name_r} = {col_2.name_l}"
+            )
+        else:
+            return f"{col_1.name_l} = {col_2.name_r}"
 
     def create_label_for_charts(self) -> str:
         col_1 = self.col_expression_1
         col_2 = self.col_expression_2
-        return f"Match on reversed cols: {col_1.label} and {col_2.label}"
+        direction = "both directions" if self.symmetrical else "one direction"
+        return f"Match on reversed cols: {col_1.label} and {col_2.label} ({direction})"
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
