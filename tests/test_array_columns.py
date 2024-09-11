@@ -1,8 +1,8 @@
 import pytest
 
 from splink.comparison_library import ArrayIntersectAtSizes
-from splink.internals.testing import comparison_vector_value
 from tests.decorator import mark_with_dialects_excluding
+from tests.literal_utils import run_comparison_vector_value_tests
 
 
 @mark_with_dialects_excluding("sqlite", "spark")
@@ -71,29 +71,7 @@ def test_array_comparison_1(test_helpers, dialect):
         },
     ]
 
-    for case in test_cases:
-        inputs = [
-            {
-                k: v
-                for k, v in input_data.items()
-                if k not in ["expected_value", "expected_label"]
-            }
-            for input_data in case["inputs"]
-        ]
-        expected_values = [
-            input_data["expected_value"] for input_data in case["inputs"]
-        ]
-        expected_labels = [
-            input_data["expected_label"] for input_data in case["inputs"]
-        ]
-
-        results = comparison_vector_value(case["comparison"], inputs, db_api)
-
-        for result, expected_value, expected_label in zip(
-            results, expected_values, expected_labels
-        ):
-            assert result["comparison_vector_value"] == expected_value
-            assert result["label_for_charts"] == expected_label
+    run_comparison_vector_value_tests(test_cases, db_api)
 
     # Test for ValueError with negative sizes
     with pytest.raises(ValueError):
