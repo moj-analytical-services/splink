@@ -50,7 +50,7 @@ def comparison_vector_value(
         unique_id_column_name="unique_id",
         _source_dataset_column_name="dataset",
         _source_dataset_column_name_is_required=False,
-        sql_dialect=db_api.sql_dialect,
+        sql_dialect=db_api.sql_dialect.name,
     )
 
     comparison_internal = comparison.get_comparison(sqlglot_dialect)
