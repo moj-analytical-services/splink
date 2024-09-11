@@ -1,25 +1,26 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.database_api import DatabaseAPISubClass
-from splink.internals.misc import ascii_uid
+from splink.internals.misc import ascii_uid, ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import ColumnInfoSettings
 
 
 def is_in_level(
     comparison_level: ComparisonLevelCreator,
-    literal_values: Dict[str, Any],
+    literal_values: Dict[str, Any] | List[Dict[str, Any]],
     db_api: DatabaseAPISubClass,
-) -> bool:
+) -> List[bool]:
     sqlglot_dialect = db_api.sql_dialect.sqlglot_name
     sql_cond = comparison_level.get_comparison_level(sqlglot_dialect).sql_condition
     if sql_cond == "ELSE":
-        return True
+        return [True] * len(ensure_is_list(literal_values))
 
     table_name = f"__splink__temp_table_{ascii_uid(8)}"
-    db_api._table_registration([literal_values], table_name)
+    literal_values_list = ensure_is_list(literal_values)
+    db_api._table_registration(literal_values_list, table_name)
 
     sql_to_evaluate = f"SELECT {sql_cond} as result FROM {table_name}"
 
@@ -29,14 +30,15 @@ def is_in_level(
 
     db_api.delete_table_from_database(table_name)
 
-    return bool(res.as_record_dict()[0]["result"])
+    result = [bool(row["result"]) for row in res.as_record_dict()]
+    return result[0] if isinstance(literal_values, dict) else result
 
 
-def compute_comparison_vector_value(
+def comparison_vector_value(
     comparison: ComparisonCreator,
-    literal_values: Dict[str, Any],
+    literal_values: Dict[str, Any] | List[Dict[str, Any]],
     db_api: DatabaseAPISubClass,
-) -> Dict[str, Any]:
+) -> Dict[str, Any] | List[Dict[str, Any]]:
     sqlglot_dialect = db_api.sql_dialect.sqlglot_name
 
     mock_column_info_settings = ColumnInfoSettings(
@@ -50,13 +52,12 @@ def compute_comparison_vector_value(
     )
 
     comparison_internal = comparison.get_comparison(sqlglot_dialect)
-
     comparison_internal.column_info_settings = mock_column_info_settings
-
     case_statement = comparison_internal._case_statement
 
     table_name = f"__splink__temp_table_{ascii_uid(8)}"
-    db_api._table_registration([literal_values], table_name)
+    literal_values_list = ensure_is_list(literal_values)
+    db_api._table_registration(literal_values_list, table_name)
 
     sql_to_evaluate = f"SELECT {case_statement}  FROM {table_name}"
 
@@ -66,19 +67,22 @@ def compute_comparison_vector_value(
 
     db_api.delete_table_from_database(table_name)
 
-    result_dict = res.as_record_dict()[0]
-    first_column_name = next(iter(result_dict))
-
-    result = result_dict[first_column_name]
+    result_dicts = res.as_record_dict()
 
     instantiated_levels = comparison_internal.comparison_levels
-
     cvv_label_lookup = {
         level.comparison_vector_value: level.label_for_charts
         for level in instantiated_levels
     }
 
-    return {
-        "comparison_vector_value": result,
-        "label_for_charts": cvv_label_lookup.get(result, ""),
-    }
+    result_key = next(iter(result_dicts[0]))
+
+    output = [
+        {
+            "comparison_vector_value": row[result_key],
+            "label_for_charts": cvv_label_lookup.get(row[result_key], ""),
+        }
+        for row in result_dicts
+    ]
+
+    return output if isinstance(literal_values, list) else output[0]
