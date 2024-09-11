@@ -802,15 +802,12 @@ class ArraySubsetLevel(ComparisonLevelCreator):
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        if hasattr(sql_dialect, "array_intersect"):
-            return sql_dialect.array_intersect(self)
-
         sqlglot_dialect_name = sql_dialect.sqlglot_name
 
         sqlglot_base_dialect_sql = """
             ARRAY_SIZE(
-            ARRAY_INTERSECT(___col____l, ___col____r)) / 
-            SMALLEST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))
+            ARRAY_INTERSECT(___col____l, ___col____r)) /
+            LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))
             == 1
             """
         translated = _translate_sql_string(
@@ -823,6 +820,9 @@ class ArraySubsetLevel(ComparisonLevelCreator):
         translated = translated.replace("___col____l", col.name_l)
         translated = translated.replace("___col____r", col.name_r)
         return translated
+
+    def create_label_for_charts(self) -> str:
+        return "Array subset"
 
 
 class PercentageDifferenceLevel(ComparisonLevelCreator):
