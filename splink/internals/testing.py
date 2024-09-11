@@ -12,11 +12,11 @@ def is_in_level(
     comparison_level: ComparisonLevelCreator,
     literal_values: Dict[str, Any] | List[Dict[str, Any]],
     db_api: DatabaseAPISubClass,
-) -> List[bool]:
+) -> bool | List[bool]:
     sqlglot_dialect = db_api.sql_dialect.sqlglot_name
     sql_cond = comparison_level.get_comparison_level(sqlglot_dialect).sql_condition
     if sql_cond == "ELSE":
-        return [True] * len(ensure_is_list(literal_values))
+        sql_cond = "TRUE"
 
     table_name = f"__splink__temp_table_{ascii_uid(8)}"
     literal_values_list = ensure_is_list(literal_values)
