@@ -1,11 +1,11 @@
 import pytest
 
-import splink.internals.comparison_library as cl
 import splink.internals.comparison_level_library as cll
+import splink.internals.comparison_library as cl
 from tests.decorator import mark_with_dialects_excluding
 from tests.literal_utils import (
-    ComparisonTestSpec,
     ComparisonLevelTestSpec,
+    ComparisonTestSpec,
     LiteralTestValues,
     run_tests_with_args,
 )
