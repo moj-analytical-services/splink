@@ -2,6 +2,13 @@ import pandas as pd
 
 import splink.comparison_library as cl
 import splink.internals.comparison_level_library as cll
+from splink.comparison_library import CustomComparison
+from splink.internals.comparison_level_library import (
+    ColumnsReversedLevel,
+    ElseLevel,
+    ExactMatchLevel,
+    NullLevel,
+)
 from tests.literal_utils import run_comparison_vector_value_tests
 
 from .decorator import mark_with_dialects_excluding
@@ -10,44 +17,67 @@ from .decorator import mark_with_dialects_excluding
 @mark_with_dialects_excluding()
 def test_column_reversal(test_helpers, dialect):
     helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
 
-    data = [
-        {"id": 1, "forename": "John", "surname": "Smith", "full_name": "John Smith"},
-        {"id": 2, "forename": "Smith", "surname": "John", "full_name": "Smith John"},
-        {"id": 3, "forename": "Rob", "surname": "Jones", "full_name": "Rob Jones"},
-        {"id": 4, "forename": "Rob", "surname": "Jones", "full_name": "Rob Jones"},
+    comparison = CustomComparison(
+        comparison_description="full_name",
+        comparison_levels=[
+            NullLevel("full_name"),
+            ExactMatchLevel("full_name"),
+            ColumnsReversedLevel("forename", "surname"),
+            ElseLevel(),
+        ],
+    )
+
+    test_cases = [
+        {
+            "comparison": comparison,
+            "inputs": [
+                {
+                    "full_name_l": "John Smith",
+                    "full_name_r": "John Smith",
+                    "forename_l": "John",
+                    "forename_r": "John",
+                    "surname_l": "Smith",
+                    "surname_r": "Smith",
+                    "expected_value": 2,
+                    "expected_label": "Exact match on full_name",
+                },
+                {
+                    "full_name_l": "John Smith",
+                    "full_name_r": "Smith John",
+                    "forename_l": "John",
+                    "forename_r": "Smith",
+                    "surname_l": "Smith",
+                    "surname_r": "John",
+                    "expected_value": 1,
+                    "expected_label": "Match on reversed cols: forename and surname (one direction)",  # noqa: E501
+                },
+                {
+                    "full_name_l": "Rob Jones",
+                    "full_name_r": "Rob Jones",
+                    "forename_l": "Rob",
+                    "forename_r": "Rob",
+                    "surname_l": "Jones",
+                    "surname_r": "Jones",
+                    "expected_value": 2,
+                    "expected_label": "Exact match on full_name",
+                },
+                {
+                    "full_name_l": "John Smith",
+                    "full_name_r": "Jane Doe",
+                    "forename_l": "John",
+                    "forename_r": "Jane",
+                    "surname_l": "Smith",
+                    "surname_r": "Doe",
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+            ],
+        },
     ]
 
-    settings = {
-        "unique_id_column_name": "id",
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [],
-        "comparisons": [
-            {
-                "output_column_name": "full_name",
-                "comparison_levels": [
-                    cll.NullLevel("full_name"),
-                    cll.ExactMatchLevel("full_name"),
-                    cll.ColumnsReversedLevel("forename", "surname"),
-                    cll.ElseLevel(),
-                ],
-            },
-        ],
-        "retain_matching_columns": True,
-        "retain_intermediate_calculation_columns": True,
-    }
-
-    df = pd.DataFrame(data)
-    df = helper.convert_frame(df)
-
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
-    df_e = linker.inference.predict().as_pandas_dataframe()
-
-    row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
-    assert row["gamma_full_name"] == 1
-
-    row = dict(df_e.query("id_l == 3 and id_r == 4").iloc[0])
-    assert row["gamma_full_name"] == 2
+    run_comparison_vector_value_tests(test_cases, db_api)
 
 
 @mark_with_dialects_excluding()
