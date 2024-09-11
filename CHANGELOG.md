@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Match weight and m and u probabilities charts now have improved tooltips ([#2392](https://github.com/moj-analytical-services/splink/pull/2392))
 
+### Fixed
+
+- Fixed issue where `ColumnsReversedLevel` required equality on both columns ([#2395](https://github.com/moj-analytical-services/splink/pull/2395))
+
 ## [4.0.1] - 2024-09-06
 
 ### Added
