@@ -22,7 +22,9 @@ def run_is_in_level_tests(test_cases: List[Dict[str, Any]], db_api: Any) -> None
             expected.append(input_data["expected"])
 
         results = is_in_level(case["level"], inputs, db_api)
-        assert results == expected
+        assert (
+            results == expected
+        ), f"Expected {expected}, but got {results} for case: {case}"
 
 
 def run_comparison_vector_value_tests(
@@ -45,11 +47,19 @@ def run_comparison_vector_value_tests(
 
         results = comparison_vector_value(case["comparison"], inputs, db_api)
 
-        for result, expected_value, expected_label in zip(
-            results, expected_values, expected_labels
+        for i, (result, expected_value, expected_label) in enumerate(
+            zip(results, expected_values, expected_labels)
         ):
-            assert result["comparison_vector_value"] == expected_value
-            assert result["label_for_charts"] == expected_label
+            assert result["comparison_vector_value"] == expected_value, (
+                f"For case {case['comparison']} input {i}, "
+                f"expected value {expected_value}, "
+                f"but got {result['comparison_vector_value']}"
+            )
+            assert result["label_for_charts"] == expected_label, (
+                f"For case {case['comparison']} input {i}, "
+                f"expected label '{expected_label}', "
+                f"but got '{result['label_for_charts']}'"
+            )
 
 
 class ComparisonLevelTestSpec:
