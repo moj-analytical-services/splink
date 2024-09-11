@@ -1052,7 +1052,9 @@ class ForenameSurnameComparison(ComparisonCreator):
             )
 
         levels.append(
-            cll.ColumnsReversedLevel(forename_col_expression, surname_col_expression)
+            cll.ColumnsReversedLevel(
+                forename_col_expression, surname_col_expression, symmetrical=True
+            )
         )
 
         for threshold in self.jaro_winkler_thresholds:
