@@ -2,14 +2,17 @@ from typing import Any, Dict
 
 import sqlglot
 import sqlglot.expressions
+from sqlglot.expressions import Expression
 
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
-from splink.internals.database_api import DatabaseAPI
+from splink.internals.database_api import (
+    DatabaseAPISubClass,
+)
 from splink.internals.pipeline import CTEPipeline
 
 
-def _set_quoted(node):
+def _set_quoted(node: Expression) -> Expression:
     if hasattr(node, "quoted"):
         node.set("quoted", True)
     return node
@@ -46,7 +49,7 @@ def _replace_identifier(node, replacements: Dict[str, Any], dialect: str):
 def is_in_level(
     comparison_level: ComparisonLevelCreator,
     literal_values: Dict[str, Any],
-    db_api: DatabaseAPI,
+    db_api: DatabaseAPISubClass,
 ) -> bool:
     """Check if a set of literal values satisfies a comparison level condition.
 
@@ -74,12 +77,13 @@ def is_in_level(
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql_to_evaluate, "__splink__is_in_level")
     res = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    res = res.as_record_dict()[0]["result"]
-    return res
+    return bool(res.as_record_dict()[0]["result"])
 
 
 def compute_comparison_vector_value(
-    comparison: ComparisonCreator, literal_values: Dict[str, Any], db_api: DatabaseAPI
+    comparison: ComparisonCreator,
+    literal_values: Dict[str, Any],
+    db_api: DatabaseAPISubClass,
 ) -> Dict[str, Any]:
     """Compute the comparison vector value for a set of literal values.
 
