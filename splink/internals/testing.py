@@ -1,10 +1,9 @@
 from typing import Any, Dict
 
-import pyarrow as pa
-
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
 
 
@@ -18,10 +17,8 @@ def is_in_level(
     if sql_cond == "ELSE":
         return True
 
-    pa_table = pa.Table.from_pydict({k: [v] for k, v in literal_values.items()})
-
-    table_name = "__splink__temp_table"
-    db_api._table_registration(pa_table, table_name)
+    table_name = f"__splink__temp_table_{ascii_uid(8)}"
+    db_api._table_registration([literal_values], table_name)
 
     sql_to_evaluate = f"SELECT {sql_cond} as result FROM {table_name}"
 
