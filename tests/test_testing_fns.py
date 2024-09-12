@@ -9,12 +9,12 @@ from splink.comparison_level_library import (
     NullLevel,
 )
 from splink.comparison_library import ArrayIntersectAtSizes, ExactMatch
-from splink.internals.testing import comparison_vector_value, is_in_level
-
-db_api = DuckDBAPI()
+from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_level_tests
 
 
 def test_is_in_level():
+    db_api = DuckDBAPI()
+
     test_cases = [
         {
             "level": ExactMatchLevel("name"),
@@ -63,17 +63,11 @@ def test_is_in_level():
         },
     ]
 
-    for case in test_cases:
-        inputs = [
-            {k: v for k, v in input_data.items() if k != "expected"}
-            for input_data in case["inputs"]
-        ]
-        expected = [input_data["expected"] for input_data in case["inputs"]]
-        results = is_in_level(case["level"], inputs, db_api)
-        assert results == expected
+    run_is_in_level_tests(test_cases, db_api)
 
 
 def test_comparison_vector_value():
+    db_api = DuckDBAPI()
     test_cases = [
         {
             "comparison": ExactMatch("name"),
@@ -123,26 +117,4 @@ def test_comparison_vector_value():
         },
     ]
 
-    for case in test_cases:
-        inputs = [
-            {
-                k: v
-                for k, v in input_data.items()
-                if k not in ["expected_value", "expected_label"]
-            }
-            for input_data in case["inputs"]
-        ]
-        expected_values = [
-            input_data["expected_value"] for input_data in case["inputs"]
-        ]
-        expected_labels = [
-            input_data["expected_label"] for input_data in case["inputs"]
-        ]
-
-        results = comparison_vector_value(case["comparison"], inputs, db_api)
-
-        for result, expected_value, expected_label in zip(
-            results, expected_values, expected_labels
-        ):
-            assert result["comparison_vector_value"] == expected_value
-            assert result["label_for_charts"] == expected_label
+    run_comparison_vector_value_tests(test_cases, db_api)
