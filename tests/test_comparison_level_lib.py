@@ -292,3 +292,74 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
     ]
 
     run_comparison_vector_value_tests(test_cases, db_api)
+
+
+@mark_with_dialects_excluding()
+def test_absolute_difference(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    abs_comparison = cl.CustomComparison(
+        comparison_description="amount",
+        comparison_levels=[
+            cll.NullLevel("amount"),
+            cll.AbsoluteDifferenceLevel("amount", 0),  # 5
+            cll.AbsoluteDifferenceLevel("amount", 5),  # 4
+            cll.AbsoluteDifferenceLevel("amount", 10),  # 3
+            cll.AbsoluteDifferenceLevel("amount", 20),  # 2
+            cll.AbsoluteDifferenceLevel("amount", 50),  # 1
+            cll.ElseLevel(),
+        ],
+    )
+
+    test_cases = [
+        {
+            "comparison": abs_comparison,
+            "inputs": [
+                {
+                    "amount_l": 100,
+                    "amount_r": 100,
+                    "expected_value": 5,
+                    "expected_label": "Absolute difference of 'amount' <= 0",
+                },
+                {
+                    "amount_l": 100,
+                    "amount_r": 103,
+                    "expected_value": 4,
+                    "expected_label": "Absolute difference of 'amount' <= 5",
+                },
+                {
+                    "amount_l": 100,
+                    "amount_r": 108,
+                    "expected_value": 3,
+                    "expected_label": "Absolute difference of 'amount' <= 10",
+                },
+                {
+                    "amount_l": 100,
+                    "amount_r": 115,
+                    "expected_value": 2,
+                    "expected_label": "Absolute difference of 'amount' <= 20",
+                },
+                {
+                    "amount_l": 100,
+                    "amount_r": 140,
+                    "expected_value": 1,
+                    "expected_label": "Absolute difference of 'amount' <= 50",
+                },
+                {
+                    "amount_l": 100,
+                    "amount_r": 200,
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+                {
+                    "amount_l": None,
+                    "amount_r": 100,
+                    "expected_value": -1,
+                    "expected_label": "amount is NULL",
+                },
+            ],
+        },
+    ]
+
+    run_comparison_vector_value_tests(test_cases, db_api)
