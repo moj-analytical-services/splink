@@ -843,3 +843,37 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
             f"Percentage difference of '{col.label}' "
             f"within {self.percentage_threshold:,.2%}"
         )
+
+
+class AbsoluteDifferenceLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        difference_threshold: Union[int, float],
+    ):
+        """
+        Represents a comparison level where the absolute difference between two
+        numerical values is within a specified threshold.
+
+        Args:
+            col_name (str | ColumnExpression): Input column name or ColumnExpression.
+            difference_threshold (int | float): The maximum allowed absolute difference
+                between the two values.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.difference_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=difference_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="difference_threshold",
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"ABS({col.name_l} - {col.name_r}) <= {self.difference_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Absolute difference of '{col.label}' <= {self.difference_threshold}"
