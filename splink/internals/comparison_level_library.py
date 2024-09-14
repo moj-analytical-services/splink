@@ -86,6 +86,20 @@ def validate_categorical_parameter(
 
 
 class NullLevel(ComparisonLevelCreator):
+    """Represents a comparison level where either or both values are NULL
+
+    e.g. val_l IS NULL OR val_r IS NULL
+
+    Args:
+        col_name (Union[str, ColumnExpression]): Input column name or ColumnExpression
+        valid_string_pattern (str, optional): If provided, a regex pattern to extract
+            a valid substring from the column before checking for NULL. Default is None.
+
+    Note:
+        If a valid_string_pattern is provided, the NULL check will be performed on
+        the extracted substring rather than the original column value.
+    """
+
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
@@ -109,6 +123,11 @@ class NullLevel(ComparisonLevelCreator):
 
 
 class ElseLevel(ComparisonLevelCreator):
+    """
+    This level is used to capture all comparisons that do not match any other
+    specified levels. It corresponds to the ELSE clause in a SQL CASE statement.
+    """
+
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return "ELSE"
 
@@ -281,6 +300,19 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         literal_datatype: str,
         side_of_comparison: str = "both",
     ):
+        """Represents a comparison level where a column matches a literal value
+
+        e.g. val_l = 'literal' AND/OR val_r = 'literal'
+
+        Args:
+            col_name (Union[str, ColumnExpression]): Input column name or
+                ColumnExpression
+            literal_value (str): The literal value to compare against e.g. 'male'
+            literal_datatype (str): The datatype of the literal value.
+                Must be one of: "string", "int", "float", "date"
+            side_of_comparison (str, optional): Which side(s) of the comparison to
+                apply. Must be one of: "left", "right", "both". Defaults to "both".
+        """
         self.side_of_comparison = validate_categorical_parameter(
             allowed_values=["left", "right", "both"],
             parameter_value=side_of_comparison,
