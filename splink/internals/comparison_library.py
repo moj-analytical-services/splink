@@ -357,7 +357,42 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         term_frequency_adjustments: bool = False,
         invalid_dates_as_null: bool = True,
     ):
-        """Invalid dates as null does nothing if input is not a string"""
+        """
+        Represents a comparison of the data in `col_name` with multiple levels based on
+        absolute time differences:
+
+        - Exact match in `col_name`
+        - Absolute time difference levels at specified thresholds
+        - ...
+        - Anything else
+
+        For example, with metrics = ['day', 'month'] and thresholds = [1, 3] the levels
+        are:
+
+        - Exact match in `col_name`
+        - Absolute time difference in `col_name` <= 1 day
+        - Absolute time difference in `col_name` <= 3 months
+        - Anything else
+
+        This comparison uses the AbsoluteTimeDifferenceLevel, which computes the total
+        elapsed time between two dates, rather than counting calendar intervals.
+
+        Args:
+            col_name (str): The name of the column to compare.
+            input_is_string (bool): If True, the input dates are treated as strings
+                and parsed according to `datetime_format`.
+            metrics (Union[DateMetricType, List[DateMetricType]]): The unit(s) of time
+                to use when comparing dates. Can be 'second', 'minute', 'hour', 'day',
+                'month', or 'year'.
+            thresholds (Union[int, float, List[Union[int, float]]]): The threshold(s)
+                to use for the time difference level(s).
+            datetime_format (str, optional): The format string for parsing dates if
+                `input_is_string` is True. ISO 8601 format used if not provided.
+            term_frequency_adjustments (bool, optional): Whether to apply term frequency
+                adjustments. Defaults to False.
+            invalid_dates_as_null (bool, optional): If True and `input_is_string` is
+                True, treat invalid dates as null. Defaults to True.
+        """
         time_metrics_as_iterable = ensure_is_iterable(metrics)
         # unpack it to a list so we can repeat iteration if needed
         self.time_metrics = [*time_metrics_as_iterable]
