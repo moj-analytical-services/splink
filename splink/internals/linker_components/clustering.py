@@ -56,8 +56,14 @@ class LinkerClustering:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
                 into groups based on the desired match threshold.
 
+        Examples:
+            ```python
+            df_predict = linker.inference.predict(threshold_match_probability=0.5)
+            df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                df_predict, threshold_match_probability=0.95
+            )
+            ```
         """
-
         # Feeding in df_predict forces materiailisation, if it exists in your database
         pipeline = CTEPipeline()
         nodes_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
@@ -248,6 +254,20 @@ class LinkerClustering:
                 attribute "edges" for edge metrics table
                 attribute "clusters" for cluster metrics table
 
+        Examples:
+            ```python
+            df_predict = linker.inference.predict(threshold_match_probability=0.5)
+            df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                df_predict, threshold_match_probability=0.95
+            )
+            graph_metrics = linker.clustering.compute_graph_metrics(
+                df_predict, df_clustered, threshold_match_probability=0.95
+            )
+
+            node_metrics = graph_metrics.nodes.as_pandas_dataframe()
+            edge_metrics = graph_metrics.edges.as_pandas_dataframe()
+            cluster_metrics = graph_metrics.clusters.as_pandas_dataframe()
+            ```
         """
         if threshold_match_probability is None:
             threshold_match_probability = df_clustered.metadata.get(
