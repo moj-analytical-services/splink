@@ -17,6 +17,11 @@ tags:
       filters:
         - "!^create_sql$"  # Exclude the create_sql method
 
+
+## AbsoluteDateDifferenceAtThresholds
+
+An alias of [AbsoluteTimeDifferenceAtThresholds](./comparison_level_library.html#splink.comparison_level_library.AbsoluteTimeDifferenceLevel).
+
 ## Configuring comparisons
 
 Note that all comparison levels have a `.configure()` method as follows:
@@ -27,3 +32,4 @@ Note that all comparison levels have a `.configure()` method as follows:
       show_root_heading: false
       show_root_toc: true
       show_source: false
+
