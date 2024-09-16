@@ -96,7 +96,7 @@ class LinkerTraining:
         for br in deterministic_matching_rules:
             blocking_rules.append(
                 to_blocking_rule_creator(br).get_blocking_rule(
-                    self._linker._db_api.sql_dialect.name
+                    self._linker._db_api.sql_dialect.sql_dialect_str
                 )
             )
 
@@ -286,7 +286,7 @@ class LinkerTraining:
         compute_df_concat_with_tf(self._linker, pipeline)
 
         blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-            self._linker._sql_dialect
+            self._linker._sql_dialect_str
         )
 
         if not isinstance(blocking_rule_obj, (BlockingRule, SaltedBlockingRule)):

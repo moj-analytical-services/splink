@@ -158,7 +158,7 @@ def test_check_for_missing_settings_column(input_name, expected_output):
 )
 def test_blocking_rule_sql_string_validation(blocking_rule_sql_string, expected):
     result = check_for_missing_or_invalid_columns_in_sql_strings(
-        sql_dialect="duckdb",
+        sqlglot_dialect="duckdb",
         sql_strings=[blocking_rule_sql_string],
         valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         additional_validation_checks=[validate_table_names],
@@ -175,7 +175,7 @@ def test_collective_blocking_rules():
     expected_output_len = sum(bool(exp) for exp in blocking_rule_test_cases.values())
 
     result = check_for_missing_or_invalid_columns_in_sql_strings(
-        sql_dialect="duckdb",
+        sqlglot_dialect="duckdb",
         sql_strings=collective_rules,
         valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         additional_validation_checks=[validate_table_names],
@@ -199,7 +199,7 @@ def test_identical_blocking_rules_ignored():
     ]
 
     result = check_for_missing_or_invalid_columns_in_sql_strings(
-        sql_dialect="duckdb",
+        sqlglot_dialect="duckdb",
         sql_strings=test_identical_rules,
         valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
         additional_validation_checks=[validate_table_names],
@@ -212,7 +212,7 @@ def test_identical_blocking_rules_ignored():
 def test_check_for_missing_or_invalid_columns_in_sql_strings():
     invalid_comparisons_identified = (
         check_comparison_for_missing_or_invalid_sql_strings(
-            sql_dialect="duckdb",
+            sqlglot_dialect="duckdb",
             comparisons_to_check=[
                 CustomComparison(**email_comparison_to_check).get_comparison("duckdb"),
                 CustomComparison(**city_comparison_to_check).get_comparison("duckdb"),

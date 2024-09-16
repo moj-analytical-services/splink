@@ -62,7 +62,7 @@ class Comparison:
     def __init__(
         self,
         comparison_levels: List[ComparisonLevel],
-        sqlglot_dialect_name: str,
+        sqlglot_dialect: str,
         output_column_name: str = None,
         comparison_description: str = None,
         column_info_settings: ColumnInfoSettings = None,
@@ -71,7 +71,7 @@ class Comparison:
 
         self._column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
-        self.sqlglot_dialect_name = sqlglot_dialect_name
+        self.sqlglot_dialect = sqlglot_dialect
         self.output_column_name = (
             output_column_name or self._default_output_column_name()
         )

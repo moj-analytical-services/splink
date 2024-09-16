@@ -17,7 +17,7 @@ def is_in_level(
     literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> bool | List[bool]:
-    sqlglot_dialect = db_api.sql_dialect.sqlglot_name
+    sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
     sql_cond = comparison_level.get_comparison_level(sqlglot_dialect).sql_condition
     if sql_cond == "ELSE":
         sql_cond = "TRUE"
@@ -46,7 +46,7 @@ def comparison_vector_value(
     literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> Dict[str, Any] | List[Dict[str, Any]]:
-    sqlglot_dialect = db_api.sql_dialect.sqlglot_name
+    sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
 
     mock_column_info_settings = ColumnInfoSettings(
         bayes_factor_column_prefix="bm_",
@@ -55,7 +55,7 @@ def comparison_vector_value(
         unique_id_column_name="unique_id",
         _source_dataset_column_name="dataset",
         _source_dataset_column_name_is_required=False,
-        sql_dialect=db_api.sql_dialect.name,
+        sql_dialect=db_api.sql_dialect.sql_dialect_str,
     )
 
     comparison_internal = comparison.get_comparison(sqlglot_dialect)

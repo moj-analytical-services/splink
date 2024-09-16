@@ -9,6 +9,7 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 
 from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.dialects import SplinkDialect
 from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
@@ -37,7 +38,7 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
         blocking_rule = br.get("blocking_rule", None)
         if blocking_rule is None:
             raise ValueError("No blocking rule submitted...")
-        sqlglot_dialect = br.get("sql_dialect", None)
+        sql_dialect_str = br.get("sql_dialect", None)
 
         salting_partitions = br.get("salting_partitions", None)
         arrays_to_explode = br.get("arrays_to_explode", None)
@@ -50,15 +51,15 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
 
         if salting_partitions is not None:
             return SaltedBlockingRule(
-                blocking_rule, sqlglot_dialect, salting_partitions
+                blocking_rule, sql_dialect_str, salting_partitions
             )
 
         if arrays_to_explode is not None:
             return ExplodingBlockingRule(
-                blocking_rule, sqlglot_dialect, arrays_to_explode
+                blocking_rule, sql_dialect_str, arrays_to_explode
             )
 
-        return BlockingRule(blocking_rule, sqlglot_dialect)
+        return BlockingRule(blocking_rule, sql_dialect_str)
 
     else:
         br = BlockingRule(br)
@@ -80,10 +81,10 @@ class BlockingRule:
     def __init__(
         self,
         blocking_rule_sql: str,
-        sqlglot_dialect: str = None,
+        sql_dialect_str: str = None,
     ):
-        if sqlglot_dialect:
-            self._sql_dialect = sqlglot_dialect
+        if sql_dialect_str:
+            self._sql_dialect_str = sql_dialect_str
 
         # Temporarily just to see if tests still pass
         if not isinstance(blocking_rule_sql, str):
@@ -92,11 +93,13 @@ class BlockingRule:
             )
         self.blocking_rule_sql = blocking_rule_sql
         self.preceding_rules: List[BlockingRule] = []
-        self.sqlglot_dialect = sqlglot_dialect
 
     @property
-    def sql_dialect(self):
-        return None if not hasattr(self, "_sql_dialect") else self._sql_dialect
+    def sqlglot_dialect(self):
+        if not hasattr(self, "_sql_dialect_str"):
+            return None
+        else:
+            return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
     @property
     def match_key(self):
@@ -238,7 +241,7 @@ class BlockingRule:
         output = {}
 
         output["blocking_rule"] = self.blocking_rule_sql
-        output["sql_dialect"] = self.sql_dialect
+        output["sql_dialect"] = self._sql_dialect_str
 
         return output
 
@@ -495,7 +498,9 @@ def materialise_exploded_id_tables(
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
         arrays_to_explode_quoted = [
-            InputColumn(colname, sql_dialect=db_api.sql_dialect.name).quote().name
+            InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect)
+            .quote()
+            .name
             for colname in br.array_columns_to_explode
         ]
 

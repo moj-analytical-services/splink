@@ -260,7 +260,6 @@ def expectation_maximisation(
     # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
 
-    sql_dialect = db_api.sql_dialect.name
     sql_infinity_expression = db_api.sql_dialect.infinity_expression
 
     max_iterations = training_settings.max_iterations
@@ -292,7 +291,6 @@ def expectation_maximisation(
                 unique_id_input_columns=unique_id_input_columns,
                 core_model_settings=core_model_settings,
                 training_mode=True,
-                sql_dialect=sql_dialect,
                 sql_infinity_expression=sql_infinity_expression,
             )
 

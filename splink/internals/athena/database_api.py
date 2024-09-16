@@ -227,7 +227,7 @@ class AthenaAPI(DatabaseAPI[dict[str, Any]]):
         physical_name = sql_dict["physical_name"]
         sql_query = sql_dict["sql"]
         sql_query = sqlglot_transform_sql(
-            sql_query, cast_concat_as_varchar, dialect="presto"
+            sql_query, cast_concat_as_varchar, sqlglot_dialect="presto"
         )
         sql_query = sql_query.replace("FLOAT", "double").replace("float", "double")
 

@@ -29,7 +29,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         pragma_result = self.db_api._execute_sql_against_backend(sql).fetchall()
         cols = [r["name"] for r in pragma_result]
 
-        return [InputColumn(c, sql_dialect="sqlite") for c in cols]
+        return [InputColumn(c, sqlglot_dialect_str="sqlite") for c in cols]
 
     def validate(self):
         if not isinstance(self.physical_name, str):

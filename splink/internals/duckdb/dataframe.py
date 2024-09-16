@@ -23,7 +23,7 @@ class DuckDBDataFrame(SplinkDataFrame):
         d = self.as_record_dict(1)[0]
 
         col_strings = list(d.keys())
-        return [InputColumn(c, sql_dialect="duckdb") for c in col_strings]
+        return [InputColumn(c, sqlglot_dialect_str="duckdb") for c in col_strings]
 
     def validate(self):
         pass

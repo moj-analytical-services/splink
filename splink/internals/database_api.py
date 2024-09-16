@@ -66,7 +66,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             try:
                 final_sql = sqlglot.parse_one(
                     final_sql,
-                    read=self.sql_dialect,
+                    read=self.sql_dialect.sqlglot_dialect,
                 ).sql(pretty=True)
                 # if sqlglot produces any errors, just report the raw SQL
             except Exception:
