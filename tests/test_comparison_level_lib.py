@@ -365,7 +365,7 @@ def test_absolute_difference(test_helpers, dialect):
     run_comparison_vector_value_tests(test_cases, db_api)
 
 
-@mark_with_dialects_including("duckdb")
+@mark_with_dialects_including("duckdb", pass_dialect=True)
 def test_cosine_similarity_level(test_helpers, dialect):
     import pyarrow as pa
 
