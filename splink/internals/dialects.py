@@ -97,6 +97,12 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
+    @property
+    def cosine_similarity_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Cosine Similarity' function"
+        )
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -251,6 +257,10 @@ class DuckDBDialect(SplinkDialect):
             other_columns_to_retain.append(column_to_explode)
             return f"""select {','.join(cols_to_select)}
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501
+
+    @property
+    def cosine_similarity_function_name(self):
+        return "array_cosine_similarity"
 
 
 class SparkDialect(SplinkDialect):

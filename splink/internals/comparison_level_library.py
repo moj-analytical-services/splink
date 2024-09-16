@@ -792,6 +792,41 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         return f"Distance less than {self.km_threshold}km"
 
 
+class CosineSimilarityLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        similarity_threshold: float,
+    ):
+        """A comparison level using a cosine similarity function
+
+        e.g. array_cosine_similarity(val_l, val_r) >= similarity_threshold
+
+        Args:
+            col_name (str): Input column name
+            similarity_threshold (float): The threshold to use to assess
+                similarity. Should be between 0 and 1.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.similarity_threshold = validate_numeric_parameter(
+            lower_bound=0.0,
+            upper_bound=1.0,
+            parameter_value=similarity_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="similarity_threshold",
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        cs_fn = sql_dialect.cosine_similarity_function_name
+        return f"{cs_fn}({col.name_l}, {col.name_r}) >= {self.similarity_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Cosine similarity of {col.label} >= {self.similarity_threshold}"
+
+
 class ArrayIntersectLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str | ColumnExpression, min_intersection: int):
         """Represents a comparison level based around the size of an intersection of
