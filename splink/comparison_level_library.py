@@ -5,6 +5,7 @@ from splink.internals.comparison_level_library import (
     And,
     ArrayIntersectLevel,
     ColumnsReversedLevel,
+    CosineSimilarityLevel,
     CustomLevel,
     DamerauLevenshteinLevel,
     DistanceFunctionLevel,
@@ -44,4 +45,5 @@ __all__ = [
     "And",
     "Not",
     "Or",
+    "CosineSimilarityLevel",
 ]

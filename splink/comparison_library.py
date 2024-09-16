@@ -2,6 +2,7 @@ from splink.internals.comparison_library import (
     AbsoluteDateDifferenceAtThresholds,
     AbsoluteTimeDifferenceAtThresholds,
     ArrayIntersectAtSizes,
+    CosineSimilarityAtThresholds,
     CustomComparison,
     DamerauLevenshteinAtThresholds,
     DateOfBirthComparison,
@@ -36,4 +37,5 @@ __all__ = [
     "ForenameSurnameComparison",
     "NameComparison",
     "PostcodeComparison",
+    "CosineSimilarityAtThresholds",
 ]

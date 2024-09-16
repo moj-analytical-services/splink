@@ -1118,3 +1118,47 @@ class ForenameSurnameComparison(ComparisonCreator):
         forename_output_name = self.col_expressions["forename"].output_column_name
         surname_output_name = self.col_expressions["surname"].output_column_name
         return f"{forename_output_name}_{surname_output_name}"
+
+
+class CosineSimilarityAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        score_threshold_or_thresholds: Union[Iterable[float], float] = [0.9, 0.8, 0.7],
+    ):
+        """
+        Represents a comparison of the data in `col_name` with two or more levels:
+
+        - Cosine similarity levels at specified thresholds
+        - ...
+        - Anything else
+
+        For example, with score_threshold_or_thresholds = [0.9, 0.7] the levels are:
+
+        - Cosine similarity in `col_name` >= 0.9
+        - Cosine similarity in `col_name` >= 0.7
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare.
+            score_threshold_or_thresholds (Union[float, list], optional): The
+                threshold(s) to use for the cosine similarity level(s).
+                Defaults to [0.9, 0.7].
+        """
+
+        thresholds_as_iterable = ensure_is_iterable(score_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            *[
+                cll.CosineSimilarityLevel(self.col_expression, threshold)
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
