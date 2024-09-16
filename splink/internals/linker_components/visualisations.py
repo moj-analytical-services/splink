@@ -212,7 +212,7 @@ class LinkerVisualisations:
                 this or `n_most_freq` set to None, all values will be shown.
                 Default to 10.
             vals_to_include (list, optional): Specific values for which to show term
-                sfrequency adjustments.
+                frequency adjustments.
                 Defaults to None.
             as_dict (bool, optional): If True, return the chart as a dictionary.
 

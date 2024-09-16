@@ -59,7 +59,7 @@ class LinkerMisc:
         Examples:
             ```py
             linker = Linker(df, settings, db_api)
-            df_predict = linker.predict()
+            df_predict = linker.inference.predict()
             linker.misc.query_sql(f"select * from {df_predict.physical_name} limit 10")
             ```
 
