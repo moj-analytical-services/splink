@@ -3,7 +3,7 @@ import splink.internals.comparison_level_library as cll
 from splink import ColumnExpression
 from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_level_tests
 
-from .decorator import mark_with_dialects_excluding
+from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 
 
 @mark_with_dialects_excluding()
@@ -365,7 +365,7 @@ def test_absolute_difference(test_helpers, dialect):
     run_comparison_vector_value_tests(test_cases, db_api)
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_including("duckdb")
 def test_cosine_similarity_level(test_helpers, dialect):
     import pyarrow as pa
 
