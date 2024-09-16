@@ -105,7 +105,8 @@ class SplinkDialect(ABC):
     @property
     def cosine_similarity_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Cosine Similarity' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'Cosine Similarity' function"
         )
 
     def random_sample_sql(
