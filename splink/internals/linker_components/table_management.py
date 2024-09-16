@@ -55,7 +55,10 @@ class LinkerTableManagement:
             >>>
             # On subsequent data linking job, read this table rather than recompute
             df_first_name_tf = pd.read_parquet("folder/first_name_tf")
-            df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+            linker.table_management.register_term_frequency_lookup(
+                df_first_name_tf, "first_name"
+            )
+
             ```
 
 
@@ -207,8 +210,10 @@ class LinkerTableManagement:
                 {"first_name": "alfie", "tf_first_name": 0.013},
             ]
             tf_df = pd.DataFrame(tf_table)
-            linker.table_management.register_term_frequency_lookup(tf_df,
-                                                                    "first_name")
+            linker.table_management.register_term_frequency_lookup(
+                tf_df,
+                "first_name"
+            )
             ```
         """
 
