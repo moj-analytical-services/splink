@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
+
+import pyarrow as pa
 
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
@@ -12,7 +14,7 @@ from splink.internals.settings import ColumnInfoSettings
 
 def is_in_level(
     comparison_level: ComparisonLevelCreator,
-    literal_values: Dict[str, Any] | List[Dict[str, Any]],
+    literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> bool | List[bool]:
     sqlglot_dialect = db_api.sql_dialect.sqlglot_name
@@ -21,8 +23,11 @@ def is_in_level(
         sql_cond = "TRUE"
 
     table_name = f"__splink__temp_table_{ascii_uid(8)}"
-    literal_values_list = ensure_is_list(literal_values)
-    db_api._table_registration(literal_values_list, table_name)
+    if isinstance(literal_values, pa.Table):
+        db_api._table_registration(literal_values, table_name)
+    else:
+        literal_values_list = ensure_is_list(literal_values)
+        db_api._table_registration(literal_values_list, table_name)
 
     sql_to_evaluate = f"SELECT {sql_cond} as result FROM {table_name}"
 
@@ -38,7 +43,7 @@ def is_in_level(
 
 def comparison_vector_value(
     comparison: ComparisonCreator,
-    literal_values: Dict[str, Any] | List[Dict[str, Any]],
+    literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> Dict[str, Any] | List[Dict[str, Any]]:
     sqlglot_dialect = db_api.sql_dialect.sqlglot_name
@@ -58,8 +63,11 @@ def comparison_vector_value(
     case_statement = comparison_internal._case_statement
 
     table_name = f"__splink__temp_table_{ascii_uid(8)}"
-    literal_values_list = ensure_is_list(literal_values)
-    db_api._table_registration(literal_values_list, table_name)
+    if isinstance(literal_values, pa.Table):
+        db_api._table_registration(literal_values, table_name)
+    else:
+        literal_values_list = ensure_is_list(literal_values)
+        db_api._table_registration(literal_values_list, table_name)
 
     sql_to_evaluate = f"SELECT {case_statement}  FROM {table_name}"
 
@@ -87,4 +95,4 @@ def comparison_vector_value(
         for row in result_dicts
     ]
 
-    return output if isinstance(literal_values, list) else output[0]
+    return output if isinstance(literal_values, (list, pa.Table)) else output[0]

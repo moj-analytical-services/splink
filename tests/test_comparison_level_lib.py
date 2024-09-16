@@ -363,3 +363,97 @@ def test_absolute_difference(test_helpers, dialect):
     ]
 
     run_comparison_vector_value_tests(test_cases, db_api)
+
+
+@mark_with_dialects_excluding()
+def test_cosine_similarity_level(test_helpers, dialect):
+    import pyarrow as pa
+
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    EMBEDDING_DIMENSION = 4
+
+    cosine_similarity_comparison_using_levels = cl.CustomComparison(
+        comparison_description="text_vector",
+        comparison_levels=[
+            cll.NullLevel("text_vector"),
+            cll.CosineSimilarityLevel("text_vector", 0.9),  # 3
+            cll.CosineSimilarityLevel("text_vector", 0.7),  # 2
+            cll.CosineSimilarityLevel("text_vector", 0.5),  # 1
+            cll.ElseLevel(),
+        ],
+    )
+
+    input_dicts = [
+        {
+            "text_vector_l": [0.5205, 0.4616, 0.3333, 0.2087],
+            "text_vector_r": [0.4137, 0.5439, 0.0737, 0.2041],
+            "expected_value": 3,
+            "expected_label": "Cosine similarity of text_vector >= 0.9",
+        },  # Cosine similarity: 0.9312
+        {
+            "text_vector_l": [0.7026, 0.8887, 0.1711, 0.0525],
+            "text_vector_r": [0.4549, 0.4891, 0.1555, 0.6263],
+            "expected_value": 2,
+            "expected_label": "Cosine similarity of text_vector >= 0.7",
+        },  # Cosine similarity: 0.7639
+        {
+            "text_vector_l": [0.8713, 0.3416, 0.4024, 0.1350],
+            "text_vector_r": [0.2104, 0.5763, 0.0442, 0.0872],
+            "expected_value": 1,
+            "expected_label": "Cosine similarity of text_vector >= 0.5",
+        },  # Cosine similarity: 0.6418
+        {
+            "text_vector_l": [0.99, 0.00, 0.99, 0.00],
+            "text_vector_r": [0.00, 0.99, 0.00, 0.99],
+            "expected_value": 0,
+            "expected_label": "All other comparisons",
+        },
+        {
+            "text_vector_l": None,
+            "text_vector_r": [0.99, 0.99, 0.99, 0.99],
+            "expected_value": -1,
+            "expected_label": "text_vector is NULL",
+        },
+    ]
+
+    # Convert input_dicts to a pyarrow Table
+    inputs_pa = pa.Table.from_pydict(
+        {
+            "text_vector_l": [d["text_vector_l"] for d in input_dicts],
+            "text_vector_r": [d["text_vector_r"] for d in input_dicts],
+            "expected_value": [d["expected_value"] for d in input_dicts],
+            "expected_label": [d["expected_label"] for d in input_dicts],
+        },
+        schema=pa.schema(
+            [
+                ("text_vector_l", pa.list_(pa.float32(), EMBEDDING_DIMENSION)),
+                ("text_vector_r", pa.list_(pa.float32(), EMBEDDING_DIMENSION)),
+                ("expected_value", pa.int16()),
+                ("expected_label", pa.string()),
+            ]
+        ),
+    )
+
+    test_cases = [
+        {
+            "comparison": cosine_similarity_comparison_using_levels,
+            "inputs": inputs_pa,
+        },
+    ]
+
+    run_comparison_vector_value_tests(test_cases, db_api)
+
+    cosine_similarity_comparison = cl.CosineSimilarityAtThresholds(
+        "text_vector", [0.9, 0.7, 0.5]
+    )
+
+    test_cases = [
+        {
+            "comparison": cosine_similarity_comparison,
+            "inputs": inputs_pa,
+        },
+    ]
+
+    run_comparison_vector_value_tests(test_cases, db_api)
