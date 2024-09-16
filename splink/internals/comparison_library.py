@@ -357,7 +357,42 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         term_frequency_adjustments: bool = False,
         invalid_dates_as_null: bool = True,
     ):
-        """Invalid dates as null does nothing if input is not a string"""
+        """
+        Represents a comparison of the data in `col_name` with multiple levels based on
+        absolute time differences:
+
+        - Exact match in `col_name`
+        - Absolute time difference levels at specified thresholds
+        - ...
+        - Anything else
+
+        For example, with metrics = ['day', 'month'] and thresholds = [1, 3] the levels
+        are:
+
+        - Exact match in `col_name`
+        - Absolute time difference in `col_name` <= 1 day
+        - Absolute time difference in `col_name` <= 3 months
+        - Anything else
+
+        This comparison uses the AbsoluteTimeDifferenceLevel, which computes the total
+        elapsed time between two dates, rather than counting calendar intervals.
+
+        Args:
+            col_name (str): The name of the column to compare.
+            input_is_string (bool): If True, the input dates are treated as strings
+                and parsed according to `datetime_format`.
+            metrics (Union[DateMetricType, List[DateMetricType]]): The unit(s) of time
+                to use when comparing dates. Can be 'second', 'minute', 'hour', 'day',
+                'month', or 'year'.
+            thresholds (Union[int, float, List[Union[int, float]]]): The threshold(s)
+                to use for the time difference level(s).
+            datetime_format (str, optional): The format string for parsing dates if
+                `input_is_string` is True. ISO 8601 format used if not provided.
+            term_frequency_adjustments (bool, optional): Whether to apply term frequency
+                adjustments. Defaults to False.
+            invalid_dates_as_null (bool, optional): If True and `input_is_string` is
+                True, treat invalid dates as null. Defaults to True.
+        """
         time_metrics_as_iterable = ensure_is_iterable(metrics)
         # unpack it to a list so we can repeat iteration if needed
         self.time_metrics = [*time_metrics_as_iterable]
@@ -1052,7 +1087,9 @@ class ForenameSurnameComparison(ComparisonCreator):
             )
 
         levels.append(
-            cll.ColumnsReversedLevel(forename_col_expression, surname_col_expression)
+            cll.ColumnsReversedLevel(
+                forename_col_expression, surname_col_expression, symmetrical=True
+            )
         )
 
         for threshold in self.jaro_winkler_thresholds:
@@ -1081,3 +1118,47 @@ class ForenameSurnameComparison(ComparisonCreator):
         forename_output_name = self.col_expressions["forename"].output_column_name
         surname_output_name = self.col_expressions["surname"].output_column_name
         return f"{forename_output_name}_{surname_output_name}"
+
+
+class CosineSimilarityAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        score_threshold_or_thresholds: Union[Iterable[float], float] = [0.9, 0.8, 0.7],
+    ):
+        """
+        Represents a comparison of the data in `col_name` with two or more levels:
+
+        - Cosine similarity levels at specified thresholds
+        - ...
+        - Anything else
+
+        For example, with score_threshold_or_thresholds = [0.9, 0.7] the levels are:
+
+        - Cosine similarity in `col_name` >= 0.9
+        - Cosine similarity in `col_name` >= 0.7
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare.
+            score_threshold_or_thresholds (Union[float, list], optional): The
+                threshold(s) to use for the cosine similarity level(s).
+                Defaults to [0.9, 0.7].
+        """
+
+        thresholds_as_iterable = ensure_is_iterable(score_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            *[
+                cll.CosineSimilarityLevel(self.col_expression, threshold)
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name

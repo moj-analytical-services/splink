@@ -38,7 +38,7 @@ class ColumnInfoSettings:
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str
     _source_dataset_column_name: str
-    _source_dataset_column_name_is_required: str
+    _source_dataset_column_name_is_required: bool
     sql_dialect: str
 
     @property
@@ -337,7 +337,7 @@ class Settings:
             for c in cols
         ]
 
-    def _get_source_dataset_column_name_is_required(self):
+    def _get_source_dataset_column_name_is_required(self) -> bool:
         return self._link_type not in ["dedupe_only"]
 
     @property

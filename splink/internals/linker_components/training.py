@@ -247,14 +247,7 @@ class LinkerTraining:
         [this PR](https://github.com/moj-analytical-services/splink/pull/734) for
         the rationale.
 
-        Examples:
-            Default behaviour
-            ```py
-            br_training = block_on("first_name", "dob")
-            linker.training.estimate_parameters_using_expectation_maximisation(
-                br_training
-            )
-            ```
+
 
         Args:
             blocking_rule (BlockingRuleCreator | str): The blocking rule used to
@@ -276,9 +269,9 @@ class LinkerTraining:
 
         Examples:
             ```py
-            blocking_rule = block_on("first_name", "surname")
+            br_training = block_on("first_name", "dob")
             linker.training.estimate_parameters_using_expectation_maximisation(
-                blocking_rule
+                br_training
             )
             ```
 

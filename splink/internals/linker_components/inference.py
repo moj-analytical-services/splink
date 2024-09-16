@@ -62,6 +62,10 @@ class LinkerInference:
         Deterministic linkage, however, is likely to result in missed links
         (false negatives).
 
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
+
+
         Examples:
 
             ```py
@@ -76,10 +80,6 @@ class LinkerInference:
             linker = Linker(df, settings, db_api=db_api)
             splink_df = linker.inference.deterministic_link()
             ```
-
-
-        Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
         """
         pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.

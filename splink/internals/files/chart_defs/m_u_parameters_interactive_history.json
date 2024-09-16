@@ -66,19 +66,10 @@
         "tooltip": [
           {
             "type": "nominal",
-            "field": "m_probability_description",
-            "title": "m probability description"
-          },
-          {
-            "type": "nominal",
             "field": "comparison_name",
-            "title": "Comparison column name"
+            "title": "Comparison name"
           },
-          {
-            "type": "ordinal",
-            "field": "label_for_charts",
-            "title": "Label"
-          },
+          { "type": "ordinal", "field": "label_for_charts", "title": "Label" },
           {
             "type": "nominal",
             "field": "sql_condition",
@@ -87,26 +78,41 @@
           {
             "type": "quantitative",
             "field": "m_probability",
-            "format": ".4p",
-            "title": "m probability"
+            "format": ".10~g",
+            "title": "M probability"
           },
           {
             "type": "quantitative",
             "field": "u_probability",
-            "format": ".4p",
-            "title": "u probability"
+            "format": ".10~g",
+            "title": "U probability"
           },
           {
             "type": "quantitative",
             "field": "bayes_factor",
             "title": "Bayes factor = m/u",
-            "format": ",.4f"
+            "format": ",.6f"
           },
           {
             "type": "quantitative",
             "field": "log2_bayes_factor",
             "title": "Match weight = log2(m/u)",
-            "format": ",.4f"
+            "format": ".4~g"
+          },
+          {
+            "type": "nominal",
+            "field": "bayes_factor_description",
+            "title": "Match weight description"
+          },
+          {
+            "type": "nominal",
+            "field": "m_probability_description",
+            "title": "m probability description"
+          },
+          {
+            "type": "nominal",
+            "field": "u_probability_description",
+            "title": "u probability description"
           }
         ],
         "color": {
@@ -165,19 +171,10 @@
         "tooltip": [
           {
             "type": "nominal",
-            "field": "u_probability_description",
-            "title": "u probability description"
-          },
-          {
-            "type": "nominal",
             "field": "comparison_name",
-            "title": "Comparison column name"
+            "title": "Comparison name"
           },
-          {
-            "type": "ordinal",
-            "field": "label_for_charts",
-            "title": "Label"
-          },
+          { "type": "ordinal", "field": "label_for_charts", "title": "Label" },
           {
             "type": "nominal",
             "field": "sql_condition",
@@ -186,26 +183,41 @@
           {
             "type": "quantitative",
             "field": "m_probability",
-            "format": ".4p",
-            "title": "m probability"
+            "format": ".10~g",
+            "title": "M probability"
           },
           {
             "type": "quantitative",
             "field": "u_probability",
-            "format": ".4p",
-            "title": "u probability"
+            "format": ".10~g",
+            "title": "U probability"
           },
           {
             "type": "quantitative",
             "field": "bayes_factor",
             "title": "Bayes factor = m/u",
-            "format": ",.4f"
+            "format": ",.6f"
           },
           {
             "type": "quantitative",
             "field": "log2_bayes_factor",
             "title": "Match weight = log2(m/u)",
-            "format": ",.4f"
+            "format": ".4~g"
+          },
+          {
+            "type": "nominal",
+            "field": "bayes_factor_description",
+            "title": "Match weight description"
+          },
+          {
+            "type": "nominal",
+            "field": "m_probability_description",
+            "title": "m probability description"
+          },
+          {
+            "type": "nominal",
+            "field": "u_probability_description",
+            "title": "u probability description"
           }
         ],
         "color": {

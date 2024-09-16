@@ -1,9 +1,11 @@
 from splink.internals.comparison_level_library import (
     AbsoluteDateDifferenceLevel,
+    AbsoluteDifferenceLevel,
     AbsoluteTimeDifferenceLevel,
     And,
     ArrayIntersectLevel,
     ColumnsReversedLevel,
+    CosineSimilarityLevel,
     CustomLevel,
     DamerauLevenshteinLevel,
     DistanceFunctionLevel,
@@ -39,7 +41,9 @@ __all__ = [
     "DistanceInKMLevel",
     "ArrayIntersectLevel",
     "PercentageDifferenceLevel",
+    "AbsoluteDifferenceLevel",
     "And",
     "Not",
     "Or",
+    "CosineSimilarityLevel",
 ]

@@ -135,6 +135,7 @@ class LinkerEvalution:
                 (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
                 - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
+
         Examples:
             ```py
             linker.evaluation.accuracy_analysis_from_labels_column("ground_truth", add_metrics=["f1"])
@@ -244,13 +245,14 @@ class LinkerEvalution:
                 (emphasis on recall) and \u03b2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
                 - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
+
+        Returns:
+            altair.Chart: An altair chart
+
         Examples:
             ```py
             linker.accuracy_analysis_from_labels_table("ground_truth", add_metrics=["f1"])
             ```
-
-        Returns:
-            altair.Chart: An altair chart
         """  # noqa: E501
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
@@ -313,6 +315,9 @@ class LinkerEvalution:
             threshold_match_probability (float, optional): Threshold above which a score
                 is considered to be a match. Defaults to 0.5.
 
+        Returns:
+            SplinkDataFrame:  Table containing false positives and negatives
+
         Examples:
             ```py
             linker.evaluation.prediction_errors_from_labels_column(
@@ -321,9 +326,6 @@ class LinkerEvalution:
                 include_false_positives=False
             ).as_pandas_dataframe()
             ```
-
-        Returns:
-            SplinkDataFrame:  Table containing false positives and negatives
         """
         return prediction_errors_from_label_column(
             self._linker,
@@ -352,16 +354,15 @@ class LinkerEvalution:
                 the title of the output chart.
             as_dict (bool, optional): If True, return a dict version of the chart.
 
+        Returns:
+            altair.Chart: An altair chart
+
         Examples:
             After estimating the parameters of the model, run:
 
             ```py
             linker.evaluation.unlinkables_chart()
             ```
-
-
-        Returns:
-            altair.Chart: An altair chart
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries

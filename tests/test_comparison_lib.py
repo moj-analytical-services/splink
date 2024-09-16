@@ -4,6 +4,8 @@ import splink.internals.comparison_library as cl
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
+from tests.decorator import mark_with_dialects_excluding
+from tests.literal_utils import run_comparison_vector_value_tests
 
 
 def test_distance_function_comparison():
@@ -63,32 +65,35 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
-def test_set_to_lowercase():
-    data = [
-        {"id": 1, "forename": "John"},
-        {"id": 2, "forename": "john"},
-        {"id": 3, "forename": "Rob"},
-        {"id": 4, "forename": "Rob"},
+@mark_with_dialects_excluding()
+def test_set_to_lowercase(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    test_cases = [
+        {
+            "comparison": cl.ExactMatch(ColumnExpression("forename").lower()),
+            "inputs": [
+                {
+                    "forename_l": "John",
+                    "forename_r": "john",
+                    "expected_value": 1,
+                    "expected_label": "Exact match on transformed forename",
+                },
+                {
+                    "forename_l": "Rob",
+                    "forename_r": "Rob",
+                    "expected_value": 1,
+                    "expected_label": "Exact match on transformed forename",
+                },
+                {
+                    "forename_l": "John",
+                    "forename_r": "Jane",
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+            ],
+        },
     ]
 
-    settings = {
-        "unique_id_column_name": "id",
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [],
-        "comparisons": [cl.ExactMatch(ColumnExpression("forename").lower())],
-        "retain_matching_columns": True,
-        "retain_intermediate_calculation_columns": True,
-    }
-
-    df = pd.DataFrame(data)
-
-    db_api = DuckDBAPI()
-
-    linker = Linker(df, settings, db_api=db_api)
-    df_e = linker.inference.predict().as_pandas_dataframe()
-
-    row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
-    assert row["gamma_forename"] == 1
-
-    row = dict(df_e.query("id_l == 3 and id_r == 4").iloc[0])
-    assert row["gamma_forename"] == 1
+    run_comparison_vector_value_tests(test_cases, db_api)

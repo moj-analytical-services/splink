@@ -67,7 +67,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+            input = self.spark.createDataFrame(input)
 
         if isinstance(input, pd.DataFrame):
             input = self._clean_pandas_df(input)
