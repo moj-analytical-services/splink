@@ -52,6 +52,10 @@ This section provides a series of examples to help you get started with Splink. 
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a> [Cookbook of various Splink techniques](./duckdb/cookbook.ipynb)
 
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/cookbook.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Investigating Bias in a Splink Model](./duckdb/bias_eval.ipynb)
+
 ##### Entity type: Financial transactions
 
 <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/transactions.ipynb">
