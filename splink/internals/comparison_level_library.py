@@ -25,9 +25,9 @@ def unsupported_splink_dialects(
     def decorator(func: CreateSQLFunctionType[T]) -> CreateSQLFunctionType[T]:
         @wraps(func)
         def wrapper(self: T, splink_dialect: SplinkDialect) -> str:
-            if splink_dialect.name in unsupported_dialects:
+            if splink_dialect.sql_dialect_str in unsupported_dialects:
                 raise ValueError(
-                    f"Dialect {splink_dialect.name} is not supported "
+                    f"Dialect {splink_dialect.sql_dialect_str} is not supported "
                     f"for {self.__class__.__name__}"
                 )
             return func(self, splink_dialect)
@@ -86,6 +86,20 @@ def validate_categorical_parameter(
 
 
 class NullLevel(ComparisonLevelCreator):
+    """Represents a comparison level where either or both values are NULL
+
+    e.g. val_l IS NULL OR val_r IS NULL
+
+    Args:
+        col_name (Union[str, ColumnExpression]): Input column name or ColumnExpression
+        valid_string_pattern (str, optional): If provided, a regex pattern to extract
+            a valid substring from the column before checking for NULL. Default is None.
+
+    Note:
+        If a valid_string_pattern is provided, the NULL check will be performed on
+        the extracted substring rather than the original column value.
+    """
+
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
@@ -109,6 +123,11 @@ class NullLevel(ComparisonLevelCreator):
 
 
 class ElseLevel(ComparisonLevelCreator):
+    """
+    This level is used to capture all comparisons that do not match any other
+    specified levels. It corresponds to the ELSE clause in a SQL CASE statement.
+    """
+
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         return "ELSE"
 
@@ -148,13 +167,13 @@ class CustomLevel(ComparisonLevelCreator):
             # if we are told it is one dialect, but try to create comparison level
             # of another, try to translate with sqlglot
             if sql_dialect != base_dialect:
-                base_dialect_sqlglot_name = base_dialect.sqlglot_name
+                base_dialect_sqlglot_name = base_dialect.sqlglot_dialect
 
                 # as default, translate condition into our dialect
                 try:
                     sql_condition = _translate_sql_string(
                         sql_condition,
-                        sql_dialect.sqlglot_name,
+                        sql_dialect.sqlglot_dialect,
                         base_dialect_sqlglot_name,
                     )
                 # if we hit a sqlglot error, assume users knows what they are doing,
@@ -189,6 +208,8 @@ class CustomLevel(ComparisonLevelCreator):
                 "tf_minimum_u_value",
                 "label_for_charts",
                 "disable_tf_exact_match_detection",
+                "fix_m_probability",
+                "fix_u_probability",
             )
             # split dict in two depending whether or not entries are 'configurables'
             configurables = {
@@ -279,6 +300,19 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         literal_datatype: str,
         side_of_comparison: str = "both",
     ):
+        """Represents a comparison level where a column matches a literal value
+
+        e.g. val_l = 'literal' AND/OR val_r = 'literal'
+
+        Args:
+            col_name (Union[str, ColumnExpression]): Input column name or
+                ColumnExpression
+            literal_value (str): The literal value to compare against e.g. 'male'
+            literal_datatype (str): The datatype of the literal value.
+                Must be one of: "string", "int", "float", "date"
+            side_of_comparison (str, optional): Which side(s) of the comparison to
+                apply. Must be one of: "left", "right", "both". Defaults to "both".
+        """
         self.side_of_comparison = validate_categorical_parameter(
             allowed_values=["left", "right", "both"],
             parameter_value=side_of_comparison,
@@ -299,7 +333,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
-        dialect = sql_dialect.sqlglot_name
+        dialect = sql_dialect.sqlglot_dialect
         lit = self.literal_value_undialected
 
         if self.literal_datatype == "string":
@@ -331,16 +365,23 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self,
         col_name_1: Union[str, ColumnExpression],
         col_name_2: Union[str, ColumnExpression],
+        symmetrical: bool = False,
     ):
         """Represents a comparison level where the columns are reversed. For example,
         if surname is in the forename field and vice versa
 
+        By default, col_l = col_r.  If the symmetrical argument is True, then
+        col_l = col_r AND col_r = col_l.
+
         Args:
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
+            symmetrical (bool): If True, equality is required in in both directions.
+                Default is False.
         """
         self.col_expression_1 = ColumnExpression.instantiate_if_str(col_name_1)
         self.col_expression_2 = ColumnExpression.instantiate_if_str(col_name_2)
+        self.symmetrical = symmetrical
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression_1.sql_dialect = sql_dialect
@@ -348,14 +389,18 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         col_1 = self.col_expression_1
         col_2 = self.col_expression_2
 
-        return (
-            f"{col_1.name_l} = {col_2.name_r} " f"AND {col_1.name_r} = {col_2.name_l}"
-        )
+        if self.symmetrical:
+            return (
+                f"{col_1.name_l} = {col_2.name_r} AND {col_1.name_r} = {col_2.name_l}"
+            )
+        else:
+            return f"{col_1.name_l} = {col_2.name_r}"
 
     def create_label_for_charts(self) -> str:
         col_1 = self.col_expression_1
         col_2 = self.col_expression_2
-        return f"Match on reversed cols: {col_1.label} and {col_2.label}"
+        direction = "both directions" if self.symmetrical else "one direction"
+        return f"Match on reversed cols: {col_1.label} and {col_2.label} ({direction})"
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
@@ -666,7 +711,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
             f"<= {self.time_threshold_seconds}"
         )
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
         translated = _translate_sql_string(
             sqlglot_base_dialect_sql, sqlglot_dialect_name
         )
@@ -747,6 +792,41 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         return f"Distance less than {self.km_threshold}km"
 
 
+class CosineSimilarityLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        similarity_threshold: float,
+    ):
+        """A comparison level using a cosine similarity function
+
+        e.g. array_cosine_similarity(val_l, val_r) >= similarity_threshold
+
+        Args:
+            col_name (str): Input column name
+            similarity_threshold (float): The threshold to use to assess
+                similarity. Should be between 0 and 1.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.similarity_threshold = validate_numeric_parameter(
+            lower_bound=0.0,
+            upper_bound=1.0,
+            parameter_value=similarity_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="similarity_threshold",
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        cs_fn = sql_dialect.cosine_similarity_function_name
+        return f"{cs_fn}({col.name_l}, {col.name_r}) >= {self.similarity_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Cosine similarity of {col.label} >= {self.similarity_threshold}"
+
+
 class ArrayIntersectLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str | ColumnExpression, min_intersection: int):
         """Represents a comparison level based around the size of an intersection of
@@ -772,7 +852,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         if hasattr(sql_dialect, "array_intersect"):
             return sql_dialect.array_intersect(self)
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
 
         sqlglot_base_dialect_sql = f"""
             ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r))
@@ -830,3 +910,37 @@ class PercentageDifferenceLevel(ComparisonLevelCreator):
             f"Percentage difference of '{col.label}' "
             f"within {self.percentage_threshold:,.2%}"
         )
+
+
+class AbsoluteDifferenceLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: Union[str, ColumnExpression],
+        difference_threshold: Union[int, float],
+    ):
+        """
+        Represents a comparison level where the absolute difference between two
+        numerical values is within a specified threshold.
+
+        Args:
+            col_name (str | ColumnExpression): Input column name or ColumnExpression.
+            difference_threshold (int | float): The maximum allowed absolute difference
+                between the two values.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.difference_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=difference_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="difference_threshold",
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        return f"ABS({col.name_l} - {col.name_r}) <= {self.difference_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return f"Absolute difference of '{col.label}' <= {self.difference_threshold}"

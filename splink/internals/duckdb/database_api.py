@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Sequence, Union
+from typing import Union
 
 import duckdb
 import pandas as pd
@@ -14,7 +14,6 @@ from splink.internals.dialects import (
 from .dataframe import DuckDBDataFrame
 from .duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
-    duckdb_load_from_file,
     validate_duckdb_connection,
 )
 
@@ -74,7 +73,15 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+            import pyarrow as pa
+
+            try:
+                # pyarrow preserves types better than pandas
+                import pyarrow as pa
+
+                input = pa.Table.from_pylist(input)
+            except ImportError:
+                input = pd.DataFrame.from_records(input)
 
         self._con.register(table_name, input)
 
@@ -93,9 +100,6 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
             return False
         return True
 
-    def load_from_file(self, file_path: str) -> str:
-        return duckdb_load_from_file(file_path)
-
     def _execute_sql_against_backend(self, final_sql: str) -> duckdb.DuckDBPyRelation:
         return self._con.sql(final_sql)
 
@@ -110,11 +114,3 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         except ImportError:
             pass
         return accepted_df_dtypes
-
-    def process_input_tables(
-        self, input_tables: Sequence[AcceptableInputTableType]
-    ) -> Sequence[AcceptableInputTableType]:
-        input_tables = super().process_input_tables(input_tables)
-        return [
-            self.load_from_file(t) if isinstance(t, str) else t for t in input_tables
-        ]

@@ -169,7 +169,7 @@ def populate_m_u_from_lookup(
 ) -> None:
     cl = comparison_level
 
-    if "m" not in training_fixed_probabilities:
+    if not cl._fix_m_probability and "m" not in training_fixed_probabilities:
         try:
             m_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value
@@ -188,7 +188,7 @@ def populate_m_u_from_lookup(
                 cl._m_warning_sent = True
         cl.m_probability = m_probability
 
-    if "u" not in training_fixed_probabilities:
+    if not cl._fix_u_probability and "u" not in training_fixed_probabilities:
         try:
             u_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value
@@ -260,7 +260,6 @@ def expectation_maximisation(
     # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
 
-    sql_dialect = db_api.sql_dialect.name
     sql_infinity_expression = db_api.sql_dialect.infinity_expression
 
     max_iterations = training_settings.max_iterations
@@ -292,7 +291,6 @@ def expectation_maximisation(
                 unique_id_input_columns=unique_id_input_columns,
                 core_model_settings=core_model_settings,
                 training_mode=True,
-                sql_dialect=sql_dialect,
                 sql_infinity_expression=sql_infinity_expression,
             )
 

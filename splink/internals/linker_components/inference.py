@@ -62,6 +62,10 @@ class LinkerInference:
         Deterministic linkage, however, is likely to result in missed links
         (false negatives).
 
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
+
+
         Examples:
 
             ```py
@@ -76,10 +80,6 @@ class LinkerInference:
             linker = Linker(df, settings, db_api=db_api)
             splink_df = linker.inference.deterministic_link()
             ```
-
-
-        Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.
         """
         pipeline = CTEPipeline()
         # Allows clustering during a deterministic linkage.
@@ -199,7 +199,7 @@ class LinkerInference:
         # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
         if (
             materialise_after_computing_term_frequencies
-            or self._linker._sql_dialect == "duckdb"
+            or self._linker._sql_dialect.sql_dialect_str == "duckdb"
         ):
             df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
             pipeline = CTEPipeline([df_concat_with_tf])
@@ -371,7 +371,7 @@ class LinkerInference:
 
         blocking_rule_list = [
             to_blocking_rule_creator(br).get_blocking_rule(
-                self._linker._db_api.sql_dialect.name
+                self._linker._db_api.sql_dialect.sql_dialect_str
             )
             for br in blocking_rule_list
         ]

@@ -128,8 +128,7 @@ class ComparisonLevel:
     def __init__(
         self,
         sql_condition: str,
-        # TODO: do we want dialect or just dialect name?
-        sqlglot_dialect_name: str,
+        sqlglot_dialect: str,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -139,8 +138,10 @@ class ComparisonLevel:
         m_probability: float = None,
         u_probability: float = None,
         disable_tf_exact_match_detection: bool = False,
+        fix_m_probability: bool = False,
+        fix_u_probability: bool = False,
     ):
-        self._sqlglot_dialect_name = sqlglot_dialect_name
+        self.sqlglot_dialect = sqlglot_dialect
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -156,6 +157,9 @@ class ComparisonLevel:
         self._u_probability: float | None | str = u_probability
         self.default_m_probability: float | None = None
         self.default_u_probability: float | None = None
+
+        self._fix_m_probability = fix_m_probability
+        self._fix_u_probability = fix_u_probability
 
         # TODO: control this in comparison getter setter ?
         # These will be set when the ComparisonLevel is passed into a Comparison
@@ -176,11 +180,6 @@ class ComparisonLevel:
         return copy(self)
 
     @property
-    def sql_dialect(self):
-        # TODO: align name with attribute
-        return self._sqlglot_dialect_name
-
-    @property
     def is_null_level(self) -> bool:
         return self._is_null_level
 
@@ -196,7 +195,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._tf_adjustment_column
         if val:
-            return InputColumn(val, sql_dialect=self.sql_dialect)
+            return InputColumn(val, sqlglot_dialect_str=self.sqlglot_dialect)
         else:
             return None
 
@@ -242,22 +241,40 @@ class ComparisonLevel:
         self._u_probability = value
 
     @property
-    def _m_probability_description(self):
+    def _m_probability_description(self) -> str:
+        if self.is_null_level:
+            return ""
         if self.m_probability is not None:
+            percentage = self.m_probability * 100
+            one_in_n = (
+                1 / self.m_probability if self.m_probability > 0 else float("inf")
+            )
             return (
                 "Amongst matching record comparisons, "
-                f"{self.m_probability:.2%} of records are in the "
+                f"{percentage:.4g}% of records (i.e. one in "
+                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
+        else:
+            return ""
 
     @property
-    def _u_probability_description(self):
+    def _u_probability_description(self) -> str:
+        if self.is_null_level:
+            return ""
         if self.u_probability is not None:
+            percentage = self.u_probability * 100
+            one_in_n = (
+                1 / self.u_probability if self.u_probability > 0 else float("inf")
+            )
             return (
                 "Amongst non-matching record comparisons, "
-                f"{self.u_probability:.2%} of records are in the "
+                f"{percentage:.4g}% of records (i.e. one in "
+                f"{self._num_fmt_dp_or_sf(one_in_n)}) are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
+        else:
+            return ""
 
     def _add_trained_u_probability(self, val, desc="no description given"):
         self._trained_u_probabilities.append(
@@ -347,21 +364,36 @@ class ComparisonLevel:
         else:
             return math.log2(self._bayes_factor)
 
+    def _num_fmt_dp_or_sf(self, val):
+        if val > 5000:
+            return f"{val:,.0f}"
+        elif val >= 100:
+            return f"{val:,.0f}"
+        else:
+            return f"{val:,.4g}"
+
     @property
     def _bayes_factor_description(self):
         text = (
             f"If comparison level is `{self.label_for_charts.lower()}` "
             "then comparison is"
         )
+
         if self._bayes_factor == math.inf:
             return f"{text} certain to be a match"
         elif self._bayes_factor == 0.0:
             return f"{text} impossible to be a match"
         elif self._bayes_factor >= 1.0:
-            return f"{text} {self._bayes_factor:,.2f} times more likely to be a match"
+            return (
+                f"{text} {self._num_fmt_dp_or_sf(self._bayes_factor)} times "
+                "more likely to be a match"
+            )
         else:
             mult = 1 / self._bayes_factor
-            return f"{text}  {mult:,.2f} times less likely to be a match"
+            return (
+                f"{text} {self._num_fmt_dp_or_sf(mult)} times "
+                "less likely to be a match"
+            )
 
     @property
     def label_for_charts(self):
@@ -406,7 +438,7 @@ class ComparisonLevel:
         sql = self.sql_condition
         if self._is_else_level:
             return True
-        dialect = self.sql_dialect
+        dialect = self.sqlglot_dialect
         try:
             sqlglot.parse_one(sql, read=dialect)
         except sqlglot.ParseError as e:
@@ -421,7 +453,9 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition, dialect=self.sql_dialect)
+        cols = get_columns_used_from_sql(
+            self.sql_condition, sqlglot_dialect=self.sqlglot_dialect
+        )
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -434,7 +468,7 @@ class ComparisonLevel:
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
 
-            input_cols.append(InputColumn(c, sql_dialect=self.sql_dialect))
+            input_cols.append(InputColumn(c, sqlglot_dialect_str=self.sqlglot_dialect))
 
         return input_cols
 
@@ -472,7 +506,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sql_dialect
+            self.sql_condition.lower(), read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 
@@ -485,7 +519,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sql_dialect
+            self.sql_condition.lower(), read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 
@@ -674,6 +708,8 @@ class ComparisonLevel:
         output["comparison_vector_value"] = self.comparison_vector_value
         output["max_comparison_vector_value"] = comparison_num_levels - 1
         output["bayes_factor_description"] = self._bayes_factor_description
+        output["m_probability_description"] = self._m_probability_description
+        output["u_probability_description"] = self._u_probability_description
 
         return output
 

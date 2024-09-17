@@ -44,7 +44,7 @@ class ComparisonLevelCreator(ABC):
         for the end user - otherwise they'd need to import a SplinkDialect"""
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         return ComparisonLevel(
-            sqlglot_dialect_name=sql_dialect.sqlglot_name,
+            sqlglot_dialect=sql_dialect.sqlglot_dialect,
             **self.create_level_dict(sql_dialect_str),
         )
 
@@ -80,6 +80,8 @@ class ComparisonLevelCreator(ABC):
         is_null_level: UnsuppliedNoneOr[bool] = unsupplied_option,
         label_for_charts: UnsuppliedNoneOr[str] = unsupplied_option,
         disable_tf_exact_match_detection: UnsuppliedNoneOr[bool] = unsupplied_option,
+        fix_m_probability: UnsuppliedNoneOr[bool] = unsupplied_option,
+        fix_u_probability: UnsuppliedNoneOr[bool] = unsupplied_option,
     ) -> "ComparisonLevelCreator":
         """
         Configure the comparison level with options which are common to all
@@ -127,6 +129,12 @@ class ComparisonLevelCreator(ABC):
                 frequency adjustments are set, the corresponding adjustment will be
                 made using the u-value for _this_ level, rather than the usual case
                 where it is the u-value of the exact match level in the same comparison.
+                Default is equivalent to False.
+            fix_m_probability (bool, optional): If true, the m probability for this
+                level will be fixed and not estimated during training.
+                Default is equivalent to False.
+            fix_u_probability (bool, optional): If true, the u probability for this
+                level will be fixed and not estimated during training.
                 Default is equivalent to False.
         Returns:
             ComparisonLevelCreator: The instance of the ComparisonLevelCreator class

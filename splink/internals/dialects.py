@@ -30,12 +30,14 @@ class SplinkDialect(ABC):
         return cls._dialect_instances[cls]
 
     @abstractproperty
-    def name(self):
+    def sql_dialect_str(self):
         pass
 
     @property
-    def sqlglot_name(self):
-        return self.name
+    def sqlglot_dialect(self):
+        # If not explicitly set, return the splink_dialect_str
+        # because they're usually the same except e.g. athena vs presto
+        return self.sql_dialect_str
 
     @classmethod
     def from_string(cls: type[Self], dialect_name: str) -> Self:
@@ -70,44 +72,56 @@ class SplinkDialect(ABC):
     @property
     def levenshtein_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Levenshtein' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'Levenshtein' function"
         )
 
     @property
     def damerau_levenshtein_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Damerau-Levenshtein' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'Damerau-Levenshtein' function"
         )
 
     @property
     def jaro_winkler_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Jaro-Winkler' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'Jaro-Winkler' function"
         )
 
     @property
     def jaro_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Jaro' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Jaro' function"
         )
 
     @property
     def jaccard_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'Jaccard' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Jaccard' function"
+        )
+
+    @property
+    def cosine_similarity_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'Cosine Similarity' function"
         )
 
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
         raise NotImplementedError(
-            f"Backend '{self.name}' needs a random_sample_sql added to its dialect"
+            f"Backend '{self.sql_dialect_str}' needs a random_sample_sql "
+            "added to its dialect"
         )
 
     @property
     def infinity_expression(self):
         raise NotImplementedError(
-            f"Backend '{self.name}' needs an infinity_expression added to its dialect"
+            f"Backend '{self.sql_dialect_str}' needs an infinity_expression "
+            "added to its dialect"
         )
 
     @staticmethod
@@ -123,7 +137,8 @@ class SplinkDialect(ABC):
 
     def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'try_parse_date' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'try_parse_date' function"
         )
 
     def try_parse_timestamp(self, name: str, timestamp_format: str = None) -> str:
@@ -131,7 +146,8 @@ class SplinkDialect(ABC):
 
     def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'try_parse_timestamp' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'try_parse_timestamp' function"
         )
 
     @final
@@ -144,7 +160,8 @@ class SplinkDialect(ABC):
         self, name: str, pattern: str, capture_group: int = 0
     ) -> str:
         raise NotImplementedError(
-            f"Backend '{self.name}' does not have a 'regex_extract' function"
+            f"Backend '{self.sql_dialect_str}' does not have a "
+            "'regex_extract' function"
         )
 
     def explode_arrays_sql(
@@ -162,7 +179,7 @@ class DuckDBDialect(SplinkDialect):
     _dialect_name_for_factory = "duckdb"
 
     @property
-    def name(self):
+    def sql_dialect_str(self):
         return "duckdb"
 
     @property
@@ -252,12 +269,16 @@ class DuckDBDialect(SplinkDialect):
             return f"""select {','.join(cols_to_select)}
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501
 
+    @property
+    def cosine_similarity_function_name(self):
+        return "array_cosine_similarity"
+
 
 class SparkDialect(SplinkDialect):
     _dialect_name_for_factory = "spark"
 
     @property
-    def name(self):
+    def sql_dialect_str(self):
         return "spark"
 
     @property
@@ -344,7 +365,7 @@ class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
 
     @property
-    def name(self):
+    def sql_dialect_str(self):
         return "sqlite"
 
     # SQLite does not natively support string distance functions.
@@ -391,7 +412,7 @@ class PostgresDialect(SplinkDialect):
     _dialect_name_for_factory = "postgres"
 
     @property
-    def name(self):
+    def sql_dialect_str(self):
         return "postgres"
 
     @property
@@ -478,11 +499,11 @@ class AthenaDialect(SplinkDialect):
     _dialect_name_for_factory = "athena"
 
     @property
-    def name(self):
+    def sql_dialect_str(self):
         return "athena"
 
     @property
-    def sqlglot_name(self):
+    def sqlglot_dialect(self):
         return "presto"
 
     @property

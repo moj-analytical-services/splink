@@ -156,7 +156,9 @@ class Linker:
         # or overwrite it with the db api dialect?
         # Maybe overwrite it here and incompatibilities have to be dealt with
         # by comparisons/ blocking rules etc??
-        self._settings_obj = settings_creator.get_settings(db_api.sql_dialect.name)
+        self._settings_obj = settings_creator.get_settings(
+            db_api.sql_dialect.sql_dialect_str
+        )
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
@@ -283,21 +285,21 @@ class Linker:
 
     # TODO: rename these!
     @property
-    def _sql_dialect(self) -> str:
-        return self._db_api.sql_dialect.name
+    def _sql_dialect_str(self) -> str:
+        return self._db_api.sql_dialect.sql_dialect_str
 
     @property
-    def _sql_dialect_object(self) -> SplinkDialect:
+    def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
 
     @property
     def _infinity_expression(self):
-        return self._sql_dialect_object.infinity_expression
+        return self._sql_dialect.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
-        return self._sql_dialect_object.random_sample_sql(
+        return self._sql_dialect.random_sample_sql(
             proportion, sample_size, seed=seed, table=table, unique_id=unique_id
         )
 
@@ -306,9 +308,11 @@ class Linker:
         input_tables: Sequence[AcceptableInputTableType],
         input_aliases: Optional[str | List[str]],
     ) -> Dict[str, SplinkDataFrame]:
+        input_tables_list = ensure_is_list(input_tables)
+
         if input_aliases is None:
             input_table_aliases = [
-                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables)
+                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables_list)
             ]
             overwrite = True
         else:
@@ -331,8 +335,8 @@ class Linker:
 
         # Run miscellaneous checks on our settings dictionary.
         _validate_dialect(
-            settings_dialect=self._settings_obj._sql_dialect,
-            linker_dialect=self._sql_dialect,
+            settings_dialect=self._settings_obj._sql_dialect_str,
+            linker_dialect=self._sql_dialect_str,
             linker_type=self.__class__.__name__,
         )
 
@@ -489,9 +493,9 @@ class Linker:
 
         for cc in ccs:
             for cl in cc._comparison_levels_excluding_null:
-                if cl._has_estimated_u_values:
+                if cl._has_estimated_u_values and not cl._fix_u_probability:
                     cl.u_probability = cl._trained_u_median
-                if cl._has_estimated_m_values:
+                if cl._has_estimated_m_values and not cl._fix_m_probability:
                     cl.m_probability = cl._trained_m_median
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
@@ -534,7 +538,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         blocking_rule = BlockingRule(
-            f"{uid_l} = {uid_r}", sqlglot_dialect=self._sql_dialect
+            f"{uid_l} = {uid_r}", sql_dialect_str=self._sql_dialect.sql_dialect_str
         )
 
         pipeline = CTEPipeline()
@@ -569,7 +573,6 @@ class Linker:
         sql_infos = predict_from_comparison_vectors_sqls(
             unique_id_input_columns=uid_cols,
             core_model_settings=self._settings_obj.core_model_settings,
-            sql_dialect=self._sql_dialect,
             sql_infinity_expression=self._infinity_expression,
         )
         for sql_info in sql_infos:

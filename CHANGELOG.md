@@ -7,10 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Match weight and m and u probabilities charts now have improved tooltips ([#2392](https://github.com/moj-analytical-services/splink/pull/2392))
+- Added new `AbsoluteDifferenceLevel` comparison level for numerical columns ([#2398](https://github.com/moj-analytical-services/splink/pull/2398))
+- Added new `CosineSimilarityLevel` and `CosineSimilarityAtThresholds` for comparing array columns using cosine similarity ([#2405](https://github.com/moj-analytical-services/splink/pull/2405))
+
+### Fixed
+
+- Fixed issue where `ColumnsReversedLevel` required equality on both columns ([#2395](https://github.com/moj-analytical-services/splink/pull/2395))
+
+## [4.0.1] - 2024-09-06
+
+### Added
+
+- When using DuckDB, you can now pass `duckdb.DuckDBPyRelation`s as input tables to the `Linker` ([#2375](https://github.com/moj-analytical-services/splink/pull/2375))
+- It's now possible to fix values for `m` and `u` probabilities in the settings such that they are not updated/changed during training.  ([#2379](https://github.com/moj-analytical-services/splink/pull/2379))
+- All charts can now be returned as vega lite spec dictionaries ([#2361](https://github.com/moj-analytical-services/splink/pull/2361))
+
+
 ### Fixed
 
 - Completeness chart now works correctly with indexed columns in spark ([#2309](https://github.com/moj-analytical-services/splink/pull/2309))
 - Completeness chart works even if you have a `source_dataset` column ([#2323](https://github.com/moj-analytical-services/splink/pull/2323))
+- `SQLiteAPI` can now be instantiated without error when opting not to register custom UDFs  ([#2342](https://github.com/moj-analytical-services/splink/pull/2342))
+- Splink now runs properly when working in read-only filesystems ([#2357](https://github.com/moj-analytical-services/splink/pull/2357))
+- Infinite Bayes factor no longer causes SQL error in `Spark` ([#2372](https://github.com/moj-analytical-services/splink/pull/2372))
+- `splink_datasets` is now functional in read-only filesystems ([#2378](https://github.com/moj-analytical-services/splink/pull/2378))
 
 
 ## [4.0.0] - 2024-07-24
@@ -114,7 +137,9 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/3.9.14...HEAD
+[unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.0...HEAD
+[4.0.0]: https://github.com/moj-analytical-services/splink/compare/3.9.15...4.0.0
+[3.9.15]: https://github.com/moj-analytical-services/splink/compare/3.9.14...3.9.15
 [3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14
 [3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
 [3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12

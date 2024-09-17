@@ -67,7 +67,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+            input = self.spark.createDataFrame(input)
 
         if isinstance(input, pd.DataFrame):
             input = self._clean_pandas_df(input)
@@ -257,6 +257,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
+            r"__splink__df_concat_sample",
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
@@ -264,6 +265,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
             r"__splink__blocked_id_pairs",
+            r"__splink__marginal_exploded_ids_blocking_rule.*",
         ]
 
         if re.fullmatch(r"|".join(regex_to_persist), templated_name):

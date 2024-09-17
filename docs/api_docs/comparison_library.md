@@ -15,6 +15,11 @@ tags:
       inherited_members: false
       merge_init_into_class: true
 
+## AbsoluteDateDifferenceAtThresholds
+
+An alias of [AbsoluteTimeDifferenceAtThresholds](./comparison_library.html#splink.comparison_library.AbsoluteTimeDifferenceAtThresholds).
+
+
 ## Configuring comparisons
 
 Note that all comparisons have a `.configure()` method as follows:
@@ -25,3 +30,4 @@ Note that all comparisons have a `.configure()` method as follows:
       show_root_heading: false
       show_root_toc: true
       show_source: false
+

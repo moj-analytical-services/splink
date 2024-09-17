@@ -134,7 +134,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
 
     pipeline = CTEPipeline(input_dataframes=[df_sample])
 
-    if linker._sql_dialect == "duckdb" and max_pairs > 1e4:
+    if linker._sql_dialect.sql_dialect_str == "duckdb" and max_pairs > 1e4:
         br = blocking_rule_to_obj(
             {
                 "blocking_rule": "1=1",

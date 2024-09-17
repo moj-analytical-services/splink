@@ -29,7 +29,7 @@ class AthenaDataFrame(SplinkDataFrame):
         )
 
         cols = list(d.keys())
-        return [InputColumn(c, sql_dialect="presto") for c in cols]
+        return [InputColumn(c, sqlglot_dialect_str="presto") for c in cols]
 
     def validate(self):
         pass

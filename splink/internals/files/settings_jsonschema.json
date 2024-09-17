@@ -196,12 +196,11 @@
                     1e-9
                   ]
                 },
-                "disable_tf_exact_match_detection":{
-                    "title": "If true, do not seek exact match u-value for TF adjustment",
-                    "type": "boolean",
-                    "default": false
+                "disable_tf_exact_match_detection": {
+                  "title": "If true, do not seek exact match u-value for TF adjustment",
+                  "type": "boolean",
+                  "default": false
                 }
-                
               },
               "required": [
                 "sql_condition"
@@ -296,14 +295,14 @@
       "examples": [
         "spark",
         "duckdb",
-        "presto",
+        "athena",
         "sqlite",
         "postgres"
       ],
       "enum": [
         "spark",
         "duckdb",
-        "presto",
+        "athena",
         "sqlite",
         "postgres"
       ]

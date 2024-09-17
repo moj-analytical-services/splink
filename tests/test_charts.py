@@ -2,8 +2,8 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
+from tests.decorator import mark_with_dialects_excluding
 
 # ground truth:
 # true matches ALWAYS match on gender
@@ -119,7 +119,10 @@ df = pd.DataFrame(
 )
 
 
-def test_m_u_charts():
+# sqlite has weird issue unrelated to charts,
+# but with training stuff we also randomly test here
+@mark_with_dialects_excluding("sqlite")
+def test_m_u_charts(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -128,7 +131,8 @@ def test_m_u_charts():
             cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    db_api = DuckDBAPI()
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     linker = Linker(df, settings, db_api=db_api)
 
@@ -147,7 +151,8 @@ def test_m_u_charts():
     linker.visualisations.match_weights_chart()
 
 
-def test_parameter_estimate_charts():
+@mark_with_dialects_excluding()
+def test_parameter_estimate_charts(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -156,7 +161,8 @@ def test_parameter_estimate_charts():
             cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    db_api = DuckDBAPI()
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     linker = Linker(df, settings, db_api=db_api)
 
@@ -193,7 +199,7 @@ def test_parameter_estimate_charts():
             cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
-    db_api = DuckDBAPI()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     linker = Linker(df, settings, db_api=db_api)
     linker.training.estimate_u_using_random_sampling(1e6)
@@ -201,7 +207,8 @@ def test_parameter_estimate_charts():
     linker.visualisations.parameter_estimate_comparisons_chart()
 
 
-def test_tf_adjustment_chart():
+@mark_with_dialects_excluding()
+def test_tf_adjustment_chart(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -212,7 +219,8 @@ def test_tf_adjustment_chart():
             cl.LevenshteinAtThresholds("surname", [1]),
         ],
     }
-    db_api = DuckDBAPI()
+    helper = test_helpers[dialect]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     linker = Linker(df, settings, db_api=db_api)
     linker.visualisations.tf_adjustment_chart("gender")
