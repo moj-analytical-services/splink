@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional
 
 from splink.internals.connected_components import solve_connected_components
@@ -107,7 +108,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     # print(f"Original clustering results at threshold {INITIAL_THRESHOLD}")
     # print(cc.as_duckdbpyrelation())
-
+    start_time_pre_query = time.time()
     pipeline = CTEPipeline([cc, edges_sdf])
 
     sql = f"""
@@ -120,13 +121,27 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     sql = f"""
     SELECT
         c.cluster_id,
-        COALESCE(MIN(e.match_probability), 1.0) AS min_match_probability
+        e.match_probability
     FROM {cc.physical_name} c
     LEFT JOIN __splink__relevant_edges e
     ON c.{node_id_column_name} = e.{edge_id_column_name_left}
-       OR c.{node_id_column_name} = e.{edge_id_column_name_right}
-    GROUP BY c.cluster_id
+    UNION ALL
+    SELECT
+        c.cluster_id,
+        e.match_probability
+    FROM {cc.physical_name} c
+    LEFT JOIN __splink__relevant_edges e
+    ON c.{node_id_column_name} = e.{edge_id_column_name_right}
+    """
+    pipeline.enqueue_sql(sql, "__splink__cluster_edge_probabilities")
 
+    # Step 2: Find the min probability
+    sql = """
+    SELECT
+        cluster_id,
+        COALESCE(MIN(match_probability), 1.0) AS min_match_probability
+    FROM __splink__cluster_edge_probabilities
+    GROUP BY cluster_id
     """
     pipeline.enqueue_sql(sql, "__splink__cluster_min_probs")
 
@@ -160,8 +175,13 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     # print(node_cluster_min_probabilities.as_duckdbpyrelation())
 
     # print("----------------------------------")
+    end_time_pre_query = time.time()
+    print(
+        f"Time taken to pre-query: {end_time_pre_query - start_time_pre_query:.2f} seconds"
+    )
     for NEW_THRESHOLD in match_probability_thresholds:
-        # print(f"Now clustering at threshold {NEW_THRESHOLD}")
+        print(f"Now clustering at threshold {NEW_THRESHOLD}")
+        start_time = time.time()
         # First filter the edges and the nodes to remove any where
         # min_match_probability is > the NEW_THRESHOLD
 
@@ -178,15 +198,31 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
         if OLD_THRESHOLD != INITIAL_THRESHOLD:  # if not t
             # For each clusters in the new clusters, get the new min_match_probability
+            # Step 1: Split the LEFT JOIN across a UNION ALL
             sql = f"""
             SELECT
-                    c.cluster_id,
-                    COALESCE(MIN(e.match_probability), 1.0) AS min_match_probability
-                FROM {marginal_new_clusters.physical_name} c
-                LEFT JOIN {edges_in_play.physical_name} e
-                ON c.{node_id_column_name} = e.{edge_id_column_name_left}
-                OR c.{node_id_column_name} = e.{edge_id_column_name_right}
-                GROUP BY c.cluster_id
+                c.cluster_id,
+                e.match_probability
+            FROM {marginal_new_clusters.physical_name} c
+            LEFT JOIN {edges_in_play.physical_name} e
+            ON c.{node_id_column_name} = e.{edge_id_column_name_left}
+            UNION ALL
+            SELECT
+                c.cluster_id,
+                e.match_probability
+            FROM {marginal_new_clusters.physical_name} c
+            LEFT JOIN {edges_in_play.physical_name} e
+            ON c.{node_id_column_name} = e.{edge_id_column_name_right}
+            """
+            pipeline.enqueue_sql(sql, "__splink__additional_cluster_edge_probabilities")
+
+            # Step 2: Find the min probability
+            sql = """
+            SELECT
+                cluster_id,
+                COALESCE(MIN(match_probability), 1.0) AS min_match_probability
+            FROM __splink__additional_cluster_edge_probabilities
+            GROUP BY cluster_id
             """
             pipeline.enqueue_sql(sql, "__splink__additional_cluster_min_probs")
 
@@ -287,6 +323,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         final_new_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         all_results[NEW_THRESHOLD] = final_new_clusters
         OLD_THRESHOLD = NEW_THRESHOLD
+        end_time = time.time()
+        print(f"Iteration Time taken: {end_time - start_time:.2f} seconds")
 
         # print("final_new_clusters")
         # print(final_new_clusters.as_duckdbpyrelation())
