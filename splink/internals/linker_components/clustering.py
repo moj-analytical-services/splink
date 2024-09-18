@@ -78,7 +78,7 @@ class LinkerClustering:
 
         sql = f"""
         select
-            {uid_concat_nodes} as node_id,
+            {uid_concat_nodes} as node_id
             from __splink__df_concat
         """
         pipeline.enqueue_sql(sql, "__splink__df_nodes_with_composite_ids")
