@@ -85,15 +85,31 @@ class LinkerClustering:
 
         nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        has_match_prob_col = "match_probability" in [
+            c.unquote().name for c in df_predict.columns
+        ]
+
+        if not has_match_prob_col and threshold_match_probability is not None:
+            raise ValueError(
+                "df_predict must have a column called 'match_probability' if "
+                "threshold_match_probability is provided"
+            )
+
+        match_p_expr = ""
+        match_p_select_expr = ""
+        if threshold_match_probability is not None:
+            match_p_expr = f"where match_probability >= {threshold_match_probability}"
+            match_p_select_expr = ", match_probability"
+
         pipeline = CTEPipeline([df_predict])
 
         sql = f"""
         select
             {uid_concat_edges_l} as node_id_l,
-            {uid_concat_edges_r} as node_id_r,
-            match_probability
-            from __splink__df_predict
-            where match_probability >= {threshold_match_probability}
+            {uid_concat_edges_r} as node_id_r
+            {match_p_select_expr}
+            from {df_predict.templated_name}
+            {match_p_expr}
         """
         pipeline.enqueue_sql(sql, "__splink__df_edges")
 
