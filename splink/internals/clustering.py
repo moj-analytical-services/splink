@@ -271,8 +271,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-        # print("nodes_in_play")
-        # print(nodes_in_play.as_duckdbpyrelation())
+        print("nodes_in_play")
+        print(nodes_in_play.as_duckdbpyrelation().count("*"))
 
         # Filter edges to keep only those not in stable clusters
         pipeline = CTEPipeline([edges_sdf, stable_nodes])
@@ -292,10 +292,12 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edges_in_play = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-        # print("edges_in_play")
+        print("edges_in_play")
         # print(edges_in_play.as_duckdbpyrelation())
+        print(edges_in_play.as_duckdbpyrelation().count("*"))
 
         # Now we cluster the ones still in play
+        start_time_clustering = time.time()
         marginal_new_clusters = cluster_pairwise_predictions_at_threshold(
             nodes=nodes_in_play,
             edges=edges_in_play,
@@ -304,6 +306,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
             edge_id_column_name_left=edge_id_column_name_left,
             edge_id_column_name_right=edge_id_column_name_right,
             threshold_match_probability=NEW_THRESHOLD,
+        )
+        end_time_clustering = time.time()
+        print(
+            f"Time taken to cluster at threshold {NEW_THRESHOLD}: {end_time_clustering - start_time_clustering:.2f} seconds"
         )
 
         pipeline = CTEPipeline([stable_nodes, marginal_new_clusters])

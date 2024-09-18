@@ -194,11 +194,11 @@ def _cc_generate_representatives_loop_cond(
 
         from __splink__df_neighbours as neighbours
 
-        left join {prev_representatives} as repr_neighbour
+        inner join {prev_representatives} as repr_neighbour
         on neighbours.neighbour = repr_neighbour.node_id
 
         where
-            repr_neighbour.rep_match
+            repr_neighbour.rep_match = True
 
         UNION ALL
 
@@ -208,6 +208,8 @@ def _cc_generate_representatives_loop_cond(
             representative
 
         from {prev_representatives}
+        where
+            {prev_representatives}.rep_match = False
 
     ) AS source
     group by source.node_id
