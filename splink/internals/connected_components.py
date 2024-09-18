@@ -6,59 +6,23 @@
 # we have been able to use the paper to further our understanding
 # of the problem and come to a working solution.
 
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+# See also https://github.com/RobinL/clustering_in_sql
+
 from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
-from splink.internals.input_column import InputColumn
+from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
-    _composite_unique_id_from_nodes_sql,
-)
-
-if TYPE_CHECKING:
-    from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
 
 
-def _cc_create_nodes_table(linker: "Linker", generated_graph: bool = False) -> str:
-    """SQL to create our connected components nodes table.
-
-    From our edges table, create a nodes table.
-
-    This captures ALL nodes in our edges representation
-    as a single columnar list.
-
-    This logic can be shortcut by using the unique
-    id column found in __splink__df_concat_with_tf.
-    """
-
-    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
-    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols)
-
-    if generated_graph:
-        sql = """
-        select unique_id_l as node_id
-            from __splink__df_connected_components_df
-
-            UNION
-
-        select unique_id_r as node_id
-            from __splink__df_connected_components_df
-        """
-    else:
-        sql = f"""
-        select {uid_concat} as node_id
-        from __splink__df_concat_with_tf
-        """
-
-    return sql
+def _cc_create_unique_id_cols():
+    pass
 
 
 def _cc_generate_neighbours_representation() -> str:
@@ -80,20 +44,20 @@ def _cc_generate_neighbours_representation() -> str:
 
     sql = """
     select n.node_id,
-        e_l.unique_id_r as neighbour
+        e_l.node_id_r as neighbour
     from nodes as n
 
-    left join __splink__df_connected_components_df as e_l
-        on n.node_id = e_l.unique_id_l
+    left join __splink__edges as e_l
+        on n.node_id = e_l.node_id_l
 
-    UNION ALL
+    UNION
 
     select n.node_id,
-        coalesce(e_r.unique_id_l, n.node_id) as neighbour
+        coalesce(e_r.node_id_l, n.node_id) as neighbour
     from nodes as n
 
-    left join __splink__df_connected_components_df as e_r
-        on n.node_id = e_r.unique_id_r
+    left join __splink__edges as e_r
+        on n.node_id = e_r.node_id_r
     """
 
     return sql
@@ -113,7 +77,7 @@ def _cc_generate_initial_representatives_table() -> str:
     they are a cluster.
 
     This is done initially by grouping on our neighbours table
-    and finding the minimum representative for each node.
+    and finding the minimum neighbour for each node.
     """
 
     sql = """
@@ -296,93 +260,14 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     return sql
 
 
-def _cc_create_unique_id_cols(
-    linker: "Linker",
-    concat_with_tf: str,
-    df_predict: SplinkDataFrame,
-    match_probability_threshold: Optional[float],
-) -> SplinkDataFrame:
-    """Create SQL to pull unique ID columns for connected components.
-
-    Takes the output of linker.predict() and either creates unique IDs for
-    our linked dataframes, if we are performing a link job, or pulls out
-    the unique ID columns if deduping.
-
-    Args:
-        linker:
-            Splink linker object. For more, see splink.linker.
-
-        match_probability_threshold (int):
-            The minimum match probability threshold for a link to be
-            considered a match. This reduces the number of unique IDs created
-            and connected in our algorithm.
-            Not required if in deterministic link mode.
-
-    Returns:
-        SplinkDataFrame: A dataframe containing two sets of unique IDs,
-        unique_id_l and unique_id_r.
-
-    """
-    # Set probability threshold
-    if "is_deterministic_link" in df_predict.metadata:
-        match_probability_condition = ""
-    elif match_probability_threshold is None:
-        raise TypeError("Parameter 'match_probability_threshold' is missing or None")
-    else:
-        match_probability_condition = (
-            f"where match_probability >= {match_probability_threshold}"
-        )
-
-    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
-    uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
-    uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
-    uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
-
-    # Generate new unique IDs for our linked dataframes.
-    sql = f"""
-        select
-        {uid_concat_edges_l} as unique_id_l,
-        {uid_concat_edges_r} as unique_id_r
-        from {df_predict.physical_name}
-        {match_probability_condition}
-
-        UNION
-
-        select
-        {uid_concat_edges} as unique_id_l,
-        {uid_concat_edges} as unique_id_r
-        from {concat_with_tf}
-    """
-    pipeline = CTEPipeline()
-    pipeline.enqueue_sql(sql, "__splink__df_connected_components_df")
-    return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-
-def _exit_query(
-    representatives: SplinkDataFrame,
-    concat_with_tf: SplinkDataFrame,
-    uid_cols: list[InputColumn],
-) -> str:
-    representatives_name = representatives.physical_name
-    concat_with_tf_name = concat_with_tf.physical_name
-
-    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
-
-    return f"""
-        select
-            c.representative as cluster_id, n.*
-        from {representatives_name} as c
-
-        left join {concat_with_tf_name} as n
-        on {uid_concat} = c.node_id
-    """
-
-
 def solve_connected_components(
-    linker: "Linker",
+    nodes_table: SplinkDataFrame,
     edges_table: SplinkDataFrame,
-    concat_with_tf: SplinkDataFrame,
-    _generated_graph: bool = False,
+    node_id_column_name: str,
+    edge_id_column_name_left: str,
+    edge_id_column_name_right: str,
+    db_api: DatabaseAPISubClass,
+    threshold_match_probability: Optional[float],
 ) -> SplinkDataFrame:
     """Connected Components main algorithm.
 
@@ -396,13 +281,7 @@ def solve_connected_components(
         edges_table (SplinkDataFrame):
             Splink dataframe containing our edges dataframe to be connected.
 
-        generated_graph (bool):
-            Specifies whether the input df is a NetworkX graph, or part of
-            a splink deduping or linking job.
 
-            This is used for testing against NetworkX and only impacts how
-            our nodes table is generated as this can be shortcut using
-            __splink__df_concat_with_tf.
 
     Returns:
         SplinkDataFrame: A dataframe containing the connected components list
@@ -410,19 +289,34 @@ def solve_connected_components(
 
     """
 
-    input_dfs = [edges_table]
-    if _generated_graph:
-        edges_table.templated_name = "__splink__df_connected_components_df"
-    else:
-        input_dfs.append(concat_with_tf)
+    pipeline = CTEPipeline([edges_table, nodes_table])
 
-    pipeline = CTEPipeline(input_dfs)
-    # Create our initial node and neighbours tables
-    sql = _cc_create_nodes_table(linker, _generated_graph)
+    sql = f"""
+    select
+        {edge_id_column_name_left} as node_id_l,
+        {edge_id_column_name_right} as node_id_r
+    from {edges_table.physical_name}
+    where match_probability >= {threshold_match_probability}
+
+    UNION
+
+    select
+    {node_id_column_name} as node_id_l,
+    {node_id_column_name} as node_id_r
+    from {nodes_table.physical_name}
+    """
+    pipeline.enqueue_sql(sql, "__splink__edges")
+    edges = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    pipeline = CTEPipeline([edges])
+
+    sql = f"select {node_id_column_name} as node_id from {nodes_table.physical_name}"
+
     pipeline.enqueue_sql(sql, "nodes")
+
     sql = _cc_generate_neighbours_representation()
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
-    neighbours = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     # Create our initial representatives table
     pipeline = CTEPipeline([neighbours])
@@ -434,7 +328,8 @@ def solve_connected_components(
     # Execute if we have no batching, otherwise add it to our batched process
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
-    representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
@@ -469,7 +364,7 @@ def solve_connected_components(
             repr_name,
         )
 
-        representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -481,7 +376,7 @@ def solve_connected_components(
 
         pipeline.enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = linker._db_api.sql_pipeline_to_splink_dataframe(
+        root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
 
@@ -494,18 +389,13 @@ def solve_connected_components(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-    # Create our final representatives table
-    # Need to edit how we export the table based on whether we are
-    # performing a link or dedupe job.
-    uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
+    sql = f"""
+    select
+        node_id as {node_id_column_name},
+        representative as cluster_id
+    from {representatives.templated_name}
+    """
 
-    exit_query = _exit_query(
-        representatives=representatives,
-        concat_with_tf=concat_with_tf,
-        uid_cols=uid_cols,
-    )
     pipeline = CTEPipeline([representatives])
-    pipeline.enqueue_sql(exit_query, "__splink__df_representatives")
-    representatives = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    return representatives
+    pipeline.enqueue_sql(sql, "__splink__clustering_output")
+    return db_api.sql_pipeline_to_splink_dataframe(pipeline)
