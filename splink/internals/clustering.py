@@ -30,7 +30,7 @@ def cluster_pairwise_predictions_at_threshold(
             sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect,
         ).name_r
 
-    return solve_connected_components(
+    cc = solve_connected_components(
         nodes_table=nodes_sdf,
         edges_table=edges_sdf,
         node_id_column_name=node_id_column_name,
@@ -39,3 +39,5 @@ def cluster_pairwise_predictions_at_threshold(
         db_api=db_api,
         threshold_match_probability=threshold_match_probability,
     )
+    cc.metadata["threshold_match_probability"] = threshold_match_probability
+    return cc

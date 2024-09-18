@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from splink.internals.connected_components import (
-    _cc_create_unique_id_cols,
     solve_connected_components,
 )
 from splink.internals.edge_metrics import compute_edge_metrics
@@ -18,9 +17,7 @@ from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
-from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
-)
+from splink.internals.vertically_concatenate import enqueue_df_concat
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
@@ -64,25 +61,84 @@ class LinkerClustering:
             )
             ```
         """
-        # Feeding in df_predict forces materiailisation, if it exists in your database
-        pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
-        edges_table = _cc_create_unique_id_cols(
-            self._linker,
-            nodes_with_tf.physical_name,
-            df_predict,
-            threshold_match_probability,
+        # Need to get nodes and edges in a format suitable to pass to
+        # cluster_pairwise_predictions_at_threshold
+        linker = self._linker
+        db_api = linker._db_api
+
+        pipeline = CTEPipeline()
+
+        enqueue_df_concat(linker, pipeline)
+
+        uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
+        uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        uid_concat_nodes = _composite_unique_id_from_nodes_sql(uid_cols, None)
+
+        sql = f"""
+        select
+            {uid_concat_nodes} as node_id,
+            from __splink__df_concat
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_nodes_with_composite_ids")
+
+        nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        pipeline = CTEPipeline([df_predict])
+
+        sql = f"""
+        select
+            {uid_concat_edges_l} as node_id_l,
+            {uid_concat_edges_r} as node_id_r,
+            match_probability
+            from __splink__df_predict
+            where match_probability >= {threshold_match_probability}
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_edges")
+
+        edges_table_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
         )
 
         cc = solve_connected_components(
-            self._linker,
-            edges_table,
-            nodes_with_tf,
+            nodes_table=nodes_with_composite_ids,
+            edges_table=edges_table_with_composite_ids,
+            node_id_column_name="node_id",
+            edge_id_column_name_left="node_id_l",
+            edge_id_column_name_right="node_id_r",
+            db_api=db_api,
+            threshold_match_probability=threshold_match_probability,
         )
-        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
-        return cc
+        pipeline = CTEPipeline([cc])
+
+        enqueue_df_concat(linker, pipeline)
+
+        df_obj = next(iter(linker._input_tables_dict.values()))
+        columns = df_obj.columns_escaped
+
+        if linker._settings_obj._get_source_dataset_column_name_is_required():
+            columns.insert(
+                1,
+                linker._settings_obj.column_info_settings.source_dataset_input_column.name,
+            )
+
+        select_columns_sql = ", ".join(columns)
+
+        sql = f"""
+        select
+            cc.cluster_id,
+            {select_columns_sql}
+        from __splink__clustering_output as cc
+        left join __splink__df_concat
+        on cc.node_id = {uid_concat_nodes}
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_clustered_with_input_data")
+
+        df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        return df_clustered_with_input_data
 
     def _compute_metrics_nodes(
         self,
