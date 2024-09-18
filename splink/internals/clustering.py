@@ -105,8 +105,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     )
     all_results[INITIAL_THRESHOLD] = cc
 
-    print(f"Original clustering results at threshold {INITIAL_THRESHOLD}")
-    print(cc.as_duckdbpyrelation())
+    # print(f"Original clustering results at threshold {INITIAL_THRESHOLD}")
+    # print(cc.as_duckdbpyrelation())
 
     pipeline = CTEPipeline([cc, edges_sdf])
 
@@ -156,12 +156,12 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     # Next is the main loop where we calculate the result for the rest of the thresholds
     OLD_THRESHOLD = INITIAL_THRESHOLD
 
-    print("node_cluster_min_probabilities")
-    print(node_cluster_min_probabilities.as_duckdbpyrelation())
+    # print("node_cluster_min_probabilities")
+    # print(node_cluster_min_probabilities.as_duckdbpyrelation())
 
-    print("----------------------------------")
+    # print("----------------------------------")
     for NEW_THRESHOLD in match_probability_thresholds:
-        print(f"Now clustering at threshold {NEW_THRESHOLD}")
+        # print(f"Now clustering at threshold {NEW_THRESHOLD}")
         # First filter the edges and the nodes to remove any where
         # min_match_probability is > the NEW_THRESHOLD
 
@@ -219,8 +219,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         stable_nodes = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-        print("stable_nodes")
-        print(stable_nodes.as_duckdbpyrelation())
+        # print("stable_nodes")
+        # print(stable_nodes.as_duckdbpyrelation())
 
         # Filter the nodes to remove any where min_match_probability is < the NEW_THRESHOLD
 
@@ -235,8 +235,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-        print("nodes_in_play")
-        print(nodes_in_play.as_duckdbpyrelation())
+        # print("nodes_in_play")
+        # print(nodes_in_play.as_duckdbpyrelation())
 
         # Filter edges to keep only those not in stable clusters
         pipeline = CTEPipeline([edges_sdf, stable_nodes])
@@ -256,8 +256,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edges_in_play = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
-        print("edges_in_play")
-        print(edges_in_play.as_duckdbpyrelation())
+        # print("edges_in_play")
+        # print(edges_in_play.as_duckdbpyrelation())
 
         # Now we cluster the ones still in play
         marginal_new_clusters = cluster_pairwise_predictions_at_threshold(
@@ -288,8 +288,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         all_results[NEW_THRESHOLD] = final_new_clusters
         OLD_THRESHOLD = NEW_THRESHOLD
 
-        print("final_new_clusters")
-        print(final_new_clusters.as_duckdbpyrelation())
-        print("----------------------------------")
+        # print("final_new_clusters")
+        # print(final_new_clusters.as_duckdbpyrelation())
+        # print("----------------------------------")
 
     return all_results
