@@ -10,7 +10,7 @@ def cluster_pairwise_predictions_at_threshold(
     nodes: AcceptableInputTableType,
     edges: AcceptableInputTableType,
     db_api: DatabaseAPISubClass,
-    node_id_column_name: Optional[str] = None,
+    node_id_column_name: str,
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
     threshold_match_probability: Optional[float] = None,
