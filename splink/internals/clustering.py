@@ -62,13 +62,19 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     edge_id_column_name_right: Optional[str] = None,
 ) -> SplinkDataFrame:
     tid = ascii_uid(8)
+    if not isinstance(nodes, SplinkDataFrame):
+        nodes_sdf = db_api.register_table(
+            nodes, f"__splink__df_nodes_{tid}", overwrite=True
+        )
+    else:
+        nodes_sdf = nodes
 
-    nodes_sdf = db_api.register_table(
-        nodes, f"__splink__df_nodes_{tid}", overwrite=True
-    )
-    edges_sdf = db_api.register_table(
-        edges, f"__splink__df_edges_{tid}", overwrite=True
-    )
+    if not isinstance(edges, SplinkDataFrame):
+        edges_sdf = db_api.register_table(
+            edges, f"__splink__df_edges_{tid}", overwrite=True
+        )
+    else:
+        edges_sdf = edges
 
     if not edge_id_column_name_left:
         edge_id_column_name_left = InputColumn(
@@ -104,16 +110,23 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     pipeline = CTEPipeline([cc, edges_sdf])
 
+    sql = f"""
+    SELECT * from {edges_sdf.templated_name}
+    WHERE match_probability >= {INITIAL_THRESHOLD}
+    """
+    pipeline.enqueue_sql(sql, "__splink__relevant_edges")
+
     # Calculate cluster_min_probs
     sql = f"""
     SELECT
         c.cluster_id,
         COALESCE(MIN(e.match_probability), 1.0) AS min_match_probability
     FROM {cc.physical_name} c
-    LEFT JOIN {edges_sdf.physical_name} e
+    LEFT JOIN __splink__relevant_edges e
     ON c.{node_id_column_name} = e.{edge_id_column_name_left}
        OR c.{node_id_column_name} = e.{edge_id_column_name_right}
     GROUP BY c.cluster_id
+
     """
     pipeline.enqueue_sql(sql, "__splink__cluster_min_probs")
 
