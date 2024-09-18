@@ -291,12 +291,16 @@ def solve_connected_components(
 
     pipeline = CTEPipeline([edges_table, nodes_table])
 
+    match_prob_expr = f"where match_probability >= {threshold_match_probability}"
+    if threshold_match_probability is None:
+        match_prob_expr = ""
+
     sql = f"""
     select
         {edge_id_column_name_left} as node_id_l,
         {edge_id_column_name_right} as node_id_r
     from {edges_table.physical_name}
-    where match_probability >= {threshold_match_probability}
+    {match_prob_expr}
 
     UNION
 
