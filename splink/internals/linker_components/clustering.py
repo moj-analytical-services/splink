@@ -154,6 +154,11 @@ class LinkerClustering:
 
         df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        if threshold_match_probability is not None:
+            df_clustered_with_input_data.metadata["threshold_match_probability"] = (
+                threshold_match_probability
+            )
+
         return df_clustered_with_input_data
 
     def _compute_metrics_nodes(
