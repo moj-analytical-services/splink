@@ -85,6 +85,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     match_probability_thresholds = sorted(match_probability_thresholds)
 
     INITIAL_THRESHOLD = match_probability_thresholds.pop(0)
+    all_results = {}
 
     # First cluster at the lowest threshold
     cc = cluster_pairwise_predictions_at_threshold(
@@ -96,6 +97,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edge_id_column_name_right=edge_id_column_name_right,
         threshold_match_probability=INITIAL_THRESHOLD,
     )
+    all_results[INITIAL_THRESHOLD] = cc
+
+    print(f"Original clustering results at threshold {INITIAL_THRESHOLD}")
+    print(cc.as_duckdbpyrelation())
 
     pipeline = CTEPipeline([cc, edges_sdf])
 
@@ -118,6 +123,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     SELECT
         n.cluster_id,
         n.{node_id_column_name},
+
         cmp.min_match_probability
     FROM {cc.physical_name} n
     JOIN __splink__cluster_min_probs cmp ON n.cluster_id = cmp.cluster_id
@@ -136,26 +142,76 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     # Next is the main loop where we calculate the result for the rest of the thresholds
     OLD_THRESHOLD = INITIAL_THRESHOLD
+
+    print("node_cluster_min_probabilities")
+    print(node_cluster_min_probabilities.as_duckdbpyrelation())
+
+    print("----------------------------------")
     for NEW_THRESHOLD in match_probability_thresholds:
+        print(f"Now clustering at threshold {NEW_THRESHOLD}")
         # First filter the edges and the nodes to remove any where
         # min_match_probability is > the NEW_THRESHOLD
 
         pipeline = CTEPipeline([node_cluster_min_probabilities])
         sql = f"""
         SELECT
+            cluster_id,
             {node_id_column_name},
-            cluster_id
+            min_match_probability
         FROM __splink__node_cluster_min_probabilities
         WHERE min_match_probability >= {NEW_THRESHOLD}
         """
-        pipeline.enqueue_sql(sql, "__splink__stable_nodes")
+        pipeline.enqueue_sql(sql, "__splink__stable_nodes_from_initial_threshold")
 
-        stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        print(stable_clusters.as_duckdbpyrelation())
+        if OLD_THRESHOLD != INITIAL_THRESHOLD:  # if not t
+            # For each clusters in the new clusters, get the new min_match_probability
+            sql = f"""
+            SELECT
+                    c.cluster_id,
+                    COALESCE(MIN(e.match_probability), 1.0) AS min_match_probability
+                FROM {marginal_new_clusters.physical_name} c
+                LEFT JOIN {edges_in_play.physical_name} e
+                ON c.{node_id_column_name} = e.{edge_id_column_name_left}
+                OR c.{node_id_column_name} = e.{edge_id_column_name_right}
+                GROUP BY c.cluster_id
+            """
+            pipeline.enqueue_sql(sql, "__splink__additional_cluster_min_probs")
+
+            # But what we need is the node ids corresponding to these clusters
+            sql = f"""
+            SELECT
+                n.cluster_id,
+                n.{node_id_column_name},
+                cmp.min_match_probability
+            FROM {marginal_new_clusters.physical_name} n
+            JOIN __splink__additional_cluster_min_probs cmp ON n.cluster_id = cmp.cluster_id
+            WHERE cmp.min_match_probability >= {NEW_THRESHOLD}
+            """
+            pipeline.enqueue_sql(
+                sql, "__splink__additional_node_cluster_min_probabilities"
+            )
+
+            sql = """
+            select * from __splink__additional_node_cluster_min_probabilities
+            UNION ALL
+            select * from __splink__stable_nodes_from_initial_threshold
+            """
+            pipeline.enqueue_sql(sql, "__splink__stable_nodes")
+        else:
+            sql = """
+            select * from __splink__stable_nodes_from_initial_threshold
+            """
+            pipeline.enqueue_sql(sql, "__splink__stable_nodes")
+
+        stable_nodes = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
+        )
+        print("stable_nodes")
+        print(stable_nodes.as_duckdbpyrelation())
 
         # Filter the nodes to remove any where min_match_probability is < the NEW_THRESHOLD
 
-        pipeline = CTEPipeline([nodes_sdf, stable_clusters])
+        pipeline = CTEPipeline([nodes_sdf, stable_nodes])
         sql = f"""
         SELECT
             {node_id_column_name}
@@ -163,12 +219,14 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         WHERE {node_id_column_name} not in (SELECT {node_id_column_name} FROM __splink__stable_nodes)
         """
         pipeline.enqueue_sql(sql, "__splink__nodes_in_play")
-        nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
+        )
         print("nodes_in_play")
         print(nodes_in_play.as_duckdbpyrelation())
 
         # Filter edges to keep only those not in stable clusters
-        pipeline = CTEPipeline([edges_sdf, stable_clusters])
+        pipeline = CTEPipeline([edges_sdf, stable_nodes])
         sql = f"""
         SELECT
             e.{edge_id_column_name_left},
@@ -182,12 +240,14 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
         pipeline.enqueue_sql(sql, "__splink__edges_in_play")
 
-        edges_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        edges_in_play = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline, use_cache=False
+        )
         print("edges_in_play")
         print(edges_in_play.as_duckdbpyrelation())
 
         # Now we cluster the ones still in play
-        new_clusters = cluster_pairwise_predictions_at_threshold(
+        marginal_new_clusters = cluster_pairwise_predictions_at_threshold(
             nodes=nodes_in_play,
             edges=edges_in_play,
             db_api=db_api,
@@ -197,17 +257,26 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
             threshold_match_probability=NEW_THRESHOLD,
         )
 
-        print(stable_clusters.as_duckdbpyrelation())
-        print(new_clusters.as_duckdbpyrelation())
-
-        # Concat new clusters with stable_clusters
-        pipeline = CTEPipeline([stable_clusters, new_clusters])
+        pipeline = CTEPipeline([stable_nodes, marginal_new_clusters])
         sql = f"""
-        SELECT * FROM {stable_clusters.templated_name}
+        SELECT cluster_id, {node_id_column_name} FROM {stable_nodes.templated_name}
         UNION ALL
-        SELECT * FROM {new_clusters.templated_name}
+        SELECT cluster_id, {node_id_column_name} FROM {marginal_new_clusters.templated_name}
         """
 
+        pipeline.enqueue_sql(sql, "__splink__all_clusters_unsorted")
+
+        sql = f"""
+        SELECT * FROM __splink__all_clusters_unsorted
+        ORDER BY cluster_id, {node_id_column_name}
+        """
         pipeline.enqueue_sql(sql, "__splink__all_clusters")
-        new_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        return new_clusters
+        final_new_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        all_results[NEW_THRESHOLD] = final_new_clusters
+        OLD_THRESHOLD = NEW_THRESHOLD
+
+        print("final_new_clusters")
+        print(final_new_clusters.as_duckdbpyrelation())
+        print("----------------------------------")
+
+    return all_results

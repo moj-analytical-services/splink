@@ -395,8 +395,9 @@ def solve_connected_components(
 
     sql = f"""
     select
+        representative as cluster_id,
         node_id as {node_id_column_name},
-        representative as cluster_id
+
     from {representatives.templated_name}
     order by cluster_id, node_id
     """
