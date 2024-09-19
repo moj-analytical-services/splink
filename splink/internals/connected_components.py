@@ -335,8 +335,8 @@ def solve_connected_components(
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
     representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
-    print(f"representatives: {c:,.0f}")
+    # c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
+    # print(f"representatives: {c:,.0f}")
     # print(representatives.as_duckdbpyrelation().show())
 
     prev_representatives_table = representatives
@@ -441,9 +441,9 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        print("representatives_thinned")
-        c = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
-        print(f"representatives_thinned: {c:,.0f}")
+        # print("representatives_thinned")
+        # c = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
+        # print(f"representatives_thinned: {c:,.0f}")
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -470,7 +470,7 @@ def solve_connected_components(
 
     pipeline = CTEPipeline()
 
-    sql = " UNION ".join(
+    sql = " UNION ALL ".join(
         [f"select * from {t.physical_name}" for t in converged_repr_tables]
     )
 
