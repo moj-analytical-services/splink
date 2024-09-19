@@ -335,11 +335,15 @@ def solve_connected_components(
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
     representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
+    print(f"representatives: {c:,.0f}")
+    # print(representatives.as_duckdbpyrelation().show())
 
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows_count = 0, 1
+    converged_repr_tables = []
     while root_rows_count > 0:
         start_time = time.time()
         iteration += 1
@@ -372,13 +376,82 @@ def solve_connected_components(
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        # print("representatives")
+        # print(representatives.as_duckdbpyrelation())
+
+        # Report stable clusters - those where the cluster size
+        # has not changed (or become null) since the last iteration
+        pipeline = CTEPipeline()
+        sql = f"""
+        select
+            representative,
+            array_agg(node_id order by node_id) as node_ids
+        from {representatives.physical_name}
+        group by representative
+        """
+        pipeline.enqueue_sql(sql, "cluster_composition_current")
+
+        sql = f"""
+        select
+            representative,
+            array_agg(node_id order by node_id) as node_ids
+        from {prev_representatives_table.physical_name}
+        group by representative
+        """
+        pipeline.enqueue_sql(sql, "cluster_composition_previous")
+
+        sql = """
+        SELECT
+            c.representative,
+            c.node_ids
+        FROM cluster_composition_current c
+        JOIN cluster_composition_previous p
+        ON c.representative = p.representative
+        WHERE c.node_ids = p.node_ids
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_stable_clusters")
+        stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        # print("stable_clusters")
+        # print(stable_clusters.as_duckdbpyrelation())
+
+        # Grab stable clusters and save to table
+        pipeline = CTEPipeline([representatives, stable_clusters])
+        sql = f"""
+        select
+            *
+        from {representatives.physical_name}
+        where representative in (select representative from __splink__df_stable_clusters)
+        """
+        pipeline.enqueue_sql(sql, "representatives_stable")
+        representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        converged_repr_tables.append(representatives_stable)
+
+        # print("representatives_stable")
+        # print(representatives_stable.as_duckdbpyrelation())
+
+        # Filter out the stable cluster and recalculate the representatives table
+        # to drop the stable nodes
+        pipeline = CTEPipeline([stable_clusters])
+        sql = f"""
+        select
+            *
+        from {representatives.physical_name}
+        where representative not in (select representative from __splink__df_stable_clusters)
+        """
+        pipeline.enqueue_sql(sql, "representatives_thinned")
+        representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        print("representatives_thinned")
+        c = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
+        print(f"representatives_thinned: {c:,.0f}")
+
         pipeline = CTEPipeline()
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
-        prev_representatives_table = representatives
+        prev_representatives_table = representatives_thinned
 
         # Check if our exit condition has been met...
-        sql = _cc_assess_exit_condition(representatives.physical_name)
+        sql = _cc_assess_exit_condition(representatives_thinned.physical_name)
 
         pipeline.enqueue_sql(sql, "__splink__df_root_rows")
 
@@ -395,15 +468,23 @@ def solve_connected_components(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-    sql = f"""
-    select
-        representative as cluster_id,
-        node_id as {node_id_column_name},
+    pipeline = CTEPipeline()
 
-    from {representatives.templated_name}
+    sql = " UNION ".join(
+        [f"select * from {t.physical_name}" for t in converged_repr_tables]
+    )
+
+    pipeline.enqueue_sql(sql, "__splink__clustering_output")
+
+    sql = f"""
+    select representative as cluster_id,
+    node_id as {node_id_column_name}
+    from __splink__clustering_output
     order by cluster_id, node_id
     """
 
-    pipeline = CTEPipeline([representatives])
-    pipeline.enqueue_sql(sql, "__splink__clustering_output")
-    return db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
+
+    final = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    return final
