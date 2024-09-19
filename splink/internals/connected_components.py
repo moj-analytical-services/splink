@@ -408,6 +408,8 @@ def solve_connected_components(
         JOIN cluster_composition_previous p
         ON c.representative = p.representative
         WHERE c.node_ids = p.node_ids
+          AND c.node_ids IS NOT NULL
+          AND p.node_ids IS NOT NULL
         """
         pipeline.enqueue_sql(sql, "__splink__df_stable_clusters")
         stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
