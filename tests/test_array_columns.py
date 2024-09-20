@@ -88,7 +88,7 @@ def test_array_subset(test_helpers, dialect):
 
     test_cases = [
         {
-            "description": "Basic ArraySubsetLevel",
+            "description": "ArraySubsetLevel with empty_is_subset=False (default)",
             "level": cll.ArraySubsetLevel("arr"),
             "inputs": [
                 {
@@ -115,6 +115,47 @@ def test_array_subset(test_helpers, dialect):
                     "arr_l": [],
                     "arr_r": ["X", "Y", "Z"],
                     "expected": False,
+                },
+                {
+                    "arr_l": [],
+                    "arr_r": [],
+                    "expected": False,
+                },
+            ],
+        },
+        {
+            "description": "ArraySubsetLevel with empty_is_subset=True",
+            "level": cll.ArraySubsetLevel("arr", empty_is_subset=True),
+            "inputs": [
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected": True,
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "Z"],
+                    "expected": False,
+                },
+                {
+                    "arr_l": ["A", "B"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected": True,
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected": False,
+                },
+                {
+                    "arr_l": [],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected": True,
+                },
+                {
+                    "arr_l": [],
+                    "arr_r": [],
+                    "expected": True,
                 },
             ],
         },
