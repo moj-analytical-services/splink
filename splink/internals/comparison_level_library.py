@@ -876,7 +876,10 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
 class ArraySubsetLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str | ColumnExpression, empty_is_subset: bool = False):
         """Represents a comparison level where the smaller array is an
-        exact subset of the larger array.
+        exact subset of the larger array. If arrays are equal length, they
+        must have the same elements
+
+        The order of items in the arrays does not matter for this comparison.
 
         Args:
             col_name (str | ColumnExpression): Input column name or ColumnExpression
