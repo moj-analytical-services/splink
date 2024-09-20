@@ -35,6 +35,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry install --no-interaction --no-root
+          poetry run pip install -e .
 
       - name: Install additional requirements
         run: poetry run pip install -r docs/demos/data/demos_requirements.txt
