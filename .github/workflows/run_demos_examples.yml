@@ -8,76 +8,42 @@ on:
     paths:
       - "splink/**"
       - "docs/demos/examples/**"
-      - “!docs/demos/examples/examples_index.md”
+      - "!docs/demos/examples/examples_index.md"
       - "pyproject.toml"
-
   workflow_dispatch:
 
 jobs:
   test-notebooks:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9"]
         test-group: ["duckdb", "spark", "sqlite"]
+    name: Test ${{ matrix.test-group }} notebooks with Python ${{ matrix.python-version }}
     steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - name: Install poetry using pipx
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      #----------------------------------------------
-      #  -- save a few section by caching poetry --
-      #----------------------------------------------
-      - name: Load cached Poetry installation
-        uses: actions/cache@v2
-        with:
-          path: ~/.local # the path depends on the OS
-          key: poetry-1 # increment to reset cache
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: "1.7.0"
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-01
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
+          cache: "poetry"
+
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
-      #----------------------------------------------
-      #       pip install additional requirements
-      #----------------------------------------------
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root
+          poetry run pip install -e .
+
       - name: Install additional requirements from demos_requirements.txt
-        run: |
-          poetry run pip install -r docs/demos/data/demos_requirements.txt
-      #----------------------------------------------
-      # Modify the notebooks to reduce the amount of data processed and speed up the tests
-      #----------------------------------------------
+        run: poetry run pip install -r docs/demos/data/demos_requirements.txt
+
       - name: Modify Notebooks to reduce data size
-        run: |
-          python scripts/reduce_notebook_runtime.py
-      #----------------------------------------------
-      # Test each notebook group in parallel
-      #----------------------------------------------
+        run: python scripts/reduce_notebook_runtime.py
+
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
-          source .venv/bin/activate
-          python -m pytest -vv --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
+          poetry run pytest -vv --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
