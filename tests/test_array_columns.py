@@ -81,7 +81,7 @@ def test_array_comparison_1(test_helpers, dialect):
         )
 
 
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_array_subset(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]

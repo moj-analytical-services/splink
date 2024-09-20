@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Match weight and m and u probabilities charts now have improved tooltips ([#2392](https://github.com/moj-analytical-services/splink/pull/2392))
 - Added new `AbsoluteDifferenceLevel` comparison level for numerical columns ([#2398](https://github.com/moj-analytical-services/splink/pull/2398))
 - Added new `CosineSimilarityLevel` and `CosineSimilarityAtThresholds` for comparing array columns using cosine similarity ([#2405](https://github.com/moj-analytical-services/splink/pull/2405))
+- Added new `ArraySubsetLevel` for comparing array columns ([#2416](https://github.com/moj-analytical-services/splink/pull/2416))
 
 ### Fixed
 

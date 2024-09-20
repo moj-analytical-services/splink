@@ -889,7 +889,8 @@ class ArraySubsetLevel(ComparisonLevelCreator):
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
         self.empty_is_subset = empty_is_subset
 
-    @unsupported_splink_dialects(["sqlite"])
+    # Postgres not supported since it doesn't correctly deal with zero length arrays
+    @unsupported_splink_dialects(["sqlite", "postgres"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         sqlglot_dialect_name = sql_dialect.sqlglot_dialect
 
