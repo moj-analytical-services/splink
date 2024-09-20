@@ -1,8 +1,9 @@
 import pytest
 
+import splink.internals.comparison_level_library as cll
 from splink.comparison_library import ArrayIntersectAtSizes
 from tests.decorator import mark_with_dialects_excluding
-from tests.literal_utils import run_comparison_vector_value_tests
+from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_level_tests
 
 
 @mark_with_dialects_excluding("sqlite", "spark")
@@ -80,35 +81,43 @@ def test_array_comparison_1(test_helpers, dialect):
         )
 
 
-# No SQLite - no array comparisons in library
 @mark_with_dialects_excluding("sqlite")
 def test_array_subset(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
 
-    test_spec = ComparisonLevelTestSpec(
-        cll.ArraySubsetLevel("arr"),
-        tests=[
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "D"]},
-                expected_in_level=True,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["A", "B", "C", "Z"]},
-                expected_in_level=False,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B"], "arr_r": ["A", "B", "C", "D"]},
-                expected_in_level=True,
-            ),
-            LiteralTestValues(
-                {"arr_l": ["A", "B", "C", "D"], "arr_r": ["X", "Y", "Z"]},
-                expected_in_level=False,
-            ),
-            LiteralTestValues(
-                {"arr_l": [], "arr_r": ["X", "Y", "Z"]},
-                expected_in_level=False,
-            ),
-        ],
-    )
-    run_tests_with_args(test_spec, db_api)
+    test_cases = [
+        {
+            "description": "Basic ArraySubsetLevel",
+            "level": cll.ArraySubsetLevel("arr"),
+            "inputs": [
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected": True,
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["A", "B", "C", "Z"],
+                    "expected": False,
+                },
+                {
+                    "arr_l": ["A", "B"],
+                    "arr_r": ["A", "B", "C", "D"],
+                    "expected": True,
+                },
+                {
+                    "arr_l": ["A", "B", "C", "D"],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected": False,
+                },
+                {
+                    "arr_l": [],
+                    "arr_r": ["X", "Y", "Z"],
+                    "expected": False,
+                },
+            ],
+        },
+    ]
+
+    run_is_in_level_tests(test_cases, db_api)

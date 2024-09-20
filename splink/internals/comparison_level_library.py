@@ -882,7 +882,7 @@ class ArraySubsetLevel(ComparisonLevelCreator):
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
 
         sqlglot_base_dialect_sql = """
             LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))<>0
