@@ -413,6 +413,7 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "__splink__df_stable_clusters")
         stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        print(stable_clusters.as_duckdbpyrelation())
         # print("stable_clusters")
         # print(stable_clusters.as_duckdbpyrelation())
 
@@ -426,6 +427,9 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "representatives_stable")
         representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        print("found stable")
+        representatives_stable.as_duckdbpyrelation().show()
         converged_repr_tables.append(representatives_stable)
 
         # print("representatives_stable")
