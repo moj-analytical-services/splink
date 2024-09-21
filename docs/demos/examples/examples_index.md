@@ -52,6 +52,10 @@ This section provides a series of examples to help you get started with Splink. 
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a> [Cookbook of various Splink techniques](./duckdb/cookbook.ipynb)
 
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/comparison_playground.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Interactive comparison playground](./duckdb/comparison_playground.ipynb)
+
 ##### Entity type: Financial transactions
 
 <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/transactions.ipynb">
