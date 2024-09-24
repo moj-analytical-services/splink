@@ -412,9 +412,6 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "stable_clusters")
 
-        # print("stable_clusters")
-        # print(stable_clusters.as_duckdbpyrelation())
-
         # Grab stable clusters and save to table
 
         sql = f"""
@@ -428,6 +425,7 @@ def solve_connected_components(
 
         # print("found stable representatives for removal")
         # representatives_stable.as_duckdbpyrelation().show()
+        # print(representatives_stable.as_duckdbpyrelation().count("*").fetchone()[0])
         converged_repr_tables.append(representatives_stable)
 
         # print("representatives_stable")
@@ -446,8 +444,11 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # print("representatives_thinned")
+        logger.info("representatives_thinned")
         # print(representatives_thinned.as_duckdbpyrelation())
+        logger.info(
+            representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
+        )
 
         pipeline = CTEPipeline()
         # Update table reference
