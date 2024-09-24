@@ -377,6 +377,7 @@ def solve_connected_components(
 
         # Report stable clusters - those where the cluster size
         # has not changed (or become null) since the last iteration
+        start_time = time.time()
         pipeline = CTEPipeline([neighbours, representatives])
         sql = f"""
         select
@@ -386,8 +387,8 @@ def solve_connected_components(
             list_sort(list_distinct(array_agg(neighbours.neighbour order by r.node_id)))
                 as distinct_neighbours
 
-        from {representatives.templated_name} as r
-        left join __splink__df_neighbours as neighbours
+        left join {representatives.templated_name} as r
+        from  __splink__df_neighbours as neighbours
         on r.node_id = neighbours.node_id
 
         group by r.representative
@@ -413,6 +414,8 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "__splink__representatives_stable")
         representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        end_time = time.time()
+        logger.info(f"new query seconds: {end_time - start_time:.2f}")
 
         converged_repr_tables.append(representatives_stable)
 
