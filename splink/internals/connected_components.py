@@ -146,7 +146,7 @@ def _cc_update_representatives_first_iter() -> str:
         n.representative,
         n.representative <> repr.representative as rep_match
     from neighbours_first_iter as n
-    left join representatives as repr
+    inner join representatives as repr
     on n.node_id = repr.node_id
     """
 
@@ -343,10 +343,12 @@ def solve_connected_components(
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows_count = 0, 1
+
     converged_repr_tables = []
     while root_rows_count > 0:
         start_time = time.time()
         iteration += 1
+        print(f"Starting iteration {iteration}")
 
         # Loop summary:
 
@@ -357,6 +359,9 @@ def solve_connected_components(
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
+        print("prev_representatives_table")
+        print(prev_representatives_table.as_duckdbpyrelation())
+
         pipeline = CTEPipeline([neighbours])
         sql = _cc_generate_representatives_loop_cond(
             prev_representatives_table.physical_name,
@@ -376,43 +381,36 @@ def solve_connected_components(
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # print("representatives")
-        # print(representatives.as_duckdbpyrelation())
+        print("representatives")
+        print(representatives.as_duckdbpyrelation())
 
         # Report stable clusters - those where the cluster size
         # has not changed (or become null) since the last iteration
-        pipeline = CTEPipeline()
+        pipeline = CTEPipeline([neighbours, representatives])
         sql = f"""
         select
-            representative,
-            array_agg(node_id order by node_id) as node_ids
-        from {representatives.physical_name}
-        group by representative
+            r.representative,
+            list_sort(list_distinct(array_agg(r.node_id order by r.node_id))) as distinct_node_ids,
+            list_sort(list_distinct(array_agg(neighbours.neighbour order by r.node_id))) as distinct_neighbours
+
+        from {representatives.templated_name} as r
+        left join __splink__df_neighbours as neighbours
+        on r.node_id = neighbours.node_id
+
+        group by r.representative
         """
         pipeline.enqueue_sql(sql, "cluster_composition_current")
 
-        sql = f"""
-        select
-            representative,
-            array_agg(node_id order by node_id) as node_ids
-        from {prev_representatives_table.physical_name}
-        group by representative
-        """
-        pipeline.enqueue_sql(sql, "cluster_composition_previous")
-
         sql = """
         SELECT
-            c.representative,
-            c.node_ids
-        FROM cluster_composition_current c
-        JOIN cluster_composition_previous p
-        ON c.representative = p.representative
-        WHERE c.node_ids = p.node_ids
-          AND c.node_ids IS NOT NULL
-          AND p.node_ids IS NOT NULL
+            representative,
+            distinct_node_ids
+        FROM cluster_composition_current
+        WHERE distinct_node_ids = distinct_neighbours
         """
         pipeline.enqueue_sql(sql, "__splink__df_stable_clusters")
         stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        print("stable_clusters")
         print(stable_clusters.as_duckdbpyrelation())
         # print("stable_clusters")
         # print(stable_clusters.as_duckdbpyrelation())
@@ -428,7 +426,7 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "representatives_stable")
         representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        print("found stable")
+        print("found stable representatives for removal")
         representatives_stable.as_duckdbpyrelation().show()
         converged_repr_tables.append(representatives_stable)
 
@@ -447,9 +445,8 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # print("representatives_thinned")
-        # c = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
-        # print(f"representatives_thinned: {c:,.0f}")
+        print("representatives_thinned")
+        print(representatives_thinned.as_duckdbpyrelation())
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -473,6 +470,9 @@ def solve_connected_components(
         )
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
+
+    print("final representatives")
+    print(representatives_thinned.as_duckdbpyrelation())
 
     pipeline = CTEPipeline()
 
