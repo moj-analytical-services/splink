@@ -335,9 +335,6 @@ def solve_connected_components(
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
     representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    # c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
-    # print(f"representatives: {c:,.0f}")
-    # print(representatives.as_duckdbpyrelation().show())
 
     prev_representatives_table = representatives
 
@@ -348,7 +345,6 @@ def solve_connected_components(
     while root_rows_count > 0:
         start_time = time.time()
         iteration += 1
-        # print(f"Starting iteration {iteration}")
 
         # Loop summary:
 
@@ -359,8 +355,6 @@ def solve_connected_components(
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
-        # print("prev_representatives_table")
-        # print(prev_representatives_table.as_duckdbpyrelation())
 
         pipeline = CTEPipeline([neighbours])
         sql = _cc_generate_representatives_loop_cond(
@@ -380,9 +374,6 @@ def solve_connected_components(
         )
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        # print("representatives")
-        # print(representatives.as_duckdbpyrelation())
 
         # Report stable clusters - those where the cluster size
         # has not changed (or become null) since the last iteration
@@ -423,13 +414,7 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "__splink__representatives_stable")
         representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # print("found stable representatives for removal")
-        # representatives_stable.as_duckdbpyrelation().show()
-        # print(representatives_stable.as_duckdbpyrelation().count("*").fetchone()[0])
         converged_repr_tables.append(representatives_stable)
-
-        # print("representatives_stable")
-        # print(representatives_stable.as_duckdbpyrelation())
 
         # Filter out the stable cluster and recalculate the representatives table
         # to drop the stable nodes
@@ -443,12 +428,6 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        logger.info("representatives_thinned")
-        # print(representatives_thinned.as_duckdbpyrelation())
-        logger.info(
-            representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
-        )
 
         pipeline = CTEPipeline()
         # Update table reference
