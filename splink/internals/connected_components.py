@@ -426,6 +426,9 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        thinned = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
+        logger.info(f"Thinned count: {thinned:,.0f}")
+
         pipeline = CTEPipeline()
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
