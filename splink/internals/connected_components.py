@@ -379,41 +379,35 @@ def solve_connected_components(
         # has not changed (or become null) since the last iteration
         start_time = time.time()
         pipeline = CTEPipeline([neighbours, representatives])
+
+        # Step 1: Find non-stable representatives
         sql = f"""
-        select
-            r.representative,
-            list_sort(list_distinct(array_agg(r.node_id order by r.node_id)))
-                as distinct_node_ids,
-            list_sort(list_distinct(array_agg(neighbours.neighbour order by r.node_id)))
-                as distinct_neighbours
-
-        left join {representatives.templated_name} as r
-        from  __splink__df_neighbours as neighbours
-        on r.node_id = neighbours.node_id
-
-        group by r.representative
-        """
-        pipeline.enqueue_sql(sql, "cluster_composition_current")
-
-        sql = """
-        SELECT
-            representative,
-            distinct_node_ids
-        FROM cluster_composition_current
-        WHERE distinct_node_ids = distinct_neighbours
+        WITH non_stable_representatives AS (
+            SELECT DISTINCT r.representative
+            FROM {representatives.templated_name} r
+            JOIN __splink__df_neighbours n ON r.node_id = n.node_id
+            JOIN {representatives.templated_name} r2 ON n.neighbour = r2.node_id
+            WHERE r.representative != r2.representative
+        )
+        SELECT DISTINCT representative
+        FROM {representatives.templated_name}
+        EXCEPT
+        SELECT representative
+        FROM non_stable_representatives
         """
         pipeline.enqueue_sql(sql, "stable_clusters")
 
-        # Grab stable clusters and save to table
-
+        # Step 2: Select stable representatives
         sql = f"""
-        select
-            *
-        from {representatives.physical_name}
-        where representative in (select representative from stable_clusters)
+        SELECT *
+        FROM {representatives.templated_name}
+        WHERE representative IN (SELECT representative FROM stable_clusters)
         """
         pipeline.enqueue_sql(sql, "__splink__representatives_stable")
+
+        # Execute pipeline and retrieve stable representatives
         representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         end_time = time.time()
         logger.info(f"new query seconds: {end_time - start_time:.2f}")
 
