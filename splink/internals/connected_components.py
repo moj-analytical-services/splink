@@ -382,10 +382,19 @@ def solve_connected_components(
 
         # Step 1: Find non-stable representatives
         sql = f"""
-        WITH non_stable_representatives AS (
+        WITH
+        filtered_neighbours AS (
+            SELECT *
+            FROM __splink__df_neighbours
+            WHERE node_id IN (
+                SELECT node_id
+                FROM {representatives.templated_name}
+            )
+        ),
+        non_stable_representatives AS (
             SELECT DISTINCT r.representative
             FROM {representatives.templated_name} r
-            JOIN __splink__df_neighbours n ON r.node_id = n.node_id
+            JOIN filtered_neighbours n ON r.node_id = n.node_id
             JOIN {representatives.templated_name} r2 ON n.neighbour = r2.node_id
             WHERE r.representative != r2.representative
         )
