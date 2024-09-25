@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import List, Optional
 
@@ -7,6 +8,8 @@ from splink.internals.input_column import InputColumn
 from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
+
+logger = logging.getLogger(__name__)
 
 
 def cluster_pairwise_predictions_at_threshold(
@@ -180,7 +183,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         f"Time taken to pre-query: {end_time_pre_query - start_time_pre_query:.2f} seconds"
     )
     for NEW_THRESHOLD in match_probability_thresholds:
-        print(f"Now clustering at threshold {NEW_THRESHOLD}")
+        logger.info("=" * 80)
+        logger.info(f"Now clustering at threshold {NEW_THRESHOLD}")
         start_time = time.time()
         # First filter the edges and the nodes to remove any where
         # min_match_probability is > the NEW_THRESHOLD
@@ -330,7 +334,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         all_results[NEW_THRESHOLD] = final_new_clusters
         OLD_THRESHOLD = NEW_THRESHOLD
         end_time = time.time()
-        print(f"Iteration Time taken: {end_time - start_time:.2f} seconds")
+        logger.info(
+            "Multithreshold clustering iteration time taken: "
+            f"{end_time - start_time:.2f} seconds"
+        )
 
         # print("final_new_clusters")
         # print(final_new_clusters.as_duckdbpyrelation())

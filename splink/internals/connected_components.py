@@ -323,6 +323,12 @@ def solve_connected_components(
     sql = _cc_generate_neighbours_representation()
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
     neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    filtered_neighbours = neighbours
+
+    # print size of filtered_neighbours
+    print(
+        f"neighbours size: {filtered_neighbours.as_duckdbpyrelation().count('*').fetchone()[0]:,.0f}"
+    )
 
     # Create our initial representatives table
     pipeline = CTEPipeline([neighbours])
@@ -343,6 +349,7 @@ def solve_connected_components(
 
     converged_repr_tables = []
     while root_rows_count > 0:
+        logger.info("--------------------------------")
         start_time = time.time()
         iteration += 1
 
@@ -378,39 +385,25 @@ def solve_connected_components(
         # Report stable clusters - those where the cluster size
         # has not changed (or become null) since the last iteration
         start_time = time.time()
-        pipeline = CTEPipeline([neighbours, representatives])
 
         # Step 1: Find non-stable representatives
+        pipeline = CTEPipeline([filtered_neighbours, representatives])
         sql = f"""
-        WITH
-        filtered_neighbours AS (
-            SELECT *
-            FROM __splink__df_neighbours
-            WHERE node_id IN (
-                SELECT node_id
-                FROM {representatives.templated_name}
-            )
-        ),
-        non_stable_representatives AS (
-            SELECT DISTINCT r.representative
-            FROM {representatives.templated_name} r
-            JOIN filtered_neighbours n ON r.node_id = n.node_id
+        SELECT DISTINCT r.representative
+        FROM {representatives.templated_name} r
+           JOIN {filtered_neighbours.templated_name} n ON r.node_id = n.node_id
             JOIN {representatives.templated_name} r2 ON n.neighbour = r2.node_id
             WHERE r.representative != r2.representative
-        )
-        SELECT DISTINCT representative
-        FROM {representatives.templated_name}
-        EXCEPT
-        SELECT representative
-        FROM non_stable_representatives
-        """
-        pipeline.enqueue_sql(sql, "stable_clusters")
 
-        # Step 2: Select stable representatives
+        """
+        pipeline.enqueue_sql(sql, "non_stable_representatives")
+
         sql = f"""
         SELECT *
         FROM {representatives.templated_name}
-        WHERE representative IN (SELECT representative FROM stable_clusters)
+        WHERE representative NOT IN (
+            SELECT representative FROM non_stable_representatives
+        )
         """
         pipeline.enqueue_sql(sql, "__splink__representatives_stable")
 
@@ -434,6 +427,20 @@ def solve_connected_components(
         """
         pipeline.enqueue_sql(sql, "representatives_thinned")
         representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        pipeline = CTEPipeline([filtered_neighbours, representatives])
+
+        sql = f"""
+        select * from {filtered_neighbours.templated_name}
+        where node_id in (select node_id from {representatives.templated_name})
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_neighbours_filtered")
+        filtered_neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        logger.info("--")
+        filtered_neighbours_count = (
+            filtered_neighbours.as_duckdbpyrelation().count("*").fetchone()[0]
+        )
+        logger.info(f"Filtered neighbours size: {filtered_neighbours_count:,}")
 
         thinned = representatives_thinned.as_duckdbpyrelation().count("*").fetchone()[0]
         logger.info(f"Thinned count: {thinned:,.0f}")
