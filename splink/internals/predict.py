@@ -99,8 +99,7 @@ def predict_from_comparison_vectors_sqls(
     )
     # Add condition to treat case of 0 as None
     if threshold_match_probability == 0:
-        threshold_match_probability = None
-        
+        threshold_match_probability = None     
     # In case user provided both, take the minimum of the two thresholds
     if threshold_match_probability is not None:
         thres_prob_as_weight = prob_to_match_weight(threshold_match_probability)
