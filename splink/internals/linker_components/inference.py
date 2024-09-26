@@ -516,14 +516,19 @@ class LinkerInference:
 
         cache = self._linker._intermediate_table_cache
 
+        if isinstance(record_1, dict):
+            record_1 = [record_1]
+        if isinstance(record_2, dict):
+            record_2 = [record_2]
+
         uid = ascii_uid(8)
         df_records_left = self._linker.table_management.register_table(
-            [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
+            record_1, f"__splink__compare_two_records_left_{uid}", overwrite=True
         )
         df_records_left.templated_name = "__splink__compare_two_records_left"
 
         df_records_right = self._linker.table_management.register_table(
-            [record_2], f"__splink__compare_two_records_right_{uid}", overwrite=True
+            record_2, f"__splink__compare_two_records_right_{uid}", overwrite=True
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
