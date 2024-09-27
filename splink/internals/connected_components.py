@@ -7,6 +7,7 @@
 # of the problem and come to a working solution.
 
 # See also https://github.com/RobinL/clustering_in_sql
+# and https://www.robinlinacre.com/connected_components/
 
 from __future__ import annotations
 
