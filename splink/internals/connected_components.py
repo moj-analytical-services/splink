@@ -45,18 +45,18 @@ def _cc_generate_neighbours_representation() -> str:
     sql = """
     select n.node_id,
         e_l.node_id_r as neighbour
-    from nodes as n
+    from nodes_ids_only as n
 
-    left join __splink__edges as e_l
+    left join __splink__df_edges_with_self_loops as e_l
         on n.node_id = e_l.node_id_l
 
     UNION
 
     select n.node_id,
         coalesce(e_r.node_id_l, n.node_id) as neighbour
-    from nodes as n
+    from nodes_ids_only as n
 
-    left join __splink__edges as e_r
+    left join __splink__df_edges_with_self_loops as e_r
         on n.node_id = e_r.node_id_r
     """
 
@@ -289,17 +289,22 @@ def solve_connected_components(
 
     """
 
+    # Unlike most Splink SQL generaiton, the templated_name of the edges table
+    # and the nodes table are not known as fixed strings because they
+    # can be used provided
+
     pipeline = CTEPipeline([edges_table, nodes_table])
 
     match_prob_expr = f"where match_probability >= {threshold_match_probability}"
     if threshold_match_probability is None:
         match_prob_expr = ""
 
+    # Add 'self-edges' so that the algorithm can 'see' the nodes with no edges
     sql = f"""
     select
         {edge_id_column_name_left} as node_id_l,
         {edge_id_column_name_right} as node_id_r
-    from {edges_table.physical_name}
+    from {edges_table.templated_name}
     {match_prob_expr}
 
     UNION
@@ -307,20 +312,22 @@ def solve_connected_components(
     select
     {node_id_column_name} as node_id_l,
     {node_id_column_name} as node_id_r
-    from {nodes_table.physical_name}
+    from {nodes_table.templated_name}
     """
-    pipeline.enqueue_sql(sql, "__splink__edges")
-    edges = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    pipeline.enqueue_sql(sql, "__splink__df_edges_with_self_loops")
+    edges_with_self_loops = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    pipeline = CTEPipeline([edges])
+    pipeline = CTEPipeline([edges_with_self_loops])
 
     sql = f"select {node_id_column_name} as node_id from {nodes_table.physical_name}"
 
-    pipeline.enqueue_sql(sql, "nodes")
+    pipeline.enqueue_sql(sql, "nodes_ids_only")
 
     sql = _cc_generate_neighbours_representation()
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
     neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    edges_with_self_loops.drop_table_from_database_and_remove_from_cache()
 
     # Create our initial representatives table
     pipeline = CTEPipeline([neighbours])
@@ -403,4 +410,9 @@ def solve_connected_components(
 
     pipeline = CTEPipeline([representatives])
     pipeline.enqueue_sql(sql, "__splink__clustering_output")
-    return db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    final_result = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    representatives.drop_table_from_database_and_remove_from_cache()
+    neighbours.drop_table_from_database_and_remove_from_cache()
+    return final_result

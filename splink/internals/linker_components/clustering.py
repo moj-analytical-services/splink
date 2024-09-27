@@ -108,10 +108,10 @@ class LinkerClustering:
             {uid_concat_edges_l} as node_id_l,
             {uid_concat_edges_r} as node_id_r
             {match_p_select_expr}
-            from {df_predict.templated_name}
+            from __splink__df_predict
             {match_p_expr}
         """
-        pipeline.enqueue_sql(sql, "__splink__df_edges")
+        pipeline.enqueue_sql(sql, "__splink__df_edges_from_predict")
 
         edges_table_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(
             pipeline
@@ -127,6 +127,8 @@ class LinkerClustering:
             threshold_match_probability=threshold_match_probability,
         )
 
+        edges_table_with_composite_ids.drop_table_from_database_and_remove_from_cache()
+        nodes_with_composite_ids.drop_table_from_database_and_remove_from_cache()
         pipeline = CTEPipeline([cc])
 
         enqueue_df_concat(linker, pipeline)
@@ -153,6 +155,8 @@ class LinkerClustering:
         pipeline.enqueue_sql(sql, "__splink__df_clustered_with_input_data")
 
         df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        cc.drop_table_from_database_and_remove_from_cache()
 
         if threshold_match_probability is not None:
             df_clustered_with_input_data.metadata["threshold_match_probability"] = (

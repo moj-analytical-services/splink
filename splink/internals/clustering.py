@@ -84,8 +84,15 @@ def cluster_pairwise_predictions_at_threshold(
 
     uid = ascii_uid(8)
 
-    nodes_sdf = db_api.register_table(nodes, f"__splink__df_nodes_{uid}")
-    edges_sdf = db_api.register_table(edges, f"__splink__df_edges_{uid}")
+    if isinstance(nodes, SplinkDataFrame):
+        nodes_sdf = nodes
+    else:
+        nodes_sdf = db_api.register_table(nodes, f"__splink__df_nodes_{uid}")
+
+    if isinstance(edges, SplinkDataFrame):
+        edges_sdf = edges
+    else:
+        edges_sdf = db_api.register_table(edges, f"__splink__df_edges_{uid}")
 
     if not edge_id_column_name_left:
         edge_id_column_name_left = InputColumn(
