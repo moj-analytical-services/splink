@@ -22,10 +22,6 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-def _cc_create_unique_id_cols():
-    pass
-
-
 def _cc_generate_neighbours_representation() -> str:
     """SQL to generate all the 'neighbours' of each input node.
 
