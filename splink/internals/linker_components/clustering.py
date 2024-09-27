@@ -103,12 +103,14 @@ class LinkerClustering:
 
         pipeline = CTEPipeline([df_predict])
 
+        # Templated name must be used here because it could be the output
+        # of a deterministic link i.e. the templated name is not know for sure
         sql = f"""
         select
             {uid_concat_edges_l} as node_id_l,
             {uid_concat_edges_r} as node_id_r
             {match_p_select_expr}
-            from __splink__df_predict
+            from {df_predict.templated_name}
             {match_p_expr}
         """
         pipeline.enqueue_sql(sql, "__splink__df_edges_from_predict")
