@@ -150,7 +150,7 @@ class LinkerClustering:
         select
             cc.cluster_id,
             {select_columns_sql}
-        from __splink__clustering_output as cc
+        from __splink__clustering_output_final as cc
         left join __splink__df_concat
         on cc.node_id = {uid_concat_nodes}
         """
