@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+from duckdb import DuckDBPyRelation
+
 from splink.internals.input_column import InputColumn
 
 logger = logging.getLogger(__name__)
@@ -135,6 +137,17 @@ class SplinkDataFrame(ABC):
         import pandas as pd
 
         return pd.DataFrame(self.as_record_dict(limit=limit))
+
+    def as_duckdbpyrelation(self, limit: Optional[int] = None) -> DuckDBPyRelation:
+        raise NotImplementedError(
+            "This method is only available when using the DuckDB backend"
+        )
+
+    # Spark not guaranteed to be available so return type is not imported
+    def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore
+        raise NotImplementedError(
+            "This method is only available when using the Spark backend"
+        )
 
     def _repr_pretty_(self, p, cycle):
         msg = (
