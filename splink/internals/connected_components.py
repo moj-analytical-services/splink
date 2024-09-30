@@ -170,9 +170,9 @@ def _cc_generate_representatives_loop_cond(
     The key difference between this function and 'cc_update_neighbours_first_iter',
     is the usage of 'needs_updating'.
 
-    The logic behind 'needs_updating' is summarised in 'cc_update_representatives_first_iter'
-    and it can be used here to reduce our neighbours table to only those nodes that need
-    updating.
+    The logic behind 'needs_updating' is summarised in
+    'cc_update_representatives_first_iter' and it can be used here to reduce our
+    neighbours table to only those nodes that need updating.
     """
 
     sql = f"""
@@ -399,18 +399,14 @@ def solve_connected_components(
     while needs_updating_count > 0:
         start_time = time.time()
         iteration += 1
-        logger.info("-" * 40 + f" Iteration {iteration} " + "-" * 40)
+        logger.info(15, "-" * 40 + f" CC Iteration {iteration} " + "-" * 40)
 
-        c = prev_representatives_table.as_duckdbpyrelation().count("*").fetchone()[0]
-        logger.info(f"Number of representatives: {c:,.0f}")
-        c = filtered_neighbours.as_duckdbpyrelation().count("*").fetchone()[0]
-        logger.info(f"Number of filtered neighbours: {c:,.0f}")
         # Loop summary:
         # 1. Find stable clusters and remove from representatives table
         #    Stable clusters are those where a set of nodes are within the same cluster
         #    and those nodes have no neighbours outside of their cluster.
         #    Add to list of converged clusters.
-        # 2. Update representatives table by following links from current representatives
+        # 2. Update representatives table by following links from current reps
         #    to their neighbours, and recalculating min representative
         # 3. Join on the representatives table from the previous iteration
         #    to create the "needs_updating" column based on whether rep has changed
@@ -478,9 +474,6 @@ def solve_connected_components(
         # Now the new representatives have been computed from the thinned
         # representatives we no longer need the older table
         prev_representatives_thinned.drop_table_from_database_and_remove_from_cache()
-
-        c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
-        logger.info(f"New representatives: {c:,.0f}")
 
         pipeline = CTEPipeline()
         # Update table reference
