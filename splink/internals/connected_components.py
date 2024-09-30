@@ -505,7 +505,7 @@ def solve_connected_components(
 
     sql = " UNION ALL ".join(
         [
-            f"""select node_id as {node_id_column_name}, representative as cluster_id,
+            f"""select node_id as {node_id_column_name}, representative as cluster_id
             from {t.physical_name}"""
             for t in converged_clusters_tables
         ]
