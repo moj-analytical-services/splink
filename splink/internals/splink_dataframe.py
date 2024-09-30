@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+from duckdb import DuckDBPyRelation
+
 from splink.internals.input_column import InputColumn
 
 logger = logging.getLogger(__name__)
@@ -136,17 +138,32 @@ class SplinkDataFrame(ABC):
 
         return pd.DataFrame(self.as_record_dict(limit=limit))
 
-    def _repr_pretty_(self, p, cycle):
-        msg = (
-            f"Table name in database: `{self.physical_name}`\n"
-            "\nTo retrieve records, you can call the following methods on this object:"
-            "\n`.as_record_dict(limit=5)` or "
-            "`.as_pandas_dataframe(limit=5)`.\n"
-            "\nYou may omit the `limit` argument to return all records."
-            "\n\nThis table represents the following splink entity: "
-            f"{self.templated_name}"
+    def as_duckdbpyrelation(self, limit: Optional[int] = None) -> DuckDBPyRelation:
+        """Return the dataframe as a duckdbpyrelation.  Only available when using the
+        DuckDB backend.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+                to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Returns:
+            duckdb.DuckDBPyRelation: A DuckDBPyRelation object
+        """
+        raise NotImplementedError(
+            "This method is only available when using the DuckDB backend"
         )
-        p.text(msg)
+
+    # Spark not guaranteed to be available so return type is not imported
+    def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821
+        """Return the dataframe as a spark dataframe.  Only available when using the
+        Spark backend.
+
+        Returns:
+            spark.DataFrame: A Spark DataFrame
+        """
+        raise NotImplementedError(
+            "This method is only available when using the Spark backend"
+        )
 
     def to_parquet(self, filepath, overwrite=False):
         """Save the dataframe in parquet format.
