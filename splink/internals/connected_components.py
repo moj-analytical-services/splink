@@ -249,7 +249,7 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     """
 
     sql = f"""
-            select count(*) as count
+            select count(*) as count_of_nodes_needing_updating
             from {representatives_name}
             where needs_updating
         """
@@ -340,18 +340,23 @@ def solve_connected_components(
 
     prev_representatives_table = representatives
 
+    print(f"representatives {representatives.physical_name}")
+    representatives.as_duckdbpyrelation().show()
+
     # Loop while our representative table still has unsettled nodes
-    iteration, root_rows_count = 0, 1
-    while root_rows_count > 0:
+    # Nodes where 'needs_updating' is True are those that have not yet settled
+    iteration, needs_updating_count = 0, 1
+    while needs_updating_count > 0:
         start_time = time.time()
         iteration += 1
 
         # Loop summary:
 
-        # 1. Update our neighbours table.
+        # 1. Update our representatives table by following links from current representatives
+        #    to their neighbours, and recalculating min representative
         # 2. Join on the representatives table from the previous iteration
-        #    to create the "needs_updating" column.
-        # 3. Assess if our exit condition has been met.
+        #    to create the "needs_updating" column based on whether rep has changed
+        # 3. Assess if any representatives changed between iterations, exit if not.
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
@@ -373,6 +378,9 @@ def solve_connected_components(
         )
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        print("-" * 100)
+        print(f"representatives {representatives.physical_name}")
+        representatives.as_duckdbpyrelation().show()
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -390,9 +398,10 @@ def solve_connected_components(
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
-        root_rows_count = root_rows[0]["count"]
+        needs_updating_count = root_rows[0]["count_of_nodes_needing_updating"]
         logger.info(
-            f"Completed iteration {iteration}, root rows count {root_rows_count}"
+            f"Completed iteration {iteration}, "
+            f"num representatives needing updating: {needs_updating_count}"
         )
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
