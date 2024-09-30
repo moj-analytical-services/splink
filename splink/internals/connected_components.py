@@ -151,7 +151,7 @@ def _cc_update_representatives_first_iter() -> str:
 
 
 def _cc_generate_representatives_loop_cond(
-    prev_representatives: str,
+    prev_representatives: str, filtered_neighbours: str
 ) -> str:
     """SQL for Connected components main loop.
 
@@ -189,7 +189,7 @@ def _cc_generate_representatives_loop_cond(
             neighbours.node_id,
             repr_neighbour.representative as representative
 
-        from __splink__df_neighbours as neighbours
+        from {filtered_neighbours} as neighbours
 
         inner join {prev_representatives} as repr_neighbour
         on neighbours.neighbour = repr_neighbour.node_id
@@ -399,12 +399,12 @@ def solve_connected_components(
     while needs_updating_count > 0:
         start_time = time.time()
         iteration += 1
-        print("-" * 40 + f" Iteration {iteration} " + "-" * 40)
+        logger.info("-" * 40 + f" Iteration {iteration} " + "-" * 40)
 
         c = prev_representatives_table.as_duckdbpyrelation().count("*").fetchone()[0]
-        print(f"Number of representatives: {c:,.0f}")
+        logger.info(f"Number of representatives: {c:,.0f}")
         c = filtered_neighbours.as_duckdbpyrelation().count("*").fetchone()[0]
-        print(f"Number of filtered neighbours: {c:,.0f}")
+        logger.info(f"Number of filtered neighbours: {c:,.0f}")
         # Loop summary:
         # 1. Find stable clusters and remove from representatives table
         #    Stable clusters are those where a set of nodes are within the same cluster
@@ -437,7 +437,7 @@ def solve_connected_components(
             SELECT representative FROM __splink__representatives_stable
         )
         """
-        pipeline.enqueue_sql(sql, "__splink__representatives_stable")
+        pipeline.enqueue_sql(sql, "__splink__representatives_unstable")
         prev_representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         # 1a. Thin neighbours table - we can drop all rows that refer to
@@ -449,13 +449,16 @@ def solve_connected_components(
             (select node_id from {prev_representatives_thinned.templated_name})
         """
         pipeline.enqueue_sql(sql, "__splink__df_neighbours_filtered")
-        filtered_neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        filtered_neighbours_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        filtered_neighbours.drop_table_from_database_and_remove_from_cache()
+        filtered_neighbours = filtered_neighbours_thinned
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
-        pipeline = CTEPipeline([neighbours])
+        pipeline = CTEPipeline([filtered_neighbours])
         sql = _cc_generate_representatives_loop_cond(
             prev_representatives_thinned.physical_name,
+            filtered_neighbours.templated_name,
         )
         pipeline.enqueue_sql(sql, "r")
         # Update our needs_updating column in the representatives table.
@@ -471,6 +474,13 @@ def solve_connected_components(
         )
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        # Now the new representatives have been computed from the thinned
+        # representatives we no longer need the older table
+        prev_representatives_thinned.drop_table_from_database_and_remove_from_cache()
+
+        c = representatives.as_duckdbpyrelation().count("*").fetchone()[0]
+        logger.info(f"New representatives: {c:,.0f}")
 
         pipeline = CTEPipeline()
         # Update table reference
@@ -496,6 +506,9 @@ def solve_connected_components(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
+    converged_clusters_tables.append(representatives)
+    filtered_neighbours.drop_table_from_database_and_remove_from_cache()
+
     pipeline = CTEPipeline()
 
     sql = " UNION ALL ".join(
@@ -512,4 +525,8 @@ def solve_connected_components(
 
     representatives.drop_table_from_database_and_remove_from_cache()
     neighbours.drop_table_from_database_and_remove_from_cache()
+
+    for t in converged_clusters_tables:
+        t.drop_table_from_database_and_remove_from_cache()
+
     return final_result
