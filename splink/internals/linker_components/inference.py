@@ -290,6 +290,71 @@ class LinkerInference:
 
         return predictions
 
+    def score_missing_cluster_edges(
+        self,
+        df_clusters: SplinkDataFrame,
+        # TODO: should work without predict, just get the full lot
+        df_predict: SplinkDataFrame,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+    ) -> SplinkDataFrame:
+        start_time = time.time()
+
+        pipeline = CTEPipeline()
+        blocking_input_tablename_l = df_clusters.physical_name
+        blocking_input_tablename_r = df_clusters.physical_name
+
+        link_type = self._linker._settings_obj._link_type
+        # TODO: rename cluster_id
+        sqls = block_using_rules_sqls(
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
+            blocking_rules=[BlockingRule("l.cluster_id = r.cluster_id")],
+            link_type=link_type,
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        )
+        sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
+
+        # TODO: generalise id columns
+        sql = f"""
+        SELECT *
+        FROM __splink__raw_blocked_id_pairs ne
+        LEFT JOIN {df_predict.physical_name} oe
+        ON oe.unique_id_l = ne.join_key_l AND oe.unique_id_r = ne.join_key_r
+        WHERE oe.unique_id_l IS NULL AND oe.unique_id_r IS NULL
+        """
+
+        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
+
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
+            self._linker._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+            sql_infinity_expression=self._linker._infinity_expression,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        predict_time = time.time() - start_time
+        logger.info(f"Predict time: {predict_time:.2f} seconds")
+
+        self._linker._predict_warning()
+        return predictions
+
     def find_matches_to_new_records(
         self,
         records_or_tablename: AcceptableInputTableType | str,
