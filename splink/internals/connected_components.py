@@ -257,7 +257,9 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     return sql
 
 
-def _cc_find_converged_nodes(representatives_name: str, neighbours_name: str) -> str:
+def _cc_find_converged_nodes(
+    representatives_name: str, neighbours_name: str
+) -> list[dict[str, str]]:
     """SQL to find nodes that have converged so are part of a stable cluster.
     These can be removed 'from play' to slim down tables and make the algorithm
     run faster.
