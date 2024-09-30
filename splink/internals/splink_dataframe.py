@@ -154,7 +154,7 @@ class SplinkDataFrame(ABC):
         )
 
     # Spark not guaranteed to be available so return type is not imported
-    def as_spark_dataframe(self) -> "SparkDataFrame":  # noqa: F821
+    def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821
         """Return the dataframe as a spark dataframe.  Only available when using the
         Spark backend.
 
