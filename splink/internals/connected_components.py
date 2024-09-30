@@ -257,6 +257,57 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     return sql
 
 
+def _cc_find_converged_nodes(representatives_name: str, neighbours_name: str) -> str:
+    """SQL to find nodes that have converged so are part of a stable cluster.
+    These can be removed 'from play' to slim down tables and make the algorithm
+    run faster.
+
+    Args:
+        representatives_name: The name of the representatives table.
+        neighbours_name: The name of the neighbours table.
+
+    Returns:
+        str: SQL query to find unconverged nodes.
+    """
+
+    # Take nodes, and find neighbours to the nodes (follow edges in both directions)
+    # For each neighbour to the node, find its representative
+    # Does that lead us back to the same cluster?  Tf not there is a neighbour
+    # outside of the cluster
+    sqls = []
+
+    sql_non_stable = f"""
+    SELECT DISTINCT r.node_id
+    FROM {representatives_name} r
+    JOIN {neighbours_name} n ON r.node_id = n.node_id
+    JOIN {representatives_name} r2 ON n.neighbour = r2.node_id
+    WHERE r.representative != r2.representative
+    """
+
+    sqls.append(
+        {
+            "sql": sql_non_stable,
+            "output_table_name": "non_stable_representatives",
+        }
+    )
+
+    sql_stable = f"""
+    SELECT *
+        FROM {representatives_name}
+        WHERE representative NOT IN (
+            SELECT representative FROM non_stable_representatives
+        )
+        """
+    sqls.append(
+        {
+            "sql": sql_stable,
+            "output_table_name": "__splink__representatives_stable",
+        }
+    )
+
+    return sqls
+
+
 def solve_connected_components(
     nodes_table: SplinkDataFrame,
     edges_table: SplinkDataFrame,
@@ -277,7 +328,6 @@ def solve_connected_components(
 
         edges_table (SplinkDataFrame):
             Splink dataframe containing our edges dataframe to be connected.
-
 
 
     Returns:
@@ -344,30 +394,59 @@ def solve_connected_components(
     representatives.as_duckdbpyrelation().show()
 
     # Loop while our representative table still has unsettled nodes
-    # Nodes where 'needs_updating' is True are those that have not yet settled
+    # (nodes where the representative has changed since the last iteration)
+    converged_clusters_tables = []
+    filtered_neighbours = neighbours
+
     iteration, needs_updating_count = 0, 1
     while needs_updating_count > 0:
         start_time = time.time()
         iteration += 1
+        print("-" * 40 + f" Iteration {iteration} " + "-" * 40)
 
         # Loop summary:
-
-        # 1. Update our representatives table by following links from current representatives
+        # 1. Find stable clusters and remove from representatives table
+        #    Stable clusters are those where a set of nodes are within the same cluster
+        #    and those nodes have no neighbours outside of their cluster.
+        #    Add to list of converged clusters.
+        # 2. Update representatives table by following links from current representatives
         #    to their neighbours, and recalculating min representative
-        # 2. Join on the representatives table from the previous iteration
+        # 3. Join on the representatives table from the previous iteration
         #    to create the "needs_updating" column based on whether rep has changed
-        # 3. Assess if any representatives changed between iterations, exit if not.
+        # 4. Assess if any representatives changed between iterations, exit if not.
+
+        # 1. Find stable clusters and remove from representatives table
+        pipeline = CTEPipeline([filtered_neighbours, prev_representatives_table])
+        unconverged_nodes_sqls = _cc_find_converged_nodes(
+            representatives.templated_name, filtered_neighbours.templated_name
+        )
+        pipeline.enqueue_list_of_sqls(unconverged_nodes_sqls)
+
+        representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        converged_clusters_tables.append(representatives_stable)
+
+        # Remove stable clusters from representatives table
+        pipeline = CTEPipeline([representatives_stable, prev_representatives_table])
+        sql = f"""
+        SELECT *
+        FROM {prev_representatives_table.templated_name}
+        WHERE representative NOT IN (
+            SELECT representative FROM __splink__representatives_stable
+        )
+        """
+        pipeline.enqueue_sql(sql, "__splink__representatives_stable")
+        prev_representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
         pipeline = CTEPipeline([neighbours])
         sql = _cc_generate_representatives_loop_cond(
-            prev_representatives_table.physical_name,
+            prev_representatives_thinned.physical_name,
         )
         pipeline.enqueue_sql(sql, "r")
         # Update our needs_updating column in the representatives table.
         sql = _cc_update_representatives_loop_cond(
-            prev_representatives_table.physical_name
+            prev_representatives_thinned.physical_name
         )
 
         repr_name = f"__splink__df_representatives_{iteration}"
@@ -378,7 +457,7 @@ def solve_connected_components(
         )
 
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        print("-" * 100)
+
         print(f"representatives {representatives.physical_name}")
         representatives.as_duckdbpyrelation().show()
 
@@ -406,16 +485,17 @@ def solve_connected_components(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-    sql = f"""
-    select
-        node_id as {node_id_column_name},
-        representative as cluster_id
-    from {representatives.templated_name}
-    order by cluster_id, node_id
-    """
+    pipeline = CTEPipeline()
 
-    pipeline = CTEPipeline([representatives])
-    pipeline.enqueue_sql(sql, "__splink__clustering_output")
+    sql = " UNION ALL ".join(
+        [
+            f"""select representative as cluster_id, node_id as {node_id_column_name}
+            from {t.physical_name}"""
+            for t in converged_clusters_tables
+        ]
+    )
+
+    pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
 
     final_result = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
