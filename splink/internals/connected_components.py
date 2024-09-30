@@ -129,7 +129,7 @@ def _cc_update_representatives_first_iter() -> str:
 
     This is only used for the first iteration as we
 
-    In this SQL, we also generate "rep_match", which is a boolean
+    In this SQL, we also generate "needs_updating", which is a boolean
     that indicates whether the current representative differs
     from the previous representative.
 
@@ -141,9 +141,9 @@ def _cc_update_representatives_first_iter() -> str:
     select
         n.node_id,
         n.representative,
-        n.representative <> repr.representative as rep_match
+        n.representative <> repr.representative as needs_updating
     from neighbours_first_iter as n
-    left join representatives as repr
+    inner join representatives as repr
     on n.node_id = repr.node_id
     """
 
@@ -168,9 +168,9 @@ def _cc_generate_representatives_loop_cond(
     all of our neighbours' representatives to a solution.
 
     The key difference between this function and 'cc_update_neighbours_first_iter',
-    is the usage of 'rep_match'.
+    is the usage of 'needs_updating'.
 
-    The logic behind 'rep_match' is summarised in 'cc_update_representatives_first_iter'
+    The logic behind 'needs_updating' is summarised in 'cc_update_representatives_first_iter'
     and it can be used here to reduce our neighbours table to only those nodes that need
     updating.
     """
@@ -191,11 +191,11 @@ def _cc_generate_representatives_loop_cond(
 
         from __splink__df_neighbours as neighbours
 
-        left join {prev_representatives} as repr_neighbour
+        inner join {prev_representatives} as repr_neighbour
         on neighbours.neighbour = repr_neighbour.node_id
 
         where
-            repr_neighbour.rep_match
+            repr_neighbour.needs_updating
 
         UNION ALL
 
@@ -219,7 +219,7 @@ def _cc_update_representatives_loop_cond(
     """SQL to update our representatives table - while loop condition.
 
     Reorganises our representatives output generated in
-    cc_generate_representatives_loop_cond() and isolates 'rep_match',
+    cc_generate_representatives_loop_cond() and isolates 'needs_updating',
     which indicates whether all representatives have 'settled' (i.e.
     no change from previous iteration).
     """
@@ -229,7 +229,7 @@ def _cc_update_representatives_loop_cond(
 
         r.node_id,
         r.representative,
-        r.representative <> repr.representative as rep_match
+        r.representative <> repr.representative as needs_updating
 
     from r
 
@@ -243,7 +243,7 @@ def _cc_update_representatives_loop_cond(
 def _cc_assess_exit_condition(representatives_name: str) -> str:
     """SQL exit condition for our Connected Components algorithm.
 
-    Where 'rep_match' (summarised in 'cc_update_representatives_first_iter')
+    Where 'needs_updating' (summarised in 'cc_update_representatives_first_iter')
     it indicates that some nodes still require updating and have not yet
     settled.
     """
@@ -251,7 +251,7 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     sql = f"""
             select count(*) as count
             from {representatives_name}
-            where rep_match
+            where needs_updating
         """
 
     return sql
@@ -350,7 +350,7 @@ def solve_connected_components(
 
         # 1. Update our neighbours table.
         # 2. Join on the representatives table from the previous iteration
-        #    to create the "rep_match" column.
+        #    to create the "needs_updating" column.
         # 3. Assess if our exit condition has been met.
 
         # Generates our representatives table for the next iteration
@@ -360,7 +360,7 @@ def solve_connected_components(
             prev_representatives_table.physical_name,
         )
         pipeline.enqueue_sql(sql, "r")
-        # Update our rep_match column in the representatives table.
+        # Update our needs_updating column in the representatives table.
         sql = _cc_update_representatives_loop_cond(
             prev_representatives_table.physical_name
         )
