@@ -399,7 +399,6 @@ def solve_connected_components(
     while needs_updating_count > 0:
         start_time = time.time()
         iteration += 1
-        logger.info(15, "-" * 40 + f" CC Iteration {iteration} " + "-" * 40)
 
         # Loop summary:
         # 1. Find stable clusters and remove from representatives table
