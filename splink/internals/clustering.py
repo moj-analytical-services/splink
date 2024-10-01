@@ -138,7 +138,7 @@ def cluster_pairwise_predictions_at_threshold(
     return cc
 
 
-def _calculate_stable_nodes_at_new_threshold(
+def _calculate_stable_clusters_at_new_threshold(
     edges_sdf: SplinkDataFrame,
     cc: SplinkDataFrame,
     node_id_column_name: str,
@@ -204,7 +204,8 @@ def _calculate_stable_nodes_at_new_threshold(
 
     sql = f"""
     select
-        {node_id_column_name}
+        {node_id_column_name},
+        cluster_id,
     from __splink__node_cluster_min_probabilities
     where min_match_probability >= {new_threshold_match_probability}
     """
@@ -213,6 +214,39 @@ def _calculate_stable_nodes_at_new_threshold(
     )
 
     return sqls
+
+
+def generate_cluster_comparison_sql(
+    all_results: Dict[float, SplinkDataFrame], unique_id_col: str = "unique_id"
+):
+    thresholds = sorted(all_results.keys())
+
+    def threshold_to_str(x):
+        if x == 0.0:
+            return "0_0"
+        elif x == 1.0:
+            return "1_0"
+        else:
+            return f"{x:.8f}".rstrip("0").replace(".", "_")
+
+    select_columns = [f"t0.{unique_id_col}"] + [
+        f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
+        for i, threshold in enumerate(thresholds)
+    ]
+
+    from_clause = f"FROM {all_results[thresholds[0]].physical_name} t0"
+    join_clauses = [
+        f"\nINNER JOIN {all_results[threshold].physical_name} t{i} ON t0.{unique_id_col} = t{i}.{unique_id_col}"
+        for i, threshold in enumerate(thresholds[1:], start=1)
+    ]
+
+    sql = f"""
+    SELECT {', '.join(select_columns)}
+    {from_clause}
+    {' '.join(join_clauses)}
+    """
+
+    return sql
 
 
 def cluster_pairwise_predictions_at_multiple_thresholds(
@@ -262,8 +296,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     # First cluster at the lowest threshold
     cc = cluster_pairwise_predictions_at_threshold(
-        nodes=nodes,
-        edges=edges,
+        nodes=nodes_sdf,
+        edges=edges_sdf,
         db_api=db_api,
         node_id_column_name=node_id_column_name,
         edge_id_column_name_left=edge_id_column_name_left,
@@ -273,9 +307,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     all_results[initial_threshold] = cc
     previous_threshold = initial_threshold
     for new_threshold in match_probability_thresholds:
+        # Get stable nodes
         pipeline = CTEPipeline([cc, edges_sdf])
 
-        sqls = _calculate_stable_nodes_at_new_threshold(
+        sqls = _calculate_stable_clusters_at_new_threshold(
             edges_sdf=edges_sdf,
             cc=cc,
             node_id_column_name=node_id_column_name,
@@ -286,16 +321,70 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
-        stable_nodes = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        # Remove stable nodes from nodes and rerun
-        # cluster_pairwise_predictions_at_threshold at new threhold
+        stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # Get stable nodes
+        # Derive nodes in play and edges in play by removing stable nodes.  Then
+        # run cluster_pairwise_predictions_at_threshold at new threhold
 
-        # Get nodes in play and edges in lpay
+        pipeline = CTEPipeline([nodes_sdf, stable_clusters])
+        sql = f"""
+        select *
+        from {nodes_sdf.templated_name}
+        where {node_id_column_name} not in
+        (select {node_id_column_name} from {stable_clusters.templated_name})
+        """
+        pipeline.enqueue_sql(sql, "__splink__nodes_in_play")
+        nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # Recluster
+        pipeline = CTEPipeline([nodes_in_play, edges_sdf])
+        sql = f"""
+        select *
+        from {edges_sdf.templated_name}
+        where {edge_id_column_name_left} in
+        (select {node_id_column_name} from {nodes_in_play.templated_name})
+        and {edge_id_column_name_right} in
+        (select {node_id_column_name} from {nodes_in_play.templated_name})
+        """
+        pipeline.enqueue_sql(sql, "__splink__edges_in_play")
+        edges_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # Set cc to the result of cluster_pairwise_predictions_at_threshold
+        marginal_new_clusters = cluster_pairwise_predictions_at_threshold(
+            nodes_in_play,
+            edges_in_play,
+            node_id_column_name=node_id_column_name,
+            db_api=db_api,
+            threshold_match_probability=new_threshold,
+        )
 
-        return node_min_probability_in_cluster
+        pipeline = CTEPipeline([stable_clusters, marginal_new_clusters])
+        sql = f"""
+        SELECT {node_id_column_name}, cluster_id
+        FROM {stable_clusters.templated_name}
+        UNION ALL
+        SELECT {node_id_column_name}, cluster_id
+        FROM {marginal_new_clusters.templated_name}
+        """
+
+        pipeline.enqueue_sql(sql, f"__splink__clusters_at_threshold")
+
+        cc = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        all_results[new_threshold] = cc
+        previous_threshold = new_threshold
+
+        edges_in_play.drop_table_from_database_and_remove_from_cache(db_api)
+        nodes_in_play.drop_table_from_database_and_remove_from_cache(db_api)
+        stable_clusters.drop_table_from_database_and_remove_from_cache(db_api)
+        marginal_new_clusters.drop_table_from_database_and_remove_from_cache(db_api)
+
+    sql = generate_cluster_comparison_sql(
+        all_results, unique_id_col=node_id_column_name
+    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
+    joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    for v in all_results.values():
+        v.drop_table_from_database_and_remove_from_cache(db_api)
+
+    return joined
