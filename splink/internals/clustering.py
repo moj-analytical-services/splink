@@ -173,17 +173,21 @@ def _calculate_stable_clusters_at_new_threshold(
     sql = f"""
     SELECT
         c.cluster_id,
+
         e.match_probability
     FROM {cc.templated_name} c
     LEFT JOIN __splink__relevant_edges e
     ON c.{node_id_column_name} = e.{edge_id_column_name_left}
+
     UNION ALL
+
     SELECT
         c.cluster_id,
         e.match_probability
     FROM {cc.templated_name} c
     LEFT JOIN __splink__relevant_edges e
     ON c.{node_id_column_name} = e.{edge_id_column_name_right}
+
     """
     sqls.append(
         {"sql": sql, "output_table_name": "__splink__cluster_edge_probabilities"}
@@ -191,23 +195,23 @@ def _calculate_stable_clusters_at_new_threshold(
 
     sql = f"""
     SELECT
-        n.cluster_id,
-        n.{node_id_column_name},
-        coalesce(min(cep.match_probability), 1.0) AS min_match_probability
-    FROM {cc.templated_name} n
-    LEFT JOIN __splink__cluster_edge_probabilities cep ON n.cluster_id = cep.cluster_id
-    GROUP BY n.cluster_id, n.{node_id_column_name}
+
+        cluster_id
+
+    FROM __splink__cluster_edge_probabilities
+    GROUP BY cluster_id
+    HAVING coalesce(min(match_probability), 1.0) >= {new_threshold_match_probability}
     """
+
     sqls.append(
-        {"sql": sql, "output_table_name": "__splink__node_cluster_min_probabilities"}
+        {"sql": sql, "output_table_name": "__splink__stable_clusters_at_new_threshold"}
     )
 
     sql = f"""
-    select
-        {node_id_column_name},
-        cluster_id,
-    from __splink__node_cluster_min_probabilities
-    where min_match_probability >= {new_threshold_match_probability}
+    select *
+    from {cc.templated_name}
+    where cluster_id in
+    (select cluster_id from __splink__stable_clusters_at_new_threshold)
     """
     sqls.append(
         {"sql": sql, "output_table_name": "__splink__stable_nodes_at_new_threshold"}
@@ -216,8 +220,10 @@ def _calculate_stable_clusters_at_new_threshold(
     return sqls
 
 
-def generate_cluster_comparison_sql(
-    all_results: Dict[float, SplinkDataFrame], unique_id_col: str = "unique_id"
+def _generate_cluster_comparison_sql(
+    all_results: dict[float, SplinkDataFrame],
+    unique_id_col: str = "unique_id",
+    output_number_of_distinct_clusters_only: bool = False,
 ):
     thresholds = sorted(all_results.keys())
 
@@ -229,14 +235,21 @@ def generate_cluster_comparison_sql(
         else:
             return f"{x:.8f}".rstrip("0").replace(".", "_")
 
-    select_columns = [f"t0.{unique_id_col}"] + [
-        f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
-        for i, threshold in enumerate(thresholds)
-    ]
+    if output_number_of_distinct_clusters_only:
+        select_columns = [
+            f"COUNT(DISTINCT t{i}.cluster_id) AS distinct_clusters_{threshold_to_str(threshold)}"
+            for i, threshold in enumerate(thresholds)
+        ]
+    else:
+        select_columns = [f"t0.{unique_id_col}"] + [
+            f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
+            for i, threshold in enumerate(thresholds)
+        ]
 
     from_clause = f"FROM {all_results[thresholds[0]].physical_name} t0"
     join_clauses = [
-        f"\nINNER JOIN {all_results[threshold].physical_name} t{i} ON t0.{unique_id_col} = t{i}.{unique_id_col}"
+        f"\nINNER JOIN {all_results[threshold].physical_name} t{i} "
+        f"ON t0.{unique_id_col} = t{i}.{unique_id_col}"
         for i, threshold in enumerate(thresholds[1:], start=1)
     ]
 
@@ -257,6 +270,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     match_probability_thresholds: list[float],
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
+    output_number_of_distinct_clusters_only: bool = False,
 ) -> SplinkDataFrame:
     # Strategy to cluster at multiple thresholds:
     # 1. Cluster at the lowest threshold
@@ -365,7 +379,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         FROM {marginal_new_clusters.templated_name}
         """
 
-        pipeline.enqueue_sql(sql, f"__splink__clusters_at_threshold")
+        pipeline.enqueue_sql(sql, "__splink__clusters_at_threshold")
 
         cc = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -377,8 +391,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         stable_clusters.drop_table_from_database_and_remove_from_cache(db_api)
         marginal_new_clusters.drop_table_from_database_and_remove_from_cache(db_api)
 
-    sql = generate_cluster_comparison_sql(
-        all_results, unique_id_col=node_id_column_name
+    sql = _generate_cluster_comparison_sql(
+        all_results,
+        unique_id_col=node_id_column_name,
+        output_number_of_distinct_clusters_only=output_number_of_distinct_clusters_only,
     )
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
