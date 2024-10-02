@@ -298,6 +298,50 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
     ) -> SplinkDataFrame:
+        """
+        Given a table of clustered records, create a dataframe of scored
+        pairwise comparisons for all pairs of records that belong to the same cluster.
+
+        If you also supply a scored edges table, this will only return pairwise
+        comparisons that are not already present in your scored edges table.
+
+        Args:
+            df_clusters (SplinkDataFrame): A table of clustered records, such
+                as the output of
+                `linker.clustering.cluster_pairwise_predictions_at_threshold()`.
+                All edges within the same cluster as specified by this table will
+                be scored.
+                Table needs cluster_id, id columns, and any columns used in
+                model comparisons.
+            df_predict (SplinkDataFrame, optional): An edges table, the output of
+                `linker.inference.predict()`.
+                If supplied, resulting table will not include any edges already
+                included in this table.
+            threshold_match_probability (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_probability above this threshold. Defaults to None.
+            threshold_match_weight (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_weight above this threshold. Defaults to None.
+
+        Examples:
+            ```py
+            linker = linker(df, "saved_settings.json", db_api=db_api)
+            df_edges = linker.inference.predict()
+            df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                df_edges,
+                0.9,
+            )
+            df_remaining_edges = linker.score_missing_cluster_edges(
+                df_clusters,
+                df_edges,
+            )
+            df_remaining_edges.as_pandas_dataframe(limit=5)
+            ```
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
+        """
+
         start_time = time.time()
 
         pipeline = CTEPipeline()
