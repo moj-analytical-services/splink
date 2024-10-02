@@ -294,7 +294,6 @@ class LinkerInference:
     def score_missing_cluster_edges(
         self,
         df_clusters: SplinkDataFrame,
-        # TODO: should work without predict, just get the full lot
         df_predict: SplinkDataFrame = None,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
