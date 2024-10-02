@@ -31,6 +31,7 @@ from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
 )
+from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
@@ -303,6 +304,8 @@ class LinkerInference:
         pipeline = CTEPipeline()
         blocking_input_tablename_l = df_clusters.physical_name
         blocking_input_tablename_r = df_clusters.physical_name
+        source_dataset_input_column = self._linker._settings_obj.column_info_settings.source_dataset_input_column
+        unique_id_input_column = self._linker._settings_obj.column_info_settings.unique_id_input_column
 
         link_type = self._linker._settings_obj._link_type
         # TODO: rename cluster_id
@@ -311,8 +314,8 @@ class LinkerInference:
             input_tablename_r=blocking_input_tablename_r,
             blocking_rules=[BlockingRule("l.cluster_id = r.cluster_id")],
             link_type=link_type,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
         )
         sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
 
@@ -322,11 +325,28 @@ class LinkerInference:
         FROM __splink__raw_blocked_id_pairs ne
         """
         if df_predict is not None:
+            if source_dataset_input_column:
+                unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+            else:
+                unique_id_columns = [unique_id_input_column]
+            uid_l_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "l")
+            uid_r_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "r")
+            sql_predict_with_join_keys = f"""
+                SELECT *, {uid_l_expr} AS join_key_l, {uid_r_expr} AS join_key_r
+                FROM {df_predict.physical_name}
+            """
+            sqls.append(
+                {
+                    "sql": sql_predict_with_join_keys,
+                    "output_table_name": "__splink__df_predict_with_join_keys"
+                }
+            )
+
             sql = f"""
             {sql}
-            LEFT JOIN {df_predict.physical_name} oe
-            ON oe.unique_id_l = ne.join_key_l AND oe.unique_id_r = ne.join_key_r
-            WHERE oe.unique_id_l IS NULL AND oe.unique_id_r IS NULL
+            LEFT JOIN __splink__df_predict_with_join_keys oe
+            ON oe.join_key_l = ne.join_key_l AND oe.join_key_r = ne.join_key_r
+            WHERE oe.join_key_l IS NULL AND oe.join_key_r IS NULL
             """
 
         sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
