@@ -294,7 +294,7 @@ class LinkerInference:
         self,
         df_clusters: SplinkDataFrame,
         # TODO: should work without predict, just get the full lot
-        df_predict: SplinkDataFrame,
+        df_predict: SplinkDataFrame = None,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
     ) -> SplinkDataFrame:
@@ -317,13 +317,17 @@ class LinkerInference:
         sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
 
         # TODO: generalise id columns
-        sql = f"""
         SELECT *
+        sql = """
         FROM __splink__raw_blocked_id_pairs ne
-        LEFT JOIN {df_predict.physical_name} oe
-        ON oe.unique_id_l = ne.join_key_l AND oe.unique_id_r = ne.join_key_r
-        WHERE oe.unique_id_l IS NULL AND oe.unique_id_r IS NULL
         """
+        if df_predict is not None:
+            sql = f"""
+            {sql}
+            LEFT JOIN {df_predict.physical_name} oe
+            ON oe.unique_id_l = ne.join_key_l AND oe.unique_id_r = ne.join_key_r
+            WHERE oe.unique_id_l IS NULL AND oe.unique_id_r IS NULL
+            """
 
         sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
