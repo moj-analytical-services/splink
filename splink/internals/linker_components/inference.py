@@ -344,25 +344,41 @@ class LinkerInference:
 
         start_time = time.time()
 
-        pipeline = CTEPipeline()
-        # alias cluster_id so that it doesn't interfere with existing column
-        sqls = [
-            {
-                "sql": (
-                    f"SELECT cluster_id AS _cluster_id, * "
-                    f"FROM {df_clusters.physical_name}"
-                ),
-                "output_table_name": "__splink__df_clusters_renamed",
-            }
-        ]
-        blocking_input_tablename_l = "__splink__df_clusters_renamed"
-        blocking_input_tablename_r = "__splink__df_clusters_renamed"
         source_dataset_input_column = (
             self._linker._settings_obj.column_info_settings.source_dataset_input_column
         )
         unique_id_input_column = (
             self._linker._settings_obj.column_info_settings.unique_id_input_column
         )
+
+        pipeline = CTEPipeline()
+        enqueue_df_concat_with_tf(self._linker, pipeline)
+        # we need to adjoin tf columns onto clusters table now
+        # also alias cluster_id so that it doesn't interfere with existing column
+        sql = f"""
+        SELECT
+            c.cluster_id AS _cluster_id,
+            ctf.*
+        FROM
+            {df_clusters.physical_name} c
+        LEFT JOIN
+            __splink__df_concat_with_tf ctf
+        ON
+            c.{unique_id_input_column.name} = ctf.{unique_id_input_column.name}
+        """
+        if source_dataset_input_column:
+            sql += (
+                f" AND c.{source_dataset_input_column.name} = "
+                f"ctf.{source_dataset_input_column.name}"
+            )
+        sqls = [
+            {
+                "sql": sql,
+                "output_table_name": "__splink__df_clusters_renamed",
+            }
+        ]
+        blocking_input_tablename_l = "__splink__df_clusters_renamed"
+        blocking_input_tablename_r = "__splink__df_clusters_renamed"
 
         link_type = self._linker._settings_obj._link_type
         sqls.extend(
