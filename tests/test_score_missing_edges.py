@@ -7,7 +7,10 @@ from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-@mark.parametrize(["link_type", "copies_of_df"], [["dedupe_only", 1], ["link_only", 2]])
+@mark.parametrize(
+    ["link_type", "copies_of_df"],
+    [["dedupe_only", 1], ["link_only", 2], ["link_and_dedupe", 2], ["link_only", 3]],
+)
 def test_score_missing_edges_dedupe(test_helpers, dialect, link_type, copies_of_df):
     helper = test_helpers[dialect]
 
