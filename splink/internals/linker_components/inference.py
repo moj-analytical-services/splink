@@ -321,14 +321,16 @@ class LinkerInference:
             source_dataset_input_column=source_dataset_input_column,
             unique_id_input_column=unique_id_input_column,
         )
+        # we are going to insert an intermediate table, so rename this
         sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
 
-        # TODO: generalise id columns
         sql = """
         SELECT ne.*
         FROM __splink__raw_blocked_id_pairs ne
         """
         if df_predict is not None:
+            # if we are given edges, we left join them, and then keep only rows
+            # where we _didn't_ have corresponding rows in edges table
             if source_dataset_input_column:
                 unique_id_columns = [
                     source_dataset_input_column,
