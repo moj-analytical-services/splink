@@ -317,8 +317,8 @@ class LinkerInference:
         sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
 
         # TODO: generalise id columns
-        SELECT *
         sql = """
+        SELECT ne.*
         FROM __splink__raw_blocked_id_pairs ne
         """
         if df_predict is not None:
