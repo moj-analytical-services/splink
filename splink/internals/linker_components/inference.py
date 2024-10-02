@@ -301,8 +301,18 @@ class LinkerInference:
         start_time = time.time()
 
         pipeline = CTEPipeline()
-        blocking_input_tablename_l = df_clusters.physical_name
-        blocking_input_tablename_r = df_clusters.physical_name
+        # alias cluster_id so that it doesn't interfere with existing column
+        sqls = [
+            {
+                "sql": (
+                    f"SELECT cluster_id AS _cluster_id, * "
+                    f"FROM {df_clusters.physical_name}"
+                ),
+                "output_table_name": "__splink__df_clusters_renamed",
+            }
+        ]
+        blocking_input_tablename_l = "__splink__df_clusters_renamed"
+        blocking_input_tablename_r = "__splink__df_clusters_renamed"
         source_dataset_input_column = (
             self._linker._settings_obj.column_info_settings.source_dataset_input_column
         )
@@ -311,14 +321,15 @@ class LinkerInference:
         )
 
         link_type = self._linker._settings_obj._link_type
-        # TODO: rename cluster_id
-        sqls = block_using_rules_sqls(
-            input_tablename_l=blocking_input_tablename_l,
-            input_tablename_r=blocking_input_tablename_r,
-            blocking_rules=[BlockingRule("l.cluster_id = r.cluster_id")],
-            link_type=link_type,
-            source_dataset_input_column=source_dataset_input_column,
-            unique_id_input_column=unique_id_input_column,
+        sqls.extend(
+            block_using_rules_sqls(
+                input_tablename_l=blocking_input_tablename_l,
+                input_tablename_r=blocking_input_tablename_r,
+                blocking_rules=[BlockingRule("l._cluster_id = r._cluster_id")],
+                link_type=link_type,
+                source_dataset_input_column=source_dataset_input_column,
+                unique_id_input_column=unique_id_input_column,
+            )
         )
         # we are going to insert an intermediate table, so rename this
         sqls[-1]["output_table_name"] = "__splink__raw_blocked_id_pairs"
