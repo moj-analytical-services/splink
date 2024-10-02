@@ -321,7 +321,7 @@ class LinkerInference:
             unique_id_input_column=unique_id_input_column,
         )
         # we are going to insert an intermediate table, so rename this
-        sqls[0]["output_table_name"] = "__splink__raw_blocked_id_pairs"
+        sqls[-1]["output_table_name"] = "__splink__raw_blocked_id_pairs"
 
         sql = """
         SELECT ne.*
@@ -377,6 +377,7 @@ class LinkerInference:
             threshold_match_weight,
             sql_infinity_expression=self._linker._infinity_expression,
         )
+        sqls[-1]["output_table_name"] = "__splink__df_predict_missing_cluster_edges"
         pipeline.enqueue_list_of_sqls(sqls)
 
         predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
