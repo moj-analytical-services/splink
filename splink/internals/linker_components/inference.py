@@ -304,8 +304,12 @@ class LinkerInference:
         pipeline = CTEPipeline()
         blocking_input_tablename_l = df_clusters.physical_name
         blocking_input_tablename_r = df_clusters.physical_name
-        source_dataset_input_column = self._linker._settings_obj.column_info_settings.source_dataset_input_column
-        unique_id_input_column = self._linker._settings_obj.column_info_settings.unique_id_input_column
+        source_dataset_input_column = (
+            self._linker._settings_obj.column_info_settings.source_dataset_input_column
+        )
+        unique_id_input_column = (
+            self._linker._settings_obj.column_info_settings.unique_id_input_column
+        )
 
         link_type = self._linker._settings_obj._link_type
         # TODO: rename cluster_id
@@ -326,7 +330,10 @@ class LinkerInference:
         """
         if df_predict is not None:
             if source_dataset_input_column:
-                unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+                unique_id_columns = [
+                    source_dataset_input_column,
+                    unique_id_input_column,
+                ]
             else:
                 unique_id_columns = [unique_id_input_column]
             uid_l_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "l")
@@ -338,7 +345,7 @@ class LinkerInference:
             sqls.append(
                 {
                     "sql": sql_predict_with_join_keys,
-                    "output_table_name": "__splink__df_predict_with_join_keys"
+                    "output_table_name": "__splink__df_predict_with_join_keys",
                 }
             )
 
