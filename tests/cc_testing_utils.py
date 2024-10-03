@@ -8,11 +8,11 @@ from splink.internals.clustering import cluster_pairwise_predictions_at_threshol
 from splink.internals.duckdb.database_api import DuckDBAPI
 
 
-def generate_random_graph(graph_size, seed=None):
+def generate_random_graph(graph_size, density=0.001, seed=None):
     if not seed:
         seed = random.randint(5, 1000000)
 
-    graph = nx.fast_gnp_random_graph(graph_size, 0.001, seed=seed, directed=False)
+    graph = nx.fast_gnp_random_graph(graph_size, density, seed=seed, directed=False)
     return graph
 
 
