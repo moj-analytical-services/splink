@@ -342,7 +342,18 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edge_id_column_name_right=edge_id_column_name_right,
         threshold_match_probability=initial_threshold,
     )
-    all_results[initial_threshold] = cc
+
+    if output_number_of_distinct_clusters_only:
+        pipeline = CTEPipeline([cc])
+        sql = f"""
+        select count(distinct cluster_id) as distinct_clusters
+        from {cc.templated_name}
+        """
+        cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        all_results[initial_threshold] = cc_distinct
+    else:
+        all_results[initial_threshold] = cc
+
     previous_threshold = initial_threshold
     for new_threshold in match_probability_thresholds:
         # Get stable nodes
@@ -406,15 +417,27 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
         pipeline.enqueue_sql(sql, "__splink__clusters_at_threshold")
 
+        previous_cc = cc
         cc = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        all_results[new_threshold] = cc
         previous_threshold = new_threshold
 
         edges_in_play.drop_table_from_database_and_remove_from_cache()
         nodes_in_play.drop_table_from_database_and_remove_from_cache()
         stable_clusters.drop_table_from_database_and_remove_from_cache()
         marginal_new_clusters.drop_table_from_database_and_remove_from_cache()
+
+        if output_number_of_distinct_clusters_only:
+            pipeline = CTEPipeline([cc])
+            sql = f"""
+            select count(distinct cluster_id) as distinct_clusters
+            from {cc.templated_name}
+            """
+            cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            all_results[new_threshold] = cc_distinct
+            previous_cc.drop_table_from_database_and_remove_from_cache()
+        else:
+            all_results[new_threshold] = cc
 
     if output_number_of_distinct_clusters_only:
         sql = _generate_distinct_cluster_count_sql(all_results)
@@ -430,5 +453,6 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     for v in all_results.values():
         v.drop_table_from_database_and_remove_from_cache()
+    cc.drop_table_from_database_and_remove_from_cache()
 
     return joined
