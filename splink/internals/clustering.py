@@ -275,7 +275,7 @@ def _generate_distinct_cluster_count_sql(
         f"""
         SELECT
             cast({threshold} as float) AS threshold,
-            COUNT(DISTINCT cluster_id) AS distinct_clusters
+            distinct_clusters
         FROM {all_results[threshold].physical_name}
         """
         for threshold in thresholds
