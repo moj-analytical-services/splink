@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from splink.internals.connected_components import solve_connected_components
@@ -9,12 +10,14 @@ from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
+logger = logging.getLogger(__name__)
+
 
 def _get_edge_id_column_names(
     node_id_column_name: str,
-    edge_id_column_name_left: str,
-    edge_id_column_name_right: str,
     db_api: DatabaseAPISubClass,
+    edge_id_column_name_left: Optional[str] = None,
+    edge_id_column_name_right: Optional[str] = None,
 ) -> tuple[str, str]:
     if not edge_id_column_name_left:
         edge_id_column_name_left = InputColumn(
@@ -120,9 +123,9 @@ def cluster_pairwise_predictions_at_threshold(
 
     edge_id_column_name_left, edge_id_column_name_right = _get_edge_id_column_names(
         node_id_column_name,
+        db_api,
         edge_id_column_name_left,
         edge_id_column_name_right,
-        db_api,
     )
 
     cc = solve_connected_components(
@@ -220,11 +223,10 @@ def _calculate_stable_clusters_at_new_threshold(
     return sqls
 
 
-def _generate_cluster_comparison_sql(
+def _generate_detailed_cluster_comparison_sql(
     all_results: dict[float, SplinkDataFrame],
     unique_id_col: str = "unique_id",
-    output_number_of_distinct_clusters_only: bool = False,
-):
+) -> str:
     thresholds = sorted(all_results.keys())
 
     def threshold_to_str(x):
@@ -235,16 +237,10 @@ def _generate_cluster_comparison_sql(
         else:
             return f"{x:.8f}".rstrip("0").replace(".", "_")
 
-    if output_number_of_distinct_clusters_only:
-        select_columns = [
-            f"COUNT(DISTINCT t{i}.cluster_id) AS distinct_clusters_{threshold_to_str(threshold)}"
-            for i, threshold in enumerate(thresholds)
-        ]
-    else:
-        select_columns = [f"t0.{unique_id_col}"] + [
-            f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
-            for i, threshold in enumerate(thresholds)
-        ]
+    select_columns = [f"t0.{unique_id_col}"] + [
+        f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
+        for i, threshold in enumerate(thresholds)
+    ]
 
     from_clause = f"FROM {all_results[thresholds[0]].physical_name} t0"
     join_clauses = [
@@ -258,6 +254,34 @@ def _generate_cluster_comparison_sql(
     {from_clause}
     {' '.join(join_clauses)}
     """
+
+    return sql
+
+
+def _generate_distinct_cluster_count_sql(
+    all_results: dict[float, SplinkDataFrame],
+) -> str:
+    thresholds = sorted(all_results.keys())
+
+    def threshold_to_str(x):
+        if x == 0.0:
+            return "0_0"
+        elif x == 1.0:
+            return "1_0"
+        else:
+            return f"{x:.8f}".rstrip("0").replace(".", "_")
+
+    select_statements = [
+        f"""
+        SELECT
+            cast({threshold} as float) AS threshold,
+            COUNT(DISTINCT cluster_id) AS distinct_clusters
+        FROM {all_results[threshold].physical_name}
+        """
+        for threshold in thresholds
+    ]
+
+    sql = "\nUNION ALL\n".join(select_statements)
 
     return sql
 
@@ -303,9 +327,9 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     edge_id_column_name_left, edge_id_column_name_right = _get_edge_id_column_names(
         node_id_column_name,
+        db_api,
         edge_id_column_name_left,
         edge_id_column_name_right,
-        db_api,
     )
 
     # First cluster at the lowest threshold
@@ -322,6 +346,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     previous_threshold = initial_threshold
     for new_threshold in match_probability_thresholds:
         # Get stable nodes
+        logger.info(f"--------Clustering at threshold {new_threshold}--------")
         pipeline = CTEPipeline([cc, edges_sdf])
 
         sqls = _calculate_stable_clusters_at_new_threshold(
@@ -386,21 +411,24 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         all_results[new_threshold] = cc
         previous_threshold = new_threshold
 
-        edges_in_play.drop_table_from_database_and_remove_from_cache(db_api)
-        nodes_in_play.drop_table_from_database_and_remove_from_cache(db_api)
-        stable_clusters.drop_table_from_database_and_remove_from_cache(db_api)
-        marginal_new_clusters.drop_table_from_database_and_remove_from_cache(db_api)
+        edges_in_play.drop_table_from_database_and_remove_from_cache()
+        nodes_in_play.drop_table_from_database_and_remove_from_cache()
+        stable_clusters.drop_table_from_database_and_remove_from_cache()
+        marginal_new_clusters.drop_table_from_database_and_remove_from_cache()
 
-    sql = _generate_cluster_comparison_sql(
-        all_results,
-        unique_id_col=node_id_column_name,
-        output_number_of_distinct_clusters_only=output_number_of_distinct_clusters_only,
-    )
+    if output_number_of_distinct_clusters_only:
+        sql = _generate_distinct_cluster_count_sql(all_results)
+    else:
+        sql = _generate_detailed_cluster_comparison_sql(
+            all_results,
+            unique_id_col=node_id_column_name,
+        )
+
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
     joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     for v in all_results.values():
-        v.drop_table_from_database_and_remove_from_cache(db_api)
+        v.drop_table_from_database_and_remove_from_cache()
 
     return joined
