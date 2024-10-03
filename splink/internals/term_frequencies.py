@@ -58,9 +58,10 @@ def _join_tf_to_df_concat_sql(linker: Linker) -> str:
         tbl = colname_to_tf_tablename(col)
         select_cols.append(f"{tbl}.{col.tf_name}")
 
-    input_columns = linker._input_columns()
+    column_names_in_df_concat = linker._concat_table_column_names
+
     aliased_concat_column_names = [
-        f"__splink__df_concat.{col.name} AS {col.name}" for col in input_columns
+        f"__splink__df_concat.{col} AS {col}" for col in column_names_in_df_concat
     ]
 
     select_cols = aliased_concat_column_names + select_cols
