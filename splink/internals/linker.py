@@ -54,6 +54,7 @@ from splink.internals.unique_id_concat import (
 )
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
+    concat_table_column_names,
 )
 
 logger = logging.getLogger(__name__)
@@ -251,6 +252,15 @@ class Linker:
             self._settings_obj.column_info_settings.source_dataset_column_name
             in input_cols
         )
+
+    @property
+    def _concat_table_column_names(self) -> list[str]:
+        """
+        Returns the columns actually present in __splink__df_concat table.
+        Includes source dataset name if it's been created, and logic of additional
+        columns already taken care of
+        """
+        return concat_table_column_names(self)
 
     @property
     def _cache_uid(self):
