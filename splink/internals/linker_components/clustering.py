@@ -17,7 +17,10 @@ from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
-from splink.internals.vertically_concatenate import enqueue_df_concat
+from splink.internals.vertically_concatenate import (
+    concat_table_column_names,
+    enqueue_df_concat,
+)
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
@@ -135,16 +138,11 @@ class LinkerClustering:
 
         enqueue_df_concat(linker, pipeline)
 
-        df_obj = next(iter(linker._input_tables_dict.values()))
-        columns = df_obj.columns_escaped
+        columns = concat_table_column_names(self._linker)
+        # don't want to include salting column in output if present
+        columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
 
-        if linker._settings_obj._get_source_dataset_column_name_is_required():
-            columns.insert(
-                1,
-                linker._settings_obj.column_info_settings.source_dataset_input_column.name,
-            )
-
-        select_columns_sql = ", ".join(columns)
+        select_columns_sql = ", ".join(columns_without_salt)
 
         sql = f"""
         select
