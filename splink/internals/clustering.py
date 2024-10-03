@@ -296,6 +296,76 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     edge_id_column_name_right: Optional[str] = None,
     output_number_of_distinct_clusters_only: bool = False,
 ) -> SplinkDataFrame:
+    """Clusters the pairwise match predictions  at multiple thresholds using
+    the connected components graph clustering algorithm.
+
+    This function efficiently computes clusters for multiple thresholds by starting
+    with the lowest threshold and incrementally updating clusters for higher thresholds.
+
+    If your node and edge column names follow Splink naming conventions, then you can
+    omit edge_id_column_name_left and edge_id_column_name_right. For example, if you
+    have a table of nodes with a column `unique_id`, it would be assumed that the
+    edge table has columns `unique_id_l` and `unique_id_r`.
+
+    Args:
+        nodes (AcceptableInputTableType): The table containing node information
+        edges (AcceptableInputTableType): The table containing edge information
+        db_api (DatabaseAPISubClass): The database API to use for querying
+        node_id_column_name (str): The name of the column containing node IDs
+        match_probability_thresholds (list[float]): List of thresholds to
+            compute clusters for
+        edge_id_column_name_left (Optional[str]): The name of the column containing
+            left edge IDs. If not provided, assumed to be f"{node_id_column_name}_l"
+        edge_id_column_name_right (Optional[str]): The name of the column containing
+            right edge IDs. If not provided, assumed to be f"{node_id_column_name}_r"
+        output_number_of_distinct_clusters_only (bool): If True, only output the number
+            of distinct clusters for each threshold instead of full cluster information
+
+    Returns:
+        SplinkDataFrame: A SplinkDataFrame containing cluster information for all
+            thresholds. If output_number_of_distinct_clusters_only is True, it contains
+            the count of distinct clusters for each threshold.
+
+    Examples:
+        ```python
+        from splink import DuckDBAPI
+        from splink.clustering import (
+            cluster_pairwise_predictions_at_multiple_thresholds
+        )
+
+        db_api = DuckDBAPI()
+
+        nodes = [
+            {"my_id": 1},
+            {"my_id": 2},
+            {"my_id": 3},
+            {"my_id": 4},
+            {"my_id": 5},
+            {"my_id": 6},
+        ]
+
+        edges = [
+            {"n_1": 1, "n_2": 2, "match_probability": 0.8},
+            {"n_1": 3, "n_2": 2, "match_probability": 0.9},
+            {"n_1": 4, "n_2": 5, "match_probability": 0.99},
+        ]
+
+        thresholds = [0.5, 0.7, 0.9]
+
+        cc = cluster_pairwise_predictions_at_multiple_thresholds(
+            nodes,
+            edges,
+            node_id_column_name="my_id",
+            edge_id_column_name_left="n_1",
+            edge_id_column_name_right="n_2",
+            db_api=db_api,
+            match_probability_thresholds=thresholds,
+        )
+
+        cc.as_duckdbpyrelation()
+        ```
+    """
+
     # Strategy to cluster at multiple thresholds:
     # 1. Cluster at the lowest threshold
     # 2. At next threshold, note that some clusters do not need to be recomputed.
