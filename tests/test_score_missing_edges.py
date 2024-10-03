@@ -6,6 +6,12 @@ from splink import Linker, SettingsCreator, block_on
 
 from .decorator import mark_with_dialects_excluding
 
+df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+# we don't need full data to check this logic - a smallish subset will do
+# as long as it's large enough to contain missed intra-cluster edges
+# when predicted with default parameters
+df_pd = df_pd[0:200]
+
 
 @mark_with_dialects_excluding()
 @mark.parametrize(
@@ -15,7 +21,7 @@ from .decorator import mark_with_dialects_excluding
 def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
     helper = test_helpers[dialect]
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = helper.convert_frame(df_pd)
     settings = SettingsCreator(
         link_type=link_type,
         comparisons=[
@@ -56,7 +62,7 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
 def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_of_df):
     helper = test_helpers[dialect]
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = helper.convert_frame(df_pd)
     settings = SettingsCreator(
         link_type=link_type,
         comparisons=[
@@ -97,7 +103,7 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
 def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_type):
     helper = test_helpers[dialect]
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df_pd.copy()
     df["record_id"] = df["unique_id"]
     del df["unique_id"]
     df["sds"] = "frame_1"
