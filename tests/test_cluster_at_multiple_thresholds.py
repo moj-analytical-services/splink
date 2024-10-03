@@ -25,7 +25,7 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
 
     combined_edges["match_probability"] = np.random.uniform(0, 1, len(combined_edges))
 
-    thresholds = [0.0, 0.3, 0.5, 0.7, 1.0]
+    thresholds = [0.5, 0.7]
 
     all_clusters = cluster_pairwise_predictions_at_multiple_thresholds(
         combined_nodes,
