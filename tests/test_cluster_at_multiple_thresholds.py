@@ -11,13 +11,13 @@ from tests.cc_testing_utils import generate_random_graph, nodes_and_edges_from_g
 from .decorator import mark_with_dialects_excluding
 
 
-@pytest.mark.parametrize("graph_size", [100, 500, 1000, 5000])
+@pytest.mark.parametrize("graph_size", [20, 500, 1000, 5000])
 @mark_with_dialects_excluding()
 def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-    if dialect == "spark" and graph_size > 100:
+    if dialect == "spark" and graph_size > 20:
         pytest.skip("Skipping large graph sizes for Spark dialect")
 
     G = generate_random_graph(graph_size)
