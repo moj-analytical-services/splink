@@ -349,6 +349,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         select count(distinct cluster_id) as distinct_clusters
         from {cc.templated_name}
         """
+        pipeline.enqueue_sql(sql, "__splink__distinct_clusters_at_threshold")
         cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         all_results[initial_threshold] = cc_distinct
     else:
@@ -433,6 +434,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
             select count(distinct cluster_id) as distinct_clusters
             from {cc.templated_name}
             """
+            pipeline.enqueue_sql(sql, "__splink__distinct_clusters_at_threshold")
             cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
             all_results[new_threshold] = cc_distinct
             previous_cc.drop_table_from_database_and_remove_from_cache()

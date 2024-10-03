@@ -248,11 +248,17 @@ class SparkAPI(DatabaseAPI[spark_df]):
             num_partitions = math.ceil(num_partitions / 6)
         elif templated_name == "__splink__distinct_clusters_at_threshold":
             num_partitions = 1
+        elif templated_name == "__splink__df_root_rows":
+            num_partitions = 1
         elif templated_name == "__splink__nodes_in_play":
             num_partitions = math.ceil(num_partitions / 10)
         elif templated_name == "__splink__edges_in_play":
             num_partitions = math.ceil(num_partitions / 10)
         elif templated_name == "__splink__clusters_at_threshold":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__clusters_at_all_thresholds":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__stable_nodes_at_new_threshold":
             num_partitions = math.ceil(num_partitions / 10)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
@@ -270,6 +276,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives.*",
+            r"__splink__representatives.*",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
             r"__splink__blocked_id_pairs",
@@ -278,6 +285,9 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__edges_in_play",
             r"__splink__clusters_at_threshold",
             r"__splink__distinct_clusters_at_threshold",
+            r"__splink__clusters_at_all_thresholds",
+            r"__splink__df_root_rows",
+            r"__splink__clustering_output_final",
         ]
 
         if re.fullmatch(r"|".join(regex_to_persist), templated_name):
