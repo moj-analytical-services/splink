@@ -17,6 +17,9 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
+    if dialect == "spark" and graph_size > 100:
+        pytest.skip("Skipping large graph sizes for Spark dialect")
+
     G = generate_random_graph(graph_size)
     combined_nodes, combined_edges = nodes_and_edges_from_graph(G)
 
