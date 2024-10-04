@@ -371,7 +371,7 @@ class EMTrainingSession:
         """
         records = self._iteration_history_records
         return match_weights_interactive_history_chart(
-            records, blocking_rule=self._blocking_rule_for_training
+            records, blocking_rule=self._blocking_rule_for_training.blocking_rule_sql
         )
 
     def m_u_values_interactive_history_chart(self) -> ChartReturnType:
