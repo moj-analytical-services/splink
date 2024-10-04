@@ -230,6 +230,11 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__blocked_id_pairs",
+            r"__splink__nodes_in_play",
+            r"__splink__edges_in_play",
+            r"__splink__clusters_at_threshold",
+            r"__splink__clusters_at_all_thresholds",
+            r"__splink__stable_nodes_at_new_threshold",
         ]
 
         num_partitions = self.num_partitions_on_repartition
@@ -246,6 +251,18 @@ class SparkAPI(DatabaseAPI[spark_df]):
             num_partitions = math.ceil(num_partitions / 4)
         elif templated_name == "__splink__blocked_id_pairs":
             num_partitions = math.ceil(num_partitions / 6)
+        elif templated_name == "__splink__distinct_clusters_at_threshold":
+            num_partitions = 1
+        elif templated_name == "__splink__nodes_in_play":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__edges_in_play":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__clusters_at_threshold":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__clusters_at_all_thresholds":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__stable_nodes_at_new_threshold":
+            num_partitions = math.ceil(num_partitions / 10)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
             spark_df = spark_df.repartition(num_partitions)
@@ -262,10 +279,18 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives.*",
+            r"__splink__representatives.*",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
             r"__splink__blocked_id_pairs",
             r"__splink__marginal_exploded_ids_blocking_rule.*",
+            r"__splink__nodes_in_play",
+            r"__splink__edges_in_play",
+            r"__splink__clusters_at_threshold",
+            r"__splink__distinct_clusters_at_threshold",
+            r"__splink__clusters_at_all_thresholds",
+            r"__splink__clustering_output_final",
+            r"__splink__stable_nodes_at_new_threshold",
         ]
 
         if re.fullmatch(r"|".join(regex_to_persist), templated_name):
