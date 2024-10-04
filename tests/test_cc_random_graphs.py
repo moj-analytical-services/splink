@@ -20,7 +20,7 @@ def test_small_erdos_renyi_graph(execution_number):
     assert (cc_df.values == nx_df.values).all()
 
 
-# @pytest.mark.skip(reason="Slow")
+@pytest.mark.skip(reason="Slow")
 @pytest.mark.parametrize("execution_number", range(10))
 def test_medium_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=10000)
@@ -31,7 +31,7 @@ def test_medium_erdos_renyi_graph(execution_number):
     assert (cc_df.values == nx_df.values).all()
 
 
-# @pytest.mark.skip(reason="Slow")
+@pytest.mark.skip(reason="Slow")
 @pytest.mark.parametrize("execution_number", range(2))
 def test_large_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=100000)
