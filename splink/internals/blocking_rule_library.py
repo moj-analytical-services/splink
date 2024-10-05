@@ -64,7 +64,7 @@ class CustomRule(BlockingRuleCreator):
 
         Examples:
             ```python
-            from splink.internals.blocking_rule_library import CustomRule
+            from splink.blocking_rule_library import CustomRule
 
             # Simple custom rule
             rule_1 = CustomRule("l.postcode = r.postcode")
