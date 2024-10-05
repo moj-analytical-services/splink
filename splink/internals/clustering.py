@@ -223,22 +223,23 @@ def _calculate_stable_clusters_at_new_threshold(
     return sqls
 
 
+def _threshold_to_str(x):
+    if x == 0.0:
+        return "0_0"
+    elif x == 1.0:
+        return "1_0"
+    else:
+        return f"{x:.8f}".rstrip("0").replace(".", "_")
+
+
 def _generate_detailed_cluster_comparison_sql(
     all_results: dict[float, SplinkDataFrame],
     unique_id_col: str = "unique_id",
 ) -> str:
     thresholds = sorted(all_results.keys())
 
-    def threshold_to_str(x):
-        if x == 0.0:
-            return "0_0"
-        elif x == 1.0:
-            return "1_0"
-        else:
-            return f"{x:.8f}".rstrip("0").replace(".", "_")
-
     select_columns = [f"t0.{unique_id_col}"] + [
-        f"t{i}.cluster_id AS cluster_{threshold_to_str(threshold)}"
+        f"t{i}.cluster_id AS cluster_{_threshold_to_str(threshold)}"
         for i, threshold in enumerate(thresholds)
     ]
 
@@ -258,24 +259,41 @@ def _generate_detailed_cluster_comparison_sql(
     return sql
 
 
+def _get_cluster_stats_sql(cc: SplinkDataFrame) -> list[dict[str, str]]:
+    sqls = []
+    cluster_sizes_sql = f"""
+    SELECT
+        cluster_id,
+        COUNT(*) AS cluster_size
+    FROM {cc.templated_name}
+    GROUP BY cluster_id
+    """
+    sqls.append(
+        {"sql": cluster_sizes_sql, "output_table_name": "__splink__cluster_sizes"}
+    )
+
+    cluster_stats_sql = """
+    SELECT
+        COUNT(*) AS num_clusters,
+        MAX(cluster_size) AS max_cluster_size,
+        AVG(cluster_size) AS avg_cluster_size
+    FROM __splink__cluster_sizes
+    """
+    sqls.append(
+        {"sql": cluster_stats_sql, "output_table_name": "__splink__cluster_stats"}
+    )
+
+    return sqls
+
+
 def _generate_distinct_cluster_count_sql(
     all_results: dict[float, SplinkDataFrame],
 ) -> str:
     thresholds = sorted(all_results.keys())
 
-    def threshold_to_str(x):
-        if x == 0.0:
-            return "0_0"
-        elif x == 1.0:
-            return "1_0"
-        else:
-            return f"{x:.8f}".rstrip("0").replace(".", "_")
-
     select_statements = [
         f"""
-        SELECT
-            cast({threshold} as float) AS threshold,
-            distinct_clusters
+        SELECT cast({threshold} as float) as threshold, *
         FROM {all_results[threshold].physical_name}
         """
         for threshold in thresholds
@@ -415,11 +433,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
     if output_number_of_distinct_clusters_only:
         pipeline = CTEPipeline([cc])
-        sql = f"""
-        select count(distinct cluster_id) as distinct_clusters
-        from {cc.templated_name}
-        """
-        pipeline.enqueue_sql(sql, "__splink__distinct_clusters_at_threshold")
+        sqls = _get_cluster_stats_sql(cc)
+        pipeline.enqueue_list_of_sqls(sqls)
         cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         all_results[initial_threshold] = cc_distinct
     else:
@@ -500,11 +515,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
 
         if output_number_of_distinct_clusters_only:
             pipeline = CTEPipeline([cc])
-            sql = f"""
-            select count(distinct cluster_id) as distinct_clusters
-            from {cc.templated_name}
-            """
-            pipeline.enqueue_sql(sql, "__splink__distinct_clusters_at_threshold")
+            sqls = _get_cluster_stats_sql(cc)
+            pipeline.enqueue_list_of_sqls(sqls)
             cc_distinct = db_api.sql_pipeline_to_splink_dataframe(pipeline)
             all_results[new_threshold] = cc_distinct
             previous_cc.drop_table_from_database_and_remove_from_cache()
