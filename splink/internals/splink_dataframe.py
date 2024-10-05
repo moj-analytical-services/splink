@@ -203,3 +203,13 @@ class SplinkDataFrame(ABC):
                 "either `overwrite = True` or manually move or delete the "
                 "existing file."
             )
+
+    def _repr_pretty_(self, p, cycle):
+        msg = (
+            f"Splink DataFrame representing table: `{self.physical_name}`\n"
+            "\nTo retrieve records, call one of the `as_x()` methods e.g."
+            "`.as_pandas_dataframe(limit=5)`\n"
+            "or query the table using SQL with `linker.misc.query_sql(sql)`\n"
+            "referring to the table with {this_df.physical_name}.\n"
+        )
+        p.text(msg)
