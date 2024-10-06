@@ -203,3 +203,23 @@ def threshold_args_to_match_weight(
         return threshold_match_weight
 
     return None
+
+
+def threshold_args_to_match_prob(
+    threshold_match_probability: float | None, threshold_match_weight: float | None
+) -> float | None:
+    if threshold_match_probability is not None and threshold_match_weight is not None:
+        raise ValueError(
+            "Cannot provide both threshold_match_probability and "
+            "threshold_match_weight. Please specify only one."
+        )
+
+    if threshold_match_probability is not None:
+        return threshold_match_probability
+
+    if threshold_match_weight is not None:
+        return bayes_factor_to_prob(
+            match_weight_to_bayes_factor(threshold_match_weight)
+        )
+
+    return None

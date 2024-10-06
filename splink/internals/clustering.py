@@ -6,7 +6,7 @@ from typing import Optional
 from splink.internals.connected_components import solve_connected_components
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ascii_uid
+from splink.internals.misc import ascii_uid, threshold_args_to_match_prob
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -42,6 +42,7 @@ def cluster_pairwise_predictions_at_threshold(
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
     threshold_match_probability: Optional[float] = None,
+    threshold_match_weight: Optional[float] = None,
 ) -> SplinkDataFrame:
     """Clusters the pairwise match predictions into groups of connected records using
     the connected components graph clustering algorithm.
@@ -49,7 +50,7 @@ def cluster_pairwise_predictions_at_threshold(
     Records with an estimated match probability at or above threshold_match_probability
     are considered to be a match (i.e. they represent the same entity).
 
-    If no match probability column is provided, it is assumed that all edges
+    If no match probability or match weight is provided, it is assumed that all edges
     (comparison) are a match.
 
     If your node and edge column names follow Splink naming conventions, then you can
@@ -68,6 +69,8 @@ def cluster_pairwise_predictions_at_threshold(
             right edge IDs. If not provided, assumed to be f"{node_id_column_name}_r"
         threshold_match_probability (Optional[float]): Pairwise comparisons with a
             match_probability at or above this threshold are matched
+        threshold_match_weight (Optional[float]): Pairwise comparisons with a
+            match_weight at or above this threshold are matched
 
     Returns:
         SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -126,6 +129,10 @@ def cluster_pairwise_predictions_at_threshold(
         db_api,
         edge_id_column_name_left,
         edge_id_column_name_right,
+    )
+
+    threshold_match_probability = threshold_args_to_match_prob(
+        threshold_match_probability, threshold_match_weight
     )
 
     cc = solve_connected_components(
