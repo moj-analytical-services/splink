@@ -183,3 +183,23 @@ def read_resource(path: str) -> str:
     if (resource_data := pkgutil.get_data("splink", path)) is None:
         raise FileNotFoundError(f"Could not locate splink resource at: {path}")
     return resource_data.decode("utf-8")
+
+
+def threshold_args_to_match_weight(
+    threshold_match_probability: float | None, threshold_match_weight: float | None
+) -> float | None:
+    if threshold_match_probability is not None and threshold_match_weight is not None:
+        raise ValueError(
+            "Cannot provide both threshold_match_probability and "
+            "threshold_match_weight. Please specify only one."
+        )
+
+    if threshold_match_probability is not None:
+        if threshold_match_probability == 0:
+            return None
+        return prob_to_match_weight(threshold_match_probability)
+
+    if threshold_match_weight is not None:
+        return threshold_match_weight
+
+    return None
