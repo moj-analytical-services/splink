@@ -313,8 +313,8 @@ def _generate_cluster_summary_stats_sql(
     select_statements = [
         f"""
         SELECT
-            {threshold} as threshold_match_probability,
-            {_threshold_to_weight(threshold)} as threshold_match_weight,
+            cast({threshold} as float) as threshold_match_probability,
+            cast({_threshold_to_weight(threshold)} as float) as threshold_match_weight,
             *
         FROM {all_results[threshold].physical_name}
         """
