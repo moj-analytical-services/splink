@@ -44,7 +44,7 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference.score_missing_cluster_edges(
+    df_missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
     ).as_pandas_dataframe()
@@ -85,7 +85,7 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference.score_missing_cluster_edges(
+    df_missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
     ).as_pandas_dataframe()
 
@@ -136,7 +136,7 @@ def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_ty
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference.score_missing_cluster_edges(
+    df_missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
     ).as_pandas_dataframe()

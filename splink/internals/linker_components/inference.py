@@ -291,7 +291,7 @@ class LinkerInference:
 
         return predictions
 
-    def score_missing_cluster_edges(
+    def _score_missing_cluster_edges(
         self,
         df_clusters: SplinkDataFrame,
         df_predict: SplinkDataFrame = None,
@@ -332,7 +332,7 @@ class LinkerInference:
                 df_edges,
                 0.9,
             )
-            df_remaining_edges = linker.score_missing_cluster_edges(
+            df_remaining_edges = linker._score_missing_cluster_edges(
                 df_clusters,
                 df_edges,
             )
