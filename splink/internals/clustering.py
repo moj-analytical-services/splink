@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Optional
 
 from splink.internals.connected_components import solve_connected_components
@@ -297,6 +298,13 @@ def _get_cluster_stats_sql(cc: SplinkDataFrame) -> list[dict[str, str]]:
     return sqls
 
 
+def _threshold_to_weight(p):
+    if p == 0 or p == 1:
+        return "NULL"
+    else:
+        return str(math.log2(p / (1 - p)))
+
+
 def _generate_cluster_summary_stats_sql(
     all_results: dict[float, SplinkDataFrame],
 ) -> str:
@@ -304,7 +312,10 @@ def _generate_cluster_summary_stats_sql(
 
     select_statements = [
         f"""
-        SELECT cast({threshold} as float) as threshold, *
+        SELECT
+            {threshold} as threshold_match_probability,
+            {_threshold_to_weight(threshold)} as threshold_match_weight,
+            *
         FROM {all_results[threshold].physical_name}
         """
         for threshold in thresholds
