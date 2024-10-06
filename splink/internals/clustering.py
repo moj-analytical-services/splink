@@ -6,7 +6,11 @@ from typing import Optional
 from splink.internals.connected_components import solve_connected_components
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ascii_uid, threshold_args_to_match_prob
+from splink.internals.misc import (
+    ascii_uid,
+    threshold_args_to_match_prob,
+    threshold_args_to_match_prob_list,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -316,7 +320,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     edges: AcceptableInputTableType,
     db_api: DatabaseAPISubClass,
     node_id_column_name: str,
-    match_probability_thresholds: list[float],
+    match_probability_thresholds: list[float] | None = None,
+    match_weight_thresholds: list[float] | None = None,
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
     output_cluster_summary_stats: bool = False,
@@ -337,8 +342,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edges (AcceptableInputTableType): The table containing edge information
         db_api (DatabaseAPISubClass): The database API to use for querying
         node_id_column_name (str): The name of the column containing node IDs
-        match_probability_thresholds (list[float]): List of thresholds to
-            compute clusters for
+        match_probability_thresholds (list[float] | None): List of match probability
+            thresholds to compute clusters for
+        match_weight_thresholds (list[float] | None): List of match weight thresholds
+            to compute clusters for
         edge_id_column_name_left (Optional[str]): The name of the column containing
             left edge IDs. If not provided, assumed to be f"{node_id_column_name}_l"
         edge_id_column_name_right (Optional[str]): The name of the column containing
@@ -416,7 +423,15 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     else:
         edges_sdf = edges
 
-    match_probability_thresholds = sorted(match_probability_thresholds)
+    match_probability_thresholds = threshold_args_to_match_prob_list(
+        match_probability_thresholds, match_weight_thresholds
+    )
+
+    if match_probability_thresholds is None or len(match_probability_thresholds) == 0:
+        raise ValueError(
+            "Must provide either match_probability_thresholds "
+            "or match_weight_thresholds"
+        )
 
     initial_threshold = match_probability_thresholds.pop(0)
     all_results = {}

@@ -223,3 +223,25 @@ def threshold_args_to_match_prob(
         )
 
     return None
+
+
+def threshold_args_to_match_prob_list(
+    match_probability_thresholds: list[float] | None,
+    match_weight_thresholds: list[float] | None,
+) -> list[float] | None:
+    if match_probability_thresholds is not None and match_weight_thresholds is not None:
+        raise ValueError(
+            "Cannot provide both match_probability_thresholds and "
+            "match_weight_thresholds. Please specify only one."
+        )
+
+    if match_probability_thresholds is not None:
+        return sorted(match_probability_thresholds)
+
+    if match_weight_thresholds is not None:
+        return sorted(
+            bayes_factor_to_prob(match_weight_to_bayes_factor(w))
+            for w in match_weight_thresholds
+        )
+
+    return None
