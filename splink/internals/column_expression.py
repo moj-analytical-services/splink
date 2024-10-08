@@ -47,8 +47,16 @@ class ColumnExpression:
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
         self.raw_sql_expression = sql_expression
         self.operations: list[ColumnExpressionOperation] = []
-        if sql_dialect is not None:
-            self.sql_dialect: SplinkDialect = sql_dialect
+        self._sql_dialect = sql_dialect
+    
+    @property
+    def sql_dialect(self) -> SplinkDialect:
+        """A safe property for accessing `sql_dialect` with an error message if unset."""
+        if self._sql_dialect is None:
+            raise ValueError(
+                "SQL dialect has not been set. Please set it before using ColumnExpression. "
+            )
+        return self._sql_dialect
 
     def _clone(self) -> "ColumnExpression":
         clone = copy(self)
