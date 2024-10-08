@@ -31,6 +31,7 @@ from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
 )
+from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
@@ -288,6 +289,174 @@ class LinkerInference:
         if materialise_blocked_pairs:
             blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
+        return predictions
+
+    def _score_missing_cluster_edges(
+        self,
+        df_clusters: SplinkDataFrame,
+        df_predict: SplinkDataFrame = None,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+    ) -> SplinkDataFrame:
+        """
+        Given a table of clustered records, create a dataframe of scored
+        pairwise comparisons for all pairs of records that belong to the same cluster.
+
+        If you also supply a scored edges table, this will only return pairwise
+        comparisons that are not already present in your scored edges table.
+
+        Args:
+            df_clusters (SplinkDataFrame): A table of clustered records, such
+                as the output of
+                `linker.clustering.cluster_pairwise_predictions_at_threshold()`.
+                All edges within the same cluster as specified by this table will
+                be scored.
+                Table needs cluster_id, id columns, and any columns used in
+                model comparisons.
+            df_predict (SplinkDataFrame, optional): An edges table, the output of
+                `linker.inference.predict()`.
+                If supplied, resulting table will not include any edges already
+                included in this table.
+            threshold_match_probability (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_probability above this threshold. Defaults to None.
+            threshold_match_weight (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_weight above this threshold. Defaults to None.
+
+        Examples:
+            ```py
+            linker = linker(df, "saved_settings.json", db_api=db_api)
+            df_edges = linker.inference.predict()
+            df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                df_edges,
+                0.9,
+            )
+            df_remaining_edges = linker._score_missing_cluster_edges(
+                df_clusters,
+                df_edges,
+            )
+            df_remaining_edges.as_pandas_dataframe(limit=5)
+            ```
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
+        """
+
+        start_time = time.time()
+
+        source_dataset_input_column = (
+            self._linker._settings_obj.column_info_settings.source_dataset_input_column
+        )
+        unique_id_input_column = (
+            self._linker._settings_obj.column_info_settings.unique_id_input_column
+        )
+
+        pipeline = CTEPipeline()
+        enqueue_df_concat_with_tf(self._linker, pipeline)
+        # we need to adjoin tf columns onto clusters table now
+        # also alias cluster_id so that it doesn't interfere with existing column
+        sql = f"""
+        SELECT
+            c.cluster_id AS _cluster_id,
+            ctf.*
+        FROM
+            {df_clusters.physical_name} c
+        LEFT JOIN
+            __splink__df_concat_with_tf ctf
+        ON
+            c.{unique_id_input_column.name} = ctf.{unique_id_input_column.name}
+        """
+        if source_dataset_input_column:
+            sql += (
+                f" AND c.{source_dataset_input_column.name} = "
+                f"ctf.{source_dataset_input_column.name}"
+            )
+        sqls = [
+            {
+                "sql": sql,
+                "output_table_name": "__splink__df_clusters_renamed",
+            }
+        ]
+        blocking_input_tablename_l = "__splink__df_clusters_renamed"
+        blocking_input_tablename_r = "__splink__df_clusters_renamed"
+
+        link_type = self._linker._settings_obj._link_type
+        sqls.extend(
+            block_using_rules_sqls(
+                input_tablename_l=blocking_input_tablename_l,
+                input_tablename_r=blocking_input_tablename_r,
+                blocking_rules=[BlockingRule("l._cluster_id = r._cluster_id")],
+                link_type=link_type,
+                source_dataset_input_column=source_dataset_input_column,
+                unique_id_input_column=unique_id_input_column,
+            )
+        )
+        # we are going to insert an intermediate table, so rename this
+        sqls[-1]["output_table_name"] = "__splink__raw_blocked_id_pairs"
+
+        sql = """
+        SELECT ne.*
+        FROM __splink__raw_blocked_id_pairs ne
+        """
+        if df_predict is not None:
+            # if we are given edges, we left join them, and then keep only rows
+            # where we _didn't_ have corresponding rows in edges table
+            if source_dataset_input_column:
+                unique_id_columns = [
+                    source_dataset_input_column,
+                    unique_id_input_column,
+                ]
+            else:
+                unique_id_columns = [unique_id_input_column]
+            uid_l_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "l")
+            uid_r_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "r")
+            sql_predict_with_join_keys = f"""
+                SELECT *, {uid_l_expr} AS join_key_l, {uid_r_expr} AS join_key_r
+                FROM {df_predict.physical_name}
+            """
+            sqls.append(
+                {
+                    "sql": sql_predict_with_join_keys,
+                    "output_table_name": "__splink__df_predict_with_join_keys",
+                }
+            )
+
+            sql = f"""
+            {sql}
+            LEFT JOIN __splink__df_predict_with_join_keys oe
+            ON oe.join_key_l = ne.join_key_l AND oe.join_key_r = ne.join_key_r
+            WHERE oe.join_key_l IS NULL AND oe.join_key_r IS NULL
+            """
+
+        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
+
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
+            self._linker._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+            sql_infinity_expression=self._linker._infinity_expression,
+        )
+        sqls[-1]["output_table_name"] = "__splink__df_predict_missing_cluster_edges"
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        predict_time = time.time() - start_time
+        logger.info(f"Predict time: {predict_time:.2f} seconds")
+
+        self._linker._predict_warning()
         return predictions
 
     def find_matches_to_new_records(

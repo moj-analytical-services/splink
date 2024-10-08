@@ -377,7 +377,7 @@ class LinkerVisualisations:
                 `linker.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
             sampling_method (str, optional): `random`, `by_cluster_size` or
-                `lowest_density_clusters`. Defaults to `random`.
+                `lowest_density_clusters_by_size`. Defaults to `random`.
             sample_size (int, optional): Number of clusters to show in the dahboard.
                 Defaults to 10.
             cluster_ids (list): The IDs of the clusters that will be displayed in the
