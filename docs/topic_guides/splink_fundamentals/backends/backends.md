@@ -51,10 +51,12 @@ See the DuckDB [deduplication example notebook](../../../demos/examples/duckdb/d
 ### :simple-apachespark: Spark
 
 Spark is recommended for:
+
 - Very large linkages, especially where DuckDB is performing poorly or running out of memory, or
 - Or have easier access to a Spark cluster than a single high-spec instance to run DuckDB
 
 It is not our default recommendation for most users because:
+
 - It involves more configuration than users, such as registering UDFs and setting up a Spark cluster
 - It is slower than DuckDB for many
 
@@ -66,7 +68,7 @@ See the Spark [deduplication example notebook](../../../demos/examples/spark/ded
 
 ### :simple-amazonaws: Athena
 
-Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for fuzzy matching functions, see [Presto]https://prestodb.io/docs/current/functions/string.html). At this time, the Athena backend is being used sparingly by the Splink development team so receives minimal levels of support.
+Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for fuzzy matching functions, see [Presto](https://prestodb.io/docs/current/functions/string.html). At this time, the Athena backend is being used sparingly by the Splink development team so receives minimal levels of support.
 
 In addition, from a development perspective, the necessity for an AWS connection makes testing Athena code more difficult, so there may be occasional bugs that would normally be caught by our testing framework.
 
