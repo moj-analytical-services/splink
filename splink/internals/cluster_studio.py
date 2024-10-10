@@ -233,7 +233,7 @@ def _get_cluster_id_of_each_size(
     where row_num <= {rows_per_partition}
     """
 
-    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    pipeline.enqueue_sql(sql, "__splink__cluster_count_row_numbered_2")
     df_cluster_sample_with_size = linker._db_api.sql_pipeline_to_splink_dataframe(
         pipeline
     )
