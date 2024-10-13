@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.0.4] - 2024-10-13
 
+### Added
+
+- `cluster_pairwise_predictions_at_multiple_thresholds` to more efficiently cluster at multiple thresholds ([#2437](https://github.com/moj-analytical-services/splink/pull/2437))
+
 ### Fixed
 
 - Fixed issue with `profile_columns` using latest Altair version ([#2466](https://github.com/moj-analytical-services/splink/pull/2466))
