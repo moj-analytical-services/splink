@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "4.0.3"
+version = "4.0.4"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
