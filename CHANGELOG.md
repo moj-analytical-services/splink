@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.4] - 2024-10-13
+
+### Fixed
+
+- Fixed issue with `profile_columns` using latest Altair version ([#2466](https://github.com/moj-analytical-services/splink/pull/2466))
+
+## [4.0.3] - 2024-09-19
+
+### Added
+
+- Cluster without linker by @RobinL in https://github.com/moj-analytical-services/splink/pull/2412
+- Better autocomplete for dataframes by @RobinL in https://github.com/moj-analytical-services/splink/pull/2434
+
 
 ## [4.0.2] - 2024-09-19
 
