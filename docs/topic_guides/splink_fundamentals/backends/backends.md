@@ -95,7 +95,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, DuckDBAPI
 
-    linker = Linker(your_args. DuckDBAPI)
+    linker = Linker(df, settings, db_api=DuckDBAPI(...))
     ```
 
 === ":simple-apachespark: Spark"
@@ -103,7 +103,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, SparkAPI
 
-    linker = Linker(your_args. SparkAPI)
+    linker = Linker(df, settings, db_api=SparkAPI(...))
     ```
 
 === ":simple-amazonaws: Athena"
@@ -111,7 +111,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, AthenaAPI
 
-    linker = Linker(your_args. AthenaAPI)
+    linker = Linker(df, settings, db_api=AthenaAPI(...))
     ```
 
 === ":simple-sqlite: SQLite"
@@ -119,7 +119,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, SQLiteAPI
 
-    linker = Linker(your_args. SQLiteAPI)
+    linker = Linker(df, settings, db_api=SQLiteAPI(...))
 
     ```
 
@@ -128,7 +128,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, PostgresAPI
 
-    linker = Linker(your_args. PostgresAPI)
+    linker = Linker(df, settings, db_api=PostgresAPI(...))
 
     ```
 
