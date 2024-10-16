@@ -5,7 +5,6 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.blocking import (
-    BlockingRule,
     block_using_rules_sqls,
     materialise_exploded_id_tables,
 )
@@ -18,6 +17,7 @@ from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
 )
+from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
     ensure_is_list,
@@ -683,20 +683,36 @@ class LinkerInference:
             SplinkDataFrame: Pairwise comparison with scored prediction
         """
 
-        cache = self._linker._intermediate_table_cache
+        if isinstance(record_1, dict):
+            record_1 = [record_1]
+
+        if isinstance(record_2, dict):
+            record_2 = [record_2]
 
         uid = ascii_uid(8)
         df_records_left = self._linker.table_management.register_table(
-            [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
+            record_1, f"__splink__compare_two_records_left_{uid}", overwrite=True
         )
         df_records_left.templated_name = "__splink__compare_two_records_left"
 
         df_records_right = self._linker.table_management.register_table(
-            [record_2], f"__splink__compare_two_records_right_{uid}", overwrite=True
+            record_2, f"__splink__compare_two_records_right_{uid}", overwrite=True
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
         pipeline = CTEPipeline([df_records_left, df_records_right])
+        cols_used = self._linker._settings_obj._columns_used_by_comparisons
+        select_expr = ", ".join(cols_used)
+        sql = f"""
+        select '_left' as unique_id, {select_expr}
+        from __splink__compare_two_records_left
+        UNION ALL
+        select '_right' as unique_id, {select_expr}
+        from __splink__compare_two_records_right
+        """
+        pipeline.enqueue_sql(sql, "__splink__compare_two_records_concat")
+
+        cache = self._linker._intermediate_table_cache
 
         if "__splink__df_concat_with_tf" in cache:
             nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
@@ -717,57 +733,32 @@ class LinkerInference:
                     )
 
         sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
-            self._linker, "__splink__compare_two_records_left"
+            self._linker, "__splink__compare_two_records_concat"
+        )
+        pipeline.enqueue_sql(
+            sql_join_tf, "__splink__compare_two_records_concat_with_tf"
         )
 
-        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        two_records_df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
-            self._linker, "__splink__compare_two_records_right"
-        )
-
-        pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
-
-        source_dataset_ic = (
-            self._linker._settings_obj.column_info_settings.source_dataset_input_column
-        )
-        uid_ic = self._linker._settings_obj.column_info_settings.unique_id_input_column
-
-        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
-            self._linker,
-            df_records_left,
-            pipeline,
-            in_tablename="__splink__compare_two_records_left_with_tf",
-            out_tablename="__splink__compare_two_records_left_with_tf_uid_fix",
-            uid_str="_left",
-        )
-        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
-            self._linker,
-            df_records_right,
-            pipeline,
-            in_tablename="__splink__compare_two_records_right_with_tf",
-            out_tablename="__splink__compare_two_records_right_with_tf_uid_fix",
-            uid_str="_right",
-        )
-
-        sqls = block_using_rules_sqls(
-            input_tablename_l="__splink__compare_two_records_left_with_tf_uid_fix",
-            input_tablename_r="__splink__compare_two_records_right_with_tf_uid_fix",
-            blocking_rules=[BlockingRule("1=1")],
-            link_type=self._linker._settings_obj._link_type,
-            source_dataset_input_column=source_dataset_ic,
-            unique_id_input_column=uid_ic,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
+        pipeline = CTEPipeline([two_records_df])
+        sql = """
+        select '_left' as join_key_l, '_right' as join_key_r, '0' as match_key
+        """
+        pipeline.enqueue_sql(sql, "__splink__blocked_id_pairs")
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-            input_tablename_l="__splink__compare_two_records_left_with_tf_uid_fix",
-            input_tablename_r="__splink__compare_two_records_right_with_tf_uid_fix",
-            source_dataset_input_column=source_dataset_ic,
-            unique_id_input_column=uid_ic,
+            input_tablename_l="__splink__compare_two_records_concat_with_tf",
+            input_tablename_r="__splink__compare_two_records_concat_with_tf",
+            source_dataset_input_column=None,
+            unique_id_input_column=InputColumn(
+                "unique_id",
+                sqlglot_dialect_str=self._linker._db_api.sql_dialect.sqlglot_dialect,
+            ),
         )
+
         pipeline.enqueue_list_of_sqls(sqls)
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
