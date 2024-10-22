@@ -1,3 +1,6 @@
+import os
+from functools import wraps
+
 import pandas as pd
 
 import splink.comparison_library as cl
@@ -17,21 +20,24 @@ settings = SettingsCreator(
         cl.ExactMatch("first_name"),
         cl.ExactMatch("surname"),
         cl.ExactMatch("dob"),
-        cl.ExactMatch("city"),
+        cl.ExactMatch("city").configure(term_frequency_adjustments=True),
     ],
     blocking_rules_to_generate_predictions=[
         block_on("dob"),
         block_on("first_name", "surname"),
     ],
+    retain_intermediate_calculation_columns=True,
 )
 
 
 def debug_mode_test_wrapper(test_function):
-    def wrapper(test_helpers, dialect):
+    @wraps(test_function)
+    def wrapper(*args, **kwargs):
         errors = {}
         for debug_mode in (False, True):
+            kwargs["debug_mode"] = debug_mode
             try:
-                test_function(test_helpers, dialect, debug_mode=debug_mode)
+                test_function(*args, **kwargs)
             except Exception as e:
                 errors[debug_mode] = e
         if errors:
@@ -49,7 +55,7 @@ def debug_mode_test_wrapper(test_function):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_u_training(test_helpers, dialect, debug_mode):
+def test_debug_mode_u_training(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -62,7 +68,7 @@ def test_debug_mode_u_training(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_ptrrm_train(test_helpers, dialect, debug_mode):
+def test_debug_mode_ptrrm_train(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -79,7 +85,7 @@ def test_debug_mode_ptrrm_train(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_em_training(test_helpers, dialect, debug_mode):
+def test_debug_mode_em_training(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -92,7 +98,7 @@ def test_debug_mode_em_training(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_combined_training(test_helpers, dialect, debug_mode):
+def test_debug_mode_combined_training(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -110,7 +116,7 @@ def test_debug_mode_combined_training(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_predict(test_helpers, dialect, debug_mode):
+def test_debug_mode_predict(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -123,7 +129,7 @@ def test_debug_mode_predict(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_clustering(test_helpers, dialect, debug_mode):
+def test_debug_mode_clustering(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -137,7 +143,7 @@ def test_debug_mode_clustering(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_match_weights_chart(test_helpers, dialect, debug_mode):
+def test_debug_mode_match_weights_chart(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -150,7 +156,7 @@ def test_debug_mode_match_weights_chart(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_m_u_chart(test_helpers, dialect, debug_mode):
+def test_debug_mode_m_u_chart(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -163,7 +169,22 @@ def test_debug_mode_m_u_chart(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_interactive_match_weights_chart(test_helpers, dialect, debug_mode):
+def test_debug_mode_tf_adjustments_chart(test_helpers, dialect, debug_mode=None):
+    helper = test_helpers[dialect]
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    linker = Linker(df, settings, db_api)
+    db_api.debug_mode = debug_mode
+
+    linker.visualisations.tf_adjustment_chart("city")
+
+
+@mark_with_dialects_excluding()
+@debug_mode_test_wrapper
+def test_debug_mode_interactive_match_weights_chart(
+    test_helpers, dialect, debug_mode=None
+):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -179,7 +200,7 @@ def test_debug_mode_interactive_match_weights_chart(test_helpers, dialect, debug
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_interactive_m_u_chart(test_helpers, dialect, debug_mode):
+def test_debug_mode_interactive_m_u_chart(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -195,7 +216,7 @@ def test_debug_mode_interactive_m_u_chart(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_unlinkables_chart(test_helpers, dialect, debug_mode):
+def test_debug_mode_unlinkables_chart(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -208,7 +229,7 @@ def test_debug_mode_unlinkables_chart(test_helpers, dialect, debug_mode):
 
 @mark_with_dialects_excluding()
 @debug_mode_test_wrapper
-def test_debug_mode_profile_columns(test_helpers, dialect, debug_mode):
+def test_debug_mode_profile_columns(test_helpers, dialect, debug_mode=None):
     helper = test_helpers[dialect]
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
@@ -217,3 +238,37 @@ def test_debug_mode_profile_columns(test_helpers, dialect, debug_mode):
 
     profile_columns(df, db_api)
 
+
+@mark_with_dialects_excluding()
+@debug_mode_test_wrapper
+def test_debug_mode_comparison_viewer(test_helpers, dialect, tmp_path, debug_mode=None):
+    helper = test_helpers[dialect]
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    linker = Linker(df, settings, db_api)
+    db_api.debug_mode = debug_mode
+
+    df_e = linker.inference.predict(0.8)
+
+    linker.visualisations.comparison_viewer_dashboard(
+        df_e, os.path.join(tmp_path, "test_cvd.html"), overwrite=True
+    )
+
+
+@mark_with_dialects_excluding()
+@debug_mode_test_wrapper
+def test_debug_mode_cluster_studio(test_helpers, dialect, tmp_path, debug_mode=None):
+    helper = test_helpers[dialect]
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    linker = Linker(df, settings, db_api)
+    db_api.debug_mode = debug_mode
+
+    df_e = linker.inference.predict(0.8)
+    df_c = linker.clustering.cluster_pairwise_predictions_at_threshold(df_e, 0.9)
+
+    linker.visualisations.cluster_studio_dashboard(
+        df_e, df_c, os.path.join(tmp_path, "test_csd.html"), overwrite=True
+    )
