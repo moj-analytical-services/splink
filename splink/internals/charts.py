@@ -7,8 +7,7 @@ from typing import Any, Dict, Union
 
 import numpy as np
 import pandas as pd
-from altair import Chart
-from altair.core import SchemaBase
+from altair import Chart, SchemaBase
 
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
