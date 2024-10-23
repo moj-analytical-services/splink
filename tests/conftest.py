@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pytest
 
@@ -55,13 +56,18 @@ def _make_spark():
     sc = SparkContext.getOrCreate(conf=conf)
 
     spark = SparkSession(sc)
-    spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
+
     return spark
 
 
+def _checkpoint_dir(path):
+    return os.path.join(path, "spark_checkpoint_dir")
+
+
 @pytest.fixture(scope="module")
-def spark():
+def spark(tmp_path):
     spark = _make_spark()
+    spark.sparkContext.setCheckpointDir(_checkpoint_dir(tmp_path))
     yield spark
 
 
@@ -82,14 +88,14 @@ def df_spark(spark):
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
 @pytest.fixture
-def test_helpers(pg_engine):
+def test_helpers(pg_engine, tmp_path):
     # LazyDict to lazy-load helpers
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
     return LazyDict(
         duckdb=(DuckDBTestHelper, []),
-        spark=(SparkTestHelper, [_make_spark]),
+        spark=(SparkTestHelper, [_make_spark, _checkpoint_dir(tmp_path)]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )

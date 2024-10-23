@@ -63,8 +63,9 @@ class DuckDBTestHelper(TestHelper):
 
 
 class SparkTestHelper(TestHelper):
-    def __init__(self, spark_creator_function):
+    def __init__(self, spark_creator_function, spark_checkpoint_dir):
         self.spark = spark_creator_function()
+        self.spark.sparkContext.setCheckpointDir(spark_checkpoint_dir)
 
     @property
     def DatabaseAPI(self):
