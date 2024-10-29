@@ -131,18 +131,21 @@ def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDa
 def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
     cache = linker._intermediate_table_cache
 
-    if "__splink__df_concat" in cache:
-        nodes_with_tf = cache.get_with_logging("__splink__df_concat")
-        pipeline.append_input_dataframe(nodes_with_tf)
-        return pipeline
+    # when using debug_mode we don't use the cache elsewhere,
+    # so let's not use it here
+    if not linker._debug_mode:
+        if "__splink__df_concat" in cache:
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat")
+            pipeline.append_input_dataframe(nodes_with_tf)
+            return pipeline
 
-    # __splink__df_concat_with_tf is a superset of __splink__df_concat
-    # so if it exists, use it instead
-    elif "__splink__df_concat_with_tf" in cache:
-        nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-        nodes_with_tf.templated_name = "__splink__df_concat"
-        pipeline.append_input_dataframe(nodes_with_tf)
-        return pipeline
+        # __splink__df_concat_with_tf is a superset of __splink__df_concat
+        # so if it exists, use it instead
+        elif "__splink__df_concat_with_tf" in cache:
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
+            nodes_with_tf.templated_name = "__splink__df_concat"
+            pipeline.append_input_dataframe(nodes_with_tf)
+            return pipeline
 
     sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
