@@ -3,26 +3,17 @@ from __future__ import annotations
 import json
 import math
 import os
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import pandas as pd
+from altair import Chart, SchemaBase
 
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
-altair_installed = True
-
-try:
-    import altair as alt
-except ImportError:
-    altair_installed = False
-
-if TYPE_CHECKING:
-    import altair as alt
-
 # type alias:
-ChartReturnType = Union[Dict[Any, Any], alt.core.SchemaBase]
+ChartReturnType = Union[Dict[Any, Any], SchemaBase]
 
 
 def load_chart_definition(filename):
@@ -42,13 +33,8 @@ def _load_external_libs():
 def altair_or_json(
     chart_dict: dict[Any, Any], as_dict: bool = False
 ) -> ChartReturnType:
-    if altair_installed:
-        if not as_dict:
-            try:
-                return alt.Chart.from_dict(chart_dict)
-
-            except ModuleNotFoundError:
-                return chart_dict
+    if not as_dict:
+        return Chart.from_dict(chart_dict)
 
     return chart_dict
 
