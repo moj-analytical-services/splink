@@ -221,6 +221,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 )
                 run_time = parse_duration(time.time() - start_time)
                 print(f"Step ran in: {run_time}")  # noqa: T201
+            # don't want to cache anything in debug mode
+            self._intermediate_table_cache.invalidate_cache()
 
         # if there is an error the pipeline will not reset, leaving caller to handle
 
