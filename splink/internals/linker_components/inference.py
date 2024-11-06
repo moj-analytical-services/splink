@@ -686,13 +686,30 @@ class LinkerInference:
         cache = self._linker._intermediate_table_cache
 
         uid = ascii_uid(8)
+
+        # Check if input is a DuckDB relation without importing DuckDB
+        if isinstance(record_1, dict):
+            to_register_left = [record_1]
+        else:
+            to_register_left = record_1
+
+        if isinstance(record_2, dict):
+            to_register_right = [record_2]
+        else:
+            to_register_right = record_2
+
         df_records_left = self._linker.table_management.register_table(
-            [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
+            to_register_left,
+            f"__splink__compare_two_records_left_{uid}",
+            overwrite=True,
         )
+
         df_records_left.templated_name = "__splink__compare_two_records_left"
 
         df_records_right = self._linker.table_management.register_table(
-            [record_2], f"__splink__compare_two_records_right_{uid}", overwrite=True
+            to_register_right,
+            f"__splink__compare_two_records_right_{uid}",
+            overwrite=True,
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
