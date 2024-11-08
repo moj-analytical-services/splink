@@ -728,7 +728,9 @@ class LinkerInference:
             nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
             pipeline.append_input_dataframe(nodes_with_tf)
 
-        for tf_col in linker._settings_obj._term_frequency_columns:
+        tf_cols = linker._settings_obj._term_frequency_columns
+
+        for tf_col in tf_cols:
             tf_table_name = colname_to_tf_tablename(tf_col)
             if tf_table_name in cache:
                 tf_table = cache.get_with_logging(tf_table_name)
@@ -743,23 +745,41 @@ class LinkerInference:
                     )
 
         sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
-            linker, "__splink__compare_two_records_left"
+            linker, "__splink__compare_two_records_left", df_records_left
         )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
-            linker, "__splink__compare_two_records_right"
+            linker, "__splink__compare_two_records_right", df_records_right
         )
 
         pipeline.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
+        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
+            linker,
+            df_records_left,
+            pipeline,
+            in_tablename="__splink__compare_two_records_left_with_tf",
+            out_tablename="__splink__compare_two_records_left_with_tf_uid_fix",
+            uid_str="_left",
+        )
+        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
+            linker,
+            df_records_right,
+            pipeline,
+            in_tablename="__splink__compare_two_records_right_with_tf",
+            out_tablename="__splink__compare_two_records_right_with_tf_uid_fix",
+            uid_str="_right",
+        )
+
         cols_to_select = self._linker._settings_obj._columns_to_select_for_blocking
+
         select_expr = ", ".join(cols_to_select)
         sql = f"""
         select {select_expr}, 0 as match_key
-        from __splink__compare_two_records_left_with_tf as l
-        cross join __splink__compare_two_records_right_with_tf as r
+        from __splink__compare_two_records_left_with_tf_uid_fix as l
+        cross join __splink__compare_two_records_right_with_tf_uid_fix as r
         """
         pipeline.enqueue_sql(sql, "__splink__compare_two_records_blocked")
 
