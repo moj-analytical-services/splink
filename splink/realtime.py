@@ -1,10 +1,13 @@
+from pathlib import Path
 from typing import Any, Dict
 
-from .internals import similarity_analysis
-from .internals.completeness import completeness_chart
 from .internals.database_api import DatabaseAPISubClass
+from .internals.misc import ascii_uid
 from .internals.pipeline import CTEPipeline
-from .internals.profile_data import profile_columns
+from .internals.predict import (
+    predict_from_comparison_vectors_sqls_using_settings,
+)
+from .internals.settings_creator import SettingsCreator
 from .internals.splink_dataframe import SplinkDataFrame
 
 __all__ = [
@@ -15,6 +18,7 @@ __all__ = [
 def compare_records(
     record_1: Dict[str, Any],
     record_2: Dict[str, Any],
+    settings: SettingsCreator | dict[str, Any] | Path | str,
     db_api: DatabaseAPISubClass,
 ) -> SplinkDataFrame:
     """Compare two records and compute similarity scores without requiring a Linker.
@@ -28,6 +32,16 @@ def compare_records(
     Returns:
         SplinkDataFrame: Comparison results
     """
+
+
+    if not isinstance(settings, SettingsCreator):
+        settings_creator = SettingsCreator.from_path_or_dict(settings)
+    else:
+        settings_creator = settings
+
+    settings_obj = settings_creator.get_settings(db_api.sql_dialect.sql_dialect_str)
+
+
     uid = ascii_uid(8)
 
     if isinstance(record_1, dict):
@@ -57,24 +71,36 @@ def compare_records(
     pipeline = CTEPipeline([df_records_left, df_records_right])
 
     # Cross join the records
-    cols_to_select = [c.name for c in df_records_left.columns]
-    select_expr = ", ".join(cols_to_select)
+    cols_to_select = settings_obj._columns_to_select_for_blocking
 
+    select_expr = ", ".join(cols_to_select)
     sql = f"""
     select {select_expr}, 0 as match_key
-    from __splink__compare_records_left_{uid} as l
-    cross join __splink__compare_records_right_{uid} as r
+    from __splink__compare_records_left as l
+    cross join __splink__compare_records_right as r
     """
-    pipeline.enqueue_sql(sql, "__splink__compare_records_blocked")
+    pipeline.enqueue_sql(sql, "__splink__compare_two_records_blocked")
 
-    # Select comparison columns
+    cols_to_select = (
+        settings_obj._columns_to_select_for_comparison_vector_values
+    )
+    select_expr = ", ".join(cols_to_select)
     sql = f"""
     select {select_expr}
-    from __splink__compare_records_blocked
+    from __splink__compare_two_records_blocked
     """
     pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    # Execute pipeline and return results
+    sqls = predict_from_comparison_vectors_sqls_using_settings(
+        settings_obj,
+        sql_infinity_expression=db_api.sql_dialect.infinity_expression,
+    )
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    predictions = db_api.sql_pipeline_to_splink_dataframe(
+        pipeline, use_cache=False
+    )
+
     predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
 
     return predictions
