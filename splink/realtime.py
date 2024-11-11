@@ -15,11 +15,14 @@ __all__ = [
 ]
 
 
+_sql_used_for_compare_records_cache = {"sql": None, "uid": None}
+
 def compare_records(
     record_1: Dict[str, Any],
     record_2: Dict[str, Any],
     settings: SettingsCreator | dict[str, Any] | Path | str,
     db_api: DatabaseAPISubClass,
+    use_sql_from_cache: bool = True,
 ) -> SplinkDataFrame:
     """Compare two records and compute similarity scores without requiring a Linker.
     Assumes any required term frequency values are provided in the input records.
@@ -32,16 +35,7 @@ def compare_records(
     Returns:
         SplinkDataFrame: Comparison results
     """
-
-
-
-    if not isinstance(settings, SettingsCreator):
-        settings_creator = SettingsCreator.from_path_or_dict(settings)
-    else:
-        settings_creator = settings
-
-    settings_obj = settings_creator.get_settings(db_api.sql_dialect.sql_dialect_str)
-
+    global _sql_used_for_compare_records_cache
 
     uid = ascii_uid(8)
 
@@ -69,7 +63,23 @@ def compare_records(
     )
     df_records_right.templated_name = "__splink__compare_records_right"
 
+    if _sql_used_for_compare_records_cache["sql"] is not None and use_sql_from_cache:
+        sql = _sql_used_for_compare_records_cache["sql"]
+        uid_in_sql = _sql_used_for_compare_records_cache["uid"]
+        sql = sql.replace(uid_in_sql, uid)
+        return db_api._execute_sql_against_backend(sql)
+
+
+    if not isinstance(settings, SettingsCreator):
+        settings_creator = SettingsCreator.from_path_or_dict(settings)
+    else:
+        settings_creator = settings
+
+
+    settings_obj = settings_creator.get_settings(db_api.sql_dialect.sql_dialect_str)
+
     pipeline = CTEPipeline([df_records_left, df_records_right])
+
 
     cols_to_select = settings_obj._columns_to_select_for_blocking
 
@@ -99,6 +109,7 @@ def compare_records(
 
     predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    sql_used_to_create = pipeline.sql_used_to_create
+    _sql_used_for_compare_records_cache["sql"] = predictions.sql_used_to_create
+    _sql_used_for_compare_records_cache["uid"] = uid
 
     return predictions
