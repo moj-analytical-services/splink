@@ -7,6 +7,7 @@ from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
+from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
@@ -181,8 +182,11 @@ class BlockingRule:
     @property
     def _parsed_join_condition(self) -> Join:
         br = self.blocking_rule_sql
+        br_flattened = flatten(parse_one(br, dialect=self.sqlglot_dialect)).sql(
+            dialect=self.sqlglot_dialect
+        )
         return parse_one("INNER JOIN r", into=Join).on(
-            br, dialect=self.sqlglot_dialect
+            br_flattened, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
 
     @property

@@ -1,6 +1,7 @@
 import duckdb
 import pandas as pd
 
+import splink.blocking_rule_library as brl
 from splink.blocking_analysis import (
     count_comparisons_from_blocking_rule,
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
@@ -814,3 +815,89 @@ def test_n_largest_blocks(test_helpers, dialect):
             ["key_0", "key_1"]
         ).reset_index(drop=True),
     )
+
+
+def test_blocking_rule_parentheses_equivalence():
+    """Test that different blocking rule formats produce identical results
+    (issue #2501)"""
+
+    # Test data
+    data = [
+        {
+            "unique_id": 1,
+            "forename1_std": "john",
+            "forename2_std": "michael",
+            "dob_std": "1990-01-15",
+            "case_number": "A001",
+        },
+        {
+            "unique_id": 2,
+            "forename1_std": "john",
+            "forename2_std": "michael",
+            "dob_std": "1990-01-15",
+            "case_number": "A002",
+        },
+        {
+            "unique_id": 3,
+            "forename1_std": "sarah",
+            "forename2_std": "jane",
+            "dob_std": "1985-03-22",
+            "case_number": "A003",
+        },
+        {
+            "unique_id": 4,
+            "forename1_std": "robert",
+            "forename2_std": "james",
+            "dob_std": "1992-11-30",
+            "case_number": "A004",
+        },
+    ]
+    df = pd.DataFrame(data)
+    db_api = DuckDBAPI()
+
+    # Test three variations of the same blocking rule
+    br_with_brl = brl.And(
+        brl.block_on("forename1_std", "forename2_std", "dob_std"),
+        brl.CustomRule("l.case_number != r.case_number"),
+    )
+
+    br_with_parens = """
+    ((l.forename1_std = r.forename1_std)
+    AND (l.forename2_std = r.forename2_std)
+    AND (l.dob_std = r.dob_std))
+    AND (l.case_number != r.case_number)
+    """
+
+    br_without_parens = """
+    l.forename1_std = r.forename1_std
+    AND l.forename2_std = r.forename2_std
+    AND l.dob_std = r.dob_std
+    AND l.case_number != r.case_number
+    """
+
+    # Get results for each variation
+    result_brl = count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule=br_with_brl,
+        link_type="dedupe_only",
+        db_api=db_api,
+    )
+
+    result_with_parens = count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule=br_with_parens,
+        link_type="dedupe_only",
+        db_api=db_api,
+    )
+
+    result_without_parens = count_comparisons_from_blocking_rule(
+        table_or_tables=df,
+        blocking_rule=br_without_parens,
+        link_type="dedupe_only",
+        db_api=db_api,
+    )
+
+    # Check specific values
+    for result in [result_brl, result_with_parens, result_without_parens]:
+        assert result["number_of_comparisons_generated_pre_filter_conditions"] == 6
+        assert result["number_of_comparisons_to_be_scored_post_filter_conditions"] == 1
