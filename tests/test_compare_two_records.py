@@ -13,7 +13,7 @@ from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 from .decorator import mark_with_dialects_excluding
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_compare_two_records_1(test_helpers, dialect):
     # This one tests the following cases
     # - User provides a city tf tble
@@ -21,10 +21,9 @@ def test_compare_two_records_1(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # Cast the dob column to date
-    df["dob"] = df["dob"].astype("datetime64[s]")
-    df["first_name"] = df["first_name"].str.strip()
+    df = helper.load_frame_from_parquet(
+        "./tests/datasets/fake_1000_from_splink_demos_strip_datetypes.parquet"
+    )
 
     settings = SettingsCreator(
         link_type="dedupe_only",
@@ -90,7 +89,7 @@ def test_compare_two_records_1(test_helpers, dialect):
     )
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite")
 def test_compare_two_records_2(test_helpers, dialect):
     # This one tests the following cases
     # - User provides a city and first_name tf tables
@@ -99,10 +98,9 @@ def test_compare_two_records_2(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # Cast the dob column to date
-    df["dob"] = df["dob"].astype("datetime64[s]")
-    df["first_name"] = df["first_name"].str.strip()
+    df = helper.load_frame_from_parquet(
+        "./tests/datasets/fake_1000_from_splink_demos_strip_datetypes.parquet"
+    )
 
     settings = SettingsCreator(
         link_type="dedupe_only",
