@@ -20,6 +20,7 @@ from splink.internals.vertically_concatenate import (
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
+    from splink.internals.settings import Settings
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
@@ -289,8 +290,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def _select_found_by_blocking_rules(linker: "Linker") -> str:
-    brs = linker._settings_obj._blocking_rules_to_generate_predictions
+def _select_found_by_blocking_rules(settings_obj: "Settings") -> str:
+    brs = settings_obj._blocking_rules_to_generate_predictions
 
     if brs:
         br_strings = [
@@ -425,7 +426,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     )
 
     sqls.extend(sqls_2)
-    br_col = _select_found_by_blocking_rules(linker)
+    br_col = _select_found_by_blocking_rules(linker._settings_obj)
 
     sql = f"""
     select *, {br_col}

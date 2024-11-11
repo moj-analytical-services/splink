@@ -4,6 +4,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
+from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
     block_using_rules_sqls,
@@ -639,7 +640,10 @@ class LinkerInference:
         return predictions
 
     def compare_two_records(
-        self, record_1: dict[str, Any], record_2: dict[str, Any]
+        self,
+        record_1: dict[str, Any],
+        record_2: dict[str, Any],
+        include_found_by_blocking_rules: bool = False,
     ) -> SplinkDataFrame:
         """Use the linkage model to compare and score a pairwise record comparison
         based on the two input records provided
@@ -798,6 +802,15 @@ class LinkerInference:
             sql_infinity_expression=linker._infinity_expression,
         )
         pipeline.enqueue_list_of_sqls(sqls)
+
+        if include_found_by_blocking_rules:
+            br_col = _select_found_by_blocking_rules(linker._settings_obj)
+            sql = f"""
+            select *, {br_col}
+            from __splink__df_predict
+            """
+
+            pipeline.enqueue_sql(sql, "__splink__found_by_blocking_rules")
 
         predictions = linker._db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
