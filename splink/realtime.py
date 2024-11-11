@@ -17,6 +17,7 @@ __all__ = [
 
 _sql_used_for_compare_records_cache = {"sql": None, "uid": None}
 
+
 def compare_records(
     record_1: Dict[str, Any],
     record_2: Dict[str, Any],
@@ -67,19 +68,20 @@ def compare_records(
         sql = _sql_used_for_compare_records_cache["sql"]
         uid_in_sql = _sql_used_for_compare_records_cache["uid"]
         sql = sql.replace(uid_in_sql, uid)
-        return db_api._execute_sql_against_backend(sql)
-
+        return db_api._sql_to_splink_dataframe(
+            sql,
+            templated_name="__splink__realtime_compare_records",
+            physical_name=f"__splink__realtime_compare_records_{uid}",
+        )
 
     if not isinstance(settings, SettingsCreator):
         settings_creator = SettingsCreator.from_path_or_dict(settings)
     else:
         settings_creator = settings
 
-
     settings_obj = settings_creator.get_settings(db_api.sql_dialect.sql_dialect_str)
 
     pipeline = CTEPipeline([df_records_left, df_records_right])
-
 
     cols_to_select = settings_obj._columns_to_select_for_blocking
 
@@ -91,9 +93,7 @@ def compare_records(
     """
     pipeline.enqueue_sql(sql, "__splink__compare_two_records_blocked")
 
-    cols_to_select = (
-        settings_obj._columns_to_select_for_comparison_vector_values
-    )
+    cols_to_select = settings_obj._columns_to_select_for_comparison_vector_values
     select_expr = ", ".join(cols_to_select)
     sql = f"""
     select {select_expr}
