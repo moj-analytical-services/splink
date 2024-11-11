@@ -182,10 +182,12 @@ class BlockingRule:
     @property
     def _parsed_join_condition(self) -> Join:
         br = self.blocking_rule_sql
-        join_condition = parse_one("INNER JOIN r", into=Join).on(
-            br, dialect=self.sqlglot_dialect
+        br_flattened = flatten(parse_one(br, dialect=self.sqlglot_dialect)).sql(
+            dialect=self.sqlglot_dialect
+        )
+        return parse_one("INNER JOIN r", into=Join).on(
+            br_flattened, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
-        return flatten(join_condition)
 
     @property
     def _equi_join_conditions(self):
