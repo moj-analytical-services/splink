@@ -183,7 +183,6 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
         check_names=False,
     )
 
-    # Compare df1 and df3 (similar pattern)
     res1_3_first = compare_records(df1, df3, settings, db_api).as_pandas_dataframe()
     res1_3_not_from_cache = compare_records(
         df1, df3, settings, db_api, use_sql_from_cache=False
