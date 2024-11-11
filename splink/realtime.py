@@ -34,6 +34,7 @@ def compare_records(
     """
 
 
+
     if not isinstance(settings, SettingsCreator):
         settings_creator = SettingsCreator.from_path_or_dict(settings)
     else:
@@ -70,7 +71,6 @@ def compare_records(
 
     pipeline = CTEPipeline([df_records_left, df_records_right])
 
-    # Cross join the records
     cols_to_select = settings_obj._columns_to_select_for_blocking
 
     select_expr = ", ".join(cols_to_select)
@@ -97,10 +97,8 @@ def compare_records(
     )
     pipeline.enqueue_list_of_sqls(sqls)
 
-    predictions = db_api.sql_pipeline_to_splink_dataframe(
-        pipeline, use_cache=False
-    )
+    predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
+    sql_used_to_create = pipeline.sql_used_to_create
 
     return predictions
