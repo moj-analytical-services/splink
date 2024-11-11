@@ -119,13 +119,88 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
 
-    # Load data from CSV instead of hard-coding
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df1 = pd.DataFrame(
+        [
+            {
+                "unique_id": 0,
+                "first_name": "Julia",
+                "surname": "Taylor",
+                "city": "London",
+                "email": "hannah88@powers.com",
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+            {
+                "unique_id": 1,
+                "first_name": "John",
+                "surname": "Smith",
+                "city": "Manchester",
+                "email": "john.smith@email.com",
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+        ]
+    )
 
-    # Select subsets of records for testing
-    df1 = df.iloc[[0, 1]].copy()  # First two records
-    df2 = df.iloc[[2, 3]].copy()  # Next two records
-    df3 = df.iloc[[4, 5, 6]].copy()  # Next three records
+    df2 = pd.DataFrame(
+        [
+            {
+                "unique_id": 2,
+                "first_name": "Julia",
+                "surname": "Taylor",
+                "city": "London",
+                "email": "hannah88@powers.com",
+                "cluster": 0,
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+            {
+                "unique_id": 3,
+                "first_name": "Jane",
+                "surname": "Wilson",
+                "city": "Birmingham",
+                "email": "jane.w@example.com",
+                "cluster": 1,
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+        ]
+    )
+
+    df3 = pd.DataFrame(
+        [
+            {
+                "unique_id": 4,
+                "first_name": "Noah",
+                "surname": "Watson",
+                "city": "Bolton",
+                "email": "matthew78@ballard-mcdonald.net",
+                "cluster": 2,
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+            {
+                "unique_id": 5,
+                "first_name": "Emma",
+                "surname": "Brown",
+                "city": "Leeds",
+                "email": "emma.b@test.com",
+                "cluster": 3,
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+            {
+                "unique_id": 6,
+                "first_name": "Oliver",
+                "surname": "Davies",
+                "city": "Bristol",
+                "email": "oliver.d@example.net",
+                "cluster": 4,
+                "tf_city": 0.2,
+                "tf_first_name": 0.1,
+            },
+        ]
+    )
 
     # Add required columns if they don't exist
     for frame in [df1, df2, df3]:
