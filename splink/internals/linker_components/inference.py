@@ -641,8 +641,8 @@ class LinkerInference:
 
     def compare_two_records(
         self,
-        record_1: dict[str, Any] | AcceptableInputTableType | str,
-        record_2: dict[str, Any] | AcceptableInputTableType | str,
+        record_1: dict[str, Any] | AcceptableInputTableType,
+        record_2: dict[str, Any] | AcceptableInputTableType,
         include_found_by_blocking_rules: bool = False,
     ) -> SplinkDataFrame:
         """Use the linkage model to compare and score a pairwise record comparison
