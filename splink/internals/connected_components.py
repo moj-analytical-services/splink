@@ -258,7 +258,9 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
 
 
 def _cc_find_converged_nodes(
-    representatives_name: str, neighbours_name: str
+    representatives_name: str,
+    neighbours_name: str,
+    iteration: int,
 ) -> list[dict[str, str]]:
     """SQL to find nodes that have converged so are part of a stable cluster.
     These can be removed 'from play' to slim down tables and make the algorithm
@@ -267,6 +269,7 @@ def _cc_find_converged_nodes(
     Args:
         representatives_name: The name of the representatives table.
         neighbours_name: The name of the neighbours table.
+        iteration: The iteration of the algorithm
 
     Returns:
         str: SQL query to find unconverged nodes.
@@ -303,7 +306,7 @@ def _cc_find_converged_nodes(
     sqls.append(
         {
             "sql": sql_stable,
-            "output_table_name": "__splink__representatives_stable",
+            "output_table_name": f"__splink__representatives_stable_{iteration}",
         }
     )
 
@@ -418,6 +421,7 @@ def solve_connected_components(
         converged_nodes_sqls = _cc_find_converged_nodes(
             prev_representatives_table.templated_name,
             filtered_neighbours.templated_name,
+            iteration,
         )
         pipeline.enqueue_list_of_sqls(converged_nodes_sqls)
 
@@ -431,7 +435,7 @@ def solve_connected_components(
         SELECT *
         FROM {prev_representatives_table.templated_name}
         WHERE representative NOT IN (
-            SELECT representative FROM __splink__representatives_stable
+            SELECT representative FROM __splink__representatives_stable_{iteration}
         )
         """
         pipeline.enqueue_sql(sql, "__splink__representatives_unstable")
