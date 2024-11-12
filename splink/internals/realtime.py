@@ -27,8 +27,9 @@ class SQLCache:
             sql = sql.replace(cached_uid, new_uid)
         return sql
 
-    def set(self, settings_id: int, sql: str, uid: str | None) -> None:
-        self._cache[settings_id] = (sql, uid)
+    def set(self, settings_id: int, sql: str | None, uid: str | None) -> None:
+        if sql is not None:
+            self._cache[settings_id] = (sql, uid)
 
 
 _sql_cache = SQLCache()
