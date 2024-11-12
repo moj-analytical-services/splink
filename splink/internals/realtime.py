@@ -13,11 +13,6 @@ from splink.internals.predict import (
 from splink.internals.settings_creator import SettingsCreator
 from splink.internals.splink_dataframe import SplinkDataFrame
 
-__all__ = [
-    "compare_records",
-]
-
-
 _sql_used_for_compare_records_cache: dict[str, str | None] = {"sql": None, "uid": None}
 
 

@@ -5,7 +5,7 @@ import pytest
 
 import splink.comparison_library as cl
 from splink import SettingsCreator, block_on
-from splink.realtime import compare_records
+from splink.internals.realtime import compare_records
 
 from .decorator import mark_with_dialects_excluding
 
