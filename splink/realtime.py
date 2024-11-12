@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
-from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import (
@@ -18,12 +18,12 @@ __all__ = [
 ]
 
 
-_sql_used_for_compare_records_cache = {"sql": None, "uid": None}
+_sql_used_for_compare_records_cache: dict[str, str | None] = {"sql": None, "uid": None}
 
 
 def compare_records(
-    record_1: Dict[str, Any],
-    record_2: Dict[str, Any],
+    record_1: dict[str, Any] | AcceptableInputTableType,
+    record_2: dict[str, Any] | AcceptableInputTableType,
     settings: SettingsCreator | dict[str, Any] | Path | str,
     db_api: DatabaseAPISubClass,
     use_sql_from_cache: bool = True,
@@ -45,12 +45,12 @@ def compare_records(
     uid = ascii_uid(8)
 
     if isinstance(record_1, dict):
-        to_register_left = [record_1]
+        to_register_left: AcceptableInputTableType = [record_1]
     else:
         to_register_left = record_1
 
     if isinstance(record_2, dict):
-        to_register_right = [record_2]
+        to_register_right: AcceptableInputTableType = [record_2]
     else:
         to_register_right = record_2
 
@@ -71,7 +71,8 @@ def compare_records(
     if _sql_used_for_compare_records_cache["sql"] is not None and use_sql_from_cache:
         sql = _sql_used_for_compare_records_cache["sql"]
         uid_in_sql = _sql_used_for_compare_records_cache["uid"]
-        sql = sql.replace(uid_in_sql, uid)
+        if uid_in_sql is not None:
+            sql = sql.replace(uid_in_sql, uid)
         return db_api._sql_to_splink_dataframe(
             sql,
             templated_name="__splink__realtime_compare_records",

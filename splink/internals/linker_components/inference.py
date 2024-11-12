@@ -641,18 +641,30 @@ class LinkerInference:
 
     def compare_two_records(
         self,
-        record_1: dict[str, Any],
-        record_2: dict[str, Any],
+        record_1: dict[str, Any] | AcceptableInputTableType | str,
+        record_2: dict[str, Any] | AcceptableInputTableType | str,
         include_found_by_blocking_rules: bool = False,
     ) -> SplinkDataFrame:
         """Use the linkage model to compare and score a pairwise record comparison
-        based on the two input records provided
+        based on the two input records provided.
+
+        If your inputs contain multiple rows, scores for the cartesian product of
+        the two inputs will be returned.
+
+        If your inputs contain hardcoded term frequency columns (e.g.
+        a tf_first_name column), then these values will be used instead of any
+        provided term frequency lookup tables. or term frequency values derived
+        from the input data.
 
         Args:
             record_1 (dict): dictionary representing the first record.  Columns names
                 and data types must be the same as the columns in the settings object
             record_2 (dict): dictionary representing the second record.  Columns names
                 and data types must be the same as the columns in the settings object
+            include_found_by_blocking_rules (bool, optional): If True, outputs a column
+                indicating whether the record pair would have been found by any of the
+                blocking rules specified in
+                settings.blocking_rules_to_generate_predictions. Defaults to False.
 
         Examples:
             ```py
@@ -702,12 +714,12 @@ class LinkerInference:
 
         # Check if input is a DuckDB relation without importing DuckDB
         if isinstance(record_1, dict):
-            to_register_left = [record_1]
+            to_register_left: AcceptableInputTableType = [record_1]
         else:
             to_register_left = record_1
 
         if isinstance(record_2, dict):
-            to_register_right = [record_2]
+            to_register_right: AcceptableInputTableType = [record_2]
         else:
             to_register_right = record_2
 
