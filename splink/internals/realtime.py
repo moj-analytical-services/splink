@@ -13,7 +13,25 @@ from splink.internals.predict import (
 from splink.internals.settings_creator import SettingsCreator
 from splink.internals.splink_dataframe import SplinkDataFrame
 
-_sql_used_for_compare_records_cache: dict[str, str | None] = {"sql": None, "uid": None}
+
+class SQLCache:
+    def __init__(self):
+        self._cache: dict[int, tuple[str, str | None]] = {}
+
+    def get(self, settings_id: int, new_uid: str) -> str | None:
+        if settings_id not in self._cache:
+            return None
+
+        sql, cached_uid = self._cache[settings_id]
+        if cached_uid:
+            sql = sql.replace(cached_uid, new_uid)
+        return sql
+
+    def set(self, settings_id: int, sql: str, uid: str | None) -> None:
+        self._cache[settings_id] = (sql, uid)
+
+
+_sql_cache = SQLCache()
 
 
 def compare_records(
@@ -35,7 +53,7 @@ def compare_records(
     Returns:
         SplinkDataFrame: Comparison results
     """
-    global _sql_used_for_compare_records_cache
+    global _sql_cache
 
     uid = ascii_uid(8)
 
@@ -63,16 +81,14 @@ def compare_records(
     )
     df_records_right.templated_name = "__splink__compare_records_right"
 
-    if _sql_used_for_compare_records_cache["sql"] is not None and use_sql_from_cache:
-        sql = _sql_used_for_compare_records_cache["sql"]
-        uid_in_sql = _sql_used_for_compare_records_cache["uid"]
-        if uid_in_sql is not None:
-            sql = sql.replace(uid_in_sql, uid)
-        return db_api._sql_to_splink_dataframe(
-            sql,
-            templated_name="__splink__realtime_compare_records",
-            physical_name=f"__splink__realtime_compare_records_{uid}",
-        )
+    settings_id = id(settings)
+    if use_sql_from_cache:
+        if cached_sql := _sql_cache.get(settings_id, uid):
+            return db_api._sql_to_splink_dataframe(
+                cached_sql,
+                templated_name="__splink__realtime_compare_records",
+                physical_name=f"__splink__realtime_compare_records_{uid}",
+            )
 
     if not isinstance(settings, SettingsCreator):
         settings_creator = SettingsCreator.from_path_or_dict(settings)
@@ -124,9 +140,7 @@ def compare_records(
         pipeline.enqueue_sql(sql, "__splink__found_by_blocking_rules")
 
     predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    _sql_used_for_compare_records_cache["sql"] = predictions.sql_used_to_create
-    _sql_used_for_compare_records_cache["uid"] = uid
+    _sql_cache.set(settings_id, predictions.sql_used_to_create, uid)
 
     settings_obj._retain_matching_columns = retain_matching_columns
     settings_obj._retain_intermediate_calculation_columns = (
