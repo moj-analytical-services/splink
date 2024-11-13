@@ -98,10 +98,6 @@ def compare_records(
 
     settings_obj = settings_creator.get_settings(db_api.sql_dialect.sql_dialect_str)
 
-    retain_matching_columns = settings_obj._retain_matching_columns
-    retain_intermediate_calculation_columns = (
-        settings_obj._retain_intermediate_calculation_columns
-    )
     settings_obj._retain_matching_columns = True
     settings_obj._retain_intermediate_calculation_columns = True
 
@@ -142,10 +138,5 @@ def compare_records(
 
     predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     _sql_cache.set(settings_id, predictions.sql_used_to_create, uid)
-
-    settings_obj._retain_matching_columns = retain_matching_columns
-    settings_obj._retain_intermediate_calculation_columns = (
-        retain_intermediate_calculation_columns
-    )
 
     return predictions
