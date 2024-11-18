@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Clustering still works in DuckDB even if no edges are available ([#2510](https://github.com/moj-analytical-services/splink/pull/2510))
+
 ## [4.0.5] - 2024-11-06
 
 - Dataframes to be registered when using `compare_two_records`, to avoid problems with data typing (because the input data can have an explicit schema) ([#2493](https://github.com/moj-analytical-services/splink/pull/2493))
