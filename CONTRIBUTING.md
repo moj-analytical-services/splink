@@ -46,7 +46,7 @@ In either case, we ask that you assign yourself to the relevant issue and open u
 
 You can always add further PRs to build extra functionality. Starting out with a minimum viable product and iterating makes for better software (in our opinion). It also helps get features out into the wild sooner.
 
-To get set up for development locally, see the [development quickstart](https://moj-analytical-services.github.io/splink/dev_guides/dev_guides/changing_splink/development_quickstart.html).
+To get set up for development locally, see the [development quickstart](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/development_quickstart.html).
 
 ## Best practices
 
