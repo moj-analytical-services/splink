@@ -475,6 +475,39 @@ class AbsoluteDateDifferenceAtThresholds(AbsoluteTimeDifferenceAtThresholds):
     def cll_class(self):
         return cll.AbsoluteDateDifferenceLevel
 
+class ArrayStringDistance(ComparisonCreator):
+    def __init__(
+            self,
+            col_name: str,
+            distance_threshold_or_thresholds: Union[Iterable[int], int] = [1],
+            distance_function: str = "levenshtein",
+    ):
+        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        self.distance_function = distance_function
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            cll.ArrayIntersectLevel(self.col_expression, min_intersection=1),
+            *[
+                cll.ArrayStringDistanceLevel(self.col_expression, distance_threshold=threshold, distance_function=self.distance_function)
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
+        plural = "s" if len(self.thresholds) > 1 else ""
+        return (
+            f"Array string distance at maximum size{plural} "
+            f"{comma_separated_thresholds_string} vs. anything else"
+        )
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
 
 class ArrayIntersectAtSizes(ComparisonCreator):
     def __init__(
