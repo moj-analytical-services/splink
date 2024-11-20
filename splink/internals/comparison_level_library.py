@@ -619,15 +619,17 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
         ],
         distance_threshold: Union[int, float],
     ):
-        """Represents a comparison level based around the distance between
-        arrays
+        """A comparison level using the *most similar* string distance
+        between any pair of values between arrays in an array column.
+
+        The function given by `distance_function_name` must be one of
+        "levenshtein," "damera_levenshtein," "jaro_winkler," or "jaro."
 
         Args:
-            col_name (str): Input column name
-            distance_threshold (int): the maximum distance between string
-                elements in the arrays for this comparison level.
-            distance_function (str): Distance function name to calculate
-                pair-wise between arrays
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the string distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
@@ -661,7 +663,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             "jaro": sql_dialect.jaro_function_name,
         }[self.distance_function_name]
 
-        return f"""list_{'max' if self._comparator() == '>=' else 'min'}(
+        return f"""list_{self._aggregator()}(
                     list_transform(
                         flatten(
                             list_transform(
@@ -679,18 +681,23 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return (
-            f"`{self.distance_function_name}` distance of '{col.label} "
+            f"{self._aggregator().title()} `{self.distance_function_name}` distance of '{col.label} "
             f"{self._comparator()} than {self.distance_threshold}'"
         )
 
+    def _aggregator(self):
+        return "max" if self._higher_is_more_similar() else "min"
+
     def _comparator(self):
-        higher_is_more_similar = {
+        return ">=" if self._higher_is_more_similar() else "<="
+
+    def _higher_is_more_similar(self):
+        return {
             "levenshtein": False,
             "damerau_levenshtein": False,
             "jaro_winkler": True,
             "jaro": True,
         }[self.distance_function_name]
-        return ">=" if higher_is_more_similar else "<="
 
 
 DateMetricType = Literal["second", "minute", "hour", "day", "month", "year"]
