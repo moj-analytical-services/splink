@@ -357,9 +357,9 @@ class PairwiseStringDistanceFunctionAtThresholds(ComparisonCreator):
         ],
     ):
         """
-        Represents a comparison of the *most similar pair* of values where the first value is
-        in the array data in `col_name` for the first record and the second value
-        is in the array data in `col_name` for the second record.
+        Represents a comparison of the *most similar pair* of values
+        where the first value is in the array data in `col_name` for the first record
+        and the second value is in the array data in `col_name` for the second record.
         The comparison has three or more levels:
 
         - Exact match between any pair of values

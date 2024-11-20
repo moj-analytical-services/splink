@@ -681,7 +681,8 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return (
-            f"{self._aggregator().title()} `{self.distance_function_name}` distance of '{col.label} "
+            f"{self._aggregator().title()} `{self.distance_function_name}` "
+            f"distance of '{col.label} "
             f"{self._comparator()} than {self.distance_threshold}'"
         )
 
