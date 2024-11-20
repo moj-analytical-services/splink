@@ -7,7 +7,6 @@ from splink.internals.comparison_library import (
     DamerauLevenshteinAtThresholds,
     DateOfBirthComparison,
     DistanceFunctionAtThresholds,
-    PairwiseStringDistanceFunctionAtThresholds,
     DistanceInKMAtThresholds,
     EmailComparison,
     ExactMatch,
@@ -17,6 +16,7 @@ from splink.internals.comparison_library import (
     JaroWinklerAtThresholds,
     LevenshteinAtThresholds,
     NameComparison,
+    PairwiseStringDistanceFunctionAtThresholds,
     PostcodeComparison,
 )
 

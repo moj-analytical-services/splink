@@ -349,8 +349,12 @@ class PairwiseStringDistanceFunctionAtThresholds(ComparisonCreator):
     def __init__(
         self,
         col_name: str,
-        distance_function_name: Literal["levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"] = "levenshtein",
-        distance_threshold_or_thresholds: Union[Iterable[int | float], int | float] = [1],
+        distance_function_name: Literal[
+            "levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"
+        ] = "levenshtein",
+        distance_threshold_or_thresholds: Union[Iterable[int | float], int | float] = [
+            1
+        ],
     ):
         thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
         self.thresholds = [*thresholds_as_iterable]
@@ -360,10 +364,15 @@ class PairwiseStringDistanceFunctionAtThresholds(ComparisonCreator):
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         return [
             cll.NullLevel(self.col_expression),
-            # It is assumed that any string distance treats identical arrays as the most similar
+            # It is assumed that any string distance treats identical
+            # arrays as the most similar
             cll.ArrayIntersectLevel(self.col_expression, min_intersection=1),
             *[
-                cll.PairwiseStringDistanceFunctionLevel(self.col_expression, distance_threshold=threshold, distance_function_name=self.distance_function_name)
+                cll.PairwiseStringDistanceFunctionLevel(
+                    self.col_expression,
+                    distance_threshold=threshold,
+                    distance_function_name=self.distance_function_name,
+                )
                 for threshold in self.thresholds
             ],
             cll.ElseLevel(),

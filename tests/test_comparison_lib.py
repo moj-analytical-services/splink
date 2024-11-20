@@ -86,7 +86,9 @@ def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             cl.PairwiseStringDistanceFunctionAtThresholds(
-                "forename", "damerau_levenshtein", distance_threshold_or_thresholds=[1, 2],
+                "forename",
+                "damerau_levenshtein",
+                distance_threshold_or_thresholds=[1, 2],
             ),
         ],
     }
@@ -99,9 +101,13 @@ def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
         "forename": {
             # exact match: Cally (1)
             3: 1,
-            # damerau_levenshtein <= 1 : Geof[f] (1) + Sal[l]y (1) + Bar[e/r]y (1) + [B/C]arry (1) -- note that [C/S]ally is not reached due to the exact match
+            # damerau_levenshtein <= 1 :
+            # Geof[f] (1) + Sal[l]y (1) + Bar[e/r]y (1) +
+            # [B/C]arry (1)
+            # -- note that [C/S]ally is not reached due to the exact match
             2: 4,
-            # damerau_levenshtein <= 2 : Ca[ll/rr]y (2) + [S/C]al[l]y (1) + [B/C]ar[e/r]y (1)
+            # damerau_levenshtein <= 2 :
+            # Ca[ll/rr]y (2) + [S/C]al[l]y (1) + [B/C]ar[e/r]y (1)
             1: 4,
             # Else: (7 * 6) / 2 - 1 - 4 - 4
             0: 12,

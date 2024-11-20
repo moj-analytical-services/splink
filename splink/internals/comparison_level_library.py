@@ -611,24 +611,36 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
 
 
 class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str | ColumnExpression, distance_function_name: Literal["levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"], distance_threshold: Union[int, float]):
+    def __init__(
+        self,
+        col_name: str | ColumnExpression,
+        distance_function_name: Literal[
+            "levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"
+        ],
+        distance_threshold: Union[int, float],
+    ):
         """Represents a comparison level based around the distance between
         arrays
 
         Args:
             col_name (str): Input column name
-            distance_threshold (int): the maximum distance between string 
+            distance_threshold (int): the maximum distance between string
                 elements in the arrays for this comparison level.
-            distance_function (str): Distance function name to calculate 
+            distance_function (str): Distance function name to calculate
                 pair-wise between arrays
         """
 
         self.col_expression = ColumnExpression.instantiate_if_str(col_name)
         self.distance_function_name = validate_categorical_parameter(
-            allowed_values=["levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"],
+            allowed_values=[
+                "levenshtein",
+                "damerau_levenshtein",
+                "jaro_winkler",
+                "jaro",
+            ],
             parameter_value=distance_function_name,
             level_name=self.__class__.__name__,
-            parameter_name="distance_function_name"
+            parameter_name="distance_function_name",
         )
         self.distance_threshold = validate_numeric_parameter(
             lower_bound=0,
@@ -637,7 +649,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             level_name=self.__class__.__name__,
             parameter_name="distance_threshold",
         )
-    
+
     @unsupported_splink_dialects(["sqlite", "spark", "postgres", "athena"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
@@ -648,24 +660,22 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             "jaro_winkler": sql_dialect.jaro_winkler_function_name,
             "jaro": sql_dialect.jaro_function_name,
         }[self.distance_function_name]
-        
-        return (
-            f"""list_{'max' if self._comparator() == '>=' else 'min'}(
+
+        return f"""list_{'max' if self._comparator() == '>=' else 'min'}(
                     list_transform(
                         flatten(
                             list_transform(
-                                {col.name_l}, 
+                                {col.name_l},
                                 x -> list_transform(
-                                    {col.name_r}, 
+                                    {col.name_r},
                                     y -> [x,y]
                                 )
                             )
-                        ), 
+                        ),
                         pair -> {distance_function_name_transpiled}(pair[1], pair[2])
                     )
                 ) {self._comparator()} {self.distance_threshold}"""
-        )
-    
+
     def create_label_for_charts(self) -> str:
         col = self.col_expression
         return (
@@ -680,7 +690,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             "jaro_winkler": True,
             "jaro": True,
         }[self.distance_function_name]
-        return '>=' if higher_is_more_similar else '<='
+        return ">=" if higher_is_more_similar else "<="
 
 
 DateMetricType = Literal["second", "minute", "hour", "day", "month", "year"]
