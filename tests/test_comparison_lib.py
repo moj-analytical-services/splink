@@ -65,6 +65,54 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
+@mark_with_dialects_excluding("sqlite", "spark", "postgres", "athena")
+def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    data = [
+        {"unique_id": 1, "forename": ["Geof"]},
+        {"unique_id": 2, "forename": ["Cally"]},
+        {"unique_id": 3, "forename": ["Saly", "Barey"]},
+        {"unique_id": 4, "forename": ["Geoff", "Barry"]},
+        {"unique_id": 5, "forename": ["Carry"]},
+        {"unique_id": 6, "forename": ["Cally", "Sally"]},
+        {"unique_id": 7, "forename": ["Completely", "Different"]},
+    ]
+
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.PairwiseStringDistanceFunctionAtThresholds(
+                "forename", "damerau_levenshtein", distance_threshold_or_thresholds=[1, 2],
+            ),
+        ],
+    }
+
+    linker = Linker(df, settings, db_api=db_api)
+
+    df_pred = linker.inference.predict().as_pandas_dataframe()
+
+    expected_gamma_counts = {
+        "forename": {
+            # exact match: Cally (1)
+            3: 1,
+            # damerau_levenshtein <= 1 : Geof[f] (1) + Sal[l]y (1) + Bar[e/r]y (1) + [B/C]arry (1) -- note that [C/S]ally is not reached due to the exact match
+            2: 4,
+            # damerau_levenshtein <= 2 : Ca[ll/rr]y (2) + [S/C]al[l]y (1) + [B/C]ar[e/r]y (1)
+            1: 4,
+            # Else: (7 * 6) / 2 - 1 - 4 - 4
+            0: 12,
+        },
+    }
+
+    for col, expected_counts in expected_gamma_counts.items():
+        for gamma_val, expected_count in expected_counts.items():
+            assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
+
+
 @mark_with_dialects_excluding()
 def test_set_to_lowercase(test_helpers, dialect):
     helper = test_helpers[dialect]
