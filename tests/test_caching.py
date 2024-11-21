@@ -16,15 +16,28 @@ from splink.internals.vertically_concatenate import (
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-__splink__dummy_frame = pd.DataFrame(["id"])
+_dummy_pd_frame = pd.DataFrame(["id"])
 
 
 def make_mock_execute(db_api):
     # creates a mock version of linker._sql_to_splink_dataframe,
     # so we can count calls
-    dummy_splink_df = DuckDBDataFrame("template", "__splink__dummy_frame", db_api)
+    dummy_table_name = "__splink__dummy_frame"
+    dummy_splink_df = DuckDBDataFrame("template", dummy_table_name, db_api)
+
+    def register_and_return_dummy_frame(*args, **kwargs):
+        # need to make sure that the dummy frame always exist in the context
+        # we are running tests
+        # not actually interested in the frame itself, but needs to exist in
+        # connexion in case a method tries to access it
+        db_api._con.sql(
+            f"CREATE TABLE IF NOT EXISTS {dummy_table_name} AS "
+            f"SELECT * FROM _dummy_pd_frame"
+        )
+        return dummy_splink_df
+
     mock_execute = create_autospec(
-        db_api._sql_to_splink_dataframe, return_value=dummy_splink_df
+        db_api._sql_to_splink_dataframe, side_effect=register_and_return_dummy_frame
     )
     return mock_execute
 

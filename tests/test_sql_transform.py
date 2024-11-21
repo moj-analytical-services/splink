@@ -11,7 +11,7 @@ from splink.internals.sql_transform import (
 
 
 def move_l_r_test(br, expected):
-    res = move_l_r_table_prefix_to_column_suffix(br)
+    res = move_l_r_table_prefix_to_column_suffix(br, sqlglot_dialect="duckdb")
     assert res.lower() == expected.lower()
 
 
@@ -20,8 +20,8 @@ def test_move_l_r_table_prefix_to_column_suffix():
     expected = "first_name_l = first_name_r"
     move_l_r_test(br, expected)
 
-    br = "substr(l.last_name, 1, 2) = substr(r.last_name, 1, 2)"
-    expected = "substr(last_name_l, 1, 2) = substr(last_name_r, 1, 2)"
+    br = "substring(l.last_name, 1, 2) = substring(r.last_name, 1, 2)"
+    expected = "substring(last_name_l, 1, 2) = substring(last_name_r, 1, 2)"
     move_l_r_test(br, expected)
 
     br = "l.name['first'] = r.name['first'] and levenshtein(l.dob, r.dob) < 2"
