@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from weakref import WeakKeyDictionary
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
@@ -16,20 +17,25 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 
 class SQLCache:
     def __init__(self):
-        self._cache: dict[int, tuple[str, str | None]] = {}
+        self._cache: WeakKeyDictionary = WeakKeyDictionary()
 
-    def get(self, settings_id: int, new_uid: str) -> str | None:
-        if settings_id not in self._cache:
+    # TODO: if we have path/string, do we want to think about behaviour if underlying
+    # file changes between calls?
+    # TODO: might need to think about how equality works with WeakKeyDictionary in case
+    # there are any gotchas
+    # TODO: maybe check if string interning affects this in some way
+    def get(self, settings: SettingsCreator | dict[str, Any] | Path | str, new_uid: str) -> str | None:
+        if settings not in self._cache:
             return None
 
-        sql, cached_uid = self._cache[settings_id]
+        sql, cached_uid = self._cache[settings]
         if cached_uid:
             sql = sql.replace(cached_uid, new_uid)
         return sql
 
-    def set(self, settings_id: int, sql: str | None, uid: str | None) -> None:
+    def set(self, settings: SettingsCreator | dict[str, Any] | Path | str, sql: str | None, uid: str | None) -> None:
         if sql is not None:
-            self._cache[settings_id] = (sql, uid)
+            self._cache[settings] = (sql, uid)
 
 
 _sql_cache = SQLCache()
@@ -84,7 +90,7 @@ def compare_records(
 
     settings_id = id(settings)
     if use_sql_from_cache:
-        if cached_sql := _sql_cache.get(settings_id, uid):
+        if cached_sql := _sql_cache.get(settings, uid):
             return db_api._sql_to_splink_dataframe(
                 cached_sql,
                 templated_name="__splink__realtime_compare_records",
