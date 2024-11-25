@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "4.0.3"
+version = "4.0.5"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
@@ -48,6 +48,13 @@ sqlalchemy = ">=1.4.0"
 # temporarily use binary version, to avoid issues with pg_config path
 psycopg2-binary = ">=2.8.0"
 igraph = ">=0.11.2"
+# 2.2.2 is first version that supports numpy >= 2.0.0
+# if we don't constrain this, we can end up with numpy >= 2.0.0 and pandas < 2.2.2
+# particularly in pythons 3.10 and 3.11
+pandas = [
+   {version= ">1.3.5", python = ">=3.8"},
+   {version=">=2.2.2", python = ">=3.10"},
+]
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]

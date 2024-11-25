@@ -92,3 +92,37 @@ def test_clustering_mw_prob_equivalence():
         linker.clustering.cluster_pairwise_predictions_at_threshold(
             df_predict, threshold_match_weight=3, threshold_match_probability=0.95
         )
+
+
+@mark_with_dialects_excluding()
+def test_clustering_no_edges(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    df = pd.DataFrame(
+        [
+            {"id": 1, "first_name": "Andy", "surname": "Bandy", "city": "London"},
+            {"id": 2, "first_name": "Andi", "surname": "Bandi", "city": "London"},
+            {"id": 3, "first_name": "Terry", "surname": "Berry", "city": "Glasgow"},
+            {"id": 4, "first_name": "Terri", "surname": "Berri", "city": "Glasgow"},
+        ]
+    )
+
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("surname"),
+            block_on("first_name"),
+        ],
+        unique_id_column_name="id",
+    )
+    linker_input = helper.convert_frame(df)
+    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+
+    # due to blocking rules, df_predict will be empty
+    df_predict = linker.inference.predict()
+    linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.95)

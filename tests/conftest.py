@@ -59,10 +59,17 @@ def _make_spark():
     return spark
 
 
+def _cleanup_spark(spark):
+    spark.catalog.clearCache()
+    spark.stop()
+    return
+
+
 @pytest.fixture(scope="module")
 def spark():
     spark = _make_spark()
     yield spark
+    _cleanup_spark(spark)
 
 
 # TODO: align this with test_helper
@@ -87,12 +94,16 @@ def test_helpers(pg_engine):
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
-    return LazyDict(
+    helper_dict = LazyDict(
         duckdb=(DuckDBTestHelper, []),
         spark=(SparkTestHelper, [_make_spark]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )
+    yield helper_dict
+    # if someone accessed spark, cleanup!
+    if "spark" in helper_dict.accessed:
+        _cleanup_spark(helper_dict["spark"].spark)
 
 
 # Function to easily see if the gamma column added to the linker matches

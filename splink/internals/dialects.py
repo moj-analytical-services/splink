@@ -208,7 +208,7 @@ class DuckDBDialect(SplinkDialect):
 
     @property
     def default_timestamp_format(self):
-        return "%Y-%m-%dT%H:%M:%S%Z"
+        return "%Y-%m-%dT%H:%M:%SZ"
 
     def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         if date_format is None:

@@ -73,8 +73,6 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
-            import pyarrow as pa
-
             try:
                 # pyarrow preserves types better than pandas
                 import pyarrow as pa

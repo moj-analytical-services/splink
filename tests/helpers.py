@@ -71,7 +71,11 @@ class SparkTestHelper(TestHelper):
         return SparkAPI
 
     def db_api_args(self):
-        return {"spark_session": self.spark, "num_partitions_on_repartition": 1}
+        return {
+            "spark_session": self.spark,
+            "num_partitions_on_repartition": 1,
+            "break_lineage_method": "checkpoint",
+        }
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)
@@ -188,11 +192,14 @@ class LazyDict(UserDict):
     # write only in creation
     def __init__(self, **kwargs):
         self.data = {}
+        # set of keys we have accessed
+        self.accessed = set()
         for key, val in kwargs.items():
             self.data[key] = val
 
     def __getitem__(self, key):
         func, args = self.data[key]
+        self.accessed.add(key)
         return func(*args)
 
     def __setitem__(self, key, value):
