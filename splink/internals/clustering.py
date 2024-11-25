@@ -9,6 +9,7 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPIS
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
+    prob_to_match_weight,
     threshold_args_to_match_prob,
     threshold_args_to_match_prob_list,
 )
@@ -235,23 +236,38 @@ def _calculate_stable_clusters_at_new_threshold(
     return sqls
 
 
-def _threshold_to_str(x):
-    if x == 0.0:
-        return "0_0"
-    elif x == 1.0:
-        return "1_0"
+def _threshold_to_str(match_probability: float, is_match_weight: bool = False) -> str:
+    if is_match_weight:
+        if match_probability == 0.0:
+            return "mw_minus_inf"
+        elif match_probability == 1.0:
+            return "mw_inf"
+        else:
+            weight = prob_to_match_weight(match_probability)
+            formatted = f"{weight:.6f}".rstrip("0")
+            if formatted.endswith("."):
+                formatted = formatted[:-1]
+            return f"mw_{formatted.replace('.', '_')}"
     else:
-        return f"{x:.8f}".rstrip("0").replace(".", "_")
+        if match_probability == 0.0:
+            return "0_0"
+        elif match_probability == 1.0:
+            return "1_0"
+        formatted = f"{match_probability:.6f}".rstrip("0")
+        if formatted.endswith("."):
+            formatted = formatted[:-1]
+        return f"p_{formatted.replace('.', '_')}"
 
 
 def _generate_detailed_cluster_comparison_sql(
     all_results: dict[float, SplinkDataFrame],
     unique_id_col: str = "unique_id",
+    is_match_weight: bool = False,
 ) -> str:
     thresholds = sorted(all_results.keys())
 
     select_columns = [f"t0.{unique_id_col}"] + [
-        f"t{i}.cluster_id AS cluster_{_threshold_to_str(threshold)}"
+        f"t{i}.cluster_id AS cluster_{_threshold_to_str(threshold, is_match_weight)}"
         for i, threshold in enumerate(thresholds)
     ]
 
@@ -434,6 +450,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     else:
         edges_sdf = edges
 
+    is_match_weight = (
+        match_weight_thresholds is not None and match_probability_thresholds is None
+    )
+
     match_probability_thresholds = threshold_args_to_match_prob_list(
         match_probability_thresholds, match_weight_thresholds
     )
@@ -565,6 +585,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         sql = _generate_detailed_cluster_comparison_sql(
             all_results,
             unique_id_col=node_id_column_name,
+            is_match_weight=is_match_weight,
         )
 
     pipeline = CTEPipeline()
