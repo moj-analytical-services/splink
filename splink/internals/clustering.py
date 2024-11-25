@@ -522,6 +522,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
             nodes_in_play,
             edges_in_play,
             node_id_column_name=node_id_column_name,
+            edge_id_column_name_left=edge_id_column_name_left,
+            edge_id_column_name_right=edge_id_column_name_right,
             db_api=db_api,
             threshold_match_probability=new_threshold,
         )
