@@ -314,7 +314,7 @@ def _get_cluster_stats_sql(cc: SplinkDataFrame) -> list[dict[str, str]]:
     return sqls
 
 
-def _threshold_to_weight(p):
+def _threshold_to_weight_for_table(p):
     if p == 0 or p == 1:
         return "NULL"
     else:
@@ -330,7 +330,8 @@ def _generate_cluster_summary_stats_sql(
         f"""
         SELECT
             cast({threshold} as float) as threshold_match_probability,
-            cast({_threshold_to_weight(threshold)} as float) as threshold_match_weight,
+            cast({_threshold_to_weight_for_table(threshold)} as float)
+                as threshold_match_weight,
             *
         FROM {all_results[threshold].physical_name}
         """
