@@ -100,15 +100,15 @@ class LinkerClustering:
             c.unquote().name for c in df_predict.columns
         ]
 
+        threshold_match_probability = threshold_args_to_match_prob(
+            threshold_match_probability, threshold_match_weight
+        )
+
         if not has_match_prob_col and threshold_match_probability is not None:
             raise ValueError(
                 "df_predict must have a column called 'match_probability' if "
                 "threshold_match_probability is provided"
             )
-
-        threshold_match_probability = threshold_args_to_match_prob(
-            threshold_match_probability, threshold_match_weight
-        )
 
         match_p_expr = ""
         match_p_select_expr = ""
