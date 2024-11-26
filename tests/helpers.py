@@ -74,7 +74,7 @@ class SparkTestHelper(TestHelper):
         return {
             "spark_session": self.spark,
             "num_partitions_on_repartition": 1,
-            "break_lineage_method": "parquet",
+            "break_lineage_method": "checkpoint",
         }
 
     def convert_frame(self, df):
