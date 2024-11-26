@@ -1,9 +1,11 @@
 import pandas as pd
+import pytest
 from pytest import mark
 
 import splink.comparison_library as cl
-from splink import Linker, SettingsCreator, block_on
+from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 
+from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -63,6 +65,33 @@ def test_clustering(test_helpers, dialect, link_type, input_pd_tables):
 
     df_predict = linker.inference.predict()
     linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.95)
+
+
+def test_clustering_mw_prob_equivalence():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    db_api = DuckDBAPI()
+    settings_dict = get_settings_dict()
+    linker = Linker(df, settings_dict, db_api=db_api)
+
+    df_predict = linker.inference.predict()
+
+    clusters_mw = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, threshold_match_weight=4.2479
+    ).as_pandas_dataframe()
+
+    clusters_prob = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, threshold_match_probability=0.95
+    ).as_pandas_dataframe()
+
+    pd.testing.assert_series_equal(
+        clusters_mw["cluster_id"], clusters_prob["cluster_id"]
+    )
+    pd.testing.assert_series_equal(clusters_mw["unique_id"], clusters_prob["unique_id"])
+
+    with pytest.raises(ValueError, match="Please specify only one"):
+        linker.clustering.cluster_pairwise_predictions_at_threshold(
+            df_predict, threshold_match_weight=3, threshold_match_probability=0.95
+        )
 
 
 @mark_with_dialects_excluding()

@@ -235,6 +235,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__clusters_at_threshold",
             r"__splink__clusters_at_all_thresholds",
             r"__splink__stable_nodes_at_new_threshold",
+            r"__splink__clustering_output_final",
         ]
 
         num_partitions = self.num_partitions_on_repartition
@@ -262,6 +263,8 @@ class SparkAPI(DatabaseAPI[spark_df]):
         elif templated_name == "__splink__clusters_at_all_thresholds":
             num_partitions = math.ceil(num_partitions / 10)
         elif templated_name == "__splink__stable_nodes_at_new_threshold":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__clustering_output_final":
             num_partitions = math.ceil(num_partitions / 10)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):
