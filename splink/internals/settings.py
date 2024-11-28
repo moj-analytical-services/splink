@@ -313,11 +313,6 @@ class Settings:
 
             used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used_names = self._columns_used_by_comparisons
-            already_used = [
-                InputColumn(c, sqlglot_dialect_str=self._sqlglot_dialect)
-                for c in already_used_names
-            ]
-            already_used_names = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used_names))
             cols_to_retain.extend(new_cols)
@@ -369,10 +364,10 @@ class Settings:
     def _columns_used_by_comparisons(self) -> List[str]:
         cols_used = []
         for uid_col in self.column_info_settings.unique_id_input_columns:
-            cols_used.append(uid_col.name)
+            cols_used.append(uid_col.unquote().name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
-            cols = [c.name for c in cols]
+            cols = [c.unquote().name for c in cols]
 
             cols_used.extend(cols)
         return dedupe_preserving_order(cols_used)
