@@ -174,7 +174,7 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     )
 
     sql = f"""
-    select *, count_l, count_r, count_l * count_r as block_count
+    select count_l, count_r, count_l * count_r as block_count
     from __splink__count_comparisons_from_blocking_l
     inner join __splink__count_comparisons_from_blocking_r
     using ({using_str})

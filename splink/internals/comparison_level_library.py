@@ -873,6 +873,52 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         return f"Array intersection size >= {self.min_intersection}"
 
 
+class ArraySubsetLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str | ColumnExpression, empty_is_subset: bool = False):
+        """Represents a comparison level where the smaller array is an
+        exact subset of the larger array. If arrays are equal length, they
+        must have the same elements
+
+        The order of items in the arrays does not matter for this comparison.
+
+        Args:
+            col_name (str | ColumnExpression): Input column name or ColumnExpression
+            empty_is_subset (bool): If True, an empty array is considered a subset of
+                any array (including another empty array). Default is False.
+        """
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.empty_is_subset = empty_is_subset
+
+    # Postgres not supported since it doesn't correctly deal with zero length arrays
+    @unsupported_splink_dialects(["sqlite", "postgres"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        sqlglot_dialect_name = sql_dialect.sqlglot_dialect
+
+        empty_check = ""
+        if not self.empty_is_subset:
+            empty_check = (
+                "LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r)) <> 0 AND"
+            )
+
+        sqlglot_base_dialect_sql = f"""
+            {empty_check}
+            ARRAY_SIZE(ARRAY_INTERSECT(___col____l, ___col____r)) =
+            LEAST(ARRAY_SIZE(___col____l), ARRAY_SIZE(___col____r))
+            """
+        translated = _translate_sql_string(
+            sqlglot_base_dialect_sql, sqlglot_dialect_name
+        )
+
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        translated = translated.replace("___col____l", col.name_l)
+        translated = translated.replace("___col____r", col.name_r)
+        return translated
+
+    def create_label_for_charts(self) -> str:
+        return "Array subset"
+
+
 class PercentageDifferenceLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, percentage_threshold: float):
         """

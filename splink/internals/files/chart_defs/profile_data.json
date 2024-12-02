@@ -2,7 +2,7 @@
   "hconcat": [
     {
       "data": { "values": null },
-      "mark": { "type": "line", "interpolate": "step-after" },
+      "mark": { "type": "line", "interpolate": "step-before" },
       "encoding": {
         "x": {
           "type": "quantitative",

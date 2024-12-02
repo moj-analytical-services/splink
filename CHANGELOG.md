@@ -7,11 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Various bugfixes for `debug_mode` ([#2481](https://github.com/moj-analytical-services/splink/pull/2481))
+- Clustering still works in DuckDB even if no edges are available ([#2510](https://github.com/moj-analytical-services/splink/pull/2510))
+
+## [4.0.5] - 2024-11-06
+
+### Fixed
+
+- Dataframes to be registered when using `compare_two_records`, to avoid problems with data typing (because the input data can have an explicit schema) ([#2493](https://github.com/moj-analytical-services/splink/pull/2493))
+
+## [4.0.4] - 2024-10-13
+
+### Added
+
+- `cluster_pairwise_predictions_at_multiple_thresholds` to more efficiently cluster at multiple thresholds ([#2437](https://github.com/moj-analytical-services/splink/pull/2437))
+
+### Fixed
+
+- Fixed issue with `profile_columns` using latest Altair version ([#2466](https://github.com/moj-analytical-services/splink/pull/2466))
+
+## [4.0.3] - 2024-09-19
+
+### Added
+
+- Cluster without linker by @RobinL in https://github.com/moj-analytical-services/splink/pull/2412
+- Better autocomplete for dataframes by @RobinL in https://github.com/moj-analytical-services/splink/pull/2434
+
+
+## [4.0.2] - 2024-09-19
+
 ### Added
 
 - Match weight and m and u probabilities charts now have improved tooltips ([#2392](https://github.com/moj-analytical-services/splink/pull/2392))
 - Added new `AbsoluteDifferenceLevel` comparison level for numerical columns ([#2398](https://github.com/moj-analytical-services/splink/pull/2398))
 - Added new `CosineSimilarityLevel` and `CosineSimilarityAtThresholds` for comparing array columns using cosine similarity ([#2405](https://github.com/moj-analytical-services/splink/pull/2405))
+- Added new `ArraySubsetLevel` for comparing array columns ([#2416](https://github.com/moj-analytical-services/splink/pull/2416))
 
 ### Fixed
 
@@ -137,7 +169,12 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.0...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.5...HEAD
+[4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
+[4.0.4]: https://github.com/moj-analytical-services/splink/compare/4.0.3...4.0.4
+[4.0.3]: https://github.com/moj-analytical-services/splink/compare/4.0.2...4.0.3
+[4.0.2]: https://github.com/moj-analytical-services/splink/compare/4.0.1...4.0.2
+[4.0.1]: https://github.com/moj-analytical-services/splink/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/moj-analytical-services/splink/compare/3.9.15...4.0.0
 [3.9.15]: https://github.com/moj-analytical-services/splink/compare/3.9.14...3.9.15
 [3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14

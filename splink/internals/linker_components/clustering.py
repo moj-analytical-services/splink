@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from splink.internals.connected_components import (
-    _cc_create_unique_id_cols,
     solve_connected_components,
 )
 from splink.internals.edge_metrics import compute_edge_metrics
@@ -12,6 +11,9 @@ from splink.internals.graph_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
+from splink.internals.misc import (
+    threshold_args_to_match_prob,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import (
@@ -19,7 +21,8 @@ from splink.internals.unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
+    concat_table_column_names,
+    enqueue_df_concat,
 )
 
 if TYPE_CHECKING:
@@ -38,19 +41,24 @@ class LinkerClustering:
         self,
         df_predict: SplinkDataFrame,
         threshold_match_probability: Optional[float] = None,
+        threshold_match_weight: Optional[float] = None,
     ) -> SplinkDataFrame:
         """Clusters the pairwise match predictions that result from
         `linker.inference.predict()` into groups of connected record using the connected
         components graph clustering algorithm
 
         Records with an estimated `match_probability` at or above
-        `threshold_match_probability` are considered to be a match (i.e. they represent
+        `threshold_match_probability` (or records with a `match_weight` at or above
+        `threshold_match_weight`) are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
-            threshold_match_probability (float): Pairwise comparisons with a
+            threshold_match_probability (float, optional): Pairwise comparisons with a
                 `match_probability` at or above this threshold are matched
+            threshold_match_weight (float, optional): Pairwise comparisons with a
+                `match_weight` at or above this threshold are matched. Only one of
+                threshold_match_probability or threshold_match_weight should be provided
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -64,25 +72,110 @@ class LinkerClustering:
             )
             ```
         """
-        # Feeding in df_predict forces materiailisation, if it exists in your database
-        pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
-        edges_table = _cc_create_unique_id_cols(
-            self._linker,
-            nodes_with_tf.physical_name,
-            df_predict,
-            threshold_match_probability,
+        # Need to get nodes and edges in a format suitable to pass to
+        # cluster_pairwise_predictions_at_threshold
+        linker = self._linker
+        db_api = linker._db_api
+
+        pipeline = CTEPipeline()
+
+        enqueue_df_concat(linker, pipeline)
+
+        uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
+        uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        uid_concat_nodes = _composite_unique_id_from_nodes_sql(uid_cols, None)
+
+        sql = f"""
+        select
+            {uid_concat_nodes} as node_id
+            from __splink__df_concat
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_nodes_with_composite_ids")
+
+        nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        has_match_prob_col = "match_probability" in [
+            c.unquote().name for c in df_predict.columns
+        ]
+
+        threshold_match_probability = threshold_args_to_match_prob(
+            threshold_match_probability, threshold_match_weight
+        )
+
+        if not has_match_prob_col and threshold_match_probability is not None:
+            raise ValueError(
+                "df_predict must have a column called 'match_probability' if "
+                "threshold_match_probability is provided"
+            )
+
+        match_p_expr = ""
+        match_p_select_expr = ""
+        if threshold_match_probability is not None:
+            match_p_expr = f"where match_probability >= {threshold_match_probability}"
+            match_p_select_expr = ", match_probability"
+
+        pipeline = CTEPipeline([df_predict])
+
+        # Templated name must be used here because it could be the output
+        # of a deterministic link i.e. the templated name is not know for sure
+        sql = f"""
+        select
+            {uid_concat_edges_l} as node_id_l,
+            {uid_concat_edges_r} as node_id_r
+            {match_p_select_expr}
+            from {df_predict.templated_name}
+            {match_p_expr}
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_edges_from_predict")
+
+        edges_table_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
         )
 
         cc = solve_connected_components(
-            self._linker,
-            edges_table,
-            nodes_with_tf,
+            nodes_table=nodes_with_composite_ids,
+            edges_table=edges_table_with_composite_ids,
+            node_id_column_name="node_id",
+            edge_id_column_name_left="node_id_l",
+            edge_id_column_name_right="node_id_r",
+            db_api=db_api,
+            threshold_match_probability=threshold_match_probability,
         )
-        cc.metadata["threshold_match_probability"] = threshold_match_probability
 
-        return cc
+        edges_table_with_composite_ids.drop_table_from_database_and_remove_from_cache()
+        nodes_with_composite_ids.drop_table_from_database_and_remove_from_cache()
+        pipeline = CTEPipeline([cc])
+
+        enqueue_df_concat(linker, pipeline)
+
+        columns = concat_table_column_names(self._linker)
+        # don't want to include salting column in output if present
+        columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
+
+        select_columns_sql = ", ".join(columns_without_salt)
+
+        sql = f"""
+        select
+            cc.cluster_id,
+            {select_columns_sql}
+        from __splink__clustering_output_final as cc
+        left join __splink__df_concat
+        on cc.node_id = {uid_concat_nodes}
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_clustered_with_input_data")
+
+        df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        cc.drop_table_from_database_and_remove_from_cache()
+
+        if threshold_match_probability is not None:
+            df_clustered_with_input_data.metadata["threshold_match_probability"] = (
+                threshold_match_probability
+            )
+
+        return df_clustered_with_input_data
 
     def _compute_metrics_nodes(
         self,

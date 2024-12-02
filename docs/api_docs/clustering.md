@@ -1,18 +1,15 @@
 ---
 tags:
   - API
-  - Clustering
+  - clustering
 ---
-# Methods in Linker.clustering
+# Documentation for `splink.clustering`
 
-
-::: splink.internals.linker_components.clustering.LinkerClustering
+::: splink.clustering
     handler: python
-    filters:
-      - "!^__init__$"
     options:
       show_root_heading: false
       show_root_toc: false
       show_source: false
-      members_order: source
+
 

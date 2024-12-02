@@ -45,6 +45,43 @@ class CustomRule(BlockingRuleCreator):
         salting_partitions: int | None = None,
         arrays_to_explode: list[str] | None = None,
     ):
+        """
+        Represents a custom blocking rule using a user-defined SQL condition.  To
+        refer to the left hand side and the right hand side of the pairwise
+        record comparison, use `l` and `r` respectively, e.g.
+        `l.first_name = r.first_name and len(l.first_name) <2`.
+
+        Args:
+            blocking_rule (str): A SQL condition string representing the custom
+                blocking rule.
+            sql_dialect (str, optional): The SQL dialect of the provided blocking rule.
+                If specified, Splink will attempt to translate the rule to the
+                appropriate dialect.
+            salting_partitions (int, optional): The number of partitions to use for
+                salting. If provided, enables salting for this blocking rule.
+            arrays_to_explode (list[str], optional): A list of array column names
+                to explode before applying the blocking rule.
+
+        Examples:
+            ```python
+            from splink.blocking_rule_library import CustomRule
+
+            # Simple custom rule
+            rule_1 = CustomRule("l.postcode = r.postcode")
+
+            # Custom rule with dialect translation
+            rule_2 = CustomRule(
+                "SUBSTR(l.surname, 1, 3) = SUBSTR(r.surname, 1, 3)",
+                sql_dialect="sqlite"
+            )
+
+            # Custom rule with salting
+            rule_3 = CustomRule(
+                "l.city = r.city",
+                salting_partitions=10
+            )
+            ```
+        """
         super().__init__(
             salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
         )

@@ -18,9 +18,9 @@ tags:
         - "!^create_sql$"  # Exclude the create_sql method
 
 
-## AbsoluteDateDifferenceAtThresholds
+## AbsoluteDateDifferenceLevel
 
-An alias of [AbsoluteTimeDifferenceAtThresholds](./comparison_level_library.html#splink.comparison_level_library.AbsoluteTimeDifferenceLevel).
+An alias of [AbsoluteTimeDifferenceLevel](./comparison_level_library.html#splink.comparison_level_library.AbsoluteTimeDifferenceLevel).
 
 ## Configuring comparisons
 

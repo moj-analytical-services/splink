@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import pkgutil
 import random
@@ -183,3 +185,65 @@ def read_resource(path: str) -> str:
     if (resource_data := pkgutil.get_data("splink", path)) is None:
         raise FileNotFoundError(f"Could not locate splink resource at: {path}")
     return resource_data.decode("utf-8")
+
+
+def threshold_args_to_match_weight(
+    threshold_match_probability: float | None, threshold_match_weight: float | None
+) -> float | None:
+    if threshold_match_probability is not None and threshold_match_weight is not None:
+        raise ValueError(
+            "Cannot provide both threshold_match_probability and "
+            "threshold_match_weight. Please specify only one."
+        )
+
+    if threshold_match_probability is not None:
+        if threshold_match_probability == 0:
+            return None
+        return prob_to_match_weight(threshold_match_probability)
+
+    if threshold_match_weight is not None:
+        return threshold_match_weight
+
+    return None
+
+
+def threshold_args_to_match_prob(
+    threshold_match_probability: float | None, threshold_match_weight: float | None
+) -> float | None:
+    if threshold_match_probability is not None and threshold_match_weight is not None:
+        raise ValueError(
+            "Cannot provide both threshold_match_probability and "
+            "threshold_match_weight. Please specify only one."
+        )
+
+    if threshold_match_probability is not None:
+        return threshold_match_probability
+
+    if threshold_match_weight is not None:
+        return bayes_factor_to_prob(
+            match_weight_to_bayes_factor(threshold_match_weight)
+        )
+
+    return None
+
+
+def threshold_args_to_match_prob_list(
+    match_probability_thresholds: list[float] | None,
+    match_weight_thresholds: list[float] | None,
+) -> list[float] | None:
+    if match_probability_thresholds is not None and match_weight_thresholds is not None:
+        raise ValueError(
+            "Cannot provide both match_probability_thresholds and "
+            "match_weight_thresholds. Please specify only one."
+        )
+
+    if match_probability_thresholds is not None:
+        return sorted(match_probability_thresholds)
+
+    if match_weight_thresholds is not None:
+        return sorted(
+            bayes_factor_to_prob(match_weight_to_bayes_factor(w))
+            for w in match_weight_thresholds
+        )
+
+    return None

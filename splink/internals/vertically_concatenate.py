@@ -181,6 +181,35 @@ def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
     return nodes_with_tf
 
 
+def concat_table_column_names(linker: Linker) -> list[str]:
+    """
+    Returns list of column names of the table __splink__df_concat,
+    without needing to instantiate the table.
+    """
+    source_dataset_input_column = (
+        linker._settings_obj.column_info_settings.source_dataset_input_column
+    )
+
+    input_tables = linker._input_tables_dict
+    salting_required = linker._settings_obj.salting_required
+
+    df_obj = next(iter(input_tables.values()))
+    columns = df_obj.columns_escaped
+    if salting_required:
+        columns.append("__splink_salt")
+
+    if len(input_tables) > 1:
+        source_dataset_column_already_exists = False
+        if source_dataset_input_column:
+            source_dataset_column_already_exists = (
+                source_dataset_input_column.unquote().name
+                in [c.unquote().name for c in df_obj.columns]
+            )
+        if not source_dataset_column_already_exists:
+            columns.append("source_dataset")
+    return columns
+
+
 def split_df_concat_with_tf_into_two_tables_sqls(
     input_tablename: str, source_dataset_col: str, sample_switch: bool = False
 ) -> list[dict[str, str]]:

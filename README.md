@@ -11,9 +11,11 @@
 > 🎉 Splink 4 has been released! Examples of new syntax are [here](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) and a release announcement is [here](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html).
 
 
-# Fast, accurate and scalable probabilistic data linkage
+# Fast, accurate and scalable data linkage and deduplication
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets that lack unique identifiers.
+
+It is used widely by within government, academia and the private sector - see [use cases](https://moj-analytical-services.github.io/splink/#use-cases).
 
 ## Key Features
 
@@ -77,8 +79,6 @@ For projects requiring specific backends, Splink offers optional installations f
 ```sh
 pip install 'splink[{backend}]'
 ```
-
-Should you require a version of Splink without **DuckDB**, see our section on [DuckDBLess Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation).
 
 <details>
 <summary><i>Click here for backend-specific installation commands</i></summary>
@@ -168,10 +168,6 @@ df_clusters = clusters.as_pandas_dataframe(limit=5)
 
 To find the best place to ask a question, report a bug or get general advice, please refer to our [Guide](./CONTRIBUTING.md).
 
-## Use Cases
-
-To see how users are using Splink in the wild, check out the [Use Cases](https://moj-analytical-services.github.io/splink/#use-cases) section of the docs.
-
 ## Awards
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
@@ -187,7 +183,7 @@ To see how users are using Splink in the wild, check out the [Use Cases](https:/
 
 ## Citation
 
-If you use Splink in your research, we'd be grateful for a citation as follows:
+If you use Splink in your research, please cite as follows:
 
 ```BibTeX
 @article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,

@@ -4,7 +4,7 @@ from __future__ import annotations
 # https://github.com/moj-analytical-services/splink/pull/107
 import logging
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
@@ -16,6 +16,7 @@ from splink.internals.charts import (
 )
 from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -57,7 +58,13 @@ def _join_tf_to_df_concat_sql(linker: Linker) -> str:
         tbl = colname_to_tf_tablename(col)
         select_cols.append(f"{tbl}.{col.tf_name}")
 
-    select_cols.insert(0, "__splink__df_concat.*")
+    column_names_in_df_concat = linker._concat_table_column_names
+
+    aliased_concat_column_names = [
+        f"__splink__df_concat.{col} AS {col}" for col in column_names_in_df_concat
+    ]
+
+    select_cols = aliased_concat_column_names + select_cols
     select_cols_str = ", ".join(select_cols)
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
@@ -71,7 +78,7 @@ def _join_tf_to_df_concat_sql(linker: Linker) -> str:
     left_joins_str = " ".join(left_joins)
 
     sql = f"""
-    select {select_cols_str }
+    select {select_cols_str}
     from __splink__df_concat
     {left_joins_str}
     """
@@ -79,33 +86,48 @@ def _join_tf_to_df_concat_sql(linker: Linker) -> str:
     return sql
 
 
-def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str) -> str:
+def _join_new_table_to_df_concat_with_tf_sql(
+    linker: Linker,
+    input_tablename: str,
+    input_table: Optional[SplinkDataFrame] = None,
+) -> str:
     """
-    Joins any required tf columns onto new_tablename
+    Joins any required tf columns onto input_tablename
 
     This is needed e.g. when using linker.compare_two_records
     or linker.inference.find_matches_to_new_records in which the user provides
     new records which need tf adjustments computed
     """
+    tf_cols_already_populated = []
+
+    if input_table is not None:
+        tf_cols_already_populated = [
+            c.unquote().name
+            for c in input_table.columns
+            if c.unquote().name.startswith("tf_")
+        ]
+    tf_cols_not_already_populated = [
+        c
+        for c in linker._settings_obj._term_frequency_columns
+        if c.unquote().tf_name not in tf_cols_already_populated
+    ]
 
     cache = linker._intermediate_table_cache
-    settings_obj = linker._settings_obj
-    tf_cols = settings_obj._term_frequency_columns
 
-    select_cols = [f"{new_tablename}.*"]
+    select_cols = [f"{input_tablename}.*"]
 
-    for col in tf_cols:
+    for col in tf_cols_not_already_populated:
         tbl = colname_to_tf_tablename(col)
         if tbl in cache:
             select_cols.append(f"{tbl}.{col.tf_name}")
 
-    template = "left join {tbl} on " + new_tablename + ".{col} = {tbl}.{col}"
+    template = "left join {tbl} on " + input_tablename + ".{col} = {tbl}.{col}"
     template_with_alias = (
-        "left join ({subquery}) as {_as} on " + new_tablename + ".{col} = {_as}.{col}"
+        "left join ({subquery}) as {_as} on " + input_tablename + ".{col} = {_as}.{col}"
     )
 
     left_joins = []
-    for i, col in enumerate(tf_cols):
+    for i, col in enumerate(tf_cols_not_already_populated):
         tbl = colname_to_tf_tablename(col)
         if tbl in cache:
             sql = template.format(tbl=tbl, col=col.name)
@@ -127,7 +149,7 @@ def _join_new_table_to_df_concat_with_tf_sql(linker: Linker, new_tablename: str)
 
     sql = f"""
     select {select_cols_str}
-    from {new_tablename}
+    from {input_tablename}
     {left_joins_str}
 
     """
