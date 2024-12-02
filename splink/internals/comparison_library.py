@@ -351,10 +351,8 @@ class PairwiseStringDistanceFunctionAtThresholds(ComparisonCreator):
         col_name: str,
         distance_function_name: Literal[
             "levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"
-        ] = "levenshtein",
-        distance_threshold_or_thresholds: Union[Iterable[int | float], int | float] = [
-            1
         ],
+        distance_threshold_or_thresholds: Union[Iterable[int | float], int | float],
     ):
         """
         Represents a comparison of the *most similar pair* of values
