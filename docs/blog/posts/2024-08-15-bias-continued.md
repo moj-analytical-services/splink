@@ -8,29 +8,25 @@ categories:
 
 # Bias in Data Linking, continued
 
-This Splink Blog is the second installment dedicated to the topic of bias. It wraps up the work completed during the the six-month [Alan Turing Institute](https://www.turing.ac.uk) internship on '_Bias in Data Linking_', summarising the final thoughts.
+This blog is the second in our series dedicated to Bias in Data Linking. Here we wrap up work completed during the the six-month [Alan Turing Institute](https://www.turing.ac.uk) internship on '_Bias in Data Linking_', and share some final thoughts.
 
 <!-- more -->
 
-!!! note
+In the [previous blog post](2024-07-11-bias.md) we concluded that assessing bias in a linkage pipeline using real data and clerical labels is possible to some degree, but has major shortcomings. Here we consider a different approach which aims to address some of these issues.
 
-    This blog is intentionally high-level, with specific Splink examples in code provided in the [accompanying notebook](../../demos/examples/duckdb/bias_eval.ipynb).
+## A Different Approach
 
-## ⏪ Recap
+[Previously](2024-07-11-bias.md#-sources-of-bias) we established that bias in a linkage pipeline stems from two main sources: the **data** being linked and the **linkage model**. Considering both of these factors at the same time is complex, making it difficult to reach solid conclusions. Here we will explore bias how bias can have an impact within the **linkage model only**.
 
-This blog builds upon the [previous post in this series](https://moj-analytical-services.github.io/splink/blog/2024/08/19/bias-in-data-linking.html).
+As before, we assume there is a hypothesis that we would like to explore. In order to target bias within the linkage model, we construct a synthetic dataset with combinations of records which reflect the hypothesis we wish to test.
 
-In the first few months of the internship, the focus was on exploring potential sources of bias in data linking pipelines. This highlighted the complexity of these biases and the need for a standardised approach to evaluate them. As a result, a goal was set to develop such an approach. 
-
-To achieve this, a common performance evaluation method using clerical review was examined to see how it could be adapted for bias assessment. However, challenges arose with this method, primarily due to difficulties in using real data to detect bias in the messy linkage output.
-
-## ⏩ Recent developments 
-
-Building upon these challenges, it was determined that the output of a linkage pipeline (i.e. the linked data) shouldn’t be used to _detect_ bias within a pipeline. Instead, it can be used to understand the _impact_ of any detected bias. 
-
-Detecting bias should be guided by a hypothesis to form a key part of understanding any data linkage pipeline. This blog proposes a high-level approach to bias detection, broken down into 5 key steps:
+This approach can be broken down into 5 key steps:
 
 ![Image 1](./img/bias_investigation_steps.png)
+
+!!! note
+
+    The following steps are intentionally high-level, for a more hands-on application on fake data with Splink check out the [accompanying example notebook](../../demos/examples/duckdb/bias_eval.ipynb).
 
 ## <u>1. Generate synthetic records</u>
 
@@ -56,7 +52,7 @@ Given the final linkage score relies on the accumulation of these match weights,
 
 Now that you have records to compare and a trained model, the next stage is to generate match probabilities. If a threshold for a link has been chosen, this can be used to indicate which records would be considered to be a link in a linkage pipeline.
 
-It’s also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](https://moj-analytical-services.github.io/splink/charts/waterfall_chart.html) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
+It's also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](https://moj-analytical-services.github.io/splink/charts/waterfall_chart.html) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
 
 Some factor weightings might seem off for your hypothesis but be reasonable for the [overall model](#2-train-and-investigate-model). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
 
