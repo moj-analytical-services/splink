@@ -1,7 +1,8 @@
 ---
-date: 2024-09-19
+date: 2024-12-02
 authors:
   - erica-k
+  - ross-k
 categories:
   - Bias
 ---
