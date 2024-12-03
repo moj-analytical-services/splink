@@ -21,6 +21,7 @@ from splink.internals.comparison_level_library import (
     Not,
     NullLevel,
     Or,
+    PairwiseStringDistanceFunctionLevel,
     PercentageDifferenceLevel,
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     "JaroLevel",
     "JaccardLevel",
     "DistanceFunctionLevel",
+    "PairwiseStringDistanceFunctionLevel",
     "AbsoluteTimeDifferenceLevel",
     "AbsoluteDateDifferenceLevel",
     "DistanceInKMLevel",
