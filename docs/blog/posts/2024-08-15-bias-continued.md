@@ -37,7 +37,7 @@ Instead of focussing on the number of synthetic records, the key is ensuring eac
 
 ![Image 2](./img/sp_mistake_data.png)
 
-This is a simplification, and a real generation would likely include more rows with various spelling error iterations. The final two record also consider the case where similarly spelt names that relate to different individuals.
+This is a simplification, and a real generation would likely include more rows with various spelling error iterations. The final two records also consider the case of similarly spelled names relating to different individuals.
 
 ## <u>2. Investigate model parameters</u>
 
