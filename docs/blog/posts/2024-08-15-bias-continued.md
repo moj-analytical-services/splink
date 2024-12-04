@@ -55,7 +55,7 @@ Now that you have records to compare and a trained model, the next stage is to g
 
 It's also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](https://moj-analytical-services.github.io/splink/charts/waterfall_chart.html) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
 
-Some factor weightings might seem off for your hypothesis but be reasonable for the [overall model](#2-train-and-investigate-model). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
+Some match weights might seem off for your hypothesis but be reasonable for the [overall model](#2-train-and-investigate-model). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
 
 ## <u>4. Identify bias mitigations</u>
 
