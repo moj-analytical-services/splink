@@ -124,6 +124,7 @@ nav:
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
         - Cookbook: "demos/examples/duckdb/cookbook.ipynb"
+        - Investigating Bias in a Splink Model: "demos/examples/duckdb/bias_eval.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
