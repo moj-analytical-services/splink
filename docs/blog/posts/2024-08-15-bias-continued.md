@@ -45,7 +45,7 @@ The pre-trained model can be analysed specifically in relation to the hypothesis
 
 ![Image 3](./img/match_weights_chart.png)
 
-Each of the bars represent the amount of evidence (match weights) that two records to refer to the same individual depending on how similar each of the feature are. It's useful to start thinking about how this chart relates to the scenario represented by the synthetic records. For example, for the above model there is only a significant drop in match weight for first_name between the third and fourth comparison level. 
+Each of the bars represent the amount of evidence (match weights) that two records refer to the same individual, depending on how similar the features are. It's useful to start thinking about how this chart relates to the scenario represented by the synthetic records. For example, for the above model there is only a significant drop in match weight for first_name between the third and fourth comparison level. 
 
 Given the final linkage score relies on the accumulation of these match weights, viewing the model parameters in isolation like this does not give the full picture - specific examples are required.
 
