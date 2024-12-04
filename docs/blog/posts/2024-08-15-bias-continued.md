@@ -17,7 +17,7 @@ In the [previous blog post](2024-07-11-bias.md) we concluded that assessing bias
 
 ## A Different Approach
 
-[Previously](2024-07-11-bias.md#-sources-of-bias) we established that bias in a linkage pipeline stems from two main sources: the **data** being linked and the **linkage model**. Considering both of these factors at the same time is complex, making it difficult to reach solid conclusions. Here we will explore bias how bias can have an impact within the **linkage model only**.
+[Previously](2024-07-11-bias.md#-sources-of-bias) we established that bias in a linkage pipeline stems from two main sources: the **data** being linked and the **linkage model**. Considering both of these factors at the same time is complex, making it difficult to reach solid conclusions. Here we will explore how bias can have an impact within the **linkage model only**.
 
 As before, we assume there is a hypothesis that we would like to explore. In order to target bias within the linkage model, we construct a synthetic dataset with combinations of records which reflect the hypothesis we wish to test.
 
