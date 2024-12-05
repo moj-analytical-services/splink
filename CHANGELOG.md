@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.6] - 2024-12-05
+
 ### Added
 - Added new `PairwiseStringDistanceFunctionLevel` and `PairwiseStringDistanceFunctionAtThresholds`
-  for comparing array columns using a string similarity on each pair of values
-  ([#2517](https://github.com/moj-analytical-services/splink/pull/2517))
+  for comparing array columns using a string similarity on each pair of values ([#2517](https://github.com/moj-analytical-services/splink/pull/2517))
+- Compare two records now allows typed inputs, not just dict ([#2498](https://github.com/moj-analytical-services/splink/pull/2498))
+- Clustering allows match weight args not just match probability ([#2454]https://github.com/moj-analytical-services/splink/pull/2454))
 
 ### Fixed
 
