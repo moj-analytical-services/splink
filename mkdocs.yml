@@ -195,6 +195,7 @@ nav:
         - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
     - Performance:
       - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
+      - Performance of comparison functions: "topic_guides/performance/performance_of_comparison_functions.ipynb"
       - Spark Performance:
           - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
           - Salting blocking rules: "topic_guides/performance/salting.md"
