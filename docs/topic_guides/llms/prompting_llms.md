@@ -7,9 +7,12 @@ We provide two files that summarise the Splink docs to help you use Splink with 
 [Comprehensive Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/5ddbe58d2cf9e8755a211d6091ce5ad6511fe506/llm_context_long.txt) - around 83,000 tokens
 
 At present, only the concise one is short enough for the ChatGPT GUI. The longer one fits in the Claude long context (200k tokens) model.
+
 ### Recommended use
 
 To use these files, we suggest copying and pasing their contents into the LLM, and then appending your question.
+
+Alternative, if you're an OpenAI user, you can use the [Splink 4 GPT](https://chatgpt.com/g/g-szbSxsv0u-splink-4-helper), which includes these context files in their knowledge
 
 For instance, you may paste their contents and then ask:
 
@@ -89,6 +92,21 @@ clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(predictio
     Whilst these prompts can be helpful to give you some initial code, there's **no guarantees** it will be correct.
 
     However, in many cases it can provide a useful starting point.
+
+You can also ask more theoretical questions such as:
+
+```
+Explain briefly how we can calculate the prior in Splink.  Given the number of matches is unknown, how can we calculate the probability two random records match?  Give a code example.
+```
+
+<details>
+<summary>Click to see example response</summary>
+
+```
+Splink typically uses a set of deterministic rules that identify a subset of highly probable matches. By assuming these rules have a known “recall” (i.e. they capture a certain proportion of all true matches), Splink infers the total number of matches and, from that, calculates the probability that two random records match. In other words, you pick deterministic rules, count how many pairs they produce, estimate what fraction of all true matches they represent, and then scale up that count to the entire dataset, giving you an approximate prior probability.
+```
+</details>
+
 
 ### How these prompts are generated
 
