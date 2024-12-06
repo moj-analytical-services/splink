@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     # Append additional instructions to the output file
     with open(output_filename, "a", encoding="utf-8") as f:
-        f.write("\n\IMPORTANT Instructions to LLMs:\n")
+        f.write("IMPORTANT Instructions to LLMs:")
         f.write(additional_instructions_to_llms)
 
     print(  # noqa: T201
