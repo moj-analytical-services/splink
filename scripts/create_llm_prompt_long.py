@@ -338,10 +338,10 @@ if __name__ == "__main__":
 
     # Append additional instructions to the output file
     with open(output_filename, "a", encoding="utf-8") as f:
-        f.write("\n\nIMPORTANT Instructions to LLMs:\n")
+        f.write("IMPORTANT Instructions to LLMs:")
         f.write(additional_instructions_to_llms)
 
-    print(
+    print(  # NOQA: T201
         "Docstrings extracted, saved, and all specified content including tips and "
         f"instructions appended to {output_filename}"
     )  # NOQA: T201
