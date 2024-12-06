@@ -6,10 +6,10 @@ We provide two files that summarise the Splink docs to help you use Splink with 
 
 [Comprehensive Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/e3b00bcd07cce609cf4ee60908d9e6d39c5b9c5f/llm_context_long.txt) - around 72,000 tokens
 
-At present, only the concise one is short enough for ChatGPT.  The longer one fits in the currently Claude long context (200k tokens) model.
+At present, only the concise one is short enough for the ChatGPT GUI. The longer one fits in the Claude long context (200k tokens) model.
 ### Recommended use
 
-To use these files, we suggest copying and pasing their contents into the LLM, and then appending your question:
+To use these files, we suggest copying and pasing their contents into the LLM, and then appending your question.
 
 For instance, you may paste their contents and then ask:
 
