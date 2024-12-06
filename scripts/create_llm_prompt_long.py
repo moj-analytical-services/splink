@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+import urllib.request
 
 import nbformat
 
@@ -137,9 +138,7 @@ def extract_all_function_docstrings_from_module(module):
     return docstrings
 
 
-def save_docstrings_with_append(
-    docstrings, docstring_filename="llm_context_long.txt", append_filenames=None
-):
+def save_docstrings_with_append(docstrings, docstring_filename, append_filenames=None):
     append_content = ""
     if append_filenames:
         for filename in append_filenames:
@@ -196,7 +195,7 @@ def save_docstrings_with_append(
 
     print(  # NOQA: T201
         "\nDocstrings extracted, saved, and organized into sections in "
-        "llm_context_long.txt"
+        f"{docstring_filename}"
     )
 
 
@@ -217,8 +216,32 @@ def extract_and_append_md_content(md_files, docstring_filename):
             print(f"Warning: File {full_path} not found.")  # NOQA: T201
 
 
+def fetch_url_content(url):
+    with urllib.request.urlopen(url) as response:
+        return response.read().decode("utf-8")
+
+
+additional_instructions_to_llms = """
+If the user asks for Splink code, when writing Splink code use ONLY
+functions and methods which you've seen used in the context provided. Do NOT guess at
+other Splink methods or functions.
+
+If you don't know how to do something, put a comment referring them to
+https://moj-analytical-services.github.io/splink
+
+If the user asks for data cleaning, do it in their chosen backend (spark, duckdb)
+rather than pandas.  In general avoid pandas unless specificaly asked for.
+
+In most cases, you should assume the incoming data is not clean and suggest some simple
+data cleaning steps.
+"""
+
 # Main execution
 if __name__ == "__main__":
+    # Clear the output file at start
+    output_filename = "llm_context_long.txt"
+    open(output_filename, "w").close()
+
     # Extract docstrings for all public methods in specified Linker submodules
     linker_docstrings = extract_method_docstrings(
         linker,
@@ -277,7 +300,7 @@ if __name__ == "__main__":
     print("Extracting and saving docstrings...")  # NOQA: T201
     save_docstrings_with_append(
         all_docstrings,
-        "llm_context_long.txt",
+        output_filename,
         append_filenames=[
             "../docs/api_docs/settings_dict_guide.md",
             "../docs/api_docs/datasets.md",
@@ -288,8 +311,8 @@ if __name__ == "__main__":
     demos_examples_dir = "../docs/demos/examples"
     demos_tutorials_dir = "../docs/demos/tutorials"
 
-    extract_and_append_notebook_content(demos_examples_dir, "llm_context_long.txt")
-    extract_and_append_notebook_content(demos_tutorials_dir, "llm_context_long.txt")
+    extract_and_append_notebook_content(demos_examples_dir, output_filename)
+    extract_and_append_notebook_content(demos_tutorials_dir, output_filename)
 
     # New part: Append content from specified Markdown files
     mds_to_append = [
@@ -304,9 +327,21 @@ if __name__ == "__main__":
         "/docs/topic_guides/performance/performance_evaluation.md",
         "/docs/api_docs/settings_dict_guide.md",
     ]
-    extract_and_append_md_content(mds_to_append, "llm_context_long.txt")
+    extract_and_append_md_content(mds_to_append, output_filename)
 
-    print(  # NOQA: T201
-        "Docstrings extracted, saved, and all specified content "
-        "appended to llm_context_long.txt"
-    )
+    # Fetch and append content from the URL
+    url = "https://gist.githubusercontent.com/RobinL/edb10e93caeaf47c675cbfa189e4e30c/raw/fbe773db3002663dd3ddb439e38d2a549358e713/top_tips.md"
+    splink_tips = fetch_url_content(url)
+    with open(output_filename, "a", encoding="utf-8") as f:
+        f.write("\n\nSplink Tips:\n")
+        f.write(splink_tips)
+
+    # Append additional instructions to the output file
+    with open(output_filename, "a", encoding="utf-8") as f:
+        f.write("\n\nIMPORTANT Instructions to LLMs:\n")
+        f.write(additional_instructions_to_llms)
+
+    print(
+        "Docstrings extracted, saved, and all specified content including tips and "
+        f"instructions appended to {output_filename}"
+    )  # NOQA: T201
