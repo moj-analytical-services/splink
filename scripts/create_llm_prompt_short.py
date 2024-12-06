@@ -1,4 +1,5 @@
 import os
+import urllib.request
 
 import nbformat
 
@@ -24,6 +25,11 @@ def extract_and_append_notebook_code(base_dir, output_filename):
         for file in files:
             if file.endswith(".ipynb") and not file.endswith("-checkpoint.ipynb"):
                 notebook_path = os.path.join(root, file)
+                # Skip files with athena or sqlite in path
+                if any(x in notebook_path.lower() for x in ["athena", "sqlite"]):
+                    print(f"Skipping {notebook_path} due to athena/sqlite...")  # noqa: T201
+                    continue
+
                 if ".ipynb_checkpoints" not in notebook_path:
                     print(f"Processing {notebook_path}...")  # noqa: T201
                     code = extract_notebook_code(notebook_path)
@@ -53,9 +59,30 @@ def extract_and_append_md_content(md_files, output_filename):
             print(f"Warning: File {full_path} not found.")  # noqa: T201
 
 
+def fetch_url_content(url):
+    with urllib.request.urlopen(url) as response:
+        return response.read().decode("utf-8")
+
+
+additional_instructions_to_llms = """
+If the user asks for Splink code, when writing Splink code use ONLY
+functions and methods which you've seen used in the context provided. Do NOT guess at
+other Splink methods or functions.
+
+If you don't know how to do something, put a comment referring them to
+https://moj-analytical-services.github.io/splink
+
+If the user asks for data cleaning, do it in their chosen backend (spark, duckdb)
+rather than pandas.  In general avoid pandas unless specificaly asked for.
+
+In most cases, you should assume the incoming data is not clean and suggest some simple
+data cleaning steps.
+"""
+
 # Main execution
 if __name__ == "__main__":
     output_filename = "llm_context_short.txt"
+    open(output_filename, "w").close()
 
     # Extract and save Python code from notebooks in the specified directories
     demos_examples_dir = "../docs/demos/examples"
@@ -71,7 +98,19 @@ if __name__ == "__main__":
     ]
     extract_and_append_md_content(mds_to_append, output_filename)
 
+    # Fetch and append content from the URL
+    url = "https://gist.githubusercontent.com/RobinL/edb10e93caeaf47c675cbfa189e4e30c/raw/fbe773db3002663dd3ddb439e38d2a549358e713/top_tips.md"
+    splink_tips = fetch_url_content(url)
+    with open(output_filename, "a", encoding="utf-8") as f:
+        f.write("\n\nSplink Tips:\n")
+        f.write(splink_tips)
+
+    # Append additional instructions to the output file
+    with open(output_filename, "a", encoding="utf-8") as f:
+        f.write("IMPORTANT Instructions to LLMs:")
+        f.write(additional_instructions_to_llms)
+
     print(  # noqa: T201
-        "Python code from notebooks and markdown content extracted and saved to "
-        "extracted_python_code_and_markdown.txt"
+        "Python code from notebooks, markdown content, Splink tips, and additional"
+        " instructions extracted and saved to llm_context_short.txt"
     )

@@ -225,6 +225,7 @@ nav:
       - Model Evaluation:
         - accuracy chart from labels table: "charts/accuracy_analysis_from_labels_table.ipynb"
         - threshold selection tool: charts/threshold_selection_tool_from_labels_table.ipynb
+    - LLM prompts: "topic_guides/llms/prompting_llms.md"
   - Contributing:
       - "dev_guides/index.md"
       - Contributing to Splink:
