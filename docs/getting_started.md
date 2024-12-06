@@ -102,6 +102,7 @@ To get a basic Splink model up and running, use the following code. It demonstra
     df_clusters = clusters.as_pandas_dataframe(limit=5)
     ```
 
+If you're using an LLM to suggest Splink code, see [here](./topic_guides/llms/prompting_llms.md) for suggested prompts and context.
 
 ## Tutorials
 
