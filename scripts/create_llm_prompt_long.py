@@ -4,6 +4,7 @@ import os
 import urllib.request
 
 import nbformat
+from bs4 import BeautifulSoup
 
 import splink.blocking_analysis as blocking_analysis
 import splink.comparison_level_library as cll
@@ -221,6 +222,17 @@ def fetch_url_content(url):
         return response.read().decode("utf-8")
 
 
+def fetch_article_content(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # NOQA: E501
+    }
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req) as response:
+        html = response.read().decode("utf-8")
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.get_text(strip=True)
+
+
 additional_instructions_to_llms = """
 If the user asks for Splink code, when writing Splink code use ONLY
 functions and methods which you've seen used in the context provided. Do NOT guess at
@@ -330,11 +342,31 @@ if __name__ == "__main__":
     extract_and_append_md_content(mds_to_append, output_filename)
 
     # Fetch and append content from the URL
-    url = "https://gist.githubusercontent.com/RobinL/edb10e93caeaf47c675cbfa189e4e30c/raw/fbe773db3002663dd3ddb439e38d2a549358e713/top_tips.md"
+    url = "https://gist.githubusercontent.com/RobinL/edb10e93caeaf47c675cbfa189e4e30c/raw/fbe773db3002663dd3ddb439e38d2a549358e713/top_tips.md"  # NOQA: E501
     splink_tips = fetch_url_content(url)
     with open(output_filename, "a", encoding="utf-8") as f:
         f.write("\n\nSplink Tips:\n")
         f.write(splink_tips)
+
+    # Add the blog articles
+    blog_urls = [
+        "https://www.robinlinacre.com/intro_to_probabilistic_linkage/",
+        "https://www.robinlinacre.com/partial_match_weights/",
+        "https://www.robinlinacre.com/m_and_u_values/",
+        "https://www.robinlinacre.com/maths_of_fellegi_sunter/",
+        "https://www.robinlinacre.com/computing_fellegi_sunter/",
+        "https://www.robinlinacre.com/fellegi_sunter_accuracy/",
+        "https://www.robinlinacre.com/em_intuition/",
+    ]
+
+    with open(output_filename, "a", encoding="utf-8") as f:
+        f.write("\n\nBlog Articles:\n")
+        for url in blog_urls:
+            print(f"Fetching article from {url}...")  # NOQA: T201
+            content = fetch_article_content(url)
+            f.write(f"\n\nArticle from {url}:\n")
+            f.write(content)
+            f.write("\n\n")
 
     # Append additional instructions to the output file
     with open(output_filename, "a", encoding="utf-8") as f:
