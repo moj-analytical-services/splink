@@ -108,28 +108,26 @@ class SplinkDialect(ABC):
             f"Backend '{self.sql_dialect_str}' does not have a "
             "'Cosine Similarity' function"
         )
-    
+
     @property
     def array_max_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have an "
-            "'Array max' function"
+            f"Backend '{self.sql_dialect_str}' does not have an 'Array max' function"
         )
-    
+
     @property
     def array_min_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have an "
-            "'Array min' function"
+            f"Backend '{self.sql_dialect_str}' does not have an 'Array min' function"
         )
-    
+
     @property
     def array_transform_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.sql_dialect_str}' does not have an "
             "'Array transform' function"
         )
-    
+
     @property
     def array_first_index(self):
         raise NotImplementedError(
@@ -229,19 +227,19 @@ class DuckDBDialect(SplinkDialect):
     @property
     def jaccard_function_name(self):
         return "jaccard"
-    
+
     @property
     def array_max_function_name(self):
         return "list_max"
-    
+
     @property
     def array_min_function_name(self):
         return "list_min"
-    
+
     @property
     def array_transform_function_name(self):
         return "list_transform"
-    
+
     @property
     def array_first_index(self):
         return 1
@@ -344,19 +342,19 @@ class SparkDialect(SplinkDialect):
     @property
     def jaccard_function_name(self):
         return "jaccard"
-    
+
     @property
     def array_max_function_name(self):
         return "array_max"
-    
+
     @property
     def array_min_function_name(self):
         return "array_min"
-    
+
     @property
     def array_transform_function_name(self):
         return "transform"
-    
+
     @property
     def array_first_index(self):
         return 0

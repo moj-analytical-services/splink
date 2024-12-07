@@ -679,7 +679,10 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
                                 )
                             )
                         ),
-                        pair -> {distance_function_name_transpiled}(pair[{sql_dialect.array_first_index}], pair[{sql_dialect.array_first_index + 1}])
+                        pair -> {distance_function_name_transpiled}(
+                            pair[{sql_dialect.array_first_index}],
+                            pair[{sql_dialect.array_first_index + 1}]
+                        )
                     )
                 ) {self._comparator()} {self.distance_threshold}"""
 
