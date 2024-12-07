@@ -652,7 +652,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             parameter_name="distance_threshold",
         )
 
-    @unsupported_splink_dialects(["sqlite", "spark", "postgres", "athena"])
+    @unsupported_splink_dialects(["sqlite", "postgres", "athena"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
@@ -663,18 +663,23 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             "jaro": sql_dialect.jaro_function_name,
         }[self.distance_function_name]
 
-        return f"""list_{self._aggregator()}(
-                    list_transform(
+        aggregator_func = {
+            "min": sql_dialect.array_min_function_name,
+            "max": sql_dialect.array_max_function_name,
+        }[self._aggregator()]
+
+        return f"""{aggregator_func}(
+                    {sql_dialect.array_transform_function_name}(
                         flatten(
-                            list_transform(
+                            {sql_dialect.array_transform_function_name}(
                                 {col.name_l},
-                                x -> list_transform(
+                                x -> {sql_dialect.array_transform_function_name}(
                                     {col.name_r},
-                                    y -> [x,y]
+                                    y -> [x, y]
                                 )
                             )
                         ),
-                        pair -> {distance_function_name_transpiled}(pair[1], pair[2])
+                        pair -> {distance_function_name_transpiled}(pair[{sql_dialect.array_first_index}], pair[{sql_dialect.array_first_index + 1}])
                     )
                 ) {self._comparator()} {self.distance_threshold}"""
 
@@ -682,7 +687,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
         col = self.col_expression
         return (
             f"{self._aggregator().title()} `{self.distance_function_name}` "
-            f"distance of '{col.label} "
+            f"distance of '{col.label}' "
             f"{self._comparator()} than {self.distance_threshold}'"
         )
 
