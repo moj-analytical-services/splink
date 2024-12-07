@@ -1,11 +1,7 @@
----
-tags:
-  - Modelling
----
 
 # Next steps:Top Tips for Building your own model
 
-This page summarises some recommendations for how to approach building a new Splink model, to get an accurate model as quickly as possible.
+Now that you've completed the tutorial, this page summarises some recommendations for how to approach building a new Splink model, to get an accurate model as quickly as possible.
 
 At a high level, we recommend beginning with a small sample and a basic model, then iteratively adding complexity to resolve issues and improve performance.
 
