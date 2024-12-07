@@ -1,4 +1,6 @@
+from sys import version_info
 from typing import TYPE_CHECKING
+from warnings import warn
 
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.column_expression import ColumnExpression
@@ -16,6 +18,19 @@ from splink.internals.settings_creator import SettingsCreator
 if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
     from splink.internals.spark.database_api import SparkAPI
+
+if version_info.minor == 8:
+    warn(
+        (
+            "Python 3.8 has reached end-of-life.  "
+            "Future releases of Splink may no longer be compatible with "
+            "this python version.\n"
+            "Please consider upgrading your python version if you wish "
+            "to continue to be able to install the latest version of Splink."
+        ),
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
 
 
 # Use getarr to make the error appear at the point of use

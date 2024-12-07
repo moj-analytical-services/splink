@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Various bugfixes for `debug_mode` ([#2481](https://github.com/moj-analytical-services/splink/pull/2481))
 - Clustering still works in DuckDB even if no edges are available ([#2510](https://github.com/moj-analytical-services/splink/pull/2510))
 
+## Deprecated
+
+- Deprecated support for python `3.8.x` following end of support for that minor version ([#2520](https://github.com/moj-analytical-services/splink/pull/2520))
+
 ## [4.0.5] - 2024-11-06
 
 ### Fixed
