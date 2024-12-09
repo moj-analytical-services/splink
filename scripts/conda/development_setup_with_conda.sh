@@ -33,6 +33,11 @@ mamba env create -n splink --file development_environment.yaml --force
 # script on a specific platform.
 mamba list --explicit --name splink > development_environment_lock_$(uname)-$(uname -m).txt
 
+# https://github.com/python-poetry/poetry/issues/4055#issuecomment-2206673892
+mamba run --no-capture -n splink poetry config virtualenvs.create true
+mamba run --no-capture -n splink poetry config virtualenvs.in-project true
+mamba run --no-capture -n splink poetry config virtualenvs.ignore-conda-env true
+
 cd ../..
 pkill -f "postgres -D splink_db" || true
 rm -rf ./splink_db ./splink_db_log
