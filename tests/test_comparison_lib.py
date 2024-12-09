@@ -65,7 +65,7 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
-@mark_with_dialects_excluding("sqlite", "spark", "postgres", "athena")
+@mark_with_dialects_excluding("sqlite", "postgres", "athena")
 def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
@@ -88,25 +88,25 @@ def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
                     "forename_l": ["Geof"],
                     "forename_r": ["Geoff"],
                     "expected_value": 2,
-                    "expected_label": "Min `damerau_levenshtein` distance of 'forename <= than 1'",  # noqa: E501
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
                 },
                 {
                     "forename_l": ["Saly", "Barey"],
                     "forename_r": ["Sally", "Barry"],
                     "expected_value": 2,
-                    "expected_label": "Min `damerau_levenshtein` distance of 'forename <= than 1'",  # noqa: E501
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
                 },
                 {
                     "forename_l": ["Carry", "Different"],
                     "forename_r": ["Barry", "Completely"],
                     "expected_value": 2,
-                    "expected_label": "Min `damerau_levenshtein` distance of 'forename <= than 1'",  # noqa: E501
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
                 },
                 {
                     "forename_l": ["Carry", "Sabby"],
                     "forename_r": ["Cally"],
                     "expected_value": 1,
-                    "expected_label": "Min `damerau_levenshtein` distance of 'forename <= than 2'",  # noqa: E501
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 2'",  # noqa: E501
                 },
                 {
                     "forename_l": ["Completely", "Different"],
