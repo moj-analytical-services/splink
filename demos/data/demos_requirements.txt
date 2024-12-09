@@ -1,0 +1,6 @@
+ipywidgets==8.1.2
+pytest==8.0.0
+nbmake==1.5.0
+pytest-xdist==3.5.0
+jupyterlab==4.1.1
+rapidfuzz==3.6.1
