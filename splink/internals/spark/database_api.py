@@ -179,7 +179,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
                 "for an example.\n"
                 "You will not be able to use these functions in your linkage.\n"
                 "You can find the location of the jar by calling the following function"
-                ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                ":\nfrom splink.backends.spark import similarity_jar_location"
                 "\n\nFull error:\n"
                 f"{e}"
             )
