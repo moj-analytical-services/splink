@@ -115,3 +115,12 @@ These files are generated with the following scripts, which you may wish to modi
 [Create LLM Prompt Long Script](https://github.com/moj-analytical-services/splink/blob/master/scripts/create_llm_prompt_long.py)
 
 [Create LLM Prompt Short Script](https://github.com/moj-analytical-services/splink/blob/master/scripts/create_llm_prompt_short.py)
+
+### Issues and Discussions
+
+I have also created a knowledgebase file by scraping all Github issues and discussions from the main Splink repo.
+
+I've found Gemini Pro 1.5 (2 million context length) is able to process these files effectively.
+
+[Knowledgebase prompt - 1.6 million tokens](https://gist.github.com/RobinL/f241917bc4246911f12aed2b372d7f43#file-splink_knowledge_base-txt)
+[Create knowledgebase script](https://gist.github.com/RobinL/f241917bc4246911f12aed2b372d7f43#file-creation_script-py)
