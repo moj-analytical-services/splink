@@ -15,17 +15,17 @@ from splink.internals.settings_creator import SettingsCreator
 from splink.internals.splink_dataframe import SplinkDataFrame
 
 
+
 class SQLCache:
     def __init__(self):
         self._cache = {}
 
     # TODO: if we have path/string, do we want to think about behaviour if underlying
     # file changes between calls?
-    # TODO: might need to think about how equality works with WeakKeyDictionary in case
-    # there are any gotchas
-    # TODO: maybe check if string interning affects this in some way
-    def get(self, settings: SettingsCreator | dict[str, Any] | Path | str, new_uid: str) -> str | None:
-        settings_id = id(settings)
+    def get(
+        self, settings: SettingsCreator | dict[str, Any] | Path | str, new_uid: str
+    ) -> str | None:
+        settings_id = self._cache_id(settings)
         if settings_id not in self._cache:
             return None
         sql, cached_uid, settings_ref = self._cache[settings_id]
@@ -39,10 +39,33 @@ class SQLCache:
             sql = sql.replace(cached_uid, new_uid)
         return sql
 
-    def set(self, settings: SettingsCreator | dict[str, Any] | Path | str, sql: str | None, uid: str | None) -> None:
-        settings_id = id(settings)
+    def set(
+        self,
+        settings: SettingsCreator | dict[str, Any] | Path | str,
+        sql: str | None,
+        uid: str | None,
+    ) -> None:
         if sql is not None:
-            self._cache[settings_id] = (sql, uid, ref(settings))
+            settings_id = self._cache_id(settings)
+            # kind of hacky
+            # allows us to not need to special-case retrieval - will appear as though
+            # weakref is always live, so don't need to intervene
+            settings_ref = (
+                ref(settings)
+                if isinstance(settings, SettingsCreator)
+                else (lambda x: True)
+            )
+            self._cache[settings_id] = (sql, uid, settings_ref)
+
+    @staticmethod
+    def _cache_id(settings: SettingsCreator | dict[str, Any] | Path | str):
+        if isinstance(settings, SettingsCreator):
+            return str(id(settings))
+        if isinstance(settings, str):
+            return settings
+        if isinstance(settings, Path):
+            return str(settings)
+        # TODO: dict?
 
 
 _sql_cache = SQLCache()
