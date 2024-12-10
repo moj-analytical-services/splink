@@ -183,6 +183,8 @@ nav:
         - Choosing string comparators: "topic_guides/comparisons/choosing_comparators.ipynb"
         - Phonetic algorithms: "topic_guides/comparisons/phonetic.md"
         - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
+    - Training:
+      - Training rationale: "topic_guides/training/training_rationale.md"
     - Evaluation:
       - Overview: "topic_guides/evaluation/overview.md"
       - Model: "topic_guides/evaluation/model.md"
