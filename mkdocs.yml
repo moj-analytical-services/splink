@@ -110,6 +110,7 @@ nav:
       - 5. Predicting results: "demos/tutorials/05_Predicting_results.ipynb"
       - 6. Visualising predictions: "demos/tutorials/06_Visualising_predictions.ipynb"
       - 7. Evaluation: "demos/tutorials/07_Evaluation.ipynb"
+      - 8. Tips for building your own model: "demos/tutorials/08_building_your_own_model.md"
   - Examples:
       - Introduction: "demos/examples/examples_index.md"
       - DuckDB:
