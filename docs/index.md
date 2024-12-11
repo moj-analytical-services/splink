@@ -68,6 +68,8 @@ Here is a list of some of our known users and their use cases:
 	- [Office for Health Improvement and Disparities](https://www.gov.uk/government/organisations/office-for-health-improvement-and-disparities) linked Health and Justice data to [assess the pathways between probation and specialist alcohol and drug treatment services](https://www.gov.uk/government/statistics/pathways-between-probation-and-addiction-treatment-in-england#:~:text=Details,of%20Health%20and%20Social%20Care) as part of the [Better Outcomes through Linked Data programme](https://www.gov.uk/government/publications/ministry-of-justice-better-outcomes-through-linked-data-bold)
 	- [Ministry of Defence](https://www.gov.uk/government/organisations/ministry-of-defence) recently launched their [Veteran's Card system](https://www.gov.uk/government/news/hm-armed-forces-veteran-cards-will-officially-launch-in-the-new-year-following-a-successful-assessment-from-the-central-digital-and-data-office) which uses Splink to verify applicants against historic records. This project was shortlisted for the [Civil Service Awards](https://www.civilserviceawards.com/creative-solutions-award/)
  	- [Gateshead Council](https://www.gateshead.gov.uk/), in partnership with the [National Innovation Centre for Data](https://www.nicd.org.uk/) are creating a [single view of debt](https://nicd.org.uk/knowledge-hub/an-end-to-end-guide-to-overcoming-unique-identifier-challenges-with-splink)
+	- The Defense Health Agency (US Department of Defense) used Splink to identify duplicated hospital records across over 200 million data points in the military hospital data system
+
 
 === "Public Sector (International)"
 
