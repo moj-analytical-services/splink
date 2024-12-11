@@ -11,6 +11,9 @@ from splink.internals.graph_metrics import (
     _node_degree_sql,
     _size_density_centralisation_sql,
 )
+from splink.internals.misc import (
+    threshold_args_to_match_prob,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import (
@@ -38,19 +41,24 @@ class LinkerClustering:
         self,
         df_predict: SplinkDataFrame,
         threshold_match_probability: Optional[float] = None,
+        threshold_match_weight: Optional[float] = None,
     ) -> SplinkDataFrame:
         """Clusters the pairwise match predictions that result from
         `linker.inference.predict()` into groups of connected record using the connected
         components graph clustering algorithm
 
         Records with an estimated `match_probability` at or above
-        `threshold_match_probability` are considered to be a match (i.e. they represent
+        `threshold_match_probability` (or records with a `match_weight` at or above
+        `threshold_match_weight`) are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
-            threshold_match_probability (float): Pairwise comparisons with a
+            threshold_match_probability (float, optional): Pairwise comparisons with a
                 `match_probability` at or above this threshold are matched
+            threshold_match_weight (float, optional): Pairwise comparisons with a
+                `match_weight` at or above this threshold are matched. Only one of
+                threshold_match_probability or threshold_match_weight should be provided
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -91,6 +99,10 @@ class LinkerClustering:
         has_match_prob_col = "match_probability" in [
             c.unquote().name for c in df_predict.columns
         ]
+
+        threshold_match_probability = threshold_args_to_match_prob(
+            threshold_match_probability, threshold_match_weight
+        )
 
         if not has_match_prob_col and threshold_match_probability is not None:
             raise ValueError(

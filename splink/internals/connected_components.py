@@ -438,7 +438,7 @@ def solve_connected_components(
             SELECT representative FROM __splink__representatives_stable_{iteration}
         )
         """
-        pipeline.enqueue_sql(sql, "__splink__representatives_unstable")
+        pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
         prev_representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         # 1a. Thin neighbours table - we can drop all rows that refer to

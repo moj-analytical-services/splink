@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Literal, Optional, Union
 
 from splink.internals import comparison_level_library as cll
 from splink.internals.column_expression import ColumnExpression
@@ -340,6 +340,76 @@ class DistanceFunctionAtThresholds(ComparisonCreator):
             ],
             cll.ElseLevel(),
         ]
+
+    def create_output_column_name(self) -> str:
+        return self.col_expression.output_column_name
+
+
+class PairwiseStringDistanceFunctionAtThresholds(ComparisonCreator):
+    def __init__(
+        self,
+        col_name: str,
+        distance_function_name: Literal[
+            "levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"
+        ],
+        distance_threshold_or_thresholds: Union[Iterable[int | float], int | float],
+    ):
+        """
+        Represents a comparison of the *most similar pair* of values
+        where the first value is in the array data in `col_name` for the first record
+        and the second value is in the array data in `col_name` for the second record.
+        The comparison has three or more levels:
+
+        - Exact match between any pair of values
+        - User-selected string distance function levels at specified thresholds
+        - ...
+        - Anything else
+
+        For example, with distance_threshold_or_thresholds = [1, 3]
+        and distance_function 'levenshtein' the levels are:
+
+        - Exact match between any pair of values
+        - Levenshtein distance between the most similar pair of values <= 1
+        - Levenshtein distance between the most similar pair of values <= 3
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare.
+            distance_function_name (str): the name of the string distance function.
+                Must be one of "levenshtein," "damera_levenshtein," "jaro_winkler,"
+                or "jaro."
+            distance_threshold_or_thresholds (Union[float, list], optional): The
+                threshold(s) to use for the distance function level(s).
+        """
+        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        self.thresholds = [*thresholds_as_iterable]
+        self.distance_function_name = distance_function_name
+        super().__init__(col_name)
+
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        return [
+            cll.NullLevel(self.col_expression),
+            # It is assumed that any string distance treats identical
+            # arrays as the most similar
+            cll.ArrayIntersectLevel(self.col_expression, min_intersection=1),
+            *[
+                cll.PairwiseStringDistanceFunctionLevel(
+                    self.col_expression,
+                    distance_threshold=threshold,
+                    distance_function_name=self.distance_function_name,
+                )
+                for threshold in self.thresholds
+            ],
+            cll.ElseLevel(),
+        ]
+
+    def create_description(self) -> str:
+        comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
+        plural = "s" if len(self.thresholds) > 1 else ""
+        return (
+            f"Pairwise {self.distance_function_name} distance at threshold{plural} "
+            f"{comma_separated_thresholds_string} vs. anything else"
+        )
 
     def create_output_column_name(self) -> str:
         return self.col_expression.output_column_name

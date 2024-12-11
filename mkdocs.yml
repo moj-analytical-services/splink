@@ -110,6 +110,7 @@ nav:
       - 5. Predicting results: "demos/tutorials/05_Predicting_results.ipynb"
       - 6. Visualising predictions: "demos/tutorials/06_Visualising_predictions.ipynb"
       - 7. Evaluation: "demos/tutorials/07_Evaluation.ipynb"
+      - 8. Tips for building your own model: "demos/tutorials/08_building_your_own_model.md"
   - Examples:
       - Introduction: "demos/examples/examples_index.md"
       - DuckDB:
@@ -124,6 +125,7 @@ nav:
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
         - Cookbook: "demos/examples/duckdb/cookbook.ipynb"
+        - Investigating Bias in a Splink Model: "demos/examples/duckdb/bias_eval.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
@@ -181,6 +183,8 @@ nav:
         - Choosing string comparators: "topic_guides/comparisons/choosing_comparators.ipynb"
         - Phonetic algorithms: "topic_guides/comparisons/phonetic.md"
         - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
+    - Training:
+      - Training rationale: "topic_guides/training/training_rationale.md"
     - Evaluation:
       - Overview: "topic_guides/evaluation/overview.md"
       - Model: "topic_guides/evaluation/model.md"
@@ -194,6 +198,7 @@ nav:
         - How to compute graph metrics: "topic_guides/evaluation/clusters/how_to_compute_metrics.ipynb"
     - Performance:
       - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
+      - Performance of comparison functions: "topic_guides/performance/performance_of_comparison_functions.ipynb"
       - Spark Performance:
           - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
           - Salting blocking rules: "topic_guides/performance/salting.md"
@@ -223,6 +228,7 @@ nav:
       - Model Evaluation:
         - accuracy chart from labels table: "charts/accuracy_analysis_from_labels_table.ipynb"
         - threshold selection tool: charts/threshold_selection_tool_from_labels_table.ipynb
+    - LLM prompts: "topic_guides/llms/prompting_llms.md"
   - Contributing:
       - "dev_guides/index.md"
       - Contributing to Splink:

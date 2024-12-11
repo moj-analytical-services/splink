@@ -179,7 +179,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
                 "for an example.\n"
                 "You will not be able to use these functions in your linkage.\n"
                 "You can find the location of the jar by calling the following function"
-                ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                ":\nfrom splink.backends.spark import similarity_jar_location"
                 "\n\nFull error:\n"
                 f"{e}"
             )
@@ -235,6 +235,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__clusters_at_threshold",
             r"__splink__clusters_at_all_thresholds",
             r"__splink__stable_nodes_at_new_threshold",
+            r"__splink__clustering_output_final",
         ]
 
         num_partitions = self.num_partitions_on_repartition
@@ -262,6 +263,8 @@ class SparkAPI(DatabaseAPI[spark_df]):
         elif templated_name == "__splink__clusters_at_all_thresholds":
             num_partitions = math.ceil(num_partitions / 10)
         elif templated_name == "__splink__stable_nodes_at_new_threshold":
+            num_partitions = math.ceil(num_partitions / 10)
+        elif templated_name == "__splink__clustering_output_final":
             num_partitions = math.ceil(num_partitions / 10)
 
         if re.fullmatch(r"|".join(names_to_repartition), templated_name):

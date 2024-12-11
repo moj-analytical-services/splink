@@ -16,6 +16,7 @@ from splink.internals.comparison_library import (
     JaroWinklerAtThresholds,
     LevenshteinAtThresholds,
     NameComparison,
+    PairwiseStringDistanceFunctionAtThresholds,
     PostcodeComparison,
 )
 
@@ -28,6 +29,7 @@ __all__ = [
     "JaroAtThresholds",
     "JaroWinklerAtThresholds",
     "DistanceFunctionAtThresholds",
+    "PairwiseStringDistanceFunctionAtThresholds",
     "AbsoluteTimeDifferenceAtThresholds",
     "AbsoluteDateDifferenceAtThresholds",
     "ArrayIntersectAtSizes",

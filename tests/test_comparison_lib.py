@@ -65,6 +65,62 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
+@mark_with_dialects_excluding("sqlite", "postgres", "athena")
+def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    test_cases = [
+        {
+            "comparison": cl.PairwiseStringDistanceFunctionAtThresholds(
+                "forename",
+                "damerau_levenshtein",
+                distance_threshold_or_thresholds=[1, 2],
+            ),
+            "inputs": [
+                {
+                    "forename_l": ["Cally", "Sally"],
+                    "forename_r": ["Cally"],
+                    "expected_value": 3,
+                    "expected_label": "Array intersection size >= 1",
+                },
+                {
+                    "forename_l": ["Geof"],
+                    "forename_r": ["Geoff"],
+                    "expected_value": 2,
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
+                },
+                {
+                    "forename_l": ["Saly", "Barey"],
+                    "forename_r": ["Sally", "Barry"],
+                    "expected_value": 2,
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
+                },
+                {
+                    "forename_l": ["Carry", "Different"],
+                    "forename_r": ["Barry", "Completely"],
+                    "expected_value": 2,
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 1'",  # noqa: E501
+                },
+                {
+                    "forename_l": ["Carry", "Sabby"],
+                    "forename_r": ["Cally"],
+                    "expected_value": 1,
+                    "expected_label": "Min `damerau_levenshtein` distance of 'forename' <= than 2'",  # noqa: E501
+                },
+                {
+                    "forename_l": ["Completely", "Different"],
+                    "forename_r": ["Something", "Else"],
+                    "expected_value": 0,
+                    "expected_label": "All other comparisons",
+                },
+            ],
+        }
+    ]
+
+    run_comparison_vector_value_tests(test_cases, db_api)
+
+
 @mark_with_dialects_excluding()
 def test_set_to_lowercase(test_helpers, dialect):
     helper = test_helpers[dialect]

@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Optional
 
 from splink.internals.connected_components import solve_connected_components
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ascii_uid
+from splink.internals.misc import (
+    ascii_uid,
+    prob_to_match_weight,
+    threshold_args_to_match_prob,
+    threshold_args_to_match_prob_list,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -42,6 +48,7 @@ def cluster_pairwise_predictions_at_threshold(
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
     threshold_match_probability: Optional[float] = None,
+    threshold_match_weight: Optional[float] = None,
 ) -> SplinkDataFrame:
     """Clusters the pairwise match predictions into groups of connected records using
     the connected components graph clustering algorithm.
@@ -49,7 +56,7 @@ def cluster_pairwise_predictions_at_threshold(
     Records with an estimated match probability at or above threshold_match_probability
     are considered to be a match (i.e. they represent the same entity).
 
-    If no match probability column is provided, it is assumed that all edges
+    If no match probability or match weight is provided, it is assumed that all edges
     (comparison) are a match.
 
     If your node and edge column names follow Splink naming conventions, then you can
@@ -68,6 +75,8 @@ def cluster_pairwise_predictions_at_threshold(
             right edge IDs. If not provided, assumed to be f"{node_id_column_name}_r"
         threshold_match_probability (Optional[float]): Pairwise comparisons with a
             match_probability at or above this threshold are matched
+        threshold_match_weight (Optional[float]): Pairwise comparisons with a
+            match_weight at or above this threshold are matched
 
     Returns:
         SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -126,6 +135,10 @@ def cluster_pairwise_predictions_at_threshold(
         db_api,
         edge_id_column_name_left,
         edge_id_column_name_right,
+    )
+
+    threshold_match_probability = threshold_args_to_match_prob(
+        threshold_match_probability, threshold_match_weight
     )
 
     cc = solve_connected_components(
@@ -223,23 +236,38 @@ def _calculate_stable_clusters_at_new_threshold(
     return sqls
 
 
-def _threshold_to_str(x):
-    if x == 0.0:
-        return "0_0"
-    elif x == 1.0:
-        return "1_0"
+def _threshold_to_str(match_probability: float, is_match_weight: bool = False) -> str:
+    if is_match_weight:
+        if match_probability == 0.0:
+            return "mw_minus_inf"
+        elif match_probability == 1.0:
+            return "mw_inf"
+        else:
+            weight = prob_to_match_weight(match_probability)
+            formatted = f"{weight:.6f}".rstrip("0")
+            if formatted.endswith("."):
+                formatted = formatted[:-1]
+            return f"mw_{formatted.replace('.', '_')}"
     else:
-        return f"{x:.8f}".rstrip("0").replace(".", "_")
+        if match_probability == 0.0:
+            return "0_0"
+        elif match_probability == 1.0:
+            return "1_0"
+        formatted = f"{match_probability:.6f}".rstrip("0")
+        if formatted.endswith("."):
+            formatted = formatted[:-1]
+        return f"p_{formatted.replace('.', '_')}"
 
 
 def _generate_detailed_cluster_comparison_sql(
     all_results: dict[float, SplinkDataFrame],
     unique_id_col: str = "unique_id",
+    is_match_weight: bool = False,
 ) -> str:
     thresholds = sorted(all_results.keys())
 
     select_columns = [f"t0.{unique_id_col}"] + [
-        f"t{i}.cluster_id AS cluster_{_threshold_to_str(threshold)}"
+        f"t{i}.cluster_id AS cluster_{_threshold_to_str(threshold, is_match_weight)}"
         for i, threshold in enumerate(thresholds)
     ]
 
@@ -286,6 +314,13 @@ def _get_cluster_stats_sql(cc: SplinkDataFrame) -> list[dict[str, str]]:
     return sqls
 
 
+def _threshold_to_weight_for_table(p):
+    if p == 0 or p == 1:
+        return "NULL"
+    else:
+        return str(math.log2(p / (1 - p)))
+
+
 def _generate_cluster_summary_stats_sql(
     all_results: dict[float, SplinkDataFrame],
 ) -> str:
@@ -293,7 +328,11 @@ def _generate_cluster_summary_stats_sql(
 
     select_statements = [
         f"""
-        SELECT cast({threshold} as float) as threshold, *
+        SELECT
+            cast({threshold} as float) as threshold_match_probability,
+            cast({_threshold_to_weight_for_table(threshold)} as float)
+                as threshold_match_weight,
+            *
         FROM {all_results[threshold].physical_name}
         """
         for threshold in thresholds
@@ -309,7 +348,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     edges: AcceptableInputTableType,
     db_api: DatabaseAPISubClass,
     node_id_column_name: str,
-    match_probability_thresholds: list[float],
+    match_probability_thresholds: list[float] | None = None,
+    match_weight_thresholds: list[float] | None = None,
     edge_id_column_name_left: Optional[str] = None,
     edge_id_column_name_right: Optional[str] = None,
     output_cluster_summary_stats: bool = False,
@@ -330,8 +370,10 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edges (AcceptableInputTableType): The table containing edge information
         db_api (DatabaseAPISubClass): The database API to use for querying
         node_id_column_name (str): The name of the column containing node IDs
-        match_probability_thresholds (list[float]): List of thresholds to
-            compute clusters for
+        match_probability_thresholds (list[float] | None): List of match probability
+            thresholds to compute clusters for
+        match_weight_thresholds (list[float] | None): List of match weight thresholds
+            to compute clusters for
         edge_id_column_name_left (Optional[str]): The name of the column containing
             left edge IDs. If not provided, assumed to be f"{node_id_column_name}_l"
         edge_id_column_name_right (Optional[str]): The name of the column containing
@@ -409,7 +451,19 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
     else:
         edges_sdf = edges
 
-    match_probability_thresholds = sorted(match_probability_thresholds)
+    is_match_weight = (
+        match_weight_thresholds is not None and match_probability_thresholds is None
+    )
+
+    match_probability_thresholds = threshold_args_to_match_prob_list(
+        match_probability_thresholds, match_weight_thresholds
+    )
+
+    if match_probability_thresholds is None or len(match_probability_thresholds) == 0:
+        raise ValueError(
+            "Must provide either match_probability_thresholds "
+            "or match_weight_thresholds"
+        )
 
     initial_threshold = match_probability_thresholds.pop(0)
     all_results = {}
@@ -489,6 +543,8 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
             nodes_in_play,
             edges_in_play,
             node_id_column_name=node_id_column_name,
+            edge_id_column_name_left=edge_id_column_name_left,
+            edge_id_column_name_right=edge_id_column_name_right,
             db_api=db_api,
             threshold_match_probability=new_threshold,
         )
@@ -530,6 +586,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         sql = _generate_detailed_cluster_comparison_sql(
             all_results,
             unique_id_col=node_id_column_name,
+            is_match_weight=is_match_weight,
         )
 
     pipeline = CTEPipeline()

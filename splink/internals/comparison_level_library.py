@@ -610,6 +610,105 @@ class DistanceFunctionLevel(ComparisonLevelCreator):
         )
 
 
+class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: str | ColumnExpression,
+        distance_function_name: Literal[
+            "levenshtein", "damerau_levenshtein", "jaro_winkler", "jaro"
+        ],
+        distance_threshold: Union[int, float],
+    ):
+        """A comparison level using the *most similar* string distance
+        between any pair of values between arrays in an array column.
+
+        The function given by `distance_function_name` must be one of
+        "levenshtein," "damera_levenshtein," "jaro_winkler," or "jaro."
+
+        Args:
+            col_name (str | ColumnExpression): Input column name
+            distance_function_name (str): the name of the string distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+        """
+
+        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
+        self.distance_function_name = validate_categorical_parameter(
+            allowed_values=[
+                "levenshtein",
+                "damerau_levenshtein",
+                "jaro_winkler",
+                "jaro",
+            ],
+            parameter_value=distance_function_name,
+            level_name=self.__class__.__name__,
+            parameter_name="distance_function_name",
+        )
+        self.distance_threshold = validate_numeric_parameter(
+            lower_bound=0,
+            upper_bound=float("inf"),
+            parameter_value=distance_threshold,
+            level_name=self.__class__.__name__,
+            parameter_name="distance_threshold",
+        )
+
+    @unsupported_splink_dialects(["sqlite", "postgres", "athena"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        self.col_expression.sql_dialect = sql_dialect
+        col = self.col_expression
+        distance_function_name_transpiled = {
+            "levenshtein": sql_dialect.levenshtein_function_name,
+            "damerau_levenshtein": sql_dialect.damerau_levenshtein_function_name,
+            "jaro_winkler": sql_dialect.jaro_winkler_function_name,
+            "jaro": sql_dialect.jaro_function_name,
+        }[self.distance_function_name]
+
+        aggregator_func = {
+            "min": sql_dialect.array_min_function_name,
+            "max": sql_dialect.array_max_function_name,
+        }[self._aggregator()]
+
+        return f"""{aggregator_func}(
+                    {sql_dialect.array_transform_function_name}(
+                        flatten(
+                            {sql_dialect.array_transform_function_name}(
+                                {col.name_l},
+                                x -> {sql_dialect.array_transform_function_name}(
+                                    {col.name_r},
+                                    y -> [x, y]
+                                )
+                            )
+                        ),
+                        pair -> {distance_function_name_transpiled}(
+                            pair[{sql_dialect.array_first_index}],
+                            pair[{sql_dialect.array_first_index + 1}]
+                        )
+                    )
+                ) {self._comparator()} {self.distance_threshold}"""
+
+    def create_label_for_charts(self) -> str:
+        col = self.col_expression
+        return (
+            f"{self._aggregator().title()} `{self.distance_function_name}` "
+            f"distance of '{col.label}' "
+            f"{self._comparator()} than {self.distance_threshold}'"
+        )
+
+    def _aggregator(self):
+        return "max" if self._higher_is_more_similar() else "min"
+
+    def _comparator(self):
+        return ">=" if self._higher_is_more_similar() else "<="
+
+    def _higher_is_more_similar(self):
+        return {
+            "levenshtein": False,
+            "damerau_levenshtein": False,
+            "jaro_winkler": True,
+            "jaro": True,
+        }[self.distance_function_name]
+
+
 DateMetricType = Literal["second", "minute", "hour", "day", "month", "year"]
 
 
