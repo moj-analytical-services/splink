@@ -119,15 +119,9 @@ if __name__ == "__main__":
     mds_to_append = [
         "/docs/index.md",
         "/docs/getting_started.md",
+        "/docs/demos/tutorials/08_building_your_own_model.md",
     ]
     extract_and_append_md_content(mds_to_append, output_filename)
-
-    # Fetch and append content from the URL
-    url = "https://gist.githubusercontent.com/RobinL/edb10e93caeaf47c675cbfa189e4e30c/raw/fbe773db3002663dd3ddb439e38d2a549358e713/top_tips.md"  # NOQA: E501
-    splink_tips = fetch_url_content(url)
-    with open(output_filename, "a", encoding="utf-8") as f:
-        f.write("\n\nSplink Tips:\n")
-        f.write(splink_tips)
 
     # Add the blog articles
     blog_urls = [

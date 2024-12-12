@@ -2,9 +2,9 @@
 
 We provide two files that summarise the Splink docs to help you use Splink with LLMs:
 
-[Concise Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/5ddbe58d2cf9e8755a211d6091ce5ad6511fe506/llm_context_short.txt) - around 25,000 tokens
+[Concise Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/dc656a3c698848473050ba6fd56c6595c7837b52/llm_context_short.txt) - around 25,000 tokens
 
-[Comprehensive Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/5ddbe58d2cf9e8755a211d6091ce5ad6511fe506/llm_context_long.txt) - around 83,000 tokens
+[Comprehensive Splink Documentation Summary](https://gist.githubusercontent.com/RobinL/2257a0253d80ab8e651a5ec08bc3d00a/raw/dc656a3c698848473050ba6fd56c6595c7837b52/llm_context_long.txt) - around 90,000 tokens
 
 At present, only the concise one is short enough for the ChatGPT GUI. The longer one fits in the Claude long context (200k tokens) model.
 
@@ -123,4 +123,5 @@ I have also created a knowledgebase file by scraping all Github issues and discu
 I've found Gemini Pro 1.5 (2 million context length) is able to process these files effectively.
 
 [Knowledgebase prompt - 1.6 million tokens](https://gist.github.com/RobinL/f241917bc4246911f12aed2b372d7f43#file-splink_knowledge_base-txt)
+
 [Create knowledgebase script](https://gist.github.com/RobinL/f241917bc4246911f12aed2b372d7f43#file-creation_script-py)
