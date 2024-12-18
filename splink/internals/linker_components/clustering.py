@@ -282,11 +282,11 @@ class LinkerClustering:
 
         sql = f"""
         select
-            cc.cluster_id,
+            oo.cluster_id,
             {select_columns_sql}
-        from __splink__clustering_output_final as cc
+        from {oo.templated_name} as oo
         left join __splink__df_concat
-        on cc.node_id = {uid_concat_nodes}
+        on oo.node_id = {uid_concat_nodes}
         """
         pipeline.enqueue_sql(sql, "__splink__df_clustered_with_input_data")
 

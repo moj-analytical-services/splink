@@ -208,4 +208,18 @@ def one_to_one_clustering(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-    return representatives
+    pipeline = CTEPipeline()
+
+    sql = f"""
+    select node_id as {node_id_column_name}, representative as cluster_id 
+    from {representatives.physical_name}
+    """ 
+
+    pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
+
+    final_result = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    representatives.drop_table_from_database_and_remove_from_cache()
+    neighbours.drop_table_from_database_and_remove_from_cache()
+
+    return final_result
