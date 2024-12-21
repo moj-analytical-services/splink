@@ -1,0 +1,33 @@
+code.language-python > span:not(:first-child) {
+  font-size: small;
+  color: rgb(113 112 112);
+}
+
+.vega-embed details,
+.vega-embed summary details,
+.vega-embed summary,
+.vega-embed summary::before,
+.vega-embed summary::after {
+  all: unset;
+}
+
+/* 'This one weird trick will increase specificity'! :awesome: */
+/* This deals with the problem of mkdocs overriding the styles */
+/* on the summary button on vega embed charts */
+.vega-embed.vega-embed.vega-embed summary {
+  list-style: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 6px;
+  z-index: 1000;
+  background: white;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  color: #1b1e23;
+  border: 1px solid #aaa;
+  border-radius: 999px;
+  opacity: 0.2;
+  transition: opacity 0.4s ease-in;
+  cursor: pointer;
+  line-height: 0px;
+}
