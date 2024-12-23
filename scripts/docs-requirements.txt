@@ -11,7 +11,7 @@ mkdocstrings==0.25.1
 mkdocstrings-python==1.10.5
 mkdocstrings-python-legacy==0.2.3
 mkdocs-click==0.8.1
-jinja2==3.0.3
+jinja2==3.1.5
 mkdocs-charts-plugin==0.0.10
 neoteroi-mkdocs==1.0.5
 mkdocs-video==1.5.0
