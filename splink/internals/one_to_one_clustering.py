@@ -10,6 +10,7 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
+
 def one_to_one_clustering(
     nodes_table: SplinkDataFrame,
     edges_table: SplinkDataFrame,
@@ -23,13 +24,8 @@ def one_to_one_clustering(
 ) -> SplinkDataFrame:
     """One to one clustering algorithm.
 
-    This function clusters together records so that at most one record from each dataset is in each cluster.
-
-    Args:
-        
-    Returns:
-        SplinkDataFrame: A dataframe containing the connected components list
-        for your link or dedupe job.
+    This function clusters together records so that at most one record from each
+    dataset is in each cluster.
 
     """
 
@@ -39,7 +35,8 @@ def one_to_one_clustering(
     if threshold_match_probability is None:
         match_prob_expr = ""
 
-    # Add 'reverse-edges' so that the algorithm can rank all incoming and outgoing edges
+    # Add 'reverse-edges' so that the algorithm can rank all incoming and outgoing
+    # edges
     sql = f"""
     select
         {edge_id_column_name_left} as node_id,
@@ -82,9 +79,14 @@ def one_to_one_clustering(
 
         pipeline = CTEPipeline([neighbours, prev_representatives])
 
-        # might need to quote the value here? 
-        contains_expr = ", ".join([f"max(source_dataset == '{sd}') as contains_{sd}" for sd in source_datasets])
-        
+        # might need to quote the value here?
+        contains_expr = ", ".join(
+            [
+                f"max(source_dataset == '{sd}') as contains_{sd}"
+                for sd in source_datasets
+            ]
+        )
+
         sql = f"""
         select
             representative,
@@ -93,55 +95,66 @@ def one_to_one_clustering(
         group by representative
         """
 
-        pipeline.enqueue_sql(sql, f"__splink__representative_contains_flags_{iteration}")
+        pipeline.enqueue_sql(
+            sql, f"__splink__representative_contains_flags_{iteration}"
+        )
 
         sql = f"""
         select
             r.node_id,
             r.source_dataset,
             cf.*
-        from {prev_representatives.physical_name} as r 
+        from {prev_representatives.physical_name} as r
         inner join __splink__representative_contains_flags_{iteration} as cf
         on r.representative = cf.representative
         """
 
-        pipeline.enqueue_sql(sql, f"__splink__df_representatives_with_flags_{iteration}")
+        pipeline.enqueue_sql(
+            sql, f"__splink__df_representatives_with_flags_{iteration}"
+        )
 
-        duplicate_criteria = " or ".join([f"(l.contains_{sd} and r.contains_{sd})" for sd in source_datasets])
-    
-        # must be calculated every iteration since the where condition changes as the clustering progresses
+        duplicate_criteria = " or ".join(
+            [f"(l.contains_{sd} and r.contains_{sd})" for sd in source_datasets]
+        )
+
+        # must be calculated every iteration since the where condition changes as
+        # the clustering progresses
         sql = f"""
-        select 
+        select
             neighbours.node_id,
             neighbours.neighbour,
             {duplicate_criteria} as duplicate_criteria,
-            row_number() over (partition by l.representative order by match_probability desc) as rank_l,
-            row_number() over (partition by r.representative order by match_probability desc) as rank_r,
+            row_number() over (
+                partition by l.representative order by match_probability desc
+            ) as rank_l,
+            row_number() over (
+                partition by r.representative order by match_probability desc
+            ) as rank_r,
         from {neighbours.physical_name} as neighbours
         inner join __splink__df_representatives_with_flags_{iteration} as l
         on neighbours.node_id = l.node_id
-        inner join __splink__df_representatives_with_flags_{iteration} as r 
+        inner join __splink__df_representatives_with_flags_{iteration} as r
         on neighbours.neighbour = r.node_id
         where l.representative <> r.representative
         """
-        
-        # note for the future: a strategy to handle ties would go right here. 
-        
+
+        # note for the future: a strategy to handle ties would go right here.
+
         pipeline.enqueue_sql(sql, f"__splink__df_ranked_{iteration}")
-    
+
         sql = f"""
         select
             node_id,
             neighbour
-        from __splink__df_ranked_{iteration} 
+        from __splink__df_ranked_{iteration}
         where rank_l = 1 and rank_r = 1 and not duplicate_criteria
         """
 
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_{iteration}")
-    
+
         sql = f"""
         select
-        source.node_id, 
+        source.node_id,
         min(source.representative) as representative
         from
         (
@@ -151,9 +164,9 @@ def one_to_one_clustering(
             from __splink__df_neighbours_{iteration} as neighbours
             left join {prev_representatives.physical_name} as repr_neighbour
             on neighbours.neighbour = repr_neighbour.node_id
-            
+
             union all
-            
+
             select
                 node_id,
                 representative
@@ -162,8 +175,8 @@ def one_to_one_clustering(
         group by source.node_id
         """
 
-        pipeline.enqueue_sql(sql, f"r")
-    
+        pipeline.enqueue_sql(sql, "r")
+
         sql = f"""
         select
             r.node_id,
@@ -186,7 +199,7 @@ def one_to_one_clustering(
 
         # assess if the exit condition has been met
         sql = f"""
-        select 
+        select
             count(*) as count_of_nodes_needing_updating
         from {representatives.physical_name}
         where needs_updating
@@ -211,9 +224,9 @@ def one_to_one_clustering(
     pipeline = CTEPipeline()
 
     sql = f"""
-    select node_id as {node_id_column_name}, representative as cluster_id 
+    select node_id as {node_id_column_name}, representative as cluster_id
     from {representatives.physical_name}
-    """ 
+    """
 
     pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
 

@@ -5,9 +5,6 @@ from typing import TYPE_CHECKING, List, Optional
 from splink.internals.connected_components import (
     solve_connected_components,
 )
-from splink.internals.one_to_one_clustering import (
-    one_to_one_clustering,
-)
 from splink.internals.edge_metrics import compute_edge_metrics
 from splink.internals.graph_metrics import (
     GraphMetricsResults,
@@ -16,6 +13,9 @@ from splink.internals.graph_metrics import (
 )
 from splink.internals.misc import (
     threshold_args_to_match_prob,
+)
+from splink.internals.one_to_one_clustering import (
+    one_to_one_clustering,
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -181,7 +181,7 @@ class LinkerClustering:
         return df_clustered_with_input_data
 
 
-    def cluster_single_best_links_at_threshold(
+    def cluster_using_single_best_links(
         self,
         df_predict: SplinkDataFrame,
         source_datasets: List[str],
@@ -192,7 +192,37 @@ class LinkerClustering:
         Clusters the pairwise match predictions that result from
         `linker.inference.predict()` into groups of connected records using a single
         best links method that restricts the clusters to have at most one record from
-        each source dataset in the `source_datasets` list. 
+        each source dataset in the `source_datasets` list.
+
+        This method will include a record into a cluster if it is mutually the best
+        match for the record and for the cluster, and if adding the record will not
+        violate the criteria of having at most one record from each of the
+        `source_datasets`.
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            source_datasets (List[str]): The source datasets which should be treated
+                as having no duplicates. Clusters will not form with more than
+                one record from each of these datasets. This can be a subset of all of
+                the source datasets in the input data.
+            threshold_match_probability (float, optional): Pairwise comparisons with a
+                `match_probability` at or above this threshold are matched
+            threshold_match_weight (float, optional): Pairwise comparisons with a
+                `match_weight` at or above this threshold are matched. Only one of
+                threshold_match_probability or threshold_match_weight should be provided
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
+                into groups based on the desired match threshold and the source datasets
+                for which duplicates are not allowed.
+
+        Examples:
+            ```python
+            df_predict = linker.inference.predict(threshold_match_probability=0.5)
+            df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
+                df_predict, source_datasets=["A", "B"], threshold_match_probability=0.95
+            )
+            ```
         """
         linker = self._linker
         db_api = linker._db_api
@@ -206,7 +236,9 @@ class LinkerClustering:
         uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         uid_concat_nodes = _composite_unique_id_from_nodes_sql(uid_cols, None)
 
-        source_dataset_column_name = linker._settings_obj.column_info_settings.source_dataset_column_name
+        source_dataset_column_name = (
+            linker._settings_obj.column_info_settings.source_dataset_column_name
+        )
 
         sql = f"""
         select
@@ -300,7 +332,6 @@ class LinkerClustering:
             )
 
         return df_clustered_with_input_data
-
 
     def _compute_metrics_nodes(
         self,
