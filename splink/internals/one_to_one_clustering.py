@@ -82,7 +82,7 @@ def one_to_one_clustering(
         # might need to quote the value here?
         contains_expr = ", ".join(
             [
-                f"max(source_dataset == '{sd}') as contains_{sd}"
+                f"max(source_dataset = '{sd}') as contains_{sd}"
                 for sd in source_datasets
             ]
         )
