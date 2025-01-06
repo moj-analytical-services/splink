@@ -180,7 +180,6 @@ class LinkerClustering:
 
         return df_clustered_with_input_data
 
-
     def cluster_using_single_best_links(
         self,
         df_predict: SplinkDataFrame,
