@@ -129,7 +129,7 @@ def one_to_one_clustering(
             ) as rank_l,
             row_number() over (
                 partition by r.representative order by match_probability desc
-            ) as rank_r,
+            ) as rank_r
         from {neighbours.physical_name} as neighbours
         inner join __splink__df_representatives_with_flags_{iteration} as l
         on neighbours.node_id = l.node_id
@@ -160,7 +160,7 @@ def one_to_one_clustering(
         (
             select
                 neighbours.node_id,
-                repr_neighbour.representative as representative,
+                repr_neighbour.representative as representative
             from __splink__df_neighbours_{iteration} as neighbours
             left join {prev_representatives.physical_name} as repr_neighbour
             on neighbours.neighbour = repr_neighbour.node_id
