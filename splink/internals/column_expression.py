@@ -4,7 +4,7 @@ import re
 import string
 from copy import copy
 from functools import partial
-from typing import Protocol, Union
+from typing import Literal, Protocol, Union
 
 import sqlglot
 
@@ -244,6 +244,36 @@ class ColumnExpression:
         op = partial(
             clone._try_parse_timestamp_dialected,
             timestamp_format=timestamp_format,
+        )
+        clone.operations.append(op)
+
+        return clone
+
+    def _access_extreme_array_element_dialected(
+        self,
+        name: str,
+        sql_dialect: SplinkDialect,
+        first_or_last: Literal["first", "last"],
+    ) -> str:
+        return sql_dialect.access_extreme_array_element(
+            name, first_or_last=first_or_last
+        )
+
+    def access_extreme_array_element(
+        self, first_or_last: Literal["first", "last"]
+    ) -> "ColumnExpression":
+        """
+        Applies a transformation to access either the first or the last element
+        of an array
+
+        Args:
+            first_or_last (str): 'first' for returning the first elemen of the array,
+                'last' for the last element
+        """
+        clone = self._clone()
+        op = partial(
+            clone._access_extreme_array_element_dialected,
+            first_or_last=first_or_last,
         )
         clone.operations.append(op)
 
