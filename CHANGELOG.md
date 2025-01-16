@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `ColumnExpression` now supports accessing first or last element of an array column via method `access_extreme_array_element()` ([#2520](https://github.com/moj-analytical-services/splink/pull/2585))
+- `ColumnExpression` now supports accessing first or last element of an array column via method `access_extreme_array_element()` ([#2585](https://github.com/moj-analytical-services/splink/pull/2585)), or converting string literals to `NULL` via `nullif()` ([#2586](https://github.com/moj-analytical-services/splink/pull/2586))
 
 ### Deprecated
 
