@@ -927,7 +927,7 @@ class CosineSimilarityLevel(ComparisonLevelCreator):
 
 
 class ArrayIntersectLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str | ColumnExpression, min_intersection: int):
+    def __init__(self, col_name: str | ColumnExpression, min_intersection: int = 1):
         """Represents a comparison level based around the size of an intersection of
         arrays
 
