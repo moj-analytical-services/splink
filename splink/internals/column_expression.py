@@ -201,6 +201,34 @@ class ColumnExpression:
 
         return clone
 
+    def _nullif_dialected(
+        self,
+        name: str,
+        null_value: str,
+        sql_dialect: SplinkDialect,
+    ) -> str:
+        substr_sql = sqlglot.parse_one(f"nullif(___col___, '{null_value}')").sql(
+            dialect=sql_dialect.sqlglot_dialect
+        )
+        return substr_sql.replace("___col___", name)
+
+    def nullif(self, null_value: str) -> "ColumnExpression":
+        """
+        Applies a nullif transform to the input expression,
+        with the specified string value that should be converted to NULL.
+
+        Args:
+            null_value (str): The string literal that should be converted to NULL.
+        """
+        clone = self._clone()
+        op = partial(
+            clone._nullif_dialected,
+            null_value=null_value,
+        )
+        clone.operations.append(op)
+
+        return clone
+
     def _try_parse_date_dialected(
         self,
         name: str,
