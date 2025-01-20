@@ -65,7 +65,7 @@ class SQLCache:
     @staticmethod
     def _cache_id(
         settings: SettingsCreator | dict[str, Any] | Path | str, sql_dialect_str: str
-    ):
+    ) -> str:
         if isinstance(settings, SettingsCreator):
             return str(id(settings))
         if isinstance(settings, str):

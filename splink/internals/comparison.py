@@ -61,19 +61,19 @@ class Comparison:
 
     def __init__(
         self,
-        comparison_levels: List[ComparisonLevel | dict],
+        comparison_levels: List[ComparisonLevel | dict[str, Any]],
         sqlglot_dialect: str,
         output_column_name: str = None,
         comparison_description: str = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
-        comparison_levels: list[ComparisonLevel] = [
+        comparison_levels_as_objs: list[ComparisonLevel] = [
             ComparisonLevel(**cl, sqlglot_dialect=sqlglot_dialect)
             if isinstance(cl, dict)
             else cl
             for cl in comparison_levels
         ]
-        self.comparison_levels: list[ComparisonLevel] = comparison_levels
+        self.comparison_levels: list[ComparisonLevel] = comparison_levels_as_objs
 
         self._column_info_settings: Optional[ColumnInfoSettings] = column_info_settings
 
