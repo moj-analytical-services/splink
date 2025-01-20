@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 from typing import Any
 from weakref import ref
@@ -15,7 +14,6 @@ from splink.internals.predict import (
 )
 from splink.internals.settings_creator import SettingsCreator
 from splink.internals.splink_dataframe import SplinkDataFrame
-
 
 
 class SQLCache:
@@ -40,7 +38,6 @@ class SQLCache:
             del self._cache[settings_id]
             return None
 
-        sql, cached_uid = self._cache[settings]
         if cached_uid:
             sql = sql.replace(cached_uid, new_uid)
         return sql
@@ -138,9 +135,7 @@ def compare_records(
     df_records_right.templated_name = "__splink__compare_records_right"
 
     if use_sql_from_cache:
-        cached_sql = _sql_cache.get(
-            settings, uid, sql_dialect_str=sql_dialect_str
-        )
+        cached_sql = _sql_cache.get(settings, uid, sql_dialect_str=sql_dialect_str)
         if cached_sql:
             return db_api._sql_to_splink_dataframe(
                 cached_sql,
