@@ -354,3 +354,67 @@ def test_realtime_cache_different_settings(test_helpers, dialect):
         df1, df2, settings_1, db_api, use_sql_from_cache=True
     ).as_record_dict()[0]["match_weight"]
     assert res1 == pytest.approx(res1_again)
+
+
+@mark_with_dialects_excluding()
+def test_realtime_cache_different_settings_dict(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    df1 = pd.DataFrame(
+        [
+            {
+                "unique_id": 0,
+                "first_name": "Julia",
+                "surname": "Taylor",
+                "city": "London",
+                "email": "julia@email.com",
+            }
+        ]
+    )
+
+    df2 = pd.DataFrame(
+        [
+            {
+                "unique_id": 1,
+                "first_name": "Julia",
+                "surname": "Taylor",
+                "city": "London",
+                "email": "bad@address.com",
+            }
+        ]
+    )
+
+    settings_1 = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+        "blocking_rules_to_generate_predictions": [block_on("first_name")],
+    }
+
+    settings_2 = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("email"),
+        ],
+        "blocking_rules_to_generate_predictions": [block_on("first_name")],
+    }
+
+    res1 = compare_records(df1, df2, settings_1, db_api, use_sql_from_cache=True)
+    res1 = res1.as_record_dict()[0]["match_weight"]
+
+    res2 = compare_records(df1, df2, settings_2, db_api, use_sql_from_cache=True)
+    res2 = res2.as_record_dict()[0]["match_weight"]
+
+    # should be different results as different model
+    assert res1 != pytest.approx(res2)
+
+    res1_again = compare_records(df1, df2, settings_1, db_api, use_sql_from_cache=True)
+    res1_again = res1_again.as_record_dict()[0]["match_weight"]
+    # using cache
+    assert res1 == pytest.approx(res1_again)

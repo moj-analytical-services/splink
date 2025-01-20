@@ -140,7 +140,7 @@ class ComparisonCreator(ABC):
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
             "comparison_levels": [
-                cl.get_comparison_level(sql_dialect_str)
+                cl.get_comparison_level(sql_dialect_str).as_dict()
                 for cl in self.get_configured_comparison_levels()
             ],
         }
