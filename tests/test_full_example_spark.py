@@ -70,6 +70,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
 
     completeness_chart(df_spark, spark_api)
 
+    spark.sql("USE DATABASE `1111`")
     linker = Linker(
         df_spark,
         settings,
@@ -77,7 +78,6 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
             spark_session=spark,
             break_lineage_method="checkpoint",
             num_partitions_on_repartition=2,
-            database="1111",
         ),
     )
 
