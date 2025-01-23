@@ -183,7 +183,7 @@ class LinkerClustering:
     def cluster_using_single_best_links(
         self,
         df_predict: SplinkDataFrame,
-        source_datasets: List[str],
+        duplicate_free_datasets: List[str],
         threshold_match_probability: Optional[float] = None,
         threshold_match_weight: Optional[float] = None,
     ) -> SplinkDataFrame:
@@ -191,17 +191,17 @@ class LinkerClustering:
         Clusters the pairwise match predictions that result from
         `linker.inference.predict()` into groups of connected records using a single
         best links method that restricts the clusters to have at most one record from
-        each source dataset in the `source_datasets` list.
+        each source dataset in the `duplicate_free_datasets` list.
 
         This method will include a record into a cluster if it is mutually the best
         match for the record and for the cluster, and if adding the record will not
         violate the criteria of having at most one record from each of the
-        `source_datasets`.
+        `duplicate_free_datasets`.
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
-            source_datasets (List[str]): The source datasets which should be treated
-                as having no duplicates. Clusters will not form with more than
+            duplicate_free_datasets: (List[str]): The source datasets which should be
+                treated as having no duplicates. Clusters will not form with more than
                 one record from each of these datasets. This can be a subset of all of
                 the source datasets in the input data.
             threshold_match_probability (float, optional): Pairwise comparisons with a
@@ -219,7 +219,9 @@ class LinkerClustering:
             ```python
             df_predict = linker.inference.predict(threshold_match_probability=0.5)
             df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
-                df_predict, source_datasets=["A", "B"], threshold_match_probability=0.95
+                df_predict,
+                duplicate_free_datasets=["A", "B"],
+                threshold_match_probability=0.95
             )
             ```
         """
@@ -294,7 +296,7 @@ class LinkerClustering:
             source_dataset_column_name="source_dataset",
             edge_id_column_name_left="node_id_l",
             edge_id_column_name_right="node_id_r",
-            source_datasets=source_datasets,
+            duplicate_free_datasets=duplicate_free_datasets,
             db_api=db_api,
             threshold_match_probability=threshold_match_probability,
         )

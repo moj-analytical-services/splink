@@ -40,7 +40,9 @@ def test_single_best_links_correctness(test_helpers, dialect):
     )
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
-        df_predict, source_datasets=["a", "b", "c"], threshold_match_probability=0.5
+        df_predict,
+        duplicate_free_datasets=["a", "b", "c"],
+        threshold_match_probability=0.5,
     )
 
     result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
@@ -56,7 +58,7 @@ def test_single_best_links_correctness(test_helpers, dialect):
                 "a-__-3",
                 "a-__-3",
                 "a-__-6",
-                "b-__-7",
+                "a-__-6",
                 "c-__-8",
             ],
             "unique_id": [0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -103,7 +105,7 @@ def test_single_best_links_ties(test_helpers, dialect):
     )
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
-        df_predict, source_datasets=["a", "b"], threshold_match_probability=0.5
+        df_predict, duplicate_free_datasets=["a", "b"], threshold_match_probability=0.5
     )
 
     result = df_clusters.as_pandas_dataframe()
@@ -143,7 +145,9 @@ def test_single_best_links_one_to_one(test_helpers, dialect):
     df_predict = linker.inference.predict(0.5)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
-        df_predict, source_datasets=["a", "b"], threshold_match_probability=0.5
+        df_predict,
+        duplicate_free_datasets=["a", "b"],
+        threshold_match_probability=0.5,
     )
 
     result = linker.misc.query_sql(

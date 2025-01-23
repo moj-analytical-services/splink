@@ -18,7 +18,7 @@ def one_to_one_clustering(
     source_dataset_column_name: str,
     edge_id_column_name_left: str,
     edge_id_column_name_right: str,
-    source_datasets: List[str],
+    duplicate_free_datasets: List[str],
     db_api: DatabaseAPISubClass,
     threshold_match_probability: Optional[float],
 ) -> SplinkDataFrame:
@@ -83,7 +83,7 @@ def one_to_one_clustering(
         contains_expr = ", ".join(
             [
                 f"max(cast(source_dataset = '{sd}' as int)) > 0 as contains_{sd}"
-                for sd in source_datasets
+                for sd in duplicate_free_datasets
             ]
         )
 
@@ -114,7 +114,7 @@ def one_to_one_clustering(
         )
 
         duplicate_criteria = " or ".join(
-            [f"(l.contains_{sd} and r.contains_{sd})" for sd in source_datasets]
+            [f"(l.contains_{sd} and r.contains_{sd})" for sd in duplicate_free_datasets]
         )
 
         # must be calculated every iteration since the where condition changes as
@@ -123,7 +123,6 @@ def one_to_one_clustering(
         select
             neighbours.node_id,
             neighbours.neighbour,
-            {duplicate_criteria} as duplicate_criteria,
             row_number() over (
                 partition by l.representative order by match_probability desc
             ) as rank_l,
@@ -135,7 +134,7 @@ def one_to_one_clustering(
         on neighbours.node_id = l.node_id
         inner join __splink__df_representatives_with_flags_{iteration} as r
         on neighbours.neighbour = r.node_id
-        where l.representative <> r.representative
+        where l.representative <> r.representative and not ({duplicate_criteria})
         """
 
         # note for the future: a strategy to handle ties would go right here.
@@ -147,7 +146,7 @@ def one_to_one_clustering(
             node_id,
             neighbour
         from __splink__df_ranked_{iteration}
-        where rank_l = 1 and rank_r = 1 and not duplicate_criteria
+        where rank_l = 1 and rank_r = 1
         """
 
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_{iteration}")
