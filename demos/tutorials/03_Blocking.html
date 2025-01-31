@@ -1,0 +1,5981 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://moj-analytical-services.github.io/splink/demos/tutorials/03_Blocking.html">
+      
+      
+        <link rel="prev" href="02_Exploratory_analysis.html">
+      
+      
+        <link rel="next" href="04_Estimating_model_parameters.html">
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS feed" href="../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="RSS feed of updated content" href="../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.2">
+    
+    
+      
+        <title>3. Blocking - Splink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../css/custom.css">
+    
+      <link rel="stylesheet" href="../../css/neoteroi-mkdocs.css">
+    
+      <link rel="stylesheet" href="../../css/ansi-colours.css">
+    
+      <link rel="stylesheet" href="../../css/jupyter-cells.css">
+    
+      <link rel="stylesheet" href="../../css/pandas-dataframe.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function n(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],n("js",new Date),n("config","G-L6JT8NK528"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&n("event","search",{search_term:this.value})}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");n("event","feedback",{page:t,data:e}),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){n("config","G-L6JT8NK528",{page_path:e.pathname})})});var e=document.createElement("script");e.async=!0,e.src="https://www.googletagmanager.com/gtag/js?id=G-L6JT8NK528",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#choosing-blocking-rules-to-optimise-runtime" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+
+    <center> Still using Splink 3 and looking for the old docs?  You can find them  <a href ="https://moj-analytical-services.github.io/splink3_legacy_docs/index.html">here</a></center>
+
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Splink" class="md-header__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../img/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Splink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3. Blocking
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting_started.html" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="00_Tutorial_Introduction.html" class="md-tabs__link">
+          
+  
+    
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/examples_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api_docs/api_docs_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  API Docs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../topic_guides/topic_guides_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../dev_guides/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../blog/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Splink" class="md-nav__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../img/favicon.ico" alt="logo">
+
+    </a>
+    Splink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="00_Tutorial_Introduction.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="01_Prerequisites.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1. Data prep prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="02_Exploratory_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2. Exploratory analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    3. Blocking
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="03_Blocking.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    3. Blocking
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#blocking-rules-in-splink" class="md-nav__link">
+    <span class="md-ellipsis">
+      Blocking rules in Splink
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devising-effective-blocking-rules-for-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devising effective blocking rules for prediction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#splink-tools-to-help-choose-your-blocking-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splink tools to help choose your blocking rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Splink tools to help choose your blocking rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#counting-the-number-of-comparisons-created-by-a-single-blocking-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Counting the number of comparisons created by a single blocking rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-worst-offending-values-for-your-blocking-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 'worst offending' values for your blocking rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counting-the-number-of-comparisons-created-by-a-list-of-blocking-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Counting the number of comparisons created by a list of blocking rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#digging-deeper-understanding-why-certain-blocking-rules-create-large-numbers-of-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Digging deeper: Understanding why certain blocking rules create large numbers of comparisons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="04_Estimating_model_parameters.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4. Estimating model parameters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="05_Predicting_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    5. Predicting results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="06_Visualising_predictions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    6. Visualising predictions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="07_Evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    7. Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="08_building_your_own_model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    8. Tips for building your own model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/examples_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/transactions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking financial transactions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/link_only.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking two tables of persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/real_time_record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Real time record linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/accuracy_analysis_from_labels_column.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation from ground truth column
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/pairwise_labels.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Estimating m probabilities from labels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/quick_and_dirty_persons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick and dirty persons model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/deterministic_dedupe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deterministic dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/febrl3.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl3 Dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/febrl4.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl4 link-only
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/cookbook.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cookbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/duckdb/bias_eval.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Investigating Bias in a Splink Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    PySpark
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            PySpark
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/spark/deduplicate_1k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplication using Pyspark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Athena
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Athena
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/athena/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    SQLite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            SQLite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/sqlite/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    API Docs
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Docs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/api_docs_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linker
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Linker
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/visualisations.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualisations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/inference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/clustering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/table_management.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Table Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/misc.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Miscellaneous functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparisons Library
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Comparisons Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/comparison_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/comparison_level_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Level Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Other
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Other
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/exploratory.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploratory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/blocking.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking rule creator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/blocking_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/splink_dataframe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDataFrame
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/em_training_session.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EM Training Session API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/datasets.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDatasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_docs/settings_dict_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Dict
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/topic_guides_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Record Linkage Theory
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Record Linkage Theory
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/theory/record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Why do we need record linkage?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/theory/probabilistic_vs_deterministic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Probabilistic vs Deterministic linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/theory/fellegi_sunter.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Fellegi-Sunter Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/theory/linked_data_as_graphs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linked Data as Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linkage Models in Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Linkage Models in Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/splink_fundamentals/settings.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining Splink models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/splink_fundamentals/querying_splink_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieving and querying Splink results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/splink_fundamentals/link_type.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Link type - linking vs deduping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_4" id="__nav_5_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Splink's SQL backends - Spark, DuckDB etc
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Splink's SQL backends - Spark, DuckDB etc
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/splink_fundamentals/backends/backends.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backends overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/splink_fundamentals/backends/postgres.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PostgreSQL
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Data Preparation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Data Preparation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/data_preparation/feature_engineering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Engineering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/blocking/blocking_rules.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    What are Blocking Rules?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/blocking/performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computational Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/blocking/model_training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model Training Blocking Rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing Records
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing Records
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/comparisons_and_comparison_levels.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparisons and comparison levels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/customising_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining and customising comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/out_of_the_box_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Out-of-the-box comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/term-frequency.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Term frequency adjustments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6_5" id="__nav_5_6_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing strings
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing strings
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    String comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/choosing_comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choosing string comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/phonetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic algorithms
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/regular_expressions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Regular expressions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/training/training_rationale.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training rationale
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8" id="__nav_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_3" id="__nav_5_8_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Edges (Links)
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            Edges (Links)
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/edge_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/edge_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Edge Metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/labelling.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clerical Labelling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_4" id="__nav_5_8_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clusters
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_4">
+            <span class="md-nav__icon md-icon"></span>
+            Clusters
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/clusters/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/clusters/graph_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/evaluation/clusters/how_to_compute_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to compute graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9" id="__nav_5_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/performance/drivers_of_performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run times, performance and linking large data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/performance/performance_of_comparison_functions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Performance of comparison functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_3" id="__nav_5_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Spark Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            Spark Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/performance/optimising_spark.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising Spark performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/performance/salting.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Salting blocking rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_4" id="__nav_5_9_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/performance/optimising_duckdb.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising DuckDB performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../charts/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Charts Gallery
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_10" id="__nav_5_10_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10">
+            <span class="md-nav__icon md-icon"></span>
+            Charts Gallery
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_2" id="__nav_5_10_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Exploratory Analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_2">
+            <span class="md-nav__icon md-icon"></span>
+            Exploratory Analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/completeness_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    completeness chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/profile_columns.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    profile columns
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_3" id="__nav_5_10_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/cumulative_comparisons_to_be_scored_from_blocking_rules_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cumulative num comparisons from blocking rules chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_4" id="__nav_5_10_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Similarity analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Similarity analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/choosing_comparators.html#choosing-thresholds" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score threshold chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/comparisons/choosing_comparators.html#phonetic-matching" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic match chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_5" id="__nav_5_10_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Model Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/comparison_viewer_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    comparison viewer dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/match_weights_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    match weights chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/m_u_parameters_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    m u parameters chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/parameter_estimate_comparisons_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    parameter estimate comparisons chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/tf_adjustment_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tf adjustment chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/unlinkables_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    unlinkables chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/waterfall_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    waterfall chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_6" id="__nav_5_10_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Clustering
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/cluster_studio_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cluster studio dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_7" id="__nav_5_10_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_7">
+            <span class="md-nav__icon md-icon"></span>
+            Model Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/accuracy_analysis_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    accuracy chart from labels table
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../charts/threshold_selection_tool_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    threshold selection tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../topic_guides/llms/prompting_llms.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM prompts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../dev_guides/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing to Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing to Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/CONTRIBUTING.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/development_quickstart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/building_env_locally.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building your local environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/lint_and_format.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linting and Formatting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/testing.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/contributing_to_docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/managing_dependencies_with_poetry.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Dependencies with Poetry
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/releases.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releasing a Package Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/changing_splink/blog_posts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to the Splink Blog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    How Splink works
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            How Splink works
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/debug_modes.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and debugging Splink
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/transpilation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Transpilation using sqlglot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_3" id="__nav_6_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance and caching
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Performance and caching
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Caching and pipelining
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/spark_pipelining_and_caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spark caching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_4" id="__nav_6_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Charts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Charts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/charts/understanding_and_editing_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and editing charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/charts/building_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building new charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/udfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User-Defined Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_6" id="__nav_6_3_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Settings Validation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Settings Validation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/settings_validation/settings_validation_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Validation Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/settings_validation/extending_settings_validator.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Extending the Settings Validator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_guides/dependency_compatibility_policy.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dependency Compatibility Policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../blog/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Blog
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Blog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Categories
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Categories
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/bias.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bias
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/ethics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ethics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/feature-updates.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#blocking-rules-in-splink" class="md-nav__link">
+    <span class="md-ellipsis">
+      Blocking rules in Splink
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devising-effective-blocking-rules-for-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devising effective blocking rules for prediction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#splink-tools-to-help-choose-your-blocking-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splink tools to help choose your blocking rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Splink tools to help choose your blocking rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#counting-the-number-of-comparisons-created-by-a-single-blocking-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Counting the number of comparisons created by a single blocking rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-worst-offending-values-for-your-blocking-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 'worst offending' values for your blocking rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counting-the-number-of-comparisons-created-by-a-list-of-blocking-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Counting the number of comparisons created by a list of blocking rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#digging-deeper-understanding-why-certain-blocking-rules-create-large-numbers-of-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Digging deeper: Understanding why certain blocking rules create large numbers of comparisons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/moj-analytical-services/splink/edit/master/docs/demos/tutorials/03_Blocking.ipynb" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
+  
+
+
+<div><h1 id="choosing-blocking-rules-to-optimise-runtime">Choosing blocking rules to optimise runtime<a class="headerlink" href="#choosing-blocking-rules-to-optimise-runtime" title="Permanent link">¶</a></h1>
+<p><a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/03_Blocking.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+</a></p>
+<p>To link records, we need to compare pairs of records and decide which pairs are matches.</p>
+<p>For example consider the following two records:</p>
+<table>
+<thead>
+<tr>
+<th>first_name</th>
+<th>surname</th>
+<th>dob</th>
+<th>city</th>
+<th>email</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Robert</td>
+<td>Allen</td>
+<td>1971-05-24</td>
+<td>nan</td>
+<td>roberta25@smith.net</td>
+</tr>
+<tr>
+<td>Rob</td>
+<td>Allen</td>
+<td>1971-06-24</td>
+<td>London</td>
+<td>roberta25@smith.net</td>
+</tr>
+</tbody>
+</table>
+<p>These can be represented as a pairwise comparison as follows:</p>
+<table>
+<thead>
+<tr>
+<th>first_name_l</th>
+<th>first_name_r</th>
+<th>surname_l</th>
+<th>surname_r</th>
+<th>dob_l</th>
+<th>dob_r</th>
+<th>city_l</th>
+<th>city_r</th>
+<th>email_l</th>
+<th>email_r</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Robert</td>
+<td>Rob</td>
+<td>Allen</td>
+<td>Allen</td>
+<td>1971-05-24</td>
+<td>1971-06-24</td>
+<td>nan</td>
+<td>London</td>
+<td>roberta25@smith.net</td>
+<td>roberta25@smith.net</td>
+</tr>
+</tbody>
+</table>
+<p>For most large datasets, it is computationally intractable to compare every row with every other row, since the number of comparisons rises quadratically with the number of records.</p>
+<p>Instead we rely on blocking rules, which specify which pairwise comparisons to generate. For example, we could generate the subset of pairwise comparisons where either first name or surname matches.</p>
+<p>This is part of a two step process to link data:</p>
+<ol>
+<li>
+<p>Use blocking rules to generate candidate pairwise record comparisons</p>
+</li>
+<li>
+<p>Use a probabilistic linkage model to score these candidate pairs, to determine which ones should be linked</p>
+</li>
+</ol>
+<p><strong>Blocking rules are the most important determinant of the performance of your linkage job</strong>.</p>
+<p>When deciding on your blocking rules, you're trading off accuracy for performance:</p>
+<ul>
+<li>If your rules are too loose, your linkage job may fail.</li>
+<li>If they're too tight, you may miss some valid links.</li>
+</ul>
+<p>This tutorial clarifies what blocking rules are, and how to choose good rules.</p>
+<h2 id="blocking-rules-in-splink">Blocking rules in Splink<a class="headerlink" href="#blocking-rules-in-splink" title="Permanent link">¶</a></h2>
+<p>In Splink, blocking rules are specified as SQL expressions.</p>
+<p>For example, to generate the subset of record comparisons where the first name and surname matches, we can specify the following blocking rule:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">block_on</span>
+<span class="n">block_on</span><span class="p">(</span><span class="s2">"first_name"</span><span class="p">,</span> <span class="s2">"surname"</span><span class="p">)</span>
+</code></pre></div>
+<p>When executed, this blocking rule will be converted to a SQL statement with the following form:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="p">...</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">input_tables</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">l</span>
+<span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">input_tables</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">r</span>
+<span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">first_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">first_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">surname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">surname</span>
+</code></pre></div>
+<p>Since blocking rules are SQL expressions, they can be arbitrarily complex. For example, you could create record comparisons where the initial of the first name and the surname match with the following rule:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">block_on</span>
+<span class="n">block_on</span><span class="p">(</span><span class="s2">"substr(first_name, 1, 2)"</span><span class="p">,</span> <span class="s2">"surname"</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="devising-effective-blocking-rules-for-prediction">Devising effective blocking rules for prediction<a class="headerlink" href="#devising-effective-blocking-rules-for-prediction" title="Permanent link">¶</a></h2>
+<p>The aims of your blocking rules are twofold:</p>
+<ol>
+<li>Eliminate enough non-matching comparison pairs so your record linkage job is small enough to compute</li>
+<li>Eliminate as few truly matching pairs as possible (ideally none)</li>
+</ol>
+<p>It is usually impossible to find a single blocking rule which achieves both aims, so we recommend using multiple blocking rules.</p>
+<p>When we specify multiple blocking rules, Splink will generate all comparison pairs that meet any one of the rules.</p>
+<p>For example, consider the following blocking rule:</p>
+<p><code>block_on("first_name", "dob")</code></p>
+<p>This rule is likely to be effective in reducing the number of comparison pairs. It will retain all truly matching pairs, except those with errors or nulls in either the <code>first_name</code> or <code>dob</code> fields.</p>
+<p>Now consider a second blocking rule:</p>
+<p><code>block_on("email")</code>.</p>
+<p>This will retain all truly matching pairs, except those with errors or nulls in the <code>email</code> column.</p>
+<p>Individually, these blocking rules are problematic because they exclude true matches where the records contain typos of certain types. But between them, they might do quite a good job.</p>
+<p>For a true match to be eliminated by the use of these two blocking rules, it would have to have an error in <em>both</em> <code>email</code> AND (<code>first_name</code> or <code>dob</code>).</p>
+<p>This is not completely implausible, but it is significantly less likely than if we'd used a single rule.</p>
+<p>More generally, we can often specify multiple blocking rules such that it becomes highly implausible that a true match would not meet at least one of these blocking criteria. This is the recommended approach in Splink. Generally we would recommend between about 3 and 10, though even more is possible.</p>
+<p>The question then becomes how to choose what to put in this list.</p>
+<h2 id="splink-tools-to-help-choose-your-blocking-rules">Splink tools to help choose your blocking rules<a class="headerlink" href="#splink-tools-to-help-choose-your-blocking-rules" title="Permanent link">¶</a></h2>
+<p>Splink contains a number of tools to help you choose effective blocking rules. Let's try them out, using our small test dataset:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">DuckDBAPI</span><span class="p">,</span> <span class="n">block_on</span><span class="p">,</span> <span class="n">splink_datasets</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">splink_datasets</span><span class="o">.</span><span class="n">fake_1000</span>
+</code></pre></div>
+<h3 id="counting-the-number-of-comparisons-created-by-a-single-blocking-rule">Counting the number of comparisons created by a single blocking rule<a class="headerlink" href="#counting-the-number-of-comparisons-created-by-a-single-blocking-rule" title="Permanent link">¶</a></h3>
+<p>On large datasets, some blocking rules imply the creation of trillions of record comparisons, which would cause a linkage job to fail.</p>
+<p>Before using a blocking rule in a linkage job, it's therefore a good idea to count the number of records it generates to ensure it is not too loose:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink.blocking_analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_comparisons_from_blocking_rule</span>
+
+<span class="n">db_api</span> <span class="o">=</span> <span class="n">DuckDBAPI</span><span class="p">()</span>
+
+<span class="n">br</span> <span class="o">=</span> <span class="n">block_on</span><span class="p">(</span><span class="s2">"substr(first_name, 1,1)"</span><span class="p">,</span> <span class="s2">"surname"</span><span class="p">)</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="n">count_comparisons_from_blocking_rule</span><span class="p">(</span>
+    <span class="n">table_or_tables</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">blocking_rule</span><span class="o">=</span><span class="n">br</span><span class="p">,</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"dedupe_only"</span><span class="p">,</span>
+    <span class="n">db_api</span><span class="o">=</span><span class="n">db_api</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">counts</span>
+</code></pre></div>
+<pre><code>{'number_of_comparisons_generated_pre_filter_conditions': 1632,
+ 'number_of_comparisons_to_be_scored_post_filter_conditions': 473,
+ 'filter_conditions_identified': '',
+ 'equi_join_conditions_identified': 'SUBSTR(l.first_name, 1, 1) = SUBSTR(r.first_name, 1, 1) AND l."surname" = r."surname"',
+ 'link_type_join_condition': 'where l."unique_id" &lt; r."unique_id"'}
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">br</span> <span class="o">=</span> <span class="s2">"l.first_name = r.first_name and levenshtein(l.surname, r.surname) &lt; 2"</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="n">count_comparisons_from_blocking_rule</span><span class="p">(</span>
+    <span class="n">table_or_tables</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">blocking_rule</span><span class="o">=</span> <span class="n">br</span><span class="p">,</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"dedupe_only"</span><span class="p">,</span>
+    <span class="n">db_api</span><span class="o">=</span><span class="n">db_api</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">counts</span>
+</code></pre></div>
+<pre><code>{'number_of_comparisons_generated_pre_filter_conditions': 4827,
+ 'number_of_comparisons_to_be_scored_post_filter_conditions': 372,
+ 'filter_conditions_identified': 'LEVENSHTEIN(l.surname, r.surname) &lt; 2',
+ 'equi_join_conditions_identified': 'l.first_name = r.first_name',
+ 'link_type_join_condition': 'where l."unique_id" &lt; r."unique_id"'}
+</code></pre>
+<p>The maximum number of comparisons that you can compute will be affected by your choice of SQL backend, and how powerful your computer is.</p>
+<p>For linkages in DuckDB on a standard laptop, we suggest using blocking rules that create no more than about 20 million comparisons. For Spark and Athena, try starting with fewer than 100 million comparisons, before scaling up.</p>
+<h3 id="finding-worst-offending-values-for-your-blocking-rule">Finding 'worst offending' values for your blocking rule<a class="headerlink" href="#finding-worst-offending-values-for-your-blocking-rule" title="Permanent link">¶</a></h3>
+<p>Blocking rules can be affected by skew:  some values of a field may be much more common than others, and this can lead to a disproportionate number of comparisons being generated.</p>
+<p>It can be useful to identify whether your data is afflicted by this problem. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink.blocking_analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">n_largest_blocks</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">n_largest_blocks</span><span class="p">(</span>    <span class="n">table_or_tables</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">blocking_rule</span><span class="o">=</span> <span class="n">block_on</span><span class="p">(</span><span class="s2">"city"</span><span class="p">,</span> <span class="s2">"first_name"</span><span class="p">),</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"dedupe_only"</span><span class="p">,</span>
+    <span class="n">db_api</span><span class="o">=</span><span class="n">db_api</span><span class="p">,</span>
+    <span class="n">n_largest</span><span class="o">=</span><span class="mi">3</span>
+    <span class="p">)</span>
+
+<span class="n">result</span><span class="o">.</span><span class="n">as_pandas_dataframe</span><span class="p">()</span>
+</code></pre></div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>key_0</th>
+      <th>key_1</th>
+      <th>count_l</th>
+      <th>count_r</th>
+      <th>block_count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Birmingham</td>
+      <td>Theodore</td>
+      <td>7</td>
+      <td>7</td>
+      <td>49</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>London</td>
+      <td>Oliver</td>
+      <td>7</td>
+      <td>7</td>
+      <td>49</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>London</td>
+      <td>James</td>
+      <td>6</td>
+      <td>6</td>
+      <td>36</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>In this case, we can see that <code>Oliver</code>s in <code>London</code> will result in 49 comparisons being generated.  This is acceptable on this small dataset, but on a larger dataset, <code>Oliver</code>s in <code>London</code> could be responsible for many million comparisons.</p>
+<h3 id="counting-the-number-of-comparisons-created-by-a-list-of-blocking-rules">Counting the number of comparisons created by a list of blocking rules<a class="headerlink" href="#counting-the-number-of-comparisons-created-by-a-list-of-blocking-rules" title="Permanent link">¶</a></h3>
+<p>As noted above, it's usually a good idea to use multiple blocking rules. It's therefore useful to know how many record comparisons will be generated when these rules are applied.</p>
+<p>Since the same record comparison may be created by several blocking rules, and Splink automatically deduplicates these comparisons, we cannot simply total the number of comparisons generated by each rule individually.</p>
+<p>Splink provides a chart that shows the marginal (additional) comparisons generated by each blocking rule, after deduplication:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink.blocking_analysis</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">cumulative_comparisons_to_be_scored_from_blocking_rules_chart</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">blocking_rules_for_analysis</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">block_on</span><span class="p">(</span><span class="s2">"substr(first_name, 1,1)"</span><span class="p">,</span> <span class="s2">"surname"</span><span class="p">),</span>
+    <span class="n">block_on</span><span class="p">(</span><span class="s2">"surname"</span><span class="p">),</span>
+    <span class="n">block_on</span><span class="p">(</span><span class="s2">"email"</span><span class="p">),</span>
+    <span class="n">block_on</span><span class="p">(</span><span class="s2">"city"</span><span class="p">,</span> <span class="s2">"first_name"</span><span class="p">),</span>
+    <span class="s2">"l.first_name = r.first_name and levenshtein(l.surname, r.surname) &lt; 2"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">cumulative_comparisons_to_be_scored_from_blocking_rules_chart</span><span class="p">(</span>
+    <span class="n">table_or_tables</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">blocking_rules</span><span class="o">=</span><span class="n">blocking_rules_for_analysis</span><span class="p">,</span>
+    <span class="n">db_api</span><span class="o">=</span><span class="n">db_api</span><span class="p">,</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"dedupe_only"</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<style>
+  #altair-viz-ac97b89040984f068c205e79a9bd127f.vega-embed {
+    width: 100%;
+    display: flex;
+  }
+
+  #altair-viz-ac97b89040984f068c205e79a9bd127f.vega-embed details,
+  #altair-viz-ac97b89040984f068c205e79a9bd127f.vega-embed details summary {
+    position: relative;
+  }
+</style>
+<div id="altair-viz-ac97b89040984f068c205e79a9bd127f"></div>
+<script type="text/javascript">
+  var VEGA_DEBUG = (typeof VEGA_DEBUG == "undefined") ? {} : VEGA_DEBUG;
+  (function(spec, embedOpt){
+    let outputDiv = document.currentScript.previousElementSibling;
+    if (outputDiv.id !== "altair-viz-ac97b89040984f068c205e79a9bd127f") {
+      outputDiv = document.getElementById("altair-viz-ac97b89040984f068c205e79a9bd127f");
+    }
+    const paths = {
+      "vega": "https://cdn.jsdelivr.net/npm/vega@5?noext",
+      "vega-lib": "https://cdn.jsdelivr.net/npm/vega-lib?noext",
+      "vega-lite": "https://cdn.jsdelivr.net/npm/vega-lite@5.17.0?noext",
+      "vega-embed": "https://cdn.jsdelivr.net/npm/vega-embed@6?noext",
+    };
+
+    function maybeLoadScript(lib, version) {
+      var key = `${lib.replace("-", "")}_version`;
+      return (VEGA_DEBUG[key] == version) ?
+        Promise.resolve(paths[lib]) :
+        new Promise(function(resolve, reject) {
+          var s = document.createElement('script');
+          document.getElementsByTagName("head")[0].appendChild(s);
+          s.async = true;
+          s.onload = () => {
+            VEGA_DEBUG[key] = version;
+            return resolve(paths[lib]);
+          };
+          s.onerror = () => reject(`Error loading script: ${paths[lib]}`);
+          s.src = paths[lib];
+        });
+    }
+
+    function showError(err) {
+      outputDiv.innerHTML = `<div class="error" style="color:red;">${err}</div>`;
+      throw err;
+    }
+
+    function displayChart(vegaEmbed) {
+      vegaEmbed(outputDiv, spec, embedOpt)
+        .catch(err => showError(`Javascript Error: ${err.message}<br>This usually means there's a typo in your chart specification. See the javascript console for the full traceback.`));
+    }
+
+    if(typeof define === "function" && define.amd) {
+      requirejs.config({paths});
+      require(["vega-embed"], displayChart, err => showError(`Error loading script: ${err.message}`));
+    } else {
+      maybeLoadScript("vega", "5")
+        .then(() => maybeLoadScript("vega-lite", "5.17.0"))
+        .then(() => maybeLoadScript("vega-embed", "6"))
+        .catch(showError)
+        .then(() => displayChart(vegaEmbed));
+    }
+  })({"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-98f9ef003c07a61c2c401d3a599f708c"}, "mark": "bar", "encoding": {"order": {"field": "cumulative_rows"}, "tooltip": [{"field": "blocking_rule", "title": "SQL Condition", "type": "nominal"}, {"field": "row_count", "format": ",", "title": "Comparisons Generated", "type": "quantitative"}, {"field": "cumulative_rows", "format": ",", "title": "Cumulative Comparisons", "type": "quantitative"}, {"field": "cartesian", "format": ",", "title": "Total comparisons in Cartesian product", "type": "quantitative"}], "x": {"field": "start", "title": "Comparisons Generated by Rule(s)", "type": "quantitative"}, "x2": {"field": "cumulative_rows"}, "y": {"field": "blocking_rule", "sort": ["-x2"], "title": "SQL Blocking Rule"}}, "height": {"step": 20}, "title": {"text": "Count of Additional Comparisons Generated by Each Blocking Rule", "subtitle": "(Counts exclude comparisons already generated by previous rules)"}, "width": 450, "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json", "datasets": {"data-98f9ef003c07a61c2c401d3a599f708c": [{"blocking_rule": "(SUBSTR(l.first_name, 1, 1) = SUBSTR(r.first_name, 1, 1)) AND (l.\"surname\" = r.\"surname\")", "row_count": 473, "cumulative_rows": 473, "cartesian": 499500, "match_key": "0", "start": 0}, {"blocking_rule": "l.\"surname\" = r.\"surname\"", "row_count": 1165, "cumulative_rows": 1638, "cartesian": 499500, "match_key": "1", "start": 473}, {"blocking_rule": "l.\"email\" = r.\"email\"", "row_count": 468, "cumulative_rows": 2106, "cartesian": 499500, "match_key": "2", "start": 1638}, {"blocking_rule": "(l.\"city\" = r.\"city\") AND (l.\"first_name\" = r.\"first_name\")", "row_count": 145, "cumulative_rows": 2251, "cartesian": 499500, "match_key": "3", "start": 2106}, {"blocking_rule": "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2", "row_count": 30, "cumulative_rows": 2281, "cartesian": 499500, "match_key": "4", "start": 2251}]}}, {"mode": "vega-lite"});
+</script>
+
+<h3 id="digging-deeper-understanding-why-certain-blocking-rules-create-large-numbers-of-comparisons">Digging deeper: Understanding why certain blocking rules create large numbers of comparisons<a class="headerlink" href="#digging-deeper-understanding-why-certain-blocking-rules-create-large-numbers-of-comparisons" title="Permanent link">¶</a></h3>
+<p>Finally, we can use the <code>profile_columns</code> function we saw in the previous tutorial to understand a specific blocking rule in more depth.</p>
+<p>Suppose we're interested in blocking on city and first initial.</p>
+<p>Within each distinct value of <code>(city, first initial)</code>, all possible pairwise comparisons will be generated.</p>
+<p>So for instance, if there are 15 distinct records with <code>London,J</code> then these records will result in <code>n(n-1)/2 = 105</code> pairwise comparisons being generated.</p>
+<p>In a larger dataset, we might observe 10,000 <code>London,J</code> records, which would then be responsible for <code>49,995,000</code> comparisons.</p>
+<p>These high-frequency values therefore have a disproportionate influence on the overall number of pairwise comparisons, and so it can be useful to analyse skew, as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink.exploratory</span><span class="w"> </span><span class="kn">import</span> <span class="n">profile_columns</span>
+
+<span class="n">profile_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">column_expressions</span><span class="o">=</span><span class="p">[</span><span class="s2">"city || left(first_name,1)"</span><span class="p">],</span> <span class="n">db_api</span><span class="o">=</span><span class="n">db_api</span><span class="p">)</span>
+</code></pre></div>
+<style>
+  #altair-viz-6df195f20cdf4a60b9bdc4a211af0119.vega-embed {
+    width: 100%;
+    display: flex;
+  }
+
+  #altair-viz-6df195f20cdf4a60b9bdc4a211af0119.vega-embed details,
+  #altair-viz-6df195f20cdf4a60b9bdc4a211af0119.vega-embed details summary {
+    position: relative;
+  }
+</style>
+<div id="altair-viz-6df195f20cdf4a60b9bdc4a211af0119"></div>
+<script type="text/javascript">
+  var VEGA_DEBUG = (typeof VEGA_DEBUG == "undefined") ? {} : VEGA_DEBUG;
+  (function(spec, embedOpt){
+    let outputDiv = document.currentScript.previousElementSibling;
+    if (outputDiv.id !== "altair-viz-6df195f20cdf4a60b9bdc4a211af0119") {
+      outputDiv = document.getElementById("altair-viz-6df195f20cdf4a60b9bdc4a211af0119");
+    }
+    const paths = {
+      "vega": "https://cdn.jsdelivr.net/npm/vega@5?noext",
+      "vega-lib": "https://cdn.jsdelivr.net/npm/vega-lib?noext",
+      "vega-lite": "https://cdn.jsdelivr.net/npm/vega-lite@5.17.0?noext",
+      "vega-embed": "https://cdn.jsdelivr.net/npm/vega-embed@6?noext",
+    };
+
+    function maybeLoadScript(lib, version) {
+      var key = `${lib.replace("-", "")}_version`;
+      return (VEGA_DEBUG[key] == version) ?
+        Promise.resolve(paths[lib]) :
+        new Promise(function(resolve, reject) {
+          var s = document.createElement('script');
+          document.getElementsByTagName("head")[0].appendChild(s);
+          s.async = true;
+          s.onload = () => {
+            VEGA_DEBUG[key] = version;
+            return resolve(paths[lib]);
+          };
+          s.onerror = () => reject(`Error loading script: ${paths[lib]}`);
+          s.src = paths[lib];
+        });
+    }
+
+    function showError(err) {
+      outputDiv.innerHTML = `<div class="error" style="color:red;">${err}</div>`;
+      throw err;
+    }
+
+    function displayChart(vegaEmbed) {
+      vegaEmbed(outputDiv, spec, embedOpt)
+        .catch(err => showError(`Javascript Error: ${err.message}<br>This usually means there's a typo in your chart specification. See the javascript console for the full traceback.`));
+    }
+
+    if(typeof define === "function" && define.amd) {
+      requirejs.config({paths});
+      require(["vega-embed"], displayChart, err => showError(`Error loading script: ${err.message}`));
+    } else {
+      maybeLoadScript("vega", "5")
+        .then(() => maybeLoadScript("vega-lite", "5.17.0"))
+        .then(() => maybeLoadScript("vega-embed", "6"))
+        .catch(showError)
+        .then(() => displayChart(vegaEmbed));
+    }
+  })({"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "vconcat": [{"hconcat": [{"mark": {"type": "line", "interpolate": "step-after"}, "data": {"values": [{"percentile_ex_nulls": 0.9777448177337646, "percentile_inc_nulls": 0.9850000143051147, "value_count": 15, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 15.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.924332320690155, "percentile_inc_nulls": 0.9490000009536743, "value_count": 12, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 36.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.9094955325126648, "percentile_inc_nulls": 0.9390000104904175, "value_count": 10, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 10.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.8694362044334412, "percentile_inc_nulls": 0.9120000004768372, "value_count": 9, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 27.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.8456973433494568, "percentile_inc_nulls": 0.8960000276565552, "value_count": 8, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 16.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.7937685251235962, "percentile_inc_nulls": 0.8610000014305115, "value_count": 7, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 35.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.7670623064041138, "percentile_inc_nulls": 0.8429999947547913, "value_count": 6, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 18.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.7225519418716431, "percentile_inc_nulls": 0.812999963760376, "value_count": 5, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 30.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.5979228615760803, "percentile_inc_nulls": 0.7289999723434448, "value_count": 4, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 84.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.46439170837402344, "percentile_inc_nulls": 0.6389999985694885, "value_count": 3, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 90.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.357566773891449, "percentile_inc_nulls": 0.5670000314712524, "value_count": 2, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 72.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 0.0, "percentile_inc_nulls": 0.3259999752044678, "value_count": 1, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 241.0, "distinct_value_count": 352}, {"percentile_ex_nulls": 1.0, "percentile_inc_nulls": 1.0, "value_count": 15, "group_name": "city_left_first_name_1_", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "sum_tokens_in_value_count_group": 15.0, "distinct_value_count": 352}]}, "encoding": {"tooltip": [{"field": "value_count", "type": "quantitative"}, {"field": "percentile_ex_nulls", "type": "quantitative"}, {"field": "percentile_inc_nulls", "type": "quantitative"}, {"field": "total_non_null_rows", "type": "quantitative"}, {"field": "total_rows_inc_nulls", "type": "quantitative"}], "x": {"field": "percentile_ex_nulls", "sort": "descending", "title": "Percentile", "type": "quantitative"}, "y": {"field": "value_count", "title": "Count of values", "type": "quantitative"}}, "title": {"text": "Distribution of counts of values in column city || left(first_name,1)", "subtitle": "In this col, 326 values (32.6%) are null and there are 352 distinct values"}}, {"mark": "bar", "data": {"values": [{"value_count": 15, "group_name": "city_left_first_name_1_", "value": "LondonJ", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 12, "group_name": "city_left_first_name_1_", "value": "LondonH", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 12, "group_name": "city_left_first_name_1_", "value": "LondonF", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 12, "group_name": "city_left_first_name_1_", "value": "LondonE", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 10, "group_name": "city_left_first_name_1_", "value": "LondonO", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 9, "group_name": "city_left_first_name_1_", "value": "BirminghamT", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 9, "group_name": "city_left_first_name_1_", "value": "LondonT", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 9, "group_name": "city_left_first_name_1_", "value": "LondonL", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 8, "group_name": "city_left_first_name_1_", "value": "CoventryL", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 8, "group_name": "city_left_first_name_1_", "value": "SalfordL", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}]}, "encoding": {"tooltip": [{"field": "value", "type": "nominal"}, {"field": "value_count", "type": "quantitative"}, {"field": "total_non_null_rows", "type": "quantitative"}, {"field": "total_rows_inc_nulls", "type": "quantitative"}], "x": {"field": "value", "sort": "-y", "title": null, "type": "nominal"}, "y": {"field": "value_count", "title": "Value count", "type": "quantitative"}}, "title": "Top 10 values by value count"}, {"mark": "bar", "data": {"values": [{"value_count": 1, "group_name": "city_left_first_name_1_", "value": "BradfofrdL", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "LononR", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "LvpreoolR", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "LoodonT", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "BirminghaimT", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "BirgmhniamT", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "BrritsolR", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "PlymouthG", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "BirminmhagA", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}, {"value_count": 1, "group_name": "city_left_first_name_1_", "value": "LondoonL", "total_non_null_rows": 674, "total_rows_inc_nulls": 1000, "distinct_value_count": 352}]}, "encoding": {"tooltip": [{"field": "value", "type": "nominal"}, {"field": "value_count", "type": "quantitative"}, {"field": "total_non_null_rows", "type": "quantitative"}, {"field": "total_rows_inc_nulls", "type": "quantitative"}], "x": {"field": "value", "sort": "-y", "title": null, "type": "nominal"}, "y": {"field": "value_count", "scale": {"domain": [0, 15]}, "title": "Value count", "type": "quantitative"}}, "title": "Bottom 10 values by value count"}]}], "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"}, {"mode": "vega-lite"});
+</script>
+
+<div class="admonition note">
+<p class="admonition-title">Further Reading</p>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24"><path d="M22.011 3.269H16.19a4.29 4.29 0 0 0-4.185 3.345A4.29 4.29 0 0 0 7.819 3.27H2a2 2 0 0 0-2.001 2v10.244a2 2 0 0 0 2 2h3.738c4.257 0 5.53 1.025 6.138 3.134a.112.112 0 0 0 .112.084h.024a.112.112 0 0 0 .112-.084c.612-2.109 1.885-3.133 6.138-3.133h3.737a2 2 0 0 0 2.001-2V5.27a2 2 0 0 0-1.989-2ZM10.083 14.325a.144.144 0 0 1-.144.144H3.257a.144.144 0 0 1-.144-.144v-.953a.144.144 0 0 1 .144-.144H9.94a.144.144 0 0 1 .144.144zm0-2.537a.144.144 0 0 1-.144.144H3.257a.144.144 0 0 1-.144-.144v-.952a.144.144 0 0 1 .144-.144H9.94a.144.144 0 0 1 .144.144zm0-2.537a.144.144 0 0 1-.144.144H3.257a.144.144 0 0 1-.144-.144V8.3a.144.144 0 0 1 .144-.144H9.94a.144.144 0 0 1 .144.144zm10.804 5.07a.144.144 0 0 1-.144.144h-6.682a.144.144 0 0 1-.144-.144v-.953a.144.144 0 0 1 .144-.144h6.682a.144.144 0 0 1 .144.144zm0-2.537a.144.144 0 0 1-.144.144h-6.682a.144.144 0 0 1-.144-.144v-.952a.144.144 0 0 1 .144-.144h6.682a.144.144 0 0 1 .144.144zm0-2.537a.144.144 0 0 1-.144.144h-6.682a.144.144 0 0 1-.144-.144V8.3a.144.144 0 0 1 .144-.144h6.682a.144.144 0 0 1 .144.144v.952z"></path></svg></span> For a deeper dive on blocking, please refer to the <a href="../../topic_guides/blocking/blocking_rules.html">Blocking Topic Guides</a>.</p>
+<p><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24"><path d="m21.71 20.29-1.42 1.42a1 1 0 0 1-1.41 0L7 9.85A3.81 3.81 0 0 1 6 10a4 4 0 0 1-3.78-5.3l2.54 2.54.53-.53 1.42-1.42.53-.53L4.7 2.22A4 4 0 0 1 10 6a3.81 3.81 0 0 1-.15 1l11.86 11.88a1 1 0 0 1 0 1.41M2.29 18.88a1 1 0 0 0 0 1.41l1.42 1.42a1 1 0 0 0 1.41 0l5.47-5.46-2.83-2.83M20 2l-4 2v2l-2.17 2.17 2 2L18 8h2l2-4Z"></path></svg></span> For more on the blocking tools in Splink, please refer to the <a href="../../api_docs/blocking.html">Blocking API documentation</a>.</p>
+<p><img alt="📊" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f4ca.svg" title=":bar_chart:"> For more on the charts used in this tutorial, please refer to the <a href="../../charts/index.html#blocking">Charts Gallery</a>.</p>
+</div>
+<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">¶</a></h2>
+<p>Now we have chosen which records to compare, we can use those records to train a linkage model.</p></div>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="02_Exploratory_analysis.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: 2. Exploratory analysis">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                2. Exploratory analysis
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="04_Estimating_model_parameters.html" class="md-footer__link md-footer__link--next" aria-label="Next: 4. Estimating model parameters">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                4. Estimating model parameters
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/moj-analytical-services/splink" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/splink/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6zM286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3zM167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4zm-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.robinlinacre.com/" target="_blank" rel="noopener" title="www.robinlinacre.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://moj-analytical-services.github.io/splink/feed_rss_created.xml" target="_blank" rel="noopener" title="moj-analytical-services.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zm0 352a64 64 0 1 1 128 0 64 64 0 1 1-128 0zm32-256c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "content.tooltips", "header.autohide", "search.highlight", "search.share", "search.suggest", "navigation.indexes", "navigation.footer", "content.action.edit", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "toc.follow"], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+        <script src="../../js/mkdocs-charts-plugin.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+      
+    
+  </body>
+</html>

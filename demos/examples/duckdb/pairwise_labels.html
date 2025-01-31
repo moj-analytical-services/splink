@@ -1,0 +1,5833 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://moj-analytical-services.github.io/splink/demos/examples/duckdb/pairwise_labels.html">
+      
+      
+        <link rel="prev" href="accuracy_analysis_from_labels_column.html">
+      
+      
+        <link rel="next" href="quick_and_dirty_persons.html">
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS feed" href="../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="RSS feed of updated content" href="../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.2">
+    
+    
+      
+        <title>Estimating m probabilities from labels - Splink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../css/custom.css">
+    
+      <link rel="stylesheet" href="../../../css/neoteroi-mkdocs.css">
+    
+      <link rel="stylesheet" href="../../../css/ansi-colours.css">
+    
+      <link rel="stylesheet" href="../../../css/jupyter-cells.css">
+    
+      <link rel="stylesheet" href="../../../css/pandas-dataframe.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function n(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],n("js",new Date),n("config","G-L6JT8NK528"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&n("event","search",{search_term:this.value})}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");n("event","feedback",{page:t,data:e}),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){n("config","G-L6JT8NK528",{page_path:e.pathname})})});var e=document.createElement("script");e.async=!0,e.src="https://www.googletagmanager.com/gtag/js?id=G-L6JT8NK528",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#estimating-m-from-a-sample-of-pairwise-labels" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+
+    <center> Still using Splink 3 and looking for the old docs?  You can find them  <a href ="https://moj-analytical-services.github.io/splink3_legacy_docs/index.html">here</a></center>
+
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Splink" class="md-header__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../../img/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Splink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Estimating m probabilities from labels
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting_started.html" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/00_Tutorial_Introduction.html" class="md-tabs__link">
+          
+  
+    
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../examples_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api_docs/api_docs_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  API Docs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../topic_guides/topic_guides_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dev_guides/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../blog/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Splink" class="md-nav__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../../img/favicon.ico" alt="logo">
+
+    </a>
+    Splink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/00_Tutorial_Introduction.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/01_Prerequisites.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1. Data prep prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/02_Exploratory_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2. Exploratory analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/03_Blocking.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    3. Blocking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/04_Estimating_model_parameters.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4. Estimating model parameters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/05_Predicting_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    5. Predicting results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/06_Visualising_predictions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    6. Visualising predictions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/07_Evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    7. Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/08_building_your_own_model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    8. Tips for building your own model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="transactions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking financial transactions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="link_only.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking two tables of persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="real_time_record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Real time record linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="accuracy_analysis_from_labels_column.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation from ground truth column
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Estimating m probabilities from labels
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="pairwise_labels.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Estimating m probabilities from labels
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#estimating-m-from-a-sample-of-pairwise-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Estimating m from a sample of pairwise labels
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quick_and_dirty_persons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick and dirty persons model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="deterministic_dedupe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deterministic dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="febrl3.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl3 Dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="febrl4.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl4 link-only
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cookbook.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cookbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bias_eval.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Investigating Bias in a Splink Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    PySpark
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            PySpark
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spark/deduplicate_1k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplication using Pyspark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Athena
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Athena
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../athena/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    SQLite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            SQLite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sqlite/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    API Docs
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Docs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/api_docs_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linker
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Linker
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/visualisations.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualisations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/inference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/clustering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/table_management.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Table Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/misc.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Miscellaneous functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparisons Library
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Comparisons Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/comparison_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/comparison_level_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Level Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Other
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Other
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/exploratory.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploratory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/blocking.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking rule creator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/blocking_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/splink_dataframe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDataFrame
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/em_training_session.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EM Training Session API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/datasets.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDatasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/settings_dict_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Dict
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/topic_guides_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Record Linkage Theory
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Record Linkage Theory
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Why do we need record linkage?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/probabilistic_vs_deterministic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Probabilistic vs Deterministic linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/fellegi_sunter.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Fellegi-Sunter Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/linked_data_as_graphs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linked Data as Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linkage Models in Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Linkage Models in Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/settings.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining Splink models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/querying_splink_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieving and querying Splink results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/link_type.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Link type - linking vs deduping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_4" id="__nav_5_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Splink's SQL backends - Spark, DuckDB etc
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Splink's SQL backends - Spark, DuckDB etc
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/backends/backends.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backends overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/backends/postgres.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PostgreSQL
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Data Preparation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Data Preparation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/data_preparation/feature_engineering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Engineering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/blocking_rules.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    What are Blocking Rules?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computational Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/model_training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model Training Blocking Rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing Records
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing Records
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/comparisons_and_comparison_levels.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparisons and comparison levels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/customising_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining and customising comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/out_of_the_box_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Out-of-the-box comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/term-frequency.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Term frequency adjustments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6_5" id="__nav_5_6_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing strings
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing strings
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    String comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choosing string comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/phonetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic algorithms
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/regular_expressions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Regular expressions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/training/training_rationale.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training rationale
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8" id="__nav_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_3" id="__nav_5_8_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Edges (Links)
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            Edges (Links)
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/edge_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/edge_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Edge Metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/labelling.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clerical Labelling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_4" id="__nav_5_8_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clusters
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_4">
+            <span class="md-nav__icon md-icon"></span>
+            Clusters
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/graph_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/how_to_compute_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to compute graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9" id="__nav_5_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/drivers_of_performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run times, performance and linking large data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/performance_of_comparison_functions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Performance of comparison functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_3" id="__nav_5_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Spark Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            Spark Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/optimising_spark.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising Spark performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/salting.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Salting blocking rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_4" id="__nav_5_9_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/optimising_duckdb.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising DuckDB performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../charts/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Charts Gallery
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_10" id="__nav_5_10_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10">
+            <span class="md-nav__icon md-icon"></span>
+            Charts Gallery
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_2" id="__nav_5_10_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Exploratory Analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_2">
+            <span class="md-nav__icon md-icon"></span>
+            Exploratory Analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/completeness_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    completeness chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/profile_columns.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    profile columns
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_3" id="__nav_5_10_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/cumulative_comparisons_to_be_scored_from_blocking_rules_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cumulative num comparisons from blocking rules chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_4" id="__nav_5_10_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Similarity analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Similarity analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#choosing-thresholds" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score threshold chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#phonetic-matching" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic match chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_5" id="__nav_5_10_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Model Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/comparison_viewer_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    comparison viewer dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/match_weights_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    match weights chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/m_u_parameters_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    m u parameters chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/parameter_estimate_comparisons_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    parameter estimate comparisons chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/tf_adjustment_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tf adjustment chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/unlinkables_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    unlinkables chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/waterfall_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    waterfall chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_6" id="__nav_5_10_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Clustering
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/cluster_studio_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cluster studio dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_7" id="__nav_5_10_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_7">
+            <span class="md-nav__icon md-icon"></span>
+            Model Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/accuracy_analysis_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    accuracy chart from labels table
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/threshold_selection_tool_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    threshold selection tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/llms/prompting_llms.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM prompts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../dev_guides/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing to Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing to Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/CONTRIBUTING.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/development_quickstart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/building_env_locally.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building your local environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/lint_and_format.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linting and Formatting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/testing.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/contributing_to_docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/managing_dependencies_with_poetry.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Dependencies with Poetry
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/releases.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releasing a Package Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/blog_posts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to the Splink Blog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    How Splink works
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            How Splink works
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/debug_modes.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and debugging Splink
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/transpilation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Transpilation using sqlglot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_3" id="__nav_6_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance and caching
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Performance and caching
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Caching and pipelining
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/spark_pipelining_and_caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spark caching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_4" id="__nav_6_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Charts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Charts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/charts/understanding_and_editing_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and editing charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/charts/building_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building new charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/udfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User-Defined Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_6" id="__nav_6_3_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Settings Validation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Settings Validation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/settings_validation/settings_validation_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Validation Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/settings_validation/extending_settings_validator.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Extending the Settings Validator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/dependency_compatibility_policy.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dependency Compatibility Policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../blog/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Blog
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Blog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Categories
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Categories
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/bias.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bias
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/ethics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ethics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/feature-updates.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#estimating-m-from-a-sample-of-pairwise-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Estimating m from a sample of pairwise labels
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/moj-analytical-services/splink/edit/master/docs/demos/examples/duckdb/pairwise_labels.ipynb" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
+  
+
+
+  <h1>Estimating m probabilities from labels</h1>
+
+<div><p><a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/pairwise_labels.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+</a></p>
+<h2 id="estimating-m-from-a-sample-of-pairwise-labels">Estimating m from a sample of pairwise labels<a class="headerlink" href="#estimating-m-from-a-sample-of-pairwise-labels" title="Permanent link">¶</a></h2>
+<p>In this example, we estimate the m probabilities of the model from a table containing pairwise record comparisons which we know are 'true' matches. For example, these may be the result of work by a clerical team who have manually labelled a sample of matches.</p>
+<p>The table must be in the following format:</p>
+<table>
+<thead>
+<tr>
+<th>source_dataset_l</th>
+<th>unique_id_l</th>
+<th>source_dataset_r</th>
+<th>unique_id_r</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>df_1</td>
+<td>1</td>
+<td>df_2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>df_1</td>
+<td>1</td>
+<td>df_2</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>It is assumed that every record in the table represents a certain match.</p>
+<p>Note that the column names above are the defaults. They should correspond to the values you've set for <a href="https://moj-analytical-services.github.io/splink/settings_dict_guide.html#unique_id_column_name"><code>unique_id_column_name</code></a> and <a href="https://moj-analytical-services.github.io/splink/settings_dict_guide.html#source_dataset_column_name"><code>source_dataset_column_name</code></a>, if you've chosen custom values.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">splink_dataset_labels</span>
+
+<span class="n">pairwise_labels</span> <span class="o">=</span> <span class="n">splink_dataset_labels</span><span class="o">.</span><span class="n">fake_1000_labels</span>
+
+<span class="c1"># Choose labels indicating a match</span>
+<span class="n">pairwise_labels</span> <span class="o">=</span> <span class="n">pairwise_labels</span><span class="p">[</span><span class="n">pairwise_labels</span><span class="p">[</span><span class="s2">"clerical_match_score"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">pairwise_labels</span>
+</code></pre></div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_id_l</th>
+      <th>source_dataset_l</th>
+      <th>unique_id_r</th>
+      <th>source_dataset_r</th>
+      <th>clerical_match_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>fake_1000</td>
+      <td>1</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0</td>
+      <td>fake_1000</td>
+      <td>2</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>fake_1000</td>
+      <td>3</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>49</th>
+      <td>1</td>
+      <td>fake_1000</td>
+      <td>2</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>50</th>
+      <td>1</td>
+      <td>fake_1000</td>
+      <td>3</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>3171</th>
+      <td>994</td>
+      <td>fake_1000</td>
+      <td>996</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3172</th>
+      <td>995</td>
+      <td>fake_1000</td>
+      <td>996</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3173</th>
+      <td>997</td>
+      <td>fake_1000</td>
+      <td>998</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3174</th>
+      <td>997</td>
+      <td>fake_1000</td>
+      <td>999</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3175</th>
+      <td>998</td>
+      <td>fake_1000</td>
+      <td>999</td>
+      <td>fake_1000</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>2031 rows × 5 columns</p>
+</div>
+
+<p>We now proceed to estimate the Fellegi Sunter model:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">splink_datasets</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">splink_datasets</span><span class="o">.</span><span class="n">fake_1000</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_id</th>
+      <th>first_name</th>
+      <th>surname</th>
+      <th>dob</th>
+      <th>city</th>
+      <th>email</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>Robert</td>
+      <td>Alan</td>
+      <td>1971-06-24</td>
+      <td>NaN</td>
+      <td>robert255@smith.net</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>Robert</td>
+      <td>Allen</td>
+      <td>1971-05-24</td>
+      <td>NaN</td>
+      <td>roberta25@smith.net</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">splink.comparison_library</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">DuckDBAPI</span><span class="p">,</span> <span class="n">Linker</span><span class="p">,</span> <span class="n">SettingsCreator</span><span class="p">,</span> <span class="n">block_on</span>
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">SettingsCreator</span><span class="p">(</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"dedupe_only"</span><span class="p">,</span>
+    <span class="n">blocking_rules_to_generate_predictions</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">block_on</span><span class="p">(</span><span class="s2">"first_name"</span><span class="p">),</span>
+        <span class="n">block_on</span><span class="p">(</span><span class="s2">"surname"</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">comparisons</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">NameComparison</span><span class="p">(</span><span class="s2">"first_name"</span><span class="p">),</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">NameComparison</span><span class="p">(</span><span class="s2">"surname"</span><span class="p">),</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">DateOfBirthComparison</span><span class="p">(</span>
+            <span class="s2">"dob"</span><span class="p">,</span>
+            <span class="n">input_is_string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">ExactMatch</span><span class="p">(</span><span class="s2">"city"</span><span class="p">)</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">term_frequency_adjustments</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">EmailComparison</span><span class="p">(</span><span class="s2">"email"</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">retain_intermediate_calculation_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">linker</span> <span class="o">=</span> <span class="n">Linker</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">db_api</span><span class="o">=</span><span class="n">DuckDBAPI</span><span class="p">(),</span> <span class="n">set_up_basic_logging</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">deterministic_rules</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"l.first_name = r.first_name and levenshtein(r.dob, l.dob) &lt;= 1"</span><span class="p">,</span>
+    <span class="s2">"l.surname = r.surname and levenshtein(r.dob, l.dob) &lt;= 1"</span><span class="p">,</span>
+    <span class="s2">"l.first_name = r.first_name and levenshtein(r.surname, l.surname) &lt;= 2"</span><span class="p">,</span>
+    <span class="s2">"l.email = r.email"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">linker</span><span class="o">.</span><span class="n">training</span><span class="o">.</span><span class="n">estimate_probability_two_random_records_match</span><span class="p">(</span><span class="n">deterministic_rules</span><span class="p">,</span> <span class="n">recall</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">linker</span><span class="o">.</span><span class="n">training</span><span class="o">.</span><span class="n">estimate_u_using_random_sampling</span><span class="p">(</span><span class="n">max_pairs</span><span class="o">=</span><span class="mf">1e6</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>You are using the default value for `max_pairs`, which may be too small and thus lead to inaccurate estimates for your model's u-parameters. Consider increasing to 1e8 or 1e9, which will result in more accurate estimates, but with a longer run time.
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Register the pairwise labels table with the database, and then use it to estimate the m values</span>
+<span class="n">labels_df</span> <span class="o">=</span> <span class="n">linker</span><span class="o">.</span><span class="n">table_management</span><span class="o">.</span><span class="n">register_labels_table</span><span class="p">(</span><span class="n">pairwise_labels</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">training</span><span class="o">.</span><span class="n">estimate_m_from_pairwise_labels</span><span class="p">(</span><span class="n">labels_df</span><span class="p">)</span>
+
+
+<span class="c1"># If the labels table already existing in the dataset you could run</span>
+<span class="c1"># linker.training.estimate_m_from_pairwise_labels("labels_tablename_here")</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">training_blocking_rule</span> <span class="o">=</span> <span class="n">block_on</span><span class="p">(</span><span class="s2">"first_name"</span><span class="p">)</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">training</span><span class="o">.</span><span class="n">estimate_parameters_using_expectation_maximisation</span><span class="p">(</span><span class="n">training_blocking_rule</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>&lt;EMTrainingSession, blocking on l."first_name" = r."first_name", deactivating comparisons first_name&gt;
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">linker</span><span class="o">.</span><span class="n">visualisations</span><span class="o">.</span><span class="n">parameter_estimate_comparisons_chart</span><span class="p">()</span>
+</code></pre></div>
+<style>
+  #altair-viz-9d310b56c70042a58417e5a15b5c4297.vega-embed {
+    width: 100%;
+    display: flex;
+  }
+
+  #altair-viz-9d310b56c70042a58417e5a15b5c4297.vega-embed details,
+  #altair-viz-9d310b56c70042a58417e5a15b5c4297.vega-embed details summary {
+    position: relative;
+  }
+</style>
+<div id="altair-viz-9d310b56c70042a58417e5a15b5c4297"></div>
+<script type="text/javascript">
+  var VEGA_DEBUG = (typeof VEGA_DEBUG == "undefined") ? {} : VEGA_DEBUG;
+  (function(spec, embedOpt){
+    let outputDiv = document.currentScript.previousElementSibling;
+    if (outputDiv.id !== "altair-viz-9d310b56c70042a58417e5a15b5c4297") {
+      outputDiv = document.getElementById("altair-viz-9d310b56c70042a58417e5a15b5c4297");
+    }
+    const paths = {
+      "vega": "https://cdn.jsdelivr.net/npm/vega@5?noext",
+      "vega-lib": "https://cdn.jsdelivr.net/npm/vega-lib?noext",
+      "vega-lite": "https://cdn.jsdelivr.net/npm/vega-lite@5.17.0?noext",
+      "vega-embed": "https://cdn.jsdelivr.net/npm/vega-embed@6?noext",
+    };
+
+    function maybeLoadScript(lib, version) {
+      var key = `${lib.replace("-", "")}_version`;
+      return (VEGA_DEBUG[key] == version) ?
+        Promise.resolve(paths[lib]) :
+        new Promise(function(resolve, reject) {
+          var s = document.createElement('script');
+          document.getElementsByTagName("head")[0].appendChild(s);
+          s.async = true;
+          s.onload = () => {
+            VEGA_DEBUG[key] = version;
+            return resolve(paths[lib]);
+          };
+          s.onerror = () => reject(`Error loading script: ${paths[lib]}`);
+          s.src = paths[lib];
+        });
+    }
+
+    function showError(err) {
+      outputDiv.innerHTML = `<div class="error" style="color:red;">${err}</div>`;
+      throw err;
+    }
+
+    function displayChart(vegaEmbed) {
+      vegaEmbed(outputDiv, spec, embedOpt)
+        .catch(err => showError(`Javascript Error: ${err.message}<br>This usually means there's a typo in your chart specification. See the javascript console for the full traceback.`));
+    }
+
+    if(typeof define === "function" && define.amd) {
+      requirejs.config({paths});
+      require(["vega-embed"], displayChart, err => showError(`Error loading script: ${err.message}`));
+    } else {
+      maybeLoadScript("vega", "5")
+        .then(() => maybeLoadScript("vega-lite", "5.17.0"))
+        .then(() => maybeLoadScript("vega-embed", "6"))
+        .catch(showError)
+        .then(() => displayChart(vegaEmbed));
+    }
+  })({"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}, "title": {"anchor": "middle", "fontSize": 18, "subtitleFontSize": 14}}, "data": {"name": "data-ed1f09f27dd97222de32cebf09987fb4"}, "mark": {"type": "point", "filled": false, "opacity": 0.7, "size": 100}, "encoding": {"color": {"field": "estimate_description", "type": "nominal"}, "column": {"align": "each", "field": "col_header", "header": {"labelFontSize": 14, "labelFontWeight": "bold"}, "title": null, "type": "nominal"}, "row": {"align": "each", "field": "comparison_name", "header": {"labelAlign": "left", "labelAnchor": "middle", "labelAngle": 0, "labelFontSize": 12, "labelFontWeight": "bold"}, "sort": {"field": "comparison_sort_order"}, "title": null, "type": "nominal"}, "shape": {"field": "estimate_description", "scale": {"range": ["circle", "square", "triangle", "diamond"]}, "type": "nominal"}, "tooltip": [{"field": "comparison_name", "type": "nominal"}, {"field": "estimate_description", "type": "nominal"}, {"field": "estimated_probability", "type": "quantitative"}], "x": {"axis": {"gridColor": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": "#aaa"}, "value": "#ddd"}, "gridDash": {"condition": {"test": "abs(datum.value / 10) == 1", "value": [3]}, "value": null}, "gridWidth": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": 2}, "value": 1}}, "field": "estimated_probability_as_log_odds", "title": "Estimated probability as log odds", "type": "quantitative"}, "y": {"axis": {"grid": true, "title": null}, "field": "comparison_level_label", "sort": {"field": "comparison_vector_value", "order": "descending"}, "type": "nominal"}}, "params": [{"name": "mouse_zoom", "select": {"type": "interval", "encodings": ["x"]}, "bind": "scales"}], "resolve": {"scale": {"y": "independent"}}, "title": {"text": "Comparison of parameter estimates across training sessions", "subtitle": "Use mousewheel to zoom"}, "transform": [{"calculate": "datum.m_or_u + '-probability (as log odds)'", "as": "col_header"}], "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json", "datasets": {"data-ed1f09f27dd97222de32cebf09987fb4": [{"m_or_u": "m", "estimated_probability": 0.4953998584571833, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -0.026547154611559317, "sql_condition": "\"first_name_l\" = \"first_name_r\"", "comparison_level_label": "Exact match on first_name", "comparison_vector_value": 4, "comparison_name": "first_name", "comparison_sort_order": 0}, {"m_or_u": "m", "estimated_probability": 0.16772823779193205, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -2.3109290959381057, "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.92", "comparison_level_label": "Jaro-Winkler distance of first_name >= 0.92", "comparison_vector_value": 3, "comparison_name": "first_name", "comparison_sort_order": 0}, {"m_or_u": "m", "estimated_probability": 0.050955414012738856, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -4.219168520462161, "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.88", "comparison_level_label": "Jaro-Winkler distance of first_name >= 0.88", "comparison_vector_value": 2, "comparison_name": "first_name", "comparison_sort_order": 0}, {"m_or_u": "m", "estimated_probability": 0.08138711960368011, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -3.496584617054763, "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.7", "comparison_level_label": "Jaro-Winkler distance of first_name >= 0.7", "comparison_vector_value": 1, "comparison_name": "first_name", "comparison_sort_order": 0}, {"m_or_u": "m", "estimated_probability": 0.20452937013446568, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.959500637720247, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "first_name", "comparison_sort_order": 0}, {"m_or_u": "m", "estimated_probability": 0.4485294117647059, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -0.2980813529329946, "sql_condition": "\"surname_l\" = \"surname_r\"", "comparison_level_label": "Exact match on surname", "comparison_vector_value": 4, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.6257815226019211, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": 0.7417782660774624, "sql_condition": "\"surname_l\" = \"surname_r\"", "comparison_level_label": "Exact match on surname", "comparison_vector_value": 4, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.21544117647058825, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.864587606402177, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.92", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.92", "comparison_vector_value": 3, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.2275262574980547, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -1.7634528464982868, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.92", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.92", "comparison_vector_value": 3, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.04044117647058824, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -4.568474377932588, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.88", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.88", "comparison_vector_value": 2, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.03662391383195619, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -4.7172412336516025, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.88", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.88", "comparison_vector_value": 2, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.08161764705882353, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -3.492141895257851, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.7", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.7", "comparison_vector_value": 1, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.09678319985317106, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -3.2222437773864243, "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.7", "comparison_level_label": "Jaro-Winkler distance of surname >= 0.7", "comparison_vector_value": 1, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.2139705882352941, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.8771707948122067, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.013285106214896938, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -6.214751618166397, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "surname", "comparison_sort_order": 1}, {"m_or_u": "m", "estimated_probability": 0.42146725750861647, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -0.4569780550512149, "sql_condition": "\"dob_l\" = \"dob_r\"", "comparison_level_label": "Exact match on dob", "comparison_vector_value": 5, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.3934524875218463, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -0.6244312304143554, "sql_condition": "\"dob_l\" = \"dob_r\"", "comparison_level_label": "Exact match on dob", "comparison_vector_value": 5, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.08862629246676514, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -3.3622360835408993, "sql_condition": "damerau_levenshtein(\"dob_l\", \"dob_r\") <= 1", "comparison_level_label": "Levenshtein distance of dob <= 1", "comparison_vector_value": 4, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.12854217781802071, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -2.7611890203595673, "sql_condition": "damerau_levenshtein(\"dob_l\", \"dob_r\") <= 1", "comparison_level_label": "Levenshtein distance of dob <= 1", "comparison_vector_value": 4, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.09699655342195962, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -3.218726104138678, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 2629800.0", "comparison_level_label": "Abs difference of 'transformed dob <= 1 month'", "comparison_vector_value": 3, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.06508162067908886, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -3.8445183367349016, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 2629800.0", "comparison_level_label": "Abs difference of 'transformed dob <= 1 month'", "comparison_vector_value": 3, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.11422944362383063, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -2.9549984761239103, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 31557600.0", "comparison_level_label": "Abs difference of 'transformed dob <= 1 year'", "comparison_vector_value": 2, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.13671959131132042, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -2.65860925873792, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 31557600.0", "comparison_level_label": "Abs difference of 'transformed dob <= 1 year'", "comparison_vector_value": 2, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.23830625307730183, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.6763942441744413, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 315576000.0", "comparison_level_label": "Abs difference of 'transformed dob <= 10 year'", "comparison_vector_value": 1, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.22502621697661637, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -1.7840544112329517, "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 315576000.0", "comparison_level_label": "Abs difference of 'transformed dob <= 10 year'", "comparison_vector_value": 1, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.04037419990152634, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -4.570966370639806, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.05117790569310731, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -4.2125445893251285, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "dob", "comparison_sort_order": 2}, {"m_or_u": "m", "estimated_probability": 0.5661492978566149, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": 0.38398388881490503, "sql_condition": "\"city_l\" = \"city_r\"", "comparison_level_label": "Exact match on city", "comparison_vector_value": 1, "comparison_name": "city", "comparison_sort_order": 3}, {"m_or_u": "m", "estimated_probability": 0.5628130218653614, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": 0.3644052786018151, "sql_condition": "\"city_l\" = \"city_r\"", "comparison_level_label": "Exact match on city", "comparison_vector_value": 1, "comparison_name": "city", "comparison_sort_order": 3}, {"m_or_u": "m", "estimated_probability": 0.43385070214338506, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -0.3839838888149049, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "city", "comparison_sort_order": 3}, {"m_or_u": "m", "estimated_probability": 0.4371869781346386, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -0.36440527860181515, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "city", "comparison_sort_order": 3}, {"m_or_u": "m", "estimated_probability": 0.5340642129992169, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": 0.1968820708288665, "sql_condition": "\"email_l\" = \"email_r\"", "comparison_level_label": "Exact match on email", "comparison_vector_value": 4, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.5707272045221725, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": 0.4109065857204091, "sql_condition": "\"email_l\" = \"email_r\"", "comparison_level_label": "Exact match on email", "comparison_vector_value": 4, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.23492560689115113, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.7033960614725043, "sql_condition": "NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), '') = NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')", "comparison_level_label": "Exact match on username", "comparison_vector_value": 3, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.2094073550927045, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -1.9166224179708937, "sql_condition": "NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), '') = NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')", "comparison_level_label": "Exact match on username", "comparison_vector_value": 3, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.22239624119028975, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -1.8059027880236918, "sql_condition": "jaro_winkler_similarity(\"email_l\", \"email_r\") >= 0.88", "comparison_level_label": "Jaro-Winkler distance of email >= 0.88", "comparison_vector_value": 2, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.19001135184876095, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -2.091816076956007, "sql_condition": "jaro_winkler_similarity(\"email_l\", \"email_r\") >= 0.88", "comparison_level_label": "Jaro-Winkler distance of email >= 0.88", "comparison_vector_value": 2, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.0015661707126076742, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -9.31628153174622, "sql_condition": "jaro_winkler_similarity(NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), ''), NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')) >= 0.88", "comparison_level_label": "Jaro-Winkler >0.88 on username", "comparison_vector_value": 1, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.019731832581364434, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -5.634579617838549, "sql_condition": "jaro_winkler_similarity(NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), ''), NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')) >= 0.88", "comparison_level_label": "Jaro-Winkler >0.88 on username", "comparison_vector_value": 1, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.007047768206734534, "estimate_description": "estimate m from pairwise labels", "estimated_probability_as_log_odds": -7.1384140286970945, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "email", "comparison_sort_order": 4}, {"m_or_u": "m", "estimated_probability": 0.010122255954997663, "estimate_description": "EM, blocked on: l.\"first_name\" = r.\"first_name\"", "estimated_probability_as_log_odds": -6.6116475889964015, "sql_condition": "ELSE", "comparison_level_label": "All other comparisons", "comparison_vector_value": 0, "comparison_name": "email", "comparison_sort_order": 4}]}}, {"mode": "vega-lite"});
+</script>
+
+<div class="highlight"><pre><span></span><code><span class="n">linker</span><span class="o">.</span><span class="n">visualisations</span><span class="o">.</span><span class="n">match_weights_chart</span><span class="p">()</span>
+</code></pre></div>
+<style>
+  #altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb.vega-embed {
+    width: 100%;
+    display: flex;
+  }
+
+  #altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb.vega-embed details,
+  #altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb.vega-embed details summary {
+    position: relative;
+  }
+</style>
+<div id="altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb"></div>
+<script type="text/javascript">
+  var VEGA_DEBUG = (typeof VEGA_DEBUG == "undefined") ? {} : VEGA_DEBUG;
+  (function(spec, embedOpt){
+    let outputDiv = document.currentScript.previousElementSibling;
+    if (outputDiv.id !== "altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb") {
+      outputDiv = document.getElementById("altair-viz-92e7ea2c6f0648648ac3ebb22c154bfb");
+    }
+    const paths = {
+      "vega": "https://cdn.jsdelivr.net/npm/vega@5?noext",
+      "vega-lib": "https://cdn.jsdelivr.net/npm/vega-lib?noext",
+      "vega-lite": "https://cdn.jsdelivr.net/npm/vega-lite@5.17.0?noext",
+      "vega-embed": "https://cdn.jsdelivr.net/npm/vega-embed@6?noext",
+    };
+
+    function maybeLoadScript(lib, version) {
+      var key = `${lib.replace("-", "")}_version`;
+      return (VEGA_DEBUG[key] == version) ?
+        Promise.resolve(paths[lib]) :
+        new Promise(function(resolve, reject) {
+          var s = document.createElement('script');
+          document.getElementsByTagName("head")[0].appendChild(s);
+          s.async = true;
+          s.onload = () => {
+            VEGA_DEBUG[key] = version;
+            return resolve(paths[lib]);
+          };
+          s.onerror = () => reject(`Error loading script: ${paths[lib]}`);
+          s.src = paths[lib];
+        });
+    }
+
+    function showError(err) {
+      outputDiv.innerHTML = `<div class="error" style="color:red;">${err}</div>`;
+      throw err;
+    }
+
+    function displayChart(vegaEmbed) {
+      vegaEmbed(outputDiv, spec, embedOpt)
+        .catch(err => showError(`Javascript Error: ${err.message}<br>This usually means there's a typo in your chart specification. See the javascript console for the full traceback.`));
+    }
+
+    if(typeof define === "function" && define.amd) {
+      requirejs.config({paths});
+      require(["vega-embed"], displayChart, err => showError(`Error loading script: ${err.message}`));
+    } else {
+      maybeLoadScript("vega", "5")
+        .then(() => maybeLoadScript("vega-lite", "5.17.0"))
+        .then(() => maybeLoadScript("vega-embed", "6"))
+        .catch(showError)
+        .then(() => displayChart(vegaEmbed));
+    }
+  })({"config": {"view": {"continuousWidth": 300, "continuousHeight": 300, "discreteHeight": 60, "discreteWidth": 400}, "header": {"title": null}, "mark": {"tooltip": null}, "title": {"anchor": "middle"}}, "vconcat": [{"mark": {"type": "bar", "clip": true, "height": 15}, "encoding": {"color": {"field": "log2_bayes_factor", "scale": {"domain": [-10, 0, 10], "interpolate": "lab", "range": ["red", "#bbbbbb", "green"]}, "title": "Match weight", "type": "quantitative"}, "tooltip": [{"field": "comparison_name", "title": "Comparison name", "type": "nominal"}, {"field": "probability_two_random_records_match", "format": ".4f", "title": "Probability two random records match", "type": "nominal"}, {"field": "log2_bayes_factor", "format": ",.4f", "title": "Equivalent match weight", "type": "quantitative"}, {"field": "bayes_factor_description", "title": "Match weight description", "type": "nominal"}], "x": {"axis": {"domain": false, "gridColor": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": "#aaa"}, "value": "#ddd"}, "gridDash": {"condition": {"test": "abs(datum.value / 10) == 1", "value": [3]}, "value": null}, "gridWidth": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": 2}, "value": 1}, "labels": false, "ticks": false, "title": ""}, "field": "log2_bayes_factor", "scale": {"domain": [-9, 9]}, "type": "quantitative"}, "y": {"axis": {"title": "Prior (starting) match weight", "titleAlign": "right", "titleAngle": 0, "titleFontWeight": "normal"}, "field": "label_for_charts", "sort": {"field": "comparison_vector_value", "order": "descending"}, "type": "nominal"}}, "height": 20, "transform": [{"filter": "(datum.comparison_name == 'probability_two_random_records_match')"}]}, {"mark": {"type": "bar", "clip": true}, "encoding": {"color": {"field": "log2_bayes_factor", "scale": {"domain": [-10, 0, 10], "interpolate": "lab", "range": ["red", "#bbbbbb", "green"]}, "title": "Match weight", "type": "quantitative"}, "row": {"field": "comparison_name", "header": {"labelAlign": "left", "labelAnchor": "middle", "labelAngle": 0}, "sort": {"field": "comparison_sort_order"}, "type": "nominal"}, "tooltip": [{"field": "comparison_name", "title": "Comparison name", "type": "nominal"}, {"field": "label_for_charts", "title": "Label", "type": "ordinal"}, {"field": "sql_condition", "title": "SQL condition", "type": "nominal"}, {"field": "m_probability", "format": ".4f", "title": "M probability", "type": "quantitative"}, {"field": "u_probability", "format": ".4f", "title": "U probability", "type": "quantitative"}, {"field": "bayes_factor", "format": ",.4f", "title": "Bayes factor = m/u", "type": "quantitative"}, {"field": "log2_bayes_factor", "format": ",.4f", "title": "Match weight = log2(m/u)", "type": "quantitative"}, {"field": "bayes_factor_description", "title": "Match weight description", "type": "nominal"}], "x": {"axis": {"gridColor": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": "#aaa"}, "value": "#ddd"}, "gridDash": {"condition": {"test": "abs(datum.value / 10) == 1", "value": [3]}, "value": null}, "gridWidth": {"condition": {"test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0", "value": 2}, "value": 1}, "title": "Comparison level match weight = log2(m/u)"}, "field": "log2_bayes_factor", "scale": {"domain": [-9, 9]}, "type": "quantitative"}, "y": {"axis": {"title": null}, "field": "label_for_charts", "sort": {"field": "comparison_vector_value", "order": "descending"}, "type": "nominal"}}, "height": {"step": 12}, "resolve": {"axis": {"y": "independent"}, "scale": {"y": "independent"}}, "transform": [{"filter": "(datum.comparison_name != 'probability_two_random_records_match')"}]}], "data": {"name": "data-3ac41d0cb87094778550dc4f5831a54f"}, "params": [{"name": "mouse_zoom", "select": {"type": "interval", "encodings": ["x"]}, "bind": "scales", "views": []}], "resolve": {"axis": {"y": "independent"}, "scale": {"y": "independent"}}, "title": {"text": "Model parameters (components of final match weight)", "subtitle": "Use mousewheel to zoom"}, "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json", "datasets": {"data-3ac41d0cb87094778550dc4f5831a54f": [{"comparison_name": "probability_two_random_records_match", "sql_condition": null, "label_for_charts": "", "m_probability": null, "u_probability": null, "m_probability_description": null, "u_probability_description": null, "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": null, "is_null_level": false, "bayes_factor": 0.0033430420247643373, "log2_bayes_factor": -8.224622793739668, "comparison_vector_value": 0, "max_comparison_vector_value": 0, "bayes_factor_description": "The probability that two random records drawn at random match is 0.003 or one in  300.1 records.This is equivalent to a starting match weight of -8.225.", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": -1}, {"comparison_name": "first_name", "sql_condition": "\"first_name_l\" = \"first_name_r\"", "label_for_charts": "Exact match on first_name", "m_probability": 0.4953998584571833, "u_probability": 0.0057935713975033705, "m_probability_description": "Amongst matching record comparisons, 49.54% of records are in the exact match on first_name comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.58% of records are in the exact match on first_name comparison level", "has_tf_adjustments": true, "tf_adjustment_column": "first_name", "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 85.50854463805632, "log2_bayes_factor": 6.417996686710603, "comparison_vector_value": 4, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `exact match on first_name` then comparison is 85.51 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 0}, {"comparison_name": "first_name", "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.92", "label_for_charts": "Jaro-Winkler distance of first_name >= 0.92", "m_probability": 0.16772823779193205, "u_probability": 0.0023429457903817435, "m_probability_description": "Amongst matching record comparisons, 16.77% of records are in the jaro-winkler distance of first_name >= 0.92 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.23% of records are in the jaro-winkler distance of first_name >= 0.92 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 71.58861228479536, "log2_bayes_factor": 6.1616582088171565, "comparison_vector_value": 3, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of first_name >= 0.92` then comparison is 71.59 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 0}, {"comparison_name": "first_name", "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.88", "label_for_charts": "Jaro-Winkler distance of first_name >= 0.88", "m_probability": 0.050955414012738856, "u_probability": 0.0015484319951285285, "m_probability_description": "Amongst matching record comparisons, 5.10% of records are in the jaro-winkler distance of first_name >= 0.88 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.15% of records are in the jaro-winkler distance of first_name >= 0.88 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 32.90775066199099, "log2_bayes_factor": 5.040355512425451, "comparison_vector_value": 2, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of first_name >= 0.88` then comparison is 32.91 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 0}, {"comparison_name": "first_name", "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.7", "label_for_charts": "Jaro-Winkler distance of first_name >= 0.7", "m_probability": 0.08138711960368011, "u_probability": 0.018934945558406913, "m_probability_description": "Amongst matching record comparisons, 8.14% of records are in the jaro-winkler distance of first_name >= 0.7 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 1.89% of records are in the jaro-winkler distance of first_name >= 0.7 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 4.298249464337388, "log2_bayes_factor": 2.1037492171812744, "comparison_vector_value": 1, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of first_name >= 0.7` then comparison is 4.30 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 0}, {"comparison_name": "first_name", "sql_condition": "ELSE", "label_for_charts": "All other comparisons", "m_probability": 0.20452937013446568, "u_probability": 0.9713801052585794, "m_probability_description": "Amongst matching record comparisons, 20.45% of records are in the all other comparisons comparison level", "u_probability_description": "Amongst non-matching record comparisons, 97.14% of records are in the all other comparisons comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.2105554448019299, "log2_bayes_factor": -2.2477279119133526, "comparison_vector_value": 0, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `all other comparisons` then comparison is  4.75 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 0}, {"comparison_name": "surname", "sql_condition": "\"surname_l\" = \"surname_r\"", "label_for_charts": "Exact match on surname", "m_probability": 0.5371554671833135, "u_probability": 0.004889975550122249, "m_probability_description": "Amongst matching record comparisons, 53.72% of records are in the exact match on surname comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.49% of records are in the exact match on surname comparison level", "has_tf_adjustments": true, "tf_adjustment_column": "surname", "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 109.84829303898762, "log2_bayes_factor": 6.779368641299035, "comparison_vector_value": 4, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `exact match on surname` then comparison is 109.85 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 1}, {"comparison_name": "surname", "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.92", "label_for_charts": "Jaro-Winkler distance of surname >= 0.92", "m_probability": 0.22148371698432145, "u_probability": 0.00283905173880724, "m_probability_description": "Amongst matching record comparisons, 22.15% of records are in the jaro-winkler distance of surname >= 0.92 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.28% of records are in the jaro-winkler distance of surname >= 0.92 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 78.01327251519993, "log2_bayes_factor": 6.285647687617522, "comparison_vector_value": 3, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of surname >= 0.92` then comparison is 78.01 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 1}, {"comparison_name": "surname", "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.88", "label_for_charts": "Jaro-Winkler distance of surname >= 0.88", "m_probability": 0.03853254515127222, "u_probability": 0.0011314412292407403, "m_probability_description": "Amongst matching record comparisons, 3.85% of records are in the jaro-winkler distance of surname >= 0.88 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.11% of records are in the jaro-winkler distance of surname >= 0.88 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 34.05616142972772, "log2_bayes_factor": 5.089843928659545, "comparison_vector_value": 2, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of surname >= 0.88` then comparison is 34.06 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 1}, {"comparison_name": "surname", "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.7", "label_for_charts": "Jaro-Winkler distance of surname >= 0.7", "m_probability": 0.0892004234559973, "u_probability": 0.014729633311540402, "m_probability_description": "Amongst matching record comparisons, 8.92% of records are in the jaro-winkler distance of surname >= 0.7 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 1.47% of records are in the jaro-winkler distance of surname >= 0.7 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 6.055848205407148, "log2_bayes_factor": 2.598329043492248, "comparison_vector_value": 1, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of surname >= 0.7` then comparison is 6.06 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 1}, {"comparison_name": "surname", "sql_condition": "ELSE", "label_for_charts": "All other comparisons", "m_probability": 0.11362784722509553, "u_probability": 0.9764098981702893, "m_probability_description": "Amongst matching record comparisons, 11.36% of records are in the all other comparisons comparison level", "u_probability_description": "Amongst non-matching record comparisons, 97.64% of records are in the all other comparisons comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.11637310051651938, "log2_bayes_factor": -3.1031704750969547, "comparison_vector_value": 0, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `all other comparisons` then comparison is  8.59 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 1}, {"comparison_name": "dob", "sql_condition": "\"dob_l\" = \"dob_r\"", "label_for_charts": "Exact match on dob", "m_probability": 0.4074598725152314, "u_probability": 0.0017477477477477479, "m_probability_description": "Amongst matching record comparisons, 40.75% of records are in the exact match on dob comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.17% of records are in the exact match on dob comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 233.13425695459117, "log2_bayes_factor": 7.8650172007075945, "comparison_vector_value": 5, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `exact match on dob` then comparison is 233.13 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "dob", "sql_condition": "damerau_levenshtein(\"dob_l\", \"dob_r\") <= 1", "label_for_charts": "Levenshtein distance of dob <= 1", "m_probability": 0.10858423514239293, "u_probability": 0.0016436436436436436, "m_probability_description": "Amongst matching record comparisons, 10.86% of records are in the levenshtein distance of dob <= 1 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.16% of records are in the levenshtein distance of dob <= 1 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 66.06312479126099, "log2_bayes_factor": 6.045773305719355, "comparison_vector_value": 4, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `levenshtein distance of dob <= 1` then comparison is 66.06 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "dob", "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 2629800.0", "label_for_charts": "Abs difference of 'transformed dob <= 1 month'", "m_probability": 0.08103908705052423, "u_probability": 0.0024084084084084086, "m_probability_description": "Amongst matching record comparisons, 8.10% of records are in the abs difference of 'transformed dob <= 1 month' comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.24% of records are in the abs difference of 'transformed dob <= 1 month' comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 33.648398987312426, "log2_bayes_factor": 5.072465956988507, "comparison_vector_value": 3, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `abs difference of 'transformed dob <= 1 month'` then comparison is 33.65 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "dob", "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 31557600.0", "label_for_charts": "Abs difference of 'transformed dob <= 1 year'", "m_probability": 0.1254745174675755, "u_probability": 0.033053053053053054, "m_probability_description": "Amongst matching record comparisons, 12.55% of records are in the abs difference of 'transformed dob <= 1 year' comparison level", "u_probability_description": "Amongst non-matching record comparisons, 3.31% of records are in the abs difference of 'transformed dob <= 1 year' comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 3.796155146883947, "log2_bayes_factor": 1.9245389557589478, "comparison_vector_value": 2, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `abs difference of 'transformed dob <= 1 year'` then comparison is 3.80 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "dob", "sql_condition": "ABS(EPOCH(try_strptime(\"dob_l\", '%Y-%m-%d')) - EPOCH(try_strptime(\"dob_r\", '%Y-%m-%d'))) <= 315576000.0", "label_for_charts": "Abs difference of 'transformed dob <= 10 year'", "m_probability": 0.2316662350269591, "u_probability": 0.30747947947947946, "m_probability_description": "Amongst matching record comparisons, 23.17% of records are in the abs difference of 'transformed dob <= 10 year' comparison level", "u_probability_description": "Amongst non-matching record comparisons, 30.75% of records are in the abs difference of 'transformed dob <= 10 year' comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.7534364095423156, "log2_bayes_factor": -0.4084423422007769, "comparison_vector_value": 1, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `abs difference of 'transformed dob <= 10 year'` then comparison is  1.33 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "dob", "sql_condition": "ELSE", "label_for_charts": "All other comparisons", "m_probability": 0.04577605279731682, "u_probability": 0.6536676676676677, "m_probability_description": "Amongst matching record comparisons, 4.58% of records are in the all other comparisons comparison level", "u_probability_description": "Amongst non-matching record comparisons, 65.37% of records are in the all other comparisons comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.07002955027689989, "log2_bayes_factor": -3.8358923671173697, "comparison_vector_value": 0, "max_comparison_vector_value": 5, "bayes_factor_description": "If comparison level is `all other comparisons` then comparison is  14.28 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 2}, {"comparison_name": "city", "sql_condition": "\"city_l\" = \"city_r\"", "label_for_charts": "Exact match on city", "m_probability": 0.5644811598609882, "u_probability": 0.0551475711801453, "m_probability_description": "Amongst matching record comparisons, 56.45% of records are in the exact match on city comparison level", "u_probability_description": "Amongst non-matching record comparisons, 5.51% of records are in the exact match on city comparison level", "has_tf_adjustments": true, "tf_adjustment_column": "city", "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 10.235829933779886, "log2_bayes_factor": 3.355556177493555, "comparison_vector_value": 1, "max_comparison_vector_value": 1, "bayes_factor_description": "If comparison level is `exact match on city` then comparison is 10.24 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 3}, {"comparison_name": "city", "sql_condition": "ELSE", "label_for_charts": "All other comparisons", "m_probability": 0.4355188401390118, "u_probability": 0.9448524288198547, "m_probability_description": "Amongst matching record comparisons, 43.55% of records are in the all other comparisons comparison level", "u_probability_description": "Amongst non-matching record comparisons, 94.49% of records are in the all other comparisons comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.4609384776445844, "log2_bayes_factor": -1.117353890697282, "comparison_vector_value": 0, "max_comparison_vector_value": 1, "bayes_factor_description": "If comparison level is `all other comparisons` then comparison is  2.17 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 3}, {"comparison_name": "email", "sql_condition": "\"email_l\" = \"email_r\"", "label_for_charts": "Exact match on email", "m_probability": 0.5523957087606948, "u_probability": 0.0021938713143283602, "m_probability_description": "Amongst matching record comparisons, 55.24% of records are in the exact match on email comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.22% of records are in the exact match on email comparison level", "has_tf_adjustments": true, "tf_adjustment_column": "\"email\"", "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 251.79038768270107, "log2_bayes_factor": 7.976079397743489, "comparison_vector_value": 4, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `exact match on email` then comparison is 251.79 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 4}, {"comparison_name": "email", "sql_condition": "NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), '') = NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')", "label_for_charts": "Exact match on username", "m_probability": 0.22216648099192782, "u_probability": 0.0010390328952024346, "m_probability_description": "Amongst matching record comparisons, 22.22% of records are in the exact match on username comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.10% of records are in the exact match on username comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 213.82044978339513, "log2_bayes_factor": 7.740256028755592, "comparison_vector_value": 3, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `exact match on username` then comparison is 213.82 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 4}, {"comparison_name": "email", "sql_condition": "jaro_winkler_similarity(\"email_l\", \"email_r\") >= 0.88", "label_for_charts": "Jaro-Winkler distance of email >= 0.88", "m_probability": 0.20620379651952536, "u_probability": 0.0009135769109519858, "m_probability_description": "Amongst matching record comparisons, 20.62% of records are in the jaro-winkler distance of email >= 0.88 comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.09% of records are in the jaro-winkler distance of email >= 0.88 comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 225.71038524239003, "log2_bayes_factor": 7.81832899019637, "comparison_vector_value": 2, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler distance of email >= 0.88` then comparison is 225.71 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 4}, {"comparison_name": "email", "sql_condition": "jaro_winkler_similarity(NULLIF(regexp_extract(\"email_l\", '^[^@]+', 0), ''), NULLIF(regexp_extract(\"email_r\", '^[^@]+', 0), '')) >= 0.88", "label_for_charts": "Jaro-Winkler >0.88 on username", "m_probability": 0.010649001646986053, "u_probability": 0.000501823937001795, "m_probability_description": "Amongst matching record comparisons, 1.06% of records are in the jaro-winkler >0.88 on username comparison level", "u_probability_description": "Amongst non-matching record comparisons, 0.05% of records are in the jaro-winkler >0.88 on username comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 21.220593243538243, "log2_bayes_factor": 4.407393083729446, "comparison_vector_value": 1, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `jaro-winkler >0.88 on username` then comparison is 21.22 times more likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 4}, {"comparison_name": "email", "sql_condition": "ELSE", "label_for_charts": "All other comparisons", "m_probability": 0.008585012080866098, "u_probability": 0.9953516949425154, "m_probability_description": "Amongst matching record comparisons, 0.86% of records are in the all other comparisons comparison level", "u_probability_description": "Amongst non-matching record comparisons, 99.54% of records are in the all other comparisons comparison level", "has_tf_adjustments": false, "tf_adjustment_column": null, "tf_adjustment_weight": 1.0, "is_null_level": false, "bayes_factor": 0.008625104196323199, "log2_bayes_factor": -6.8572423991754246, "comparison_vector_value": 0, "max_comparison_vector_value": 4, "bayes_factor_description": "If comparison level is `all other comparisons` then comparison is  115.94 times less likely to be a match", "probability_two_random_records_match": 0.0033319033319033323, "comparison_sort_order": 4}]}}, {"mode": "vega-lite"});
+</script></div>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="accuracy_analysis_from_labels_column.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Evaluation from ground truth column">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Evaluation from ground truth column
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="quick_and_dirty_persons.html" class="md-footer__link md-footer__link--next" aria-label="Next: Quick and dirty persons model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Quick and dirty persons model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/moj-analytical-services/splink" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/splink/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6zM286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3zM167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4zm-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.robinlinacre.com/" target="_blank" rel="noopener" title="www.robinlinacre.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://moj-analytical-services.github.io/splink/feed_rss_created.xml" target="_blank" rel="noopener" title="moj-analytical-services.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zm0 352a64 64 0 1 1 128 0 64 64 0 1 1-128 0zm32-256c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "content.tooltips", "header.autohide", "search.highlight", "search.share", "search.suggest", "navigation.indexes", "navigation.footer", "content.action.edit", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "toc.follow"], "search": "../../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+        <script src="../../../js/mkdocs-charts-plugin.js"></script>
+      
+        <script src="../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+      
+    
+  </body>
+</html>
