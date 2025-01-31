@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for 'one to one' linking and clustering (allowing the user to force clusters to contain at most one record from given `source_dataset`s) in [#2578](https://github.com/moj-analytical-services/splink/pull/2578/)
+- `ColumnExpression` now supports accessing first or last element of an array column via method `access_extreme_array_element()` ([#2585](https://github.com/moj-analytical-services/splink/pull/2585)), or converting string literals to `NULL` via `nullif()` ([#2586](https://github.com/moj-analytical-services/splink/pull/2586))
+
 
 ### Deprecated
 
@@ -21,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new `PairwiseStringDistanceFunctionLevel` and `PairwiseStringDistanceFunctionAtThresholds`
   for comparing array columns using a string similarity on each pair of values ([#2517](https://github.com/moj-analytical-services/splink/pull/2517))
 - Compare two records now allows typed inputs, not just dict ([#2498](https://github.com/moj-analytical-services/splink/pull/2498))
-- Clustering allows match weight args not just match probability ([#2454]https://github.com/moj-analytical-services/splink/pull/2454))
+- Clustering allows match weight args not just match probability ([#2454](https://github.com/moj-analytical-services/splink/pull/2454))
 
 ### Fixed
 
@@ -50,7 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cluster without linker by @RobinL in https://github.com/moj-analytical-services/splink/pull/2412
 - Better autocomplete for dataframes by @RobinL in https://github.com/moj-analytical-services/splink/pull/2434
-
 
 ## [4.0.2] - 2024-09-19
 
@@ -185,7 +186,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.5...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.6...HEAD
+[4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
 [4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
 [4.0.4]: https://github.com/moj-analytical-services/splink/compare/4.0.3...4.0.4
 [4.0.3]: https://github.com/moj-analytical-services/splink/compare/4.0.2...4.0.3

@@ -16,6 +16,7 @@ However, there may be situations where you don't wish to derive a new column, pe
 
 This is where a `ColumnExpression` may be used. It represents some SQL expression, which may be a column, or some more complicated construct,
 to which you can also apply zero or more transformations. These are lazily evaluated, and in particular will not be tied to a specific SQL dialect until they are put (via [settings](./settings_dict_guide.md) into a linker).
+This can be particularly useful if you want to write code that can easily be switched between different backends.
 
 ??? warning "Term frequency adjustments"
     One caveat to using a `ColumnExpression` is that it cannot be combined with term frequency adjustments.

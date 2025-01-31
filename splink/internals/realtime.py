@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
+from weakref import ref
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
@@ -16,20 +18,69 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 
 class SQLCache:
     def __init__(self):
-        self._cache: dict[int, tuple[str, str | None]] = {}
+        self._cache = {}
 
-    def get(self, settings_id: int, new_uid: str) -> str | None:
+    # TODO: if we have path/string, do we want to think about behaviour if underlying
+    # file changes between calls?
+    def get(
+        self,
+        settings: SettingsCreator | dict[str, Any] | Path | str,
+        new_uid: str,
+        *,
+        sql_dialect_str: str,
+    ) -> str | None:
+        settings_id = self._cache_id(settings, sql_dialect_str)
         if settings_id not in self._cache:
             return None
+        sql, cached_uid, settings_ref = self._cache[settings_id]
+        # if reference is dead, delete cache entry and return nowt
+        if settings_ref() is None:
+            del self._cache[settings_id]
+            return None
 
-        sql, cached_uid = self._cache[settings_id]
         if cached_uid:
             sql = sql.replace(cached_uid, new_uid)
         return sql
 
-    def set(self, settings_id: int, sql: str | None, uid: str | None) -> None:
+    def set(
+        self,
+        settings: SettingsCreator | dict[str, Any] | Path | str,
+        sql: str | None,
+        uid: str | None,
+        *,
+        sql_dialect_str: str,
+    ) -> None:
         if sql is not None:
-            self._cache[settings_id] = (sql, uid)
+            settings_id = self._cache_id(settings, sql_dialect_str)
+            # kind of hacky
+            # allows us to not need to special-case retrieval - will appear as though
+            # weakref is always live, so don't need to intervene
+            settings_ref = (
+                ref(settings)
+                if isinstance(settings, SettingsCreator)
+                else (lambda: True)
+            )
+            self._cache[settings_id] = (sql, uid, settings_ref)
+
+    @staticmethod
+    def _cache_id(
+        settings: SettingsCreator | dict[str, Any] | Path | str, sql_dialect_str: str
+    ) -> str:
+        if isinstance(settings, SettingsCreator):
+            return str(id(settings))
+        if isinstance(settings, str):
+            return settings
+        if isinstance(settings, Path):
+            return str(settings)
+        # we have a dict
+        try:
+            key = json.dumps(settings)
+        except TypeError:
+            settings_dict = SettingsCreator(**settings).create_settings_dict(
+                sql_dialect_str=sql_dialect_str
+            )
+            key = json.dumps(settings_dict)
+        return key
 
 
 _sql_cache = SQLCache()
@@ -57,6 +108,7 @@ def compare_records(
     global _sql_cache
 
     uid = ascii_uid(8)
+    sql_dialect_str = db_api.sql_dialect.sql_dialect_str
 
     if isinstance(record_1, dict):
         to_register_left: AcceptableInputTableType = [record_1]
@@ -82,9 +134,9 @@ def compare_records(
     )
     df_records_right.templated_name = "__splink__compare_records_right"
 
-    settings_id = id(settings)
     if use_sql_from_cache:
-        if cached_sql := _sql_cache.get(settings_id, uid):
+        cached_sql = _sql_cache.get(settings, uid, sql_dialect_str=sql_dialect_str)
+        if cached_sql:
             return db_api._sql_to_splink_dataframe(
                 cached_sql,
                 templated_name="__splink__realtime_compare_records",
@@ -137,6 +189,8 @@ def compare_records(
         pipeline.enqueue_sql(sql, "__splink__found_by_blocking_rules")
 
     predictions = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    _sql_cache.set(settings_id, predictions.sql_used_to_create, uid)
+    _sql_cache.set(
+        settings, predictions.sql_used_to_create, uid, sql_dialect_str=sql_dialect_str
+    )
 
     return predictions

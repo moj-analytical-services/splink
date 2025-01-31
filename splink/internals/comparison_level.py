@@ -658,6 +658,9 @@ class ComparisonLevel:
         if self._u_probability and self._u_is_trained:
             output["u_probability"] = self.u_probability
 
+        output["fix_m_probability"] = self._fix_m_probability
+        output["fix_u_probability"] = self._fix_u_probability
+
         if self._has_tf_adjustments:
             output["tf_adjustment_column"] = self._tf_adjustment_input_column.input_name
             if self._tf_minimum_u_value != 0:

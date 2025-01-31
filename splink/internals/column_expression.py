@@ -4,7 +4,7 @@ import re
 import string
 from copy import copy
 from functools import partial
-from typing import Protocol, Union
+from typing import Literal, Protocol, Union
 
 import sqlglot
 
@@ -201,6 +201,34 @@ class ColumnExpression:
 
         return clone
 
+    def _nullif_dialected(
+        self,
+        name: str,
+        null_value: str,
+        sql_dialect: SplinkDialect,
+    ) -> str:
+        substr_sql = sqlglot.parse_one(f"nullif(___col___, '{null_value}')").sql(
+            dialect=sql_dialect.sqlglot_dialect
+        )
+        return substr_sql.replace("___col___", name)
+
+    def nullif(self, null_value: str) -> "ColumnExpression":
+        """
+        Applies a nullif transform to the input expression,
+        with the specified string value that should be converted to NULL.
+
+        Args:
+            null_value (str): The string literal that should be converted to NULL.
+        """
+        clone = self._clone()
+        op = partial(
+            clone._nullif_dialected,
+            null_value=null_value,
+        )
+        clone.operations.append(op)
+
+        return clone
+
     def _try_parse_date_dialected(
         self,
         name: str,
@@ -244,6 +272,36 @@ class ColumnExpression:
         op = partial(
             clone._try_parse_timestamp_dialected,
             timestamp_format=timestamp_format,
+        )
+        clone.operations.append(op)
+
+        return clone
+
+    def _access_extreme_array_element_dialected(
+        self,
+        name: str,
+        sql_dialect: SplinkDialect,
+        first_or_last: Literal["first", "last"],
+    ) -> str:
+        return sql_dialect.access_extreme_array_element(
+            name, first_or_last=first_or_last
+        )
+
+    def access_extreme_array_element(
+        self, first_or_last: Literal["first", "last"]
+    ) -> "ColumnExpression":
+        """
+        Applies a transformation to access either the first or the last element
+        of an array
+
+        Args:
+            first_or_last (str): 'first' for returning the first elemen of the array,
+                'last' for the last element
+        """
+        clone = self._clone()
+        op = partial(
+            clone._access_extreme_array_element_dialected,
+            first_or_last=first_or_last,
         )
         clone.operations.append(op)
 

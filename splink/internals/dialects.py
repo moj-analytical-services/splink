@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, Type, TypeVar, final
+from typing import TYPE_CHECKING, Literal, Type, TypeVar, final
 
 if TYPE_CHECKING:
     from splink.internals.comparison_level_library import (
@@ -190,6 +190,14 @@ class SplinkDialect(ABC):
             "'regex_extract' function"
         )
 
+    def access_extreme_array_element(
+        self, name: str, first_or_last: Literal["first", "last"]
+    ) -> str:
+        raise NotImplementedError(
+            f"Backend '{self.sql_dialect_str}' does not have an "
+            "'access_extreme_array_element' function"
+        )
+
     def explode_arrays_sql(
         self,
         tbl_name: str,
@@ -287,6 +295,18 @@ class DuckDBDialect(SplinkDialect):
             return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
+
+    def access_extreme_array_element(
+        self, name: str, first_or_last: Literal["first", "last"]
+    ) -> str:
+        if first_or_last == "first":
+            return f"{name}[{self.array_first_index}]"
+        if first_or_last == "last":
+            return f"{name}[-1]"
+        raise ValueError(
+            f"Argument 'first_or_last' should be 'first' or 'last', "
+            f"received: '{first_or_last}'"
+        )
 
     def explode_arrays_sql(
         self,
@@ -396,6 +416,18 @@ class SparkDialect(SplinkDialect):
             return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
         else:
             return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def access_extreme_array_element(
+        self, name: str, first_or_last: Literal["first", "last"]
+    ) -> str:
+        if first_or_last == "first":
+            return f"{name}[{self.array_first_index}]"
+        if first_or_last == "last":
+            return f"element_at({name}, -1)"
+        raise ValueError(
+            f"Argument 'first_or_last' should be 'first' or 'last', "
+            f"received: '{first_or_last}'"
+        )
 
     def explode_arrays_sql(
         self,
@@ -551,6 +583,22 @@ class PostgresDialect(SplinkDialect):
     @property
     def infinity_expression(self):
         return "'infinity'"
+
+    @property
+    def array_first_index(self):
+        return 1
+
+    def access_extreme_array_element(
+        self, name: str, first_or_last: Literal["first", "last"]
+    ) -> str:
+        if first_or_last == "first":
+            return f"{name}[{self.array_first_index}]"
+        if first_or_last == "last":
+            return f"{name}[array_length({name}, 1)]"
+        raise ValueError(
+            f"Argument 'first_or_last' should be 'first' or 'last', "
+            f"received: '{first_or_last}'"
+        )
 
 
 class AthenaDialect(SplinkDialect):

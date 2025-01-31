@@ -155,8 +155,13 @@ class SparkAPI(DatabaseAPI[spark_df]):
         # be stored. The filter will remove none, so if catalog is not provided and
         # spark version is < 3.3.0 we will use the default catalog.
         self.splink_data_store = ".".join(
-            [f"`{x}`" for x in [catalog, database] if x is not None]
+            [self._quote_if_needed(x) for x in [catalog, database] if x is not None]
         )
+
+    def _quote_if_needed(self, identifier):
+        if identifier.startswith("`") and identifier.endswith("`"):
+            return identifier
+        return f"`{identifier}`"
 
     def _register_udfs_from_jar(self):
         # TODO: this should check if these are already registered and skip if so
