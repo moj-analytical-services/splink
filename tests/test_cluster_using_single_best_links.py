@@ -6,8 +6,10 @@ from splink import Linker, SettingsCreator, block_on
 from .decorator import mark_with_dialects_excluding
 
 
+# See https://www.robinlinacre.com/graphPlayground/ with this data:
+# https://gist.github.com/RobinL/a022c16ada1892035b1f3f7838f80db0#file-example_1-json
 @mark_with_dialects_excluding()
-def test_single_best_links_correctness(test_helpers, dialect):
+def test_single_best_links_correctness_example_1(test_helpers, dialect):
     helper = test_helpers[dialect]
 
     df = pd.DataFrame(
@@ -63,6 +65,136 @@ def test_single_best_links_correctness(test_helpers, dialect):
             ],
             "unique_id": [0, 1, 2, 3, 4, 5, 6, 7, 8],
             "source_dataset": ["a", "b", "c", "a", "b", "c", "a", "b", "c"],
+        }
+    )
+    correct_result = correct_result.sort_values("unique_id")
+    correct_result = correct_result.reset_index(drop=True)
+
+    pd.testing.assert_frame_equal(result, correct_result)
+
+
+# See https://www.robinlinacre.com/graphPlayground/ with this data:
+# https://gist.github.com/RobinL/a022c16ada1892035b1f3f7838f80db0#file-example_2-json
+@mark_with_dialects_excluding()
+def test_single_best_links_example_2(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    df = pd.DataFrame(
+        {
+            "unique_id": ["1", "2", "3", "4", "5", "6", "7"],
+            "source_dataset": ["a", "b", "a", "b", "a", "b", "d"],
+        }
+    )
+
+    predictions = pd.DataFrame(
+        {
+            "unique_id_l": ["1", "2", "3", "4", "5", "6", "4"],
+            "unique_id_r": ["2", "3", "4", "5", "6", "1", "7"],
+            "source_dataset_l": ["a", "b", "a", "b", "a", "b", "b"],
+            "source_dataset_r": ["b", "a", "b", "a", "b", "a", "d"],
+            "match_probability": [0.92, 0.91, 0.99, 0.88, 0.90, 0.96, 0.91],
+        }
+    )
+
+    settings = SettingsCreator(
+        link_type="link_only",
+        comparisons=[],
+        blocking_rules_to_generate_predictions=[],
+    )
+
+    linker = Linker(df, settings, **helper.extra_linker_args())
+
+    df_predict = linker.table_management.register_table_predict(
+        predictions, overwrite=True
+    )
+
+    df_clusters = linker.clustering.cluster_using_single_best_links(
+        df_predict,
+        duplicate_free_datasets=["a", "b", "d"],
+        threshold_match_probability=0.5,
+    )
+
+    result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
+    result = result.reset_index(drop=True)
+
+    correct_result = pd.DataFrame(
+        {
+            "cluster_id": [
+                "a-__-1",
+                "b-__-2",
+                "a-__-3",
+                "a-__-3",
+                "a-__-5",
+                "a-__-1",
+                "a-__-3",
+            ],
+            "unique_id": ["1", "2", "3", "4", "5", "6", "7"],
+            "source_dataset": ["a", "b", "a", "b", "a", "b", "d"],
+        }
+    )
+    correct_result = correct_result.sort_values("unique_id")
+    correct_result = correct_result.reset_index(drop=True)
+
+    pd.testing.assert_frame_equal(result, correct_result)
+
+
+# See https://www.robinlinacre.com/graphPlayground/ with this data:
+# https://gist.github.com/RobinL/a022c16ada1892035b1f3f7838f80db0#file-example_3-json
+@mark_with_dialects_excluding()
+def test_single_best_links_example_3(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    df = pd.DataFrame(
+        {
+            "unique_id": ["1", "2", "3", "4", "5", "6", "7"],
+            "source_dataset": ["a", "c", "b", "a", "b", "c", "a"],
+        }
+    )
+
+    predictions = pd.DataFrame(
+        {
+            "unique_id_l": ["1", "2", "3", "4", "5", "6"],
+            "unique_id_r": ["2", "3", "4", "5", "6", "7"],
+            "source_dataset_l": ["a", "c", "b", "a", "b", "c"],
+            "source_dataset_r": ["c", "b", "a", "b", "c", "a"],
+            "match_probability": [0.98, 0.90, 0.80, 0.81, 0.91, 0.99],
+        }
+    )
+
+    settings = SettingsCreator(
+        link_type="link_only",
+        comparisons=[],
+        blocking_rules_to_generate_predictions=[],
+    )
+
+    linker = Linker(df, settings, **helper.extra_linker_args())
+
+    df_predict = linker.table_management.register_table_predict(
+        predictions, overwrite=True
+    )
+
+    df_clusters = linker.clustering.cluster_using_single_best_links(
+        df_predict,
+        duplicate_free_datasets=["a", "b", "c"],
+        threshold_match_probability=0.5,
+    )
+
+    result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
+    result = result.reset_index(drop=True)
+
+    correct_result = pd.DataFrame(
+        {
+            "cluster_id": [
+                "a-__-1",
+                "a-__-1",
+                "a-__-1",
+                "a-__-4",
+                "a-__-7",
+                "a-__-7",
+                "a-__-7",
+            ],
+            "unique_id": ["1", "2", "3", "4", "5", "6", "7"],
+            "source_dataset": ["a", "c", "b", "a", "b", "c", "a"],
         }
     )
     correct_result = correct_result.sort_values("unique_id")
