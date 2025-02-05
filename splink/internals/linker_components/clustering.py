@@ -1,7 +1,16 @@
 from __future__ import annotations
 
+import logging
+
 from typing import TYPE_CHECKING, Optional
 
+from splink.internals.clustering import (
+    cluster_pairwise_predictions_at_threshold,
+    _get_cluster_stats_sql,
+    _calculate_stable_clusters_at_new_threshold,
+    _generate_detailed_cluster_comparison_sql,
+    _generate_cluster_summary_stats_sql
+)
 from splink.internals.connected_components import (
     solve_connected_components,
 )
@@ -13,6 +22,7 @@ from splink.internals.graph_metrics import (
 )
 from splink.internals.misc import (
     threshold_args_to_match_prob,
+    threshold_args_to_match_prob_list
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -176,6 +186,285 @@ class LinkerClustering:
             )
 
         return df_clustered_with_input_data
+
+    def cluster_pairwise_predictions_at_multiple_thresholds(
+        self,
+        df_predict: SplinkDataFrame,
+        match_probability_thresholds: Optional[list[float]] | None = None,
+        match_weight_thresholds: Optional[list[float]] | None = None,
+        output_cluster_summary_stats: bool = False,
+    ) -> SplinkDataFrame:
+        """Clusters the pairwise match predictions at multiple thresholds using
+        the connected components graph clustering algorithm.
+
+        This function efficiently computes clusters for multiple thresholds by starting
+        with the lowest threshold and incrementally updating clusters for higher thresholds.
+
+        If your node and edge column names follow Splink naming conventions, then you can
+        omit edge_id_column_name_left and edge_id_column_name_right. For example, if you
+        have a table of nodes with a column `unique_id`, it would be assumed that the
+        edge table has columns `unique_id_l` and `unique_id_r`.
+
+        Args:
+            nodes (AcceptableInputTableType): The table containing node information
+            edges (AcceptableInputTableType): The table containing edge information
+            db_api (DatabaseAPISubClass): The database API to use for querying
+            node_id_column_name (str): The name of the column containing node IDs
+            match_probability_thresholds (list[float] | None): List of match probability
+                thresholds to compute clusters for
+            match_weight_thresholds (list[float] | None): List of match weight thresholds
+                to compute clusters for
+            edge_id_column_name_left (Optional[str]): The name of the column containing
+                left edge IDs. If not provided, assumed to be f"{node_id_column_name}_l"
+            edge_id_column_name_right (Optional[str]): The name of the column containing
+                right edge IDs. If not provided, assumed to be f"{node_id_column_name}_r"
+            output_cluster_summary_stats (bool): If True, output summary statistics
+                for each threshold instead of full cluster information
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing cluster information for all
+                thresholds. If output_cluster_summary_stats is True, it contains summary
+                statistics (number of clusters, max cluster size, avg cluster size) for
+                each threshold.
+
+        Examples:
+            ```python
+            from splink import DuckDBAPI
+            from splink.clustering import (
+                cluster_pairwise_predictions_at_multiple_thresholds
+            )
+
+            db_api = DuckDBAPI()
+
+            nodes = [
+                {"my_id": 1},
+                {"my_id": 2},
+                {"my_id": 3},
+                {"my_id": 4},
+                {"my_id": 5},
+                {"my_id": 6},
+            ]
+
+            edges = [
+                {"n_1": 1, "n_2": 2, "match_probability": 0.8},
+                {"n_1": 3, "n_2": 2, "match_probability": 0.9},
+                {"n_1": 4, "n_2": 5, "match_probability": 0.99},
+            ]
+
+            thresholds = [0.5, 0.7, 0.9]
+
+            cc = cluster_pairwise_predictions_at_multiple_thresholds(
+                nodes,
+                edges,
+                node_id_column_name="my_id",
+                edge_id_column_name_left="n_1",
+                edge_id_column_name_right="n_2",
+                db_api=db_api,
+                match_probability_thresholds=thresholds,
+            )
+
+            cc.as_duckdbpyrelation()
+            ```
+        """
+
+        # Strategy to cluster at multiple thresholds:
+        # 1. Cluster at the lowest threshold
+        # 2. At next threshold, note that some clusters do not need to be recomputed.
+        #    Specifically, those where the min probability within the cluster is
+        #    greater than this next threshold.
+        # 3. Compute remaining clusters which _are_ affected by the next threshold.
+        # 4. Repeat for remaining thresholds.
+
+        # Need to get nodes and edges in a format suitable to pass to
+        # cluster_pairwise_predictions_at_threshold
+        linker = self._linker
+        db_api = linker._db_api
+
+        pipeline = CTEPipeline()
+
+        enqueue_df_concat(linker, pipeline)
+
+        uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
+        uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+        uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+        uid_concat_nodes = _composite_unique_id_from_nodes_sql(uid_cols, None)
+
+
+        # Input could either be user data, or a SplinkDataFrame
+        sql = f"""
+        select
+            {uid_concat_nodes} as node_id
+            from __splink__df_concat
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_nodes_with_composite_ids")
+
+        nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        has_match_prob_col = "match_probability" in [
+            c.unquote().name for c in df_predict.columns
+        ]
+
+        is_match_weight = (
+            match_weight_thresholds is not None and match_probability_thresholds is None
+        )
+
+        match_probability_thresholds = threshold_args_to_match_prob_list(
+            match_probability_thresholds, match_weight_thresholds
+        )
+
+        if match_probability_thresholds is None or len(match_probability_thresholds) == 0:
+            raise ValueError(
+                "Must provide either match_probability_thresholds "
+                "or match_weight_thresholds"
+            )
+        
+        if not has_match_prob_col and match_probability_thresholds is not None:
+            raise ValueError(
+                "df_predict must have a column called 'match_probability' if "
+                "threshold_match_probability is provided"
+            )
+
+        initial_threshold = match_probability_thresholds.pop(0)
+        all_results = {}
+
+        # Templated name must be used here because it could be the output
+        # of a deterministic link i.e. the physical name is not know for sure
+        sql = f"""
+        select
+            {uid_concat_edges_l} as node_id_l,
+            {uid_concat_edges_r} as node_id_r,
+            match_probability
+            from {df_predict.physical_name}
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_edges_from_predict")
+
+        edges_table_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
+        )
+
+        # First cluster at the lowest threshold
+        cc = cluster_pairwise_predictions_at_threshold(
+            nodes=nodes_with_composite_ids,
+            edges=edges_table_with_composite_ids,
+            db_api=db_api,
+            node_id_column_name="node_id",
+            edge_id_column_name_left="node_id_l",
+            edge_id_column_name_right="node_id_r",
+            threshold_match_probability=initial_threshold,
+        )
+
+        if output_cluster_summary_stats:
+            pipeline = CTEPipeline([cc])
+            sqls = _get_cluster_stats_sql(cc)
+            pipeline.enqueue_list_of_sqls(sqls)
+            cc_summary = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            all_results[initial_threshold] = cc_summary
+        else:
+            all_results[initial_threshold] = cc
+
+        previous_threshold = initial_threshold
+        for new_threshold in match_probability_thresholds:
+            # Get stable nodes
+            logger.info(f"--------Clustering at threshold {new_threshold}--------")
+            pipeline = CTEPipeline([cc, edges_table_with_composite_ids])
+
+            sqls = _calculate_stable_clusters_at_new_threshold(
+                edges_sdf=edges_table_with_composite_ids,
+                cc=cc,
+                node_id_column_name="node_id",
+                edge_id_column_name_left=uid_concat_edges_l,
+                edge_id_column_name_right=uid_concat_edges_r,
+                previous_threshold_match_probability=previous_threshold,
+                new_threshold_match_probability=new_threshold,
+            )
+
+            pipeline.enqueue_list_of_sqls(sqls)
+            stable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+            # Derive nodes in play and edges in play by removing stable nodes.  Then
+            # run cluster_pairwise_predictions_at_threshold at new threhold
+
+            pipeline = CTEPipeline([nodes_with_composite_ids, stable_clusters])
+            sql = f"""
+            select *
+            from {nodes_with_composite_ids.templated_name}
+            where node_id not in
+            (select node_id from {stable_clusters.templated_name})
+            """
+            pipeline.enqueue_sql(sql, "__splink__nodes_in_play")
+            nodes_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+            pipeline = CTEPipeline([nodes_in_play, edges_table_with_composite_ids])
+            sql = f"""
+            select *
+            from {edges_table_with_composite_ids.templated_name}
+            where {uid_concat_edges_l} in
+            (select node_id from {nodes_in_play.templated_name})
+            and {uid_concat_edges_r} in
+            (select node_id from {nodes_in_play.templated_name})
+            """
+            pipeline.enqueue_sql(sql, "__splink__edges_in_play")
+            edges_in_play = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+            marginal_new_clusters = cluster_pairwise_predictions_at_threshold(
+                nodes_in_play,
+                edges_in_play,
+                node_id_column_name="node_id",
+                edge_id_column_name_left=uid_concat_edges_l,
+                edge_id_column_name_right=uid_concat_edges_r,
+                db_api=db_api,
+                threshold_match_probability=new_threshold,
+            )
+
+            pipeline = CTEPipeline([stable_clusters, marginal_new_clusters])
+            sql = f"""
+            SELECT node_id, cluster_id
+            FROM {stable_clusters.templated_name}
+            UNION ALL
+            SELECT node_id, cluster_id
+            FROM {marginal_new_clusters.templated_name}
+            """
+
+            pipeline.enqueue_sql(sql, "__splink__clusters_at_threshold")
+
+            previous_cc = cc
+            cc = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+            previous_threshold = new_threshold
+
+            edges_in_play.drop_table_from_database_and_remove_from_cache()
+            nodes_in_play.drop_table_from_database_and_remove_from_cache()
+            stable_clusters.drop_table_from_database_and_remove_from_cache()
+            marginal_new_clusters.drop_table_from_database_and_remove_from_cache()
+
+            if output_cluster_summary_stats:
+                pipeline = CTEPipeline([cc])
+                sqls = _get_cluster_stats_sql(cc)
+                pipeline.enqueue_list_of_sqls(sqls)
+                cc_summary = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+                all_results[new_threshold] = cc_summary
+                previous_cc.drop_table_from_database_and_remove_from_cache()
+            else:
+                all_results[new_threshold] = cc
+
+        if output_cluster_summary_stats:
+            sql = _generate_cluster_summary_stats_sql(all_results)
+        else:
+            sql = _generate_detailed_cluster_comparison_sql(
+                all_results,
+                unique_id_col="node_id",
+                is_match_weight=is_match_weight,
+            )
+
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
+        joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        for v in all_results.values():
+            v.drop_table_from_database_and_remove_from_cache()
+        cc.drop_table_from_database_and_remove_from_cache()
+
+        return joined
 
     def _compute_metrics_nodes(
         self,
