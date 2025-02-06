@@ -10,6 +10,7 @@ on:
       - "docs/demos/examples/**"
       - "!docs/demos/examples/examples_index.md"
       - "pyproject.toml"
+      - "poetry.lock"
   workflow_dispatch:
 
 jobs:
