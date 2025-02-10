@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
@@ -462,6 +463,13 @@ def _count_comparisons_generated_from_blocking_rule(
         "count_of_pairwise_comparisons_generated"
     ]
     pre_filter_total_df.drop_table_from_database_and_remove_from_cache()
+
+    # This is sometimes the sum() over zero rows, with returns as a nan (flaot)
+    # or None.  This result implies a count of zero.
+    if pre_filter_total is None or (
+        isinstance(pre_filter_total, float) and math.isnan(pre_filter_total)
+    ):
+        pre_filter_total = 0
 
     def add_l_r(sql, table_name):
         tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_dialect)
