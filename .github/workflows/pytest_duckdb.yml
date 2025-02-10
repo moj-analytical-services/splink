@@ -8,6 +8,7 @@ on:
       - "splink/**"
       - "tests/**"
       - "pyproject.toml"
+      - "poetry.lock"
 
 jobs:
   test:
@@ -39,11 +40,14 @@ jobs:
           poetry run pytest -v --durations=0 -m "duckdb_only or core" --cov=splink --cov-report=xml --cov-report=term tests/
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
+        if: ${{ matrix.python-version == '3.11' }}
         with:
           name: coverage-report
           path: coverage.xml
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
+        # upload a single run version - should be representative coverage-wise as we don't have much version-dependent code
+        if: ${{ matrix.python-version == '3.11' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

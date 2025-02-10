@@ -9,6 +9,7 @@ on:
       - splink/**
       - docs/demos/tutorials/**
       - pyproject.toml
+      - "poetry.lock"
 
   workflow_dispatch:
 
