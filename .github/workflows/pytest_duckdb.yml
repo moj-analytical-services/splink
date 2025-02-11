@@ -41,13 +41,10 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.python-version == '3.11' }}
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.python-version }}
           path: coverage.xml
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v3
-        # upload a single run version - should be representative coverage-wise as we don't have much version-dependent code
-        if: ${{ matrix.python-version == '3.11' }}
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
