@@ -8,6 +8,7 @@ on:
       - "splink/**"
       - "tests/**"
       - "pyproject.toml"
+      - "poetry.lock"
 
 jobs:
   test:
