@@ -650,6 +650,10 @@ class LinkerClustering:
             v.drop_table_from_database_and_remove_from_cache()
         cc.drop_table_from_database_and_remove_from_cache()
 
+        df_clustered_with_input_data.metadata["threshold_match_probabilities"] = (
+                [initial_threshold] + match_probability_thresholds
+            )
+        
         return df_clustered_with_input_data
 
     def _compute_metrics_nodes(
