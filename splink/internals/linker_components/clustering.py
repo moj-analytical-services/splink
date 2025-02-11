@@ -38,6 +38,7 @@ from splink.internals.vertically_concatenate import (
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
+logger = logging.getLogger(__name__)
 
 class LinkerClustering:
     """Cluster the results of the linkage model and analyse clusters, accessed via
@@ -327,21 +328,30 @@ class LinkerClustering:
         initial_threshold = match_probability_thresholds.pop(0)
         all_results = {}
 
+        match_p_expr = ""
+        match_p_select_expr = ""
+        if initial_threshold is not None:
+            match_p_expr = f"where match_probability >= {initial_threshold}"
+            match_p_select_expr = ", match_probability"
+
+        pipeline = CTEPipeline([df_predict])
+
         # Templated name must be used here because it could be the output
         # of a deterministic link i.e. the physical name is not know for sure
         sql = f"""
         select
             {uid_concat_edges_l} as node_id_l,
-            {uid_concat_edges_r} as node_id_r,
-            match_probability
-            from {df_predict.physical_name}
+            {uid_concat_edges_r} as node_id_r
+            {match_p_select_expr}
+            from {df_predict.templated_name}
+            {match_p_expr}
         """
         pipeline.enqueue_sql(sql, "__splink__df_edges_from_predict")
 
         edges_table_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(
             pipeline
         )
-
+        logger.info(f"--------Clustering at threshold {initial_threshold}--------")
         # First cluster at the lowest threshold
         cc = cluster_pairwise_predictions_at_threshold(
             nodes=nodes_with_composite_ids,
@@ -372,8 +382,8 @@ class LinkerClustering:
                 edges_sdf=edges_table_with_composite_ids,
                 cc=cc,
                 node_id_column_name="node_id",
-                edge_id_column_name_left=uid_concat_edges_l,
-                edge_id_column_name_right=uid_concat_edges_r,
+                edge_id_column_name_left="node_id_l",
+                edge_id_column_name_right="node_id_r",
                 previous_threshold_match_probability=previous_threshold,
                 new_threshold_match_probability=new_threshold,
             )
@@ -398,9 +408,9 @@ class LinkerClustering:
             sql = f"""
             select *
             from {edges_table_with_composite_ids.templated_name}
-            where {uid_concat_edges_l} in
+            where node_id_l in
             (select node_id from {nodes_in_play.templated_name})
-            and {uid_concat_edges_r} in
+            and node_id_r in
             (select node_id from {nodes_in_play.templated_name})
             """
             pipeline.enqueue_sql(sql, "__splink__edges_in_play")
@@ -410,8 +420,8 @@ class LinkerClustering:
                 nodes_in_play,
                 edges_in_play,
                 node_id_column_name="node_id",
-                edge_id_column_name_left=uid_concat_edges_l,
-                edge_id_column_name_right=uid_concat_edges_r,
+                edge_id_column_name_left="node_id_l",
+                edge_id_column_name_right="node_id_r",
                 db_api=db_api,
                 threshold_match_probability=new_threshold,
             )
@@ -460,11 +470,30 @@ class LinkerClustering:
         pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
         joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        columns = concat_table_column_names(self._linker)
+        # don't want to include salting column in output if present
+        columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
+
+        select_columns_sql = ", ".join(columns_without_salt)
+
+        pipeline = CTEPipeline([joined])
+        sql = f"""
+        select
+            co.*,
+            {select_columns_sql}
+        from {joined.physical_name} as co
+        left join __splink__df_concat
+        on co.node_id = {uid_concat_nodes}
+        """
+        pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds_with_input_data")
+
+        df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         for v in all_results.values():
             v.drop_table_from_database_and_remove_from_cache()
         cc.drop_table_from_database_and_remove_from_cache()
 
-        return joined
+        return df_clustered_with_input_data
 
     def _compute_metrics_nodes(
         self,
