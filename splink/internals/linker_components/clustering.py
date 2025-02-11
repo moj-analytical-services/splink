@@ -348,80 +348,45 @@ class LinkerClustering:
     def cluster_pairwise_predictions_at_multiple_thresholds(
         self,
         df_predict: SplinkDataFrame,
-        match_probability_thresholds: Optional[list[float]] | None = None,
-        match_weight_thresholds: Optional[list[float]] | None = None,
+        threshold_match_probabilities: Optional[list[float]] | None = None,
+        threshold_match_weights: Optional[list[float]] | None = None,
         output_cluster_summary_stats: bool = False,
     ) -> SplinkDataFrame:
-        """Clusters the pairwise match predictions at multiple thresholds using
-        the connected components graph clustering algorithm.
+        """Clusters the pairwise match predictions that result from
+        `linker.inference.predict()` into groups of connected record using the connected
+        components graph clustering algorithm
+
+        Records with an estimated `match_probability` at or above each of the values in
+        `threshold_match_probabilities` (or records with a `match_weight` at or above
+        each of the values in `threshold_match_weights`) are considered to be a match 
+        (i.e. they represent the same entity).
 
         This function efficiently computes clusters for multiple thresholds by starting
         with the lowest threshold and incrementally updating clusters for higher thresholds.
 
-        If your node and edge column names follow Splink naming conventions, then you can
-        omit edge_id_column_name_left and edge_id_column_name_right. For example, if you
-        have a table of nodes with a column `unique_id`, it would be assumed that the
-        edge table has columns `unique_id_l` and `unique_id_r`.
-
         Args:
-            nodes (AcceptableInputTableType): The table containing node information
-            edges (AcceptableInputTableType): The table containing edge information
-            db_api (DatabaseAPISubClass): The database API to use for querying
-            node_id_column_name (str): The name of the column containing node IDs
-            match_probability_thresholds (list[float] | None): List of match probability
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            threshold_match_probabilities (list[float] | None): List of match probability
                 thresholds to compute clusters for
-            match_weight_thresholds (list[float] | None): List of match weight thresholds
+            threshold_match_weights (list[float] | None): List of match weight thresholds
                 to compute clusters for
-            edge_id_column_name_left (Optional[str]): The name of the column containing
-                left edge IDs. If not provided, assumed to be f"{node_id_column_name}_l"
-            edge_id_column_name_right (Optional[str]): The name of the column containing
-                right edge IDs. If not provided, assumed to be f"{node_id_column_name}_r"
             output_cluster_summary_stats (bool): If True, output summary statistics
                 for each threshold instead of full cluster information
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame containing cluster information for all
-                thresholds. If output_cluster_summary_stats is True, it contains summary
+            SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
+                into groups for each of the desired match thresholds. 
+                If output_cluster_summary_stats is True, it contains summary
                 statistics (number of clusters, max cluster size, avg cluster size) for
                 each threshold.
 
         Examples:
             ```python
-            from splink import DuckDBAPI
-            from splink.clustering import (
-                cluster_pairwise_predictions_at_multiple_thresholds
+            df_predict = linker.inference.predict(threshold_match_probability=0.5)
+            df_clustered = linker.clustering.cluster_pairwise_predictions_at_multiple_thresholds(
+                df_predict, threshold_match_probability=0.95
             )
-
-            db_api = DuckDBAPI()
-
-            nodes = [
-                {"my_id": 1},
-                {"my_id": 2},
-                {"my_id": 3},
-                {"my_id": 4},
-                {"my_id": 5},
-                {"my_id": 6},
-            ]
-
-            edges = [
-                {"n_1": 1, "n_2": 2, "match_probability": 0.8},
-                {"n_1": 3, "n_2": 2, "match_probability": 0.9},
-                {"n_1": 4, "n_2": 5, "match_probability": 0.99},
-            ]
-
-            thresholds = [0.5, 0.7, 0.9]
-
-            cc = cluster_pairwise_predictions_at_multiple_thresholds(
-                nodes,
-                edges,
-                node_id_column_name="my_id",
-                edge_id_column_name_left="n_1",
-                edge_id_column_name_right="n_2",
-                db_api=db_api,
-                match_probability_thresholds=thresholds,
-            )
-
-            cc.as_duckdbpyrelation()
+            ```
             ```
         """
 
@@ -463,26 +428,26 @@ class LinkerClustering:
         ]
 
         is_match_weight = (
-            match_weight_thresholds is not None and match_probability_thresholds is None
+            threshold_match_weights is not None and threshold_match_probabilities is None
         )
 
-        match_probability_thresholds = threshold_args_to_match_prob_list(
-            match_probability_thresholds, match_weight_thresholds
+        threshold_match_probabilities = threshold_args_to_match_prob_list(
+            threshold_match_probabilities, threshold_match_weights
         )
 
-        if match_probability_thresholds is None or len(match_probability_thresholds) == 0:
+        if threshold_match_probabilities is None or len(threshold_match_probabilities) == 0:
             raise ValueError(
-                "Must provide either match_probability_thresholds "
-                "or match_weight_thresholds"
+                "Must provide either threshold_match_probabilities "
+                "or threshold_match_weights"
             )
         
-        if not has_match_prob_col and match_probability_thresholds is not None:
+        if not has_match_prob_col and threshold_match_probabilities is not None:
             raise ValueError(
                 "df_predict must have a column called 'match_probability' if "
                 "threshold_match_probability is provided"
             )
 
-        initial_threshold = match_probability_thresholds.pop(0)
+        initial_threshold = threshold_match_probabilities.pop(0)
         all_results = {}
 
         match_p_expr = ""
@@ -530,7 +495,7 @@ class LinkerClustering:
             all_results[initial_threshold] = cc
 
         previous_threshold = initial_threshold
-        for new_threshold in match_probability_thresholds:
+        for new_threshold in threshold_match_probabilities:
             # Get stable nodes
             logger.info(f"--------Clustering at threshold {new_threshold}--------")
             pipeline = CTEPipeline([cc, edges_table_with_composite_ids])
@@ -651,7 +616,7 @@ class LinkerClustering:
         cc.drop_table_from_database_and_remove_from_cache()
 
         df_clustered_with_input_data.metadata["threshold_match_probabilities"] = (
-                [initial_threshold] + match_probability_thresholds
+                [initial_threshold] + threshold_match_probabilities
             )
         
         return df_clustered_with_input_data
