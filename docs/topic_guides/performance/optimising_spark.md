@@ -22,13 +22,13 @@ It is assumed readers have already read the more general [guide to linking big d
 For a cluster with 10 CPUs, that outputs about 8GB of data in parquet format, the following setup may be appropriate:
 
 ```python
+from splink import SparkAPI
+
 spark.conf.set("spark.default.parallelism", "50")
 spark.conf.set("spark.sql.shuffle.partitions", "50")
 
-linker = Linker(
-    person_standardised_nodes,
-    settings,
-    db_api=spark_api,
+db_api = SparkAPI(
+    spark_session=spark,
     break_lineage_method="parquet",
     num_partitions_on_repartition=80,
 )
@@ -45,17 +45,17 @@ Splink will automatically break lineage in sensible places. We have found in pra
 
 You can do this using the `break_lineage_method` parameter as follows:
 
-```
-linker = Linker(
-    person_standardised_nodes,
-    settings,
-    db_api=db_api,
-    break_lineage_method="parquet"
+```python
+from splink import SparkAPI
+
+db_api = SparkAPI(
+    spark_session=spark,
+    break_lineage_method="parquet",
+    num_partitions_on_repartition=80,
 )
-
 ```
 
-Other options are `checkpoint` and `persist`. For different Spark setups, particularly if you have fast local storage, you may find these options perform better.
+Other options are `checkpoint` and `persist`, plus a [few others](https://github.com/moj-analytical-services/splink/blob/2ed9f8bf2a21fffafa14e3bb848aa69370043e33/splink/internals/spark/database_api.py#L34) for databricks. For different Spark setups, particularly if you have fast local storage, you may find these options perform better.
 
 ## Spark Parallelism
 
