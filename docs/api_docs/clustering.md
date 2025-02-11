@@ -1,9 +1,12 @@
 ---
 tags:
   - API
-  - clustering
+  - Clustering
 ---
+
 # Documentation for `splink.clustering`
+
+Clustering at one or multiple thresholds is also available without a `linker` object:
 
 ::: splink.clustering
     handler: python
