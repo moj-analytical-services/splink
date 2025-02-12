@@ -41,6 +41,28 @@ However, erroneous links (false positives) could also be the reason for _high_ n
 
 It is important to consider [cluster size](#cluster-size) when looking at node degree. By definition, larger clusters contain more nodes to form links between, allowing nodes within them to attain higher degrees compared to those in smaller clusters. Consequently, low node degree within larger clusters can carry greater significance.
 
+Bear in mind, that the centrality of a single node in a cluster isn't necessarily representative of the overall connectedness of a cluster. This is where [cluster centralisation](#cluster-centralisation) can help.
+
+### Node Centrality
+
+##### Definition
+
+Node centrality is the **proportion of all possible edges connected to a node**. It can also be interpreted as a normalised node degree, or the proportion of other nodes in the cluster that are linked to. Centrality ranges from 0 to 1. A centrality of 1 means a node is connected to all other nodes in a cluster.
+
+##### Example
+
+In the cluster below node B is connected to all nodes (giving a centrality of 1), whereas node A is connected to 1 out of 4 nodes (giving a centrality of 0.25).
+
+![](../../../img/clusters/basic_graph_centralisataion.drawio.png){:width="80%"}
+
+##### Application in Data Linkage
+
+High node centrality is generally considered good as it means the node is directly connected to many of the other nodes in a cluster. Low node centrality (particularly in relation to the rest of the nodes in the cluster) can be an indicative of a false link (false positive).
+
+Unlike node degree, centrality takes the cluster size into account and, being normalised, is more appropriate for comparing nodes across clusters.
+
+Node centrality can be useful as the node with the highest centrality in a cluster could be chosen to represent a cluster (sometimes know as a "golden record"). This is not appropriate in all cases, but the most connected node within a cluster will likely have much in common with other nodes.
+
 Bear in mind, that the degree of a single node in a cluster isn't necessarily representative of the overall connectedness of a cluster. This is where [cluster centralisation](#cluster-centralisation) can help.
 
 <hr>
