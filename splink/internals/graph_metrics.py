@@ -101,7 +101,7 @@ def _node_degree_centralisation_sql(
             composite_unique_id,
             cluster_id,
             node_degree,
-            CASE 
+            CASE
                 WHEN cluster_size > 1 THEN node_degree / (cluster_size - 1)
                 ELSE 0
             END AS node_centrality
