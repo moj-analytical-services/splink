@@ -92,7 +92,7 @@ def _node_degree_centralisation_sql(
             c.{composite_uid_clusters} = n.node
         GROUP BY composite_unique_id, cluster_id)
 
-        SELECT 
+        SELECT
             composite_unique_id,
             cluster_id,
             node_degree,
