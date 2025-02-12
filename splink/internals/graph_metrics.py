@@ -81,7 +81,7 @@ def _node_degree_centralisation_sql(
         SELECT
             c.{composite_uid_clusters} AS composite_unique_id,
             c.cluster_id AS cluster_id,
-            COUNT(*) FILTER (WHERE neighbour IS NOT NULL) AS node_degree,
+            COUNT(*) FILTER (WHERE n.neighbour IS NOT NULL) AS node_degree,
             COUNT(*) OVER(PARTITION BY c.cluster_id) AS cluster_size
         FROM
             {df_clustered.physical_name} c
@@ -101,7 +101,10 @@ def _node_degree_centralisation_sql(
             composite_unique_id,
             cluster_id,
             node_degree,
-            node_degree / (cluster_size - 1) AS node_centrality
+            CASE 
+                WHEN cluster_size > 1 THEN node_degree / (cluster_size - 1)
+                ELSE 0
+            END AS node_centrality
         FROM {node_degree_table_name}
     """
     sql_info = {"sql": sql, "output_table_name": "__splink__graph_metrics_nodes"}
