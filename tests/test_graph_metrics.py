@@ -190,42 +190,42 @@ def test_metrics(dialect, test_helpers):
         + [{"cluster_id": 5, "unique_id": i} for i in range(24, 24 + 1)]
     )
 
-    expected_node_degrees = [
+    expected_node_metrics = [
         # cluster 1
         # max degree 3
         # centralisation = (1 + 2 + 1)/(3 * 2)
-        (1, 3),
-        (2, 2),
-        (3, 1),
-        (4, 2),
+        (1, 3, 0.75),
+        (2, 2, 0.5),
+        (3, 1, 0.25),
+        (4, 2, 0.5),
         # cluster 2
         # centralisation = (2 + 1 + 2 + 1 + 2)/(5 * 4)
-        (5, 3),
-        (6, 1),
-        (7, 2),
-        (8, 1),
-        (9, 2),
-        (10, 1),
+        (5, 3, 0.5),
+        (6, 1, 1.0/6),
+        (7, 2, 2.0/6),
+        (8, 1, 1.0/6),
+        (9, 2, 2.0/6),
+        (10, 1, 1.0/6),
         # cluster 3
         # centralisation = NULL
-        (11, 1),
-        (12, 1),
+        (11, 1, 1.0),
+        (12, 1, 1.0),
         # cluster 4
         # centralisation = (3 + 2 + 1 + 3 + 1 + 4 + 3 + 4 + 3 + 4)/(10*9)
-        (13, 6),
-        (14, 3),
-        (15, 4),
-        (16, 5),
-        (17, 3),
-        (18, 5),
-        (19, 2),
-        (20, 3),
-        (21, 2),
-        (22, 3),
-        (23, 2),
+        (13, 6, 6.0/11),
+        (14, 3, 3.0/11),
+        (15, 4, 4.0/11),
+        (16, 5, 5.0/11),
+        (17, 3, 3.0/11),
+        (18, 5, 5.0/11),
+        (19, 2, 2.0/11),
+        (20, 3, 3.0/11),
+        (21, 2, 2.0/11),
+        (22, 3, 3.0/11),
+        (23, 2, 2.0/11),
         # cluster 5
         # centralisation = NULL
-        (24, 0),
+        (24, 0, 0.0),
     ]
 
     # pass in dummy frame to linker
@@ -280,12 +280,17 @@ def test_metrics(dialect, test_helpers):
 
     df_nm = cm.nodes.as_pandas_dataframe()
 
-    for unique_id, expected_node_degree in expected_node_degrees:
+    for unique_id, expected_node_degree, expected_node_centrality in expected_node_metrics:
         relevant_row = df_nm[df_nm["composite_unique_id"] == unique_id]
         calculated_node_degree = relevant_row["node_degree"].iloc[0]
         assert calculated_node_degree == expected_node_degree, (
             f"Expected node degree {expected_node_degree} for node {unique_id}, "
             f"but found node degree {calculated_node_degree}"
+        )
+        calculated_node_centrality = relevant_row["node_centrality"].iloc[0]
+        assert calculated_node_centrality == expected_node_centrality, (
+            f"Expected node degree {expected_node_centrality} for node {unique_id}, "
+            f"but found node degree {calculated_node_centrality}"
         )
 
 
