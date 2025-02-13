@@ -33,6 +33,7 @@ from splink.internals.unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
 from splink.internals.vertically_concatenate import (
+    compute_df_concat,
     concat_table_column_names,
     enqueue_df_concat,
 )
@@ -601,19 +602,22 @@ class LinkerClustering:
         pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
         joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        pipeline = CTEPipeline()
+        concat = compute_df_concat(linker, pipeline)
+
         columns = concat_table_column_names(self._linker)
         # don't want to include salting column in output if present
         columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
 
         select_columns_sql = ", ".join(columns_without_salt)
 
-        pipeline = CTEPipeline([joined])
+        pipeline = CTEPipeline([joined, concat])
         sql = f"""
         select
             co.*,
             {select_columns_sql}
         from {joined.physical_name} as co
-        left join __splink__df_concat
+        left join {concat.physical_name} as c
         on co.node_id = {uid_concat_nodes}
         """
         pipeline.enqueue_sql(
