@@ -53,7 +53,7 @@ Node centrality is the **proportion of all possible edges connected to a node**.
 
 In the cluster below node B is connected to all nodes (giving a centrality of 1), whereas node A is connected to 1 out of 4 nodes (giving a centrality of 0.25).
 
-![](../../../img/clusters/basic_graph_centralisataion.drawio.png){:width="80%"}
+![](../../../img/clusters/basic_graph_records.drawio.png){:width="80%"}
 
 ##### Application in Data Linkage
 
