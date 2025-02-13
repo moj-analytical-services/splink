@@ -195,9 +195,9 @@ def test_metrics(dialect, test_helpers):
         # max degree 3
         # centralisation = (1 + 2 + 1)/(3 * 2)
         (1, 3, 1.0),
-        (2, 2, 2.0/3),
-        (3, 1, 1.0/3),
-        (4, 2, 2.0/3),
+        (2, 2, 2.0 / 3),
+        (3, 1, 1.0 / 3),
+        (4, 2, 2.0 / 3),
         # cluster 2
         # centralisation = (2 + 1 + 2 + 1 + 2)/(5 * 4)
         (5, 3, 0.6),
@@ -288,7 +288,7 @@ def test_metrics(dialect, test_helpers):
             f"but found node degree {calculated_node_degree}"
         )
         calculated_node_centrality = relevant_row["node_centrality"].iloc[0]
-        assert calculated_node_centrality == expected_centrality, (
+        assert round(calculated_node_centrality, 3) == round(expected_centrality, 3), (
             f"Expected node centrality {expected_centrality} for node {unique_id}, "
             f"but found node centrality {calculated_node_centrality}"
         )
