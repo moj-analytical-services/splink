@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import logging
-
 from typing import TYPE_CHECKING, List, Optional
 
 from splink.internals.clustering import (
-    cluster_pairwise_predictions_at_threshold,
-    _get_cluster_stats_sql,
     _calculate_stable_clusters_at_new_threshold,
+    _generate_cluster_summary_stats_sql,
     _generate_detailed_cluster_comparison_sql,
-    _generate_cluster_summary_stats_sql
+    _get_cluster_stats_sql,
+    cluster_pairwise_predictions_at_threshold,
 )
 from splink.internals.connected_components import (
     solve_connected_components,
@@ -22,7 +21,7 @@ from splink.internals.graph_metrics import (
 )
 from splink.internals.misc import (
     threshold_args_to_match_prob,
-    threshold_args_to_match_prob_list
+    threshold_args_to_match_prob_list,
 )
 from splink.internals.one_to_one_clustering import (
     one_to_one_clustering,
@@ -42,6 +41,7 @@ if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
+
 
 class LinkerClustering:
     """Cluster the results of the linkage model and analyse clusters, accessed via
@@ -378,19 +378,21 @@ class LinkerClustering:
                 The output dataframe will contain the following metadata:
 
                 - threshold_match_probabilities: List of match probability thresholds
-                
+
                 - cluster_summary_stats: summary statistics (number of clusters, max
                  cluster size, avg cluster size) for each threshold
 
         Examples:
             ```python
             df_predict = linker.inference.predict(threshold_match_probability=0.5)
-            df_clustered = linker.clustering.cluster_pairwise_predictions_at_multiple_thresholds(
+            df_clustered =
+                linker.clustering.cluster_pairwise_predictions_at_multiple_thresholds(
                 df_predict, threshold_match_probability=0.95
             )
 
             # Access the match probability thresholds
-            match_prob_thresholds = df_clustered.metadata["threshold_match_probabilities"]
+            match_prob_thresholds = df_clustered
+                .metadata["threshold_match_probabilities"]
 
             # Access the cluster summary stats
             cluster_summary_stats = df_clustered.metadata["cluster_summary_stats"]
@@ -420,7 +422,6 @@ class LinkerClustering:
         uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
         uid_concat_nodes = _composite_unique_id_from_nodes_sql(uid_cols, None)
 
-
         # Input could either be user data, or a SplinkDataFrame
         sql = f"""
         select
@@ -436,7 +437,7 @@ class LinkerClustering:
         ]
 
         is_match_weight = (
-            threshold_match_weights is not None 
+            threshold_match_weights is not None
             and threshold_match_probabilities is None
         )
 
@@ -444,8 +445,10 @@ class LinkerClustering:
             threshold_match_probabilities, threshold_match_weights
         )
 
-        if (threshold_match_probabilities is None 
-            or len(threshold_match_probabilities) == 0):
+        if (
+            threshold_match_probabilities is None
+            or len(threshold_match_probabilities) == 0
+        ):
             raise ValueError(
                 "Must provide either threshold_match_probabilities "
                 "or threshold_match_weights"
@@ -497,14 +500,14 @@ class LinkerClustering:
         )
 
         all_results[initial_threshold] = cc
-        
+
         # Calculate Summary stats for first clustering threshold
         pipeline = CTEPipeline([cc])
         sqls = _get_cluster_stats_sql(cc)
         pipeline.enqueue_list_of_sqls(sqls)
         cc_summary = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         all_results_summary[initial_threshold] = cc_summary
-        
+
         # Now iterate over the remaining thresholds
         previous_threshold = initial_threshold
         for new_threshold in threshold_match_probabilities:
@@ -571,7 +574,6 @@ class LinkerClustering:
 
             pipeline.enqueue_sql(sql, "__splink__clusters_at_threshold")
 
-            previous_cc = cc
             cc = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
             previous_threshold = new_threshold
@@ -582,7 +584,6 @@ class LinkerClustering:
             marginal_new_clusters.drop_table_from_database_and_remove_from_cache()
 
             all_results[new_threshold] = cc
-            
 
             # Calculate summary stats for metadata
             pipeline = CTEPipeline([cc])
@@ -590,12 +591,12 @@ class LinkerClustering:
             pipeline.enqueue_list_of_sqls(sqls)
             cc_summary = db_api.sql_pipeline_to_splink_dataframe(pipeline)
             all_results_summary[new_threshold] = cc_summary
-        
+
         sql = _generate_detailed_cluster_comparison_sql(
-                all_results,
-                unique_id_col="node_id",
-                is_match_weight=is_match_weight,
-            )
+            all_results,
+            unique_id_col="node_id",
+            is_match_weight=is_match_weight,
+        )
         pipeline = CTEPipeline()
         pipeline.enqueue_sql(sql, "__splink__clusters_at_all_thresholds")
         joined = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -615,20 +616,18 @@ class LinkerClustering:
         left join __splink__df_concat
         on co.node_id = {uid_concat_nodes}
         """
-        pipeline.enqueue_sql(sql, 
-                             "__splink__clusters_at_all_thresholds_with_input_data"
-                             )
+        pipeline.enqueue_sql(
+            sql, "__splink__clusters_at_all_thresholds_with_input_data"
+        )
 
         df_clustered_with_input_data = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-
-        
         # Add metadata to the output dataframe
         ## Match probability thresholds
-        df_clustered_with_input_data.metadata["threshold_match_probabilities"] = (
-                [initial_threshold] + threshold_match_probabilities
-            )
-        
+        df_clustered_with_input_data.metadata["threshold_match_probabilities"] = [
+            initial_threshold
+        ] + threshold_match_probabilities
+
         ## Cluster Summary stats
         pipeline = CTEPipeline()
         sql = _generate_cluster_summary_stats_sql(all_results_summary)
@@ -636,7 +635,7 @@ class LinkerClustering:
         df_clustered_with_input_data.metadata["cluster_summary_stats"] = (
             db_api.sql_pipeline_to_splink_dataframe(pipeline)
         )
-        
+
         # Drop cached tables
         for v in all_results.values():
             v.drop_table_from_database_and_remove_from_cache()
@@ -814,7 +813,7 @@ class LinkerClustering:
                 - attribute "nodes" for nodes metrics table
 
                 - attribute "edges" for edge metrics table
-                
+
                 - attribute "clusters" for cluster metrics table
 
         Examples:
