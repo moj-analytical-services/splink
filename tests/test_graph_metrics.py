@@ -289,8 +289,8 @@ def test_metrics(dialect, test_helpers):
         )
         calculated_node_centrality = relevant_row["node_centrality"].iloc[0]
         assert calculated_node_centrality == expected_centrality, (
-            f"Expected node degree {expected_centrality} for node {unique_id}, "
-            f"but found node degree {calculated_node_centrality}"
+            f"Expected node centrality {expected_centrality} for node {unique_id}, "
+            f"but found node centrality {calculated_node_centrality}"
         )
 
 

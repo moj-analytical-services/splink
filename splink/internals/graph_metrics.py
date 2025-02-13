@@ -102,7 +102,7 @@ def _node_degree_centralisation_sql(
             cluster_id,
             node_degree,
             CASE
-                WHEN cluster_size > 1 THEN node_degree / (cluster_size - 1)
+                WHEN cluster_size > 1 THEN (1.0 * node_degree) / (cluster_size - 1)
                 ELSE 0
             END AS node_centrality
         FROM {node_degree_table_name}
