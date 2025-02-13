@@ -33,7 +33,7 @@ settings = SettingsCreator(
     link_type="dedupe_only",
     blocking_rules_to_generate_predictions=[
         block_on("first_name"),
-        block_on("surname"),
+        block_on("surname", "dob"),
     ],
     comparisons=[
         ctl.NameComparison("first_name"),
