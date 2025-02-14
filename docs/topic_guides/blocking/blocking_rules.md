@@ -6,7 +6,7 @@ tags:
 
 # What are Blocking Rules?
 
-The primary driver the run time of Splink is the number of record pairs that the Splink model has to process.  This is controlled by the blocking rules.
+The primary driver of Splink's run time is the number of record pairs that the Splink model has to process.  This is controlled by the blocking rules.
 
 This guide explains what blocking rules are, and how they can be used.
 
@@ -132,7 +132,7 @@ count_comparisons_from_blocking_rule(
     )
 ```
 
-### More compelex blocking rules
+### More complex blocking rules
 
 It is possible to use more complex blocking rules that use non-equijoin conditions.  For example, you could use a blocking rule that uses a fuzzy matching function:
 

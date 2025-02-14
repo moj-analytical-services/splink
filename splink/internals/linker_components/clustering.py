@@ -16,7 +16,7 @@ from splink.internals.connected_components import (
 from splink.internals.edge_metrics import compute_edge_metrics
 from splink.internals.graph_metrics import (
     GraphMetricsResults,
-    _node_degree_sql,
+    _node_degree_centralisation_sql,
     _size_density_centralisation_sql,
 )
 from splink.internals.misc import (
@@ -662,17 +662,18 @@ class LinkerClustering:
 
         Node metrics produced:
         * node_degree (absolute number of neighbouring nodes)
+        * node_centralisation (proportion of neighbours wrt maximum possible number)
 
         Output table has a single row per input node, along with the cluster id (as
-        assigned in `linker.cluster_pairwise_at_threshold()`) and the metric
-        node_degree:
+        assigned in `linker.cluster_pairwise_at_threshold()`) and the metrics
+        node_degree and node_centralisation:
 
-        |-------------------------------------------------|
-        | composite_unique_id | cluster_id  | node_degree |
-        |---------------------|-------------|-------------|
-        | s1-__-10001         | s1-__-10001 | 6           |
-        | s1-__-10002         | s1-__-10001 | 4           |
-        | s1-__-10003         | s1-__-10003 | 2           |
+        |-----------------------------------------------------------------------|
+        | composite_unique_id | cluster_id  | node_degree | node_centralisation |
+        |---------------------|-------------|-------------|---------------------|
+        | s1-__-10001         | s1-__-10001 | 6           | 0.9                 |
+        | s1-__-10002         | s1-__-10001 | 4           | 0.6                 |
+        | s1-__-10003         | s1-__-10003 | 2           | 0.3                 |
         ...
         """
         uid_cols = (
@@ -684,7 +685,7 @@ class LinkerClustering:
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         pipeline = CTEPipeline()
-        sqls = _node_degree_sql(
+        sqls = _node_degree_centralisation_sql(
             df_predict,
             df_clustered,
             composite_uid_edges_l,
