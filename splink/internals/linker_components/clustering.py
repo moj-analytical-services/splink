@@ -865,3 +865,84 @@ class LinkerClustering:
         return GraphMetricsResults(
             nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
         )
+    
+def compute_graph_metrics_at_multiple_thresholds(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        *,
+        threshold_match_probability: list[float] = None,
+    ) -> GraphMetricsResults:
+        """
+        Generates tables containing graph metrics (for nodes, edges and clusters),
+        and returns a data class of Splink dataframes. This function is similar to
+        compute_graph_metrics, but allows for the computation of graph metrics at
+        multiple thresholds, using the output of 
+        `cluster_pairwise_predictions_at_multiple_thresholds()`.
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.inference.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.clustering.cluster_pairwise_predictions_at_multiple_thresholds()`
+            threshold_match_probability (list, optional): Filter the pairwise match
+                predictions to include only pairwise comparisons with a
+                match_probability at or above each of these thresholds.
+                If not provided, the value will be taken from metadata on `df_clustered`.
+                If no such metadata is available, this value _must_ be provided.
+
+        Returns:
+            GraphMetricsResult: A data class containing SplinkDataFrames
+                of cluster IDs and selected node, edge or cluster metrics.
+
+                - attribute "nodes" for nodes metrics table
+
+                - attribute "edges" for edge metrics table
+
+                - attribute "clusters" for cluster metrics table
+
+        Examples:
+            ```python
+            df_predict = linker.inference.predict(threshold_match_probability=0.5)
+            df_clustered = linker.clustering.cluster_pairwise_predictions_at_multiple_thresholds(
+                df_predict, threshold_match_probabilities=[0.5, 0.8, 0.95]
+            )
+            graph_metrics = linker.clustering.compute_graph_metrics_at_multiple_thresholds(
+                df_predict, df_clustered
+            )
+
+            node_metrics = graph_metrics.nodes.as_pandas_dataframe()
+            edge_metrics = graph_metrics.edges.as_pandas_dataframe()
+            cluster_metrics = graph_metrics.clusters.as_pandas_dataframe()
+
+            # Access the match probability thresholds
+            probability_thresholds = graph_metrics.nodes.metadata
+            ```
+        """
+        if threshold_match_probabilities is None:
+            threshold_match_probabilities = df_clustered.metadata.get(
+                "threshold_match_probabilities", None
+            )
+            # we may not have metadata if clusters have been manually registered, or
+            # read in from a format that does not include it
+            if threshold_match_probability is None:
+                raise TypeError(
+                    "As `df_clustered` has no threshold metadata associated to it, "
+                    "to compute graph metrics you must provide "
+                    "`threshold_match_probabilities` manually"
+                )
+        for threshold in threshold_match_probabilities:
+            df_node_metrics = self._compute_metrics_nodes(
+                df_predict, df_clustered, threshold
+            )
+            df_edge_metrics = self._compute_metrics_edges(
+                df_node_metrics,
+                df_predict,
+                df_clustered,
+                threshold,
+            )
+            # don't need edges as information is baked into node metrics
+            df_cluster_metrics = self._compute_metrics_clusters(df_node_metrics)
+
+        return GraphMetricsResults(
+            nodes=df_node_metrics, edges=df_edge_metrics, clusters=df_cluster_metrics
+        )
