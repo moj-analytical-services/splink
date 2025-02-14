@@ -48,17 +48,17 @@ This section provides a series of examples to help you get started with Splink. 
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Linking the febrl4 datasets](./duckdb/febrl4.ipynb). As above, these datasets are from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
 </a>
 
-<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/cookbook.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/cookbook.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a> [Cookbook of various Splink techniques](./duckdb/cookbook.ipynb)
+</a> [Cookbook of various Splink techniques](./duckdb_no_test/cookbook.ipynb)
 
-<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/comparison_playground.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/comparison_playground.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a> [Interactive comparison playground](./duckdb/comparison_playground.ipynb)
+</a> [Interactive comparison playground](./duckdb_no_test/comparison_playground.ipynb)
 
-<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/cookbook.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/cookbook.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a> [Investigating Bias in a Splink Model](./duckdb/bias_eval.ipynb)
+</a> [Investigating Bias in a Splink Model](./duckdb_no_test/bias_eval.ipynb)
 
 
 ##### Entity type: Financial transactions
@@ -66,6 +66,13 @@ This section provides a series of examples to help you get started with Splink. 
 <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/transactions.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a> [Linking financial transactions](./duckdb/transactions.ipynb)
+
+##### Entity type: Businesses
+
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a> [Matching business rates data with Companies House data](./duckdb_no_test/business_rates_match.ipynb)
+
 
 ### :simple-apachespark: PySpark examples
 

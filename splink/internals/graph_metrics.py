@@ -25,7 +25,7 @@ def _truncated_edges_sql(
     return sql_info
 
 
-def _node_degree_sql(
+def _node_degree_centralisation_sql(
     df_predict: SplinkDataFrame,
     df_clustered: SplinkDataFrame,
     composite_uid_edges_l: str,
@@ -34,7 +34,8 @@ def _node_degree_sql(
     threshold_match_probability: float,
 ) -> List[Dict[str, str]]:
     """
-    Generates sql for computing node degree per node, at a given edge threshold.
+    Generates sql for computing node degree and node centralisation (i.e.
+    normalised node degree) per node, at a given edge threshold.
 
     This is includes nodes with no edges, as identified via the clusters table.
 
@@ -80,7 +81,8 @@ def _node_degree_sql(
         SELECT
             c.{composite_uid_clusters} AS composite_unique_id,
             c.cluster_id AS cluster_id,
-            COUNT(*) FILTER (WHERE neighbour IS NOT NULL) AS node_degree
+            COUNT(*) FILTER (WHERE n.neighbour IS NOT NULL) AS node_degree,
+            COUNT(*) OVER(PARTITION BY c.cluster_id) AS cluster_size
         FROM
             {df_clustered.physical_name} c
         LEFT JOIN
@@ -89,8 +91,25 @@ def _node_degree_sql(
             c.{composite_uid_clusters} = n.node
         GROUP BY composite_unique_id, cluster_id
     """
+    node_degree_table_name = "__splink__graph_metrics_node_degree"
+    sql_info = {"sql": sql, "output_table_name": node_degree_table_name}
+    sqls.append(sql_info)
+
+    # calculate node centrality
+    sql = f"""
+        SELECT
+            composite_unique_id,
+            cluster_id,
+            node_degree,
+            CASE
+                WHEN cluster_size > 1 THEN (1.0 * node_degree) / (cluster_size - 1)
+                ELSE 0
+            END AS node_centrality
+        FROM {node_degree_table_name}
+    """
     sql_info = {"sql": sql, "output_table_name": "__splink__graph_metrics_nodes"}
     sqls.append(sql_info)
+
     return sqls
 
 
