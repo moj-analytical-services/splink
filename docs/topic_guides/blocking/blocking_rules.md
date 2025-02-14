@@ -132,7 +132,7 @@ count_comparisons_from_blocking_rule(
     )
 ```
 
-### More compelex blocking rules
+### More complex blocking rules
 
 It is possible to use more complex blocking rules that use non-equijoin conditions.  For example, you could use a blocking rule that uses a fuzzy matching function:
 
