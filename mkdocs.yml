@@ -116,6 +116,7 @@ nav:
       - DuckDB:
         - Deduplicate 50k rows historical persons: "demos/examples/duckdb/deduplicate_50k_synthetic.ipynb"
         - Linking financial transactions: "demos/examples/duckdb/transactions.ipynb"
+        - Linking businesses: "demos/examples/duckdb_no_test/business_rates_match.ipynb"
         - Linking two tables of persons: "demos/examples/duckdb/link_only.ipynb"
         - Real time record linkage: "demos/examples/duckdb/real_time_record_linkage.ipynb"
         - Evaluation from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
@@ -124,8 +125,9 @@ nav:
         - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
-        - Cookbook: "demos/examples/duckdb/cookbook.ipynb"
-        - Investigating Bias in a Splink Model: "demos/examples/duckdb/bias_eval.ipynb"
+        - Cookbook: "demos/examples/duckdb_no_test/cookbook.ipynb"
+        - Investigating Bias in a Splink Model: "demos/examples/duckdb_no_test/bias_eval.ipynb"
+        - Comparison playground: "demos/examples/duckdb_no_test/comparison_playground.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
