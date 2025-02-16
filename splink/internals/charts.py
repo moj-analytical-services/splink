@@ -25,7 +25,7 @@ def _load_external_libs():
     to_load = {
         "vega-embed": "internals/files/external_js/vega-embed@6.20.2",
         "vega-lite": "internals/files/external_js/vega-lite@5.2.0",
-        "vega": "internals/files/external_js/vega@5.21.0",
+        "vega": "internals/files/external_js/vega@5.31.0",
     }
     return {k: read_resource(v) for k, v in to_load.items()}
 
