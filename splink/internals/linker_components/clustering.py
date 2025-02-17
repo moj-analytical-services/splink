@@ -662,14 +662,14 @@ class LinkerClustering:
 
         Node metrics produced:
         * node_degree (absolute number of neighbouring nodes)
-        * node_centralisation (proportion of neighbours wrt maximum possible number)
+        * node_centrality (proportion of neighbours wrt maximum possible number)
 
         Output table has a single row per input node, along with the cluster id (as
         assigned in `linker.cluster_pairwise_at_threshold()`) and the metrics
-        node_degree and node_centralisation:
+        node_degree and node_centrality:
 
         |-----------------------------------------------------------------------|
-        | composite_unique_id | cluster_id  | node_degree | node_centralisation |
+        | composite_unique_id | cluster_id  | node_degree | node_centrality |
         |---------------------|-------------|-------------|---------------------|
         | s1-__-10001         | s1-__-10001 | 6           | 0.9                 |
         | s1-__-10002         | s1-__-10001 | 4           | 0.6                 |
