@@ -167,7 +167,7 @@ class LinkerTraining:
         self,
         max_pairs: float = 1e6,
         seed: int = None,
-        experimental_optimisation: bool = False,
+        experimental_optimisation: bool = True,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -195,7 +195,7 @@ class LinkerTraining:
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for Athena and SQLite set to None.
             experimental_optimisation (bool): If true, enables experimental SQL
-                optimization that reuses repeated function calls. Defaults to True.
+                optimization that reuses repeated function calls. Defaults to False.
 
         Examples:
             ```py
@@ -228,6 +228,7 @@ class LinkerTraining:
         fix_m_probabilities: bool = False,
         fix_u_probabilities: bool = True,
         populate_probability_two_random_records_match_from_trained_values: bool = False,
+        experimental_optimisation: bool = True,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -271,6 +272,8 @@ class LinkerTraining:
             populate_prob... (bool,optional): The full name of this parameter is
                 populate_probability_two_random_records_match_from_trained_values. If
                 True, derive this parameter from the blocked value. Defaults to False.
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to False.
 
         Examples:
             ```py
@@ -311,6 +314,7 @@ class LinkerTraining:
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
+            experimental_optimisation=experimental_optimisation,
         )
 
         core_model_settings = em_training_session._train()
