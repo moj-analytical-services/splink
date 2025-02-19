@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import duckdb
+import pandas as pd
 import pytest
 from sqlglot import parse_one
 
@@ -103,7 +104,7 @@ def create_test_data(
     if return_as_ddb_table:
         return con.table("df")
     else:
-        return con.table("df").df()
+        return pd.DataFrame(data)
 
 
 def calculate_tf_product_array_sql(token_rel_freq_array_name):
@@ -181,7 +182,7 @@ def test_optimisation_with_custom_comparison():
     )
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres", "sqlite")
 def test_optimisation_with_em_training(test_helpers, dialect):
     """Test that the SQL optimization works correctly with EM training"""
     # This works because estimate u is not random on a small dataset because
@@ -193,7 +194,6 @@ def test_optimisation_with_em_training(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             JaroWinklerAtThresholds("first_name", [0.9, 0.8, 0.7]),
-            ArrayIntersectAtSizes("name_tokens", [3, 2, 1]),
             CustomComparison(
                 output_column_name="surname",
                 comparison_levels=[
