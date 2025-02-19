@@ -158,6 +158,7 @@ class LinkerInference:
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
         materialise_blocked_pairs: bool = True,
+        experimental_optimisation: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -180,6 +181,8 @@ class LinkerInference:
                 computed as part of a large CTE pipeline.   Defaults to True
             materialise_blocked_pairs: In the blocking phase, materialise the table
                 of pairs of records that will be scored
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to True.
 
         Examples:
             ```py
@@ -268,6 +271,8 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            include_clerical_match_score=False,
+            experimental_optimisation=experimental_optimisation,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
