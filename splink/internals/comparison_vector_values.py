@@ -4,6 +4,10 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.reusable_function_detection import (
+    _build_reusable_functions_sql,
+    _find_repeated_functions,
+)
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
@@ -78,13 +82,17 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
-    # Add new CTE for reusable function values
-    sql = """
-    select *
-    from blocked_with_cols
-    """
+    # Find repeated functions and build SQL to compute them
+    repeated_functions = _find_repeated_functions(
+        columns_to_select_for_comparison_vector_values
+    )
+    reusable_sql = _build_reusable_functions_sql(repeated_functions)
+
     sqls.append(
-        {"sql": sql, "output_table_name": "reusable_function_values_optimisation"}
+        {
+            "sql": reusable_sql,
+            "output_table_name": "reusable_function_values_optimisation",
+        }
     )
 
     # Modify the final SQL to read from reusable_function_values instead
