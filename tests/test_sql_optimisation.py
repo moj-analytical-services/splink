@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import duckdb
 import pytest
 from sqlglot import parse_one
@@ -322,7 +324,9 @@ def test_find_repeated_functions_with_different_args():
 
 @mark_with_dialects_including("duckdb")
 def test_optimisation_with_multiple_complex_comparisons():
-    """Test that SQL optimization works with multiple complex comparisons including term frequencies"""
+    """Test matches the result when running the model pre-optimisation
+    i.e. on master before the optimisation PR was merged
+    """
     # Set up DuckDB specific test data
     con = duckdb.connect(":memory:")
     df = create_test_data(con, return_as_ddb_table=True)

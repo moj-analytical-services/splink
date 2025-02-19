@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Dict, Set, Tuple
 
 from sqlglot import exp, parse_one
