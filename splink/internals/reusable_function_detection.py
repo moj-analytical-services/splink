@@ -1,4 +1,15 @@
-from typing import List
+from typing import Dict, List, Set
+
+from sqlglot import exp, parse_one
+
+
+def _count_repeated_functions(ast: exp.Expression, dialect: str = "duckdb") -> Set[str]:
+    """Return a set of function SQL strings that appear more than once."""
+    function_counts: Dict[str, int] = {}
+    for func in ast.find_all(exp.Func):
+        func_sql = func.sql(dialect=dialect)
+        function_counts[func_sql] = function_counts.get(func_sql, 0) + 1
+    return {f for f, count in function_counts.items() if count > 1}
 
 
 def _find_repeated_functions(
@@ -13,23 +24,22 @@ def _find_repeated_functions(
     """
     repeated_functions = []
 
-    # For now, just hardcode the patterns we're looking for
-    patterns = [
-        {
-            "function_sql": 'jaro_winkler_similarity("first_name_l", "first_name_r")',
-            "alias": "jw_first_name",
-        },
-        {"function_sql": 'jaccard("surname_l", "surname_r")', "alias": "jd_surname"},
+    # Only look at CASE statements
+    case_statements = [
+        col
+        for col in columns_to_select_for_comparison_vector_values
+        if col.startswith("CASE")
     ]
 
-    # Check if any of our patterns appear in the CASE statements
-    for col in columns_to_select_for_comparison_vector_values:
-        if not col.startswith("CASE"):
-            continue
+    # Parse each CASE statement and find repeated functions
+    for case_sql in case_statements:
+        ast = parse_one(case_sql, read="duckdb")
+        repeated_funcs = _count_repeated_functions(ast)
 
-        for pattern in patterns:
-            if pattern["function_sql"] in col:
-                repeated_functions.append(pattern)
+        for func_sql in repeated_funcs:
+            # Generate a clean alias from the function name
+            alias = "".join(c if c.isalnum() else "_" for c in func_sql.lower())
+            repeated_functions.append({"function_sql": func_sql, "alias": alias})
 
     return repeated_functions
 
