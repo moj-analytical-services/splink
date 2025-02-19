@@ -164,7 +164,10 @@ class LinkerTraining:
         )
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: float = 1e6, seed: int = None
+        self,
+        max_pairs: float = 1e6,
+        seed: int = None,
+        experimental_optimisation: bool = False,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -191,6 +194,8 @@ class LinkerTraining:
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for Athena and SQLite set to None.
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to True.
 
         Examples:
             ```py
@@ -210,7 +215,7 @@ class LinkerTraining:
                 "result in more accurate estimates, but with a longer run time."
             )
 
-        estimate_u_values(self._linker, max_pairs, seed)
+        estimate_u_values(self._linker, max_pairs, seed, experimental_optimisation)
         self._linker._populate_m_u_from_trained_values()
 
         self._linker._settings_obj._columns_without_estimated_parameters_message()
