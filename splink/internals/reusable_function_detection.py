@@ -1,13 +1,13 @@
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Set, Tuple
 
 from sqlglot import exp, parse_one
 
 
-def _count_repeated_functions(ast: exp.Expression, dialect: str = "duckdb") -> Set[str]:
+def _count_repeated_functions(ast: exp.Expression, sqlglot_dialect: str) -> Set[str]:
     """Return a set of function SQL strings that appear more than once."""
     function_counts: Dict[str, int] = {}
     for func in ast.find_all(exp.Func):
-        func_sql = func.sql(dialect=dialect)
+        func_sql = func.sql(dialect=sqlglot_dialect)
         function_counts[func_sql] = function_counts.get(func_sql, 0) + 1
     return {f for f, count in function_counts.items() if count > 1}
 
@@ -16,19 +16,19 @@ def _replace_repeated_functions(
     ast: exp.Expression,
     repeated_funcs: Set[str],
     var_mapping: Dict[str, str],
-    dialect: str = "duckdb",
+    sqlglot_dialect: str,
 ) -> exp.Expression:
     """Replace repeated function calls with references to computed columns."""
 
     def transform_func(node):
         if isinstance(node, exp.Func):
-            node_sql = node.sql(dialect=dialect)
+            node_sql = node.sql(dialect=sqlglot_dialect)
             if node_sql in repeated_funcs:
                 # Skip if nested in another repeated function
                 if (
                     node.parent
                     and isinstance(node.parent, exp.Func)
-                    and node.parent.sql(dialect=dialect) in repeated_funcs
+                    and node.parent.sql(dialect=sqlglot_dialect) in repeated_funcs
                 ):
                     return node
                 # Return reference to computed column
@@ -40,9 +40,14 @@ def _replace_repeated_functions(
 
 def _find_repeated_functions(
     columns_to_select_for_comparison_vector_values: list[str],
+    sqlglot_dialect: str,
 ) -> Tuple[list[dict[str, str]], list[str]]:
     """Find repeated function calls and return both the function definitions
     and modified SQL that uses the computed values.
+
+    Args:
+        columns_to_select_for_comparison_vector_values: List of SQL expressions
+        sqlglot_dialect: SQLGlot dialect name to use for parsing and generating SQL
 
     Returns:
         Tuple containing:
@@ -62,8 +67,8 @@ def _find_repeated_functions(
     # First pass: find all repeated functions
     all_repeated_funcs = set()
     for case_sql in case_statements:
-        ast = parse_one(case_sql, read="duckdb")
-        all_repeated_funcs.update(_count_repeated_functions(ast))
+        ast = parse_one(case_sql, read=sqlglot_dialect)
+        all_repeated_funcs.update(_count_repeated_functions(ast, sqlglot_dialect))
 
     # Build mapping of function SQL to alias
     var_mapping = {}
@@ -75,11 +80,11 @@ def _find_repeated_functions(
     # Second pass: replace function calls with column references
     for col in columns_to_select_for_comparison_vector_values:
         if col.startswith("CASE"):
-            ast = parse_one(col, read="duckdb")
+            ast = parse_one(col, read=sqlglot_dialect)
             modified_ast = _replace_repeated_functions(
-                ast, all_repeated_funcs, var_mapping
+                ast, all_repeated_funcs, var_mapping, sqlglot_dialect
             )
-            modified_columns.append(modified_ast.sql(dialect="duckdb"))
+            modified_columns.append(modified_ast.sql(dialect=sqlglot_dialect))
         else:
             modified_columns.append(col)
 

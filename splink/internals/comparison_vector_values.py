@@ -57,6 +57,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     """
     sqls = []
 
+    sqlglot_dialect = unique_id_input_column.sqlglot_dialect
+
     if source_dataset_input_column:
         unique_id_columns = [source_dataset_input_column, unique_id_input_column]
     else:
@@ -86,7 +88,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     if experimental_optimisation:
         # Find repeated functions and get modified columns
         repeated_functions, modified_columns = _find_repeated_functions(
-            columns_to_select_for_comparison_vector_values
+            columns_to_select_for_comparison_vector_values,
+            sqlglot_dialect=sqlglot_dialect,
         )
         reusable_sql = _build_reusable_functions_sql(repeated_functions)
 
@@ -108,9 +111,14 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     else:
         clerical_match_score = ""
 
+    if experimental_optimisation:
+        table_select_from = "reusable_function_values_optimisation"
+    else:
+        table_select_from = "blocked_with_cols"
+
     sql = f"""
     select {select_cols_expr} {clerical_match_score}
-    from {'reusable_function_values_optimisation' if experimental_optimisation else 'blocked_with_cols'}
+    from {table_select_from}
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_comparison_vectors"})
