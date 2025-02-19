@@ -303,6 +303,7 @@ class LinkerInference:
         df_predict: SplinkDataFrame = None,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
+        experimental_optimisation: bool = True,
     ) -> SplinkDataFrame:
         """
         Given a table of clustered records, create a dataframe of scored
@@ -329,6 +330,8 @@ class LinkerInference:
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_weight above this threshold. Defaults to None.
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to True.
 
         Examples:
             ```py
@@ -445,6 +448,7 @@ class LinkerInference:
             input_tablename_r=blocking_input_tablename_r,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            experimental_optimisation=experimental_optimisation,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -473,6 +477,7 @@ class LinkerInference:
         | dict[str, Any]
         | str = [],
         match_weight_threshold: float = -4,
+        experimental_optimisation: bool = True,
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the Splink prediction score.
@@ -489,6 +494,8 @@ class LinkerInference:
                 provided to the linker when it was instantiated. Defaults to [].
             match_weight_threshold (int, optional): Return matches with a match weight
                 above this threshold. Defaults to -4.
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to True.
 
         Examples:
             ```py
@@ -614,6 +621,7 @@ class LinkerInference:
             input_tablename_r="__splink__df_new_records_with_tf",
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            experimental_optimisation=experimental_optimisation,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
@@ -649,6 +657,7 @@ class LinkerInference:
         record_1: dict[str, Any] | AcceptableInputTableType,
         record_2: dict[str, Any] | AcceptableInputTableType,
         include_found_by_blocking_rules: bool = False,
+        experimental_optimisation: bool = True,
     ) -> SplinkDataFrame:
         """Use the linkage model to compare and score a pairwise record comparison
         based on the two input records provided.
@@ -670,6 +679,8 @@ class LinkerInference:
                 indicating whether the record pair would have been found by any of the
                 blocking rules specified in
                 settings.blocking_rules_to_generate_predictions. Defaults to False.
+            experimental_optimisation (bool): If true, enables experimental SQL
+                optimization that reuses repeated function calls. Defaults to True.
 
         Examples:
             ```py
