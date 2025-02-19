@@ -82,8 +82,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
-    # Find repeated functions and build SQL to compute them
-    repeated_functions = _find_repeated_functions(
+    # Find repeated functions and get modified columns
+    repeated_functions, modified_columns = _find_repeated_functions(
         columns_to_select_for_comparison_vector_values
     )
     reusable_sql = _build_reusable_functions_sql(repeated_functions)
@@ -95,8 +95,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
         }
     )
 
-    # Modify the final SQL to read from reusable_function_values instead
-    select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
+    # Use modified columns that reference the computed values
+    select_cols_expr = ", \n".join(modified_columns)
 
     if include_clerical_match_score:
         clerical_match_score = ", clerical_match_score"

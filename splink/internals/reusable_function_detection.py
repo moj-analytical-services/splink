@@ -1,4 +1,4 @@
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 from sqlglot import exp, parse_one
 
@@ -12,17 +12,45 @@ def _count_repeated_functions(ast: exp.Expression, dialect: str = "duckdb") -> S
     return {f for f, count in function_counts.items() if count > 1}
 
 
+def _replace_repeated_functions(
+    ast: exp.Expression,
+    repeated_funcs: Set[str],
+    var_mapping: Dict[str, str],
+    dialect: str = "duckdb",
+) -> exp.Expression:
+    """Replace repeated function calls with references to computed columns."""
+
+    def transform_func(node):
+        if isinstance(node, exp.Func):
+            node_sql = node.sql(dialect=dialect)
+            if node_sql in repeated_funcs:
+                # Skip if nested in another repeated function
+                if (
+                    node.parent
+                    and isinstance(node.parent, exp.Func)
+                    and node.parent.sql(dialect=dialect) in repeated_funcs
+                ):
+                    return node
+                # Return reference to computed column
+                return exp.to_identifier(var_mapping[node_sql])
+        return node
+
+    return ast.transform(transform_func)
+
+
 def _find_repeated_functions(
     columns_to_select_for_comparison_vector_values: list[str],
-) -> list[dict[str, str]]:
-    """Find repeated function calls in the comparison vector columns.
-    For now, just hardcoded to look for specific patterns.
+) -> Tuple[list[dict[str, str]], list[str]]:
+    """Find repeated function calls and return both the function definitions
+    and modified SQL that uses the computed values.
 
-    Returns a list of dicts with keys:
-        - function_sql: the original function call
-        - alias: the column name to store the result
+    Returns:
+        Tuple containing:
+        - List of dicts with function_sql and alias for repeated functions
+        - List of modified SQL strings with references to computed values
     """
     repeated_functions = []
+    modified_columns = []
 
     # Only look at CASE statements
     case_statements = [
@@ -31,23 +59,35 @@ def _find_repeated_functions(
         if col.startswith("CASE")
     ]
 
-    # Parse each CASE statement and find repeated functions
+    # First pass: find all repeated functions
+    all_repeated_funcs = set()
     for case_sql in case_statements:
         ast = parse_one(case_sql, read="duckdb")
-        repeated_funcs = _count_repeated_functions(ast)
+        all_repeated_funcs.update(_count_repeated_functions(ast))
 
-        for func_sql in repeated_funcs:
-            # Generate a clean alias from the function name
-            alias = "".join(c if c.isalnum() else "_" for c in func_sql.lower())
-            repeated_functions.append({"function_sql": func_sql, "alias": alias})
+    # Build mapping of function SQL to alias
+    var_mapping = {}
+    for func_sql in all_repeated_funcs:
+        alias = "".join(c if c.isalnum() else "_" for c in func_sql.lower())
+        var_mapping[func_sql] = alias
+        repeated_functions.append({"function_sql": func_sql, "alias": alias})
 
-    return repeated_functions
+    # Second pass: replace function calls with column references
+    for col in columns_to_select_for_comparison_vector_values:
+        if col.startswith("CASE"):
+            ast = parse_one(col, read="duckdb")
+            modified_ast = _replace_repeated_functions(
+                ast, all_repeated_funcs, var_mapping
+            )
+            modified_columns.append(modified_ast.sql(dialect="duckdb"))
+        else:
+            modified_columns.append(col)
+
+    return repeated_functions, modified_columns
 
 
 def _build_reusable_functions_sql(repeated_functions: list[dict[str, str]]) -> str:
-    """Build SQL to compute reusable function values.
-    Takes list of function definitions from _find_repeated_functions.
-    """
+    """Build SQL to compute reusable function values."""
     if not repeated_functions:
         return "select * from blocked_with_cols"
 
