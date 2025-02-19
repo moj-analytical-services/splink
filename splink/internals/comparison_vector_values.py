@@ -78,6 +78,16 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
+    # Add new CTE for reusable function values
+    sql = """
+    select *
+    from blocked_with_cols
+    """
+    sqls.append(
+        {"sql": sql, "output_table_name": "reusable_function_values_optimisation"}
+    )
+
+    # Modify the final SQL to read from reusable_function_values instead
     select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
 
     if include_clerical_match_score:
@@ -85,10 +95,9 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     else:
         clerical_match_score = ""
 
-    # The second table computes the comparison vectors from these aliases
     sql = f"""
     select {select_cols_expr} {clerical_match_score}
-    from blocked_with_cols
+    from reusable_function_values_optimisation
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_comparison_vectors"})
