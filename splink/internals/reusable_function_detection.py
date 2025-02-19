@@ -6,9 +6,28 @@ from sqlglot import exp, parse_one
 def _count_repeated_functions(ast: exp.Expression, sqlglot_dialect: str) -> Set[str]:
     """Return a set of function SQL strings that appear more than once."""
     function_counts: Dict[str, int] = {}
+
+    # First pass: count all functions
     for func in ast.find_all(exp.Func):
         func_sql = func.sql(dialect=sqlglot_dialect)
         function_counts[func_sql] = function_counts.get(func_sql, 0) + 1
+
+    # Second pass: remove nested functions that are part of repeated outer functions
+    for func in ast.find_all(exp.Func):
+        func_sql = func.sql(dialect=sqlglot_dialect)
+        # If this function is repeated
+        if function_counts.get(func_sql, 0) > 1:
+            # Check if it's nested inside another repeated function
+            parent = func.parent
+            while parent:
+                if isinstance(parent, exp.Func):
+                    parent_sql = parent.sql(dialect=sqlglot_dialect)
+                    if function_counts.get(parent_sql, 0) > 1:
+                        # Remove this nested function from results
+                        function_counts[func_sql] = 1
+                        break
+                parent = parent.parent
+
     return {f for f, count in function_counts.items() if count > 1}
 
 
