@@ -474,7 +474,7 @@ def cluster_pairwise_predictions_at_multiple_thresholds(
         edge_id_column_name_left,
         edge_id_column_name_right,
     )
-
+    logger.info(f"--------Clustering at threshold {initial_threshold}--------")
     # First cluster at the lowest threshold
     cc = cluster_pairwise_predictions_at_threshold(
         nodes=nodes_sdf,
