@@ -240,3 +240,4 @@ def test_non_linker_charts(dialect, test_helpers):
         model_json = json.loads(u.read().decode())
 
     match_weights_chart(model_json, sql_dialect_str = dialect)
+    

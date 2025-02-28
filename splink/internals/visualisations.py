@@ -1,23 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
 from pathlib import Path
 
-from splink.internals.charts import match_weights_chart
+from splink.internals.charts import partial_match_weights_chart
 
 from splink.internals.settings_creator import SettingsCreator
 import urllib
 import json
-as_dict = False
 
 url = "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/demo_settings/real_time_settings.json"
 
 with urllib.request.urlopen(url) as u:
     model_json = json.loads(u.read().decode())
 
-def match_weights_chart(settings_dict: Path | str, 
+def match_weights_chart(settings_dict: Path | str,
                         as_dict: bool = False,
-                        sql_dialect_str: str = 'duckdb') -> altair_chart:
+                        sql_dialect_str: str = 'duckdb'):
     """Display a chart of the (partial) match weights of the linkage model
 
         Args:
@@ -41,8 +39,8 @@ def match_weights_chart(settings_dict: Path | str,
             settings_creator = SettingsCreator.from_path_or_dict(settings_dict)
     else:
         settings_creator = settings_dict
-            
+
     settings = settings_creator.get_settings(sql_dialect_str=sql_dialect_str)
     records = settings._parameters_as_detailed_records
-    
+
     return match_weights_chart(records, as_dict=as_dict)
