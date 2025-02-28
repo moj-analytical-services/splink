@@ -1,8 +1,11 @@
+import json
 import pandas as pd
 import pytest
+import urllib
 
 import splink.internals.comparison_library as cl
 from splink.internals.linker import Linker
+from splink.visualisations import match_weights_chart
 from tests.decorator import mark_with_dialects_excluding
 
 # ground truth:
@@ -228,3 +231,12 @@ def test_tf_adjustment_chart(dialect, test_helpers):
 
     with pytest.raises(ValueError):
         linker.visualisations.tf_adjustment_chart("surname")
+
+def test_non_linker_charts(dialect, test_helpers):
+
+    url = "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/demo_settings/real_time_settings.json"
+
+    with urllib.request.urlopen(url) as u:
+        model_json = json.loads(u.read().decode())
+
+    match_weights_chart(model_json, sql_dialect_str = dialect)
