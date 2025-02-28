@@ -7,11 +7,6 @@ import urllib
 from splink.internals.charts import ChartReturnType, partial_match_weights_chart
 from splink.internals.settings_creator import SettingsCreator
 
-url = "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/demo_settings/real_time_settings.json"
-
-with urllib.request.urlopen(url) as u:
-    model_json = json.loads(u.read().decode())
-
 def match_weights_chart(settings_dict: Path | str,
                         as_dict: bool = False,
                         sql_dialect_str: str = 'duckdb') -> ChartReturnType:
