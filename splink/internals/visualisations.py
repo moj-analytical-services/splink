@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import urllib
+
 
 from splink.internals.charts import ChartReturnType, partial_match_weights_chart
-
 from splink.internals.settings_creator import SettingsCreator
-import urllib
-import json
+
 
 url = "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/demo_settings/real_time_settings.json"
 
