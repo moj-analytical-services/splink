@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from splink.internals.charts import partial_match_weights_chart
+from splink.internals.charts import ChartReturnType, partial_match_weights_chart
 
 from splink.internals.settings_creator import SettingsCreator
 import urllib
@@ -15,7 +15,7 @@ with urllib.request.urlopen(url) as u:
 
 def match_weights_chart(settings_dict: Path | str,
                         as_dict: bool = False,
-                        sql_dialect_str: str = 'duckdb'):
+                        sql_dialect_str: str = 'duckdb') -> ChartReturnType:
     """Display a chart of the (partial) match weights of the linkage model
 
         Args:
@@ -43,4 +43,4 @@ def match_weights_chart(settings_dict: Path | str,
     settings = settings_creator.get_settings(sql_dialect_str=sql_dialect_str)
     records = settings._parameters_as_detailed_records
 
-    return match_weights_chart(records, as_dict=as_dict)
+    return partial_match_weights_chart(records, as_dict=as_dict)
