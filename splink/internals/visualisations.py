@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 import urllib
 
-
 from splink.internals.charts import ChartReturnType, partial_match_weights_chart
 from splink.internals.settings_creator import SettingsCreator
 
