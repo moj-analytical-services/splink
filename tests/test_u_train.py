@@ -371,3 +371,60 @@ def test_seed_u_outputs(test_helpers, dialect):
         linker_1._settings_obj._parameter_estimates_as_records
         != linker_3._settings_obj._parameter_estimates_as_records
     )
+
+
+# No SQLite or Postgres - don't support random seed
+@mark_with_dialects_excluding("sqlite", "postgres")
+def test_seed_u_outputs_different_order(test_helpers, dialect):
+    # seed was producing different results due to lack of table ordering
+    # df_concat not guaranteed order, so sampling from it, even with seed
+    # can lead to different results
+
+    helper = test_helpers[dialect]
+
+    n_rows = 1_000
+    names = {
+        0: "Andy",
+        1: "Robin",
+        2: "Sam",
+        3: "Ross",
+    }
+    input_frame = pd.DataFrame(
+        [
+            {
+                "unique_id": i,
+                "first_name": names[i % len(names)],
+            }
+            for i in range(n_rows)
+        ]
+    )
+    # simple way to get a slightly uneven distribution
+    input_frame.sample(n=347, random_state=123)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("first_name"),
+        ],
+    }
+
+    u_vals = set()
+    # each time we shuffle the input frame
+    # this simulates the non-deterministic ordering of df_concat
+    for i in range(5):
+        df_pd = input_frame.sample(frac=1, random_state=i)
+
+        df = helper.convert_frame(df_pd)
+        linker = helper.Linker(df, settings, **helper.extra_linker_args())
+        linker.training.estimate_u_using_random_sampling(67, 5330)
+        u_prob = (
+            linker._settings_obj.comparisons[0]
+            ._get_comparison_level_by_comparison_vector_value(0)
+            .u_probability
+        )
+
+        u_vals.add(u_prob)
+
+    # should have got the same u-value each time, as we supply a seed
+    # input data is same, just shuffled - should get ordered when we sample
+    assert len(u_vals) == 1
