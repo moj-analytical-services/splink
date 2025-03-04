@@ -7,14 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.7] - 2025-03-04
+
 ### Added
 
 - Support for 'one to one' linking and clustering (allowing the user to force clusters to contain at most one record from given `source_dataset`s) in [#2578](https://github.com/moj-analytical-services/splink/pull/2578/)
 - `ColumnExpression` now supports accessing first or last element of an array column via method `access_extreme_array_element()` ([#2585](https://github.com/moj-analytical-services/splink/pull/2585)), or converting string literals to `NULL` via `nullif()` ([#2586](https://github.com/moj-analytical-services/splink/pull/2586))
+- `PairwiseStringDistanceFunction` now works with `spark` backend ([#2546](https://github.com/moj-analytical-services/splink/pull/2546))
+- `linker.clustering.compute_graph_metrics()` now also computes node centrality ([#2618](https://github.com/moj-analytical-services/splink/pull/2618))
 
 ### Fixed
 
 - Fixed issue where `estimate_u_using_random_sampling()` could give different answers between runs even when a `seed` is set ([#2642](https://github.com/moj-analytical-services/splink/pull/2642))
+- Fixed issue where `compare_records` could return the wrong cached SQL when more than one model in memory ([#2589](https://github.com/moj-analytical-services/splink/pull/2589))
+- `SparkAPI` now correctly handles case where database is not a valid SQL identifier ([#2577](https://github.com/moj-analytical-services/splink/pull/2577))
 
 ### Deprecated
 
@@ -189,7 +195,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.6...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.7...HEAD
+[4.0.7]: https://github.com/moj-analytical-services/splink/compare/4.0.6...4.0.7
 [4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
 [4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
 [4.0.4]: https://github.com/moj-analytical-services/splink/compare/4.0.3...4.0.4

@@ -54,7 +54,7 @@ def __getattr__(name):
     raise AttributeError(f"module 'splink' has no attribute '{name}'") from None
 
 
-__version__ = "4.0.6"
+__version__ = "4.0.7"
 
 
 __all__ = [
