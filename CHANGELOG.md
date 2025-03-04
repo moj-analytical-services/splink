@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for 'one to one' linking and clustering (allowing the user to force clusters to contain at most one record from given `source_dataset`s) in [#2578](https://github.com/moj-analytical-services/splink/pull/2578/)
 - `ColumnExpression` now supports accessing first or last element of an array column via method `access_extreme_array_element()` ([#2585](https://github.com/moj-analytical-services/splink/pull/2585)), or converting string literals to `NULL` via `nullif()` ([#2586](https://github.com/moj-analytical-services/splink/pull/2586))
 
+### Fixed
+
+- Fixed issue where `estimate_u_using_random_sampling()` could give different answers between runs even when a `seed` is set ([#2642](https://github.com/moj-analytical-services/splink/pull/2642))
 
 ### Deprecated
 
