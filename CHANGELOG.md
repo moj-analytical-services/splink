@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.7] - 2025-03-04
+
 ### Added
 
 - Support for 'one to one' linking and clustering (allowing the user to force clusters to contain at most one record from given `source_dataset`s) in [#2578](https://github.com/moj-analytical-services/splink/pull/2578/)
@@ -189,7 +191,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.6...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.7...HEAD
+[4.0.7]: https://github.com/moj-analytical-services/splink/compare/4.0.6...4.0.7
 [4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
 [4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
 [4.0.4]: https://github.com/moj-analytical-services/splink/compare/4.0.3...4.0.4
