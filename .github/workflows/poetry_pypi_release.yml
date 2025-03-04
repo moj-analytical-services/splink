@@ -5,30 +5,37 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 jobs:
-  poetry-publish:
+  build-package:
+    name: upload release to PyPI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
         with:
-          ref: master
-      - name: Install poetry
-        run: pipx install poetry
-      - uses: actions/setup-python@v4
+          python-version: 3.11
+
+      - run: |
+          pip install poetry
+          poetry build
+
+      - uses: actions/upload-artifact@v3
         with:
-          python-version: "3.8"
-      - name: Publish to Pypi
-        env:
-          TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: poetry publish --build -u __token__ -p $TOKEN
-      # Create duckdbless requirements
-      - name: Run duckdbless setup
-        run: |
-          chmod +x ./scripts/duckdb-less_packages.sh
-          ./scripts/duckdb-less_packages.sh
-        shell: bash
-      - uses: stefanzweifel/git-auto-commit-action@v4
+          path: ./dist
+
+  pypi-publish:
+    needs: build-package
+    environment: 'release'
+
+    name: upload release to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v3
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          commit_message: Update duckdbless requirements
-          # feed exact file for ease
-          file_pattern: "duckdbless_requirements.txt"
-          repository: ./scripts
+          packages-dir: artifact/
