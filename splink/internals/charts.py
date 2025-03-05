@@ -84,7 +84,7 @@ def save_offline_chart(
         print(iframe_message.format(filename=filename))  # noqa: T201
 
 
-def match_weights_chart(records, as_dict=False):
+def partial_match_weights_chart(records, as_dict=False):
     chart_path = "match_weights_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
