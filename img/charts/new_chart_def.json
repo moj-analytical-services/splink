@@ -1,0 +1,171 @@
+{
+  "title": {
+    "text": "Heatmaps of string comparison metrics",
+    "anchor": "middle",
+    "fontSize": 16
+  },
+  "hconcat": [
+    {
+      "layer": [
+        {
+          "mark": "rect",
+          "encoding": {
+            "color": {
+              "field": "score",
+              "scale": {
+                "domain": [
+                  0,
+                  1
+                ],
+                "scheme": "greenblue"
+              },
+              "type": "quantitative",
+              "legend": null
+            },
+            "x": {
+              "field": "comparator",
+              "type": "ordinal",
+              "title": null
+            },
+            "y": {
+              "field": "strings_to_compare",
+              "type": "ordinal",
+              "title": "String comparison",
+              "axis": {
+                "titleFontSize": 14
+              }
+            }
+          },
+          "title": "Similarity",
+          "width": {
+            "step": 40
+          },
+          "height": {
+            "step": 30
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "middle"
+          },
+          "encoding": {
+            "size": {
+              "field": "score",
+              "scale": {
+                "range": [
+                  8,
+                  14
+                ]
+              },
+              "legend": null
+            },
+            "text": {
+              "field": "score",
+              "format": ".2f",
+              "type": "quantitative"
+            },
+            "x": {
+              "field": "comparator",
+              "type": "ordinal",
+              "axis": {
+                "labelFontSize": 12
+              }
+            },
+            "y": {
+              "field": "strings_to_compare",
+              "type": "ordinal"
+            }
+          }
+        }
+      ],
+      "data": {
+        "name": "data-similarity"
+      }
+    },
+    {
+      "layer": [
+        {
+          "mark": "rect",
+          "encoding": {
+            "color": {
+              "field": "score",
+              "scale": {
+                "scheme": "yelloworangered",
+                "reverse": true
+              },
+              "type": "quantitative",
+              "legend": null
+            },
+            "x": {
+              "field": "comparator",
+              "type": "ordinal",
+              "title": null,
+              "axis": {
+                "labelFontSize": 12
+              }
+            },
+            "y": {
+              "field": "strings_to_compare",
+              "type": "ordinal",
+              "axis": null
+            }
+          },
+          "title": "Distance",
+          "width": {
+            "step": 40
+          },
+          "height": {
+            "step": 30
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "middle"
+          },
+          "encoding": {
+            "size": {
+              "field": "score",
+              "scale": {
+                "range": [
+                  8,
+                  14
+                ],
+                "reverse": true
+              },
+              "legend": null
+            },
+            "text": {
+              "field": "score",
+              "type": "quantitative"
+            },
+            "x": {
+              "field": "comparator",
+              "type": "ordinal"
+            },
+            "y": {
+              "field": "strings_to_compare",
+              "type": "ordinal"
+            }
+          }
+        }
+      ],
+      "data": {
+        "name": "data-distance"
+      }
+    }
+  ],
+  "resolve": {
+    "scale": {
+      "color": "independent",
+      "y": "shared",
+      "size": "independent"
+    }
+  },
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
+  "datasets": {
+    "data-similarity": "[{\"strings_to_compare\":\"Richard, Richard\",\"comparator\":\"jaro\",\"score\":1.0},{\"strings_to_compare\":\"Richard, RICHARD\",\"comparator\":\"jaro\",\"score\":0.43},{\"strings_to_compare\":\"Richard, Richar\",\"comparator\":\"jaro\",\"score\":0.95},{\"strings_to_compare\":\"Richard, iRchard\",\"comparator\":\"jaro\",\"score\":0.95},{\"strings_to_compare\":\"Richard, Richadr\",\"comparator\":\"jaro\",\"score\":0.95},{\"strings_to_compare\":\"Richard, Rich\",\"comparator\":\"jaro\",\"score\":0.86},{\"strings_to_compare\":\"Richard, Rick\",\"comparator\":\"jaro\",\"score\":0.73},{\"strings_to_compare\":\"Richard, Ricky\",\"comparator\":\"jaro\",\"score\":0.68},{\"strings_to_compare\":\"Richard, Dick\",\"comparator\":\"jaro\",\"score\":0.6},{\"strings_to_compare\":\"Richard, Rico\",\"comparator\":\"jaro\",\"score\":0.73},{\"strings_to_compare\":\"Richard, Rachael\",\"comparator\":\"jaro\",\"score\":0.71},{\"strings_to_compare\":\"Richard, Stephen\",\"comparator\":\"jaro\",\"score\":0.43},{\"strings_to_compare\":\"Richard, Richard\",\"comparator\":\"jaro_winkler\",\"score\":1.0},{\"strings_to_compare\":\"Richard, RICHARD\",\"comparator\":\"jaro_winkler\",\"score\":0.43},{\"strings_to_compare\":\"Richard, Richar\",\"comparator\":\"jaro_winkler\",\"score\":0.97},{\"strings_to_compare\":\"Richard, iRchard\",\"comparator\":\"jaro_winkler\",\"score\":0.95},{\"strings_to_compare\":\"Richard, Richadr\",\"comparator\":\"jaro_winkler\",\"score\":0.97},{\"strings_to_compare\":\"Richard, Rich\",\"comparator\":\"jaro_winkler\",\"score\":0.91},{\"strings_to_compare\":\"Richard, Rick\",\"comparator\":\"jaro_winkler\",\"score\":0.81},{\"strings_to_compare\":\"Richard, Ricky\",\"comparator\":\"jaro_winkler\",\"score\":0.68},{\"strings_to_compare\":\"Richard, Dick\",\"comparator\":\"jaro_winkler\",\"score\":0.6},{\"strings_to_compare\":\"Richard, Rico\",\"comparator\":\"jaro_winkler\",\"score\":0.81},{\"strings_to_compare\":\"Richard, Rachael\",\"comparator\":\"jaro_winkler\",\"score\":0.74},{\"strings_to_compare\":\"Richard, Stephen\",\"comparator\":\"jaro_winkler\",\"score\":0.43},{\"strings_to_compare\":\"Richard, Richard\",\"comparator\":\"jaccard\",\"score\":1.0},{\"strings_to_compare\":\"Richard, RICHARD\",\"comparator\":\"jaccard\",\"score\":0.08},{\"strings_to_compare\":\"Richard, Richar\",\"comparator\":\"jaccard\",\"score\":0.86},{\"strings_to_compare\":\"Richard, iRchard\",\"comparator\":\"jaccard\",\"score\":1.0},{\"strings_to_compare\":\"Richard, Richadr\",\"comparator\":\"jaccard\",\"score\":1.0},{\"strings_to_compare\":\"Richard, Rich\",\"comparator\":\"jaccard\",\"score\":0.57},{\"strings_to_compare\":\"Richard, Rick\",\"comparator\":\"jaccard\",\"score\":0.38},{\"strings_to_compare\":\"Richard, Ricky\",\"comparator\":\"jaccard\",\"score\":0.33},{\"strings_to_compare\":\"Richard, Dick\",\"comparator\":\"jaccard\",\"score\":0.22},{\"strings_to_compare\":\"Richard, Rico\",\"comparator\":\"jaccard\",\"score\":0.38},{\"strings_to_compare\":\"Richard, Rachael\",\"comparator\":\"jaccard\",\"score\":0.44},{\"strings_to_compare\":\"Richard, Stephen\",\"comparator\":\"jaccard\",\"score\":0.08}]",
+    "data-distance": "[{\"strings_to_compare\":\"Richard, Richard\",\"comparator\":\"levenshtein\",\"score\":0.0},{\"strings_to_compare\":\"Richard, RICHARD\",\"comparator\":\"levenshtein\",\"score\":6.0},{\"strings_to_compare\":\"Richard, Richar\",\"comparator\":\"levenshtein\",\"score\":1.0},{\"strings_to_compare\":\"Richard, iRchard\",\"comparator\":\"levenshtein\",\"score\":2.0},{\"strings_to_compare\":\"Richard, Richadr\",\"comparator\":\"levenshtein\",\"score\":2.0},{\"strings_to_compare\":\"Richard, Rich\",\"comparator\":\"levenshtein\",\"score\":3.0},{\"strings_to_compare\":\"Richard, Rick\",\"comparator\":\"levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Ricky\",\"comparator\":\"levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Dick\",\"comparator\":\"levenshtein\",\"score\":5.0},{\"strings_to_compare\":\"Richard, Rico\",\"comparator\":\"levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Rachael\",\"comparator\":\"levenshtein\",\"score\":3.0},{\"strings_to_compare\":\"Richard, Stephen\",\"comparator\":\"levenshtein\",\"score\":7.0},{\"strings_to_compare\":\"Richard, Richard\",\"comparator\":\"damerau_levenshtein\",\"score\":0.0},{\"strings_to_compare\":\"Richard, RICHARD\",\"comparator\":\"damerau_levenshtein\",\"score\":6.0},{\"strings_to_compare\":\"Richard, Richar\",\"comparator\":\"damerau_levenshtein\",\"score\":1.0},{\"strings_to_compare\":\"Richard, iRchard\",\"comparator\":\"damerau_levenshtein\",\"score\":1.0},{\"strings_to_compare\":\"Richard, Richadr\",\"comparator\":\"damerau_levenshtein\",\"score\":1.0},{\"strings_to_compare\":\"Richard, Rich\",\"comparator\":\"damerau_levenshtein\",\"score\":3.0},{\"strings_to_compare\":\"Richard, Rick\",\"comparator\":\"damerau_levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Ricky\",\"comparator\":\"damerau_levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Dick\",\"comparator\":\"damerau_levenshtein\",\"score\":5.0},{\"strings_to_compare\":\"Richard, Rico\",\"comparator\":\"damerau_levenshtein\",\"score\":4.0},{\"strings_to_compare\":\"Richard, Rachael\",\"comparator\":\"damerau_levenshtein\",\"score\":3.0},{\"strings_to_compare\":\"Richard, Stephen\",\"comparator\":\"damerau_levenshtein\",\"score\":7.0}]"
+  }
+}
