@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deprecated support for python `3.8.x` following end of support for that minor version ([#2520](https://github.com/moj-analytical-services/splink/pull/2520))
 
+### Changed
+
+- Upgraded Vega to 5.31 ([#2599](https://github.com/moj-analytical-services/splink/issues/2599))
+
 ## [4.0.6] - 2024-12-05
 
 ### Added

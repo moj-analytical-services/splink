@@ -133,7 +133,7 @@ def render_splink_comparison_viewer_html(
 
     files = {
         "embed": "internals/files/external_js/vega-embed@6.20.2",
-        "vega": "internals/files/external_js/vega@5.21.0",
+        "vega": "internals/files/external_js/vega@5.31.0",
         "vegalite": "internals/files/external_js/vega-lite@5.2.0",
         "stdlib": "internals/files/external_js/stdlib.js@5.8.3",
         "svu_text": "internals/files/splink_vis_utils/splink_vis_utils.js",
