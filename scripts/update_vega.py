@@ -15,16 +15,16 @@ from urllib.request import urlretrieve
 
 # Define the currently bundled and new versions of Vega
 VERSION_VEGA_EXISTING = "5.21.0"
-VERSION_VEGA_NEW      = "5.31.0"
+VERSION_VEGA_NEW = "5.31.0"
 
 # Define filepaths of the existing and new Vega files
 external_js_path = Path("splink", "internals", "files", "external_js")
 vega_file_existing = external_js_path / f"vega@{VERSION_VEGA_EXISTING}"
-vega_file_new      = external_js_path / f"vega@{VERSION_VEGA_NEW}"
+vega_file_new = external_js_path / f"vega@{VERSION_VEGA_NEW}"
 
 # Delete the existing Vega file
 if vega_file_existing.exists():
-    print(f"Deleting the existing Vega file at {str(vega_file_existing)}...")
+    print(f"Deleting the existing Vega file at {str(vega_file_existing)}...")  # noqa: T201
     Path.unlink(vega_file_existing)
 else:
     raise ValueError(
@@ -41,8 +41,10 @@ else:
 # filename isn't versioned, so you'd want to manually check that
 # VERSION_VEGA_NEW is consistent with what's actually downloaded. We'll use that
 # last approach here.
-vega_url = "https://raw.githubusercontent.com/vega/vega/refs/heads/main/docs/vega.min.js"
-print(f"Downloading the new Vega file and saving as {str(vega_file_new)}...")
+vega_url = (
+    "https://raw.githubusercontent.com/vega/vega/refs/heads/main/docs/vega.min.js"
+)
+print(f"Downloading the new Vega file and saving as {str(vega_file_new)}...")  # noqa: T201
 urlretrieve(vega_url, vega_file_new)
 
-print("Vega update complete.")
+print("Vega update complete.")  # noqa: T201
