@@ -1,0 +1,381 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "description": "Links and nodes",
+  "padding": 0,
+  "autosize": "none",
+  "signals": [
+    {
+      "name": "node_click",
+      "on": [
+        {
+          "events": "@nodes:click",
+          "update": "datum"
+        }
+      ]
+    },
+    {
+      "name": "nodeRadius",
+      "value": 1
+    },
+    {
+      "name": "nodeCollideStrength",
+      "value": 1
+    },
+    {
+      "name": "nodeCollideRadius",
+      "value": 1.4
+    },
+    {
+      "name": "linkStrength",
+      "value": 0.5
+    },
+    {
+      "name": "edge_click",
+      "on": [
+        {
+          "events": "@edges:click",
+          "update": "datum"
+        }
+      ]
+    },
+    {
+      "name": "cx",
+      "update": "width / 2"
+    },
+    {
+      "name": "cy",
+      "update": "height / 2"
+    },
+    {
+      "name": "nodeCharge",
+      "value": 30
+    },
+    {
+      "name": "linkDistance",
+      "value": 0.5
+    },
+    {
+      "name": "vis_height",
+      "value": 320
+    },
+    {
+      "name": "vis_width",
+      "value": 780
+    },
+    {
+      "name": "static",
+      "value": true
+    },
+    {
+      "description": "State variable for active node fix status.",
+      "name": "fix",
+      "value": false,
+      "on": [
+        {
+          "events": "symbol:mouseout[!event.buttons], window:mouseup",
+          "update": "false"
+        },
+        {
+          "events": "symbol:mouseover",
+          "update": "fix || true"
+        },
+        {
+          "events": "[symbol:mousedown, window:mouseup] > window:mousemove!",
+          "update": "xy()",
+          "force": true
+        }
+      ]
+    },
+    {
+      "description": "Graph node most recently interacted with.",
+      "name": "node",
+      "value": null,
+      "on": [
+        {
+          "events": "symbol:mouseover",
+          "update": "fix === true ? item() : node"
+        }
+      ]
+    },
+    {
+      "description": "Flag to restart Force simulation upon data changes.",
+      "name": "restart",
+      "value": false,
+      "on": [
+        {
+          "events": {
+            "signal": "fix"
+          },
+          "update": "fix && fix.length"
+        }
+      ]
+    }
+  ],
+  "width": {
+    "signal": "vis_width"
+  },
+  "height": {
+    "signal": "vis_height"
+  },
+  "data": [
+    {
+      "name": "node-data",
+      "values": [
+        {
+          "name": "1. lucas smith",
+          "eigen_centrality": 0.4352045493,
+          "__node_id": "1",
+          "cluster_id": 1,
+          "tooltip": {}
+        },
+        {
+          "name": "2. lucas smyth",
+          "eigen_centrality": 0.4352045493,
+          "__node_id": "2",
+          "cluster_id": 1,
+          "tooltip": {}
+        },
+        {
+          "name": "3. lucas smyth",
+          "eigen_centrality": 0.4352045493,
+          "__node_id": "3",
+          "cluster_id": 1,
+          "tooltip": {}
+        },
+        {
+          "name": "4. david jones",
+          "eigen_centrality": 0.4352045493,
+          "__node_id": "4",
+          "cluster_id": 2,
+          "tooltip": {}
+        },
+        {
+          "name": "5. david jones",
+          "eigen_centrality": 0.4352045493,
+          "__node_id": "5",
+          "cluster_id": 2,
+          "tooltip": {}
+        }
+      ]
+    },
+    {
+      "name": "link-data",
+      "values": [
+        {
+          "source": "1",
+          "target": "2",
+          "tooltip": {},
+          "match_probability": 1
+        },
+        {
+          "source": "1",
+          "target": "3",
+          "tooltip": {},
+          "match_probability": 1
+        },
+        {
+          "source": "2",
+          "target": "3",
+          "tooltip": {},
+          "match_probability": 1
+        },
+        {
+          "source": "4",
+          "target": "5",
+          "tooltip": {},
+          "match_probability": 1
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {
+        "data": "node-data",
+        "field": "cluster_id"
+      },
+      "range": [
+        "#A9C5FC",
+        "#FFB300",
+        "#deebf7",
+        "#fee0d2",
+        "#ef8a62",
+        "#b2182b"
+      ]
+    },
+    {
+      "name": "link_colour",
+      "type": "linear",
+      "domain": [0, 1],
+      "range": {
+        "scheme": "redyellowgreen"
+      },
+      "reverse": false
+    }
+  ],
+  "legends": [],
+  "marks": [
+    {
+      "name": "nodes",
+      "type": "symbol",
+      "zindex": 1,
+      "from": {
+        "data": "node-data"
+      },
+      "on": [
+        {
+          "trigger": "fix",
+          "modify": "node",
+          "values": "fix === true ? {fx: node.x, fy: node.y} : {fx: fix[0], fy: fix[1]}"
+        }
+      ],
+      "encode": {
+        "enter": {
+          "stroke": {
+            "value": "black"
+          },
+          "tooltip": {
+            "signal": "datum.tooltip"
+          }
+        },
+        "update": {
+          "size": {
+            "value": 1000,
+            "mult": {
+              "signal": "nodeRadius"
+            }
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "fill": {
+            "scale": "color",
+            "field": "cluster_id"
+          }
+        }
+      },
+      "transform": [
+        {
+          "type": "force",
+          "iterations": 400,
+          "restart": {
+            "signal": "restart"
+          },
+          "static": {
+            "signal": "static"
+          },
+          "signal": "force",
+          "forces": [
+            {
+              "force": "center",
+              "x": {
+                "signal": "cx"
+              },
+              "y": {
+                "signal": "cy"
+              }
+            },
+            {
+              "force": "collide",
+              "radius": {
+                "expr": "pow(1000*nodeRadius,0.5)*nodeCollideStrength*nodeCollideRadius"
+              },
+              "strength": {
+                "signal": "nodeCollideStrength"
+              }
+            },
+            {
+              "force": "nbody",
+              "strength": {
+                "signal": "nodeCharge"
+              }
+            },
+            {
+              "description": "Uses link-data to find links between nodes constraining x and y of nodes.  Tranforms link-data so source and target are objects that include e.g. x and y coords",
+              "force": "link",
+              "links": "link-data",
+              "distance": {
+                "expr": "50*linkDistance"
+              },
+              "id": "datum.__node_id",
+              "strength": {
+                "signal": "linkStrength"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "The force link transform will replace source and target with objects containing x and y coords.  We need to extract x and y to plot a path between them",
+      "type": "path",
+      "name": "edges",
+      "from": {
+        "data": "link-data"
+      },
+      "interactive": true,
+      "encode": {
+        "update": {
+          "stroke": {
+            "scale": "link_colour",
+            "field": "match_probability"
+          },
+          "tooltip": {
+            "signal": "datum.tooltip"
+          },
+          "strokeWidth": {
+            "value": 2
+          }
+        }
+      },
+      "transform": [
+        {
+          "type": "linkpath",
+          "require": {
+            "signal": "force"
+          },
+          "shape": "line",
+          "sourceX": "datum.source.x",
+          "sourceY": "datum.source.y",
+          "targetX": "datum.target.x",
+          "targetY": "datum.target.y"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "nodes"
+      },
+      "interactive": false,
+      "zindex": 2,
+      "encode": {
+        "enter": {
+          "align": {
+            "value": "center"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "fontSize": {
+            "value": 12
+          },
+
+          "text": {
+            "field": "datum.name"
+          }
+        },
+        "update": {
+          "x": {
+            "field": "x"
+          },
+          "y": {
+            "field": "y"
+          }
+        }
+      }
+    }
+  ]
+}
