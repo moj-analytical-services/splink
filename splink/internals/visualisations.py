@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from splink.internals.charts import ChartReturnType, partial_match_weights_chart
 from splink.internals.settings_creator import SettingsCreator
+from splink.internals.charts import ChartReturnType, partial_match_weights_chart
 
 def match_weights_chart(settings_dict: Path | str,
                         as_dict: bool = False,
