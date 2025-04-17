@@ -160,6 +160,7 @@ df_clusters = clusters.as_pandas_dataframe(limit=5)
 
 ## Videos
 
+- [Pydata Global 2024 talk](https://www.youtube.com/watch?v=eQtFkI8f02U)
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
 
