@@ -128,6 +128,7 @@ nav:
         - Cookbook: "demos/examples/duckdb_no_test/cookbook.ipynb"
         - Investigating Bias in a Splink Model: "demos/examples/duckdb_no_test/bias_eval.ipynb"
         - Comparison playground: "demos/examples/duckdb_no_test/comparison_playground.ipynb"
+        - Pseudopeople Census to ACS link: "demos/examples/duckdb/pseudopeople-acs.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
       - Athena:
