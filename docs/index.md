@@ -50,6 +50,10 @@ High correlation occurs when the value of a column is highly constrained (predic
 
 Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
+## Videos
+
+Our PyData Global 2024 talk provides a brief introduction to Splink and available on YouTube [here](https://www.youtube.com/watch?v=eQtFkI8f02U).
+
 ## Support
 
 If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
