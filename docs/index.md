@@ -52,7 +52,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Videos
 
-Our PyData Global 2024 talk provides a brief introduction to Splink and available on YouTube [here](https://www.youtube.com/watch?v=eQtFkI8f02U).
+Our PyData Global 2024 talk provides a brief introduction to Splink and is available on YouTube [here](https://www.youtube.com/watch?v=eQtFkI8f02U).
 
 ## Support
 
