@@ -11,50 +11,29 @@ on:
 
 jobs:
   mypy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: Check type hinting with mypy
     steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Install poetry using pipx
+        run: pipx install poetry && pipx ensurepath
+
       - name: Set up python
         id: setup-python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9.10
-      #----------------------------------------------
-      #       set up environment
-      #----------------------------------------------
-      - name: Load cached Poetry installation
-        uses: actions/cache@v4
-        with:
-          path: ~/.local
-          key: poetry-0 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-typehint-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+          python-version: "3.12.1"
+          cache: "poetry"
+
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with=typechecking
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-root --with=typechecking
+
       - name: Install library
         run: poetry install --no-interaction
-      #----------------------------------------------
-      #              run mypy
-      #----------------------------------------------
-      - name: Run mypy
-        run: |
-          source .venv/bin/activate
-          mypy splink
 
+      - name: Run mypy
+        run: poetry run mypy splink
