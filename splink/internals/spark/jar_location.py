@@ -1,7 +1,7 @@
 from pyspark.sql.types import DoubleType, StringType
 
 
-def _spark_v_3_check() -> bool:
+def _spark_version_3_or_above_installed() -> bool:
     """Check if spark 3.0 or above is installed
 
     Returns:
@@ -16,7 +16,7 @@ def _spark_v_3_check() -> bool:
 def similarity_jar_location():
     import splink
 
-    if _spark_v_3_check():
+    if _spark_version_3_or_above_installed():
         path = (
             splink.__file__[0:-11]
             + "internals/files/spark_jars/scala-udf-similarity-0.1.2_spark3.x.jar"
@@ -58,7 +58,7 @@ def get_scala_udfs():
         ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
     ]
 
-    if _spark_v_3_check():
+    if _spark_version_3_or_above_installed():
         # Outline spark 3 exclusive scala functions
         spark_3_udfs = [
             (
