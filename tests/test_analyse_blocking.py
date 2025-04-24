@@ -541,7 +541,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         sql = sql_template.format(blocking_rule=br)
         res = duckdb.sql(sql).df()
-        results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
+        results[br] = {"count_from_join_dedupe_only": res.iloc[0].iloc[0]}
 
     db_api = DuckDBAPI()
 
@@ -578,7 +578,7 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     for br in blocking_rules:
         sql = sql_template.format(blocking_rule=br)
         res = duckdb.sql(sql).df()
-        results[br] = {"count_from_join_link_only": res.iloc[0][0]}
+        results[br] = {"count_from_join_link_only": res.iloc[0].iloc[0]}
 
     db_api = DuckDBAPI()
 

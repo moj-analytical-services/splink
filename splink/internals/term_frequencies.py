@@ -221,8 +221,10 @@ def comparison_level_to_tf_chart_data(cl: dict[str, Any]) -> dict[str, Any]:
 
     # Add ranks for sorting/selecting
     df = df.sort_values("log2_bf_tf")
-    df["most_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount()
-    df["least_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount(ascending=False)
+    df["most_freq_rank"] = df.groupby("gamma", observed=False)["log2_bf_tf"].cumcount()
+    df["least_freq_rank"] = df.groupby("gamma", observed=False)["log2_bf_tf"].cumcount(
+        ascending=False
+    )
 
     cl["df_out"] = df
 
@@ -298,7 +300,7 @@ def tf_adjustment_chart(
 
     df["bin"] = cut(df["log2_bf_final"], bins=bin_edges)
     binned_df = (
-        df.groupby(["gamma", "bin", "log2_bf"])
+        df.groupby(["gamma", "bin", "log2_bf"], observed=False)
         .agg({"log2_bf_final": "count", "log2_bf_tf": "mean"})
         .reset_index()
         .rename(columns={"log2_bf_final": "count"})
