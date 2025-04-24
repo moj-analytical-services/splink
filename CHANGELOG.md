@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- New version of Spark udf `.jar` file, which has updated dependencies [#2679](https://github.com/moj-analytical-services/splink/pull/2679)
+
 ## [4.0.7] - 2025-03-04
 
 ### Added
