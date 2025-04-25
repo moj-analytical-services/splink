@@ -60,8 +60,8 @@ This section provides a series of examples to help you get started with Splink. 
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a> [Investigating Bias in a Splink Model](./duckdb_no_test/bias_eval.ipynb)
 
-<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb/pseudopeople-acs.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Linking the pseudopeople Census and ACS datasets](./duckdb/pseudopeople-acs.ipynb). These datasets are generated using [pseudopeople](https://pseudopeople.readthedocs.io/en/latest/).
+<a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/pseudopeople-acs.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/> [Linking the pseudopeople Census and ACS datasets](./duckdb_no_test/pseudopeople-acs.ipynb). These datasets are generated using [pseudopeople](https://pseudopeople.readthedocs.io/en/latest/).
 </a>
 
 
