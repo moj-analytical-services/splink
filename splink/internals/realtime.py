@@ -101,7 +101,17 @@ def compare_records(
     Args:
         record_1 (dict): First record to compare
         record_2 (dict): Second record to compare
+        settings (SettingsCreator, dict, Path, str): Model settings, or path to
+            a saved model
         db_api (DatabaseAPISubClass): Database API to use for computations
+        use_sql_from_cache (bool): Use cached SQL if available,
+            rather than re-constructing. Default True
+        include_found_by_blocking_rules (bool): Include a column indicating whether
+            or not the pairs of records would have been picked up by the supplied
+            blocking rules. Defaults to False.
+        join_condition (str): A SQL expression in terms of the tables 'l' and 'r',
+            which is used to filter which records are compared.
+            Defaults to '1=1' (meaning all pairs of records remain)
 
     Returns:
         SplinkDataFrame: Comparison results
