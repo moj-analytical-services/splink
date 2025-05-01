@@ -93,6 +93,7 @@ def compare_records(
     db_api: DatabaseAPISubClass,
     use_sql_from_cache: bool = True,
     include_found_by_blocking_rules: bool = False,
+    join_condition: str = "1=1",
 ) -> SplinkDataFrame:
     """Compare two records and compute similarity scores without requiring a Linker.
     Assumes any required term frequency values are provided in the input records.
@@ -161,7 +162,8 @@ def compare_records(
     sql = f"""
     select {select_expr}, 0 as match_key
     from __splink__compare_records_left as l
-    cross join __splink__compare_records_right as r
+    join __splink__compare_records_right as r
+    on {join_condition}
     """
     pipeline.enqueue_sql(sql, "__splink__compare_two_records_blocked")
 
