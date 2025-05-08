@@ -210,6 +210,15 @@ class LinkerClustering:
             threshold_match_weight (float, optional): Pairwise comparisons with a
                 `match_weight` at or above this threshold are matched. Only one of
                 threshold_match_probability or threshold_match_weight should be provided
+            ties_method (str): How the clustering method should deal with ties. There
+                are two options: "drop" and "arbitrary". The "drop" option drops a
+                link from record A1 to record B1 if there exists another link
+                from record A1 to another record B2 with the same match weight, only
+                if B1 and B2 are in the same source dataset. If the links A1 to B1 and
+                A1 to C1 are tied where each record is from a different source dataset
+                then the links will be kept. The "arbitrary" option preferences a link
+                to the record with the lowest id. In the case of a tie between A1 to B1
+                and A1 to B2, the link to B1 will be accepted.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
