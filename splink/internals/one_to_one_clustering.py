@@ -119,8 +119,8 @@ def one_to_one_clustering(
         )
 
         # Ordering by the node_id is a consistent way to break ties.
-        # Ordering by the source_dataset allows links to form in 
-        # situations like A1 <-> B1 <-> C1 where both are tied (e.g. if the 
+        # Ordering by the source_dataset allows links to form in
+        # situations like A1 <-> B1 <-> C1 where both are tied (e.g. if the
         # records have the exact same data in three datasets) regardless of
         # keeping or dropping ties.
         if ties_method == "arbitrary":
@@ -161,7 +161,7 @@ def one_to_one_clustering(
         group by node_id
         """
 
-        pipeline.enqueue_sql(sql, f"__splink__df_ranked_count_l")
+        pipeline.enqueue_sql(sql, "__splink__df_ranked_count_l")
 
         sql = f"""
         select
@@ -172,7 +172,7 @@ def one_to_one_clustering(
         group by neighbour
         """
 
-        pipeline.enqueue_sql(sql, f"__splink__df_ranked_count_r")
+        pipeline.enqueue_sql(sql, "__splink__df_ranked_count_r")
 
         sql = f"""
         select
