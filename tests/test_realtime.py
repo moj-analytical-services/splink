@@ -418,3 +418,53 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     res1_again = res1_again.as_record_dict()[0]["match_weight"]
     # using cache
     assert res1 == pytest.approx(res1_again)
+
+
+@mark_with_dialects_excluding()
+def test_realtime_custom_join(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    db_api = helper.extra_linker_args()["db_api"]
+
+    df = pd.DataFrame(
+        [
+            {
+                "unique_id": i,
+                "first_name": "Julia",
+                "surname": "Taylor",
+                "city": "London",
+                "email": "julia@email.com",
+            }
+            for i in range(5)
+        ]
+    )
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+        "blocking_rules_to_generate_predictions": [block_on("first_name")],
+    }
+
+    res = compare_records(
+        df,
+        df,
+        settings,
+        db_api,
+        use_sql_from_cache=False,
+    )
+    # count of comparisons = 5 * 5
+    assert len(res.as_record_dict()) == 25
+
+    res = compare_records(
+        df,
+        df,
+        settings,
+        db_api,
+        use_sql_from_cache=False,
+        join_condition="l.unique_id < r.unique_id",
+    )
+    # count of comparisons = 5 * 4 / 2
+    assert len(res.as_record_dict()) == 10
