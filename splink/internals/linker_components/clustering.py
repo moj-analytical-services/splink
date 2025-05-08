@@ -186,6 +186,7 @@ class LinkerClustering:
         duplicate_free_datasets: List[str],
         threshold_match_probability: Optional[float] = None,
         threshold_match_weight: Optional[float] = None,
+        ties_method: str = "drop",
     ) -> SplinkDataFrame:
         """
         Clusters the pairwise match predictions that result from
@@ -227,6 +228,9 @@ class LinkerClustering:
         """
         linker = self._linker
         db_api = linker._db_api
+
+        if ties_method not in ["drop", "arbitrary"]:
+            raise ValueError("ties_method must be one of 'drop', or 'arbitrary'")
 
         pipeline = CTEPipeline()
 
@@ -297,6 +301,7 @@ class LinkerClustering:
             edge_id_column_name_left="node_id_l",
             edge_id_column_name_right="node_id_r",
             duplicate_free_datasets=duplicate_free_datasets,
+            ties_method=ties_method,
             db_api=db_api,
             threshold_match_probability=threshold_match_probability,
         )

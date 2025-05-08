@@ -19,6 +19,7 @@ def one_to_one_clustering(
     edge_id_column_name_left: str,
     edge_id_column_name_right: str,
     duplicate_free_datasets: List[str],
+    ties_method: str,
     db_api: DatabaseAPISubClass,
     threshold_match_probability: Optional[float],
 ) -> SplinkDataFrame:
@@ -117,17 +118,29 @@ def one_to_one_clustering(
             [f"(l.contains_{sd} and r.contains_{sd})" for sd in duplicate_free_datasets]
         )
 
+        # Ordering by the node_id is a consistent way to break ties.
+        # Ordering by the source_dataset allows links to form in 
+        # situations like A1 <-> B1 <-> C1 where both are tied (e.g. if the 
+        # records have the exact same data in three datasets) regardless of
+        # keeping or dropping ties.
+        if ties_method == "arbitrary":
+            order_by_l = "match_probability desc, r.node_id"
+            order_by_r = "match_probability desc, l.node_id"
+        else:
+            order_by_l = "match_probability desc, r.source_dataset"
+            order_by_r = "match_probability desc, l.source_dataset"
+
         # must be calculated every iteration since the where condition changes as
         # the clustering progresses
         sql = f"""
         select
             neighbours.node_id,
             neighbours.neighbour,
-            row_number() over (
-                partition by l.representative order by match_probability desc
+            rank() over (
+                partition by l.representative order by {order_by_l}
             ) as rank_l,
-            row_number() over (
-                partition by r.representative order by match_probability desc
+            rank() over (
+                partition by r.representative order by {order_by_r}
             ) as rank_r
         from {neighbours.physical_name} as neighbours
         inner join __splink__df_representatives_with_flags_{iteration} as l
@@ -137,16 +150,40 @@ def one_to_one_clustering(
         where l.representative <> r.representative and not ({duplicate_criteria})
         """
 
-        # note for the future: a strategy to handle ties would go right here.
-
         pipeline.enqueue_sql(sql, f"__splink__df_ranked_{iteration}")
 
         sql = f"""
         select
             node_id,
-            neighbour
+            count(distinct neighbour) as count_l
         from __splink__df_ranked_{iteration}
         where rank_l = 1 and rank_r = 1
+        group by node_id
+        """
+
+        pipeline.enqueue_sql(sql, f"__splink__df_ranked_count_l")
+
+        sql = f"""
+        select
+            neighbour,
+            count(distinct node_id) as count_r
+        from __splink__df_ranked_{iteration}
+        where rank_l = 1 and rank_r = 1
+        group by neighbour
+        """
+
+        pipeline.enqueue_sql(sql, f"__splink__df_ranked_count_r")
+
+        sql = f"""
+        select
+            r.node_id,
+            r.neighbour
+        from __splink__df_ranked_{iteration} as r
+        inner join __splink__df_ranked_count_l as cl
+        on r.node_id = cl.node_id
+        inner join __splink__df_ranked_count_r as cr
+        on r.neighbour = cr.neighbour
+        where rank_l = 1 and rank_r = 1 and count_l = 1 and count_r = 1
         """
 
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_{iteration}")
