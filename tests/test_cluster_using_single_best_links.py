@@ -289,7 +289,7 @@ def test_single_best_links_ties_method(test_helpers, dialect):
     )
 
     result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
-    result = result.reset_index()
+    result = result.reset_index(drop=True)
 
     correct_result = pd.DataFrame(
         {
@@ -306,7 +306,7 @@ def test_single_best_links_ties_method(test_helpers, dialect):
         }
     )
 
-    correct_result = correct_result.reset_index()
+    correct_result = correct_result.reset_index(drop=True)
 
     pd.testing.assert_frame_equal(result, correct_result)
 
@@ -320,7 +320,7 @@ def test_single_best_links_ties_method(test_helpers, dialect):
     )
 
     result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
-    result = result.reset_index()
+    result = result.reset_index(drop=True)
 
     correct_result = pd.DataFrame(
         {
@@ -337,7 +337,7 @@ def test_single_best_links_ties_method(test_helpers, dialect):
         }
     )
 
-    correct_result = correct_result.reset_index()
+    correct_result = correct_result.reset_index(drop=True)
 
     pd.testing.assert_frame_equal(result, correct_result)
 
