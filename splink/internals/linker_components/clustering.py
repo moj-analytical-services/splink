@@ -186,7 +186,7 @@ class LinkerClustering:
         duplicate_free_datasets: List[str],
         threshold_match_probability: Optional[float] = None,
         threshold_match_weight: Optional[float] = None,
-        ties_method: str = "drop",
+        ties_method: str = "arbitrary",
     ) -> SplinkDataFrame:
         """
         Clusters the pairwise match predictions that result from
