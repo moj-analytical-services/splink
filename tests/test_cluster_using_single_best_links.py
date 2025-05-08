@@ -237,13 +237,109 @@ def test_single_best_links_ties(test_helpers, dialect):
     )
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
-        df_predict, duplicate_free_datasets=["a", "b"], threshold_match_probability=0.5
+        df_predict,
+        duplicate_free_datasets=["a", "b"],
+        threshold_match_probability=0.5,
     )
 
     result = df_clusters.as_pandas_dataframe()
     n_clusters = result["cluster_id"].nunique()
 
     assert n_clusters > 1
+
+
+@mark_with_dialects_excluding()
+def test_single_best_links_ties_method(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    df = pd.DataFrame(
+        {
+            "unique_id": [0, 1, 2, 3, 4, 5],
+            "source_dataset": ["a", "a", "b", "a", "b", "c"],
+        }
+    )
+
+    predictions = pd.DataFrame(
+        {
+            "unique_id_l": [0, 1, 3, 3],
+            "unique_id_r": [2, 2, 4, 5],
+            "source_dataset_l": ["a", "a", "a", "a"],
+            "source_dataset_r": ["b", "b", "b", "c"],
+            "match_probability": [0.90, 0.90, 0.8, 0.8],
+        }
+    )
+
+    settings = SettingsCreator(
+        link_type="link_only",
+        comparisons=[],
+        blocking_rules_to_generate_predictions=[],
+    )
+
+    linker = Linker(df, settings, **helper.extra_linker_args())
+
+    df_predict = linker.table_management.register_table_predict(
+        predictions, overwrite=True
+    )
+
+    df_clusters = linker.clustering.cluster_using_single_best_links(
+        df_predict,
+        duplicate_free_datasets=["a", "b", "c"],
+        threshold_match_probability=0.5,
+        ties_method="drop",
+    )
+
+    result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
+    result = result.reset_index()
+
+    correct_result = pd.DataFrame(
+        {
+            "cluster_id": [
+                "a-__-0",
+                "a-__-1",
+                "b-__-2",
+                "a-__-3",
+                "a-__-3",
+                "a-__-3",
+            ],
+            "unique_id": [0, 1, 2, 3, 4, 5],
+            "source_dataset": ["a", "a", "b", "a", "b", "c"],
+        }
+    )
+
+    correct_result = correct_result.reset_index()
+
+    pd.testing.assert_frame_equal(result, correct_result)
+
+    # test arbitrary
+
+    df_clusters = linker.clustering.cluster_using_single_best_links(
+        df_predict,
+        duplicate_free_datasets=["a", "b", "c"],
+        threshold_match_probability=0.5,
+        ties_method="arbitrary",
+    )
+
+    result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
+    result = result.reset_index()
+
+    correct_result = pd.DataFrame(
+        {
+            "cluster_id": [
+                "a-__-0",
+                "a-__-1",
+                "a-__-0",
+                "a-__-3",
+                "a-__-3",
+                "a-__-3",
+            ],
+            "unique_id": [0, 1, 2, 3, 4, 5],
+            "source_dataset": ["a", "a", "b", "a", "b", "c"],
+        }
+    )
+
+    correct_result = correct_result.reset_index()
+
+    pd.testing.assert_frame_equal(result, correct_result)
 
 
 @mark_with_dialects_excluding()
@@ -300,3 +396,4 @@ def test_single_best_links_one_to_one(test_helpers, dialect):
 
     count = result["count"][0]
     assert count == 0
+
