@@ -186,7 +186,7 @@ class LinkerClustering:
         duplicate_free_datasets: List[str],
         threshold_match_probability: Optional[float] = None,
         threshold_match_weight: Optional[float] = None,
-        ties_method: str = "arbitrary",
+        ties_method: str = "lowest_id",
     ) -> SplinkDataFrame:
         """
         Clusters the pairwise match predictions that result from
@@ -211,15 +211,12 @@ class LinkerClustering:
                 `match_weight` at or above this threshold are matched. Only one of
                 threshold_match_probability or threshold_match_weight should be provided
             ties_method (str): How the clustering method should deal with ties. There
-                are two options: "drop" and "arbitrary". The "drop" option drops a
-                link from record A1 to record B1 if there exists another link
-                from record A1 to another record B2 with the same match weight, only
-                if B1 and B2 are in the same source dataset. If the links A1 to B1 and
+                are two options: 'drop' and 'lowest_id'. After linking datasets A and B,
+                if record A1 is tied between records B1 and B2 from dataset B, then 
+                the 'drop' option will drop both links, whereas the 'lowest_id' option
+                will keep the link to record B1. If the links A1 to B1 and
                 A1 to C1 are tied where each record is from a different source dataset
-                then the links will be kept. The "arbitrary" option preferences a link
-                to the record with the lowest id. In the case of a tie between A1 to B1
-                and A1 to B2, the link to B1 will be accepted.
-
+                then both links will be kept, even with the 'drop' option.
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
                 into groups based on the desired match threshold and the source datasets
@@ -238,8 +235,8 @@ class LinkerClustering:
         linker = self._linker
         db_api = linker._db_api
 
-        if ties_method not in ["drop", "arbitrary"]:
-            raise ValueError("ties_method must be one of 'drop', or 'arbitrary'")
+        if ties_method not in ["drop", "lowest_id"]:
+            raise ValueError("ties_method must be one of 'drop', or 'lowest_id'")
 
         pipeline = CTEPipeline()
 

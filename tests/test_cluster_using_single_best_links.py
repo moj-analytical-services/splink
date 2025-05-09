@@ -310,13 +310,13 @@ def test_single_best_links_ties_method(test_helpers, dialect):
 
     pd.testing.assert_frame_equal(result, correct_result)
 
-    # test arbitrary
+    # test lowest_id
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
         duplicate_free_datasets=["a", "b", "c"],
         threshold_match_probability=0.5,
-        ties_method="arbitrary",
+        ties_method="lowest_id",
     )
 
     result = df_clusters.as_pandas_dataframe().sort_values("unique_id")
