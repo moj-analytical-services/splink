@@ -152,38 +152,33 @@ def one_to_one_clustering(
 
         pipeline.enqueue_sql(sql, f"__splink__df_ranked_{iteration}")
 
+        # these counts check for ties by counting how many neighbouring ids
+        # there were with rank=1. If the ties_method is arbitrary there will
+        # only ever be one neighbouring id with rank 1.
         sql = f"""
         select
             node_id,
-            count(distinct neighbour) as count_l
-        from __splink__df_ranked_{iteration}
-        where rank_l = 1 and rank_r = 1
-        group by node_id
-        """
-
-        pipeline.enqueue_sql(sql, "__splink__df_ranked_count_l")
-
-        sql = f"""
-        select
             neighbour,
-            count(distinct node_id) as count_r
+            count(distinct neighbour) over (
+                partition by node_id
+                rows between unbounded preceding and unbounded following
+            ) as count_l,
+            count(distinct node_id) over (
+                partition by neighbour
+                rows between unbounded preceding and unbounded following
+            ) as count_r
         from __splink__df_ranked_{iteration}
         where rank_l = 1 and rank_r = 1
-        group by neighbour
         """
 
-        pipeline.enqueue_sql(sql, "__splink__df_ranked_count_r")
+        pipeline.enqueue_sql(sql, "__splink__df_ranked_counts")
 
-        sql = f"""
+        sql = """
         select
-            r.node_id,
-            r.neighbour
-        from __splink__df_ranked_{iteration} as r
-        inner join __splink__df_ranked_count_l as cl
-        on r.node_id = cl.node_id
-        inner join __splink__df_ranked_count_r as cr
-        on r.neighbour = cr.neighbour
-        where rank_l = 1 and rank_r = 1 and count_l = 1 and count_r = 1
+            node_id,
+            neighbour
+        from __splink__df_ranked_counts
+        where count_l = 1 and count_r = 1
         """
 
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_{iteration}")
