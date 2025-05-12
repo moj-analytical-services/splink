@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def drop_ties_sqls(
     neighbours_table_name: str,
     duplicate_free_datasets: List[str],
-):
+) -> List[dict[str, str]]:
     sqls = []
 
     dup_free_datasets = ", ".join([f"'{sd}'" for sd in duplicate_free_datasets])
