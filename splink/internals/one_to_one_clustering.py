@@ -32,7 +32,7 @@ def drop_ties_sqls(
             else 0
         end as tie_l
     from {neighbours_table_name}
-    group by 
+    group by
         node_id,
         source_dataset_l,
         source_dataset_r,
@@ -54,7 +54,7 @@ def drop_ties_sqls(
             else 0
         end as tie_r
     from {neighbours_table_name}
-    group by 
+    group by
         neighbour,
         source_dataset_l,
         source_dataset_r,
@@ -73,14 +73,14 @@ def drop_ties_sqls(
         n.*
     from {neighbours_table_name} as n
     inner join __splink__df_neighbours_ties_l as l
-    on 
-        n.node_id = l.node_id and 
+    on
+        n.node_id = l.node_id and
         n.source_dataset_l = l.source_dataset_l and
-        n.source_dataset_r = l.source_dataset_r and 
+        n.source_dataset_r = l.source_dataset_r and
         n.match_probability = l.match_probability
     inner join __splink__df_neighbours_ties_r as r
-    on 
-        n.neighbour = r.neighbour and 
+    on
+        n.neighbour = r.neighbour and
         n.source_dataset_l = r.source_dataset_l and
         n.source_dataset_r = r.source_dataset_r and
         n.match_probability = r.match_probability

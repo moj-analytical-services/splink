@@ -349,7 +349,7 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
     df = pd.DataFrame(
         {
             "unique_id": [0, 1, 2, 3],
-            "source_dataset": ['a', 'b', 'b', 'b'],
+            "source_dataset": ["a", "b", "b", "b"],
         }
     )
 
@@ -357,8 +357,8 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
         {
             "unique_id_l": [0, 0, 0],
             "unique_id_r": [1, 2, 3],
-            "source_dataset_l": ['a', 'a', 'a'],
-            "source_dataset_r": ['b', 'b', 'b'],
+            "source_dataset_l": ["a", "a", "a"],
+            "source_dataset_r": ["b", "b", "b"],
             "match_probability": [0.90, 0.90, 0.8],
         }
     )
@@ -394,7 +394,7 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
                 "a-__-0",
             ],
             "unique_id": [0, 1, 2, 3],
-            "source_dataset": ['a', 'b', 'b', 'b'],
+            "source_dataset": ["a", "b", "b", "b"],
         }
     )
 
