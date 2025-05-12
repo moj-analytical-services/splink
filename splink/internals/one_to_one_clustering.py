@@ -19,6 +19,9 @@ def drop_ties_sqls(
 
     dup_free_datasets = ", ".join([f"'{sd}'" for sd in duplicate_free_datasets])
 
+    # a link is marked as a tie if there are multiple links with the same match
+    # probability from that record to multiple records in one of the source datasets
+    # which is not supposed to have duplicates.
     sql = f"""
     select
         node_id,
