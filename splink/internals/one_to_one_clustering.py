@@ -244,9 +244,9 @@ def one_to_one_clustering(
 
         sql = f"""
         select
-            r.node_id,
-            r.neighbour
-        from __splink__df_ranked_{iteration} as r
+            node_id,
+            neighbour
+        from __splink__df_ranked_{iteration}
         where rank_l = 1 and rank_r = 1
         """
 
