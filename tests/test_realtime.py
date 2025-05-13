@@ -80,29 +80,29 @@ def test_realtime_cache_two_records(test_helpers, dialect):
         retain_matching_columns=True,
     )
 
-    res1_2_first = compare_records(df1, df2, settings, db_api).as_record_dict()[0][
-        "match_weight"
-    ]
+    res1_2_first = compare_records(
+        df1, df2, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
+    ).as_record_dict()[0]["match_weight"]
 
     res1_2_not_from_cache = compare_records(
         df1, df2, settings, db_api, sql_cache_key=None
     ).as_record_dict()[0]["match_weight"]
 
     res1_2_from_cache = compare_records(
-        df1, df2, settings, db_api, sql_cache_key="model_c2r"
+        df1, df2, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
     ).as_record_dict()[0]["match_weight"]
 
     assert res1_2_first == pytest.approx(res1_2_not_from_cache)
     assert res1_2_first == pytest.approx(res1_2_from_cache)
 
-    res1_3_first = compare_records(df1, df3, settings, db_api).as_record_dict()[0][
-        "match_weight"
-    ]
+    res1_3_first = compare_records(
+        df1, df3, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
+    ).as_record_dict()[0]["match_weight"]
     res1_3_not_from_cache = compare_records(
         df1, df3, settings, db_api, sql_cache_key=None
     ).as_record_dict()[0]["match_weight"]
     res1_3_from_cache = compare_records(
-        df1, df3, settings, db_api, sql_cache_key="model_c2r"
+        df1, df3, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
     ).as_record_dict()[0]["match_weight"]
 
     assert res1_3_first == pytest.approx(res1_3_not_from_cache)
@@ -230,13 +230,13 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
 
     # Compare df1 and df2
     res1_2_first = compare_records(
-        df1, df2, settings, db_api, sql_cache_key="model_cmr"
+        df1, df2, settings, db_api, sql_cache_key=f"model_cmr_{dialect}"
     ).as_pandas_dataframe()
     res1_2_not_from_cache = compare_records(
         df1, df2, settings, db_api, sql_cache_key=None
     ).as_pandas_dataframe()
     res1_2_from_cache = compare_records(
-        df1, df2, settings, db_api, sql_cache_key="model_cmr"
+        df1, df2, settings, db_api, sql_cache_key=f"model_cmr_{dialect}"
     ).as_pandas_dataframe()
 
     # Compare match weights using pandas merge
@@ -262,12 +262,14 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
         check_names=False,
     )
 
-    res1_3_first = compare_records(df1, df3, settings, db_api).as_pandas_dataframe()
+    res1_3_first = compare_records(
+        df1, df3, settings, db_api, sql_cache_key=f"model_cmr_{dialect}"
+    ).as_pandas_dataframe()
     res1_3_not_from_cache = compare_records(
         df1, df3, settings, db_api, sql_cache_key=None
     ).as_pandas_dataframe()
     res1_3_from_cache = compare_records(
-        df1, df3, settings, db_api, sql_cache_key="model_cmr"
+        df1, df3, settings, db_api, sql_cache_key=f"model_cmr_{dialect}"
     ).as_pandas_dataframe()
 
     merged = res1_3_first.merge(
@@ -343,17 +345,17 @@ def test_realtime_cache_different_settings(test_helpers, dialect):
     )
 
     res1 = compare_records(
-        df1, df2, settings_1, db_api, sql_cache_key="first_model"
+        df1, df2, settings_1, db_api, sql_cache_key=f"first_model_{dialect}"
     ).as_record_dict()[0]["match_weight"]
 
     res2 = compare_records(
-        df1, df2, settings_2, db_api, sql_cache_key="second_model"
+        df1, df2, settings_2, db_api, sql_cache_key=f"second_model_{dialect}"
     ).as_record_dict()[0]["match_weight"]
 
     assert res1 != pytest.approx(res2)
 
     res1_again = compare_records(
-        df1, df2, settings_1, db_api, sql_cache_key="first_model"
+        df1, df2, settings_1, db_api, sql_cache_key=f"first_model_{dialect}"
     ).as_record_dict()[0]["match_weight"]
     assert res1 == pytest.approx(res1_again)
 
@@ -408,12 +410,12 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     }
 
     res1 = compare_records(
-        df1, df2, settings_1, db_api, sql_cache_key="first_model_dict"
+        df1, df2, settings_1, db_api, sql_cache_key=f"first_model_dict_{dialect}"
     )
     res1 = res1.as_record_dict()[0]["match_weight"]
 
     res2 = compare_records(
-        df1, df2, settings_2, db_api, sql_cache_key="second_model_dict"
+        df1, df2, settings_2, db_api, sql_cache_key=f"second_model_dict_{dialect}"
     )
     res2 = res2.as_record_dict()[0]["match_weight"]
 
@@ -421,7 +423,7 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     assert res1 != pytest.approx(res2)
 
     res1_again = compare_records(
-        df1, df2, settings_1, db_api, sql_cache_key="first_model_dict"
+        df1, df2, settings_1, db_api, sql_cache_key=f"first_model_dict_{dialect}"
     )
     res1_again = res1_again.as_record_dict()[0]["match_weight"]
     # using cache
