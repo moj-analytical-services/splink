@@ -46,7 +46,7 @@ def compare_records(
     record_2: dict[str, Any] | AcceptableInputTableType,
     settings: SettingsCreator | dict[str, Any] | Path | str,
     db_api: DatabaseAPISubClass,
-    sql_cache_key: str | None = "model_sql",
+    sql_cache_key: str | None = None,
     include_found_by_blocking_rules: bool = False,
     join_condition: str = "1=1",
 ) -> SplinkDataFrame:
@@ -61,7 +61,7 @@ def compare_records(
         db_api (DatabaseAPISubClass): Database API to use for computations
         sql_cache_key (str): Use cached SQL if available, rather than re-constructing,
             stored under this cache key. If None, do not retrieve sql, or cache it.
-            Default 'model_sql'.
+            Default None.
         include_found_by_blocking_rules (bool): Include a column indicating whether
             or not the pairs of records would have been picked up by the supplied
             blocking rules. Defaults to False.
