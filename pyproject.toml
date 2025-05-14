@@ -137,6 +137,7 @@ markers = [
 ]
 
 [tool.mypy]
+python_version = "3.10"
 packages = "splink"
 # for now at least allow implicit optionals
 # to cut down on noise. Easy to fix.
