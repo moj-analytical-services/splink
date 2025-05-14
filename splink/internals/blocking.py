@@ -114,6 +114,14 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
+    @staticmethod
+    def _add_preceding_rules_to_each_blocking_rule(
+        brs_as_objs: list[BlockingRule],
+    ) -> list[BlockingRule]:
+        for n, br in enumerate(brs_as_objs):
+            br.add_preceding_rules(brs_as_objs[:n])
+        return brs_as_objs
+
     def exclude_pairs_generated_by_this_rule_sql(
         self,
         source_dataset_input_column: Optional[InputColumn],

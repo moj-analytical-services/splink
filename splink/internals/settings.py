@@ -248,8 +248,10 @@ class Settings:
             retain_intermediate_calculation_columns
         )
 
-        self._blocking_rules_to_generate_predictions = self._add_preceding_rules(
-            blocking_rules_to_generate_predictions,
+        self._blocking_rules_to_generate_predictions = (
+            BlockingRule._add_preceding_rules_to_each_blocking_rule(
+                blocking_rules_to_generate_predictions,
+            )
         )
 
         self._cache_uid = linker_uid
@@ -491,14 +493,6 @@ class Settings:
 
     def _get_comparison_by_output_column_name(self, name: str) -> Comparison:
         return self.core_model_settings.get_comparison_by_output_column_name(name)
-
-    # TODO: staticmethod - maybe living on BlockingRule?
-    def _add_preceding_rules(
-        self, brs_as_objs: list[BlockingRule]
-    ) -> list[BlockingRule]:
-        for n, br in enumerate(brs_as_objs):
-            br.add_preceding_rules(brs_as_objs[:n])
-        return brs_as_objs
 
     # TODO: is this the most logical place for this to live now it's static?
     @staticmethod
