@@ -386,7 +386,11 @@ class LinkerInference:
             block_using_rules_sqls(
                 input_tablename_l=blocking_input_tablename_l,
                 input_tablename_r=blocking_input_tablename_r,
-                blocking_rules=[BlockingRule("l._cluster_id = r._cluster_id")],
+                blocking_rules=[
+                    BlockingRule(
+                        "l._cluster_id = r._cluster_id", self._linker._sql_dialect_str
+                    )
+                ],
                 link_type=link_type,
                 source_dataset_input_column=source_dataset_input_column,
                 unique_id_input_column=unique_id_input_column,

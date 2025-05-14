@@ -31,12 +31,20 @@ def test_preceding_blocking_rules(dialect):
     settings_tester = SettingsCreator(**settings).get_settings(dialect)
 
     brs_as_strings = [
-        BlockingRule("l.help = r.help"),
-        "l.help2 = r.help2",
-        {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
+        BlockingRule("l.help = r.help", dialect),
+        blocking_rule_to_obj(
+            {"blocking_rule": "l.help2 = r.help2", "sql_dialect": dialect}
+        ),
+        blocking_rule_to_obj(
+            {
+                "blocking_rule": "l.help3 = r.help3",
+                "salting_partitions": 3,
+                "sql_dialect": dialect,
+            }
+        ),
         block_on("help4").get_blocking_rule(dialect),
     ]
-    brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
+    brs_as_objs = settings_tester._add_preceding_rules(brs_as_strings)
     brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
 
     assert brs_as_objs[0].preceding_rules == []

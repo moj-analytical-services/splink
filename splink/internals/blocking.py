@@ -592,7 +592,7 @@ def block_using_rules_sqls(
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = [BlockingRule("1=1")]
+        blocking_rules = [BlockingRule("1=1", sql_dialect_str="spark")]
 
     br_sqls = []
 

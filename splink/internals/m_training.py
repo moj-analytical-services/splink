@@ -45,7 +45,11 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
     sqls = block_using_rules_sqls(
         input_tablename_l="__splink__df_concat_with_tf",
         input_tablename_r="__splink__df_concat_with_tf",
-        blocking_rules=[BlockingRule(f"l.{label_colname} = r.{label_colname}")],
+        blocking_rules=[
+            BlockingRule(
+                f"l.{label_colname} = r.{label_colname}", linker._sql_dialect_str
+            )
+        ],
         link_type=settings_obj._link_type,
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,

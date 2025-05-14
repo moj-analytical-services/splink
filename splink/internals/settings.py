@@ -3,12 +3,11 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Any, List, Literal, Sequence, TypedDict
+from typing import Any, List, Literal, TypedDict
 
 from splink.internals.blocking import (
     BlockingRule,
     SaltedBlockingRule,
-    blocking_rule_to_obj,
 )
 from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 from splink.internals.comparison import Comparison
@@ -249,9 +248,8 @@ class Settings:
             retain_intermediate_calculation_columns
         )
 
-        # TODO: do we need to convert?
-        self._blocking_rules_to_generate_predictions = self._brs_as_objs(
-            blocking_rules_to_generate_predictions
+        self._blocking_rules_to_generate_predictions = self._add_preceding_rules(
+            blocking_rules_to_generate_predictions,
         )
 
         self._cache_uid = linker_uid
@@ -494,10 +492,10 @@ class Settings:
     def _get_comparison_by_output_column_name(self, name: str) -> Comparison:
         return self.core_model_settings.get_comparison_by_output_column_name(name)
 
-    def _brs_as_objs(
-        self, brs_as_strings: Sequence[str | BlockingRule]
-    ) -> List[BlockingRule]:
-        brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
+    # TODO: staticmethod - maybe living on BlockingRule?
+    def _add_preceding_rules(
+        self, brs_as_objs: list[BlockingRule]
+    ) -> list[BlockingRule]:
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs

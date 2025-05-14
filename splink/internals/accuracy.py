@@ -503,7 +503,10 @@ def _predict_from_label_column_sql(linker, label_colname):
     settings = linker._settings_obj
     brs = settings._blocking_rules_to_generate_predictions
 
-    label_blocking_rule = BlockingRule(f"l.{label_colname} = r.{label_colname}")
+    label_blocking_rule = BlockingRule(
+        f"l.{label_colname} = r.{label_colname}",
+        sql_dialect_str=linker._sql_dialect_str,
+    )
     label_blocking_rule.preceding_rules = brs.copy()
     brs.append(label_blocking_rule)
 

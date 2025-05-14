@@ -5,7 +5,11 @@ import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
-from splink.internals.blocking import block_using_rules_sqls, blocking_rule_to_obj
+from splink.internals.blocking import (
+    BlockingRuleDict,
+    block_using_rules_sqls,
+    blocking_rule_to_obj,
+)
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
@@ -146,12 +150,13 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     pipeline = CTEPipeline(input_dataframes=[df_sample])
 
     if linker._sql_dialect.sql_dialect_str == "duckdb" and max_pairs > 1e4:
-        br = blocking_rule_to_obj(
-            {
-                "blocking_rule": "1=1",
-                "salting_partitions": multiprocessing.cpu_count(),
-            }
-        )
+        blocking_rule_dict: BlockingRuleDict = {
+            "blocking_rule": "1=1",
+            "salting_partitions": multiprocessing.cpu_count(),
+            "sql_dialect": linker._sql_dialect_str,
+            "arrays_to_explode": None,
+        }
+        br = blocking_rule_to_obj(blocking_rule_dict)
         settings_obj._blocking_rules_to_generate_predictions = [br]
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
