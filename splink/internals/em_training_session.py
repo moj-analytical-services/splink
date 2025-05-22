@@ -69,7 +69,9 @@ class EMTrainingSession:
         self.original_core_model_settings = core_model_settings.copy()
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
-            blocking_rule_for_training = BlockingRule(blocking_rule_for_training)
+            blocking_rule_for_training = BlockingRule(
+                blocking_rule_for_training, linker._sql_dialect_str
+            )
 
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies

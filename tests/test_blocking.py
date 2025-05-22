@@ -2,7 +2,6 @@ from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.input_column import _get_dialect_quotes
 from splink.internals.linker import Linker
-from splink.internals.settings_creator import SettingsCreator
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -10,7 +9,6 @@ from .decorator import mark_with_dialects_excluding
 
 @mark_with_dialects_excluding()
 def test_preceding_blocking_rules(dialect):
-    settings = get_settings_dict()
     br_surname = block_on("surname", salting_partitions=4).get_blocking_rule(dialect)
 
     q, _ = _get_dialect_quotes(dialect)
@@ -27,24 +25,33 @@ def test_preceding_blocking_rules(dialect):
     br_surname.add_preceding_rules(preceding_rules)
     assert br_surname.preceding_rules == preceding_rules
 
-    # Check preceding rules
-    settings_tester = SettingsCreator(**settings).get_settings(dialect)
-
-    brs_as_strings = [
-        BlockingRule("l.help = r.help"),
-        "l.help2 = r.help2",
-        {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
+    blocking_rules = [
+        BlockingRule("l.help = r.help", dialect),
+        blocking_rule_to_obj(
+            {"blocking_rule": "l.help2 = r.help2", "sql_dialect": dialect}
+        ),
+        blocking_rule_to_obj(
+            {
+                "blocking_rule": "l.help3 = r.help3",
+                "salting_partitions": 3,
+                "sql_dialect": dialect,
+            }
+        ),
         block_on("help4").get_blocking_rule(dialect),
     ]
-    brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
-    brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
+    blocking_rules = BlockingRule._add_preceding_rules_to_each_blocking_rule(
+        blocking_rules
+    )
+    blocking_rule_sqls = [
+        blocking_rule_to_obj(br).blocking_rule_sql for br in blocking_rules
+    ]
 
-    assert brs_as_objs[0].preceding_rules == []
+    assert blocking_rules[0].preceding_rules == []
 
     def assess_preceding_rules(settings_brs_index):
-        br_prec = brs_as_objs[settings_brs_index].preceding_rules
+        br_prec = blocking_rules[settings_brs_index].preceding_rules
         br_prec_txt = [br.blocking_rule_sql for br in br_prec]
-        assert br_prec_txt == brs_as_txt[:settings_brs_index]
+        assert br_prec_txt == blocking_rule_sqls[:settings_brs_index]
 
     assess_preceding_rules(1)
     assess_preceding_rules(2)

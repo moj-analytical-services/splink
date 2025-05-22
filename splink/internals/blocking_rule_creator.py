@@ -3,7 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Union, final
 
-from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
+from splink.internals.blocking import (
+    BlockingRule,
+    BlockingRuleDict,
+    blocking_rule_to_obj,
+)
 from splink.internals.dialects import SplinkDialect
 
 
@@ -30,21 +34,17 @@ class BlockingRuleCreator(ABC):
         pass
 
     @final
-    def create_blocking_rule_dict(self, sql_dialect_str: str) -> dict[str, Any]:
+    def create_blocking_rule_dict(self, sql_dialect_str: str) -> BlockingRuleDict:
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
-        level_dict = {
+        level_dict: BlockingRuleDict = {
             "blocking_rule": self.create_sql(sql_dialect),
             "sql_dialect": sql_dialect_str,
+            "salting_partitions": self.salting_partitions,
+            "arrays_to_explode": self.arrays_to_explode,
         }
 
         if self.salting_partitions and self.arrays_to_explode:
             raise ValueError("Cannot use both salting_partitions and arrays_to_explode")
-
-        if self.salting_partitions:
-            level_dict["salting_partitions"] = self.salting_partitions
-
-        if self.arrays_to_explode:
-            level_dict["arrays_to_explode"] = self.arrays_to_explode
 
         return level_dict
 

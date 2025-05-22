@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, TypedDict
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Expression, Identifier, Join
@@ -32,7 +32,14 @@ backend_link_type_options = Literal[
 ]
 
 
-def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRule:
+class BlockingRuleDict(TypedDict):
+    blocking_rule: str
+    sql_dialect: str
+    salting_partitions: int | None
+    arrays_to_explode: list[str] | None
+
+
+def blocking_rule_to_obj(br: BlockingRule | BlockingRuleDict) -> BlockingRule:
     if isinstance(br, BlockingRule):
         return br
     elif isinstance(br, dict):
@@ -40,7 +47,8 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
         if blocking_rule is None:
             raise ValueError("No blocking rule submitted...")
         sql_dialect_str = br.get("sql_dialect", None)
-
+        if sql_dialect_str is None:
+            raise ValueError("Must provide a valid sql_dialect")
         salting_partitions = br.get("salting_partitions", None)
         arrays_to_explode = br.get("arrays_to_explode", None)
 
@@ -62,9 +70,7 @@ def blocking_rule_to_obj(br: BlockingRule | dict[str, Any] | str) -> BlockingRul
 
         return BlockingRule(blocking_rule, sql_dialect_str)
 
-    else:
-        br = BlockingRule(br)
-        return br
+    raise TypeError(f"'br' must be of type 'BlockingRule' or 'dict', not {type(br)}")
 
 
 def combine_unique_id_input_columns(
@@ -82,10 +88,11 @@ class BlockingRule:
     def __init__(
         self,
         blocking_rule_sql: str,
-        sql_dialect_str: str = None,
+        sql_dialect_str: str,
     ):
-        if sql_dialect_str:
-            self._sql_dialect_str = sql_dialect_str
+        if sql_dialect_str is None:
+            raise TypeError("BlockingRule requires a valid 'sql_dialect_str'")
+        self._sql_dialect_str = sql_dialect_str
 
         # Temporarily just to see if tests still pass
         if not isinstance(blocking_rule_sql, str):
@@ -97,10 +104,7 @@ class BlockingRule:
 
     @property
     def sqlglot_dialect(self):
-        if not hasattr(self, "_sql_dialect_str"):
-            return None
-        else:
-            return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
+        return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
     @property
     def match_key(self):
@@ -109,6 +113,14 @@ class BlockingRule:
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
+
+    @staticmethod
+    def _add_preceding_rules_to_each_blocking_rule(
+        brs_as_objs: list[BlockingRule],
+    ) -> list[BlockingRule]:
+        for n, br in enumerate(brs_as_objs):
+            br.add_preceding_rules(brs_as_objs[:n])
+        return brs_as_objs
 
     def exclude_pairs_generated_by_this_rule_sql(
         self,
@@ -273,7 +285,7 @@ class SaltedBlockingRule(BlockingRule):
     def __init__(
         self,
         blocking_rule: str,
-        sqlglot_dialect: str = None,
+        sqlglot_dialect: str,
         salting_partitions: int = 1,
     ):
         if salting_partitions is None or salting_partitions <= 1:
@@ -343,7 +355,7 @@ class ExplodingBlockingRule(BlockingRule):
     def __init__(
         self,
         blocking_rule: BlockingRule | dict[str, Any] | str,
-        sqlglot_dialect: str = None,
+        sqlglot_dialect: str,
         array_columns_to_explode: list[str] = [],
     ):
         if isinstance(blocking_rule, BlockingRule):
@@ -588,7 +600,7 @@ def block_using_rules_sqls(
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = [BlockingRule("1=1")]
+        blocking_rules = [BlockingRule("1=1", sql_dialect_str="spark")]
 
     br_sqls = []
 
