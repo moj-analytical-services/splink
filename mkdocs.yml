@@ -136,12 +136,13 @@ nav:
       - SQLite:
         - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
   - API Docs:
+    # This should align with docs/api_docs/api_docs_index.md
     - Introduction: "api_docs/api_docs_index.md"
     - Linker:
       - Training: "api_docs/training.md"
       - Visualisations: "api_docs/visualisations.md"
       - Inference: "api_docs/inference.md"
-      - Clustering: "api_docs/clustering.md"
+      - Clustering: "api_docs/linker_clustering.md"
       - Evaluation: "api_docs/evaluation.md"
       - Table Management: "api_docs/table_management.md"
       - Miscellaneous functions: "api_docs/misc.md"
@@ -150,11 +151,15 @@ nav:
         - Comparison Level Library: "api_docs/comparison_level_library.md"
     - Other:
         - Exploratory: "api_docs/exploratory.md"
-        - Blocking rule creator: "api_docs/blocking.md"
         - Blocking analysis: "api_docs/blocking_analysis.md"
+        - Blocking: "api_docs/blocking.md"
+        - Clustering: "api_docs/clustering.md"
         - SplinkDataFrame: "api_docs/splink_dataframe.md"
         - EM Training Session API: "api_docs/em_training_session.md"
+        - Column Expressions: "api_docs/column_expression.md"
+    - In-build datasets:
         - SplinkDatasets: "api_docs/datasets.md"
+    - Splink Settings:
         - Settings Dict: "api_docs/settings_dict_guide.md"
   - User Guide:
     - Introduction: "topic_guides/topic_guides_index.md"
