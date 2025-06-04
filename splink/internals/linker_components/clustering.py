@@ -186,6 +186,7 @@ class LinkerClustering:
         duplicate_free_datasets: List[str],
         threshold_match_probability: Optional[float] = None,
         threshold_match_weight: Optional[float] = None,
+        ties_method: str = "lowest_id",
     ) -> SplinkDataFrame:
         """
         Clusters the pairwise match predictions that result from
@@ -209,7 +210,13 @@ class LinkerClustering:
             threshold_match_weight (float, optional): Pairwise comparisons with a
                 `match_weight` at or above this threshold are matched. Only one of
                 threshold_match_probability or threshold_match_weight should be provided
-
+            ties_method (str): How the clustering method should deal with ties. There
+                are two options: 'drop' and 'lowest_id'. After linking datasets A and B,
+                if record A1 is tied between records B1 and B2 from dataset B, then
+                the 'drop' option will drop both links, whereas the 'lowest_id' option
+                will keep the link to record B1. If the links A1 to B1 and
+                A1 to C1 are tied where each record is from a different source dataset
+                then both links will be kept, even with the 'drop' option.
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
                 into groups based on the desired match threshold and the source datasets
@@ -227,6 +234,9 @@ class LinkerClustering:
         """
         linker = self._linker
         db_api = linker._db_api
+
+        if ties_method not in ["drop", "lowest_id"]:
+            raise ValueError("ties_method must be one of 'drop', or 'lowest_id'")
 
         pipeline = CTEPipeline()
 
@@ -278,7 +288,9 @@ class LinkerClustering:
         sql = f"""
         select
             {uid_concat_edges_l} as node_id_l,
-            {uid_concat_edges_r} as node_id_r
+            {uid_concat_edges_r} as node_id_r,
+            {source_dataset_column_name}_l as source_dataset_l,
+            {source_dataset_column_name}_r as source_dataset_r
             {match_p_select_expr}
             from {df_predict.templated_name}
             {match_p_expr}
@@ -297,6 +309,7 @@ class LinkerClustering:
             edge_id_column_name_left="node_id_l",
             edge_id_column_name_right="node_id_r",
             duplicate_free_datasets=duplicate_free_datasets,
+            ties_method=ties_method,
             db_api=db_api,
             threshold_match_probability=threshold_match_probability,
         )
