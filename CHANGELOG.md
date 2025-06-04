@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.8] - 2025-06-04
+
+### Fixed
+
+- Fix bug where u-sampling with a seed fails with custom `unique_id_column_name` [#2659](https://github.com/moj-analytical-services/splink/pull/2659)
+
 ### Changed
 
 - New version of Spark udf `.jar` file, which has updated dependencies [#2679](https://github.com/moj-analytical-services/splink/pull/2679)
@@ -203,7 +209,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.7...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.8...HEAD
+[4.0.8]: https://github.com/moj-analytical-services/splink/compare/4.0.7...4.0.8
 [4.0.7]: https://github.com/moj-analytical-services/splink/compare/4.0.6...4.0.7
 [4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
 [4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
