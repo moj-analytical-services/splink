@@ -302,6 +302,7 @@ class LinkerVisualisations:
         out_path: str,
         overwrite: bool = False,
         num_example_rows: int = 2,
+        minimum_comparison_vector_count: int = 0,
         return_html_as_string: bool = False,
     ) -> str | None:
         """Generate an interactive html visualization of the linker's predictions and
@@ -316,6 +317,11 @@ class LinkerVisualisations:
                 Defaults to False.
             num_example_rows (int, optional): Number of example rows per comparison
                 vector. Defaults to 2.
+            minimum_comparison_vector_count (int, optional): The minimum number
+                of times that a comparison vector has to occur for it to
+                be included in the dashboard. This can reduce the size of
+                the produced html file by eliminating the rarest comparison
+                vectors. Defaults to 0 (all comparison vectors are included).
             return_html_as_string: If True, return the html as a string
 
         Examples:
@@ -340,7 +346,11 @@ class LinkerVisualisations:
         sql = comparison_vector_distribution_sql(self._linker)
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
-        sqls = comparison_viewer_table_sqls(self._linker, num_example_rows)
+        sqls = comparison_viewer_table_sqls(
+            self._linker,
+            num_example_rows,
+            minimum_comparison_vector_count,
+        )
         pipeline.enqueue_list_of_sqls(sqls)
 
         df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)

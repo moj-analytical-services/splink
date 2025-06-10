@@ -85,11 +85,13 @@ def row_examples(
 
 
 def comparison_viewer_table_sqls(
-    linker: Linker, example_rows_per_category: int = 2
+    linker: Linker,
+    example_rows_per_category: int = 2,
+    minimum_comparison_vector_count: int = 0,
 ) -> list[dict[str, str]]:
     sqls = row_examples(linker, example_rows_per_category)
 
-    sql = """
+    sql = f"""
     select ser.*,
            cvd.sum_gam,
            cvd.count_rows_in_comparison_vector_group as count,
@@ -98,6 +100,7 @@ def comparison_viewer_table_sqls(
     left join
      __splink__df_comparison_vector_distribution as cvd
     on ser.gam_concat = cvd.gam_concat
+    where cvd.count_rows_in_comparison_vector_group >= {minimum_comparison_vector_count}
     """
 
     sql_info = {
