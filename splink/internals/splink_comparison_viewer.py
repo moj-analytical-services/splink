@@ -58,8 +58,7 @@ def row_examples(
     sql = """
     select *,
         ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order)
-            AS row_example_index,
-        COUNT(*) OVER (PARTITION BY gam_concat) AS count
+            AS row_example_index
     from __splink__df_predict_with_row_id
     """
 
@@ -86,19 +85,22 @@ def row_examples(
 
 
 def comparison_viewer_table_sqls(
-    linker: Linker, example_rows_per_category: int = 2
+    linker: Linker,
+    example_rows_per_category: int = 2,
+    minimum_comparison_vector_count: int = 0,
 ) -> list[dict[str, str]]:
     sqls = row_examples(linker, example_rows_per_category)
 
-    sql = """
+    sql = f"""
     select ser.*,
            cvd.sum_gam,
-           cvd.count_rows_in_comparison_vector_group,
+           cvd.count_rows_in_comparison_vector_group as count,
            cvd.proportion_of_comparisons
     from __splink__df_example_rows as ser
     left join
      __splink__df_comparison_vector_distribution as cvd
     on ser.gam_concat = cvd.gam_concat
+    where cvd.count_rows_in_comparison_vector_group >= {minimum_comparison_vector_count}
     """
 
     sql_info = {

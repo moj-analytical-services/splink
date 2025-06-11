@@ -8421,7 +8421,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  });
 
 	  cvd_filtered = cvd_filtered.filter(
-	    (d) => d.count_rows_in_comparison_vector_group >= filter_count
+	    (d) => d.count >= filter_count
 	  );
 
 	  if (cvd_filtered.length == 0) {
