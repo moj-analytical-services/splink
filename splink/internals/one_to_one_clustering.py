@@ -11,6 +11,95 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
+def drop_ties_sqls(
+    neighbours_table_name: str,
+    duplicate_free_datasets: List[str],
+) -> List[dict[str, str]]:
+    sqls = []
+
+    dup_free_datasets = ", ".join([f"'{sd}'" for sd in duplicate_free_datasets])
+
+    # a link is marked as a tie if there are multiple links with the same match
+    # probability from that record to multiple records in one of the source datasets
+    # which is not supposed to have duplicates.
+    sql = f"""
+    select
+        node_id,
+        source_dataset_l,
+        source_dataset_r,
+        match_probability,
+        case when
+            count(distinct neighbour) > 1 and
+                source_dataset_r in ({dup_free_datasets})
+            then 1
+            else 0
+        end as tie_l
+    from {neighbours_table_name}
+    group by
+        node_id,
+        source_dataset_l,
+        source_dataset_r,
+        match_probability
+    """
+
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_neighbours_ties_l"})
+
+    sql = f"""
+    select
+        neighbour,
+        source_dataset_l,
+        source_dataset_r,
+        match_probability,
+        case when
+            count(distinct node_id) > 1 and
+                source_dataset_l in ({dup_free_datasets})
+            then 1
+            else 0
+        end as tie_r
+    from {neighbours_table_name}
+    group by
+        neighbour,
+        source_dataset_l,
+        source_dataset_r,
+        match_probability
+    """
+
+    sqls.append(
+        {
+            "sql": sql,
+            "output_table_name": "__splink__df_neighbours_ties_r",
+        }
+    )
+
+    sql = f"""
+    select
+        n.*
+    from {neighbours_table_name} as n
+    inner join __splink__df_neighbours_ties_l as l
+    on
+        n.node_id = l.node_id and
+        n.source_dataset_l = l.source_dataset_l and
+        n.source_dataset_r = l.source_dataset_r and
+        n.match_probability = l.match_probability
+    inner join __splink__df_neighbours_ties_r as r
+    on
+        n.neighbour = r.neighbour and
+        n.source_dataset_l = r.source_dataset_l and
+        n.source_dataset_r = r.source_dataset_r and
+        n.match_probability = r.match_probability
+    where l.tie_l = 0 and r.tie_r = 0
+    """
+
+    sqls.append(
+        {
+            "sql": sql,
+            "output_table_name": "__splink__df_neighbours_no_ties",
+        }
+    )
+
+    return sqls
+
+
 def one_to_one_clustering(
     nodes_table: SplinkDataFrame,
     edges_table: SplinkDataFrame,
@@ -19,6 +108,7 @@ def one_to_one_clustering(
     edge_id_column_name_left: str,
     edge_id_column_name_right: str,
     duplicate_free_datasets: List[str],
+    ties_method: str,
     db_api: DatabaseAPISubClass,
     threshold_match_probability: Optional[float],
 ) -> SplinkDataFrame:
@@ -41,6 +131,8 @@ def one_to_one_clustering(
     select
         {edge_id_column_name_left} as node_id,
         {edge_id_column_name_right} as neighbour,
+        source_dataset_l,
+        source_dataset_r,
         match_probability
     from {edges_table.templated_name}
     {match_prob_expr}
@@ -50,11 +142,20 @@ def one_to_one_clustering(
     select
     {edge_id_column_name_right} as node_id,
     {edge_id_column_name_left} as neighbour,
+    source_dataset_r as source_dataset_l,
+    source_dataset_l as source_dataset_r,
     match_probability
     from {edges_table.templated_name}
     {match_prob_expr}
     """
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
+
+    if ties_method == "drop":
+        sqls = drop_ties_sqls(
+            neighbours_table_name="__splink__df_neighbours",
+            duplicate_free_datasets=duplicate_free_datasets,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
 
     neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
@@ -117,17 +218,19 @@ def one_to_one_clustering(
             [f"(l.contains_{sd} and r.contains_{sd})" for sd in duplicate_free_datasets]
         )
 
+        # Ordering by the node_id is a consistent way to break ties.
+
         # must be calculated every iteration since the where condition changes as
         # the clustering progresses
         sql = f"""
         select
             neighbours.node_id,
             neighbours.neighbour,
-            row_number() over (
-                partition by l.representative order by match_probability desc
+            rank() over (
+                partition by l.representative order by match_probability desc, r.node_id
             ) as rank_l,
-            row_number() over (
-                partition by r.representative order by match_probability desc
+            rank() over (
+                partition by r.representative order by match_probability desc, l.node_id
             ) as rank_r
         from {neighbours.physical_name} as neighbours
         inner join __splink__df_representatives_with_flags_{iteration} as l
@@ -136,8 +239,6 @@ def one_to_one_clustering(
         on neighbours.neighbour = r.node_id
         where l.representative <> r.representative and not ({duplicate_criteria})
         """
-
-        # note for the future: a strategy to handle ties would go right here.
 
         pipeline.enqueue_sql(sql, f"__splink__df_ranked_{iteration}")
 
