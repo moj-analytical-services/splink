@@ -64,7 +64,7 @@ def ensure_is_iterable(a):
     return a if isinstance(a, Iterable) else [a]
 
 
-def ensure_is_list(a):
+def ensure_is_list(a: list[T] | T) -> list[T]:
     return a if isinstance(a, list) else [a]
 
 
