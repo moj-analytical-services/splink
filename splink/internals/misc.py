@@ -7,7 +7,7 @@ import string
 from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
-from typing import Iterable
+from typing import Iterable, TypeVar, overload
 
 import numpy as np
 
@@ -41,6 +41,21 @@ def interpolate(start, end, num_elements):
 
 def normalise(vals):
     return [v / sum(vals) for v in vals]
+
+
+T = TypeVar("T")
+
+
+@overload
+def ensure_is_iterable(a: str) -> list[str]: ...
+
+
+@overload
+def ensure_is_iterable(a: list[T]) -> list[T]: ...
+
+
+@overload
+def ensure_is_iterable(a: Iterable[T] | T) -> Iterable[T]: ...
 
 
 def ensure_is_iterable(a):
