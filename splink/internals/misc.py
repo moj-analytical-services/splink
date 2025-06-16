@@ -39,13 +39,6 @@ def interpolate(start, end, num_elements):
     return vals
 
 
-def normalise(vals):
-    return [v / sum(vals) for v in vals]
-
-
-T = TypeVar("T")
-
-
 @overload
 def ensure_is_iterable(a: str) -> list[str]: ...
 
@@ -66,15 +59,6 @@ def ensure_is_iterable(a):
 
 def ensure_is_list(a: list[T] | T) -> list[T]:
     return a if isinstance(a, list) else [a]
-
-
-def ensure_is_tuple(a):
-    if isinstance(a, tuple):
-        return a
-    elif isinstance(a, list):
-        return tuple(a)
-    else:
-        return (a,)
 
 
 def join_list_with_commas_final_and(lst):
