@@ -238,5 +238,5 @@ $$
 
 ## Further Reading
 
-[This academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) provides a detailed mathematical description of the model used by R [fastLink package](https://github.com/kosukeimai/fastLink).  The mathematical uesd by Splink is very similar.
+[This academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) provides a detailed mathematical description of the model used by R [fastLink package](https://github.com/kosukeimai/fastLink).  The mathematics used by Splink is very similar.
 
