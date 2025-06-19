@@ -1,0 +1,6345 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://moj-analytical-services.github.io/splink/demos/examples/duckdb_no_test/business_rates_match.html">
+      
+      
+        <link rel="prev" href="../duckdb/transactions.html">
+      
+      
+        <link rel="next" href="../duckdb/link_only.html">
+      
+      
+        <link rel="alternate" type="application/rss+xml" title="RSS feed" href="../../../feed_rss_created.xml">
+        <link rel="alternate" type="application/rss+xml" title="RSS feed of updated content" href="../../../feed_rss_updated.xml">
+      
+      <link rel="icon" href="../../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.2">
+    
+    
+      
+        <title>Linking businesses - Splink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../css/custom.css">
+    
+      <link rel="stylesheet" href="../../../css/neoteroi-mkdocs.css">
+    
+      <link rel="stylesheet" href="../../../css/ansi-colours.css">
+    
+      <link rel="stylesheet" href="../../../css/jupyter-cells.css">
+    
+      <link rel="stylesheet" href="../../../css/pandas-dataframe.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function n(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],n("js",new Date),n("config","G-L6JT8NK528"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&n("event","search",{search_term:this.value})}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");n("event","feedback",{page:t,data:e}),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){n("config","G-L6JT8NK528",{page_path:e.pathname})})});var e=document.createElement("script");e.async=!0,e.src="https://www.googletagmanager.com/gtag/js?id=G-L6JT8NK528",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#matching-businesses" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+
+    <center> Still using Splink 3 and looking for the old docs?  You can find them  <a href ="https://moj-analytical-services.github.io/splink3_legacy_docs/index.html">here</a></center>
+
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Splink" class="md-header__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../../img/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Splink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Linking businesses
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting_started.html" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/00_Tutorial_Introduction.html" class="md-tabs__link">
+          
+  
+    
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../examples_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api_docs/api_docs_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  API Docs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../topic_guides/topic_guides_index.html" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dev_guides/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../blog/index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Splink" class="md-nav__button md-logo" aria-label="Splink" data-md-component="logo">
+      
+  <img src="../../../img/favicon.ico" alt="logo">
+
+    </a>
+    Splink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/moj-analytical-services/splink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/00_Tutorial_Introduction.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/01_Prerequisites.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1. Data prep prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/02_Exploratory_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2. Exploratory analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/03_Blocking.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    3. Blocking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/04_Estimating_model_parameters.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4. Estimating model parameters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/05_Predicting_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    5. Predicting results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/06_Visualising_predictions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    6. Visualising predictions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/07_Evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    7. Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/08_building_your_own_model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    8. Tips for building your own model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/transactions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking financial transactions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Linking businesses
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="business_rates_match.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Linking businesses
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#matching-businesses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Matching businesses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature engineering
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature engineering">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#splink-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splink model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extensions-and-final-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extensions and final notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/link_only.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linking two tables of persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/real_time_record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Real time record linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/accuracy_analysis_from_labels_column.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation from ground truth column
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/pairwise_labels.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Estimating m probabilities from labels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/quick_and_dirty_persons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick and dirty persons model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/deterministic_dedupe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deterministic dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/febrl3.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl3 Dedupe
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duckdb/febrl4.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Febrl4 link-only
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cookbook.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cookbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="bias_eval.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Investigating Bias in a Splink Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="comparison_playground.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison playground
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pseudopeople-acs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pseudopeople Census to ACS link
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    PySpark
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            PySpark
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spark/deduplicate_1k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplication using Pyspark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Athena
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Athena
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../athena/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    SQLite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            SQLite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sqlite/deduplicate_50k_synthetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deduplicate 50k rows historical persons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    API Docs
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Docs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/api_docs_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linker
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Linker
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/visualisations.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualisations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/inference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/linker_clustering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/evaluation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/table_management.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Table Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/misc.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Miscellaneous functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparisons Library
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Comparisons Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/comparison_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/comparison_level_library.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison Level Library
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Other
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Other
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/exploratory.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploratory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/blocking_analysis.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/blocking.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/clustering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/splink_dataframe.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDataFrame
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/em_training_session.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EM Training Session API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/column_expression.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Column Expressions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    In-build datasets
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            In-build datasets
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/datasets.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SplinkDatasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Splink Settings
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            Splink Settings
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api_docs/settings_dict_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Dict
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/topic_guides_index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Record Linkage Theory
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Record Linkage Theory
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/record_linkage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Why do we need record linkage?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/probabilistic_vs_deterministic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Probabilistic vs Deterministic linkage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/fellegi_sunter.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Fellegi-Sunter Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/theory/linked_data_as_graphs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linked Data as Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Linkage Models in Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Linkage Models in Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/settings.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining Splink models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/querying_splink_results.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieving and querying Splink results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/link_type.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Link type - linking vs deduping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_4" id="__nav_5_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Splink's SQL backends - Spark, DuckDB etc
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Splink's SQL backends - Spark, DuckDB etc
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/backends/backends.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backends overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/splink_fundamentals/backends/postgres.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PostgreSQL
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Data Preparation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Data Preparation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/data_preparation/feature_engineering.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Engineering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/blocking_rules.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    What are Blocking Rules?
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computational Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/blocking/model_training.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model Training Blocking Rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing Records
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing Records
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/comparisons_and_comparison_levels.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparisons and comparison levels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/customising_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Defining and customising comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/out_of_the_box_comparisons.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Out-of-the-box comparisons
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/term-frequency.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Term frequency adjustments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6_5" id="__nav_5_6_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Comparing strings
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Comparing strings
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    String comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choosing string comparators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/phonetic.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic algorithms
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/regular_expressions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Regular expressions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/training/training_rationale.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Training rationale
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8" id="__nav_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/model.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_3" id="__nav_5_8_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Edges (Links)
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            Edges (Links)
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/edge_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/edge_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Edge Metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/labelling.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Clerical Labelling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_8_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8_4" id="__nav_5_8_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clusters
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_8_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8_4">
+            <span class="md-nav__icon md-icon"></span>
+            Clusters
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/graph_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/evaluation/clusters/how_to_compute_metrics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to compute graph metrics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9" id="__nav_5_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/drivers_of_performance.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run times, performance and linking large data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/performance_of_comparison_functions.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Performance of comparison functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_3" id="__nav_5_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Spark Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            Spark Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/optimising_spark.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising Spark performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/salting.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Salting blocking rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_9_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_9_4" id="__nav_5_9_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DuckDB Performance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_9_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            DuckDB Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/performance/optimising_duckdb.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimising DuckDB performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../charts/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Charts Gallery
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_10" id="__nav_5_10_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10">
+            <span class="md-nav__icon md-icon"></span>
+            Charts Gallery
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_2" id="__nav_5_10_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Exploratory Analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_2">
+            <span class="md-nav__icon md-icon"></span>
+            Exploratory Analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/completeness_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    completeness chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/profile_columns.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    profile columns
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_3" id="__nav_5_10_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Blocking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Blocking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/cumulative_comparisons_to_be_scored_from_blocking_rules_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cumulative num comparisons from blocking rules chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_4" id="__nav_5_10_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Similarity analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Similarity analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#choosing-thresholds" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparator score threshold chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/comparisons/choosing_comparators.html#phonetic-matching" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phonetic match chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_5" id="__nav_5_10_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Training
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Model Training
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/comparison_viewer_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    comparison viewer dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/match_weights_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    match weights chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/m_u_parameters_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    m u parameters chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/parameter_estimate_comparisons_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    parameter estimate comparisons chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/tf_adjustment_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tf adjustment chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/unlinkables_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    unlinkables chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/waterfall_chart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    waterfall chart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_6" id="__nav_5_10_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Clustering
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Clustering
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/cluster_studio_dashboard.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cluster studio dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_10_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_10_7" id="__nav_5_10_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_10_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_10_7">
+            <span class="md-nav__icon md-icon"></span>
+            Model Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/accuracy_analysis_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    accuracy chart from labels table
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../charts/threshold_selection_tool_from_labels_table.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    threshold selection tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../topic_guides/llms/prompting_llms.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM prompts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../dev_guides/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing to Splink
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing to Splink
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/CONTRIBUTING.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/development_quickstart.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/building_env_locally.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building your local environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/lint_and_format.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linting and Formatting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/testing.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/contributing_to_docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/managing_dependencies_with_poetry.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Dependencies with Poetry
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/releases.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releasing a Package Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/changing_splink/blog_posts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to the Splink Blog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    How Splink works
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            How Splink works
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/debug_modes.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and debugging Splink
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/transpilation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Transpilation using sqlglot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_3" id="__nav_6_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Performance and caching
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Performance and caching
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Caching and pipelining
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/spark_pipelining_and_caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Spark caching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_4" id="__nav_6_3_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Charts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Charts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/charts/understanding_and_editing_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding and editing charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/charts/building_charts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building new charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/udfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User-Defined Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_6" id="__nav_6_3_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Settings Validation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Settings Validation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/settings_validation/settings_validation_overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings Validation Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/settings_validation/extending_settings_validator.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Extending the Settings Validator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev_guides/dependency_compatibility_policy.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dependency Compatibility Policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../blog/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Blog
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Blog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Categories
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Categories
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/bias.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bias
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/ethics.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ethics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/category/feature-updates.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature Updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#matching-businesses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Matching businesses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature engineering
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature engineering">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#splink-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Splink model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extensions-and-final-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extensions and final notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/moj-analytical-services/splink/edit/master/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
+  
+
+
+  <h1>Linking businesses</h1>
+
+<div><p><a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+</a> </p>
+<h3 id="matching-businesses">Matching businesses<a class="headerlink" href="#matching-businesses" title="Permanent link">¶</a></h3>
+<p>In this example we attempt to match open business rates data from Stockport (<a href="https://www.data.gov.uk/dataset/f027145b-b55f-4602-b889-b28a8ca04462/stockport-council-business-rates">source</a>) with Companies House data (<a href="https://download.companieshouse.gov.uk/en_output.html">source</a>).</p>
+<p>This is quite a challenging scenario because the data is not initially well suited for Splink.</p>
+<p>First, there are only three columns to match on:</p>
+<ul>
+<li>The business name</li>
+<li>The address</li>
+<li>The business postcode</li>
+</ul>
+<p>Second, the data itself is quite different to many other applications: the business name is an ordred 'bag of words'.</p>
+<p>We will therefore need to use a few preprocessing tricks to build a successful matching model/</p>
+<p>Let's start by taking a look at the data. To make the size of these files managable, I have <a href="https://github.com/RobinL/company_matching_example/blob/main/business_rates_gen_data.py">selected only</a> rows from the companies house data where <code>substr(postcode, 1,4)</code> matches at least one postcode in the Stockport data, resulting in:</p>
+<ul>
+<li>Companies house data is around 1 million records</li>
+<li>Stockport data has 4,540 records</li>
+</ul>
+<p>In this example, to make it easy to understand, I break the calculation into multiple steps.  Many calculations can be combined into single steps - you can see a more condensed version <a href="https://github.com/RobinL/company_matching_example/blob/main/business_rates_working_example.py">here</a>.</p>
+<p>First, let's take a look at the data:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">duckdb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">altair</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">alt</span>
+
+<span class="n">df_companies_house</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">"https://github.com/RobinL/company_matching_example/raw/refs/heads/main/companies_house.parquet"</span><span class="p">)</span>
+<span class="n">df_companies_house</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">"company_name"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">df_stockport_business_rates</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">"https://github.com/RobinL/company_matching_example/raw/refs/heads/main/stockport_business_rates.parquet"</span><span class="p">)</span>
+<span class="n">df_stockport_business_rates</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">"company_name"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌──────────────────────────────┬────────────────┬─────────────────────────────────────────┬──────────┐
+│         company_name         │ company_number │             address_concat              │ postcode │
+│           varchar            │    varchar     │                 varchar                 │ varchar  │
+├──────────────────────────────┼────────────────┼─────────────────────────────────────────┼──────────┤
+│ ! LTD                        │ 08209948       │ 9 PRINCES SQUARE                        │ HG1 1ND  │
+│ !BIG IMPACT GRAPHICS LIMITED │ 11743365       │ 372 OLD STREET 335 ROSDEN HOUSE         │ EC1V 9LT │
+│ !NFOGENIE LTD                │ 13522064       │ 71-75 SHELTON STREET                    │ WC2H 9JQ │
+│       ·                      │    ·           │       ·                                 │    ·     │
+│       ·                      │    ·           │       ·                                 │    ·     │
+│       ·                      │    ·           │       ·                                 │    ·     │
+│ 4TECH MOTO LIMITED           │ 05583123       │ 1 BOND STREET                           │ BB8 9DG  │
+│ 4TECH SOFTWARE LIMITED       │ 07415956       │ ELEVEN BRINDLEYPLACE 2 BRUNSWICK SQUARE │ B1 2LP   │
+├──────────────────────────────┴────────────────┴─────────────────────────────────────────┴──────────┤
+│ ? rows (&gt;9999 rows, 5 shown)                                                             4 columns │
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┬────────────────┬──────────────────────────────────────────────────────────────────────────┬──────────┐
+│            company_name             │ company_number │                              address_concat                              │ postcode │
+│               varchar               │    varchar     │                                 varchar                                  │ varchar  │
+├─────────────────────────────────────┼────────────────┼──────────────────────────────────────────────────────────────────────────┼──────────┤
+│ 08 UK LTD                           │ NULL           │ 15 MADOC STREET LLANDUDNO CONWY WALES                                    │ LL30 2TL │
+│ 1 GR LTD                            │ NULL           │ 296-296A GORTON ROAD REDDISH STOCKPORT                                   │ SK5 6RN  │
+│ 101 CANVAS PRINTS LTD               │ NULL           │ SUITE 44 4TH FLOOR HOULDSWORTH MILL HOULDSWORTH STREET REDDISH STOCKPORT │ SK5 6DA  │
+│           ·                         │  ·             │                           ·                                              │    ·     │
+│           ·                         │  ·             │                           ·                                              │    ·     │
+│           ·                         │  ·             │                           ·                                              │    ·     │
+│ ZYGOCITY LTD T/A CRAFTSTAR STENCILS │ NULL           │ UNIT 46 GOYT MILL UPPER HIBBERT LANE MARPLE STOCKPORT                    │ SK6 7HX  │
+│ ZYNC GROUP LTD IN LIQUIDATION       │ NULL           │ C/O COWGILLS LIMITED FOURTH FLOOR UNIT 5B THE PARKLANDS BOLTON           │ BL6 4SD  │
+├─────────────────────────────────────┴────────────────┴──────────────────────────────────────────────────────────────────────────┴──────────┤
+│ 4540 rows (5 shown)                                                                                                              4 columns │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="feature-engineering">Feature engineering<a class="headerlink" href="#feature-engineering" title="Permanent link">¶</a></h2>
+<p>We will do some feature engineering to make this data more amenable to matching:</p>
+<ul>
+<li>To match companies, we will tokenise the company name and compute the term frequenices of each token.  This will allow us to more accurately quantify how closely two business names match</li>
+<li>We will also pick out a subset of tokens to give us access to new blocking strategies</li>
+<li>To match addresses, we will use the first number in the address and the postcode only.  This is simpistic - for a more advanced approach to address matching in Splink see <a href="https://github.com/RobinL/uk_address_matcher/">here</a> </li>
+</ul>
+<p>We'll perform this featuring on both datasets simultanouesly to ensure the token frequencies are representative of all the data</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start by creating a table with the data vertically concatenated</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">create or replace table all_input_data as</span>
+<span class="s2">with concat_data as (</span>
+<span class="s2">    select *, 'stockport' as source_dataset</span>
+
+<span class="s2">from df_stockport_business_rates</span>
+<span class="s2">union all</span>
+<span class="s2">select *, 'z_all_companies' as source_dataset</span>
+<span class="s2">from df_companies_house</span>
+<span class="s2">)</span>
+<span class="s2">select ROW_NUMBER() OVER () as unique_id, *</span>
+<span class="s2">from concat_data</span>
+<span class="s2">"""</span>
+
+<span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+<span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"all_input_data"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">100000</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+
+
+┌───────────┬──────────────────────────────┬────────────────┬──────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────┐
+│ unique_id │         company_name         │ company_number │                              address_concat                              │ postcode │ source_dataset  │
+│   int64   │           varchar            │    varchar     │                                 varchar                                  │ varchar  │     varchar     │
+├───────────┼──────────────────────────────┼────────────────┼──────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────┤
+│         1 │ 08 UK LTD                    │ NULL           │ 15 MADOC STREET LLANDUDNO CONWY WALES                                    │ LL30 2TL │ stockport       │
+│         2 │ 1 GR LTD                     │ NULL           │ 296-296A GORTON ROAD REDDISH STOCKPORT                                   │ SK5 6RN  │ stockport       │
+│         3 │ 101 CANVAS PRINTS LTD        │ NULL           │ SUITE 44 4TH FLOOR HOULDSWORTH MILL HOULDSWORTH STREET REDDISH STOCKPORT │ SK5 6DA  │ stockport       │
+│         4 │ 121 DIRECT MAIL LTD          │ NULL           │ UNIT 18 CHARTER HOUSE LATHAM CLOSE BREDBURY STOCKPORT                    │ SK6 2SD  │ stockport       │
+│         5 │ 121 PERSONAL TRAINING LTD    │ NULL           │ 198 WILMSLOW ROAD HEALD GREEN STOCKPORT                                  │ SK8 3BH  │ stockport       │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │
+│      9996 │ AL-MAALIK LOCUM SERVICES LTD │ 14351700       │ 239 MOSELEY ROAD LEVENSHULME                                             │ M19 2LJ  │ z_all_companies │
+│      9997 │ AL-MAALIK PHARMACIES LTD     │ 14421852       │ 239 MOSELEY ROAD LEVENSHULME                                             │ M19 2LJ  │ z_all_companies │
+│      9998 │ AL-MAALIK PROPERTIES LTD     │ 14412454       │ 1041 STOCKPORT ROAD                                                      │ M19 2TF  │ z_all_companies │
+│      9999 │ AL-MADAD OUTREACH LTD        │ 14827390       │ 124-128 CITY ROAD                                                        │ EC1V 2NX │ z_all_companies │
+│     10000 │ AL-MADANI LTD                │ 14415359       │ 71-75 SHELTON STREET COVENT GARDEN                                       │ WC2H 9JQ │ z_all_companies │
+├───────────┴──────────────────────────────┴────────────────┴──────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────┤
+│ ? rows (&gt;9999 rows, 10 shown)                                                                                                                           6 columns │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Tokenize company names, and explode tokens across rows</span>
+<span class="c1"># The tokenisation approach here is simplistic, more advanced strategies could be used</span>
+<span class="c1"># in a more fully-fledged application</span>
+
+
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">CREATE OR REPLACE TABLE unnested AS</span>
+<span class="s2">SELECT</span>
+<span class="s2">    unique_id,</span>
+<span class="s2">    unnest(regexp_split_to_array(upper(trim(company_name)), '</span><span class="se">\\</span><span class="s2">s+')) as name_token,</span>
+<span class="s2">    generate_subscripts(regexp_split_to_array(upper(trim(company_name)), '</span><span class="se">\\</span><span class="s2">s+'), 1) as token_position_in_name</span>
+<span class="s2">FROM all_input_data</span>
+<span class="s2">"""</span>
+
+<span class="n">unnested</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"unnested"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">100000</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌───────────┬────────────┬────────────────────────┐
+│ unique_id │ name_token │ token_position_in_name │
+│   int64   │  varchar   │         int64          │
+├───────────┼────────────┼────────────────────────┤
+│         1 │ 08         │                      1 │
+│         1 │ UK         │                      2 │
+│         1 │ LTD        │                      3 │
+│         2 │ 1          │                      1 │
+│         2 │ GR         │                      2 │
+│         · │ ·          │                      · │
+│         · │ ·          │                      · │
+│         · │ ·          │                      · │
+│      2619 │ MEDATECH   │                      1 │
+│      2619 │ UK         │                      2 │
+│      2619 │ LTD        │                      3 │
+│      2620 │ MEDIA      │                      1 │
+│      2620 │ +          │                      2 │
+├───────────┴────────────┴────────────────────────┤
+│ ? rows (&gt;9999 rows, 10 shown)         3 columns │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Compute token relative frequencies</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">CREATE OR REPLACE TABLE token_frequencies AS</span>
+<span class="s2">SELECT</span>
+<span class="s2">    name_token as token,</span>
+<span class="s2">    count(*)::float/(select count(*) from unnested) as rel_freq</span>
+<span class="s2">FROM unnested</span>
+<span class="s2">GROUP BY token</span>
+<span class="s2">ORDER BY rel_freq DESC</span>
+
+<span class="s2">"""</span>
+
+<span class="c1"># Execute and show results</span>
+<span class="n">token_frequencies</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"token_frequencies"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">100000</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌────────────┬───────────────┐
+│   token    │   rel_freq    │
+│  varchar   │     float     │
+├────────────┼───────────────┤
+│ LTD        │    0.14284134 │
+│ LIMITED    │    0.13450336 │
+│ SERVICES   │   0.012372046 │
+│ &amp;          │    0.01089211 │
+│ MANAGEMENT │  0.0076835644 │
+│   ·        │        ·      │
+│   ·        │        ·      │
+│   ·        │        ·      │
+│ MENDIP     │ 6.0517837e-06 │
+│ MVP        │ 6.0517837e-06 │
+│ FINGERS    │ 6.0517837e-06 │
+│ GRADUATE   │ 6.0517837e-06 │
+│ REACT      │ 6.0517837e-06 │
+├────────────┴───────────────┤
+│ ? rows           2 columns │
+└────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Reconstruct the company name as a list of tokens with their relative frequency</span>
+<span class="c1"># This creates a new column called name_tokens_with_freq</span>
+<span class="c1"># Example: 101 CANVAS PRINTS LTD  becomes</span>
+<span class="c1"># [</span>
+<span class="c1">#  {'token': 101, 'rel_freq': 3.19e-05},</span>
+<span class="c1">#  {'token': CANVAS, 'rel_freq': 2.20e-05},</span>
+<span class="c1">#  {'token': PRINTS, 'rel_freq': 3.16e-05},</span>
+<span class="c1">#  {'token': LTD, 'rel_freq': 0.142}</span>
+<span class="c1"># ]</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">CREATE OR REPLACE TABLE input_data_with_tokens AS</span>
+<span class="s2">WITH</span>
+<span class="s2">tokens_with_freq AS (</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        m.unique_id,</span>
+<span class="s2">        -- Create a list of structs containing each token and its frequency</span>
+<span class="s2">        list_transform(</span>
+<span class="s2">            list_zip(</span>
+<span class="s2">                array_agg(u.name_token ORDER BY u.token_position_in_name),</span>
+<span class="s2">                array_agg(COALESCE(tf.rel_freq, 0.0) ORDER BY u.token_position_in_name)</span>
+<span class="s2">            ),</span>
+<span class="s2">            x -&gt; struct_pack(token := x[1], rel_freq := x[2])</span>
+<span class="s2">        ) as name_tokens_with_freq</span>
+<span class="s2">    FROM all_input_data m</span>
+<span class="s2">    JOIN unnested u ON m.unique_id = u.unique_id</span>
+<span class="s2">    LEFT JOIN token_frequencies tf ON u.name_token = tf.token</span>
+<span class="s2">    GROUP BY m.unique_id</span>
+<span class="s2">)</span>
+<span class="s2">SELECT</span>
+<span class="s2">    m.*,</span>
+<span class="s2">    t.name_tokens_with_freq</span>
+<span class="s2">FROM all_input_data m</span>
+<span class="s2">LEFT JOIN tokens_with_freq t ON m.unique_id = t.unique_id</span>
+<span class="s2">order by m.unique_id</span>
+<span class="s2">"""</span>
+
+<span class="c1"># Execute and show results</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"input_data_with_tokens"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌───────────┬──────────────────────┬────────────────┬──────────────────────┬──────────┬─────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ unique_id │     company_name     │ company_number │    address_concat    │ postcode │ source_dataset  │                                    name_tokens_with_freq                                     │
+│   int64   │       varchar        │    varchar     │       varchar        │ varchar  │     varchar     │                           struct(token varchar, rel_freq float)[]                            │
+├───────────┼──────────────────────┼────────────────┼──────────────────────┼──────────┼─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────┤
+│         1 │ 08 UK LTD            │ NULL           │ 15 MADOC STREET LL…  │ LL30 2TL │ stockport       │ [{'token': 08, 'rel_freq': 2.2006486e-06}, {'token': UK, 'rel_freq': 0.0059337737}, {'toke…  │
+│         2 │ 1 GR LTD             │ NULL           │ 296-296A GORTON RO…  │ SK5 6RN  │ stockport       │ [{'token': 1, 'rel_freq': 0.000688803}, {'token': GR, 'rel_freq': 2.3656972e-05}, {'token'…  │
+│         3 │ 101 CANVAS PRINTS …  │ NULL           │ SUITE 44 4TH FLOOR…  │ SK5 6DA  │ stockport       │ [{'token': 101, 'rel_freq': 3.1909403e-05}, {'token': CANVAS, 'rel_freq': 2.2006485e-05}, …  │
+│         4 │ 121 DIRECT MAIL LTD  │ NULL           │ UNIT 18 CHARTER HO…  │ SK6 2SD  │ stockport       │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': DIRECT, 'rel_freq': 0.00050367345}, …  │
+│         5 │ 121 PERSONAL TRAIN…  │ NULL           │ 198 WILMSLOW ROAD …  │ SK8 3BH  │ stockport       │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': PERSONAL, 'rel_freq': 8.8851186e-05}…  │
+│         · │          ·           │  ·             │          ·           │    ·     │     ·           │                                              ·                                               │
+│         · │          ·           │  ·             │          ·           │    ·     │     ·           │                                              ·                                               │
+│         · │          ·           │  ·             │          ·           │    ·     │     ·           │                                              ·                                               │
+│      9996 │ AL-MAALIK LOCUM SE…  │ 14351700       │ 239 MOSELEY ROAD L…  │ M19 2LJ  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': LOCUM, 'rel_freq': 6.6844696e-0…  │
+│      9997 │ AL-MAALIK PHARMACI…  │ 14421852       │ 239 MOSELEY ROAD L…  │ M19 2LJ  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PHARMACIES, 'rel_freq': 4.67637…  │
+│      9998 │ AL-MAALIK PROPERTI…  │ 14412454       │ 1041 STOCKPORT ROAD  │ M19 2TF  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PROPERTIES, 'rel_freq': 0.00506…  │
+│      9999 │ AL-MADAD OUTREACH …  │ 14827390       │ 124-128 CITY ROAD    │ EC1V 2NX │ z_all_companies │ [{'token': AL-MADAD, 'rel_freq': 2.7508108e-07}, {'token': OUTREACH, 'rel_freq': 1.9530757…  │
+│     10000 │ AL-MADANI LTD        │ 14415359       │ 71-75 SHELTON STRE…  │ WC2H 9JQ │ z_all_companies │ [{'token': AL-MADANI, 'rel_freq': 2.7508108e-07}, {'token': LTD, 'rel_freq': 0.14284134}]    │
+├───────────┴──────────────────────┴────────────────┴──────────────────────┴──────────┴─────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ? rows (&gt;9999 rows, 10 shown)                                                                                                                                                              7 columns │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Derive rarest tokens - these will be used for blocking</span>
+<span class="c1"># This would be simpler if Duckdb list sort supported a lambda function</span>
+<span class="c1"># but it doesn't, so we have to unnest the list and sort manually</span>
+<span class="c1"># https://duckdb.org/docs/sql/functions/list.html#sorting-lists</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">with</span>
+<span class="s2">tokens_unnested as (</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        unique_id,</span>
+<span class="s2">        unnest(name_tokens_with_freq) as token_info</span>
+<span class="s2">    FROM input_data_with_tokens</span>
+<span class="s2">),</span>
+<span class="s2">rare_tokens as (</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        unique_id,</span>
+<span class="s2">        array_agg(token_info.token ORDER BY token_info.rel_freq ASC)[:2] as rarest_tokens</span>
+<span class="s2">    FROM tokens_unnested</span>
+<span class="s2">    WHERE token_info.rel_freq &lt; 0.01</span>
+<span class="s2">    GROUP BY unique_id</span>
+<span class="s2">)</span>
+<span class="s2">select m.*, rarest_tokens</span>
+<span class="s2">from input_data_with_tokens as m</span>
+<span class="s2">left join rare_tokens on m.unique_id = rare_tokens.unique_id</span>
+<span class="s2">order by m.unique_id</span>
+<span class="s2">"""</span>
+<span class="n">input_data_with_tokens_and_rarest_tokens</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">input_data_with_tokens_and_rarest_tokens</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌───────────┬──────────────────────────────┬────────────────┬──────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────┐
+│ unique_id │         company_name         │ company_number │                              address_concat                              │ postcode │ source_dataset  │                                                                                name_tokens_with_freq                                                                                │      rarest_tokens      │
+│   int64   │           varchar            │    varchar     │                                 varchar                                  │ varchar  │     varchar     │                                                                       struct(token varchar, rel_freq float)[]                                                                       │        varchar[]        │
+├───────────┼──────────────────────────────┼────────────────┼──────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────┤
+│         1 │ 08 UK LTD                    │ NULL           │ 15 MADOC STREET LLANDUDNO CONWY WALES                                    │ LL30 2TL │ stockport       │ [{'token': 08, 'rel_freq': 2.2006486e-06}, {'token': UK, 'rel_freq': 0.0059337737}, {'token': LTD, 'rel_freq': 0.14284134}]                                                         │ [08, UK]                │
+│         2 │ 1 GR LTD                     │ NULL           │ 296-296A GORTON ROAD REDDISH STOCKPORT                                   │ SK5 6RN  │ stockport       │ [{'token': 1, 'rel_freq': 0.000688803}, {'token': GR, 'rel_freq': 2.3656972e-05}, {'token': LTD, 'rel_freq': 0.14284134}]                                                           │ [GR, 1]                 │
+│         3 │ 101 CANVAS PRINTS LTD        │ NULL           │ SUITE 44 4TH FLOOR HOULDSWORTH MILL HOULDSWORTH STREET REDDISH STOCKPORT │ SK5 6DA  │ stockport       │ [{'token': 101, 'rel_freq': 3.1909403e-05}, {'token': CANVAS, 'rel_freq': 2.2006485e-05}, {'token': PRINTS, 'rel_freq': 3.163432e-05}, {'token': LTD, 'rel_freq': 0.14284134}]      │ [CANVAS, PRINTS]        │
+│         4 │ 121 DIRECT MAIL LTD          │ NULL           │ UNIT 18 CHARTER HOUSE LATHAM CLOSE BREDBURY STOCKPORT                    │ SK6 2SD  │ stockport       │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': DIRECT, 'rel_freq': 0.00050367345}, {'token': MAIL, 'rel_freq': 1.5679621e-05}, {'token': LTD, 'rel_freq': 0.14284134}]       │ [MAIL, 121]             │
+│         5 │ 121 PERSONAL TRAINING LTD    │ NULL           │ 198 WILMSLOW ROAD HEALD GREEN STOCKPORT                                  │ SK8 3BH  │ stockport       │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': PERSONAL, 'rel_freq': 8.8851186e-05}, {'token': TRAINING, 'rel_freq': 0.00092289696}, {'token': LTD, 'rel_freq': 0.14284134}] │ [121, PERSONAL]         │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │                                                                                          ·                                                                                          │        ·                │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │                                                                                          ·                                                                                          │        ·                │
+│         · │             ·                │  ·             │              ·                                                           │    ·     │     ·           │                                                                                          ·                                                                                          │        ·                │
+│      9996 │ AL-MAALIK LOCUM SERVICES LTD │ 14351700       │ 239 MOSELEY ROAD LEVENSHULME                                             │ M19 2LJ  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': LOCUM, 'rel_freq': 6.6844696e-05}, {'token': SERVICES, 'rel_freq': 0.012372046}, {'token': LTD, 'rel_freq': 0.14284134}] │ [AL-MAALIK, LOCUM]      │
+│      9997 │ AL-MAALIK PHARMACIES LTD     │ 14421852       │ 239 MOSELEY ROAD LEVENSHULME                                             │ M19 2LJ  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PHARMACIES, 'rel_freq': 4.676378e-06}, {'token': LTD, 'rel_freq': 0.14284134}]                                           │ [AL-MAALIK, PHARMACIES] │
+│      9998 │ AL-MAALIK PROPERTIES LTD     │ 14412454       │ 1041 STOCKPORT ROAD                                                      │ M19 2TF  │ z_all_companies │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PROPERTIES, 'rel_freq': 0.005062042}, {'token': LTD, 'rel_freq': 0.14284134}]                                            │ [AL-MAALIK, PROPERTIES] │
+│      9999 │ AL-MADAD OUTREACH LTD        │ 14827390       │ 124-128 CITY ROAD                                                        │ EC1V 2NX │ z_all_companies │ [{'token': AL-MADAD, 'rel_freq': 2.7508108e-07}, {'token': OUTREACH, 'rel_freq': 1.9530757e-05}, {'token': LTD, 'rel_freq': 0.14284134}]                                            │ [AL-MADAD, OUTREACH]    │
+│     10000 │ AL-MADANI LTD                │ 14415359       │ 71-75 SHELTON STREET COVENT GARDEN                                       │ WC2H 9JQ │ z_all_companies │ [{'token': AL-MADANI, 'rel_freq': 2.7508108e-07}, {'token': LTD, 'rel_freq': 0.14284134}]                                                                                           │ [AL-MADANI]             │
+├───────────┴──────────────────────────────┴────────────────┴──────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────┤
+│ ? rows (&gt;9999 rows, 10 shown)                                                                                                                                                                                                                                                                                                                                           8 columns │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="c1"># Finally we're going to extract the 'house number' from the address, which, combined with the postcode will be used for matching</span>
+
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">CREATE OR REPLACE TABLE data_for_matching AS</span>
+<span class="s2">select</span>
+<span class="s2">    unique_id,</span>
+<span class="s2">    source_dataset,</span>
+<span class="s2">    company_name,</span>
+<span class="s2">    company_number,</span>
+<span class="s2">    COALESCE(</span>
+<span class="s2">        REGEXP_EXTRACT(address_concat, '(</span><span class="se">\\</span><span class="s2">d+[A-Z]?)'),</span>
+<span class="s2">        REGEXP_EXTRACT(address_concat, '(</span><span class="se">\\</span><span class="s2">S+)(?=</span><span class="se">\\</span><span class="s2">s+HOUSE)')</span>
+<span class="s2">    ) AS first_num_in_address,</span>
+<span class="s2">    postcode,</span>
+<span class="s2">    name_tokens_with_freq,</span>
+<span class="s2">    rarest_tokens</span>
+<span class="s2">from input_data_with_tokens_and_rarest_tokens</span>
+
+<span class="s2">"""</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"data_for_matching"</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌───────────┬─────────────────┬──────────────────────────────┬────────────────┬──────────────────────┬──────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────┐
+│ unique_id │ source_dataset  │         company_name         │ company_number │ first_num_in_address │ postcode │                                                                                name_tokens_with_freq                                                                                │      rarest_tokens      │
+│   int64   │     varchar     │           varchar            │    varchar     │       varchar        │ varchar  │                                                                       struct(token varchar, rel_freq float)[]                                                                       │        varchar[]        │
+├───────────┼─────────────────┼──────────────────────────────┼────────────────┼──────────────────────┼──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────┤
+│         1 │ stockport       │ 08 UK LTD                    │ NULL           │ 15                   │ LL30 2TL │ [{'token': 08, 'rel_freq': 2.2006486e-06}, {'token': UK, 'rel_freq': 0.0059337737}, {'token': LTD, 'rel_freq': 0.14284134}]                                                         │ [08, UK]                │
+│         2 │ stockport       │ 1 GR LTD                     │ NULL           │ 296                  │ SK5 6RN  │ [{'token': 1, 'rel_freq': 0.000688803}, {'token': GR, 'rel_freq': 2.3656972e-05}, {'token': LTD, 'rel_freq': 0.14284134}]                                                           │ [GR, 1]                 │
+│         3 │ stockport       │ 101 CANVAS PRINTS LTD        │ NULL           │ 44                   │ SK5 6DA  │ [{'token': 101, 'rel_freq': 3.1909403e-05}, {'token': CANVAS, 'rel_freq': 2.2006485e-05}, {'token': PRINTS, 'rel_freq': 3.163432e-05}, {'token': LTD, 'rel_freq': 0.14284134}]      │ [CANVAS, PRINTS]        │
+│         4 │ stockport       │ 121 DIRECT MAIL LTD          │ NULL           │ 18                   │ SK6 2SD  │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': DIRECT, 'rel_freq': 0.00050367345}, {'token': MAIL, 'rel_freq': 1.5679621e-05}, {'token': LTD, 'rel_freq': 0.14284134}]       │ [MAIL, 121]             │
+│         5 │ stockport       │ 121 PERSONAL TRAINING LTD    │ NULL           │ 198                  │ SK8 3BH  │ [{'token': 121, 'rel_freq': 1.7055027e-05}, {'token': PERSONAL, 'rel_freq': 8.8851186e-05}, {'token': TRAINING, 'rel_freq': 0.00092289696}, {'token': LTD, 'rel_freq': 0.14284134}] │ [121, PERSONAL]         │
+│         · │     ·           │             ·                │  ·             │  ·                   │    ·     │                                                                                          ·                                                                                          │        ·                │
+│         · │     ·           │             ·                │  ·             │  ·                   │    ·     │                                                                                          ·                                                                                          │        ·                │
+│         · │     ·           │             ·                │  ·             │  ·                   │    ·     │                                                                                          ·                                                                                          │        ·                │
+│      9996 │ z_all_companies │ AL-MAALIK LOCUM SERVICES LTD │ 14351700       │ 239                  │ M19 2LJ  │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': LOCUM, 'rel_freq': 6.6844696e-05}, {'token': SERVICES, 'rel_freq': 0.012372046}, {'token': LTD, 'rel_freq': 0.14284134}] │ [AL-MAALIK, LOCUM]      │
+│      9997 │ z_all_companies │ AL-MAALIK PHARMACIES LTD     │ 14421852       │ 239                  │ M19 2LJ  │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PHARMACIES, 'rel_freq': 4.676378e-06}, {'token': LTD, 'rel_freq': 0.14284134}]                                           │ [AL-MAALIK, PHARMACIES] │
+│      9998 │ z_all_companies │ AL-MAALIK PROPERTIES LTD     │ 14412454       │ 1041                 │ M19 2TF  │ [{'token': AL-MAALIK, 'rel_freq': 8.252432e-07}, {'token': PROPERTIES, 'rel_freq': 0.005062042}, {'token': LTD, 'rel_freq': 0.14284134}]                                            │ [AL-MAALIK, PROPERTIES] │
+│      9999 │ z_all_companies │ AL-MADAD OUTREACH LTD        │ 14827390       │ 124                  │ EC1V 2NX │ [{'token': AL-MADAD, 'rel_freq': 2.7508108e-07}, {'token': OUTREACH, 'rel_freq': 1.9530757e-05}, {'token': LTD, 'rel_freq': 0.14284134}]                                            │ [AL-MADAD, OUTREACH]    │
+│     10000 │ z_all_companies │ AL-MADANI LTD                │ 14415359       │ 71                   │ WC2H 9JQ │ [{'token': AL-MADANI, 'rel_freq': 2.7508108e-07}, {'token': LTD, 'rel_freq': 0.14284134}]                                                                                           │ [AL-MADANI]             │
+├───────────┴─────────────────┴──────────────────────────────┴────────────────┴──────────────────────┴──────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────┤
+│ ? rows (&gt;9999 rows, 10 shown)                                                                                                                                                                                                                                                                                       8 columns │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="splink-model">Splink model<a class="headerlink" href="#splink-model" title="Permanent link">¶</a></h3>
+<p>We've now prepared our data for matching.  We'll use a fairly straightforward matching model with one innovation: we need to define a comparison that is able to exploit the information in <code>name_tokens_with_freq</code>  effectively.</p>
+<p>The approach we're going to take is to define similarity as the number of tokens in common between two business names, adjusting for term frequency.  This can be computed by multiplying together the token frequencies of the matching tokens.</p>
+<p>We will create a comparison level for different thresholds of this value.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_tf_product_array_sql</span><span class="p">(</span><span class="n">token_rel_freq_array_name</span><span class="p">):</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">    list_intersect(</span><span class="si">{</span><span class="n">token_rel_freq_array_name</span><span class="si">}</span><span class="s2">_l, </span><span class="si">{</span><span class="n">token_rel_freq_array_name</span><span class="si">}</span><span class="s2">_r)</span>
+<span class="s2">        .list_transform(x -&gt; x.rel_freq::float)</span>
+<span class="s2">        .list_concat([1.0::FLOAT]) -- in case there are no matches</span>
+<span class="s2">        .list_reduce((p, q) -&gt; p * q)</span>
+<span class="s2">    """</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Prepare our two input datasets</span>
+
+<span class="n">df_stockport</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span>
+    <span class="s2">"select * from data_for_matching where source_dataset = 'stockport'"</span>
+<span class="p">)</span>
+
+<span class="n">df_all_companies</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span>
+    <span class="s2">"select * from data_for_matching where source_dataset = 'z_all_companies'"</span>
+<span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splink</span><span class="w"> </span><span class="kn">import</span> <span class="n">DuckDBAPI</span><span class="p">,</span> <span class="n">Linker</span><span class="p">,</span> <span class="n">SettingsCreator</span><span class="p">,</span> <span class="n">block_on</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">splink.comparison_library</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cl</span>
+<span class="n">con</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">":default:"</span><span class="p">)</span>
+<span class="n">db_api</span> <span class="o">=</span> <span class="n">DuckDBAPI</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">con</span><span class="p">)</span>
+
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">SettingsCreator</span><span class="p">(</span>
+    <span class="n">link_type</span><span class="o">=</span><span class="s2">"link_only"</span><span class="p">,</span>
+    <span class="n">unique_id_column_name</span><span class="o">=</span><span class="s2">"unique_id"</span><span class="p">,</span>
+    <span class="n">probability_two_random_records_match</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mf">1e6</span><span class="p">,</span>
+    <span class="n">comparisons</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"output_column_name"</span><span class="p">:</span> <span class="s2">"name_tokens_with_freq"</span><span class="p">,</span>
+            <span class="s2">"comparison_levels"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="s1">'"name_tokens_with_freq_l" IS NULL OR "name_tokens_with_freq_r" IS NULL'</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"name_tokens_with_freq is NULL"</span><span class="p">,</span>
+                    <span class="s2">"is_null_level"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">calculate_tf_product_array_sql</span><span class="p">(</span><span class="s2">"name_tokens_with_freq"</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; 1e-12</span>
+<span class="s2">                    """</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"Array product is less than 1e-10"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">calculate_tf_product_array_sql</span><span class="p">(</span><span class="s2">"name_tokens_with_freq"</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; 1e-10</span>
+<span class="s2">                    """</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"Array product is less than 1e-10"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">calculate_tf_product_array_sql</span><span class="p">(</span><span class="s2">"name_tokens_with_freq"</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; 1e-8</span>
+<span class="s2">                    """</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"Array product is less than 1e-8"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">calculate_tf_product_array_sql</span><span class="p">(</span><span class="s2">"name_tokens_with_freq"</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; 1e-6</span>
+<span class="s2">                    """</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"Array product is less than 1e-6"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"sql_condition"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">calculate_tf_product_array_sql</span><span class="p">(</span><span class="s2">"name_tokens_with_freq"</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt; 1e-4</span>
+<span class="s2">                    """</span><span class="p">,</span>
+                    <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"Array product is less than 1e-4"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span><span class="s2">"sql_condition"</span><span class="p">:</span> <span class="s2">"ELSE"</span><span class="p">,</span> <span class="s2">"label_for_charts"</span><span class="p">:</span> <span class="s2">"All other comparisons"</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">"comparison_description"</span><span class="p">:</span> <span class="s2">"ExactMatch"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">PostcodeComparison</span><span class="p">(</span><span class="s2">"postcode"</span><span class="p">),</span>
+        <span class="n">cl</span><span class="o">.</span><span class="n">ExactMatch</span><span class="p">(</span><span class="s2">"first_num_in_address"</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">blocking_rules_to_generate_predictions</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">block_on</span><span class="p">(</span><span class="s2">"postcode"</span><span class="p">),</span>
+        <span class="n">block_on</span><span class="p">(</span><span class="s2">"rarest_tokens"</span><span class="p">,</span> <span class="s2">"substr(postcode,1,3)"</span><span class="p">),</span>
+        <span class="s2">"l.rarest_tokens[1] = r.rarest_tokens[2] and substr(l.company_name,1,3) = substr(r.company_name,1,3)"</span><span class="p">,</span>
+        <span class="s2">"l.rarest_tokens[2] = r.rarest_tokens[1] and substr(l.company_name,1,3) = substr(r.company_name,1,3)"</span><span class="p">,</span>
+        <span class="n">block_on</span><span class="p">(</span><span class="s2">"company_name"</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">additional_columns_to_retain</span><span class="o">=</span><span class="p">[</span><span class="s2">"company_name"</span><span class="p">],</span>
+    <span class="n">retain_intermediate_calculation_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">retain_matching_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">linker</span> <span class="o">=</span> <span class="n">Linker</span><span class="p">([</span><span class="n">df_stockport</span><span class="p">,</span> <span class="n">df_all_companies</span><span class="p">],</span> <span class="n">settings</span><span class="p">,</span> <span class="n">db_api</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Probably not worth training m values given how few columns we have;</span>
+<span class="c1"># by not training them we'll be using the defaults</span>
+
+<span class="n">linker</span><span class="o">.</span><span class="n">training</span><span class="o">.</span><span class="n">estimate_u_using_random_sampling</span><span class="p">(</span><span class="n">max_pairs</span><span class="o">=</span><span class="mf">1e7</span><span class="p">)</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">visualisations</span><span class="o">.</span><span class="n">match_weights_chart</span><span class="p">()</span>
+</code></pre></div>
+<pre><code>----- Estimating u probabilities using random sampling -----
+
+
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+
+
+
+Estimated u probabilities using random sampling
+
+Your model is not yet fully trained. Missing estimates for:
+    - name_tokens_with_freq (no m values are trained).
+    - postcode (no m values are trained).
+    - first_num_in_address (no m values are trained).
+</code></pre>
+<p><img alt="png" src="output_15_3.png"></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get some results</span>
+
+<span class="n">df_predictions</span> <span class="o">=</span> <span class="n">linker</span><span class="o">.</span><span class="n">inference</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">threshold_match_weight</span><span class="o">=-</span><span class="mi">5</span><span class="p">)</span>
+
+
+
+<span class="c1"># Since the companies house data is a canonical list, here we're taking the</span>
+<span class="c1"># best matching company for each Stockport business</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">WITH ranked_matches AS (</span>
+<span class="s2">    SELECT *,</span>
+<span class="s2">           ROW_NUMBER() OVER (PARTITION BY unique_id_l ORDER BY match_weight DESC) as rank</span>
+<span class="s2">    FROM </span><span class="si">{</span><span class="n">df_predictions</span><span class="o">.</span><span class="n">physical_name</span><span class="si">}</span>
+<span class="s2">),</span>
+<span class="s2">best_match as (</span>
+<span class="s2">    select * from ranked_matches</span>
+<span class="s2">    where rank = 1</span>
+<span class="s2">    order by match_weight desc</span>
+<span class="s2">),</span>
+<span class="s2">matched_stockport_ids as (</span>
+<span class="s2">    select distinct unique_id_l</span>
+<span class="s2">    from best_match</span>
+<span class="s2">)</span>
+<span class="s2">select * from best_match</span>
+
+<span class="s2">order by match_probability desc</span>
+<span class="s2">"""</span>
+
+<span class="n">ranked_matches</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">ranked_matches</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>Blocking time: 0.18 seconds
+
+
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+
+
+Predict time: 3.65 seconds
+
+ -- WARNING --
+You have called predict(), but there are some parameter estimates which have neither been estimated or specified in your settings dictionary.  To produce predictions the following untrained trained parameters will use default values.
+Comparison: 'name_tokens_with_freq':
+    m values not fully trained
+Comparison: 'postcode':
+    m values not fully trained
+Comparison: 'first_num_in_address':
+    m values not fully trained
+
+
+┌─────────────────────┬─────────────────────┬──────────────────┬──────────────────┬─────────────┬─────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬───┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬───────────┬───────┐
+│    match_weight     │  match_probability  │ source_dataset_l │ source_dataset_r │ unique_id_l │ unique_id_r │ name_tokens_with_f…  │ name_tokens_with_f…  │ gamma_name_tokens_…  │ bf_name_tokens_wit…  │ … │ first_num_in_addre…  │ gamma_first_num_in…  │ bf_first_num_in_ad…  │    company_name_l    │    company_name_r    │   rarest_tokens_l    │   rarest_tokens_r    │ match_key │ rank  │
+│       double        │       double        │     varchar      │     varchar      │    int64    │    int64    │ struct(token varch…  │ struct(token varch…  │        int32         │        double        │   │       varchar        │        int32         │        double        │       varchar        │       varchar        │      varchar[]       │      varchar[]       │  varchar  │ int64 │
+├─────────────────────┼─────────────────────┼──────────────────┼──────────────────┼─────────────┼─────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼───┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼───────────┼───────┤
+│  21.416127918577743 │  0.9999996426424596 │ stockport        │ z_all_companies  │          80 │      828925 │ [{'token': ACOUSTI…  │ [{'token': ACOUSTI…  │                    5 │    5881782.930380143 │ … │ 316                  │                    1 │   31.128138879477106 │ ACOUSTIC AND ENGIN…  │ ACOUSTIC AND ENGIN…  │ [ACOUSTIC, CONSULT…  │ [ACOUSTIC, CONSULT…  │ 0         │     1 │
+│  21.416127918577743 │  0.9999996426424596 │ stockport        │ z_all_companies  │        2323 │      487414 │ [{'token': LA, 're…  │ [{'token': LA, 're…  │                    5 │    5881782.930380143 │ … │ 29                   │                    1 │   31.128138879477106 │ LA BELLE PRESTIGE …  │ LA BELLE PRESTIGE …  │ [BELLE, LA]          │ [BELLE, LA]          │ 0         │     1 │
+│  21.416127918577743 │  0.9999996426424596 │ stockport        │ z_all_companies  │        1928 │       33589 │ [{'token': HM, 're…  │ [{'token': HM, 're…  │                    5 │    5881782.930380143 │ … │ 27                   │                    1 │   31.128138879477106 │ HM ATKINS CLOTHING…  │ HM ATKINS CLOTHING…  │ [ATKINS, HM]         │ [ATKINS, HM]         │ 0         │     1 │
+│  21.416127918577743 │  0.9999996426424596 │ stockport        │ z_all_companies  │         643 │      686474 │ [{'token': BURTON,…  │ [{'token': BURTON,…  │                    5 │    5881782.930380143 │ … │                      │                    1 │   31.128138879477106 │ BURTON ROOFING MER…  │ BURTON ROOFING MER…  │ [MERCHANTS, BURTON]  │ [MERCHANTS, BURTON]  │ 0         │     1 │
+│  21.416127918577743 │  0.9999996426424596 │ stockport        │ z_all_companies  │          58 │      599776 │ [{'token': ABCETA,…  │ [{'token': ABCETA,…  │                    5 │    5881782.930380143 │ … │ 19                   │                    1 │   31.128138879477106 │ ABCETA PLAYTHINGS …  │ ABCETA PLAYTHINGS …  │ [ABCETA, PLAYTHINGS] │ [ABCETA, PLAYTHINGS] │ 0         │     1 │
+│           ·         │           ·         │     ·            │        ·         │           · │         ·   │          ·           │          ·           │                    · │            ·         │ · │ ·                    │                    · │            ·         │          ·           │          ·           │         ·            │         ·            │ ·         │     · │
+│           ·         │           ·         │     ·            │        ·         │           · │         ·   │          ·           │          ·           │                    · │            ·         │ · │ ·                    │                    · │            ·         │          ·           │          ·           │         ·            │         ·            │ ·         │     · │
+│           ·         │           ·         │     ·            │        ·         │           · │         ·   │          ·           │          ·           │                    · │            ·         │ · │ ·                    │                    · │            ·         │          ·           │          ·           │         ·            │         ·            │ ·         │     · │
+│ -3.4705625254057795 │ 0.08274585730410321 │ stockport        │ z_all_companies  │        3079 │      355661 │ [{'token': PERPETU…  │ [{'token': PERPETU…  │                    5 │    5881782.930380143 │ … │                      │                    0 │  0.05157398705697865 │ PERPETUAL WATCH SE…  │ PERPETUAL WATCH SE…  │ [PERPETUAL, WATCH]   │ [PERPETUAL, WATCH]   │ 4         │     1 │
+│  -4.644182870808291 │ 0.03845316514889586 │ stockport        │ z_all_companies  │        2140 │      634191 │ [{'token': JAMES, …  │ [{'token': JAMES, …  │                    2 │   270.89098005456975 │ … │ 4                    │                    1 │   31.128138879477106 │ JAMES RETAIL LIMITED │ JAMES RETAIL SOHAM…  │ [JAMES, RETAIL]      │ [SOHAM, JAMES]       │ 2         │     1 │
+│  -4.644182870808291 │ 0.03845316514889586 │ stockport        │ z_all_companies  │        3986 │     1036621 │ [{'token': TGL, 'r…  │ [{'token': TGL, 'r…  │                    2 │   270.89098005456975 │ … │                      │                    1 │   31.128138879477106 │ TGL SOLUTIONS LTD    │ TGL SOLUTIONS LIMI…  │ [TGL, SOLUTIONS]     │ [TGL, SOLUTIONS]     │ 1         │     1 │
+│  -4.644182870808291 │ 0.03845316514889586 │ stockport        │ z_all_companies  │        1230 │      617874 │ [{'token': DOM, 'r…  │ [{'token': DOM, 'r…  │                    2 │   270.89098005456975 │ … │ 26                   │                    1 │   31.128138879477106 │ DOM PROPERTIES LTD   │ DOM PROPERTIES LIM…  │ [DOM, PROPERTIES]    │ [DOM, PROPERTIES]    │ 1         │     1 │
+│  -4.644182870808291 │ 0.03845316514889586 │ stockport        │ z_all_companies  │        3657 │      508179 │ [{'token': SIMULAT…  │ [{'token': SIMULAT…  │                    2 │   270.89098005456975 │ … │ 10                   │                    1 │   31.128138879477106 │ SIMULATION SOLUTIO…  │ SIMULATION SOLUTIO…  │ [SIMULATION, SOLUT…  │ [SIMULATION, SOLUT…  │ 1         │     1 │
+├─────────────────────┴─────────────────────┴──────────────────┴──────────────────┴─────────────┴─────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴───┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴───────────┴───────┤
+│ 2757 rows (10 shown)                                                                                                                                                                                                                                                                                                                                                       24 columns (19 shown) │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<div class="highlight"><pre><span></span><code><span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">CREATE OR REPLACE TABLE comparison AS</span>
+<span class="s2">select * from ranked_matches</span>
+<span class="s2">where company_name_l != company_name_r</span>
+<span class="s2">order by random()</span>
+<span class="s2">limit 1</span>
+<span class="s2">"""</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">SELECT match_probability, COLUMNS('^(t[^f_].*|b[^f_].*|[^tb].*_l)$') AS '</span><span class="se">\\</span><span class="s2">1'</span>
+<span class="s2">FROM comparison</span>
+<span class="s2">UNION ALL</span>
+<span class="s2">SELECT match_probability, COLUMNS('^(t[^f_].*|b[^f_].*|[^tb].*_r)$') AS '</span><span class="se">\\</span><span class="s2">1'</span>
+<span class="s2">FROM comparison;</span>
+<span class="s2">"""</span>
+<span class="n">duckdb</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="n">recs</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s2">"comparison"</span><span class="p">)</span><span class="o">.</span><span class="n">df</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">"records"</span><span class="p">)</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">visualisations</span><span class="o">.</span><span class="n">waterfall_chart</span><span class="p">(</span><span class="n">recs</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>┌────────────────────┬──────────────────┬─────────────┬─────────────────────────────────────────────────┬────────────┬────────────────────────┬────────────────────────────────┬───────────────────────┐
+│ match_probability  │ source_dataset_l │ unique_id_l │             name_tokens_with_freq_l             │ postcode_l │ first_num_in_address_l │         company_name_l         │    rarest_tokens_l    │
+│       double       │     varchar      │    int64    │     struct(token varchar, rel_freq float)[]     │  varchar   │        varchar         │            varchar             │       varchar[]       │
+├────────────────────┼──────────────────┼─────────────┼─────────────────────────────────────────────────┼────────────┼────────────────────────┼────────────────────────────────┼───────────────────────┤
+│ 0.9998652868923441 │ stockport        │         872 │ [{'token': CLARITAS, 'rel_freq': 1.9255674e-0…  │ SK4 4DT    │ 10                     │ CLARITAS WEALTH MANAGMENT LTD  │ [CLARITAS, MANAGMENT] │
+│ 0.9998652868923441 │ z_all_companies  │      537567 │ [{'token': CLARITAS, 'rel_freq': 1.9255674e-0…  │ SK4 4DT    │ 10                     │ CLARITAS WEALTH MANAGEMENT LTD │ [CLARITAS, WEALTH]    │
+└────────────────────┴──────────────────┴─────────────┴─────────────────────────────────────────────────┴────────────┴────────────────────────┴────────────────────────────────┴───────────────────────┘
+</code></pre>
+<p><img alt="png" src="output_17_1.png"></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">altair</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">alt</span>
+<span class="c1"># Plot histogram of match weights</span>
+
+<span class="c1"># This list does not include any stockport records where no comparison pairs were made</span>
+<span class="c1"># because blocking rules did not find any potential matches</span>
+
+<span class="c1"># Add in unmatched records</span>
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">WITH matched_stockport_ids as (</span>
+<span class="s2">    select distinct unique_id_l</span>
+<span class="s2">    from ranked_matches</span>
+<span class="s2">)</span>
+<span class="s2">select</span>
+<span class="s2">    -10 as match_weight,</span>
+<span class="s2">    0.0 as match_probability,</span>
+<span class="s2">from data_for_matching t</span>
+<span class="s2">where t.source_dataset = 'stockport'</span>
+<span class="s2">and t.unique_id not in (select unique_id_l from matched_stockport_ids)</span>
+<span class="s2">"""</span>
+
+<span class="n">unmatched_records</span> <span class="o">=</span> <span class="n">duckdb</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+<span class="n">unmatched_records</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">max_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+
+
+<span class="n">sql</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">select match_probability, match_weight from ranked_matches</span>
+<span class="s2">union all</span>
+<span class="s2">select match_probability, match_weight from unmatched_records</span>
+<span class="s2">order by match_probability desc</span>
+<span class="s2">"""</span>
+
+<span class="n">all_records</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+<span class="c1"># Create the histogram</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">all_records</span><span class="o">.</span><span class="n">df</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"match_weight:Q"</span><span class="p">,</span> <span class="nb">bin</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Bin</span><span class="p">(</span><span class="n">maxbins</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Match Weight"</span><span class="p">),</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">"count():Q"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Distribution of Match Probabilities"</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Save the chart</span>
+<span class="n">chart</span>
+</code></pre></div>
+<pre><code>┌──────────────┬───────────────────┐
+│ match_weight │ match_probability │
+│    int32     │   decimal(2,1)    │
+├──────────────┼───────────────────┤
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│           ·  │                ·  │
+│           ·  │                ·  │
+│           ·  │                ·  │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+│          -10 │               0.0 │
+├──────────────┴───────────────────┤
+│ 1783 rows (10 shown)   2 columns │
+└──────────────────────────────────┘
+</code></pre>
+<p><img alt="png" src="output_18_1.png"></p>
+<h2 id="extensions-and-final-notes">Extensions and final notes<a class="headerlink" href="#extensions-and-final-notes" title="Permanent link">¶</a></h2>
+<p>When running this against the full companies house data rather than the small subset here, the number of unmatched records (the bar on the left hand side of the histogram) reduces to about 890 records.</p>
+<p>There are a number of ways the accuracy of this example could be improved:</p>
+<ul>
+<li>Additional data cleaning, e.g. dealing better with company names like A B C Engineering vs ABC engineering, or translating word aliases like LTD to LIMITED</li>
+<li>A more sophisticated approach to tokenisation</li>
+<li>Blocking could be improved in various ways, e.g. by blocking on address tokens, using more 'rare' tokens, using partial postcodes better and so on</li>
+<li>Allowing fuzzy matching on tokens in the company name, not just full token matching</li>
+</ul></div>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../duckdb/transactions.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Linking financial transactions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Linking financial transactions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../duckdb/link_only.html" class="md-footer__link md-footer__link--next" aria-label="Next: Linking two tables of persons">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Linking two tables of persons
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/moj-analytical-services/splink" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/splink/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6zM286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3zM167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4zm-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.robinlinacre.com/" target="_blank" rel="noopener" title="www.robinlinacre.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://moj-analytical-services.github.io/splink/feed_rss_created.xml" target="_blank" rel="noopener" title="moj-analytical-services.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zm0 352a64 64 0 1 1 128 0 64 64 0 1 1-128 0zm32-256c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "content.tooltips", "header.autohide", "search.highlight", "search.share", "search.suggest", "navigation.indexes", "navigation.footer", "content.action.edit", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "toc.follow"], "search": "../../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+        <script src="../../../js/mkdocs-charts-plugin.js"></script>
+      
+        <script src="../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+      
+    
+  </body>
+</html>
