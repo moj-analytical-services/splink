@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Union
 
 
-def format_text_as_red(text):
+def format_text_as_red(text: str) -> str:
     return f"\033[91m{text}\033[0m"
 
 
@@ -25,7 +25,7 @@ class MissingDependencyException(Exception):
 
 
 class ComparisonSettingsException(SplinkException):
-    def __init__(self, message=""):
+    def __init__(self, message: str = "") -> None:
         # Add the default message to the beginning of the provided message
         full_message = "Errors were detected in your settings object's comparisons"
 

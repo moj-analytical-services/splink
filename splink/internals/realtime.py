@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
@@ -15,8 +15,8 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 
 
 class SQLCache:
-    def __init__(self):
-        self._cache = {}
+    def __init__(self) -> None:
+        self._cache: dict[str, tuple[str, str]] = {}
 
     def get(
         self,
@@ -24,18 +24,18 @@ class SQLCache:
         new_uid: str,
     ) -> str | None:
         sql, cached_uid = self._cache.get(cache_key, (None, None))
-        if cached_uid:
-            sql = sql.replace(cached_uid, new_uid)
+        if cached_uid is not None:
+            # sql will always be a str if cached_id is (and thus not None)
+            sql = cast(str, sql).replace(cached_uid, new_uid)
         return sql
 
     def set(
         self,
         cache_key: str,
-        sql: str | None,
-        uid: str | None,
+        sql: str,
+        uid: str,
     ) -> None:
-        if sql is not None:
-            self._cache[cache_key] = (sql, uid)
+        self._cache[cache_key] = (sql, uid)
 
 
 _sql_cache = SQLCache()
