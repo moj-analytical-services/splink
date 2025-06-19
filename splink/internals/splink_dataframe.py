@@ -38,8 +38,8 @@ class SplinkDataFrame(ABC):
         self.sql_used_to_create: str = ""
         self.metadata = metadata or {}
 
-    @abstractmethod
     @property
+    @abstractmethod
     def columns(self) -> list[InputColumn]:
         pass
 
