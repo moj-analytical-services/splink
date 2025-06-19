@@ -314,7 +314,7 @@ def _get_cluster_stats_sql(cc: SplinkDataFrame) -> list[dict[str, str]]:
     return sqls
 
 
-def _threshold_to_weight_for_table(p):
+def _threshold_to_weight_for_table(p: float) -> str:
     if p == 0 or p == 1:
         return "NULL"
     else:

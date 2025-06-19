@@ -67,7 +67,9 @@ class LevenshteinAtThresholds(ComparisonCreator):
                 Defaults to [1, 2].
         """
 
-        thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
+        thresholds_as_iterable: Iterable[int] = ensure_is_iterable(
+            distance_threshold_or_thresholds
+        )
         # unpack it to a list so we can repeat iteration if needed
         self.thresholds = [*thresholds_as_iterable]
         super().__init__(col_name)

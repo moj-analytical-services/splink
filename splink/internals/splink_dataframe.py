@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -35,10 +35,11 @@ class SplinkDataFrame(ABC):
         self.db_api = db_api
         self._target_schema = "splink"
         self.created_by_splink = False
-        self.sql_used_to_create: str | None = None
+        self.sql_used_to_create: str = ""
         self.metadata = metadata or {}
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def columns(self) -> list[InputColumn]:
         pass
 

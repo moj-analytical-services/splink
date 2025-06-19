@@ -91,9 +91,11 @@ class LinkerTraining:
                 f"and no more than 1. Supplied value {recall}."
             ) from None
 
-        deterministic_matching_rules = ensure_is_iterable(deterministic_matching_rules)
+        deterministic_matching_rules_list: list[str | BlockingRuleCreator] = (
+            ensure_is_iterable(deterministic_matching_rules)
+        )
         blocking_rules: List[BlockingRule] = []
-        for br in deterministic_matching_rules:
+        for br in deterministic_matching_rules_list:
             blocking_rules.append(
                 to_blocking_rule_creator(br).get_blocking_rule(
                     self._linker._db_api.sql_dialect.sql_dialect_str
