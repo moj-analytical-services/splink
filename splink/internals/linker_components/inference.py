@@ -520,7 +520,9 @@ class LinkerInference:
         )
         original_link_type = self._linker._settings_obj._link_type
 
-        blocking_rule_list = ensure_is_list(blocking_rules)
+        blocking_rule_list: list[BlockingRuleCreator | dict[str, Any] | str] = (
+            ensure_is_list(blocking_rules)
+        )
 
         if not isinstance(records_or_tablename, str):
             uid = ascii_uid(8)
@@ -543,17 +545,17 @@ class LinkerInference:
         if len(blocking_rule_list) == 0:
             blocking_rule_list = ["1=1"]
 
-        blocking_rule_list = [
+        blocking_rules_dialected = [
             to_blocking_rule_creator(br).get_blocking_rule(
                 self._linker._db_api.sql_dialect.sql_dialect_str
             )
             for br in blocking_rule_list
         ]
-        for n, br in enumerate(blocking_rule_list):
-            br.add_preceding_rules(blocking_rule_list[:n])
+        for n, br in enumerate(blocking_rules_dialected):
+            br.add_preceding_rules(blocking_rules_dialected[:n])
 
         self._linker._settings_obj._blocking_rules_to_generate_predictions = (
-            blocking_rule_list
+            blocking_rules_dialected
         )
 
         pipeline = add_unique_id_and_source_dataset_cols_if_needed(
@@ -567,7 +569,7 @@ class LinkerInference:
         sqls = block_using_rules_sqls(
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_new_records_uid_fix",
-            blocking_rules=blocking_rule_list,
+            blocking_rules=blocking_rules_dialected,
             link_type="two_dataset_link_only",
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,

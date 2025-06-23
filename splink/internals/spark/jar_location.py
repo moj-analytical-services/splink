@@ -13,7 +13,7 @@ def _spark_version_3_or_above_installed() -> bool:
     return version.parse(spark.__version__) >= version.parse("3.0")
 
 
-def similarity_jar_location():
+def similarity_jar_location() -> str:
     import splink
 
     if _spark_version_3_or_above_installed():

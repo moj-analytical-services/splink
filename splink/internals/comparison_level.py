@@ -79,7 +79,7 @@ def _default_m_values(num_levels: int) -> list[float]:
 def _default_u_values(num_levels: int) -> list[float]:
     m_vals = _default_m_values(num_levels)
     if num_levels == 2:
-        match_weights = [-5]
+        match_weights: list[float] = [-5]
     else:
         match_weights = interpolate(-5, 3, num_levels - 1)
     match_weights = match_weights + [10]
