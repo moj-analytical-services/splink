@@ -50,7 +50,7 @@ class CTEPipeline:
         self.queue: List[CTE] = []
 
         if input_dataframes is None:
-            self.input_dataframes = []
+            self.input_dataframes: list[SplinkDataFrame] = []
         else:
             self.input_dataframes = ensure_is_list(input_dataframes)
 

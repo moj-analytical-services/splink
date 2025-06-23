@@ -7,40 +7,50 @@ import string
 from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
-from typing import Iterable
+from typing import Iterable, TypeVar, overload
 
 import numpy as np
 
+T = TypeVar("T")
 
-def dedupe_preserving_order(list_of_items):
+
+def dedupe_preserving_order(list_of_items: list[T]) -> list[T]:
     return list(dict.fromkeys(list_of_items))
 
 
-def prob_to_bayes_factor(prob):
+def prob_to_bayes_factor(prob: float) -> float:
     return prob / (1 - prob) if prob != 1 else inf
 
 
-def prob_to_match_weight(prob):
+def prob_to_match_weight(prob: float) -> float:
     return log2(prob_to_bayes_factor(prob))
 
 
-def match_weight_to_bayes_factor(weight):
+def match_weight_to_bayes_factor(weight: float) -> float:
     return 2**weight
 
 
-def bayes_factor_to_prob(bf):
+def bayes_factor_to_prob(bf: float) -> float:
     return bf / (1 + bf)
 
 
-def interpolate(start, end, num_elements):
+def interpolate(start: float, end: float, num_elements: int) -> list[float]:
     steps = num_elements - 1
     step = (end - start) / steps
     vals = [start + (i * step) for i in range(0, num_elements)]
     return vals
 
 
-def normalise(vals):
-    return [v / sum(vals) for v in vals]
+@overload
+def ensure_is_iterable(a: str) -> list[str]: ...
+
+
+@overload
+def ensure_is_iterable(a: list[T]) -> list[T]: ...
+
+
+@overload
+def ensure_is_iterable(a: Iterable[T] | T) -> Iterable[T]: ...
 
 
 def ensure_is_iterable(a):
@@ -49,20 +59,11 @@ def ensure_is_iterable(a):
     return a if isinstance(a, Iterable) else [a]
 
 
-def ensure_is_list(a):
+def ensure_is_list(a: list[T] | T) -> list[T]:
     return a if isinstance(a, list) else [a]
 
 
-def ensure_is_tuple(a):
-    if isinstance(a, tuple):
-        return a
-    elif isinstance(a, list):
-        return tuple(a)
-    else:
-        return (a,)
-
-
-def join_list_with_commas_final_and(lst):
+def join_list_with_commas_final_and(lst: list[str]) -> str:
     if len(lst) == 1:
         return lst[0]
     return ", ".join(lst[:-1]) + " and " + lst[-1]
@@ -133,17 +134,19 @@ def calculate_cartesian(df_rows, link_type):
     )
 
 
-def major_minor_version_greater_equal_than(this_version, base_comparison_version):
-    this_version = this_version.split(".")[:2]
-    this_version = [v.zfill(10) for v in this_version]
+def major_minor_version_greater_equal_than(
+    this_version: str, base_comparison_version: str
+) -> bool:
+    this_version_parts = this_version.split(".")[:2]
+    this_version_parts = [v.zfill(10) for v in this_version]
 
-    base_version = base_comparison_version.split(".")[:2]
-    base_version = [v.zfill(10) for v in base_version]
+    base_version_parts = base_comparison_version.split(".")[:2]
+    base_version_parts = [v.zfill(10) for v in base_version_parts]
 
-    return this_version >= base_version
+    return this_version_parts >= base_version_parts
 
 
-def ascii_uid(len):
+def ascii_uid(len: int) -> str:
     # use only lowercase as case-sensitivity is an issue in e.g. postgres
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=len))
 

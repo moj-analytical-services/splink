@@ -312,7 +312,7 @@ class InputColumn:
         return f"{self.__class__.__name__}\n({self.col_builder.__repr__()}\n)"
 
 
-def _get_dialect_quotes(dialect):
+def _get_dialect_quotes(dialect: str | None) -> tuple[str, str]:
     """
     Returns the appropriate quotation marks for identifiers based on the SQL dialect.
 
