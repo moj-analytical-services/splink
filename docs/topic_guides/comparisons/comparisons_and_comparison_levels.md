@@ -78,7 +78,7 @@ Data Linking Model
 
 In this model we have two `Comparison`s: one for date of birth and one for first name:
 
-For data of birth, we have chosen three discrete `ComparisonLevel`s to measure similarity.  Either the dates of birth are an exact match, they differ by one character, or they are different in some other way.
+For date of birth, we have chosen three discrete `ComparisonLevel`s to measure similarity.  Either the dates of birth are an exact match, they differ by one character, or they are different in some other way.
 
 For first name, we have chosen four discrete `ComparisonLevel`s to measure similarity.  Either the first names are an exact match, they have a JaroWinkler similarity of greater than 0.95, they have a JaroWinkler similarity of greater than 0.8, or they are different in some other way.
 
