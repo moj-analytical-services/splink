@@ -107,7 +107,6 @@ For more detailed tutorial, please see [here](https://moj-analytical-services.gi
 
 ```py
 import splink.comparison_library as cl
-import splink.comparison_template_library as ctl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 
 db_api = DuckDBAPI()
@@ -119,14 +118,14 @@ settings = SettingsCreator(
     comparisons=[
         cl.JaroWinklerAtThresholds("first_name", [0.9, 0.7]),
         cl.JaroAtThresholds("surname", [0.9, 0.7]),
-        ctl.DateComparison(
+        cl.DateOfBirthComparison(
             "dob",
             input_is_string=True,
             datetime_metrics=["year", "month"],
             datetime_thresholds=[1, 1],
         ),
         cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-        ctl.EmailComparison("email"),
+        cl.EmailComparison("email"),
     ],
     blocking_rules_to_generate_predictions=[
         block_on("first_name"),
