@@ -81,6 +81,7 @@ Here is a list of some of our known users and their use cases:
 	- [Homes England](https://www.gov.uk/government/organisations/homes-england) has been working with the new developed Splink address matching version. We have succesfully tested and checked the linkage between Land Registry Price Paid dataset and the new Ordnance Survey National Geographical Dataset (NGD) but adddresses. The current linkage performs around 30 Million records in less than 5 hours with a high accuracy in a Databricks environment. This is helping Homes England with a vital component to identify and monitor new builds that will contribute to the 1.5 M homes mandate.
 	- The [Department for Business and Trade](https://www.gov.uk/government/organisations/department-for-business-and-trade) plans to use Splink as part of [Matchbox](https://github.com/uktrade/matchbox) to reconcile business and product data for both analytical and operational use
  	- The [Welsh Revenue Authority](https://www.gov.wales/welsh-revenue-authority) uses Splink in multiple linkage workflows to identify links in their own data, as well as to third party data for operational support in ensuring a fair tax system for Wales.
+	- Richmond Council and Wandsworth Council are using Splink to match residents’ records across systems to create unified records and a single view of debt.
 
 === "Public Sector (International)"
 
