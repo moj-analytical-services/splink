@@ -19,7 +19,7 @@ Blocking Rules for Model Training are used as a parameter in the `estimate_param
 from splink.duckdb.blocking_rule_library import block_on
 
 blocking_rule_for_training = block_on("first_name")
-linker.estimate_parameters_using_expectation_maximisation(
+linker.training.estimate_parameters_using_expectation_maximisation(
     blocking_rule_for_training
 )
 
@@ -33,7 +33,7 @@ Matching only on `first_name` will likely generate a large "block" of pairwise c
 
 from splink.duckdb.blocking_rule_library import block_on
 blocking_rule = block_on(["first_name", "surname"])
-linker.estimate_parameters_using_expectation_maximisation(
+linker.training.estimate_parameters_using_expectation_maximisation(
     blocking_rule_for_training
     )
 
