@@ -663,7 +663,8 @@ class Settings:
                     "behaviour, either: \n - assign a value for "
                     "`probability_two_random_records_match` in your settings dictionary"
                     ", or \n - estimate with the"
-                    " `linker.estimate_probability_two_random_records_match` function."
+                    " `linker.training.estimate_probability_two_random_records_match` "
+                    "function."
                 ]
             )
         return messages

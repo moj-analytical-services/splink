@@ -357,16 +357,16 @@ class LinkerClustering:
         Internal function for computing node-level metrics.
 
         Accepts outputs of `linker.inference.predict()` and
-        `linker.clustering.cluster_pairwise_at_threshold()`, along with the clustering
-        threshold and produces a table of node metrics.
+        `linker.clustering.cluster_pairwise_predictions_at_threshold()`, along with
+        the clustering threshold and produces a table of node metrics.
 
         Node metrics produced:
         * node_degree (absolute number of neighbouring nodes)
         * node_centralisation (proportion of neighbours wrt maximum possible number)
 
         Output table has a single row per input node, along with the cluster id (as
-        assigned in `linker.cluster_pairwise_at_threshold()`) and the metrics
-        node_degree and node_centralisation:
+        assigned in `linker.clustering.cluster_pairwise_predictions_at_threshold()`) and
+        the metrics node_degree and node_centralisation:
 
         |-----------------------------------------------------------------------|
         | composite_unique_id | cluster_id  | node_degree | node_centralisation |

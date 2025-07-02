@@ -9,7 +9,7 @@ toc_depth: 2
 
 When Splink returns results, it does so in the format of a `SplinkDataFrame`.   This is needed to allow Splink to provide results in a uniform format across the different [database backends](../splink_fundamentals/backends/backends.md)
 
-For example, when you run `df_predict = linker.predict()`, the result `df_predict` is a `SplinkDataFrame`.
+For example, when you run `df_predict = linker.inference.predict()`, the result `df_predict` is a `SplinkDataFrame`.
 
 A `SplinkDataFrame` is an abstraction of a table in the underlying backend database, and provides several convenience methods for interacting with the underlying table.
 For detailed information check [the full API](../../api_docs/splink_dataframe.md).
@@ -34,7 +34,7 @@ The following is an example of this approach, in which we use SQL to find the be
 
 ```python
 # linker is a Linker with link_type set to "link_only"
-df_predict = linker.predict(threshold_match_probability=0.75)
+df_predict = linker.inference.predict(threshold_match_probability=0.75)
 
 sql = f"""
 with ranked as
