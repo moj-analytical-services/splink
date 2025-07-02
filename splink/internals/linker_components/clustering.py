@@ -56,7 +56,7 @@ class LinkerClustering:
         the same entity).
 
         Args:
-            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_predict (SplinkDataFrame): The results of `linker.inference.predict()`
             threshold_match_probability (float, optional): Pairwise comparisons with a
                 `match_probability` at or above this threshold are matched
             threshold_match_weight (float, optional): Pairwise comparisons with a
@@ -200,7 +200,7 @@ class LinkerClustering:
         `duplicate_free_datasets`.
 
         Args:
-            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_predict (SplinkDataFrame): The results of `linker.inference.predict()`
             duplicate_free_datasets: (List[str]): The source datasets which should be
                 treated as having no duplicates. Clusters will not form with more than
                 one record from each of these datasets. This can be a subset of all of
@@ -454,7 +454,7 @@ class LinkerClustering:
         Internal function for computing cluster-level metrics.
 
         Accepts output of `linker._compute_node_metrics()` (which has the relevant
-        information from `linker.predict() and
+        information from `linker.inference.predict()` and
         `linker.clustering.cluster_pairwise_at_threshold()`), produces a table of
         cluster metrics.
 

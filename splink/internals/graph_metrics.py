@@ -40,7 +40,7 @@ def _node_degree_centralisation_sql(
     This is includes nodes with no edges, as identified via the clusters table.
 
     Args:
-        df_predict (SplinkDataFrame): The results of `linker.predict()`.
+        df_predict (SplinkDataFrame): The results of `linker.inference.predict()`.
         df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`.
         composite_uid_edges_l (str): unique id for left-hand edges.
