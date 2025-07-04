@@ -1,4 +1,3 @@
-# reusable_function_detection.py
 from __future__ import annotations
 
 from collections import Counter
@@ -15,28 +14,36 @@ def _find_repeated_functions(
     Detect function sub-expressions that are used more than once inside CASE
     expressions and rewrite the columns so they refer to computed aliases.
 
-    Returns
+    Example
     -------
-    repeated_functions : list of {"function_sql": str, "alias": str}
-        One entry per *root* duplicate function, in deterministic order.
-    modified_columns   : list[str]
-        The input columns, with duplicates replaced by their alias.
+    >>> sql = "CASE WHEN foo(a) > 0.5 THEN 2 WHEN foo(a) > 0.2 THEN 1 ELSE 0 END"
+    >>> repeated, modified = _find_repeated_functions([sql], "duckdb")
+    >>> repeated
+    [{'function_sql': 'foo(a)', 'alias': 'rf_1'}]
+    >>> modified
+    ["CASE WHEN rf_1 > 0.5 THEN 2 WHEN rf_1 > 0.2 THEN 1 ELSE 0 END"]
     """
-    # --- 1. Parse only the CASE expressions ---------------------------------
+
     case_asts = [
         parse_one(col, read=sqlglot_dialect)
         for col in columns_to_select_for_comparison_vector_values
         if col.lstrip().upper().startswith("CASE")
     ]
 
-    # --- 2. Count every function node across all CASEs ----------------------
     func_counts: Counter[exp.Expression] = Counter()
     for ast in case_asts:
         func_counts.update(fn for fn in ast.find_all(exp.Func))
 
+    # Func counts looks for whether there are multiple identical nodes in the tree
+    # and count them like:
+    #  case when ... count:1
+    #  jaro(...)     count:4
+    # this leverages the fact that the __hash__ of a node allows an __eq__ comparison
+    # and hence we can use a simple counter to find duplicate nodes
+
     repeated: set[exp.Expression] = {fn for fn, c in func_counts.items() if c > 1}
 
-    # --- 3. Keep only the *root* duplicates (not nested inside another dup) --
+    # Keep only the root duplicates (not nested inside another dup)
     def is_nested_in_repeated(fn: exp.Func) -> bool:
         parent = fn.parent
         while parent:
@@ -45,6 +52,8 @@ def _find_repeated_functions(
             parent = parent.parent
         return False
 
+    # This is just for human readibility - it means the name rf_1 reliably
+    # corresponds to the first duplicate function seen in the sql and so on
     roots_in_order: list[exp.Func] = []
     seen: set[exp.Expression] = set()  # protect against re-adding same struct
     for ast in case_asts:
@@ -53,7 +62,6 @@ def _find_repeated_functions(
                 roots_in_order.append(fn)
                 seen.add(fn)
 
-    # --- 4. Give each root an alias -----------------------------------------
     var_mapping: Dict[exp.Expression, str] = {}
     repeated_functions: list[dict[str, str]] = []
 
@@ -67,13 +75,15 @@ def _find_repeated_functions(
             }
         )
 
-    # --- 5. Replace in every CASE AST ---------------------------------------
     def _replace(node: exp.Expression) -> exp.Expression:
         # Only root duplicates are in var_mapping
         if isinstance(node, exp.Func) and node in var_mapping:
             return exp.to_identifier(var_mapping[node])
         return node
 
+    # Modified columns is the old case statements with the repeated
+    # functions replaced by their aliases (i.e. rf_1, rf_2 etc)
+    # which will have been calculated at the previous step
     modified_columns: list[str] = []
     for col in columns_to_select_for_comparison_vector_values:
         if col.lstrip().upper().startswith("CASE"):
@@ -89,7 +99,9 @@ def _find_repeated_functions(
 
 def _build_reusable_functions_sql(repeated_functions: List[Dict[str, str]]) -> str:
     """
-    Build a CTE that adds all reusable columns to `blocked_with_cols`.
+    Build a CTE that selects *, repeated_functions from the `blocked_with_cols` table
+    i.e. it 'precomputes' any repeated functions so they can be used at the next
+    step of the CTE chain
     """
     if not repeated_functions:
         return "SELECT * FROM blocked_with_cols"
