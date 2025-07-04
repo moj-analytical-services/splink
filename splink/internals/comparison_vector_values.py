@@ -4,6 +4,10 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.reusable_function_detection import (
+    _build_reusable_functions_sql,
+    _find_repeated_functions,
+)
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
@@ -43,6 +47,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     include_clerical_match_score: bool = False,
+    experimental_optimisation: bool = True,
 ) -> list[dict[str, str]]:
     """Compute the comparison vectors from __splink__blocked_id_pairs, the
     materialised dataframe of blocked pairwise record comparisons.
@@ -51,6 +56,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     for more details of what is meant by comparison vectors.
     """
     sqls = []
+
+    sqlglot_dialect = unique_id_input_column.sqlglot_dialect
 
     if source_dataset_input_column:
         unique_id_columns = [source_dataset_input_column, unique_id_input_column]
@@ -78,17 +85,40 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
-    select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
+    if experimental_optimisation:
+        # Find repeated functions and get modified columns
+        repeated_functions, modified_columns = _find_repeated_functions(
+            columns_to_select_for_comparison_vector_values,
+            sqlglot_dialect=sqlglot_dialect,
+        )
+        reusable_sql = _build_reusable_functions_sql(repeated_functions)
+
+        sqls.append(
+            {
+                "sql": reusable_sql,
+                "output_table_name": "reusable_function_values_optimisation",
+            }
+        )
+
+        # Use modified columns that reference the computed values
+        select_cols_expr = ", \n".join(modified_columns)
+    else:
+        # Use original columns without optimization
+        select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
 
     if include_clerical_match_score:
         clerical_match_score = ", clerical_match_score"
     else:
         clerical_match_score = ""
 
-    # The second table computes the comparison vectors from these aliases
+    if experimental_optimisation:
+        table_select_from = "reusable_function_values_optimisation"
+    else:
+        table_select_from = "blocked_with_cols"
+
     sql = f"""
     select {select_cols_expr} {clerical_match_score}
-    from blocked_with_cols
+    from {table_select_from}
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__df_comparison_vectors"})

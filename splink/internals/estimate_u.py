@@ -64,7 +64,12 @@ def _proportion_sample_size_link_only(
     return proportion, sample_size
 
 
-def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> None:
+def estimate_u_values(
+    linker: Linker,
+    max_pairs: float,
+    seed: int = None,
+    experimental_optimisation: bool = True,
+) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline()
 
@@ -198,6 +203,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         input_tablename_r="__splink__df_concat_sample",
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+        experimental_optimisation=experimental_optimisation,
     )
 
     pipeline.enqueue_list_of_sqls(sqls)
