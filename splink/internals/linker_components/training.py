@@ -123,7 +123,7 @@ class LinkerTraining:
                 f"Deterministic matching rules led to more "
                 f"observed matches than is consistent with supplied recall. "
                 f"With these rules, recall must be at least "
-                f"{num_observed_matches/num_total_comparisons:,.2f}."
+                f"{num_observed_matches / num_total_comparisons:,.2f}."
             )
 
         num_expected_matches = num_observed_matches / recall
@@ -138,7 +138,7 @@ class LinkerTraining:
                 f"If this is truly the case then you do not need "
                 f"to run the linkage model.\n"
                 f"However this is usually in error; "
-                f"expected rules to have recall of {100*recall:,.0f}%. "
+                f"expected rules to have recall of {100 * recall:,.0f}%. "
                 f"Consider revising rules as they may have an error."
             )
         if prob == 1:
@@ -155,7 +155,7 @@ class LinkerTraining:
 
         self._linker._settings_obj._probability_two_random_records_match = prob
 
-        reciprocal_prob = "Infinity" if prob == 0 else f"{1/prob:,.2f}"
+        reciprocal_prob = "Infinity" if prob == 0 else f"{1 / prob:,.2f}"
         logger.info(
             f"Probability two random records match is estimated to be  {prob:.3g}.\n"
             f"This means that amongst all possible pairwise record comparisons, one in "
@@ -169,7 +169,7 @@ class LinkerTraining:
         self,
         max_pairs: float = 1e6,
         seed: int = None,
-        experimental_optimisation: bool = True,
+        experimental_function_reuse_optimisation: bool = True,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -196,8 +196,9 @@ class LinkerTraining:
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for Athena and SQLite set to None.
-            experimental_optimisation (bool): If true, enables experimental SQL
-                optimization that reuses repeated function calls. Defaults to False.
+            experimental_function_reuse_optimisation (bool): If true, enables
+                experimental SQL optimization that reuses repeated function calls.
+                Defaults to False.
 
         Examples:
             ```py
@@ -217,7 +218,9 @@ class LinkerTraining:
                 "result in more accurate estimates, but with a longer run time."
             )
 
-        estimate_u_values(self._linker, max_pairs, seed, experimental_optimisation)
+        estimate_u_values(
+            self._linker, max_pairs, seed, experimental_function_reuse_optimisation
+        )
         self._linker._populate_m_u_from_trained_values()
 
         self._linker._settings_obj._columns_without_estimated_parameters_message()
@@ -230,7 +233,7 @@ class LinkerTraining:
         fix_m_probabilities: bool = False,
         fix_u_probabilities: bool = True,
         populate_probability_two_random_records_match_from_trained_values: bool = False,
-        experimental_optimisation: bool = True,
+        experimental_function_reuse_optimisation: bool = True,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -274,7 +277,7 @@ class LinkerTraining:
             populate_prob... (bool,optional): The full name of this parameter is
                 populate_probability_two_random_records_match_from_trained_values. If
                 True, derive this parameter from the blocked value. Defaults to False.
-            experimental_optimisation (bool): If true, enables experimental SQL
+            experimental_function_reuse_optimisation (bool): If true, enables experimental SQL
                 optimization that reuses repeated function calls. Defaults to False.
 
         Examples:
@@ -316,7 +319,7 @@ class LinkerTraining:
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
-            experimental_optimisation=experimental_optimisation,
+            experimental_function_reuse_optimisation=experimental_function_reuse_optimisation,
         )
 
         core_model_settings = em_training_session._train()

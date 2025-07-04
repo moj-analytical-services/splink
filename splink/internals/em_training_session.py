@@ -57,7 +57,7 @@ class EMTrainingSession:
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
         estimate_without_term_frequencies: bool = False,
-        experimental_optimisation: bool = False,
+        experimental_function_reuse_optimisation: bool = False,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -76,7 +76,9 @@ class EMTrainingSession:
 
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies
-        self.experimental_optimisation = experimental_optimisation
+        self.experimental_function_reuse_optimisation = (
+            experimental_function_reuse_optimisation
+        )
 
         self._comparison_levels_to_reverse_blocking_rule: list[
             ComparisonAndLevelDict
@@ -201,7 +203,7 @@ class EMTrainingSession:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
-            experimental_optimisation=self.experimental_optimisation,
+            experimental_function_reuse_optimisation=self.experimental_function_reuse_optimisation,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)

@@ -68,7 +68,7 @@ def estimate_u_values(
     linker: Linker,
     max_pairs: float,
     seed: int = None,
-    experimental_optimisation: bool = True,
+    experimental_function_reuse_optimisation: bool = False,
 ) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline()
@@ -203,7 +203,7 @@ def estimate_u_values(
         input_tablename_r="__splink__df_concat_sample",
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-        experimental_optimisation=experimental_optimisation,
+        experimental_function_reuse_optimisation=experimental_function_reuse_optimisation,
     )
 
     pipeline.enqueue_list_of_sqls(sqls)

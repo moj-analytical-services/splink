@@ -85,7 +85,7 @@ class Comparison:
             comparison_description or self._default_comparison_description()
         )
 
-        self.experimental_optimisation = True
+        self.experimental_function_reuse_optimisation = False
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels

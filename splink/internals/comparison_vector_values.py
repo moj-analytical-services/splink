@@ -47,7 +47,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     include_clerical_match_score: bool = False,
-    experimental_optimisation: bool = True,
+    experimental_function_reuse_optimisation: bool = False,
 ) -> list[dict[str, str]]:
     """Compute the comparison vectors from __splink__blocked_id_pairs, the
     materialised dataframe of blocked pairwise record comparisons.
@@ -85,7 +85,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
-    if experimental_optimisation:
+    if experimental_function_reuse_optimisation:
         # Find repeated functions and get modified columns
         repeated_functions, modified_columns = _find_repeated_functions(
             columns_to_select_for_comparison_vector_values,
@@ -111,7 +111,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     else:
         clerical_match_score = ""
 
-    if experimental_optimisation:
+    if experimental_function_reuse_optimisation:
         table_select_from = "reusable_function_values_optimisation"
     else:
         table_select_from = "blocked_with_cols"

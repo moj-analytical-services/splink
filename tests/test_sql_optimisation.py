@@ -167,14 +167,14 @@ def test_optimisation_with_custom_comparison():
     db_api_1 = DuckDBAPI(connection=con)
     linker_no_opt = Linker(df, settings, db_api=db_api_1)
     df_no_opt = linker_no_opt.inference.predict(
-        experimental_optimisation=False
+        experimental_function_reuse_optimisation=False
     ).as_pandas_dataframe()
 
     # Run with optimization
     db_api_2 = DuckDBAPI(connection=con)
     linker_opt = Linker(df, settings, db_api=db_api_2)
     df_opt = linker_opt.inference.predict(
-        experimental_optimisation=True
+        experimental_function_reuse_optimisation=True
     ).as_pandas_dataframe()
 
     assert (
@@ -211,24 +211,24 @@ def test_optimisation_with_em_training(test_helpers, dialect):
 
     linker_no_opt = Linker(df, settings, **helper.extra_linker_args())
     linker_no_opt.training.estimate_u_using_random_sampling(
-        max_pairs=1e3, experimental_optimisation=False
+        max_pairs=1e3, experimental_function_reuse_optimisation=False
     )
     linker_no_opt.training.estimate_parameters_using_expectation_maximisation(
-        block_on("surname"), experimental_optimisation=False
+        block_on("surname"), experimental_function_reuse_optimisation=False
     )
     df_no_opt = linker_no_opt.inference.predict(
-        experimental_optimisation=False
+        experimental_function_reuse_optimisation=False
     ).as_pandas_dataframe()
 
     linker_opt = Linker(df, settings, **helper.extra_linker_args())
     linker_opt.training.estimate_u_using_random_sampling(
-        max_pairs=1e3, experimental_optimisation=True
+        max_pairs=1e3, experimental_function_reuse_optimisation=True
     )
     linker_opt.training.estimate_parameters_using_expectation_maximisation(
-        block_on("surname"), experimental_optimisation=True
+        block_on("surname"), experimental_function_reuse_optimisation=True
     )
     df_opt = linker_opt.inference.predict(
-        experimental_optimisation=True
+        experimental_function_reuse_optimisation=True
     ).as_pandas_dataframe()
 
     assert (
@@ -338,13 +338,13 @@ def test_optimisation_with_multiple_complex_comparisons():
             cll.NullLevel("name_tokens_with_freq"),
             {
                 "sql_condition": f"""
-                    {calculate_tf_product_array_sql('name_tokens_with_freq')} < 1e-12
+                    {calculate_tf_product_array_sql("name_tokens_with_freq")} < 1e-12
                 """,
                 "label_for_charts": "Array product is less than 1e-12",
             },
             {
                 "sql_condition": f"""
-                    {calculate_tf_product_array_sql('name_tokens_with_freq')} < 1e-8
+                    {calculate_tf_product_array_sql("name_tokens_with_freq")} < 1e-8
                 """,
                 "label_for_charts": "Array product is less than 1e-8",
             },
@@ -405,15 +405,15 @@ def test_optimisation_with_multiple_complex_comparisons():
 
     # Train the model
     linker.training.estimate_u_using_random_sampling(
-        max_pairs=10000, experimental_optimisation=True
+        max_pairs=10000, experimental_function_reuse_optimisation=True
     )
     linker.training.estimate_parameters_using_expectation_maximisation(
-        block_on("surname"), experimental_optimisation=True
+        block_on("surname"), experimental_function_reuse_optimisation=True
     )
 
     # Get predictions
     predictions_df = linker.inference.predict(
-        experimental_optimisation=True
+        experimental_function_reuse_optimisation=True
     ).as_pandas_dataframe()
 
     # This was calculated on master branch prior to the optimisation
