@@ -123,7 +123,7 @@ class LinkerTraining:
                 f"Deterministic matching rules led to more "
                 f"observed matches than is consistent with supplied recall. "
                 f"With these rules, recall must be at least "
-                f"{num_observed_matches / num_total_comparisons:,.2f}."
+                f"{num_observed_matches/num_total_comparisons:,.2f}."
             )
 
         num_expected_matches = num_observed_matches / recall
@@ -138,7 +138,7 @@ class LinkerTraining:
                 f"If this is truly the case then you do not need "
                 f"to run the linkage model.\n"
                 f"However this is usually in error; "
-                f"expected rules to have recall of {100 * recall:,.0f}%. "
+                f"expected rules to have recall of {100*recall:,.0f}%. "
                 f"Consider revising rules as they may have an error."
             )
         if prob == 1:
@@ -155,7 +155,7 @@ class LinkerTraining:
 
         self._linker._settings_obj._probability_two_random_records_match = prob
 
-        reciprocal_prob = "Infinity" if prob == 0 else f"{1 / prob:,.2f}"
+        reciprocal_prob = "Infinity" if prob == 0 else f"{1/prob:,.2f}"
         logger.info(
             f"Probability two random records match is estimated to be  {prob:.3g}.\n"
             f"This means that amongst all possible pairwise record comparisons, one in "
