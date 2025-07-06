@@ -272,7 +272,6 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-            include_clerical_match_score=False,
             experimental_function_reuse_optimisation=experimental_function_reuse_optimisation,
         )
         pipeline.enqueue_list_of_sqls(sqls)
