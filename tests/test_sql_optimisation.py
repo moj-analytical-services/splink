@@ -482,4 +482,5 @@ def test_optimisation_with_multiple_complex_comparisons():
 
     # This was calculated on master branch prior to the optimisation
     # so this is a check that the new implementation gives exactly the same result
+    # Note estimate u is deterministic because it creates all pairs
     assert pytest.approx(-64.830722) == predictions_df["match_weight"].sum()
