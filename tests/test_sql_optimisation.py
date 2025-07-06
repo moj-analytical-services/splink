@@ -467,10 +467,8 @@ def test_optimisation_with_multiple_complex_comparisons():
         "max_iterations": 2,
     }
 
-    # Set up linker and run predictions
     linker = Linker(df, settings, db_api=DuckDBAPI(connection=con))
 
-    # Train the model
     linker.training.estimate_u_using_random_sampling(
         max_pairs=10000, experimental_function_reuse_optimisation=True
     )
@@ -478,7 +476,6 @@ def test_optimisation_with_multiple_complex_comparisons():
         block_on("surname"), experimental_function_reuse_optimisation=True
     )
 
-    # Get predictions
     predictions_df = linker.inference.predict(
         experimental_function_reuse_optimisation=True
     ).as_pandas_dataframe()
