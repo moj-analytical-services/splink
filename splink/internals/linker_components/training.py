@@ -233,7 +233,7 @@ class LinkerTraining:
         fix_m_probabilities: bool = False,
         fix_u_probabilities: bool = True,
         populate_probability_two_random_records_match_from_trained_values: bool = False,
-        experimental_function_reuse_optimisation: bool = True,
+        experimental_function_reuse_optimisation: bool = False,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
