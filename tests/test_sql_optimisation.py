@@ -121,9 +121,38 @@ def calculate_tf_product_array_sql(token_rel_freq_array_name):
             )
         ),
         (p, q) -> p * q
-    )"""
-    # Removing all newlines and spaces
-    return "".join(sql.split())
+    ) *
+    list_reduce(
+        list_prepend(
+            1.0,
+            list_transform(
+                list_concat(
+                    array_filter(
+                        {token_rel_freq_array_name}_l,
+                        y -> NOT array_contains(
+                            list_transform(
+                                {token_rel_freq_array_name}_r, x -> x.token
+                            ),
+                            y.token
+                        )
+                    ),
+                    array_filter(
+                        {token_rel_freq_array_name}_r,
+                        y -> NOT array_contains(
+                            list_transform(
+                                {token_rel_freq_array_name}_l, x -> x.token
+                            ),
+                            y.token
+                        )
+                    )
+                ),
+                x -> x.rel_freq
+            )
+        ),
+        (p, q) -> p / q^0.33
+    )
+    """
+    return sql
 
 
 @mark_with_dialects_including("duckdb")
@@ -166,20 +195,32 @@ def test_optimisation_with_custom_comparison():
 
     db_api_1 = DuckDBAPI(connection=con)
     linker_no_opt = Linker(df, settings, db_api=db_api_1)
-    df_no_opt = linker_no_opt.inference.predict(
+    df_no_opt_splink = linker_no_opt.inference.predict(
         experimental_function_reuse_optimisation=False
-    ).as_pandas_dataframe()
+    )
+
+    df_no_opt = df_no_opt_splink.as_pandas_dataframe()
+
+    # Check the optimisation was not applied
+    assert (
+        "reusable_function_values_optimisation"
+        not in df_no_opt_splink.sql_used_to_create
+    )
 
     # Run with optimization
     db_api_2 = DuckDBAPI(connection=con)
     linker_opt = Linker(df, settings, db_api=db_api_2)
-    df_opt = linker_opt.inference.predict(
+    df_opt_splink = linker_opt.inference.predict(
         experimental_function_reuse_optimisation=True
-    ).as_pandas_dataframe()
+    )
+    df_opt = df_opt_splink.as_pandas_dataframe()
 
     assert (
         pytest.approx(df_no_opt["match_weight"].sum()) == df_opt["match_weight"].sum()
     )
+
+    # Check the optimisation was applied
+    assert "reusable_function_values_optimisation" in df_opt_splink.sql_used_to_create
 
 
 @mark_with_dialects_excluding("postgres", "sqlite")
@@ -239,16 +280,42 @@ def test_optimisation_with_em_training(test_helpers, dialect):
 def test_find_repeated_functions_nested():
     """Test that _find_repeated_functions only returns outermost repeated functions"""
 
-    # The function we expect to be identified as repeated
+    sql = """CASE
+    WHEN fn1(a, fn2(b, c)) > 0 THEN 1
+    WHEN fn1(a, fn2(b, c)) < 5 THEN 2
+    ELSE 0
+    END"""
+
+    repeated_functions, _ = _find_repeated_functions([sql], "duckdb")
+
+    # We should find exactly one reusable function: fn1(a, fn2(b, c))
+    # even though fn2(b, c) is repeated, but nested inside it
+    assert len(repeated_functions) == 1
+
+    found_ast = parse_one(repeated_functions[0]["function_sql"], read="duckdb")
+    expected_ast = parse_one("fn1(a, fn2(b, c))", read="duckdb")
+    assert found_ast == expected_ast
+
+    # Check the nested function fn2(b, c) is not included in the results
+    nested_asts = {
+        parse_one(f["function_sql"], read="duckdb") for f in repeated_functions
+    }
+    fn2_ast = parse_one("fn2(b, c)", read="duckdb")
+    assert fn2_ast not in nested_asts
+
+    # Example 2:  Extremely complex SQL with nested functions
+
     expected_fn = calculate_tf_product_array_sql("name_tokens_with_freq")
     expected_ast = parse_one(expected_fn, read="duckdb")
 
-    expected_fn_fmt_diff = expected_fn.replace("\n", "").replace(" ", "")
+    # Check its robust to SQL formatting differences i.e. same
+    # semantics different formatting.
+    expected_fn_fmt_diff = expected_fn.replace("\n", "").replace(" ", "  ")
 
     # The full SQL with the repeated function
     sql = f"""CASE
     WHEN {expected_fn} < 1e-12 then 2
-    WHEN {expected_fn_fmt_diff} < 1e-12 then 1
+    WHEN {expected_fn_fmt_diff} < 1e-14 then 1
     ELSE 0
     END"""
 

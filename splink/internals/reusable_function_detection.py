@@ -5,6 +5,9 @@ from typing import Dict, List, Tuple
 
 from sqlglot import exp, parse_one
 
+ARITHMETIC = (exp.Mul, exp.Div, exp.Add, exp.Sub)
+TARGET_NODES = (exp.Func, *ARITHMETIC)
+
 
 def _find_repeated_functions(
     columns_to_select_for_comparison_vector_values: List[str],
@@ -32,7 +35,8 @@ def _find_repeated_functions(
 
     func_counts: Counter[exp.Expression] = Counter()
     for ast in case_asts:
-        func_counts.update(fn for fn in ast.find_all(exp.Func))
+        # count both Func nodes and arithmetic nodes (+, -, *, /)
+        func_counts.update(node for node in ast.find_all(TARGET_NODES))
 
     # Func counts looks for whether there are multiple identical nodes in the tree
     # and count them like:
@@ -44,20 +48,20 @@ def _find_repeated_functions(
     repeated: set[exp.Expression] = {fn for fn, c in func_counts.items() if c > 1}
 
     # Keep only the root duplicates (not nested inside another dup)
-    def is_nested_in_repeated(fn: exp.Func) -> bool:
+    def is_nested_in_repeated(fn: exp.Expression) -> bool:
         parent = fn.parent
         while parent:
-            if isinstance(parent, exp.Func) and parent in repeated:
+            if isinstance(parent, TARGET_NODES) and parent in repeated:
                 return True
             parent = parent.parent
         return False
 
     # This is just for human readibility - it means the name rf_1 reliably
     # corresponds to the first duplicate function seen in the sql and so on
-    roots_in_order: list[exp.Func] = []
+    roots_in_order: list[exp.Expression] = []
     seen: set[exp.Expression] = set()  # protect against re-adding same struct
     for ast in case_asts:
-        for fn in ast.find_all(exp.Func):
+        for fn in ast.find_all(TARGET_NODES):
             if fn in repeated and not is_nested_in_repeated(fn) and fn not in seen:
                 roots_in_order.append(fn)
                 seen.add(fn)
@@ -77,7 +81,7 @@ def _find_repeated_functions(
 
     def _replace(node: exp.Expression) -> exp.Expression:
         # Only root duplicates are in var_mapping
-        if isinstance(node, exp.Func) and node in var_mapping:
+        if isinstance(node, TARGET_NODES) and node in var_mapping:
             return exp.to_identifier(var_mapping[node])
         return node
 
