@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Dict, List, Tuple
+from typing import Dict, Iterable, List, Tuple, cast
 
 from sqlglot import exp, parse_one
 
 ARITHMETIC = (exp.Mul, exp.Div, exp.Add, exp.Sub)
 TARGET_NODES = (exp.Func, *ARITHMETIC)
+
+
+# Helper to ensure mypy compliance: sqlglot.find_all returns an *iterator* of specific
+# subclasses which MyPy cannot easily narrow.
+# Cast it to an Iterable[exp.Expression] once and reuse.
+def _find_all_expressions(node: exp.Expression) -> Iterable[exp.Expression]:
+    return cast(Iterable[exp.Expression], node.find_all(*TARGET_NODES))
 
 
 def _find_repeated_functions(
@@ -36,7 +43,7 @@ def _find_repeated_functions(
     func_counts: Counter[exp.Expression] = Counter()
     for ast in case_asts:
         # count both Func nodes and arithmetic nodes (+, -, *, /)
-        func_counts.update(node for node in ast.find_all(TARGET_NODES))
+        func_counts.update(_find_all_expressions(ast))
 
     # Func counts looks for whether there are multiple identical nodes in the tree
     # and count them like:
@@ -61,7 +68,7 @@ def _find_repeated_functions(
     roots_in_order: list[exp.Expression] = []
     seen: set[exp.Expression] = set()  # protect against re-adding same struct
     for ast in case_asts:
-        for fn in ast.find_all(TARGET_NODES):
+        for fn in _find_all_expressions(ast):
             if fn in repeated and not is_nested_in_repeated(fn) and fn not in seen:
                 roots_in_order.append(fn)
                 seen.add(fn)

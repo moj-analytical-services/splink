@@ -169,7 +169,7 @@ class LinkerTraining:
         self,
         max_pairs: float = 1e6,
         seed: int = None,
-        experimental_function_reuse_optimisation: bool = True,
+        experimental_function_reuse_optimisation: bool = False,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
