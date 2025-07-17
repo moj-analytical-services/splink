@@ -10323,7 +10323,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						title: "Match probability"
 					},
 					{
-						field: "match_weight",
+						field: "sort_avg_match_weight",
 						type: "quantitative",
 						format: ",.2f",
 						title: "Match weight"
