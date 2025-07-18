@@ -65,7 +65,7 @@ class Linker:
     model.
 
     Most of Splink's functionality can  be accessed by calling methods (functions)
-    on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
+    on the linker, such as `linker.inference.predict()`, `linker.profile_columns()` etc.
 
     The Linker class is intended for subclassing for specific backends, e.g.
     a `DuckDBLinker`.

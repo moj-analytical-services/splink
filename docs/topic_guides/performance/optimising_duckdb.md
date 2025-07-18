@@ -54,9 +54,9 @@ In our Splink suppose we set:
 settings =  {
     ...
     "blocking_rules_to_generate_predictions" ; [
-        block_on(["first_name"], salting_partitions=2),
-        block_on(["dob"], salting_partitions=2),
-        block_on(["surname"], salting_partitions=2),
+        block_on("first_name", salting_partitions=2),
+        block_on("dob", salting_partitions=2),
+        block_on("surname", salting_partitions=2),
     ]
     ...
 }

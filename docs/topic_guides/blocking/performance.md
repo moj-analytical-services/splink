@@ -35,7 +35,7 @@ In reality, we recommend getting a model up and running with strict Blocking Rul
 
     `l.surname = r.surname`
 
-    The user could use the `linker.count_num_comparisons_from_blocking_rule()` function to select which rule is appropriate for their data.
+    The user could use the `count_comparisons_from_blocking_rule()` function to select which rule is appropriate for their data.
 
 ## Efficient Blocking Rules
 

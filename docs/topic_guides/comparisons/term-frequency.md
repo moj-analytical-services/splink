@@ -71,18 +71,17 @@ We can also see these match weights and TF adjustments summarised using a chart 
 
 <figure markdown>
   ![](../../img/term_frequency/tf-match-weight.png){width="800"}
-  <figcaption>In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`</figcaption>
+  <figcaption>In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.visualisations.tf_adjustment_chart("name")`</figcaption>
 </figure>
 
 ## Applying TF adjustments in Splink
 
 Depending on how you compose your Splink settings, TF adjustments can be applied to a specific comparison level in different ways:
 
-### ComparisonLibrary and ComparisonTemplateLibrary functions
+### ComparisonLibrary functions
 
 ```py
 import splink.comparison_library as cl
-import splink.comparison_template_library as ctl
 
 sex_comparison = cl.ExactMatch("sex").configure(term_frequency_adjustments=True)
 
@@ -91,7 +90,7 @@ name_comparison = cl.JaroWinklerAtThresholds(
     score_threshold_or_thresholds=[0.9, 0.8],
 ).configure(term_frequency_adjustments=True)
 
-email_comparison = ctl.EmailComparison("email").configure(
+email_comparison = cl.EmailComparison("email").configure(
     term_frequency_adjustments=True,
 )
 ```
