@@ -209,7 +209,7 @@ class LinkerEvalution:
 
         The table of labels should be in the following format, and should be registered
         as a table with your database using
-        `labels_table = linker.register_labels_table(my_df)`
+        `labels_table = linker.table_management.register_labels_table(my_df)`
 
         |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
         |----------------|-----------|----------------|-----------|--------------------|
@@ -251,7 +251,7 @@ class LinkerEvalution:
 
         Examples:
             ```py
-            linker.accuracy_analysis_from_labels_table("ground_truth", add_metrics=["f1"])
+            linker.evaluation.accuracy_analysis_from_labels_table("ground_truth", add_metrics=["f1"])
             ```
         """  # noqa: E501
 

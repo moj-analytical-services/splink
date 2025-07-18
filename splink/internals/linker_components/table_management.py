@@ -45,7 +45,7 @@ class LinkerTableManagement:
             ```py
             linker = Linker(df, settings="saved_settings.json", db_api=db_api)
             linker.table_management.compute_tf_table("surname")
-            linker.compare_two_records(record_left, record_right)
+            linker.inference.compare_two_records(record_left, record_right)
             ```
             Pre-computed term frequency tables
             ```py
@@ -260,7 +260,7 @@ class LinkerTableManagement:
             ```py
             test_dict = {"a": [666,777,888],"b": [4,5,6]}
             linker.table_management.register_table(test_dict, "test_dict")
-            linker.query_sql("select * from test_dict")
+            linker.misc.query_sql("select * from test_dict")
             ```
 
         Args:
