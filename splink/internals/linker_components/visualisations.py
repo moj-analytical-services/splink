@@ -311,7 +311,7 @@ class LinkerVisualisations:
 
 
         Args:
-            df_predict (SplinkDataFrame): The outputs of `linker.predict()`
+            df_predict (SplinkDataFrame): The outputs of `linker.inference.predict()`
             out_path (str): The path (including filename) to save the html file to.
             overwrite (bool, optional): Overwrite the html file if it already exists?
                 Defaults to False.
@@ -326,7 +326,7 @@ class LinkerVisualisations:
 
         Examples:
             ```py
-            df_predictions = linker.predict()
+            df_predictions = linker.inference.predict()
             linker.visualisations.comparison_viewer_dashboard(
                 df_predictions, "scv.html", True, 2
             )
@@ -382,9 +382,9 @@ class LinkerVisualisations:
         save to `out_path`.
 
         Args:
-            df_predict (SplinkDataFrame): The outputs of `linker.predict()`
+            df_predict (SplinkDataFrame): The outputs of `linker.inference.predict()`
             df_clustered (SplinkDataFrame): The outputs of
-                `linker.cluster_pairwise_predictions_at_threshold()`
+                `linker.clustering.cluster_pairwise_predictions_at_threshold()`
             out_path (str): The path (including filename) to save the html file to.
             sampling_method (str, optional): `random`, `by_cluster_size` or
                 `lowest_density_clusters_by_size`. Defaults to `random`.
@@ -407,7 +407,7 @@ class LinkerVisualisations:
                 df_p, 0.5
             )
 
-            linker.cluster_studio_dashboard(
+            linker.visualisations.cluster_studio_dashboard(
                 df_p, df_c, [0, 4, 7], "cluster_studio.html"
             )
             ```

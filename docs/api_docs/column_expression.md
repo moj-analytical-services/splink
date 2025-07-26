@@ -42,7 +42,7 @@ from splink import block_on
 import splink.comparison_library as cl
 import splink.comparison_level_library as cll
 
-full_name_lower_br = block_on([full_name_lowercase])
+full_name_lower_br = block_on(full_name_lowercase)
 
 email_comparison = cl.DamerauLevenshteinAtThresholds(email_lowercase, distance_threshold_or_thresholds=[1, 3])
 entry_date_comparison = cl.AbsoluteTimeDifferenceAtThresholds(

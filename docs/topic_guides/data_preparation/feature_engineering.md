@@ -232,7 +232,7 @@ Now that the dmetaphone columns have been added, they can be used within compari
 
 
 ```python
-import splink.duckdb.comparison_template_library as ctl
+import splink.comparison_library as cl
 
 comparison = cl.NameComparison("first_name", dmeta_col_name="first_name_dm").get_comparison("duckdb")
 comparison.human_readable_description

@@ -25,8 +25,9 @@ def blocking_rule_args_to_list_of_blocking_rules(
     ],
     sql_dialect: str,
 ) -> list[BlockingRule]:
-    """In functions such as `linker.estimate_probability_two_random_records_match`
-    the user may have passed in strings or BlockingRuleCreator objects.
+    """In functions such as
+    `linker.training.estimate_probability_two_random_records_match` the
+    user may have passed in strings or BlockingRuleCreator objects.
 
     Additionally, they may have passed in a single string or a single
     BlockingRuleCreator object instead of a list.

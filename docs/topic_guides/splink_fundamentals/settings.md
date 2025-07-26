@@ -27,7 +27,6 @@ For example, consider a simple model:
 
 ```py linenums="1"
 import splink.comparison_library as cl
-import splink.comparison_template_library as ctl
 
 settings = SettingsCreator(
     link_type="dedupe_only",
@@ -36,9 +35,9 @@ settings = SettingsCreator(
         block_on("surname", "dob"),
     ],
     comparisons=[
-        ctl.NameComparison("first_name"),
-        ctl.NameComparison("surname"),
-        ctl.DateComparison(
+        cl.NameComparison("first_name"),
+        cl.NameComparison("surname"),
+        cl.DateOfBirthComparison(
             "dob",
             input_is_string=True,
             datetime_metrics=["month", "year"],
@@ -48,7 +47,7 @@ settings = SettingsCreator(
             ],
         ),
         cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-        ctl.EmailComparison("email"),
+        cl.EmailComparison("email"),
     ],
 )
 ```
@@ -87,7 +86,7 @@ The `"comparisons"` define the features to be compared between records: `"first_
     comparisons=[
         cl.NameComparison("first_name"),
         cl.NameComparison("surname"),
-        cl.DateComparison(
+        cl.DateOfBirthComparison(
             "dob",
             input_is_string=True,
             datetime_metrics=["month", "year"],
@@ -118,7 +117,6 @@ With our finalised settings object, we can train a Splink model using the follow
 
     ```py
     import splink.comparison_library as cl
-    import splink.comparison_template_library as ctl
     from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 
     db_api = DuckDBAPI()
@@ -131,9 +129,9 @@ With our finalised settings object, we can train a Splink model using the follow
             block_on("surname"),
         ],
         comparisons=[
-            ctl.NameComparison("first_name"),
-            ctl.NameComparison("surname"),
-            ctl.DateComparison(
+            cl.NameComparison("first_name"),
+            cl.NameComparison("surname"),
+            cl.DateOfBirthComparison(
                 "dob",
                 input_is_string=True,
                 datetime_metrics=["month", "year"],
@@ -143,7 +141,7 @@ With our finalised settings object, we can train a Splink model using the follow
                 ],
             ),
             cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-            ctl.EmailComparison("email"),
+            cl.EmailComparison("email"),
         ],
     )
 

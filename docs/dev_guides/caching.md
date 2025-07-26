@@ -50,7 +50,7 @@ Each time Splink runs a SQL pipeline, the [SQL string is hashed](https://github.
 
 When Splink is asked to execute a SQL string, before execution, it checks whether the resultant table already exists. If it does, it returns the table rather than recomputing it.
 
-For example, when we run `linker.predict()`, Splink:
+For example, when we run `linker.inference.predict()`, Splink:
 
 - Generates the SQL tasks
 - Pipelines them into a single SQL statement
