@@ -122,41 +122,6 @@ class BlockingRule:
             br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
-    def exclude_pairs_generated_by_this_rule_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string specifying how to exclude the results
-        of THIS blocking rule from subseqent blocking statements,
-        so that subsequent statements do not produce duplicate pairs
-        """
-
-        # Note the coalesce function is important here - otherwise
-        # you filter out any records with nulls in the previous rules
-        # meaning these comparisons get lost
-        return f"coalesce(({self.blocking_rule_sql}),false)"
-
-    def exclude_pairs_generated_by_all_preceding_rules_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string that excludes the results of ALL previous blocking rules from
-        the pairwise comparisons generated.
-        """
-        if not self.preceding_rules:
-            return ""
-        or_clauses = [
-            br.exclude_pairs_generated_by_this_rule_sql(
-                source_dataset_input_column,
-                unique_id_input_column,
-            )
-            for br in self.preceding_rules
-        ]
-        previous_rules = " OR ".join(or_clauses)
-        return f"AND NOT ({previous_rules})"
-
     def create_blocked_pairs_sql(
         self,
         *,
@@ -184,10 +149,6 @@ class BlockingRule:
             on
             ({self.blocking_rule_sql})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(
-                source_dataset_input_column,
-                unique_id_input_column)
-            }
             """
         return sql
 
@@ -323,9 +284,6 @@ class SaltedBlockingRule(BlockingRule):
         uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
         sqls = []
-        exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
-            source_dataset_input_column, unique_id_input_column
-        )
         for salt in range(self.salting_partitions):
             salt_condition = self._salting_condition(salt)
             sql = f"""
@@ -338,7 +296,6 @@ class SaltedBlockingRule(BlockingRule):
             on
             ({self.blocking_rule_sql} {salt_condition})
             {where_condition}
-            {exclude_sql}
             """
 
             sqls.append(sql)
@@ -395,18 +352,14 @@ class ExplodingBlockingRule(BlockingRule):
                 where_condition + " and l.source_dataset < r.source_dataset"
             )
 
-        exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
-            source_dataset_input_column, unique_id_input_column
-        )
         sql = f"""
-            select distinct
+            select
                 {id_expr_l} as {unique_id_col.name_l},
                 {id_expr_r} as {unique_id_col.name_r}
             from __splink__df_concat_unnested as l
             inner join __splink__df_concat_unnested as r
             on ({br.blocking_rule_sql})
             {where_condition}
-            {exclude_sql}
             """
 
         return sql
@@ -415,42 +368,6 @@ class ExplodingBlockingRule(BlockingRule):
         if self.exploded_id_pair_table is not None:
             self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
         self.exploded_id_pair_table = None
-
-    def exclude_pairs_generated_by_this_rule_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string specifying how to exclude the results
-        of THIS blocking rule from subseqent blocking statements,
-        so that subsequent statements do not produce duplicate pairs
-        """
-
-        unique_id_column = unique_id_input_column
-
-        unique_id_input_columns = combine_unique_id_input_columns(
-            source_dataset_input_column, unique_id_input_column
-        )
-
-        if (splink_df := self.exploded_id_pair_table) is None:
-            raise SplinkException(
-                "Must use `materialise_exploded_id_table(linker)` "
-                "to set `exploded_id_pair_table` before calling "
-                "exclude_pairs_generated_by_this_rule_sql()."
-            )
-        ids_to_compare_sql = f"select * from {splink_df.physical_name}"
-
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
-
-        return f"""EXISTS (
-            select 1 from ({ids_to_compare_sql}) as ids_to_compare
-            where (
-                {id_expr_l} = ids_to_compare.{unique_id_column.name_l} and
-                {id_expr_r} = ids_to_compare.{unique_id_column.name_r}
-            )
-        )
-        """
 
     def create_blocked_pairs_sql(
         self,
@@ -615,6 +532,17 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
+
+    sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"})
+
+    sql = """
+    SELECT
+        join_key_l,
+        join_key_r,
+        min(match_key) as match_key
+    FROM __splink__blocked_id_pairs_non_unique
+    GROUP BY join_key_l, join_key_r
+    """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
