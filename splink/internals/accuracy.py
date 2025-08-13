@@ -508,9 +508,7 @@ def _predict_from_label_column_sql(linker, label_colname):
         sql_dialect_str=linker._sql_dialect_str,
     )
     brs.append(label_blocking_rule)
-    BlockingRule._set_match_keys_for_each_blocking_rule(
-        brs
-    )
+    BlockingRule._set_match_keys_for_each_blocking_rule(brs)
 
     # Need the label colname to be in additional columns to retain
 

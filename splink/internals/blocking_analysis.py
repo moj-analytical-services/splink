@@ -326,9 +326,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     cartesian_count = calculate_cartesian(rc, link_type)
 
-    BlockingRule._set_match_keys_for_each_blocking_rule(
-        blocking_rules
-    )
+    BlockingRule._set_match_keys_for_each_blocking_rule(blocking_rules)
 
     exploding_br_with_id_tables = materialise_exploded_id_tables(
         link_type,

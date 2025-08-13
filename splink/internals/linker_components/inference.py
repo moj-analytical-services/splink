@@ -552,9 +552,7 @@ class LinkerInference:
             for br in blocking_rule_list
         ]
 
-        BlockingRule._set_match_keys_for_each_blocking_rule(
-            blocking_rules_dialected
-        )
+        BlockingRule._set_match_keys_for_each_blocking_rule(blocking_rules_dialected)
 
         self._linker._settings_obj._blocking_rules_to_generate_predictions = (
             blocking_rules_dialected

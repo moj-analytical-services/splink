@@ -11,9 +11,7 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
-from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -525,7 +523,9 @@ def block_using_rules_sqls(
 
     sql = " UNION ALL ".join(br_sqls)
 
-    sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"})
+    sqls.append(
+        {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
+    )
 
     sql = """
     SELECT
