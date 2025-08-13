@@ -100,26 +100,18 @@ class BlockingRule:
                 f"Blocking rule must be a string, not {type(blocking_rule_sql)}"
             )
         self.blocking_rule_sql = blocking_rule_sql
-        self.preceding_rules: List[BlockingRule] = []
+        self.match_key = 0
 
     @property
     def sqlglot_dialect(self):
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
-    @property
-    def match_key(self):
-        return len(self.preceding_rules)
-
-    def add_preceding_rules(self, rules):
-        rules = ensure_is_list(rules)
-        self.preceding_rules = rules
-
     @staticmethod
-    def _add_preceding_rules_to_each_blocking_rule(
+    def _set_match_keys_for_each_blocking_rule(
         brs_as_objs: list[BlockingRule],
     ) -> list[BlockingRule]:
         for n, br in enumerate(brs_as_objs):
-            br.add_preceding_rules(brs_as_objs[:n])
+            br.match_key = n
         return brs_as_objs
 
     def create_blocked_pairs_sql(
@@ -537,9 +529,9 @@ def block_using_rules_sqls(
 
     sql = """
     SELECT
+        cast(min(cast(match_key as int)) as varchar) as match_key,
         join_key_l,
-        join_key_r,
-        min(match_key) as match_key
+        join_key_r
     FROM __splink__blocked_id_pairs_non_unique
     GROUP BY join_key_l, join_key_r
     """

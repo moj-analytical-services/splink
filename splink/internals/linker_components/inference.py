@@ -551,8 +551,10 @@ class LinkerInference:
             )
             for br in blocking_rule_list
         ]
-        for n, br in enumerate(blocking_rules_dialected):
-            br.add_preceding_rules(blocking_rules_dialected[:n])
+
+        BlockingRule._set_match_keys_for_each_blocking_rule(
+            blocking_rules_dialected
+        )
 
         self._linker._settings_obj._blocking_rules_to_generate_predictions = (
             blocking_rules_dialected
