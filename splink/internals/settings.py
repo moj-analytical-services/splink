@@ -249,8 +249,8 @@ class Settings:
         )
 
         self._blocking_rules_to_generate_predictions = (
-            BlockingRule._add_preceding_rules_to_each_blocking_rule(
-                blocking_rules_to_generate_predictions,
+            BlockingRule._set_match_keys_for_each_blocking_rule(
+                blocking_rules_to_generate_predictions
             )
         )
 
