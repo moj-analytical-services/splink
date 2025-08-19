@@ -443,14 +443,8 @@ class ExplodingBlockingRule(BlockingRule):
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
         id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
-        return f"""EXISTS (
-            select 1 from ({ids_to_compare_sql}) as ids_to_compare
-            where (
-                {id_expr_l} = ids_to_compare.{unique_id_column.name_l} and
-                {id_expr_r} = ids_to_compare.{unique_id_column.name_r}
-            )
-        )
-        """
+        return "false"
+
 
     def create_blocked_pairs_sql(
         self,
@@ -615,6 +609,19 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
+
+    sqls.append(
+        {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
+    )
+
+    sql = """
+    SELECT
+        min(match_key) as match_key,
+        join_key_l,
+        join_key_r
+    FROM __splink__blocked_id_pairs_non_unique
+    GROUP BY join_key_l, join_key_r
+    """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
