@@ -284,12 +284,14 @@ def expectation_maximisation(
             sqls = predict_from_agreement_pattern_counts_sqls(
                 core_model_settings.comparisons,
                 probability_two_random_records_match,
+                splink_dialect=db_api.sql_dialect,
                 sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
                 unique_id_input_columns=unique_id_input_columns,
                 core_model_settings=core_model_settings,
+                splink_dialect=db_api.sql_dialect,
                 training_mode=True,
                 sql_infinity_expression=sql_infinity_expression,
             )

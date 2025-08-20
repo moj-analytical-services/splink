@@ -135,6 +135,18 @@ class SplinkDialect(ABC):
             "first array index defined"
         )
 
+    @property
+    def greatest_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.sql_dialect_str}' does not have a " "'Greatest' function"
+        )
+
+    @property
+    def least_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.sql_dialect_str}' does not have a " "'Least' function"
+        )
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -251,6 +263,14 @@ class DuckDBDialect(SplinkDialect):
     @property
     def array_first_index(self):
         return 1
+
+    @property
+    def greatest_function_name(self):
+        return "greatest"
+
+    @property
+    def least_function_name(self):
+        return "least"
 
     @property
     def default_date_format(self):
@@ -380,6 +400,14 @@ class SparkDialect(SplinkDialect):
         return 0
 
     @property
+    def greatest_function_name(self):
+        return "greatest"
+
+    @property
+    def least_function_name(self):
+        return "least"
+
+    @property
     def default_date_format(self):
         return "yyyy-MM-dd"
 
@@ -480,6 +508,15 @@ class SQLiteDialect(SplinkDialect):
     def infinity_expression(self):
         return "'infinity'"
 
+    @property
+    def greatest_function_name(self):
+        # SQLite uses min/max scalar functions instead of least/greatest
+        return "max"
+
+    @property
+    def least_function_name(self):
+        return "min"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -508,6 +545,14 @@ class PostgresDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    @property
+    def greatest_function_name(self):
+        return "greatest"
+
+    @property
+    def least_function_name(self):
+        return "least"
 
     def absolute_time_difference(self, clc: AbsoluteTimeDifferenceLevel) -> str:
         # need custom solution as sqlglot gets confused by 'metric', as in Spark
@@ -634,3 +679,11 @@ class AthenaDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein_distance"
+
+    @property
+    def greatest_function_name(self):
+        return "greatest"
+
+    @property
+    def least_function_name(self):
+        return "least"
