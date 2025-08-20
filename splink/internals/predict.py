@@ -106,13 +106,13 @@ def predict_from_comparison_vectors_sqls(
     )
 
     if threshold_as_mw is not None:
-        threshold_expr = f" where log2(least(greatest({bayes_factor_expr}, 1e-300), 1e300)) >= {threshold_as_mw} "
+        threshold_expr = f" where log2({bayes_factor_expr}) >= {threshold_as_mw} "
     else:
         threshold_expr = ""
 
     sql = f"""
     select
-    log2(least(greatest({bayes_factor_expr}, 1e-300), 1e300)) as match_weight,
+    log2({bayes_factor_expr}) as match_weight,
     {match_prob_expr} as match_probability,
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
