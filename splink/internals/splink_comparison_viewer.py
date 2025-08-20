@@ -39,7 +39,7 @@ def row_examples(
         p,
         bf_terms=bf_columns_no_tf,
         sql_infinity_expr=linker._infinity_expression,
-        splink_dialect=linker._db_api.sql_dialect,
+        sql_dialect=linker._db_api.sql_dialect,
     )[0]
 
     sql = f"""
