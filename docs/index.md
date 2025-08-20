@@ -82,6 +82,8 @@ Here is a list of some of our known users and their use cases:
 	- The [Department for Business and Trade](https://www.gov.uk/government/organisations/department-for-business-and-trade) plans to use Splink as part of [Matchbox](https://github.com/uktrade/matchbox) to reconcile business and product data for both analytical and operational use
  	- The [Welsh Revenue Authority](https://www.gov.wales/welsh-revenue-authority) uses Splink in multiple linkage workflows to identify links in their own data, as well as to third party data for operational support in ensuring a fair tax system for Wales.
 	- Richmond Council and Wandsworth Council are using Splink to match residents’ records across systems to create unified records and a single view of debt.
+	- [Westmorland & Furness Council](https://www.simpson-associates.co.uk/clients/westmorland-furness-council/) used Splink to matched and de-duplicated Special Educational Needs and Disability (SEND) records across systems.  This provided a “single view of the child”, improved data quality and automation, and laid the foundation for a wider “Single View of the Customer” initiative.
+
 
 === "Public Sector (International)"
 
