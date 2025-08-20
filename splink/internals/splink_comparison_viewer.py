@@ -36,7 +36,10 @@ def row_examples(
 
     p = linker._settings_obj._probability_two_random_records_match
     bf_final_no_tf = _combine_prior_and_bfs(
-        p, bf_terms=bf_columns_no_tf, sql_infinity_expr=linker._infinity_expression
+        p,
+        bf_terms=bf_columns_no_tf,
+        sql_infinity_expr=linker._infinity_expression,
+        splink_dialect=linker._db_api.sql_dialect,
     )[0]
 
     sql = f"""
