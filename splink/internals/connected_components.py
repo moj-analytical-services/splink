@@ -298,9 +298,10 @@ def _cc_find_converged_nodes(
 
     sql_stable = f"""
     SELECT *
-        FROM {representatives_name}
-        WHERE representative NOT IN (
-            SELECT representative FROM non_stable_representatives
+        FROM {representatives_name} as r
+        WHERE NOT EXISTS (
+            SELECT 1 FROM non_stable_representatives as nsr
+            WHERE r.representative = nsr.representative
         )
         """
     sqls.append(
@@ -433,9 +434,10 @@ def solve_connected_components(
         pipeline = CTEPipeline([representatives_stable, prev_representatives_table])
         sql = f"""
         SELECT *
-        FROM {prev_representatives_table.templated_name}
-        WHERE representative NOT IN (
-            SELECT representative FROM __splink__representatives_stable_{iteration}
+        FROM {prev_representatives_table.templated_name} as pr
+        WHERE NOT EXISTS (
+            SELECT 1 FROM __splink__representatives_stable_{iteration} as rs
+            WHERE pr.representative = rs.representative
         )
         """
         pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
