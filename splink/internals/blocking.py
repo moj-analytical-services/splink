@@ -426,23 +426,6 @@ class ExplodingBlockingRule(BlockingRule):
         so that subsequent statements do not produce duplicate pairs
         """
 
-        unique_id_column = unique_id_input_column
-
-        unique_id_input_columns = combine_unique_id_input_columns(
-            source_dataset_input_column, unique_id_input_column
-        )
-
-        if (splink_df := self.exploded_id_pair_table) is None:
-            raise SplinkException(
-                "Must use `materialise_exploded_id_table(linker)` "
-                "to set `exploded_id_pair_table` before calling "
-                "exclude_pairs_generated_by_this_rule_sql()."
-            )
-        ids_to_compare_sql = f"select * from {splink_df.physical_name}"
-
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
-
         return "false"
 
 
