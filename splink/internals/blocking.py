@@ -11,7 +11,6 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
-from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
@@ -427,7 +426,6 @@ class ExplodingBlockingRule(BlockingRule):
         """
 
         return "false"
-
 
     def create_blocked_pairs_sql(
         self,
