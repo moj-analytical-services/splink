@@ -91,7 +91,7 @@ Here is a list of some of our known users and their use cases:
 	- 🇩🇪 The German Federal Statistical Office ([Destatis](https://www.destatis.de/EN/Home/_node.html)) uses Splink to conduct projects in linking register-based census data.
 	- 🇪🇺 The [European Medicines Agency](https://www.ema.europa.eu/en/homepage) uses Splink to detect duplicate adverse event reports for veterinary medicines
 	- 🇺🇸 The Defense Health Agency (US Department of Defense) used Splink to identify duplicated hospital records across over 200 million data points in the military hospital data system
-	- 🌐 [UNHCR](unhcr.org) uses Splink to analyse and enhance the quality of datasets by identifying and addressing potential duplicates.
+	- 🌐 [UNHCR](https://unhcr.org) uses Splink to analyse and enhance the quality of datasets by identifying and addressing potential duplicates.
 	- 🇨🇦 The Data Integration Unit at the [Ontario Ministry of Children, Community, and Social Services](https://www.ontario.ca/page/ministry-children-community-and-social-services) are using Splink as their main data-integration tool for all intra- and inter-ministerial data-linking projects.
 	- 🇬🇲 Splink has been used to support the 2024 Gambian census by analysing and linking data from the census and the post-enumeration survey.
 	- 🇨🇦 Environment and Climate Change Canada is a user of Splink to connect datasets from various administrative and reporting programs.
