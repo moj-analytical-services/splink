@@ -45,7 +45,7 @@ jobs:
         run: mkdocs build
 
       - name: Check links
-        uses: lycheeverse/lychee-action@v1.8.0
+        uses: lycheeverse/lychee-action@v2.0.2
         with:
           fail: false
           args: --offline site/ --verbose './**/*.html'
