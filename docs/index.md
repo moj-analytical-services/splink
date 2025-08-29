@@ -91,7 +91,7 @@ Here is a list of some of our known users and their use cases:
 	- 🇩🇪 The German Federal Statistical Office ([Destatis](https://www.destatis.de/EN/Home/_node.html)) uses Splink to conduct projects in linking register-based census data.
 	- 🇪🇺 The [European Medicines Agency](https://www.ema.europa.eu/en/homepage) uses Splink to detect duplicate adverse event reports for veterinary medicines
 	- 🇺🇸 The Defense Health Agency (US Department of Defense) used Splink to identify duplicated hospital records across over 200 million data points in the military hospital data system
-	- 🌐 [UNHCR](unhcr.org) uses Splink to analyse and enhance the quality of datasets by identifying and addressing potential duplicates.
+	- 🌐 [UNHCR](https://unhcr.org) uses Splink to analyse and enhance the quality of datasets by identifying and addressing potential duplicates.
 	- 🇨🇦 The Data Integration Unit at the [Ontario Ministry of Children, Community, and Social Services](https://www.ontario.ca/page/ministry-children-community-and-social-services) are using Splink as their main data-integration tool for all intra- and inter-ministerial data-linking projects.
 	- 🇬🇲 Splink has been used to support the 2024 Gambian census by analysing and linking data from the census and the post-enumeration survey.
 	- 🇨🇦 Environment and Climate Change Canada is a user of Splink to connect datasets from various administrative and reporting programs.
@@ -102,7 +102,7 @@ Here is a list of some of our known users and their use cases:
 === "Academia"
 
 	- [Stanford University](https://www.stanford.edu/) investigated the impact of [receiving government assistance has on political attitudes](https://www.cambridge.org/core/journals/american-political-science-review/article/abs/does-receiving-government-assistance-shape-political-attitudes-evidence-from-agricultural-producers/39552BC5A496EAB6CB484FCA51C6AF21)
-	- Researchers from [Harvard Medical School](https://hms.harvard.edu/), [Vanderbilt University Medical Center](https://www.vumc.org/) and [Brigham and Women's Hospital](https://www.brighamandwomens.org/) published a study on [augmenting death ascertainment in electronic health records using publicly available internet media sources]([https://doi.org/10.1101/2025.01.24.25321042](https://www.medrxiv.org/content/medrxiv/early/2025/01/27/2025.01.24.25321042.full.pdf)).
+	- Researchers from [Harvard Medical School](https://hms.harvard.edu/), [Vanderbilt University Medical Center](https://www.vumc.org/) and [Brigham and Women's Hospital](https://www.brighamandwomens.org/) published a study on [augmenting death ascertainment in electronic health records using publicly available internet media sources](https://doi.org/10.1101/2025.01.24.25321042).
 	- [Bern University](https://arbor.bfh.ch/) researched how [Active Learning can be applied to Biomedical Record Linkage](https://ebooks.iospress.nl/doi/10.3233/SHTI230545)
 	- [University of Pennsylvania](https://www.upenn.edu/), [Princeton](https://www.princeton.edu/), and [UC Berkeley](https://www.berkeley.edu/) researchers used Splink to link property data, voter files, and campaign donations, creating a dataset of 108M individuals to study the American voter base - see [here](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/04A0071D849FBC3E1DEEB2962A6B977F/S0003055425000061a.pdf).
 

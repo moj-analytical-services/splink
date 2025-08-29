@@ -27,7 +27,7 @@ This approach can be broken down into 5 key steps:
 
 !!! note
 
-    The following steps are intentionally high-level, for a more hands-on application on fake data with Splink check out the [accompanying example notebook](../../demos/examples/duckdb/bias_eval.ipynb).
+    The following steps are intentionally high-level, for a more hands-on application on fake data with Splink check out the [accompanying example notebook](../../demos/examples/duckdb_no_test/bias_eval.ipynb).
 
 ## <u>1. Generate synthetic records</u>
 
