@@ -61,12 +61,12 @@ The [Settings dictionary](../../api_docs/settings_dict_guide.md) is central to e
 
 A common sticking point with users is how easy it is to make small errors when defining the Settings dictionary, resulting in unhelpful error messages.
 
-To address this issue, the [Settings Validator](../../dev_guides/settings_validation/settings_validation_overview.md) provides clear, user-friendly feedback on what the issue is and how to fix it.
+To address this issue, the [Settings Validator](https://web.archive.org/web/20250701194538/https://moj-analytical-services.github.io/splink/dev_guides/settings_validation/settings_validation_overview.html) provides clear, user-friendly feedback on what the issue is and how to fix it.
 
 
 ## :simple-adblock: Blocking Rule Library (Improved)
 
-In our [previous blog](../posts/2023-12-06-feature_update.md) we introduced the Blocking Rule Library (BRL) built upon the `exact_match_rule` function. When testing this functionality we found it pretty verbose, particularly when blocking on multiple columns, so figured we could do better. From Splink v3.9.6 we introduced the `block_on` function to supersede `exact_match_rule`.
+In our [previous blog](../posts/2023-07-27-feature_update.md) we introduced the Blocking Rule Library (BRL) built upon the `exact_match_rule` function. When testing this functionality we found it pretty verbose, particularly when blocking on multiple columns, so figured we could do better. From Splink v3.9.6 we introduced the `block_on` function to supersede `exact_match_rule`.
 
 For example, a block on `first_name` and `surname` now looks like:
 
