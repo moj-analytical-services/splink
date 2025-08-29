@@ -58,18 +58,6 @@ Below are some useful commands to help in the maintenance and upkeep of the [pyp
 
 A comprehensive list of Poetry commands is available in the [Poetry documentation](https://python-poetry.org/docs/cli/).
 
-### Automating Virtual Environment Creation
+### Further usage
 
-To streamline the creation of a virtual environment via `venv`, you may use the [create_venv.sh](https://github.com/moj-analytical-services/splink/blob/master/scripts/create_venv.sh) script.
-
-This script facilitates the automatic setup of a virtual environment, with the default environment name being **venv**.
-
-**Default Environment Creation:**
-```sh
-source scripts/create_venv.sh
-```
-
-**Specifying a Custom Environment Name:**
-```sh
-source scripts/create_venv.sh <name_of_venv>
-```
+For more details on working with environments refer to the [Poetry docs site](https://python-poetry.org/docs/managing-environments/).
