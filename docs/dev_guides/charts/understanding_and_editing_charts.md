@@ -9,9 +9,9 @@ Charts in Splink are built with [Altair](https://altair-viz.github.io/index.html
 
 For a given chart, there is usually:
 
-- A template chart definition (e.g. [`match_weights_waterfall.json`](https://github.com/moj-analytical-services/splink/blob/master/splink/files/chart_defs/match_weights_waterfall.json))
-- A function to create the dataset for the chart (e.g. [`records_to_waterfall_data`](https://github.com/moj-analytical-services/splink/blob/master/splink/waterfall_chart.py#L137-L145))
-- A function to read the chart definition, add the data to it, and return the chart itself (e.g. [`waterfall_chart`](https://github.com/moj-analytical-services/splink/blob/master/splink/charts.py#L188-L202))
+- A template chart definition (e.g. [`match_weights_waterfall.json`](https://github.com/moj-analytical-services/splink/blob/356afa158dc90cbb455f962a9e9ebd1dd51dbc4b/splink/internals/files/chart_defs/match_weights_waterfall.json))
+- A function to create the dataset for the chart (e.g. [`records_to_waterfall_data`](https://github.com/moj-analytical-services/splink/blob/356afa158dc90cbb455f962a9e9ebd1dd51dbc4b/splink/internals/waterfall_chart.py#L155-L163))
+- A function to read the chart definition, add the data to it, and return the chart itself (e.g. [`waterfall_chart`](https://github.com/moj-analytical-services/splink/blob/356afa158dc90cbb455f962a9e9ebd1dd51dbc4b/splink/internals/charts.py#L190-L205))
 
 ??? tip "The Vega-Lite Editor"
     By far the best feature of Vega-Lite is the [online editor](https://vega.github.io/editor) where the JSON schema and the chart are shown side-by-side, showing changes in real time as the editor helps you to navigate the API.
