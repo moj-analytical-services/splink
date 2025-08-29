@@ -20,7 +20,6 @@ then
     if [ -n "$VIRTUAL_ENV" ]; then
         deactivate
     fi
-    poetry run python3 scripts/generate_dialect_comparison_docs.py
     poetry run python3 scripts/generate_dataset_docs.py
 fi
 
