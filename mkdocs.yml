@@ -259,9 +259,6 @@ nav:
           - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
           - Building new charts: "dev_guides/charts/building_charts.ipynb"
         - User-Defined Functions: "dev_guides/udfs.md"
-        - Settings Validation:
-          - Settings Validation Overview: "dev_guides/settings_validation/settings_validation_overview.md"
-          - Extending the Settings Validator: "dev_guides/settings_validation/extending_settings_validator.md"
         - Dependency Compatibility Policy: "dev_guides/dependency_compatibility_policy.md"
   - Blog:
     - blog/index.md

@@ -64,7 +64,7 @@ In terms of implementation, the following happens:
 - Once all the tasks have been added to the queue, we call `_execute_sql_pipeline()` see [here](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L994)
 - The SQL is combined into a single pipelined statement [here](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L339)
 - We call `_sql_to_splink_dataframe()` which returns the table (from the cache if it already exists, or it executes the SQL)
-- The table is returned as a `SplinkDataframe`, an abstraction over a table in a database. See [here](https://moj-analytical-services.github.io/splink/SplinkDataFrame.html).
+- The table is returned as a `SplinkDataframe`, an abstraction over a table in a database. See [the API docs for SplinkDataFrame](../api_docs/splink_dataframe.md).
 
 #### Some cached tables do not need a hash
 

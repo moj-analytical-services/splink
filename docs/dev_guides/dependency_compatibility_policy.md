@@ -33,7 +33,7 @@ Effective versioning is crucial for ensuring Splink's compatibility across diver
 #### Compatibility Checks
 
 * **Automated Testing**: Use Continuous Integration (CI) to help test the latest python and package versions. This helps identify compatibility issues early.
-* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_run_tests_with_cache.yml) is currently our broad compatibility check for supported versions of python.
+* **Matrix Testing**: Test against a matrix of dependencies or python versions to ensure broad compatibility. [pytest_run_tests_with_cache.yml](https://github.com/moj-analytical-services/splink/blob/master/.github/workflows/pytest_duckdb.yml) is currently our broad compatibility check for supported versions of python.
 
 #### Handling Breaking Changes
 
@@ -60,11 +60,11 @@ Our approach mirrors that of key package maintainers, such as the developers beh
 
 ### Benefits of Discontinuing Support for Older Python Versions:
 
-* Enhanced Tooling: Embracing newer versions enables the use of advanced Python features. For python 3.8, these include [protocols](https://peps.python.org/pep-0544/#defining-a-protocol), [walrus operators](https://peps.python.org/pep-0572/), and improved type annotations, amongst others.
+* Enhanced Tooling: Embracing newer versions enables the use of advanced Python features, as we no longer need to use only features available in outdated python versions. See [the new features in 3.9](https://docs.python.org/3.9/whatsnew/3.9.html) that we can use after dropping support for 3.8.
 * Fewer Dependabot Alerts: Transitioning away from older Python versions reduces the volume of alerts associated with legacy package dependencies.
 * Minimised Package Conflicts: Updating python decreases the necessity for [makeshift solutions](https://github.com/moj-analytical-services/splink/blob/9499e4ee93e6157fcc6f228b60592a7cf97bb6a0/pyproject.toml#L26) to resolve dependency issues with our core dependencies, fostering a smoother integration with tools like Poetry.
 
-For a comprehensive rationale behind upgrading, the article ["It's time to stop using python 3.7"](https://pythonspeed.com/articles/stop-using-python-3.7/) offers an insightful summary.
+For a comprehensive rationale behind upgrading, the article ["It's time to stop using python 3.8"](https://pythonspeed.com/articles/stop-using-python-3.8/) offers an insightful summary.
 
 ### Implementation Timeline:
 The cessation of support for major Python versions post-end-of-life will not be immediate but will instead be phased in gradually over the months following their official end-of-life designation.
@@ -85,6 +85,6 @@ A comprehensive summary of Python's development cycle is available on the [Pytho
 
 ![](../img/dependency_management/python_release_cycle.png){width="800"}
 
-As it stands, support for Python 3.8 will officially end in October of 2024. Following an initial grace period of around six months, we will then look to phase out support.
+As it stands, support for Python 3.9 will officially end in October of 2025. Following an initial grace period of around six months, we will then look to phase out support.
 
 We will look to regularly review this page and update Splink's dependencies accordingly.
