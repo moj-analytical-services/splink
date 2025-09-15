@@ -33,7 +33,7 @@ jobs:
         run: uv python install 3.10
 
       - name: Install dependencies
-        run: uv sync -p 3.10
+        run: uv sync --group docs -p 3.10
 
       - name: Build documentation
         run: uv run mkdocs build
