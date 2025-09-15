@@ -15,21 +15,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install poetry using pipx
-        run: pipx install poetry && pipx ensurepath
-
-      - uses: actions/setup-python@v5
+      - name: Setup uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.12.1"
-          cache: "poetry"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
 
       - name: Install dependencies
-        run: |
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root --only linting
+        run: uv sync -p 3.12
+
+      - name: Run mypy
+        run: uv run mypy splink
 
       - name: Run Ruff linting
-        run: poetry run ruff check . --output-format=full
+        run: uv run ruff check . --output-format=full
 
       - name: Run Ruff formatting check
-        run: poetry run ruff format --check .
+        run: uv run ruff format --check .
