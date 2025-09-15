@@ -42,7 +42,7 @@ jobs:
         uses: lycheeverse/lychee-action@v2.0.2
         with:
           fail: false
-          args: --offline site/ --verbose './**/*.html'
+          args: --offline site/ --verbose './site/**/*.html'
 
       - name: Upload built site
         uses: actions/upload-artifact@v4.4.0
