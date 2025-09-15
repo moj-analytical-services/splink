@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pyspark = ["pyspark>=3.2.1"]
+pyspark = ["pyspark>=3.2.1,<4.0.0"]
 spark = ["pyspark>=3.2.1"]
 athena = ["awswrangler"]
 postgres = ["sqlalchemy>=1.4.0", "psycopg2-binary>=2.8.0"]
