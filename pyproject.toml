@@ -10,7 +10,7 @@ authors = [
     { name = "Andy Bond" },
     { name = "Ross Kennedy" },
 ]
-requires-python = ">=3.9.0,<4.0.0"
+requires-python = ">=3.8.0,<4.0.0"
 readme = "README.md"
 license = "MIT"
 dependencies = [
@@ -61,6 +61,13 @@ default-groups = [
     "testing",
     "typechecking",
 ]
+
+# Force a specific version no matter who requires it (directly or transitively)
+# bad
+# 27.14.0 27.7.0 27.3.0 27.2.0
+# good
+# 26.18.1 27.0.0 27.1.0
+# override-dependencies = ["sqlglot==27.2.0"]
 
 [build-system]
 requires = ["hatchling"]
