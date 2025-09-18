@@ -5,37 +5,19 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 jobs:
-  build-package:
-    name: upload release to PyPI
+  publish-to-pypi:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v3
-        with:
-          python-version: 3.11
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - run: |
-          pip install poetry
-          poetry build
+      - name: Set up Python
+        run: uv python install 3.11
 
-      - uses: actions/upload-artifact@v4
-        with:
-          path: ./dist
+      - name: Install the project
+        run: uv build --no-sources
 
-  pypi-publish:
-    needs: build-package
-    environment: 'release'
-
-    name: upload release to PyPI
-    runs-on: ubuntu-latest
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: artifact/
+      - name: Publish to PyPI
+        run: uv publish -t ${{ secrets.PYPI_API_TOKEN }}
