@@ -6,8 +6,8 @@ To quickly run both the linter and formatter, you can source the linting bash sc
 If you simply wish for ruff to print the errors it finds to the console, remove this flag.
 
 ```sh
-poetry run ruff format
-poetry run ruff check .
+uv run ruff format
+uv run ruff check .
 ```
 
 
