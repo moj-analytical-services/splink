@@ -20,16 +20,12 @@ from .duckdb_helpers.duckdb_helpers import (
 logger = logging.getLogger(__name__)
 
 
-# alias for brevity:
-ddb_con = duckdb.DuckDBPyConnection
-
-
 class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     sql_dialect = DuckDBDialect()
 
     def __init__(
         self,
-        connection: Union[str, ddb_con] = ":memory:",
+        connection: Union[str, duckdb.DuckDBPyConnectionn] = ":memory:",
         output_schema: str = None,
     ):
         super().__init__()
@@ -37,7 +33,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
 
         if isinstance(connection, str):
             con_lower = connection.lower()
-        if isinstance(connection, ddb_con):
+        if isinstance(connection, duckdb.DuckDBPyConnection):
             con = connection
         elif con_lower == ":memory:":
             con = duckdb.connect(database=connection)

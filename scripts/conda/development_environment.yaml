@@ -8,6 +8,7 @@ dependencies:
   - postgresql
   - aspell
   - pip:
+      # TODO: poetry -> uv
       - poetry==1.4.2 # TODO: Unpin. Current poetry.lock requires older poetry.
       # NOTE: These are the python packages to install alongside poetry, not within the
       # poetry-created venv!

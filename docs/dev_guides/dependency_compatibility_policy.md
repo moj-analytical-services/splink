@@ -14,7 +14,7 @@ Below is a rough summary of versioning and some complimentary guidelines detaili
 
 Effective versioning is crucial for ensuring Splink's compatibility across diverse technical ecosystems and seamless integration with various Python versions and cloud tools. Key advantages include:
 
-* Faster dependency resolution with `poetry lock`.
+* Faster dependency resolution with `uv lock`.
 * Reduces dependency conflicts across systems.
 
 

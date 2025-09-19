@@ -20,35 +20,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('scripts/docs-requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - uses: actions/checkout@v4
 
-      - run: tree docs/
+      - name: Setup uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Install docs dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r scripts/docs-requirements.txt
+      - name: Install Python 3.10
+        run: uv python install 3.10
+
+      - name: Install dependencies
+        run: uv sync --group docs -p 3.10
 
       - name: Build documentation
-        run: mkdocs build
+        run: uv run mkdocs build
 
       - name: Check links
         uses: lycheeverse/lychee-action@v2.0.2
         with:
           fail: false
-          args: --offline site/ --verbose './**/*.html'
+          args: --offline site/ --verbose './site/**/*.html'
 
       - name: Upload built site
         uses: actions/upload-artifact@v4.4.0
@@ -57,8 +51,8 @@ jobs:
           path: site
 
       # some environment info
-      - run: pip freeze
-      - run: mkdocs --version
+      - run: uv tree
+      - run: uv run mkdocs --version
 
   deploy:
     runs-on: ubuntu-latest

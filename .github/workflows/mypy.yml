@@ -17,23 +17,18 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install poetry using pipx
-        run: pipx install poetry && pipx ensurepath
-
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v5
+      - name: Setup uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.10"
-          cache: "poetry"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Python 3.10
+        run: uv python install 3.10
 
       - name: Install dependencies
-        run: |
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root --with=typechecking
-
-      - name: Install library
-        run: poetry install --no-interaction
+        run: uv sync -p 3.10
 
       - name: Run mypy
-        run: poetry run mypy splink
+        run: uv run mypy splink

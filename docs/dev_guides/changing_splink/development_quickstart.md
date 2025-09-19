@@ -26,7 +26,8 @@ Clone **your fork** to whatever directory you want to work in with `git clone ht
 
 ## Step 2: Choose how to install system dependencies
 
-Developing Splink requires Python, as well as Poetry (the package manager we use to install Python package dependencies).
+Developing Splink requires Python, as well as uv (the package manager we use to install Python package dependencies).
+Python can be installed using uv, so does not need to be installed independently (although it can be).
 Running Spark or PostgreSQL on your computer to test those backends requires additional dependencies.
 Athena only runs in the AWS cloud, so to locally run the tests for that backend you will need to create an AWS account and
 configure Splink to use it.
@@ -35,7 +36,7 @@ There are two ways to install these system dependencies: globally on your comput
 
 The decision of which approach to take is subjective.
 
-If you already have Python and Poetry installed (plus Java and PostgreSQL if you want to run the
+If you already have uv installed (plus Java and PostgreSQL if you want to run the
 Spark and PostgreSQL backends locally), there is probably little advantage to using `conda`.
 
 On the other hand, `conda` is particularly suitable if:
@@ -46,23 +47,13 @@ On the other hand, `conda` is particularly suitable if:
 
 ## Step 3, Manual install option: Install system dependencies
 
+### uv
+
+To install uv follow [the installation guide in their docs](https://docs.astral.sh/uv/getting-started/installation/).
+
 ### Python
 
-Check if Python is already installed by running `python3 --version`.
-If that outputs a version like 3.10.12, you've already got it!
-Otherwise, follow the instructions for installation on your platform
-from the [Python website](https://www.python.org/downloads/).
-
-### Poetry
-
-Run these commands to install Poetry globally.
-Note that we currently use an older version of Poetry, so the version
-must be specified.
-
-```sh
-pip install --upgrade pip
-pip install poetry==1.4.2
-```
+Once uv is installed, Python can be installed using uv, as outlined in [the uv page on installing python](https://docs.astral.sh/uv/guides/install-python/).
 
 ### Java
 
@@ -171,28 +162,22 @@ Run the rest of the steps in this guide _inside_ this environment.
 
 ## Step 4: Python package dependencies
 
-Splink manages the other Python packages it depends on using Poetry.
-Simply run `poetry install` in the Splink directory to install them.
+Splink manages the other Python packages it depends on using uv.
+Simply run `uv sync` in the Splink directory to install them.
 You can find more options for this command (such as how to install
-optional dependencies) on the [managing dependencies with Poetry page](./managing_dependencies_with_poetry.md).
-
-To enter the virtual environment created by poetry, run `poetry shell`.
-You will need to do this again each time you open a new terminal.
-Use `exit` to leave the Poetry shell.
+optional dependencies) on the [managing dependencies with uv page](./managing_dependencies_with_uv.md).
 
 ## Step 5: Activating your environment(s)
 
 Depending on the options you chose in this document, you now have either:
 
-- **Only** a Poetry virtual environment.
-- **Both** a conda environment and a Poetry virtual environment.
-
-If you did **not** use conda, then each time you open a terminal to develop
-Splink, after navigating to the repository directory, run `poetry shell`.
+- **Only** a uv virtual environment.
+- **Both** a conda environment and a uv virtual environment.
 
 If you **did** use conda, then each time you open a terminal to develop
-Splink, after navigating to the repository directory, run `mamba activate splink`
-and then `poetry shell`.
+Splink, after navigating to the repository directory, run `mamba activate splink`.
+
+In either case, relevant python commands (such as running tests, scripts, or using the REPL) can now be run using `uv run ...`.
 
 ## Step 6: Checking that it worked
 
@@ -200,17 +185,15 @@ If you have installed all the dependencies, including PostgreSQL,
 you should be able to run the following command without error (will take about 10 minutes):
 
 ```sh
-pytest tests/
+uv run pytest tests/
 ```
 
-This runs all the Splink tests across the default DuckDB and Spark backends,
-and runs some integration tests across the rest of the backends except for Athena,
-which can't run locally.
+This runs all the Splink tests across the default DuckDB and Spark backends.
 
-If you haven't installed PostgreSQL, try this:
+For a quicker, but less comprehensive check, try testing that you can import Splink without error:
 
 ```sh
-pytest tests/ --ignore tests/test_full_example_postgres.py
+uv run python -c "import splink"
 ```
 
 ## Step 7: Visual Studio Code (optional)

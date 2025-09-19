@@ -8,7 +8,7 @@ on:
       - "splink/**"
       - "tests/**"
       - "pyproject.toml"
-      - "poetry.lock"
+      - "uv.lock"
 
 jobs:
   test:
@@ -35,18 +35,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install poetry using pipx
-        run: pipx install poetry
-
-      - uses: actions/setup-python@v5
+      - name: Setup uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          poetry config virtualenvs.in-project true
-          poetry install --no-interaction --no-root
+        run: uv sync -p ${{ matrix.python-version }}
 
       - name: Run tests
-        run: poetry run pytest -v --durations=0 -m "postgres_only" tests/
+        run: uv run python -m pytest -v --durations=0 -m "postgres_only" tests/

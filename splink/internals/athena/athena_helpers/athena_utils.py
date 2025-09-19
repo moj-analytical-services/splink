@@ -19,10 +19,7 @@ def athena_warning_text(database_bucket_txt, do_does_grammar):
 def _verify_athena_inputs(database, bucket, boto3_session):
     errors = []
 
-    if (
-        database
-        not in wr.catalog.databases(limit=None, boto3_session=boto3_session).values
-    ):
+    if database not in wr.catalog.databases(boto3_session=boto3_session).values:
         errors.append(f"database '{database}'")
 
     if bucket not in wr.s3.list_buckets(boto3_session=boto3_session):
