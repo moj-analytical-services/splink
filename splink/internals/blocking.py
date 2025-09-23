@@ -196,6 +196,8 @@ class BlockingRule:
         input_tablename: str,
         input_columns: List[InputColumn],
     ) -> str:
+        """A SQL string that creates the input tables that will be joined
+        for this blocking rule"""
         return f"select * from {input_tablename}"
 
     @property
@@ -489,6 +491,8 @@ class ExplodingBlockingRule(BlockingRule):
         input_tablename: str,
         input_columns: List[InputColumn],
     ) -> str:
+        """A SQL string that creates the input tables that will be joined
+        for this blocking rule"""
         input_colnames = {col.quote().name for col in input_columns}
 
         arrays_to_explode_quoted = [
