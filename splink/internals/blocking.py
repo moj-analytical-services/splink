@@ -351,6 +351,7 @@ class SaltedBlockingRule(BlockingRule):
             sqls.append(sql)
         return " UNION ALL ".join(sqls)
 
+
 def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
     return db_api.sql_dialect.explode_arrays_sql(
         tbl_name, columns_to_explode, other_columns_to_retain
@@ -491,9 +492,7 @@ class ExplodingBlockingRule(BlockingRule):
         input_colnames = {col.quote().name for col in input_columns}
 
         arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect)
-            .quote()
-            .name
+            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect).quote().name
             for colname in self.array_columns_to_explode
         ]
 
@@ -506,7 +505,6 @@ class ExplodingBlockingRule(BlockingRule):
         )
 
         return expl_sql
-
 
     def as_dict(self):
         output = super().as_dict()
