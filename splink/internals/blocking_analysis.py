@@ -9,7 +9,6 @@ import sqlglot
 
 from splink.internals.blocking import (
     BlockingRule,
-    ExplodingBlockingRule,
     _sql_gen_where_condition,
     backend_link_type_options,
     block_using_rules_sqls,
@@ -60,33 +59,22 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         input_tablename_l = "__splink__df_concat"
         input_tablename_r = "__splink__df_concat"
 
-    if isinstance(blocking_rule, ExplodingBlockingRule):
-       input_colnames = set(input_dataframes[0].columns_escaped)
-       arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect)
-            .quote()
-            .name
-            for colname in blocking_rule.array_columns_to_explode
-       ]
+    sql = blocking_rule.create_blocking_input_sql(
+        input_tablename=input_tablename_l,
+        input_columns=input_dataframes[0].columns,
+    )
 
-       expl_sql = db_api.sql_dialect.explode_arrays_sql(
-            input_tablename_l,
-            arrays_to_explode_quoted,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
-       )
+    sqls.append({"sql": sql, "output_table_name": "__splink__br_input_l"})
 
-       sqls.append({"sql": expl_sql, "output_table_name": "__splink__df_unnested_l"})
+    sql = blocking_rule.create_blocking_input_sql(
+        input_tablename=input_tablename_r,
+        input_columns=input_dataframes[0].columns,
+    )
 
-       expl_sql = db_api.sql_dialect.explode_arrays_sql(
-            input_tablename_r,
-            arrays_to_explode_quoted,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
-       )
+    sqls.append({"sql": sql, "output_table_name": "__splink__br_input_r"})
 
-       sqls.append({"sql": expl_sql, "output_table_name": "__splink__df_unnested_r"})
-
-       input_tablename_l = "__splink__df_unnested_l"
-       input_tablename_r = "__splink__df_unnested_r"
+    input_tablename_l = "__splink__br_input_l"
+    input_tablename_r = "__splink__br_input_r"
 
     l_cols_sel = []
     r_cols_sel = []
