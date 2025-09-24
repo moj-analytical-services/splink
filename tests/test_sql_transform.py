@@ -128,6 +128,7 @@ def test_add_pref_and_suffix():
     cols_class = [InputColumn(c, sqlglot_dialect_str="duckdb") for c in cols]
     assert [c.name for c in cols_class] == out_cols
 
+
 def test_sqlglot_tree_signature():
     # just to make the tests a bit leaner
     # we don't care about actual signature, only how it compares to reference values

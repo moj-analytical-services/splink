@@ -75,7 +75,6 @@ def add_quotes_and_table_prefix(syntax_tree, table_name):
 
 
 def sqlglot_tree_signature_dict(tree_dump):
-
     def _signature(sub_tree):
         if not isinstance(sub_tree, dict) or "class" not in sub_tree:
             return ""
@@ -93,9 +92,11 @@ def sqlglot_tree_signature_dict(tree_dump):
 
     return _signature(tree_dump)
 
+
 def sqlglot_tree_signature_list(dump_list):
     def make_entry(klass):
         return {"class": klass, "children": []}
+
     nested_dump = make_entry(dump_list[0]["c"])
     dump_dict = {0: nested_dump}
     for index, d in enumerate(dump_list):
@@ -120,7 +121,8 @@ def sqlglot_tree_signature_list(dump_list):
 
     return _signature(nested_dump)
 
-def sqlglot_tree_signature(sqlglot_tree) -> str:
+
+def sqlglot_tree_signature(sqlglot_tree):
     """A short string representation of a SQLglot tree.
 
     Allows you to check the type and placement
@@ -130,14 +132,12 @@ def sqlglot_tree_signature(sqlglot_tree) -> str:
     tree_dump = sqlglot_tree.dump()
     # tree_dump may be in different formats depending on the sqlglot version
     # < 27.15.0 is dict format
-    # from 27.15.0 it's a list, 
+    # from 27.15.0 it's a list,
     if isinstance(tree_dump, dict):
         return sqlglot_tree_signature_dict(tree_dump)
     if isinstance(tree_dump, list):
         return sqlglot_tree_signature_list(tree_dump)
-    raise TypeError(
-        f"sqlglot serialised to an unexpected format: {type(tree_dump)}."
-    )
+    raise TypeError(f"sqlglot serialised to an unexpected format: {type(tree_dump)}.")
 
 
 T = TypeVar("T", bound=exp.Expression)
