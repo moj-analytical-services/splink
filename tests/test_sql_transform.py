@@ -35,7 +35,13 @@ def test_move_l_r_table_prefix_to_column_suffix():
     move_l_r_test(br, expected)
 
     br = "concat_ws(', ', l.name, r.name)"
-    expected = ("concat_ws(', ', name_l, name_r)",)
+    expected = (
+        "concat_ws(', ', name_l, name_r)",
+        (
+            "concat_ws(', ', coalesce(cast(name_l as text), ''), "
+            "coalesce(cast(name_r as text), ''))"
+        ),
+    )
     move_l_r_test(br, expected)
 
     br = "my_custom_function(l.name, r.name)"
