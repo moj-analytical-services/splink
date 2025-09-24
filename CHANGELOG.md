@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fix issue where exact match levels are not correctly identified with newer `sqlglot` versions [#2780](https://github.com/moj-analytical-services/splink/pull/2780)
+- Fix issue with l/r transformations in newer `sqlglot` versions for certain expressions [#2780](https://github.com/moj-analytical-services/splink/pull/2780)
+
 ## [4.0.8] - 2025-06-04
 
 ### Fixed
