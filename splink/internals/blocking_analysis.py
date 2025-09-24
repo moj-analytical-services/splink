@@ -253,34 +253,36 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     max_rows_limit: int = int(1e9),
     unique_id_input_column: InputColumn,
     source_dataset_input_column: Optional[InputColumn],
+    check_max_rows_limit: bool = True,
 ) -> pd.DataFrame:
     # Check none of the blocking rules will create a vast/computationally
     # intractable number of comparisons
-    for br in blocking_rules:
-        # TODO: Deal properly with exlpoding rules
-        count = _count_comparisons_generated_from_blocking_rule(
-            splink_df_dict=splink_df_dict,
-            blocking_rule=br,
-            link_type=link_type,
-            db_api=db_api,
-            max_rows_limit=max_rows_limit,
-            compute_post_filter_count=False,
-            unique_id_input_column=unique_id_input_column,
-            source_dataset_input_column=source_dataset_input_column,
-        )
-        count_pre_filter = count[
-            "number_of_comparisons_generated_pre_filter_conditions"
-        ]
-
-        if float(count_pre_filter) > max_rows_limit:
-            # TODO: Use a SplinkException?  Want this to give a sensible message
-            # when ocoming from estimate_probability_two_random_records_match
-            raise ValueError(
-                f"Blocking rule {br.blocking_rule_sql} would create {count_pre_filter} "
-                "comparisonns.\nThis exceeds the max_rows_limit of "
-                f"{max_rows_limit}.\nPlease tighten the "
-                "blocking rule or increase the max_rows_limit."
+    if check_max_rows_limit:
+        for br in blocking_rules:
+            # TODO: Deal properly with exlpoding rules
+            count = _count_comparisons_generated_from_blocking_rule(
+                splink_df_dict=splink_df_dict,
+                blocking_rule=br,
+                link_type=link_type,
+                db_api=db_api,
+                max_rows_limit=max_rows_limit,
+                compute_post_filter_count=False,
+                unique_id_input_column=unique_id_input_column,
+                source_dataset_input_column=source_dataset_input_column,
             )
+            count_pre_filter = count[
+                "number_of_comparisons_generated_pre_filter_conditions"
+            ]
+
+            if float(count_pre_filter) > max_rows_limit:
+                # TODO: Use a SplinkException?  Want this to give a sensible message
+                # when ocoming from estimate_probability_two_random_records_match
+                raise ValueError(
+                    f"Blocking rule {br.blocking_rule_sql} would create "
+                    f"{count_pre_filter} comparisonns.\nThis exceeds the "
+                    f"max_rows_limit of {max_rows_limit}.\nPlease tighten the "
+                    "blocking rule or increase the max_rows_limit."
+                )
 
     rc = _row_counts_per_input_table(
         splink_df_dict=splink_df_dict,
@@ -408,7 +410,6 @@ def _count_comparisons_generated_from_blocking_rule(
     unique_id_input_column: InputColumn,
     source_dataset_input_column: Optional[InputColumn],
 ) -> dict[str, Union[int, str]]:
-    # TODO: if it's an exploding blocking rule, make sure we error out
     pipeline = CTEPipeline()
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         splink_df_dict, blocking_rule, link_type, db_api
@@ -478,6 +479,7 @@ def _count_comparisons_generated_from_blocking_rule(
             max_rows_limit=max_rows_limit,
             unique_id_input_column=unique_id_input_column,
             source_dataset_input_column=source_dataset_input_column,
+            check_max_rows_limit=False,
         )
 
         post_filter_total = post_filter_total_df.loc[0, "row_count"].item()
