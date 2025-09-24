@@ -7,6 +7,7 @@ from splink.internals.input_column import InputColumn
 from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
+    sqlglot_tree_signature,
 )
 
 
@@ -126,3 +127,34 @@ def test_add_pref_and_suffix():
     out_cols = ['"unique_id"', '"SUR name"', '"cluster"']
     cols_class = [InputColumn(c, sqlglot_dialect_str="duckdb") for c in cols]
     assert [c.name for c in cols_class] == out_cols
+
+def test_sqlglot_tree_signature():
+    # just to make the tests a bit leaner
+    # we don't care about actual signature, only how it compares to reference values
+    def assert_signatures_match(sql_string: str, equivalent_sql: str) -> None:
+        sig = sqlglot_tree_signature(sqlglot.parse_one(sql_string))
+        expected_sig = sqlglot_tree_signature(sqlglot.parse_one(equivalent_sql))
+        assert sig == expected_sig
+
+    # the sort of expressions we allow for input columns
+    assert_signatures_match("col_1", "col_2")
+    assert_signatures_match("col_1[1]", "col_2[10]")
+    assert_signatures_match("col_1['lat']", "another_col['key']")
+    # more nested expressions
+    assert_signatures_match("name_l = name_r", "col_l = col_r")
+    assert_signatures_match(
+        "name_l IS NULL",
+        "col IS NULL",
+    )
+    assert_signatures_match(
+        "name_l IS NULL OR name_r IS NULL",
+        "some_col IS NULL OR another_col IS NULL",
+    )
+    assert_signatures_match(
+        "name_l[1] = name_r[1]",
+        "col[5] = another_col[5]",
+    )
+    assert_signatures_match(
+        "name_l['first'] = name_r['first']",
+        "address_l['primary'] = address_r['secondary']",
+    )
