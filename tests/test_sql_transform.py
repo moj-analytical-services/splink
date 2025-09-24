@@ -7,47 +7,53 @@ from splink.internals.input_column import InputColumn
 from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
+    sqlglot_tree_signature,
 )
 
 
-def move_l_r_test(br, expected):
+def move_l_r_test(br, expected_possibilities):
+    # We don't test against a single expectation,
+    # as that may depend on the underlying version of sqlglot
+    # this is due to what function names sqlglot prefers
+    # e.g. list_contains vs array_contains
+    # ultimately we might want to refactor to stabilise this
     res = move_l_r_table_prefix_to_column_suffix(br, sqlglot_dialect="duckdb")
-    assert res.lower() == expected.lower()
+    assert res.lower() in expected_possibilities
 
 
 def test_move_l_r_table_prefix_to_column_suffix():
     br = "l.first_name = r.first_name"
-    expected = "first_name_l = first_name_r"
+    expected = ("first_name_l = first_name_r",)
     move_l_r_test(br, expected)
 
     br = "substring(l.last_name, 1, 2) = substring(r.last_name, 1, 2)"
-    expected = "substring(last_name_l, 1, 2) = substring(last_name_r, 1, 2)"
+    expected = ("substring(last_name_l, 1, 2) = substring(last_name_r, 1, 2)",)
     move_l_r_test(br, expected)
 
     br = "l.name['first'] = r.name['first'] and levenshtein(l.dob, r.dob) < 2"
-    expected = "name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2"
+    expected = ("name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2",)
     move_l_r_test(br, expected)
 
     br = "concat_ws(', ', l.name, r.name)"
-    expected = "concat_ws(', ', name_l, name_r)"
+    expected = (
+        "concat_ws(', ', name_l, name_r)",
+        (
+            "concat_ws(', ', coalesce(cast(name_l as text), ''), "
+            "coalesce(cast(name_r as text), ''))"
+        ),
+    )
     move_l_r_test(br, expected)
 
     br = "my_custom_function(l.name, r.name)"
-    expected = "my_custom_function(name_l, name_r)"
+    expected = ("my_custom_function(name_l, name_r)",)
     move_l_r_test(br, expected)
 
     br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
     expected = (
-        "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+        "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1",
+        "length(list_filter(name_list_l, x -> array_contains(name_list_r, x))) >= 1",
     )
     move_l_r_test(br, expected)
-
-    br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
-    res = move_l_r_table_prefix_to_column_suffix(br)
-    expected = (
-        "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
-    )
-    assert res.lower() == expected.lower()
 
 
 def test_cast_concat_as_varchar():
@@ -126,3 +132,35 @@ def test_add_pref_and_suffix():
     out_cols = ['"unique_id"', '"SUR name"', '"cluster"']
     cols_class = [InputColumn(c, sqlglot_dialect_str="duckdb") for c in cols]
     assert [c.name for c in cols_class] == out_cols
+
+
+def test_sqlglot_tree_signature():
+    # just to make the tests a bit leaner
+    # we don't care about actual signature, only how it compares to reference values
+    def assert_signatures_match(sql_string: str, equivalent_sql: str) -> None:
+        sig = sqlglot_tree_signature(sqlglot.parse_one(sql_string))
+        expected_sig = sqlglot_tree_signature(sqlglot.parse_one(equivalent_sql))
+        assert sig == expected_sig
+
+    # the sort of expressions we allow for input columns
+    assert_signatures_match("col_1", "col_2")
+    assert_signatures_match("col_1[1]", "col_2[10]")
+    assert_signatures_match("col_1['lat']", "another_col['key']")
+    # more nested expressions
+    assert_signatures_match("name_l = name_r", "col_l = col_r")
+    assert_signatures_match(
+        "name_l IS NULL",
+        "col IS NULL",
+    )
+    assert_signatures_match(
+        "name_l IS NULL OR name_r IS NULL",
+        "some_col IS NULL OR another_col IS NULL",
+    )
+    assert_signatures_match(
+        "name_l[1] = name_r[1]",
+        "col[5] = another_col[5]",
+    )
+    assert_signatures_match(
+        "name_l['first'] = name_r['first']",
+        "address_l['primary'] = address_r['secondary']",
+    )
