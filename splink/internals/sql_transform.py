@@ -16,7 +16,7 @@ def _add_l_or_r_to_identifier(node: exp.Expression) -> exp.Expression:
 
     if (p := node.parent) is None:
         raise TypeError(f"Node {node} has no parent")
-    if isinstance(p, (exp.Lambda, exp.Anonymous)):
+    if isinstance(p, (exp.Lambda, exp.Anonymous, exp.ArrayContains)):
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
