@@ -11,35 +11,41 @@ from splink.internals.sql_transform import (
 )
 
 
-def move_l_r_test(br, expected):
+def move_l_r_test(br, expected_possibilities):
+    # We don't test against a single expectation,
+    # as that may depend on the underlying version of sqlglot
+    # this is due to what function names sqlglot prefers
+    # e.g. list_contains vs array_contains
+    # ultimately we might want to refactor to stabilise this
     res = move_l_r_table_prefix_to_column_suffix(br, sqlglot_dialect="duckdb")
-    assert res.lower() == expected.lower()
+    assert res.lower() in expected_possibilities
 
 
 def test_move_l_r_table_prefix_to_column_suffix():
     br = "l.first_name = r.first_name"
-    expected = "first_name_l = first_name_r"
+    expected = ("first_name_l = first_name_r",)
     move_l_r_test(br, expected)
 
     br = "substring(l.last_name, 1, 2) = substring(r.last_name, 1, 2)"
-    expected = "substring(last_name_l, 1, 2) = substring(last_name_r, 1, 2)"
+    expected = ("substring(last_name_l, 1, 2) = substring(last_name_r, 1, 2)",)
     move_l_r_test(br, expected)
 
     br = "l.name['first'] = r.name['first'] and levenshtein(l.dob, r.dob) < 2"
-    expected = "name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2"
+    expected = ("name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2",)
     move_l_r_test(br, expected)
 
     br = "concat_ws(', ', l.name, r.name)"
-    expected = "concat_ws(', ', name_l, name_r)"
+    expected = ("concat_ws(', ', name_l, name_r)",)
     move_l_r_test(br, expected)
 
     br = "my_custom_function(l.name, r.name)"
-    expected = "my_custom_function(name_l, name_r)"
+    expected = ("my_custom_function(name_l, name_r)",)
     move_l_r_test(br, expected)
 
     br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
     expected = (
-        "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+        "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1",
+        "length(list_filter(name_list_l, x -> array_contains(name_list_r, x))) >= 1",
     )
     move_l_r_test(br, expected)
 
