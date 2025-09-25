@@ -24,7 +24,7 @@ else
     source "${CONDA_BASE}/etc/profile.d/mamba.sh"
 fi
 
-# NOTE: Unlike poetry, conda doesn't have great support for locking dependencies.
+# NOTE: Unlike uv, conda doesn't have great support for locking dependencies.
 # There is conda-lock, but it is pretty experimental and has a bug that makes
 # it unusable for Splink as of 3/19/2024: https://github.com/conda/conda-lock/issues/619
 mamba env create -n splink --file development_environment.yaml --force
@@ -34,9 +34,7 @@ mamba env create -n splink --file development_environment.yaml --force
 mamba list --explicit --name splink > development_environment_lock_$(uname)-$(uname -m).txt
 
 # https://github.com/python-poetry/poetry/issues/4055#issuecomment-2206673892
-mamba run --no-capture -n splink poetry config virtualenvs.create true
-mamba run --no-capture -n splink poetry config virtualenvs.in-project true
-mamba run --no-capture -n splink poetry config virtualenvs.ignore-conda-env true
+# TODO: do we need an equivalent setting in uv?
 
 cd ../..
 pkill -f "postgres -D splink_db" || true
@@ -50,4 +48,4 @@ SQL
 
 # Fully reset, since poetry itself may have updated and we have a lockfile
 rm -rf ./.venv
-mamba run --no-capture -n splink poetry install --with typechecking --all-extras
+mamba run --no-capture -n splink uv sync --all-extras

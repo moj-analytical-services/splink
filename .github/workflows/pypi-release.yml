@@ -1,0 +1,23 @@
+name: Release Package on PyPi
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+jobs:
+  publish-to-pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install the project
+        run: uv build --no-sources
+
+      - name: Publish to PyPI
+        run: uv publish -t ${{ secrets.PYPI_API_TOKEN }}

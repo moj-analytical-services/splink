@@ -4,7 +4,7 @@
 !splink/
 !scripts/
 !pyproject.toml
-!poetry.lock
+!uv.lock
 !README.md
 
 **/*.pyc
