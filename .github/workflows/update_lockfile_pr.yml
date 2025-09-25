@@ -1,0 +1,24 @@
+name: Regular uv.lock refresh PR
+on:
+  schedule:
+    - cron: "25 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  lockfile-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv lock --upgrade
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: maint/weekly-uv-lock
+          title: "[auto] uv.lock refresh"
+          commit-message: "[auto] update uv.lock (weekly refresh)"
+          body: "Batch-refresh of transitive & direct deps via `uv lock --upgrade`."
+          labels: dependencies
+          delete-branch: true
