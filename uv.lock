@@ -4772,7 +4772,7 @@ dependencies = [
     { name = "pandas", version = "2.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pandas", version = "2.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "sqlglot", version = "26.33.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "sqlglot", version = "27.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "sqlglot", version = "27.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
 
 [package.optional-dependencies]
@@ -4852,19 +4852,19 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.0.3" },
     { name = "jsonschema", specifier = ">=3.2" },
     { name = "numpy", specifier = ">=1.17.3" },
-    { name = "pandas", specifier = ">1.3.5" },
+    { name = "pandas", specifier = ">=1.3.5" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.8.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.2.1,<4.0.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.2.1" },
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=1.4.0" },
-    { name = "sqlglot", specifier = ">=13.0.0" },
+    { name = "sqlglot", specifier = ">=17.6.0" },
 ]
 provides-extras = ["pyspark", "spark", "athena", "postgres"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "igraph", specifier = ">=0.11.2" },
-    { name = "pandas", specifier = ">1.3.5" },
+    { name = "pandas", specifier = ">=1.3.5" },
     { name = "psycopg2-binary", specifier = ">=2.8.0" },
     { name = "pyspark", specifier = ">=3.2.1" },
     { name = "sqlalchemy", specifier = ">=1.4.0" },
@@ -4977,7 +4977,7 @@ wheels = [
 
 [[package]]
 name = "sqlglot"
-version = "27.17.0"
+version = "27.18.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
@@ -4989,9 +4989,9 @@ resolution-markers = [
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
     "python_full_version == '3.9.*' and sys_platform != 'win32'",
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b6/a4/8e7f871b94d8752470c7547627bc905f3c7a63a268dca1da49c933441885/sqlglot-27.17.0.tar.gz", hash = "sha256:6e0bb7baebcebc0fbb9b029cfa689ef634b5181a6751df07a84be8f540058ee3", size = 5474967, upload-time = "2025-09-23T15:34:31.946Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/56/ef3c705c750b262d4cca787982e3b640d46e8b40ba06d1d5577fb1bb4d76/sqlglot-27.18.0.tar.gz", hash = "sha256:6901eb1805226f38852e53c473d67c8e13bacf11ffe5d90170874f3d7b199acf", size = 5478250, upload-time = "2025-09-25T10:31:47.423Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/c5/a23239b6ae53ef22b56db27357dbb270f116c29be52f6b4e35e5fe69214a/sqlglot-27.17.0-py3-none-any.whl", hash = "sha256:539d254806ead6c8f2b239185c3a5077185f8f452f45232da38b9326b899c7cc", size = 519268, upload-time = "2025-09-23T15:34:29.29Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/cc/110103f57c249bed40e85bd069ec3d2c29250ea228c89ed9d161924bb44d/sqlglot-27.18.0-py3-none-any.whl", hash = "sha256:71c122ddc99128347e1cd9ad6ed08b378cdf233e27eb78abce7542f47c723edd", size = 520293, upload-time = "2025-09-25T10:31:44.927Z" },
 ]
 
 [[package]]
