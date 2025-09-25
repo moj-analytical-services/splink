@@ -45,7 +45,8 @@ dev = [
 ]
 docs = [
     "griffe==0.49.0",
-    "jinja2==3.0.3",
+    # keep jinja2 relaxed so it doesn't constrain us in rest of dev
+    "jinja2>=3.0.3",
     "mkdocs==1.6.0",
     "mkdocs-autorefs==1.0.1",
     "mkdocs-charts-plugin==0.0.10",
