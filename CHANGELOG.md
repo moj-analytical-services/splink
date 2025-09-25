@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.9] - 2025-09-24
+
+### Fixed
+
+- Fix issue where exact match levels are not correctly identified with newer `sqlglot` versions [#2780](https://github.com/moj-analytical-services/splink/pull/2780)
+- Fix issue with l/r transformations in newer `sqlglot` versions for certain expressions [#2780](https://github.com/moj-analytical-services/splink/pull/2780)
+
 ## [4.0.8] - 2025-06-04
 
 ### Fixed
@@ -209,7 +216,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.8...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.9...HEAD
+[4.0.9]: https://github.com/moj-analytical-services/splink/compare/4.0.8...4.0.9
 [4.0.8]: https://github.com/moj-analytical-services/splink/compare/4.0.7...4.0.8
 [4.0.7]: https://github.com/moj-analytical-services/splink/compare/4.0.6...4.0.7
 [4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
