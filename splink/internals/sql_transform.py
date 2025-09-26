@@ -16,7 +16,7 @@ def _add_l_or_r_to_identifier(node: exp.Expression) -> exp.Expression:
 
     if (p := node.parent) is None:
         raise TypeError(f"Node {node} has no parent")
-    if isinstance(p, (exp.Lambda, exp.Anonymous)):
+    if isinstance(p, (exp.Lambda, exp.Anonymous, exp.ArrayContains)):
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
@@ -74,22 +74,15 @@ def add_quotes_and_table_prefix(syntax_tree, table_name):
     return tree
 
 
-def sqlglot_tree_signature(sqlglot_tree):
-    """A short string representation of a SQLglot tree.
-
-    Allows you to check the type and placement
-    of nodes in the AST are as expected.
-
-    e.g. lower(hello) -> Lower(Column(Identifier))"""
-
+def sqlglot_tree_signature_dict(tree_dump):
     def _signature(sub_tree):
         if not isinstance(sub_tree, dict) or "class" not in sub_tree:
             return ""
 
         child_signatures = [
-            _signature(child)
+            child_sig
             for child in sub_tree.get("args", {}).values()
-            if _signature(child)
+            if (child_sig := _signature(child))
         ]
 
         if child_signatures:
@@ -97,7 +90,54 @@ def sqlglot_tree_signature(sqlglot_tree):
         else:
             return sub_tree["class"]
 
-    return _signature(sqlglot_tree.dump())
+    return _signature(tree_dump)
+
+
+def sqlglot_tree_signature_list(dump_list):
+    def make_entry(klass):
+        return {"class": klass, "children": []}
+
+    nested_dump = make_entry(dump_list[0]["c"])
+    dump_dict = {0: nested_dump}
+    for index, d in enumerate(dump_list):
+        if index == 0:
+            continue
+        if klass := d.get("c", None):
+            entry = make_entry(klass)
+            dump_dict[index] = entry
+            dump_dict[d["i"]]["children"].append(entry)
+
+    def _signature(sub_tree):
+        child_signatures = [
+            child_sig
+            for child in sub_tree["children"]
+            if (child_sig := _signature(child))
+        ]
+
+        if child_signatures:
+            return f"{sub_tree['class']}({', '.join(child_signatures)})"
+        else:
+            return sub_tree["class"]
+
+    return _signature(nested_dump)
+
+
+def sqlglot_tree_signature(sqlglot_tree):
+    """A short string representation of a SQLglot tree.
+
+    Allows you to check the type and placement
+    of nodes in the AST are as expected.
+
+    e.g. lower(hello) -> Lower(Column(Identifier))"""
+    tree_dump = sqlglot_tree.dump()
+    # tree_dump may be in different formats depending on the sqlglot version
+    # < 27.15.0 is dict format
+    # from 27.15.0 it's a list,
+    if isinstance(tree_dump, dict):
+        return sqlglot_tree_signature_dict(tree_dump)
+    if isinstance(tree_dump, list):
+        return sqlglot_tree_signature_list(tree_dump)
+    raise TypeError(f"sqlglot serialised to an unexpected format: {type(tree_dump)}.")
 
 
 T = TypeVar("T", bound=exp.Expression)
