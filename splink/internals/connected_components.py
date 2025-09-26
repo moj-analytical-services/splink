@@ -447,9 +447,11 @@ def solve_connected_components(
         # node_ids that have converged
         pipeline = CTEPipeline([prev_representatives_thinned, filtered_neighbours])
         sql = f"""
-        select * from {filtered_neighbours.templated_name}
-        where node_id in
-            (select node_id from {prev_representatives_thinned.templated_name})
+        select fn.* from {filtered_neighbours.templated_name} as fn
+        where exists (
+            select 1 from {prev_representatives_thinned.templated_name} as prt
+            where fn.node_id = prt.node_id
+        )
         """
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_filtered_{iteration}")
         filtered_neighbours_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
