@@ -27,6 +27,9 @@ class AthenaDataFrame(SplinkDataFrame):
             table=tb,
             boto3_session=self.db_api.boto3_session,
         )
+        if d is None:
+            # TODO: maybe this should be an error?
+            return []
 
         cols = list(d.keys())
         return [InputColumn(c, sqlglot_dialect_str="presto") for c in cols]

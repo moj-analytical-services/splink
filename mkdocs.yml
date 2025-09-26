@@ -242,11 +242,10 @@ nav:
       - Contributing to Splink:
         - Contributor Guide: "dev_guides/CONTRIBUTING.md"
         - Development Quickstart: "dev_guides/changing_splink/development_quickstart.md"
-        - Building your local environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
         - Contributing to Documentation: "dev_guides/changing_splink/contributing_to_docs.md"
-        - Managing Dependencies with Poetry: "dev_guides/changing_splink/managing_dependencies_with_poetry.md"
+        - Managing Environment and Dependencies: "dev_guides/changing_splink/managing_dependencies_with_uv.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
         - Contributing to the Splink Blog: "dev_guides/changing_splink/blog_posts.md"
       - How Splink works:
