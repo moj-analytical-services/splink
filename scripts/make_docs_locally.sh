@@ -12,4 +12,4 @@ then
 fi
 
 # can remove verbose flag if needed
-uv run mkdocs serve -v --dirtyreload
+uv run --group docs python -m mkdocs serve -v --dirtyreload
