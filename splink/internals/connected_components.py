@@ -298,9 +298,10 @@ def _cc_find_converged_nodes(
 
     sql_stable = f"""
     SELECT *
-        FROM {representatives_name}
-        WHERE representative NOT IN (
-            SELECT representative FROM non_stable_representatives
+        FROM {representatives_name} as r
+        WHERE NOT EXISTS (
+            SELECT 1 FROM non_stable_representatives as nsr
+            WHERE r.representative = nsr.representative
         )
         """
     sqls.append(
@@ -433,9 +434,10 @@ def solve_connected_components(
         pipeline = CTEPipeline([representatives_stable, prev_representatives_table])
         sql = f"""
         SELECT *
-        FROM {prev_representatives_table.templated_name}
-        WHERE representative NOT IN (
-            SELECT representative FROM __splink__representatives_stable_{iteration}
+        FROM {prev_representatives_table.templated_name} as pr
+        WHERE NOT EXISTS (
+            SELECT 1 FROM __splink__representatives_stable_{iteration} as rs
+            WHERE pr.representative = rs.representative
         )
         """
         pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
@@ -445,9 +447,11 @@ def solve_connected_components(
         # node_ids that have converged
         pipeline = CTEPipeline([prev_representatives_thinned, filtered_neighbours])
         sql = f"""
-        select * from {filtered_neighbours.templated_name}
-        where node_id in
-            (select node_id from {prev_representatives_thinned.templated_name})
+        select fn.* from {filtered_neighbours.templated_name} as fn
+        where exists (
+            select 1 from {prev_representatives_thinned.templated_name} as prt
+            where fn.node_id = prt.node_id
+        )
         """
         pipeline.enqueue_sql(sql, f"__splink__df_neighbours_filtered_{iteration}")
         filtered_neighbours_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
