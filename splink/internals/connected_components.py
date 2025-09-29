@@ -346,50 +346,46 @@ def solve_connected_components(
     # and the nodes table are not known as fixed strings because they
     # can be used provided
 
-    pipeline = CTEPipeline([edges_table, nodes_table])
+    pipeline = CTEPipeline([edges_table])
 
     match_prob_expr = f"where match_probability >= {threshold_match_probability}"
     if threshold_match_probability is None:
         match_prob_expr = ""
 
-    # Add 'self-edges' so that the algorithm can 'see' the nodes with no edges
+    # add reverse edges so these can also be considered by the algorithm
     sql = f"""
     select
+        {edge_id_column_name_left} as rep_l,
         {edge_id_column_name_left} as node_id_l,
+        {edge_id_column_name_right} as rep_r,
         {edge_id_column_name_right} as node_id_r
     from {edges_table.templated_name}
     {match_prob_expr}
 
-    UNION
+    union all
 
     select
-    {node_id_column_name} as node_id_l,
-    {node_id_column_name} as node_id_r
-    from {nodes_table.templated_name}
+        {edge_id_column_name_right} as rep_l,
+        {edge_id_column_name_right} as node_id_l,
+        {edge_id_column_name_left} as rep_r,
+        {edge_id_column_name_left} as node_id_r
+    from {edges_table.templated_name}
+    {match_prob_expr}
     """
-    pipeline.enqueue_sql(sql, "__splink__df_edges_with_self_loops")
-    edges_with_self_loops = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    pipeline = CTEPipeline([edges_with_self_loops])
-
-    sql = f"select {node_id_column_name} as node_id from {nodes_table.physical_name}"
-
-    pipeline.enqueue_sql(sql, "nodes_ids_only")
-
-    sql = _cc_generate_neighbours_representation()
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
     neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    edges_with_self_loops.drop_table_from_database_and_remove_from_cache()
-
     # Create our initial representatives table
-    pipeline = CTEPipeline([neighbours])
-    sql = _cc_generate_initial_representatives_table()
-    pipeline.enqueue_sql(sql, "representatives")
-    sql = _cc_update_neighbours_first_iter()
-    pipeline.enqueue_sql(sql, "neighbours_first_iter")
-    sql = _cc_update_representatives_first_iter()
-    # Execute if we have no batching, otherwise add it to our batched process
+    # use distinct to account for nodes tables with multiple rows per
+    # node_id
+    pipeline = CTEPipeline([nodes_table])
+    sql = f"""
+    select distinct
+        {node_id_column_name} as node_id,
+        {node_id_column_name} as representative,
+    from {nodes_table.templated_name}
+    """
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
 
     representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -417,83 +413,76 @@ def solve_connected_components(
         #    to create the "needs_updating" column based on whether rep has changed
         # 4. Assess if any representatives changed between iterations, exit if not.
 
-        # 1a. Find stable clusters and remove from representatives table
+        # 1. find rep updates
         pipeline = CTEPipeline([filtered_neighbours, prev_representatives_table])
-        converged_nodes_sqls = _cc_find_converged_nodes(
-            prev_representatives_table.templated_name,
-            filtered_neighbours.templated_name,
-            iteration,
-        )
-        pipeline.enqueue_list_of_sqls(converged_nodes_sqls)
-
-        representatives_stable = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        converged_clusters_tables.append(representatives_stable)
-
-        # Remove stable clusters from representatives table
-        pipeline = CTEPipeline([representatives_stable, prev_representatives_table])
         sql = f"""
-        SELECT *
-        FROM {prev_representatives_table.templated_name} as pr
-        WHERE NOT EXISTS (
-            SELECT 1 FROM __splink__representatives_stable_{iteration} as rs
-            WHERE pr.representative = rs.representative
-        )
-        """
-        pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
-        prev_representatives_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        select 
+            old_rep,
+            min(representative) as representative
+        from (
+            select 
+                rep_l as old_rep,
+                rep_r as representative
+            from {neighbours.templated_name}
 
-        # 1a. Thin neighbours table - we can drop all rows that refer to
-        # node_ids that have converged
-        pipeline = CTEPipeline([prev_representatives_thinned, filtered_neighbours])
+            union all
+
+            select 
+                representative as old_rep,
+                representative as representative
+            from {prev_representatives_table.templated_name}
+        )
+        group by old_rep
+        """
+
+        pipeline.enqueue_sql(sql, f"__splink__rep_updates_{iteration}")
+
+        # 2. match node_ids with their new reps
         sql = f"""
-        select fn.* from {filtered_neighbours.templated_name} as fn
-        where exists (
-            select 1 from {prev_representatives_thinned.templated_name} as prt
-            where fn.node_id = prt.node_id
-        )
+        select
+            node_id,
+            u.representative
+        from {prev_representatives_table.templated_name} as p
+        join __splink__rep_updates_{iteration} as u
+        on p.representative = u.old_rep
         """
-        pipeline.enqueue_sql(sql, f"__splink__df_neighbours_filtered_{iteration}")
-        filtered_neighbours_thinned = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        filtered_neighbours.drop_table_from_database_and_remove_from_cache()
-        filtered_neighbours = filtered_neighbours_thinned
 
-        # Generates our representatives table for the next iteration
-        # by joining our previous tables onto our neighbours table.
-        pipeline = CTEPipeline([filtered_neighbours])
-        sql = _cc_generate_representatives_loop_cond(
-            prev_representatives_thinned.physical_name,
-            filtered_neighbours.templated_name,
-        )
-        pipeline.enqueue_sql(sql, "r")
-        # Update our needs_updating column in the representatives table.
-        sql = _cc_update_representatives_loop_cond(
-            prev_representatives_thinned.physical_name
-        )
-
-        repr_name = f"__splink__df_representatives_{iteration}"
-
-        pipeline.enqueue_sql(
-            sql,
-            repr_name,
-        )
-
+        pipeline.enqueue_sql(sql, f"__splink__representatives_{iteration}")
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        # Now the new representatives have been computed from the thinned
-        # representatives we no longer need the older table
-        prev_representatives_thinned.drop_table_from_database_and_remove_from_cache()
-
-        pipeline = CTEPipeline()
+        pipeline = CTEPipeline([representatives, filtered_neighbours])
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = representatives
 
-        # Check if our exit condition has been met...
-        sql = _cc_assess_exit_condition(representatives.physical_name)
+        # 3. filter neighbours and check if any links to process remain
+        sql = f"""
+        select
+            l.representative as rep_l,
+            n.node_id_l,
+            n.node_id_r,
+            r.representative as rep_r,
+        from {representatives.templated_name} as l
+        join {neighbours.templated_name} as n
+        on l.node_id = n.node_id_l
+        join {representatives.templated_name} as r
+        on n.node_id_r = r.node_id
+        where rep_l <> rep_r
+        """
 
-        pipeline.enqueue_sql(sql, "__splink__df_root_rows")
+        pipeline.enqueue_sql(sql, f"__splink__filtered_neighbours_{iteration}")
 
+        neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        filtered_neighbours.drop_table_from_database_and_remove_from_cache()
+        filtered_neighbours = neighbours
+
+        # 4. check exit condition (any edges left to process)
+        pipeline = CTEPipeline([filtered_neighbours])
+        sql = f"""
+        select count(*) as count_of_nodes_needing_updating
+        from {filtered_neighbours.templated_name}
+        """
+        pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
         )
@@ -508,18 +497,16 @@ def solve_connected_components(
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
-    converged_clusters_tables.append(representatives)
     filtered_neighbours.drop_table_from_database_and_remove_from_cache()
 
     pipeline = CTEPipeline()
 
-    sql = " UNION ALL ".join(
-        [
-            f"""select node_id as {node_id_column_name}, representative as cluster_id
-            from {t.physical_name}"""
-            for t in converged_clusters_tables
-        ]
-    )
+    sql = f"""
+    select
+        node_id as {node_id_column_name},
+        representative as cluster_id
+    from {representatives.physical_name}
+    """
 
     pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
 
@@ -527,8 +514,5 @@ def solve_connected_components(
 
     representatives.drop_table_from_database_and_remove_from_cache()
     neighbours.drop_table_from_database_and_remove_from_cache()
-
-    for t in converged_clusters_tables:
-        t.drop_table_from_database_and_remove_from_cache()
 
     return final_result
