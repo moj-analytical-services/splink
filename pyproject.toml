@@ -40,8 +40,6 @@ dev = [
     "pyspark>=3.2.1",
     "sqlalchemy>=1.4.0",
     "psycopg2-binary>=2.8.0",
-    "igraph>=0.11.2",
-    "pandas>=1.3.5",
 ]
 docs = [
     "griffe==0.49.0",
