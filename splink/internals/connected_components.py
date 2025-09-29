@@ -22,134 +22,6 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-def _cc_generate_neighbours_representation() -> str:
-    """SQL to generate all the 'neighbours' of each input node.
-
-    The 'neighbour' of a node is any other node that is connected to the original node
-    within the graph.  'Connected' means that at the threshold match probability,
-    the nodes are considered to be a match (i.e. the nodes are estimated to
-    be same entity)
-
-    This table differs to the edges table in two respects:
-    1.  Unlike the edges table, it's not guaranteed that the node (left hand side)
-        has a lower id than the neighbour.  That is, the left column (node_id) contains
-        all the nodes, not just the ones with a higher id on the right hand side
-    2. The table contains all nodes, even those with no edges (these are represented)
-        as a 'self link' i.e. ID1 -> ID1, ensuring they are present in the final
-        clusters table.
-    """
-
-    sql = """
-    select n.node_id,
-        e_l.node_id_r as neighbour
-    from nodes_ids_only as n
-
-    left join __splink__df_edges_with_self_loops as e_l
-        on n.node_id = e_l.node_id_l
-
-    UNION
-
-    select n.node_id,
-        coalesce(e_r.node_id_l, n.node_id) as neighbour
-    from nodes_ids_only as n
-
-    left join __splink__df_edges_with_self_loops as e_r
-        on n.node_id = e_r.node_id_r
-    """
-
-    return sql
-
-
-def _cc_generate_initial_representatives_table() -> str:
-    """SQL to generate our initial "representatives" table.
-
-    The 'representative' column will eventually become the cluster ID.
-
-    As outlined in the paper quoted at the top:
-
-    '...begin by choosing for each vertex (node) a representatative by picking the
-    vertex (node) with the minimum id amongst itself and its neighbours'.
-
-    e.g. node ids 1, 2 and 3 may all have representative 2, indicating
-    they are a cluster.
-
-    This is done initially by grouping on our neighbours table
-    and finding the minimum neighbour for each node.
-    """
-
-    sql = """
-    select
-        neighbours.node_id,
-        min(neighbour) as representative
-
-    from __splink__df_neighbours as neighbours
-    group by node_id
-    order by node_id
-    """
-
-    return sql
-
-
-def _cc_update_neighbours_first_iter() -> str:
-    """SQL to update our neighbours table - first iteration only.
-
-    Takes our initial neighbours table, join on the representatives table
-    and recalculates the mimumum representative for each node.
-
-    This works by joining on the current known representative for each node's
-    neighbours.
-
-    i.e. rather than looking at a node's minimum representative, we look at the node's
-    neighbour's minimum representative.
-
-    So, if we know that B is represented by A (B -> A) and C is represented by B
-    (C -> B), then we can join on B to conclude that (C -> A).
-    """
-
-    sql = """
-    select
-        neighbours.node_id,
-        min(representatives.representative) as representative
-
-    from __splink__df_neighbours as neighbours
-    left join representatives
-    on neighbours.neighbour = representatives.node_id
-        group by neighbours.node_id
-        order by neighbours.node_id
-    """
-
-    return sql
-
-
-def _cc_update_representatives_first_iter() -> str:
-    """SQL to update our representatives table - first iteration only.
-
-    From here, standardised code can be used inside a while loop,
-    as the representatives table no longer needs generating.
-
-    This is only used for the first iteration as we
-
-    In this SQL, we also generate "needs_updating", which is a boolean
-    that indicates whether the current representative differs
-    from the previous representative.
-
-    This value is used extensively to speed up our while loop and as
-    an exit condition.
-    """
-
-    sql = """
-    select
-        n.node_id,
-        n.representative,
-        n.representative <> repr.representative as needs_updating
-    from neighbours_first_iter as n
-    inner join representatives as repr
-    on n.node_id = repr.node_id
-    """
-
-    return sql
-
-
 def _cc_generate_representatives_loop_cond(
     prev_representatives: str, filtered_neighbours: str
 ) -> str:
@@ -178,37 +50,34 @@ def _cc_generate_representatives_loop_cond(
     sql = f"""
     select
 
-    source.node_id,
-    min(source.representative) as representative
+    old_rep,
+    min(representative) as representative,
+    min(stable) as stable
 
     from
     (
 
         select
 
-            neighbours.node_id,
-            repr_neighbour.representative as representative
+            rep_l as old_rep,
+            rep_r as representative,
+            0 as stable
 
-        from {filtered_neighbours} as neighbours
+        from {filtered_neighbours}
 
-        inner join {prev_representatives} as repr_neighbour
-        on neighbours.neighbour = repr_neighbour.node_id
-
-        where
-            repr_neighbour.needs_updating
-
-        UNION ALL
+        union all
 
         select
 
-            node_id,
-            representative
+            representative as old_rep,
+            representative,
+            1 as stable
 
         from {prev_representatives}
 
-    ) AS source
-    group by source.node_id
-        """
+    )
+    group by old_rep
+    """
 
     return sql
 
@@ -227,15 +96,15 @@ def _cc_update_representatives_loop_cond(
     sql = f"""
     select
 
-        r.node_id,
+        repr.node_id,
         r.representative,
-        r.representative <> repr.representative as needs_updating
+        r.stable
 
     from r
 
     left join {prev_representatives} as repr
-    on r.node_id = repr.node_id
-        """
+    on r.old_rep = repr.representative
+    """
 
     return sql
 
@@ -249,69 +118,12 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     """
 
     sql = f"""
-            select count(*) as count_of_nodes_needing_updating
-            from {representatives_name}
-            where needs_updating
+        select count(*) as count_of_nodes_needing_updating
+        from {representatives_name}
+        where not stable
         """
 
     return sql
-
-
-def _cc_find_converged_nodes(
-    representatives_name: str,
-    neighbours_name: str,
-    iteration: int,
-) -> list[dict[str, str]]:
-    """SQL to find nodes that have converged so are part of a stable cluster.
-    These can be removed 'from play' to slim down tables and make the algorithm
-    run faster.
-
-    Args:
-        representatives_name: The name of the representatives table.
-        neighbours_name: The name of the neighbours table.
-        iteration: The iteration of the algorithm
-
-    Returns:
-        str: SQL query to find unconverged nodes.
-    """
-
-    # Take nodes, and find neighbours to the nodes (follow edges in both directions)
-    # For each neighbour to the node, find its representative
-    # Does that lead us back to the same cluster?  Tf not there is a neighbour
-    # outside of the cluster
-    sqls = []
-
-    sql_non_stable = f"""
-    SELECT DISTINCT r.representative
-    FROM {representatives_name} r
-    JOIN {neighbours_name} n ON r.node_id = n.node_id
-    JOIN {representatives_name} r2 ON n.neighbour = r2.node_id
-    WHERE r.representative != r2.representative
-    """
-
-    sqls.append(
-        {
-            "sql": sql_non_stable,
-            "output_table_name": "non_stable_representatives",
-        }
-    )
-
-    sql_stable = f"""
-    SELECT *
-        FROM {representatives_name} as r
-        WHERE NOT EXISTS (
-            SELECT 1 FROM non_stable_representatives as nsr
-            WHERE r.representative = nsr.representative
-        )
-        """
-    sqls.append(
-        {
-            "sql": sql_stable,
-            "output_table_name": f"__splink__representatives_stable_{iteration}",
-        }
-    )
-
-    return sqls
 
 
 def solve_connected_components(
@@ -416,41 +228,16 @@ def solve_connected_components(
 
         # 1. find rep updates
         pipeline = CTEPipeline([filtered_neighbours, prev_representatives_table])
-        sql = f"""
-        select 
-            old_rep,
-            min(representative) as representative,
-            min(stable) as stable
-        from (
-            select 
-                rep_l as old_rep,
-                rep_r as representative,
-                0 as stable
-            from {neighbours.templated_name}
-
-            union all
-
-            select 
-                representative as old_rep,
-                representative as representative,
-                1 as stable
-            from {prev_representatives_table.templated_name}
+        sql = _cc_generate_representatives_loop_cond(
+            prev_representatives_table.templated_name,
+            filtered_neighbours.templated_name,
         )
-        group by old_rep
-        """
-
-        pipeline.enqueue_sql(sql, f"__splink__rep_updates_{iteration}")
+        pipeline.enqueue_sql(sql, "r")
 
         # 2. match node_ids with their new reps
-        sql = f"""
-        select
-            node_id,
-            u.representative,
-            u.stable
-        from {prev_representatives_table.templated_name} as p
-        join __splink__rep_updates_{iteration} as u
-        on p.representative = u.old_rep
-        """
+        sql = _cc_update_representatives_loop_cond(
+            prev_representatives_table.templated_name
+        )
 
         pipeline.enqueue_sql(sql, f"__splink__representatives_{iteration}")
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -483,11 +270,9 @@ def solve_connected_components(
 
         # 4. check exit condition (any edges left to process)
         pipeline = CTEPipeline([representatives])
-        sql = f"""
-        select count(*) as count_of_nodes_needing_updating
-        from {representatives.templated_name}
-        where stable=0
-        """
+        sql = _cc_assess_exit_condition(
+            representatives.templated_name
+        )
         pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
