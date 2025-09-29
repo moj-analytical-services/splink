@@ -384,6 +384,7 @@ def solve_connected_components(
     select distinct
         {node_id_column_name} as node_id,
         {node_id_column_name} as representative,
+        0 as stable
     from {nodes_table.templated_name}
     """
     pipeline.enqueue_sql(sql, "__splink__df_representatives")
@@ -418,18 +419,21 @@ def solve_connected_components(
         sql = f"""
         select 
             old_rep,
-            min(representative) as representative
+            min(representative) as representative,
+            min(stable) as stable
         from (
             select 
                 rep_l as old_rep,
-                rep_r as representative
+                rep_r as representative,
+                0 as stable
             from {neighbours.templated_name}
 
             union all
 
             select 
                 representative as old_rep,
-                representative as representative
+                representative as representative,
+                1 as stable
             from {prev_representatives_table.templated_name}
         )
         group by old_rep
@@ -441,7 +445,8 @@ def solve_connected_components(
         sql = f"""
         select
             node_id,
-            u.representative
+            u.representative,
+            u.stable
         from {prev_representatives_table.templated_name} as p
         join __splink__rep_updates_{iteration} as u
         on p.representative = u.old_rep
@@ -477,10 +482,11 @@ def solve_connected_components(
         filtered_neighbours = neighbours
 
         # 4. check exit condition (any edges left to process)
-        pipeline = CTEPipeline([filtered_neighbours])
+        pipeline = CTEPipeline([representatives])
         sql = f"""
         select count(*) as count_of_nodes_needing_updating
-        from {filtered_neighbours.templated_name}
+        from {representatives.templated_name}
+        where stable=0
         """
         pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
