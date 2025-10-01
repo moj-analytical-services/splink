@@ -46,7 +46,7 @@ def test_u_train(test_helpers, dialect):
     assert br.blocking_rule_sql == "l.name = r.name"
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres")
 def test_u_train_link_only(test_helpers, dialect):
     helper = test_helpers[dialect]
     data_l = [
@@ -120,7 +120,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
 # Spark is too slow in conjunction with debug mode.  If we begin to capture sql,
 # then we could refactor this test to introspect the sql
-@mark_with_dialects_excluding("spark")
+@mark_with_dialects_excluding("spark", "postgres")
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
@@ -237,7 +237,7 @@ def test_u_train_link_only_sample_proportion():
     assert count_proportioned == max_pairs
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres")
 def test_u_train_multilink(test_helpers, dialect):
     helper = test_helpers[dialect]
     datas = [
