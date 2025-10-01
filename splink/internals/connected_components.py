@@ -243,9 +243,6 @@ def solve_connected_components(
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = CTEPipeline([representatives, filtered_neighbours])
-        # Update table reference
-        prev_representatives_table.drop_table_from_database_and_remove_from_cache()
-        prev_representatives_table = representatives
 
         # 3. filter neighbours and check if any links to process remain
         sql = f"""
@@ -268,7 +265,31 @@ def solve_connected_components(
         filtered_neighbours.drop_table_from_database_and_remove_from_cache()
         filtered_neighbours = neighbours
 
-        # 4. check exit condition (any edges left to process)
+        # 4. update stable and unstable representatives
+        pipeline = CTEPipeline([representatives])
+        sql = f"""
+        select * 
+        from {representatives.templated_name}
+        where stable
+        """
+        pipeline.enqueue_sql(sql, f"__splink__stable_representatives_{iteration}")
+        converged_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        converged_clusters_tables.append(converged_clusters)
+
+        pipeline = CTEPipeline([representatives])
+        sql = f"""
+        select * 
+        from {representatives.templated_name}
+        where not stable
+        """
+        pipeline.enqueue_sql(sql, f"__splink__unstable_representatives_{iteration}")
+        unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        # Update table reference
+        prev_representatives_table.drop_table_from_database_and_remove_from_cache()
+        prev_representatives_table = unstable_clusters
+
+        # 5. check exit condition
         pipeline = CTEPipeline([representatives])
         sql = _cc_assess_exit_condition(
             representatives.templated_name
@@ -292,12 +313,13 @@ def solve_connected_components(
 
     pipeline = CTEPipeline()
 
-    sql = f"""
-    select
-        node_id as {node_id_column_name},
-        representative as cluster_id
-    from {representatives.physical_name}
-    """
+    sql = " UNION ALL ".join(
+        [
+            f"""select node_id as {node_id_column_name}, representative as cluster_id
+            from {t.physical_name}"""
+            for t in converged_clusters_tables
+        ]
+    )
 
     pipeline.enqueue_sql(sql, "__splink__clustering_output_final")
 
@@ -305,5 +327,8 @@ def solve_connected_components(
 
     representatives.drop_table_from_database_and_remove_from_cache()
     neighbours.drop_table_from_database_and_remove_from_cache()
+
+    for t in converged_clusters_tables:
+        t.drop_table_from_database_and_remove_from_cache()
 
     return final_result
