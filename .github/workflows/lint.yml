@@ -28,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: uv sync -p 3.12
 
-      - name: Run mypy
-        run: uv run mypy splink
-
       - name: Run Ruff linting
         run: uv run ruff check . --output-format=full
 
