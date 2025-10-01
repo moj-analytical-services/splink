@@ -353,3 +353,8 @@ class SparkAPI(DatabaseAPI[spark_df]):
         # specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
+
+    def _create_or_replace_temp_view(self, name: str, physical: str) -> None:
+        self._execute_sql_against_backend(
+            f"CREATE OR REPLACE TEMP VIEW {name} AS SELECT * FROM {physical}"
+        )

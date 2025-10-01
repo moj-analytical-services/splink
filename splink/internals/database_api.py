@@ -152,11 +152,16 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 return splink_dataframe
 
         if self.debug_mode:
-            print(sql)  # noqa: T201
+            print(sql)
+
             splink_dataframe = self._sql_to_splink_dataframe(
                 sql,
                 output_tablename_templated,
-                output_tablename_templated,
+                table_name_hash,
+            )
+
+            self._bind_templated_alias_to_physical(
+                output_tablename_templated, table_name_hash
             )
 
             df_pd = splink_dataframe.as_pandas_dataframe()
@@ -366,6 +371,23 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 and key == splink_df.physical_name
             ):
                 splink_df.drop_table_from_database_and_remove_from_cache()
+
+    def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
+        """Default: try TEMP VIEW, fall back to a normal VIEW."""
+        try:
+            self._create_or_replace_temp_view(templated, physical)
+        except NotImplementedError:
+            self._create_or_replace_view(templated, physical)
+
+    def _create_or_replace_temp_view(self, name: str, physical: str) -> None:
+        raise NotImplementedError
+
+    def _create_or_replace_view(self, name: str, physical: str) -> None:
+        # generic, works for DuckDB/Postgres (use DROP+CREATE if OR REPLACE not supported)
+        self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
+        self._execute_sql_against_backend(
+            f"CREATE VIEW {name} AS SELECT * FROM {physical}"
+        )
 
 
 DatabaseAPISubClass = DatabaseAPI[Any]
