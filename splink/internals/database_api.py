@@ -392,31 +392,18 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 splink_df.drop_table_from_database_and_remove_from_cache()
 
     def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
-        """Default: try TEMP VIEW, fall back to a normal VIEW."""
-        try:
-            self._create_or_replace_temp_view(templated, physical)
-        except NotImplementedError:
-            self._create_or_replace_view(templated, physical)
+        """Expose the physical table via a backend-specific temp view."""
+        self._create_or_replace_temp_view(templated, physical)
 
     def _unbind_templated_alias_from_physical(self, templated: str) -> None:
-        try:
-            self._drop_temp_view_if_exists(templated)
-        except NotImplementedError:
-            self._drop_view_if_exists(templated)
+        self._drop_temp_view_if_exists(templated)
 
     def _create_or_replace_temp_view(self, name: str, physical: str) -> None:
-        raise NotImplementedError
-
-    def _create_or_replace_view(self, name: str, physical: str) -> None:
-        self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
         self._execute_sql_against_backend(
-            f"CREATE VIEW {name} AS SELECT * FROM {physical}"
+            f"CREATE OR REPLACE TEMP VIEW {name} AS SELECT * FROM {physical}"
         )
 
     def _drop_temp_view_if_exists(self, name: str) -> None:
-        raise NotImplementedError
-
-    def _drop_view_if_exists(self, name: str) -> None:
         self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
 
     def _cleanup_debug_overlays(
