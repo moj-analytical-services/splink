@@ -203,52 +203,50 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
-            splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+            return self.sql_to_splink_dataframe_checking_cache(
                 sql_gen,
                 output_tablename_templated,
                 use_cache,
             )
-        else:
-            created_views: list[str] = []
-            created_physicals: list[str] = []
-            pipeline_completed = False
-            splink_dataframe: Optional[SplinkDataFrame] = None
 
-            try:
-                for cte in pipeline.ctes_pipeline():
-                    start_time = time.time()
-                    output_tablename = cte.output_table_name
-                    sql = cte.sql
-                    print("------")  # noqa: T201
-                    print(  # noqa: T201
-                        f"--------Creating table: {output_tablename}--------"
-                    )
+        created_views: list[str] = []
+        created_physicals: list[str] = []
+        pipeline_completed = False
+        splink_dataframe: Optional[SplinkDataFrame] = None
 
-                    splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
-                        sql,
-                        output_tablename,
-                        use_cache=False,
-                    )
-                    created_views.append(output_tablename)
-                    created_physicals.append(splink_dataframe.physical_name)
-
-                    run_time = parse_duration(time.time() - start_time)
-                    print(f"Step ran in: {run_time}")  # noqa: T201
-
-                pipeline_completed = True
-            finally:
-                self._cleanup_debug_overlays(
-                    created_views,
-                    created_physicals,
-                    pipeline_completed,
+        try:
+            for cte in pipeline.ctes_pipeline():
+                start_time = time.time()
+                output_tablename = cte.output_table_name
+                sql = cte.sql
+                print("------")  # noqa: T201
+                print(  # noqa: T201
+                    f"--------Creating table: {output_tablename}--------"
                 )
-                # don't want to cache anything in debug mode
-                self._intermediate_table_cache.invalidate_cache()
 
-            if splink_dataframe is None:
-                raise SplinkException(
-                    "Debug pipeline execution produced no output tables."
+                splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+                    sql,
+                    output_tablename,
+                    use_cache=False,
                 )
+                created_views.append(output_tablename)
+                created_physicals.append(splink_dataframe.physical_name)
+
+                run_time = parse_duration(time.time() - start_time)
+                print(f"Step ran in: {run_time}")  # noqa: T201
+
+            pipeline_completed = True
+        finally:
+            self._cleanup_debug_overlays(
+                created_views,
+                created_physicals,
+                pipeline_completed,
+            )
+            # don't want to cache anything in debug mode
+            self._intermediate_table_cache.invalidate_cache()
+
+        if splink_dataframe is None:
+            raise SplinkException("Debug pipeline execution produced no output tables.")
 
         return splink_dataframe
 
