@@ -109,7 +109,7 @@ def _cc_update_representatives_loop_cond(
     return sql
 
 
-def _cc_assess_exit_condition(representatives_name: str) -> str:
+def _cc_assess_exit_condition(neighbours_name: str) -> str:
     """SQL exit condition for our Connected Components algorithm.
 
     Where 'needs_updating' (summarised in 'cc_update_representatives_first_iter')
@@ -118,10 +118,9 @@ def _cc_assess_exit_condition(representatives_name: str) -> str:
     """
 
     sql = f"""
-        select count(*) as count_of_nodes_needing_updating
-        from {representatives_name}
-        where not stable
-        """
+    select count(*) as count_of_edges_needing_processing
+    from {neighbours_name}
+    """
 
     return sql
 
@@ -285,14 +284,16 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, f"__splink__unstable_representatives_{iteration}")
         unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+        representatives.drop_table_from_database_and_remove_from_cache()
+
         # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = unstable_clusters
 
         # 5. check exit condition
-        pipeline = CTEPipeline([representatives])
+        pipeline = CTEPipeline([filtered_neighbours])
         sql = _cc_assess_exit_condition(
-            representatives.templated_name
+            filtered_neighbours.templated_name
         )
         pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
@@ -301,14 +302,15 @@ def solve_connected_components(
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
-        needs_updating_count = root_rows[0]["count_of_nodes_needing_updating"]
+        needs_updating_count = root_rows[0]["count_of_edges_needing_processing"]
         logger.info(
             f"Completed iteration {iteration}, "
-            f"num representatives needing updating: {needs_updating_count}"
+            f"num edges remaining to process: {needs_updating_count}"
         )
         end_time = time.time()
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
+    converged_clusters_tables.append(unstable_clusters)
     filtered_neighbours.drop_table_from_database_and_remove_from_cache()
 
     pipeline = CTEPipeline()
