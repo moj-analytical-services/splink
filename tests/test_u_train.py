@@ -295,6 +295,8 @@ def test_u_train_multilink(test_helpers, dialect):
     self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api._drop_temp_view_if_exists("__splink__df_blocked_same_table_count")
     self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
@@ -333,6 +335,9 @@ def test_u_train_multilink(test_helpers, dialect):
     self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api._drop_temp_view_if_exists("__splink__df_blocked_same_table_count")
     self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 / 2)
 
