@@ -85,6 +85,8 @@ def test_u_train_link_only(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
+
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -148,6 +150,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
 
     linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
@@ -278,6 +281,7 @@ def test_u_train_multilink(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -315,6 +319,7 @@ def test_u_train_multilink(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 

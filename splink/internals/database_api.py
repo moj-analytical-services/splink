@@ -37,6 +37,7 @@ T = TypeVar("T")
 class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
     debug_mode: bool = False
+    debug_keep_temp_views: bool = False
     """
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
@@ -424,6 +425,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         physical_names: Sequence[str],
         pipeline_completed: bool,
     ) -> None:
+        if self.debug_keep_temp_views:
+            return
+
         if not templated_names:
             return
 
