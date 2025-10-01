@@ -358,3 +358,6 @@ class SparkAPI(DatabaseAPI[spark_df]):
         self._execute_sql_against_backend(
             f"CREATE OR REPLACE TEMP VIEW {name} AS SELECT * FROM {physical}"
         )
+
+    def _drop_temp_view_if_exists(self, name: str) -> None:
+        self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
