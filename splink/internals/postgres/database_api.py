@@ -180,6 +180,14 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
         """
         self._execute_sql_against_backend(sql)
 
+    def _create_or_replace_temp_view(self, name: str, physical: str) -> None:
+        sql = f"CREATE OR REPLACE TEMP VIEW {name} AS SELECT * FROM {physical}"
+        self._execute_sql_against_backend(sql)
+
+    def _drop_temp_view_if_exists(self, name: str) -> None:
+        sql = f"DROP VIEW IF EXISTS {name}"
+        self._execute_sql_against_backend(sql)
+
     def _create_splink_schema(self, other_schemas_to_search):
         other_schemas_to_search = ensure_is_list(other_schemas_to_search)
         # always search _db_schema first and public last
