@@ -20,19 +20,19 @@ Splink tests can be broadly categorised into three sets:
 
 To run tests locally against duckdb only (the default) run:
 ```sh
-poetry run pytest tests/
+uv run pytest tests/
 ```
 
 To run a single test file, append the filename to the `tests/` folder call, for example:
 
 ```sh
-poetry run pytest tests/test_u_train.py
+uv run pytest tests/test_u_train.py
 ```
 
 or for a single test, additionally append the test name after a pair of colons, as:
 
 ```sh
-poetry run pytest tests/test_u_train.py::test_u_train_multilink
+uv run pytest tests/test_u_train.py::test_u_train_multilink
 ```
 
 ??? tip "Further useful pytest options"
@@ -73,14 +73,14 @@ The available options are:
 ##### Run core tests
 Option for running only the backend-independent 'core' tests:
 
-* `poetry run pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
+* `uv run pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
 
 ##### Run tests on a specific backend
 Options for running tests on one backend only - this includes tests written [specifically for that backend](#tests-for-specific-backends), as well as [backend-agnostic tests](#backend-agnostic-testing) supported for that backend.
 
-* `poetry run pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
+* `uv run pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
     * & similarly for other dialects
-* `poetry run pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
+* `uv run pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
     * & similarly for other dialects
 
 ##### Run tests across multiple backends
