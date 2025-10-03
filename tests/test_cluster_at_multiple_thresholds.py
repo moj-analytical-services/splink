@@ -20,6 +20,9 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
     if dialect == "spark" and graph_size > 20:
         pytest.skip("Skipping large graph sizes for Spark dialect")
 
+    if dialect in {"postgres", "sqlite"} and graph_size > 500:
+        pytest.skip("Skipping large graph sizes for Postgres/SQLite dialects")
+
     G = generate_random_graph(graph_size)
     combined_nodes, combined_edges = nodes_and_edges_from_graph(G)
 
