@@ -3,7 +3,7 @@ on:
   pull_request:
     branches:
       - master
-      - "**dev"
+      - '**dev'
     paths:
       - splink/**
       - tests/**
@@ -19,12 +19,10 @@ jobs:
 
       - name: Setup uv
         id: setup-uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v2
         with:
           enable-cache: true
-              cache-dependency-glob: |
-      pyproject.toml
-      uv.lock
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Python 3.10
         run: uv python install 3.10

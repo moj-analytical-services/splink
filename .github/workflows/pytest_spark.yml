@@ -24,12 +24,10 @@ jobs:
 
       - name: Setup uv
         id: setup-uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v2
         with:
           enable-cache: true
-              cache-dependency-glob: |
-      pyproject.toml
-      uv.lock
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
