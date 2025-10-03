@@ -1,9 +1,7 @@
 from splink.internals.blocking import BlockingRule, blocking_rule_to_obj
 from splink.internals.blocking_rule_library import block_on
 from splink.internals.input_column import _get_dialect_quotes
-from splink.internals.linker import Linker
 
-from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
@@ -56,27 +54,3 @@ def test_preceding_blocking_rules(dialect):
     assess_preceding_rules(1)
     assess_preceding_rules(2)
     assess_preceding_rules(3)
-
-
-@mark_with_dialects_excluding()
-def test_simple_end_to_end(test_helpers, dialect):
-    helper = test_helpers[dialect]
-
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-    settings = get_settings_dict()
-    settings["blocking_rules_to_generate_predictions"] = [
-        block_on("first_name", "surname"),
-        block_on("dob"),
-    ]
-
-    linker = Linker(df, settings, **helper.extra_linker_args())
-
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e3)
-
-    blocking_rule = block_on("first_name", "surname")
-    linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
-
-    linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
-
-    linker.inference.predict()

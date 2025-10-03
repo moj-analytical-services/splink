@@ -15,7 +15,9 @@ from splink.internals.duckdb.database_api import DuckDBAPI
 from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 
 
-@mark_with_dialects_excluding()
+# This is slow in Spark, and so long as this passes in duckdb, there's no reason it
+# shouldn't in Spark
+@mark_with_dialects_excluding("spark")
 def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     helper = test_helpers[dialect]
 

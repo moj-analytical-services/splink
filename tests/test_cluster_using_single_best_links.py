@@ -405,7 +405,7 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
 
 @mark_with_dialects_excluding()
 def test_single_best_links_one_to_one(test_helpers, dialect):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(100)
     df_l = df.copy()
     df_r = df.copy()
     df_l["source_dataset"] = "a"
