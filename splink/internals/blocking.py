@@ -191,6 +191,15 @@ class BlockingRule:
             """
         return sql
 
+    def create_blocking_input_sql(
+        self,
+        input_tablename: str,
+        input_columns: List[InputColumn],
+    ) -> str:
+        """A SQL string that creates the input tables that will be joined
+        for this blocking rule"""
+        return f"select * from {input_tablename}"
+
     @property
     def _parsed_join_condition(self) -> Join:
         br = self.blocking_rule_sql
@@ -476,6 +485,30 @@ class ExplodingBlockingRule(BlockingRule):
             from {exploded_id_pair_table.physical_name}
         """
         return sql
+
+    def create_blocking_input_sql(
+        self,
+        input_tablename: str,
+        input_columns: List[InputColumn],
+    ) -> str:
+        """A SQL string that creates the input tables that will be joined
+        for this blocking rule"""
+        input_colnames = {col.quote().name for col in input_columns}
+
+        arrays_to_explode_quoted = [
+            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect).quote().name
+            for colname in self.array_columns_to_explode
+        ]
+
+        dialect = SplinkDialect.from_string(self._sql_dialect_str)
+
+        expl_sql = dialect.explode_arrays_sql(
+            input_tablename,
+            arrays_to_explode_quoted,
+            list(input_colnames.difference(arrays_to_explode_quoted)),
+        )
+
+        return expl_sql
 
     def as_dict(self):
         output = super().as_dict()
