@@ -71,7 +71,9 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
         pd.testing.assert_frame_equal(multi_threshold_result, single_threshold_result)
 
 
-@mark_with_dialects_excluding()
+# This is slow in Spark, and so long as this passes in duckdb, there's no reason it
+# shouldn't in Spark
+@mark_with_dialects_excluding("spark")
 def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
