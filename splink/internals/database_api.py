@@ -37,6 +37,7 @@ T = TypeVar("T")
 class DatabaseAPI(ABC, Generic[TablishType]):
     sql_dialect: SplinkDialect
     debug_mode: bool = False
+    debug_keep_temp_views: bool = False
     """
     DatabaseAPI class handles _all_ interactions with the database
     Anything backend-specific (but not related to SQL dialects) lives here also
@@ -153,10 +154,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         if self.debug_mode:
             print(sql)  # noqa: T201
+
             splink_dataframe = self._sql_to_splink_dataframe(
                 sql,
                 output_tablename_templated,
-                output_tablename_templated,
+                table_name_hash,
+            )
+
+            self._bind_templated_alias_to_physical(
+                output_tablename_templated, table_name_hash
             )
 
             df_pd = splink_dataframe.as_pandas_dataframe()
@@ -197,14 +203,18 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
-            splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+            return self.sql_to_splink_dataframe_checking_cache(
                 sql_gen,
                 output_tablename_templated,
                 use_cache,
             )
-        else:
-            # In debug mode, we do not pipeline the sql and print the
-            # results of each part of the pipeline
+
+        created_views: list[str] = []
+        created_physicals: list[str] = []
+        pipeline_completed = False
+        splink_dataframe: Optional[SplinkDataFrame] = None
+
+        try:
             for cte in pipeline.ctes_pipeline():
                 start_time = time.time()
                 output_tablename = cte.output_table_name
@@ -219,12 +229,24 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                     output_tablename,
                     use_cache=False,
                 )
+                created_views.append(output_tablename)
+                created_physicals.append(splink_dataframe.physical_name)
+
                 run_time = parse_duration(time.time() - start_time)
                 print(f"Step ran in: {run_time}")  # noqa: T201
+
+            pipeline_completed = True
+        finally:
+            self._cleanup_debug_overlays(
+                created_views,
+                created_physicals,
+                pipeline_completed,
+            )
             # don't want to cache anything in debug mode
             self._intermediate_table_cache.invalidate_cache()
 
-        # if there is an error the pipeline will not reset, leaving caller to handle
+        if splink_dataframe is None:
+            raise SplinkException("Debug pipeline execution produced no output tables.")
 
         return splink_dataframe
 
@@ -366,6 +388,54 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 and key == splink_df.physical_name
             ):
                 splink_df.drop_table_from_database_and_remove_from_cache()
+
+    def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
+        """Expose the physical table via a backend-specific temp view."""
+        self._create_or_replace_temp_view(templated, physical)
+
+    def _unbind_templated_alias_from_physical(self, templated: str) -> None:
+        self._drop_temp_view_if_exists(templated)
+
+    def _create_or_replace_temp_view(self, name: str, physical: str) -> None:
+        self._execute_sql_against_backend(
+            f"CREATE OR REPLACE TEMP VIEW {name} AS SELECT * FROM {physical}"
+        )
+
+    def _drop_temp_view_if_exists(self, name: str) -> None:
+        self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
+
+    def _cleanup_debug_overlays(
+        self,
+        templated_names: Sequence[str],
+        physical_names: Sequence[str],
+        pipeline_completed: bool,
+    ) -> None:
+        if self.debug_keep_temp_views:
+            return
+
+        if not templated_names:
+            return
+
+        for templated_name in reversed(templated_names):
+            self._unbind_templated_alias_from_physical(templated_name)
+
+        if not physical_names:
+            return
+
+        keep_upto = len(physical_names)
+        if pipeline_completed:
+            # Always retain the final physical table - it's returned to the caller.
+            keep_upto -= 1
+
+        for physical_name in physical_names[:keep_upto]:
+            try:
+                self.delete_table_from_database(physical_name)
+            except Exception as exc:  # pragma: no cover - best effort cleanup
+                logger.debug(
+                    "Unable to drop intermediate debug table %s: %s",
+                    physical_name,
+                    exc,
+                )
 
 
 DatabaseAPISubClass = DatabaseAPI[Any]

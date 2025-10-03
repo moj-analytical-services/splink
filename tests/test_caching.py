@@ -23,18 +23,27 @@ def make_mock_execute(db_api):
     # creates a mock version of linker._sql_to_splink_dataframe,
     # so we can count calls
     dummy_table_name = "__splink__dummy_frame"
-    dummy_splink_df = DuckDBDataFrame("template", dummy_table_name, db_api)
 
-    def register_and_return_dummy_frame(*args, **kwargs):
-        # need to make sure that the dummy frame always exist in the context
-        # we are running tests
-        # not actually interested in the frame itself, but needs to exist in
-        # connexion in case a method tries to access it
-        db_api._con.sql(
-            f"CREATE TABLE IF NOT EXISTS {dummy_table_name} AS "
-            f"SELECT * FROM _dummy_pd_frame"
+    # ensure a tiny seed table exists to copy from
+    db_api._execute_sql_against_backend(
+        f"CREATE TABLE IF NOT EXISTS {dummy_table_name} AS SELECT 1 AS id"
+    )
+
+    def register_and_return_dummy_frame(
+        sql, templated_name, physical_name, *args, **kwargs
+    ):
+        # Make sure the physical target exists so that:
+        #  - caching can find it, and
+        #  - debug overlays can bind a view to it safely.
+        db_api._execute_sql_against_backend(
+            f"""
+            CREATE TABLE IF NOT EXISTS {physical_name} AS
+            SELECT * FROM {dummy_table_name}
+            """
         )
-        return dummy_splink_df
+
+        # Return a SplinkDataFrame that reflects the real names for the cache
+        return DuckDBDataFrame(templated_name, physical_name, db_api)
 
     mock_execute = create_autospec(
         db_api._sql_to_splink_dataframe, side_effect=register_and_return_dummy_frame

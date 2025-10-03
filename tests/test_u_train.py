@@ -46,7 +46,7 @@ def test_u_train(test_helpers, dialect):
     assert br.blocking_rule_sql == "l.name = r.name"
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres")
 def test_u_train_link_only(test_helpers, dialect):
     helper = test_helpers[dialect]
     data_l = [
@@ -85,6 +85,8 @@ def test_u_train_link_only(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
+
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -99,6 +101,7 @@ def test_u_train_link_only(test_helpers, dialect):
     self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
+
     self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
@@ -115,7 +118,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
 # Spark is too slow in conjunction with debug mode.  If we begin to capture sql,
 # then we could refactor this test to introspect the sql
-@mark_with_dialects_excluding("spark")
+@mark_with_dialects_excluding("spark", "postgres")
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
@@ -148,6 +151,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
 
     linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
@@ -231,7 +235,7 @@ def test_u_train_link_only_sample_proportion():
     assert count_proportioned == max_pairs
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("postgres")
 def test_u_train_multilink(test_helpers, dialect):
     helper = test_helpers[dialect]
     datas = [
@@ -278,6 +282,7 @@ def test_u_train_multilink(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -291,6 +296,7 @@ def test_u_train_multilink(test_helpers, dialect):
     self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
+
     self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
@@ -315,6 +321,7 @@ def test_u_train_multilink(test_helpers, dialect):
         **helper.extra_linker_args(),
     )
     linker._debug_mode = True
+    linker._db_api.debug_keep_temp_views = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
@@ -328,6 +335,7 @@ def test_u_train_multilink(test_helpers, dialect):
     self_table_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     result = self_table_count.as_record_dict()
+
     self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 / 2)
 
