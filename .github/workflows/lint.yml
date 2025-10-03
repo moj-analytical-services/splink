@@ -15,12 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup uv
-        id: setup-uv
-        uses: astral-sh/setup-uv@v2
+      - name: Setup uv (with cache)
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
 
       - name: Install Python 3.12
         run: uv python install 3.12
