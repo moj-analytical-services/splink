@@ -110,6 +110,3 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self._execute_sql_against_backend(
             f"CREATE TEMP VIEW {name} AS SELECT * FROM {physical}"
         )
-
-    def _drop_temp_view_if_exists(self, name: str) -> None:
-        self._execute_sql_against_backend(f"DROP VIEW IF EXISTS {name}")
