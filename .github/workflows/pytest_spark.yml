@@ -38,4 +38,4 @@ jobs:
         run: uv sync -p ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uv run python -m pytest -v --durations=0 -m "spark_only" tests/
+        run: uv run python -m pytest -n auto -v --durations=0 -m "spark_only" tests/

@@ -69,6 +69,7 @@ testing = [
     "pyarrow>=7.0.0",
     "networkx>=2.5.1",
     "rapidfuzz>=2.0.3",
+    "pytest-xdist>=3.6.1",
 ]
 typechecking = ["mypy==1.9.0"]
 

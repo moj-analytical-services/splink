@@ -37,4 +37,4 @@ jobs:
         run: uv sync -p ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uv run pytest -v --durations=0 -m "sqlite_only" tests/
+        run: uv run pytest -n auto -v --durations=0 -m "sqlite_only" tests/
