@@ -52,7 +52,7 @@ def _cc_generate_representatives_loop_cond(
 
     old_rep,
     min(representative) as representative,
-    min(stable) as stable
+    min(stable) = 1 as stable
 
     from
     (
@@ -215,15 +215,20 @@ def solve_connected_components(
         iteration += 1
 
         # Loop summary:
-        # 1. Find stable clusters and remove from representatives table
-        #    Stable clusters are those where a set of nodes are within the same cluster
-        #    and those nodes have no neighbours outside of their cluster.
-        #    Add to list of converged clusters.
-        # 2. Update representatives table by following links from current reps
-        #    to their neighbours, and recalculating min representative
-        # 3. Join on the representatives table from the previous iteration
-        #    to create the "needs_updating" column based on whether rep has changed
-        # 4. Assess if any representatives changed between iterations, exit if not.
+        # 1. Update the representatives by following links from current reps
+        #    to their neighbours' representatives, and taking the minimum as the
+        #    new rep. This is a concordance of old_reps and new representatives,
+        #    and also includes a stable flag which is 1 if that cluster has no more
+        #    links to follow, and 0 otherwise.
+        # 2. Update the concordance of node_ids and representatives by joining on
+        #    old_rep.
+        # 3. Split out the stable and unstable clusters, the stable ones can be put
+        #    aside until the end, while the unstable clusters progress to the next
+        #    iteration.
+        # 4. Update the neighbours table with the new node and neighbour
+        #    representatives, where we can filter out edges within the same cluster.
+        #    If there are no more edges between different clusters then we can end
+        #    the loop.
 
         # 1. find rep updates
         pipeline = CTEPipeline([filtered_neighbours, prev_representatives_table])
@@ -241,9 +246,28 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, f"__splink__representatives_{iteration}")
         representatives = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline = CTEPipeline([representatives, filtered_neighbours])
+        # 3. update stable and unstable representatives
+        pipeline = CTEPipeline([representatives])
+        sql = f"""
+        select *
+        from {representatives.templated_name}
+        where stable
+        """
+        pipeline.enqueue_sql(sql, f"__splink__representatives_stable_{iteration}")
+        converged_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        converged_clusters_tables.append(converged_clusters)
 
-        # 3. filter neighbours and check if any links to process remain
+        pipeline = CTEPipeline([representatives])
+        sql = f"""
+        select *
+        from {representatives.templated_name}
+        where not stable
+        """
+        pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
+        unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        # 4. filter neighbours and check if any links to process remain
+        pipeline = CTEPipeline([representatives, filtered_neighbours])
         sql = f"""
         select
             l.representative as node_rep,
@@ -261,32 +285,11 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, f"__splink__filtered_neighbours_{iteration}")
 
         neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
         filtered_neighbours.drop_table_from_database_and_remove_from_cache()
         filtered_neighbours = neighbours
 
-        # 4. update stable and unstable representatives
-        pipeline = CTEPipeline([representatives])
-        sql = f"""
-        select * 
-        from {representatives.templated_name}
-        where stable = 1
-        """
-        pipeline.enqueue_sql(sql, f"__splink__representatives_stable_{iteration}")
-        converged_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        converged_clusters_tables.append(converged_clusters)
-
-        pipeline = CTEPipeline([representatives])
-        sql = f"""
-        select * 
-        from {representatives.templated_name}
-        where stable = 0
-        """
-        pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
-        unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
         representatives.drop_table_from_database_and_remove_from_cache()
-
-        # Update table reference
         prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = unstable_clusters
 
