@@ -59,8 +59,8 @@ def _cc_generate_representatives_loop_cond(
 
         select
 
-            rep_l as old_rep,
-            rep_r as representative,
+            node_rep as old_rep,
+            neighbour_rep as representative,
             0 as stable
 
         from {filtered_neighbours}
@@ -166,20 +166,20 @@ def solve_connected_components(
     # add reverse edges so these can also be considered by the algorithm
     sql = f"""
     select
-        {edge_id_column_name_left} as rep_l,
-        {edge_id_column_name_left} as node_id_l,
-        {edge_id_column_name_right} as rep_r,
-        {edge_id_column_name_right} as node_id_r
+        {edge_id_column_name_left} as node_rep,
+        {edge_id_column_name_left} as node_id,
+        {edge_id_column_name_right} as neighbour_rep,
+        {edge_id_column_name_right} as neighbour
     from {edges_table.templated_name}
     {match_prob_expr}
 
     union all
 
     select
-        {edge_id_column_name_right} as rep_l,
-        {edge_id_column_name_right} as node_id_l,
-        {edge_id_column_name_left} as rep_r,
-        {edge_id_column_name_left} as node_id_r
+        {edge_id_column_name_right} as node_rep,
+        {edge_id_column_name_right} as node_id,
+        {edge_id_column_name_left} as neighbour_rep,
+        {edge_id_column_name_left} as neighbour
     from {edges_table.templated_name}
     {match_prob_expr}
     """
@@ -246,16 +246,16 @@ def solve_connected_components(
         # 3. filter neighbours and check if any links to process remain
         sql = f"""
         select
-            l.representative as rep_l,
-            n.node_id_l,
-            n.node_id_r,
-            r.representative as rep_r,
+            l.representative as node_rep,
+            n.node_id,
+            n.neighbour,
+            r.representative as neighbour_rep
         from {representatives.templated_name} as l
         join {neighbours.templated_name} as n
-        on l.node_id = n.node_id_l
+        on l.node_id = n.node_id
         join {representatives.templated_name} as r
-        on n.node_id_r = r.node_id
-        where rep_l <> rep_r
+        on n.neighbour = r.node_id
+        where node_rep <> neighbour_rep
         """
 
         pipeline.enqueue_sql(sql, f"__splink__filtered_neighbours_{iteration}")
@@ -269,9 +269,9 @@ def solve_connected_components(
         sql = f"""
         select * 
         from {representatives.templated_name}
-        where stable
+        where stable = 1
         """
-        pipeline.enqueue_sql(sql, f"__splink__stable_representatives_{iteration}")
+        pipeline.enqueue_sql(sql, f"__splink__representatives_stable_{iteration}")
         converged_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         converged_clusters_tables.append(converged_clusters)
 
@@ -279,9 +279,9 @@ def solve_connected_components(
         sql = f"""
         select * 
         from {representatives.templated_name}
-        where not stable
+        where stable = 0
         """
-        pipeline.enqueue_sql(sql, f"__splink__unstable_representatives_{iteration}")
+        pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
         unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         representatives.drop_table_from_database_and_remove_from_cache()
