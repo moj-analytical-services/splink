@@ -35,12 +35,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup uv
-        id: setup-uv
-        uses: astral-sh/setup-uv@v2
+      - name: Setup uv (with cache)
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+          cache-suffix: "${{ runner.os }}-${{ matrix.python-version }}"
 
       - name: Install Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
