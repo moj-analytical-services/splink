@@ -114,6 +114,121 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     assert res == 1
 
 
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
+def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "postcode": [1001, 1002]},
+            {"unique_id": 2, "first_name": "Mary", "postcode": [1002, 1003]},
+            {"unique_id": 3, "first_name": "Jane", "postcode": [1003]},
+            {"unique_id": 4, "first_name": "John", "postcode": [1001]},
+        ]
+    )
+
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "postcode": [1001, 1004]},
+            {"unique_id": 2, "first_name": "Mary", "postcode": [1003, 1004]},
+            {"unique_id": 3, "first_name": "Jayne", "postcode": [1003]},
+        ]
+    )
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    args = {
+        "link_type": "link_only",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+    }
+
+    rule = block_on("postcode", arrays_to_explode=["postcode"])
+    res_dict = count_comparisons_from_blocking_rule(
+        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+    )
+    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    assert res == 6
+
+    args = {
+        "link_type": "link_and_dedupe",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+    }
+
+    rule = block_on("postcode", arrays_to_explode=["postcode"])
+    res_dict = count_comparisons_from_blocking_rule(
+        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+    )
+    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    assert res == 3 + 6 + 2
+
+
+# Just run in duckdb for speed
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
+    helper = test_helpers[dialect]
+
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    cols = ("unique_id", "sds", "first_name", "postcode", "age", "amount")
+
+    rows_1 = [
+        (1, "a", "John", [1, 2], [2, 3], 5),
+        (2, "a", "Mary", [10, 11, 12, 13], [11, 12], 5),
+    ]
+    df_1 = pd.DataFrame(rows_1, columns=cols)
+
+    rows_2 = [
+        (1, "b", "John", [1, 4], [1, 2, 3], 5),
+        (2, "b", "John", [5], [1, 2, 3], 5),
+        (3, "b", "John", [1], [1], 5),
+        (4, "b", "John", [1], [3], 1),
+        (5, "b", "Mary", [10], [11, 12], 5),
+        (6, "b", "Mary", [10], [11, 12], 1),
+        (7, "b", "Mary", [10, 11, 12, 13], [11, 12], 1),
+    ]
+    df_2 = pd.DataFrame(rows_2, columns=cols)
+
+    args = {
+        "link_type": "link_only",
+        "db_api": db_api,
+        "unique_id_column_name": "unique_id",
+        "source_dataset_column_name": "sds",
+    }
+
+    rule = {
+        "blocking_rule": """
+            l.first_name = r.first_name
+            and l.postcode = r.postcode
+            and l.age = r.age
+            and r.amount > 2
+        """,
+        "sql_dialect": "duckdb",
+        "arrays_to_explode": ["postcode", "age"],
+    }
+
+    res_dict = count_comparisons_from_blocking_rule(
+        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+    )
+
+    sql = """
+    select count(*) as count
+    from df_1 as l
+    cross join df_2 as r
+    where
+    l.first_name = r.first_name
+    and len(array_intersect(l.postcode, r.postcode)) > 0
+    and len(array_intersect(l.age, r.age)) > 0
+    and r.amount > 2
+    """
+
+    c = duckdb.sql(sql).fetchone()[0]
+
+    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+
+    assert res == c
+
+
 def validate_blocking_output(comparison_count_args, expected_out):
     records = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         **comparison_count_args
