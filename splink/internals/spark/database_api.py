@@ -258,7 +258,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
         elif templated_name == "__splink__blocked_id_pairs":
             num_partitions = math.ceil(num_partitions / 6)
         elif templated_name == "__splink__distinct_clusters_at_threshold":
-            num_partitions = 1
+            num_partitions = math.ceil(num_partitions)
         elif templated_name == "__splink__nodes_in_play":
             num_partitions = math.ceil(num_partitions / 10)
         elif templated_name == "__splink__edges_in_play":
