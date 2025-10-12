@@ -27,24 +27,20 @@ def _cc_generate_representatives_loop_cond(
 ) -> str:
     """SQL for Connected components main loop.
 
-    Takes our core neighbours table (this is constant), and
-    joins on the current representatives table from the
-    previous iteration by joining on information about each node's
-    neighbours representatives.
+    Takes the neighbours table for this iteration,
+    and uses it to find a new representative for each
+    old representative of the previous iteration. 
 
-    So, reusing the same summary logic mentioned above, if we know that B
-    is represented by A (B -> A) and C is represented by B (C -> B),
-    then we can join (B -> A) onto (C -> B) to conclude that (C -> A).
+    Because the neighbours table tracks the representative
+    of the node and the representative of its neighbour, we
+    can update the representative as the minimum of all its
+    neighbours' representatives (including itself as its own
+    neighbour).
 
-    Doing this iteratively eventually allows us to climb up the ladder through
-    all of our neighbours' representatives to a solution.
-
-    The key difference between this function and 'cc_update_neighbours_first_iter',
-    is the usage of 'needs_updating'.
-
-    The logic behind 'needs_updating' is summarised in
-    'cc_update_representatives_first_iter' and it can be used here to reduce our
-    neighbours table to only those nodes that need updating.
+    We can also derive a stable flag for each cluster, because
+    if there are no outgoing edges for that cluster (identified
+    by the node_rep) then it will never be updated in future
+    iterations.
     """
 
     sql = f"""
@@ -87,12 +83,9 @@ def _cc_update_representatives_loop_cond(
 ) -> str:
     """SQL to update our representatives table - while loop condition.
 
-    Reorganises our representatives output generated in
-    cc_generate_representatives_loop_cond() and isolates 'needs_updating',
-    which indicates whether all representatives have 'settled' (i.e.
-    no change from previous iteration).
+    Updates the representative of each node_id, using the correspondence
+    between old_reps and new representatives.
     """
-
     sql = f"""
     select
 
@@ -111,10 +104,9 @@ def _cc_update_representatives_loop_cond(
 
 def _cc_assess_exit_condition(neighbours_name: str) -> str:
     """SQL exit condition for our Connected Components algorithm.
-
-    Where 'needs_updating' (summarised in 'cc_update_representatives_first_iter')
-    it indicates that some nodes still require updating and have not yet
-    settled.
+    
+    While there are any edges left to process the algorithm should
+    continue.
     """
 
     sql = f"""
@@ -140,12 +132,21 @@ def solve_connected_components(
     into single groups, which can then be more easily visualised.
 
     Args:
-        linker:
-            Splink linker object. For more, see splink.linker.
-
+        nodes_table (SplinkDataFrame):
+            Splink dataframe containing the nodes dataframe to be clustered.
         edges_table (SplinkDataFrame):
             Splink dataframe containing our edges dataframe to be connected.
-
+        node_id_column_name (str):
+            Column name for the node id in the nodes dataframe that uniquely
+            identifies each node (across all source datasets)
+        edge_id_column_name_left (str):
+            Column name for the id of the left node in the edges dataframe.
+        edge_id_column_name_right (str):
+            Column name for the id of the right node in the edges dataframe.
+        db_api (DatabaseAPISubClass):
+            Database API.
+        threshold_match_probability (float, optional):
+            Threshold above which to accept edges as links.
 
     Returns:
         SplinkDataFrame: A dataframe containing the connected components list
@@ -155,7 +156,7 @@ def solve_connected_components(
 
     # Unlike most Splink SQL generaiton, the templated_name of the edges table
     # and the nodes table are not known as fixed strings because they
-    # can be used provided
+    # can be user provided
 
     pipeline = CTEPipeline([edges_table])
 
@@ -187,9 +188,10 @@ def solve_connected_components(
     pipeline.enqueue_sql(sql, "__splink__df_neighbours")
     neighbours = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    # Create our initial representatives table
-    # use distinct to account for nodes tables with multiple rows per
-    # node_id
+    # Create our initial representatives table.
+    # Use distinct to account for nodes tables with multiple rows per
+    # node_id, otherwise each join might produce an increasing number
+    # of rows.
     pipeline = CTEPipeline([nodes_table])
     sql = f"""
     select distinct
@@ -204,8 +206,8 @@ def solve_connected_components(
 
     prev_representatives_table = representatives
 
-    # Loop while our representative table still has unsettled nodes
-    # (nodes where the representative has changed since the last iteration)
+    # Loop while our neighbours table still has edges left to process
+    # (edges where the node_rep and neighbour_rep are different)
     converged_clusters_tables = []
     filtered_neighbours = neighbours
 
@@ -218,8 +220,8 @@ def solve_connected_components(
         # 1. Update the representatives by following links from current reps
         #    to their neighbours' representatives, and taking the minimum as the
         #    new rep. This is a concordance of old_reps and new representatives,
-        #    and also includes a stable flag which is 1 if that cluster has no more
-        #    links to follow, and 0 otherwise.
+        #    and also includes a stable flag which is true if that cluster has no more
+        #    outgoing links, and false otherwise.
         # 2. Update the concordance of node_ids and representatives by joining on
         #    old_rep.
         # 3. Split out the stable and unstable clusters, the stable ones can be put
