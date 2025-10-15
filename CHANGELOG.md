@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Deprecated
+
+- Deprecated support for python `3.9.x` following end of support for that minor version ([#2797](https://github.com/moj-analytical-services/splink/pull/2797))
+
 ## [4.0.9] - 2025-09-24
 
 ### Fixed
