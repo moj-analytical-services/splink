@@ -19,7 +19,9 @@ if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
     from splink.internals.spark.database_api import SparkAPI
 
-if (installed_minor_version := version_info.minor) < 10:
+_LOWEST_SUPPORTED_MINOR_VERSION = 10
+
+if (installed_minor_version := version_info.minor) < _LOWEST_SUPPORTED_MINOR_VERSION:
     warn(
         (
             f"Python 3.{installed_minor_version} has reached end-of-life.  "
