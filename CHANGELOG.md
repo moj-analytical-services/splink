@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Changes to `debug_mode` so that it better aligns with ordinary execution ([](https://github.com/moj-analytical-services/splink/pull/2789))
+
+### Fixed
+
+- Adjusted SQL used in `cluster_pairwise_predictions_at_thresholds` to help Spark optimise it better ([#2766](https://github.com/moj-analytical-services/splink/pull/2766))
+- Guard against issue where calculated Bayes factor becomes zero, leading to logarithm domain errors ([#2758](https://github.com/moj-analytical-services/splink/pull/2758))
+- Fix count of generated comparisons when using exploding blocking rules ([#2778](https://github.com/moj-analytical-services/splink/pull/2778))
+
 ### Deprecated
 
 - Deprecated support for python `3.9.x` following end of support for that minor version ([#2797](https://github.com/moj-analytical-services/splink/pull/2797))
