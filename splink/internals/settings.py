@@ -208,9 +208,6 @@ class Settings:
         sql_dialect: str,
         linker_uid: str = None,
     ):
-        # TODO: hook up validation here
-        # Validate against schema before processing
-        # validate_settings_against_schema(settings_dict)
 
         self._sql_dialect_str = sql_dialect
         self._sqlglot_dialect = SplinkDialect.from_string(sql_dialect).sqlglot_dialect
