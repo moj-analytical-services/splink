@@ -6242,7 +6242,7 @@ wheels = [
 
 [[package]]
 name = "splink"
-version = "4.0.9"
+version = "4.0.10"
 source = { editable = "." }
 dependencies = [
     { name = "altair", version = "5.4.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
