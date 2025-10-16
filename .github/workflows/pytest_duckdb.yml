@@ -38,7 +38,6 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv add "pytest-cov>=5.0.0"
           uv run python -m pytest -v --durations=0 -m "duckdb_only or core" --cov=splink --cov-report=xml --cov-report=term tests/
 
       - name: Upload coverage report
