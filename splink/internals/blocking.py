@@ -591,18 +591,19 @@ def block_using_rules_sqls(
 
     sql = " UNION ALL ".join(br_sqls)
 
-    sqls.append(
-        {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
-    )
+    if any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules):
+        sqls.append(
+            {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
+        )
 
-    sql = """
-    SELECT
-        min(match_key) as match_key,
-        join_key_l,
-        join_key_r
-    FROM __splink__blocked_id_pairs_non_unique
-    GROUP BY join_key_l, join_key_r
-    """
+        sql = """
+        SELECT
+            min(match_key) as match_key,
+            join_key_l,
+            join_key_r
+        FROM __splink__blocked_id_pairs_non_unique
+        GROUP BY join_key_l, join_key_r
+        """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
