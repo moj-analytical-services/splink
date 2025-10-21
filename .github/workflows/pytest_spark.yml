@@ -37,4 +37,10 @@ jobs:
         run: uv sync -p ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uv run python -m pytest -v --durations=0 -m "spark_only" tests/
+        run: |
+            # for now we skip certain tests, where limited functionality is not compatible with Spark 4
+            if [ "${{ matrix.python-version }}" = "3.8" ]; then
+              uv run python -m pytest -v --durations=0 -m "spark_only" tests/
+            else
+              uv run python -m pytest -v --durations=0 -m "spark_only and not no_spark_4" tests/
+            fi
