@@ -25,7 +25,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
 
     def __init__(
         self,
-        connection: Union[str, duckdb.DuckDBPyConnectionn] = ":memory:",
+        connection: Union[str, duckdb.DuckDBPyConnection] = ":memory:",
         output_schema: str = None,
     ):
         super().__init__()
