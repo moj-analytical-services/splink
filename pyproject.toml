@@ -124,6 +124,8 @@ markers = [
     "sqlite_only",
     "postgres",
     "postgres_only",
+# temporary skipping reduced functionality in Spark 4
+    "no_spark_4",
 ]
 
 [tool.mypy]

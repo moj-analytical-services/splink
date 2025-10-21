@@ -114,6 +114,7 @@ def test_absolute_time_difference_levels(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding("sqlite")
+@pytest.mark("no_spark_4")
 def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]

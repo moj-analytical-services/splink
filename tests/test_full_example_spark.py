@@ -17,6 +17,7 @@ from .linker_utils import _test_write_functionality, register_roc_data
 
 
 @mark_with_dialects_including("spark")
+@pytest.mark("no_spark_4")
 def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
     spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
     # Annoyingly, this needs an independent linker as csv doesn't

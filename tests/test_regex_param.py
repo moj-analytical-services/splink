@@ -109,6 +109,7 @@ record_pairs_gamma_name = {
             postcode_levels(),
             record_pairs_gamma_postcode,
             id="name regex levels test",
+            marks=["no_spark_4"],
         ),
         pytest.param(
             name_levels(),

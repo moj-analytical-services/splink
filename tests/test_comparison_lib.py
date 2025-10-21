@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 import splink.internals.comparison_library as cl
 from splink.internals.column_expression import ColumnExpression
@@ -66,6 +67,7 @@ def test_distance_function_comparison():
 
 
 @mark_with_dialects_excluding("sqlite", "postgres", "athena")
+@pytest.mark("no_spark_4")
 def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
