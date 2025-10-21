@@ -11,7 +11,6 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
-from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
@@ -435,31 +434,7 @@ class ExplodingBlockingRule(BlockingRule):
         so that subsequent statements do not produce duplicate pairs
         """
 
-        unique_id_column = unique_id_input_column
-
-        unique_id_input_columns = combine_unique_id_input_columns(
-            source_dataset_input_column, unique_id_input_column
-        )
-
-        if (splink_df := self.exploded_id_pair_table) is None:
-            raise SplinkException(
-                "Must use `materialise_exploded_id_table(linker)` "
-                "to set `exploded_id_pair_table` before calling "
-                "exclude_pairs_generated_by_this_rule_sql()."
-            )
-        ids_to_compare_sql = f"select * from {splink_df.physical_name}"
-
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
-
-        return f"""EXISTS (
-            select 1 from ({ids_to_compare_sql}) as ids_to_compare
-            where (
-                {id_expr_l} = ids_to_compare.{unique_id_column.name_l} and
-                {id_expr_r} = ids_to_compare.{unique_id_column.name_r}
-            )
-        )
-        """
+        return "false"
 
     def create_blocked_pairs_sql(
         self,
@@ -648,6 +623,20 @@ def block_using_rules_sqls(
         br_sqls.append(sql)
 
     sql = " UNION ALL ".join(br_sqls)
+
+    if any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules):
+        sqls.append(
+            {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
+        )
+
+        sql = """
+        SELECT
+            min(match_key) as match_key,
+            join_key_l,
+            join_key_r
+        FROM __splink__blocked_id_pairs_non_unique
+        GROUP BY join_key_l, join_key_r
+        """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 
