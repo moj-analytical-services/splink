@@ -76,7 +76,7 @@ def test_udf_registration(spark_api):
 
 
 @mark_with_dialects_including("spark")
-@mark("no_spark_4")
+@mark.no_spark_4
 def test_damerau_levenshtein(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
@@ -164,7 +164,7 @@ def test_damerau_levenshtein(spark_api):
 
 
 @mark_with_dialects_including("spark")
-@mark("no_spark_4")
+@mark.no_spark_4
 def test_jaro(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]

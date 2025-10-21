@@ -227,7 +227,7 @@ def test_levenshtein_level(test_helpers, dialect):
 
 # postgres has no Damerau-Levenshtein
 @mark_with_dialects_excluding("postgres")
-@mark("no_spark_4")
+@mark.no_spark_4
 def test_damerau_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]

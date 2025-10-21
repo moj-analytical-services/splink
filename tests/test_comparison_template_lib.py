@@ -52,7 +52,7 @@ def test_email_comparison(dialect, test_helpers):
 
 
 @mark_with_dialects_excluding("sqlite")
-@pytest.mark("no_spark_4")
+@pytest.mark.no_spark_4
 def test_date_of_birth_comparison_levels(dialect, test_helpers):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
