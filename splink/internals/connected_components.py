@@ -29,7 +29,7 @@ def _cc_generate_representatives_loop_cond(
 
     Takes the neighbours table for this iteration,
     and uses it to find a new representative for each
-    old representative of the previous iteration. 
+    old representative of the previous iteration.
 
     Because the neighbours table tracks the representative
     of the node and the representative of its neighbour, we
@@ -104,7 +104,7 @@ def _cc_update_representatives_loop_cond(
 
 def _cc_assess_exit_condition(neighbours_name: str) -> str:
     """SQL exit condition for our Connected Components algorithm.
-    
+
     While there are any edges left to process the algorithm should
     continue.
     """
@@ -297,9 +297,7 @@ def solve_connected_components(
 
         # 5. check exit condition
         pipeline = CTEPipeline([filtered_neighbours])
-        sql = _cc_assess_exit_condition(
-            filtered_neighbours.templated_name
-        )
+        sql = _cc_assess_exit_condition(filtered_neighbours.templated_name)
         pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
             pipeline, use_cache=False
