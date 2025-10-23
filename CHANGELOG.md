@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Spark 4 compatible versions of UDFs [#2802](https://github.com/moj-analytical-services/splink/pull/2802)
+
 ### Changed
 
-- Changes to `debug_mode` so that it better aligns with ordinary execution ([](https://github.com/moj-analytical-services/splink/pull/2789))
+- Changes to `debug_mode` so that it better aligns with ordinary execution ([#2789](https://github.com/moj-analytical-services/splink/pull/2789))
 
 ### Fixed
 
