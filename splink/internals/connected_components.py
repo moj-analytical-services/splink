@@ -277,7 +277,7 @@ def solve_connected_components(
             n.neighbour,
             r.representative as neighbour_rep
         from {representatives.templated_name} as l
-        join {neighbours.templated_name} as n
+        join {filtered_neighbours.templated_name} as n
         on l.node_id = n.node_id
         join {representatives.templated_name} as r
         on n.neighbour = r.node_id
