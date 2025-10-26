@@ -48,7 +48,7 @@ def _cc_generate_representatives_loop_cond(
 
     old_rep,
     min(representative) as representative,
-    min(stable) = 1 as stable
+    min(stable) as stable
 
     from
     (
@@ -57,7 +57,7 @@ def _cc_generate_representatives_loop_cond(
 
             node_rep as old_rep,
             neighbour_rep as representative,
-            0 as stable
+            false as stable
 
         from {filtered_neighbours}
 
@@ -67,7 +67,7 @@ def _cc_generate_representatives_loop_cond(
 
             representative as old_rep,
             representative,
-            1 as stable
+            true as stable
 
         from {prev_representatives}
 
@@ -93,7 +93,7 @@ def _cc_update_representatives_loop_cond(
         r.representative,
         r.stable
 
-    from r
+    from __splink__rep_updates as r
 
     left join {prev_representatives} as repr
     on r.old_rep = repr.representative
@@ -238,7 +238,7 @@ def solve_connected_components(
             prev_representatives_table.templated_name,
             filtered_neighbours.templated_name,
         )
-        pipeline.enqueue_sql(sql, "r")
+        pipeline.enqueue_sql(sql, "__splink__rep_updates")
 
         # 2. match node_ids with their new reps
         sql = _cc_update_representatives_loop_cond(
@@ -281,7 +281,7 @@ def solve_connected_components(
         on l.node_id = n.node_id
         join {representatives.templated_name} as r
         on n.neighbour = r.node_id
-        where node_rep <> neighbour_rep
+        where l.representative <> r.representative
         """
 
         pipeline.enqueue_sql(sql, f"__splink__filtered_neighbours_{iteration}")
