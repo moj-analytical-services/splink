@@ -37,6 +37,7 @@ def altair_or_json(
     chart_dict: dict[Any, Any], as_dict: bool = False
 ) -> ChartReturnType:
     from altair import Chart
+
     if not as_dict:
         return Chart.from_dict(chart_dict)
 

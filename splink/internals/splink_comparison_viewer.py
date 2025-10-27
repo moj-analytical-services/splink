@@ -4,8 +4,6 @@ import json
 import os
 from typing import TYPE_CHECKING, Any
 
-from jinja2 import Template
-
 from splink.internals.misc import EverythingEncoder, read_resource
 
 from .predict import _combine_prior_and_bfs
@@ -121,6 +119,8 @@ def render_splink_comparison_viewer_html(
     out_path: str,
     overwrite: bool = False,
 ) -> str:
+    from jinja2 import Template
+
     # When developing the package, it can be easier to point
     # ar the script live on observable using <script src=>
     # rather than bundling the whole thing into the html
