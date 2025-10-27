@@ -1,0 +1,34 @@
+name: Check bare-bones install
+on:
+  pull_request:
+    branches:
+      - master
+      - "**dev"
+    paths:
+      - "splink/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Check minimal-dependency Splink import
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup uv (with cache)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+
+      - name: Install Python 3.10
+        run: uv python install 3.10
+
+      - name: Install dependencies
+        run: uv sync -p 3.10 --only-group core
+
+      - name: Check Splink imports
+        run: uv run --only-group core python -c "import splink"
+
+      - name: Check dependencies installed
+        run: uv pip list

@@ -5,8 +5,6 @@ import os
 import random
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
-from jinja2 import Template
-
 from splink.internals.exceptions import SplinkException
 from splink.internals.misc import EverythingEncoder, read_resource
 from splink.internals.pipeline import CTEPipeline
@@ -354,6 +352,8 @@ def render_splink_cluster_studio_html(
     overwrite: bool = False,
     _df_cluster_metrics: SplinkDataFrame = None,
 ) -> str:
+    from jinja2 import Template
+
     bundle_observable_notebook = True
 
     svu_options = {

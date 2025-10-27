@@ -5,14 +5,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-from duckdb import DuckDBPyRelation
-
 from splink.internals.input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
+    from duckdb import DuckDBPyRelation
+
     from splink.internals.database_api import DatabaseAPI
 
 
