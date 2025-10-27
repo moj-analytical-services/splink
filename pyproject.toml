@@ -34,6 +34,9 @@ Homepage = "https://github.com/moj-analytical-services/splink"
 Repository = "https://github.com/moj-analytical-services/splink"
 
 [dependency-groups]
+# dummy 'core' group to allow us to declare conflict with athena
+# awswrangler upper-pins packages including pyarrow, so ruins our resolution otherwise
+core = []
 dev = [
     "tabulate>=0.8.9",
     "pyspark>=3.2.1",
@@ -74,10 +77,17 @@ typechecking = ["mypy==1.9.0"]
 
 [tool.uv]
 default-groups = [
+    "core",
     "dev",
     "linting",
     "testing",
     "typechecking",
+]
+conflicts = [
+  [
+    { group = "core" },
+    { extra = "athena" }
+  ]
 ]
 
 [build-system]
