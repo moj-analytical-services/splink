@@ -57,7 +57,7 @@ def _cc_generate_representatives_loop_cond(
 
             node_rep as old_rep,
             neighbour_rep as representative,
-            false as stable
+            0 as stable
 
         from {filtered_neighbours}
 
@@ -67,7 +67,7 @@ def _cc_generate_representatives_loop_cond(
 
             representative as old_rep,
             representative,
-            true as stable
+            1 as stable
 
         from {prev_representatives}
 
@@ -253,7 +253,7 @@ def solve_connected_components(
         sql = f"""
         select *
         from {representatives.templated_name}
-        where stable
+        where stable = 1
         """
         pipeline.enqueue_sql(sql, f"__splink__representatives_stable_{iteration}")
         converged_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
@@ -263,7 +263,7 @@ def solve_connected_components(
         sql = f"""
         select *
         from {representatives.templated_name}
-        where not stable
+        where stable = 0
         """
         pipeline.enqueue_sql(sql, f"__splink__representatives_unstable_{iteration}")
         unstable_clusters = db_api.sql_pipeline_to_splink_dataframe(pipeline)
