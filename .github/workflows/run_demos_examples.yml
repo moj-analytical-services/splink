@@ -38,7 +38,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync -p ${{ matrix.python-version }}
+        run: uv sync -p ${{ matrix.python-version }} --group demos
 
       - name: Modify Notebooks to reduce data size
         run: uv run python scripts/reduce_notebook_runtime.py
