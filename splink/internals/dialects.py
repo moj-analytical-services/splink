@@ -418,12 +418,12 @@ class SparkDialect(SplinkDialect):
     def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
-        return f"""to_date({name}, '{date_format}')"""
+        return f"""date(try_to_timestamp({name}, '{date_format}'))"""
 
     def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
-        return f"""to_timestamp({name}, '{timestamp_format}')"""
+        return f"""try_to_timestamp({name}, '{timestamp_format}')"""
 
     def _regex_extract_raw(
         self, name: str, pattern: str, capture_group: int = 0
