@@ -26,10 +26,13 @@ def _engine_factory(_pg_credentials):
         user=_pg_credentials["user"],
         pw=_pg_credentials["password"],
     ):
-        return create_engine(
-            f"postgresql+psycopg2://{user}:{pw}"
-            f"@{_pg_credentials['host']}:{_pg_credentials['port']}/{db}"
-        )
+        try:
+            return create_engine(
+                f"postgresql+psycopg2://{user}:{pw}"
+                f"@{_pg_credentials['host']}:{_pg_credentials['port']}/{db}"
+            )
+        except ModuleNotFoundError:
+            return None
 
     return get_engine
 
@@ -37,7 +40,10 @@ def _engine_factory(_pg_credentials):
 def _setup_test_env(_engine_factory):
     # catch case where no postgres available - if testing other backends
     try:
-        conn = _engine_factory().connect()
+        engine = _engine_factory()
+        if engine is None:
+            return None
+        conn = engine.connect()
     except OperationalError as e:
         print(repr(e))  # noqa: T201
         return None
