@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted SQL used in `cluster_pairwise_predictions_at_thresholds` to help Spark optimise it better ([#2766](https://github.com/moj-analytical-services/splink/pull/2766))
 - Guard against issue where calculated Bayes factor becomes zero, leading to logarithm domain errors ([#2758](https://github.com/moj-analytical-services/splink/pull/2758))
 - Fix count of generated comparisons when using exploding blocking rules ([#2778](https://github.com/moj-analytical-services/splink/pull/2778))
+- Allow failed date-parsing in Spark 4 to fall through as `NULL` ([#2805](https://github.com/moj-analytical-services/splink/pull/2805))
 
 ### Deprecated
 
