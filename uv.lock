@@ -111,8 +111,8 @@ name = "astunparse"
 version = "1.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "six" },
-    { name = "wheel" },
+    { name = "six", marker = "python_full_version < '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "wheel", marker = "python_full_version < '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f3/af/4182184d3c338792894f34a62672919db7ca008c89abee9b564dd34d8029/astunparse-1.6.3.tar.gz", hash = "sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872", size = 18290, upload-time = "2019-12-22T18:12:13.129Z" }
 wheels = [
@@ -1690,7 +1690,7 @@ resolution-markers = [
     "python_full_version == '3.9.*' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "zipp", version = "3.23.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "zipp", version = "3.23.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
 wheels = [
@@ -3772,7 +3772,6 @@ name = "pyarrow"
 version = "17.0.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version < '3.9'",
     "python_full_version >= '3.12' and sys_platform == 'win32'",
     "python_full_version == '3.11.*' and sys_platform == 'win32'",
     "python_full_version == '3.10.*' and sys_platform == 'win32'",
@@ -3781,6 +3780,7 @@ resolution-markers = [
     "python_full_version == '3.11.*' and sys_platform != 'win32'",
     "python_full_version == '3.10.*' and sys_platform != 'win32'",
     "python_full_version == '3.9.*' and sys_platform != 'win32'",
+    "python_full_version < '3.9'",
 ]
 dependencies = [
     { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -5825,7 +5825,7 @@ core = [
 ]
 dev = [
     { name = "psycopg2-binary", specifier = ">=2.8.0" },
-    { name = "pyspark", specifier = ">=3.2.1" },
+    { name = "pyspark", specifier = ">=3.5.0" },
     { name = "sqlalchemy", specifier = ">=1.4.0" },
     { name = "tabulate", specifier = ">=0.8.9" },
 ]

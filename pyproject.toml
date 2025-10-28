@@ -41,7 +41,7 @@ Repository = "https://github.com/moj-analytical-services/splink"
 core = ["sqlglot", "pandas"]
 dev = [
     "tabulate>=0.8.9",
-    "pyspark>=3.2.1",
+    "pyspark>=3.5.0",
     "sqlalchemy>=1.4.0",
     "psycopg2-binary>=2.8.0",
 ]
