@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.10"]
         test-group: ["duckdb", "spark", "sqlite"]
     name: Test ${{ matrix.test-group }} notebooks with Python ${{ matrix.python-version }}
     steps:
