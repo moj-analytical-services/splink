@@ -41,7 +41,7 @@ This is a simplification, and a real generation would likely include more rows w
 
 ## <u>2. Investigate model parameters</u>
 
-The pre-trained model can be analysed specifically in relation to the hypothesis, rather than just generally. In Splink, one way to do this is by using a [match weights chart](https://moj-analytical-services.github.io/splink/charts/match_weights_chart.html):
+The pre-trained model can be analysed specifically in relation to the hypothesis, rather than just generally. In Splink, one way to do this is by using a [match weights chart](../../charts/match_weights_chart.ipynb):
 
 ![Image 3](./img/match_weights_chart.png)
 
@@ -53,7 +53,7 @@ Given the final linkage score relies on the accumulation of these match weights,
 
 Now that you have records to compare and a trained model, the next stage is to generate match probabilities. If a threshold for a link has been chosen, this can be used to indicate which records would be considered to be a link in a linkage pipeline.
 
-It's also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](https://moj-analytical-services.github.io/splink/charts/waterfall_chart.html) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
+It's also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](../../charts/waterfall_chart.ipynb) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
 
 Some match weights might seem off for your hypothesis but be reasonable for the [overall model](#2-investigate-model-parameters). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
 
