@@ -13,11 +13,11 @@ This blog is the second in our series dedicated to Bias in Data Linking. Here we
 
 <!-- more -->
 
-In the [previous blog post](2024-07-11-bias.md) we concluded that assessing bias in a linkage pipeline using real data and clerical labels is possible to some degree, but has major shortcomings. Here we consider a different approach which aims to address some of these issues.
+In the [previous blog post](./2024-07-11-bias.md) we concluded that assessing bias in a linkage pipeline using real data and clerical labels is possible to some degree, but has major shortcomings. Here we consider a different approach which aims to address some of these issues.
 
 ## A Different Approach
 
-[Previously](2024-07-11-bias.md#-sources-of-bias) we established that bias in a linkage pipeline stems from two main sources: the **data** being linked and the **linkage model**. Considering both of these factors at the same time is complex, making it difficult to reach solid conclusions. Here we will explore how bias can have an impact within the **linkage model only**.
+[Previously](./2024-07-11-bias.md#sources-of-bias) we established that bias in a linkage pipeline stems from two main sources: the **data** being linked and the **linkage model**. Considering both of these factors at the same time is complex, making it difficult to reach solid conclusions. Here we will explore how bias can have an impact within the **linkage model only**.
 
 As before, we assume there is a hypothesis that we would like to explore. In order to target bias within the linkage model, we construct a synthetic dataset with combinations of records which reflect the hypothesis we wish to test.
 
@@ -55,7 +55,7 @@ Now that you have records to compare and a trained model, the next stage is to g
 
 It's also useful to examine each comparison to see which features impact the match probability the most. In Splink, you can use a [waterfall chart](https://moj-analytical-services.github.io/splink/charts/waterfall_chart.html) for this. This will help you identify if any weights are too predictive or not predictive enough based on your hypothesis. 
 
-Some match weights might seem off for your hypothesis but be reasonable for the [overall model](#2-train-and-investigate-model). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
+Some match weights might seem off for your hypothesis but be reasonable for the [overall model](#2-investigate-model-parameters). They might not be _wrong_ per se, but if they create issues in specific scenarios, they will **introduce bias into the pipeline**.
 
 ## <u>4. Identify bias mitigations</u>
 
