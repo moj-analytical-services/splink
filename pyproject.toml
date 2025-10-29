@@ -39,6 +39,11 @@ Repository = "https://github.com/moj-analytical-services/splink"
 # additionally allows us to easily check package functionality with just these installed
 # (and not the rest of our required dependencies)
 core = ["sqlglot", "pandas"]
+demos = [
+    "ipywidgets>=8.1.7",
+    "nbmake>=1.5.5",
+    "pytest-xdist>=3.6.1",
+]
 dev = [
     "tabulate>=0.8.9",
     "pyspark>=3.5.0",
