@@ -55,7 +55,6 @@ docs = [
     # keep jinja2 relaxed so it doesn't constrain us in rest of dev
     "jinja2>=3.0.3",
     "mkdocs>=1.6.0",
-    "mkdocs-charts-plugin==0.0.10",
     "mkdocs-material==9.5.2",
     "mkdocs-rss-plugin==1.15.0",
     "mkdocs-video==1.5.0",
