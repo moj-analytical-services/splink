@@ -61,6 +61,7 @@ docs = [
     "mkdocstrings>=0.25.1",
     "mkdocstrings-python==1.10.5",
     "mknotebooks>=0.8.0",
+    "nbconvert>=7.16.6",
     "neoteroi-mkdocs==1.0.5",
 ]
 linting = ["ruff>=0.4.2,<0.5"]
