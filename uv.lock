@@ -2784,20 +2784,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mkdocs-charts-plugin"
-version = "0.0.10"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mkdocs" },
-    { name = "pymdown-extensions", version = "10.15", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "pymdown-extensions", version = "10.16.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/80/670f18d7e3fffa6bd4deff3d32358350e1081a5360b82a91fe701ef8bc11/mkdocs-charts-plugin-0.0.10.tar.gz", hash = "sha256:5843afee0dcc567cc33ee4e0106c222f3e9ada3aaa17b5ac5d73b5b9e15b094d", size = 8093, upload-time = "2023-08-28T07:58:34.363Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/57/fab45c731a44fe4f25ce13206990ac7fae386dd5c831344300daf943f966/mkdocs_charts_plugin-0.0.10-py3-none-any.whl", hash = "sha256:474c2cd48b7a0a0edad50a97f3b427f81cbaf5f266f4f599298d2a172d385adb", size = 9230, upload-time = "2023-08-28T07:58:33.221Z" },
-]
-
-[[package]]
 name = "mkdocs-get-deps"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -6146,7 +6132,6 @@ docs = [
     { name = "griffe" },
     { name = "jinja2" },
     { name = "mkdocs" },
-    { name = "mkdocs-charts-plugin" },
     { name = "mkdocs-material" },
     { name = "mkdocs-rss-plugin" },
     { name = "mkdocs-video" },
@@ -6154,6 +6139,7 @@ docs = [
     { name = "mkdocstrings", version = "0.30.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "mkdocstrings-python" },
     { name = "mknotebooks" },
+    { name = "nbconvert" },
     { name = "neoteroi-mkdocs" },
 ]
 linting = [
@@ -6216,13 +6202,13 @@ docs = [
     { name = "griffe", specifier = "==0.49.0" },
     { name = "jinja2", specifier = ">=3.0.3" },
     { name = "mkdocs", specifier = ">=1.6.0" },
-    { name = "mkdocs-charts-plugin", specifier = "==0.0.10" },
     { name = "mkdocs-material", specifier = "==9.5.2" },
     { name = "mkdocs-rss-plugin", specifier = "==1.15.0" },
     { name = "mkdocs-video", specifier = "==1.5.0" },
     { name = "mkdocstrings", specifier = ">=0.25.1" },
     { name = "mkdocstrings-python", specifier = "==1.10.5" },
     { name = "mknotebooks", specifier = ">=0.8.0" },
+    { name = "nbconvert", specifier = ">=7.16.6" },
     { name = "neoteroi-mkdocs", specifier = "==1.0.5" },
 ]
 linting = [{ name = "ruff", specifier = ">=0.4.2,<0.5" }]
