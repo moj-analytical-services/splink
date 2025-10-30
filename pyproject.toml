@@ -65,6 +65,7 @@ docs = [
     "mknotebooks>=0.8.0",
     "nbconvert>=7.16.6",
     "neoteroi-mkdocs>=1.1.2",
+    "pymdown-extensions>=10.15",
 ]
 linting = ["ruff>=0.4.2,<0.5"]
 testing = [
