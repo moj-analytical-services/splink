@@ -30,11 +30,11 @@ jobs:
             pyproject.toml
             uv.lock
 
-      - name: Install Python 3.10
-        run: uv python install 3.10
+      - name: Install Python 3.13
+        run: uv python install 3.13
 
       - name: Install dependencies
-        run: uv sync --group docs -p 3.10
+        run: uv sync --group docs -p 3.13
 
       - name: Build documentation
         run: uv run mkdocs build
