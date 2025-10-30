@@ -55,7 +55,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          rendering:
+          options:
             show_source: false
   - mkdocs-video:
       is_video: True
