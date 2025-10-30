@@ -5874,17 +5874,17 @@ dev = [
     { name = "tabulate", specifier = ">=0.8.9" },
 ]
 docs = [
-    { name = "griffe", specifier = ">=0.49.0" },
-    { name = "jinja2", specifier = ">=3.0.3" },
-    { name = "mkdocs", specifier = ">=1.6.0" },
-    { name = "mkdocs-material", specifier = ">=9.5.2" },
+    { name = "griffe", specifier = ">=1.4.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.6.22" },
     { name = "mkdocs-rss-plugin", specifier = ">=1.15.0" },
     { name = "mkdocs-video", specifier = ">=1.5.0" },
-    { name = "mkdocstrings", specifier = ">=0.25.1" },
-    { name = "mkdocstrings-python", specifier = ">=1.10.5" },
+    { name = "mkdocstrings", specifier = ">=0.26.1" },
+    { name = "mkdocstrings-python", specifier = ">=1.11.1" },
     { name = "mknotebooks", specifier = ">=0.8.0" },
     { name = "nbconvert", specifier = ">=7.16.6" },
-    { name = "neoteroi-mkdocs", specifier = ">=1.0.5" },
+    { name = "neoteroi-mkdocs", specifier = ">=1.1.2" },
 ]
 linting = [{ name = "ruff", specifier = ">=0.4.2,<0.5" }]
 testing = [
