@@ -276,10 +276,10 @@ def solve_connected_components(
             n.node_id,
             n.neighbour,
             r.representative as neighbour_rep
-        from {representatives.templated_name} as l
-        join {filtered_neighbours.templated_name} as n
+        from {filtered_neighbours.templated_name} as n
+        left join {representatives.templated_name} as l
         on l.node_id = n.node_id
-        join {representatives.templated_name} as r
+        left join {representatives.templated_name} as r
         on n.neighbour = r.node_id
         where l.representative <> r.representative
         """
