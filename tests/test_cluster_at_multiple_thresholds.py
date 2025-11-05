@@ -106,6 +106,7 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
     )
 
     cc_prob_pd = cc_prob.as_pandas_dataframe()
+    cc_prob_pd = cc_prob_pd.sort_values("my_id")
 
     cc_weight = cluster_pairwise_predictions_at_multiple_thresholds(
         nodes,
@@ -117,6 +118,7 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
     )
 
     cc_weight_pd = cc_weight.as_pandas_dataframe()
+    cc_weight_pd = cc_weight_pd.sort_values("my_id")
 
     assert "cluster_mw_0" in cc_weight_pd.columns
     assert "cluster_mw_1_22" in cc_weight_pd.columns
