@@ -51,26 +51,21 @@ dev = [
     "psycopg2-binary>=2.8.0",
 ]
 docs = [
-    "griffe==0.49.0",
+    "griffe>=1.4.0",
     # keep jinja2 relaxed so it doesn't constrain us in rest of dev
-    "jinja2>=3.0.3",
-    "mkdocs==1.6.0",
-    "mkdocs-autorefs==1.0.1",
-    "mkdocs-charts-plugin==0.0.10",
-    "mkdocs-click==0.8.1",
-    "mkdocs-gen-files==0.5.0",
-    "mkdocs-material==9.5.2",
-    "mkdocs-material-extensions==1.3.1",
-    "mkdocs-mermaid2-plugin==1.1.1",
-    "mkdocs-monorepo-plugin==1.1.0",
-    "mkdocs-rss-plugin==1.15.0",
-    "mkdocs-schema-reader==0.11.1",
-    "mkdocs-video==1.5.0",
-    "mkdocstrings==0.25.1",
-    "mkdocstrings-python==1.10.5",
-    "mkdocstrings-python-legacy==0.2.3",
-    "mknotebooks==0.8.0",
-    "neoteroi-mkdocs==1.0.5",
+    "Jinja2>=3.1.6",
+    "mkdocs>=1.6.1",
+    # TODO: maybe we can use this to remove generating dataset docs as separate step
+    #"mkdocs-gen-files==0.5.0",
+    "mkdocs-material>=9.6.22",
+    "mkdocs-rss-plugin>=1.15.0",
+    "mkdocs-video>=1.5.0",
+    "mkdocstrings>=0.26.1",
+    "mkdocstrings-python>=1.11.1",
+    "mknotebooks>=0.8.0",
+    "nbconvert>=7.16.6",
+    "neoteroi-mkdocs>=1.1.2",
+    "pymdown-extensions>=10.15",
 ]
 linting = ["ruff>=0.4.2,<0.5"]
 testing = [

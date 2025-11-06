@@ -170,7 +170,7 @@ class LinkerTableManagement:
                 if it exists. Defaults to False.
 
         Returns:
-            SplinkDataFrame: An abstraction representing the table created by the SQL
+            (SplinkDataFrame): An abstraction representing the table created by the SQL
                 pipeline.
         """  # noqa: E501
         table_name_physical = "__splink__df_predict_" + self._linker._cache_uid
@@ -200,8 +200,8 @@ class LinkerTableManagement:
                 database if it exists. Defaults to False.
 
         Returns:
-            SplinkDataFrame: An abstraction representing the registered term
-            frequency table.
+            (SplinkDataFrame): An abstraction representing the registered term
+                frequency table.
 
         Examples:
             ```py

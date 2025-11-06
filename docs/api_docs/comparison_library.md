@@ -17,7 +17,7 @@ tags:
 
 ## AbsoluteDateDifferenceAtThresholds
 
-An alias of [AbsoluteTimeDifferenceAtThresholds](./comparison_library.html#splink.comparison_library.AbsoluteTimeDifferenceAtThresholds).
+An alias of [AbsoluteTimeDifferenceAtThresholds](./comparison_library.md#splink.comparison_library.AbsoluteTimeDifferenceAtThresholds).
 
 
 ## Configuring comparisons
