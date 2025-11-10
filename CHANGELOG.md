@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `py.typed` marker [#2815](https://github.com/moj-analytical-services/splink/pull/2815)
+
 ## [4.0.10] - 2025-11-03
 
 ### Added
