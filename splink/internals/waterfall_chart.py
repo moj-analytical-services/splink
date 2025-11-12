@@ -44,7 +44,10 @@ def _final_score_record(record_as_dict):
 
 
 def _comparison_records(
-    record_as_dict: dict[str, Any], comparison: Comparison, hide_details: bool = False
+    record_as_dict: dict[str, Any],
+    comparison: Comparison,
+    hide_details: bool = False,
+    _cols_cache: (dict[Comparison, tuple[list[str], list[str]]] | None) = None,
 ) -> list[dict[str, Any]]:
     output_records = []
 
@@ -71,9 +74,15 @@ def _comparison_records(
     }
 
     waterfall_record["column_name"] = c.output_column_name
-    input_cols_used = c._input_columns_used_by_case_statement
-    input_cols_l = [ic.unquote().name_l for ic in input_cols_used]
-    input_cols_r = [ic.unquote().name_r for ic in input_cols_used]
+
+    if _cols_cache is not None and c in _cols_cache:
+        input_cols_l, input_cols_r = _cols_cache[c]
+    else:
+        input_cols_used = c._input_columns_used_by_case_statement
+        input_cols_l = [ic.unquote().name_l for ic in input_cols_used]
+        input_cols_r = [ic.unquote().name_r for ic in input_cols_used]
+        if _cols_cache is not None:
+            _cols_cache[c] = (input_cols_l, input_cols_r)
 
     if hide_details:
         waterfall_record["value_l"] = ""
@@ -111,8 +120,7 @@ def _comparison_records(
         waterfall_record_2["log2_bayes_factor"] = math.log2(1.0)
         if cl._has_tf_adjustments:
             waterfall_record_2["label_for_charts"] = (
-                f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name} "
-                "with weight {cl.tf_adjustment_weight}"
+                f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name}"
             )
             bf = record_as_dict[c._bf_tf_adj_column_name]
             waterfall_record_2["bayes_factor"] = bf
@@ -138,12 +146,16 @@ def _comparison_records(
     return output_records
 
 
-def record_to_waterfall_data(record_as_dict, settings_obj, hide_details):
+def record_to_waterfall_data(
+    record_as_dict, settings_obj, hide_details, _cols_cache=None
+):
     comparisons = settings_obj.comparisons
     waterfall_records = [_prior_record(settings_obj)]
 
     for cc in comparisons:
-        records = _comparison_records(record_as_dict, cc, hide_details)
+        records = _comparison_records(
+            record_as_dict, cc, hide_details, _cols_cache=_cols_cache
+        )
         waterfall_records.extend(records)
 
     waterfall_records.append(_final_score_record(record_as_dict))
@@ -153,9 +165,23 @@ def record_to_waterfall_data(record_as_dict, settings_obj, hide_details):
 
 
 def records_to_waterfall_data(records, settings_obj, hide_details):
+    # The cache is makes this dramatically faster because
+    # c._input_columns_used_by_case_statement is expensive.
+    # Without the cache it is called for every record within
+    # record_to_waterfall_data
+    cols_cache = {}
+    for c in settings_obj.comparisons:
+        used = c._input_columns_used_by_case_statement
+        cols_cache[c] = (
+            [ic.unquote().name_l for ic in used],
+            [ic.unquote().name_r for ic in used],
+        )
+
     waterfall_data = []
     for i, record in enumerate(records):
-        new_data = record_to_waterfall_data(record, settings_obj, hide_details)
+        new_data = record_to_waterfall_data(
+            record, settings_obj, hide_details, _cols_cache=cols_cache
+        )
         for rec in new_data:
             rec["record_number"] = i
         waterfall_data.extend(new_data)
