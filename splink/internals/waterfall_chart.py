@@ -172,13 +172,13 @@ def records_to_waterfall_data(records, settings_obj, hide_details):
     # c._input_columns_used_by_case_statement is expensive.
     # Without the cache it is called for every record within
     # record_to_waterfall_data
-    cols_cache = {
-        c: (
-            [ic.unquote().name_l for ic in c._input_columns_used_by_case_statement],
-            [ic.unquote().name_r for ic in c._input_columns_used_by_case_statement],
+    cols_cache = {}
+    for c in settings_obj.comparisons:
+        used = c._input_columns_used_by_case_statement
+        cols_cache[c] = (
+            [ic.unquote().name_l for ic in used],
+            [ic.unquote().name_r for ic in used],
         )
-        for c in settings_obj.comparisons
-    }
 
     waterfall_data = []
     for i, record in enumerate(records):
