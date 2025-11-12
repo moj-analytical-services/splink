@@ -122,8 +122,7 @@ def _comparison_records(
         waterfall_record_2["log2_bayes_factor"] = math.log2(1.0)
         if cl._has_tf_adjustments:
             waterfall_record_2["label_for_charts"] = (
-                f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name} "
-                f"with weight {cl.tf_adjustment_weight}"
+                f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name}"
             )
             bf = record_as_dict[c._bf_tf_adj_column_name]
             waterfall_record_2["bayes_factor"] = bf
