@@ -27,7 +27,7 @@ dependencies = [
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
 athena = ["awswrangler"]
-postgres = ["sqlalchemy>=1.4.0", "psycopg2-binary>=2.8.0"]
+postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
 
 [project.urls]
 Homepage = "https://github.com/moj-analytical-services/splink"
@@ -47,8 +47,8 @@ demos = [
 dev = [
     "tabulate>=0.8.9",
     "pyspark>=3.5.0",
-    "sqlalchemy>=1.4.0",
-    "psycopg2-binary>=2.8.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
 ]
 docs = [
     "griffe>=1.4.0",
