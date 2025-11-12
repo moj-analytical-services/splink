@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.0.11] - 2025-11-12
 
 ### Added
-* Improve clustering performance by @aymonwuolanne in https://github.com/moj-analytical-services/splink/pull/2800
-* Improve waterfall generation performance by @RobinL in https://github.com/moj-analytical-services/splink/pull/2816
+
+- `py.typed` marker [#2815](https://github.com/moj-analytical-services/splink/pull/2815)
+- Improve clustering performance by @aymonwuolanne in https://github.com/moj-analytical-services/splink/pull/2800
+- Improve waterfall generation performance by @RobinL in https://github.com/moj-analytical-services/splink/pull/2816
 
 ## [4.0.10] - 2025-11-03
 
@@ -247,7 +249,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...HEAD
+[4.0.11]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/moj-analytical-services/splink/compare/v4.0.9...v4.0.10
 [4.0.9]: https://github.com/moj-analytical-services/splink/compare/v4.0.8...v4.0.9
 [4.0.8]: https://github.com/moj-analytical-services/splink/compare/v4.0.7...v4.0.8
