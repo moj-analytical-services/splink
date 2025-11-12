@@ -20,7 +20,7 @@ tags:
 
 ## AbsoluteDateDifferenceLevel
 
-An alias of [AbsoluteTimeDifferenceLevel](./comparison_level_library.html#splink.comparison_level_library.AbsoluteTimeDifferenceLevel).
+An alias of [AbsoluteTimeDifferenceLevel](./comparison_level_library.md#splink.comparison_level_library.AbsoluteTimeDifferenceLevel).
 
 ## Configuring comparisons
 

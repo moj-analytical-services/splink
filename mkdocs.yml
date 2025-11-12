@@ -51,13 +51,14 @@ plugins:
         remove_all_outputs_tags:
           - hide_output
   - tags
+  # automatic documentation of python objects from docstrings
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
-          rendering:
+          options:
             show_source: false
-  - charts
+  # embedding videos, see e.g. docs/dev_guides/charts/understanding_and_editing_charts.md
   - mkdocs-video:
       is_video: True
       video_autoplay: false
@@ -69,35 +70,44 @@ hooks:
   - docs/hooks/__init__.py
 
 markdown_extensions:
-  - abbr
+  # add id/style etc to markdown elements - see getting started button in docs/index.md
+  # markdown
   - attr_list
+  # for frontmatter in --- blocks, for e.g. tags
+  # mkdocs-material
   - meta
+  # for admonition blocks e.g. !!! warning
+  # markdown
   - admonition
+  # markdown in html blocks, e.g. <figure> in docs/topic_guides/comparisons/term-frequency.md
+  # markdown
   - md_in_html
+  # for expandables with ???
+  # pymdown-extensions
   - pymdownx.details
+  # for inline latex - see e.g. docs/topic_guides/theory/fellegi_sunter.md
+  # pymdown-extensions
   - pymdownx.arithmatex:
       generic: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: vegalite
-          class: vegalite
-          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.snippets:
-      auto_append:
-        - includes/abbreviations.md
+  # tabbed sections with === - e.g. docs/index.md
+  # pymdown-extensions
   - pymdownx.tabbed:
       alternate_style: true
+  # table of contents
+  # markdown
   - toc:
       permalink: True
       toc_depth: 3
-  - attr_list
+  # emojis specified as e.g. :link: - see e.g. docs/blog/posts/2024-01-25-ethics.md
+  # pymdown-extensions
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  # footnotes see e.g. docs/topic_guides/theory/fellegi_sunter.md
+  # mkdocs-material
   - footnotes
+  # ::cards:: - see e.g. docs/charts/index.md
+  # neoteroi-mkdocs
   - neoteroi.cards
 nav:
   - Getting Started: "getting_started.md"
@@ -267,9 +277,6 @@ extra_css:
 extra_javascript:
   - javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-  - https://cdn.jsdelivr.net/npm/vega@5
-  - https://cdn.jsdelivr.net/npm/vega-lite@5
-  - https://cdn.jsdelivr.net/npm/vega-embed@6
 extra:
   analytics:
     provider: google

@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.10"]
         test-group: ["duckdb", "spark", "sqlite"]
     name: Test ${{ matrix.test-group }} notebooks with Python ${{ matrix.python-version }}
     steps:
@@ -38,10 +38,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync -p ${{ matrix.python-version }}
-
-      - name: Install additional requirements from demos_requirements.txt
-        run: uv pip install -r docs/demos/data/demos_requirements.txt
+        run: uv sync -p ${{ matrix.python-version }} --group demos
 
       - name: Modify Notebooks to reduce data size
         run: uv run python scripts/reduce_notebook_runtime.py

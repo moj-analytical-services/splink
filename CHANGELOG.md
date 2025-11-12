@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.11] - 2025-11-12
+
+### Added
+* Improve clustering performance by @aymonwuolanne in https://github.com/moj-analytical-services/splink/pull/2800
+* Improve waterfall generation performance by @RobinL in https://github.com/moj-analytical-services/splink/pull/2816
+
+## [4.0.10] - 2025-11-03
+
 ### Added
 
 - Spark 4 compatible versions of UDFs [#2802](https://github.com/moj-analytical-services/splink/pull/2802)
@@ -20,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted SQL used in `cluster_pairwise_predictions_at_thresholds` to help Spark optimise it better ([#2766](https://github.com/moj-analytical-services/splink/pull/2766))
 - Guard against issue where calculated Bayes factor becomes zero, leading to logarithm domain errors ([#2758](https://github.com/moj-analytical-services/splink/pull/2758))
 - Fix count of generated comparisons when using exploding blocking rules ([#2778](https://github.com/moj-analytical-services/splink/pull/2778))
+- Allow failed date-parsing in Spark 4 to fall through as `NULL` ([#2805](https://github.com/moj-analytical-services/splink/pull/2805))
 
 ### Deprecated
 
@@ -238,22 +247,23 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/4.0.9...HEAD
-[4.0.9]: https://github.com/moj-analytical-services/splink/compare/4.0.8...4.0.9
-[4.0.8]: https://github.com/moj-analytical-services/splink/compare/4.0.7...4.0.8
-[4.0.7]: https://github.com/moj-analytical-services/splink/compare/4.0.6...4.0.7
-[4.0.6]: https://github.com/moj-analytical-services/splink/compare/4.0.5...4.0.6
-[4.0.5]: https://github.com/moj-analytical-services/splink/compare/4.0.4...4.0.5
-[4.0.4]: https://github.com/moj-analytical-services/splink/compare/4.0.3...4.0.4
-[4.0.3]: https://github.com/moj-analytical-services/splink/compare/4.0.2...4.0.3
-[4.0.2]: https://github.com/moj-analytical-services/splink/compare/4.0.1...4.0.2
-[4.0.1]: https://github.com/moj-analytical-services/splink/compare/4.0.0...4.0.1
-[4.0.0]: https://github.com/moj-analytical-services/splink/compare/3.9.15...4.0.0
-[3.9.15]: https://github.com/moj-analytical-services/splink/compare/3.9.14...3.9.15
-[3.9.14]: https://github.com/moj-analytical-services/splink/compare/3.9.13...3.9.14
-[3.9.13]: https://github.com/moj-analytical-services/splink/compare/3.9.12...3.9.13
-[3.9.12]: https://github.com/moj-analytical-services/splink/compare/3.9.11...3.9.12
-[3.9.11]: https://github.com/moj-analytical-services/splink/compare/3.9.10...3.9.11
-[3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...3.9.10
-[3.9.9]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...3.9.9
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...HEAD
+[4.0.10]: https://github.com/moj-analytical-services/splink/compare/v4.0.9...v4.0.10
+[4.0.9]: https://github.com/moj-analytical-services/splink/compare/v4.0.8...v4.0.9
+[4.0.8]: https://github.com/moj-analytical-services/splink/compare/v4.0.7...v4.0.8
+[4.0.7]: https://github.com/moj-analytical-services/splink/compare/v4.0.6...v4.0.7
+[4.0.6]: https://github.com/moj-analytical-services/splink/compare/v4.0.5...v4.0.6
+[4.0.5]: https://github.com/moj-analytical-services/splink/compare/v4.0.4...v4.0.5
+[4.0.4]: https://github.com/moj-analytical-services/splink/compare/v4.0.3...v4.0.4
+[4.0.3]: https://github.com/moj-analytical-services/splink/compare/v4.0.2...v4.0.3
+[4.0.2]: https://github.com/moj-analytical-services/splink/compare/v4.0.1...v4.0.2
+[4.0.1]: https://github.com/moj-analytical-services/splink/compare/v4.0.0...v4.0.1
+[4.0.0]: https://github.com/moj-analytical-services/splink/compare/v3.9.15...v4.0.0
+[3.9.15]: https://github.com/moj-analytical-services/splink/compare/v3.9.14...v3.9.15
+[3.9.14]: https://github.com/moj-analytical-services/splink/compare/v3.9.13...v3.9.14
+[3.9.13]: https://github.com/moj-analytical-services/splink/compare/v3.9.12...v3.9.13
+[3.9.12]: https://github.com/moj-analytical-services/splink/compare/v3.9.11...v3.9.12
+[3.9.11]: https://github.com/moj-analytical-services/splink/compare/v3.9.10...v3.9.11
+[3.9.10]: https://github.com/moj-analytical-services/splink/compare/v3.9.9...v3.9.10
+[3.9.9]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...v3.9.9
 [3.9.8]: https://github.com/moj-analytical-services/splink/compare/v3.9.7...v3.9.8

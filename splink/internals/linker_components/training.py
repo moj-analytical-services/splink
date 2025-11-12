@@ -265,9 +265,8 @@ class LinkerTraining:
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
                 probabilities after each iteration. Defaults to True.
-            populate_prob... (bool,optional): The full name of this parameter is
-                populate_probability_two_random_records_match_from_trained_values. If
-                True, derive this parameter from the blocked value. Defaults to False.
+            populate_probability_two_random_records_match_from_trained_values (bool, optional):
+                If True, derive this parameter from the blocked value. Defaults to False.
 
         Examples:
             ```py
