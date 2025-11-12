@@ -60,7 +60,7 @@ The Office for National Statistics have written a [case study about using Splink
 
 ## Installation
 
-Splink supports python 3.8+. To obtain the latest released version of splink you can install from PyPI using pip:
+Splink supports python 3.9+. To obtain the latest released version of splink you can install from PyPI using pip:
 
 ```sh
 pip install splink
