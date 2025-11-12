@@ -47,9 +47,7 @@ def _comparison_records(
     record_as_dict: dict[str, Any],
     comparison: Comparison,
     hide_details: bool = False,
-    _cols_cache: (
-        dict[Comparison, tuple[tuple[str, ...], tuple[str, ...]]] | None
-    ) = None,
+    _cols_cache: (dict[Comparison, tuple[list[str], list[str]]] | None) = None,
 ) -> list[dict[str, Any]]:
     output_records = []
 
