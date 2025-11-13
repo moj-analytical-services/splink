@@ -60,7 +60,7 @@ Our approach mirrors that of key package maintainers, such as the developers beh
 
 ### Benefits of Discontinuing Support for Older Python Versions:
 
-* Enhanced Tooling: Embracing newer versions enables the use of advanced Python features, as we no longer need to use only features available in outdated python versions. See [the new features in 3.9](https://docs.python.org/3.9/whatsnew/3.9.html) that we can use after dropping support for 3.8.
+* Enhanced Tooling: Embracing newer versions enables the use of advanced Python features, as we no longer need to use only features available in outdated python versions. See [the new features in 3.10](https://docs.python.org/3.10/whatsnew/3.10.html) that we can use after dropping support for 3.9.
 * Fewer Dependabot Alerts: Transitioning away from older Python versions reduces the volume of alerts associated with legacy package dependencies.
 * Minimised Package Conflicts: Updating python decreases the necessity for [makeshift solutions](https://github.com/moj-analytical-services/splink/blob/9499e4ee93e6157fcc6f228b60592a7cf97bb6a0/pyproject.toml#L26) to resolve dependency issues with our core dependencies, fostering a smoother integration with tools like Poetry.
 

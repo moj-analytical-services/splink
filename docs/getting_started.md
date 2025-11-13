@@ -6,7 +6,7 @@ hide:
 # Getting Started
 
 ## :material-download: Install
-Splink supports python 3.8+.
+Splink supports python 3.9+.
 
 To obtain the latest released version of Splink you can install from PyPI using pip:
 ```shell

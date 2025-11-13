@@ -10,7 +10,7 @@ authors = [
     { name = "Andy Bond" },
     { name = "Ross Kennedy" },
 ]
-requires-python = ">=3.8.0,<4.0.0"
+requires-python = ">=3.9.0,<4.0.0"
 readme = "README.md"
 license = "MIT"
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
     "sqlglot>=17.6.0",
     "altair>=5.0.1",
     "Jinja2>=3.0.3",
-    "numpy>=1.17.3",
+    "numpy>=1.19.3",
     "igraph>=0.11.2",
 ]
 
@@ -27,7 +27,7 @@ dependencies = [
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
 athena = ["awswrangler"]
-postgres = ["sqlalchemy>=1.4.0", "psycopg2-binary>=2.8.0"]
+postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
 
 [project.urls]
 Homepage = "https://github.com/moj-analytical-services/splink"
@@ -47,8 +47,8 @@ demos = [
 dev = [
     "tabulate>=0.8.9",
     "pyspark>=3.5.0",
-    "sqlalchemy>=1.4.0",
-    "psycopg2-binary>=2.8.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
 ]
 docs = [
     "griffe>=1.4.0",
@@ -72,7 +72,7 @@ testing = [
     "pytest>=7.3",
     "pyarrow>=7.0.0",
     "networkx>=2.5.1",
-    "rapidfuzz>=2.0.3",
+    "rapidfuzz>=3.0.0",
     "pytest-cov>=5.0.0",
 ]
 typechecking = ["mypy==1.9.0"]
