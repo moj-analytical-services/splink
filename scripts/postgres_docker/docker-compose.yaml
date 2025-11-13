@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
   postgres-splink:
-    image: postgres:15.2
+    image: postgres:18.0
     container_name: splink-db-postgres
     restart: always
     environment:
