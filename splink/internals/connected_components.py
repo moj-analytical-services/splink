@@ -330,9 +330,6 @@ def solve_connected_components(
 
     final_result = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    representatives.drop_table_from_database_and_remove_from_cache()
-    neighbours.drop_table_from_database_and_remove_from_cache()
-
     for t in converged_clusters_tables:
         t.drop_table_from_database_and_remove_from_cache()
 
