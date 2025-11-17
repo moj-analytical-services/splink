@@ -89,6 +89,8 @@ markdown_extensions:
   # pymdown-extensions
   - pymdownx.arithmatex:
       generic: true
+  # code markdown in admonitions, e.g. docs/getting_started.md
+  - pymdownx.superfences
   # tabbed sections with === - e.g. docs/index.md
   # pymdown-extensions
   - pymdownx.tabbed:
