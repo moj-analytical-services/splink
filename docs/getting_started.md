@@ -52,6 +52,7 @@ To get a basic Splink model up and running, use the following code. It demonstra
 3. Use clustering to generate an estimated unique person ID.
 
 ???+ note "Simple Splink Model Example"
+
     ```py
     import splink.comparison_library as cl
     from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
