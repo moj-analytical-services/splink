@@ -26,7 +26,7 @@ from .linker_utils import _test_write_functionality, register_roc_data
     ids=[
         "checkpoint",
         "delta_lake_table",
-    ]
+    ],
 )
 def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_method):
     spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
