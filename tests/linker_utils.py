@@ -89,7 +89,7 @@ def register_roc_data(linker):
         axis=1,
     )
 
-    linker.table_management.register_table(df_labels, "labels")
+    linker.table_management.register_table(df_labels, "labels", overwrite=True)
 
 
 def _test_write_functionality(linker, read_csv_func):
