@@ -223,3 +223,38 @@ def test_weightand_clamp():
     # Adjustment would be 10/5.0 = 2 if no weighting was applied
 
     assert pytest.approx(bf) == bf_no_adj * 2**0.5
+
+
+def test_tf_minimum_and_weight_follow_formula():
+    data = get_data()
+
+    city_comparison = get_city_comparison()
+
+    base_u = 0.05
+    tf_weight = 0.5
+    tf_floor = 0.2
+
+    city_comparison["comparison_levels"][1]["u_probability"] = base_u
+    city_comparison["comparison_levels"][1]["tf_adjustment_weight"] = tf_weight
+    city_comparison["comparison_levels"][1]["tf_minimum_u_value"] = tf_floor
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [city_comparison],
+        "blocking_rules_to_generate_predictions": ["l.city = r.city"],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    db_api = DuckDBAPI(connection=":memory:")
+
+    linker = Linker(data, settings, db_api=db_api)
+    df_predict = linker.inference.predict()
+    results = filter_results(df_predict)
+
+    for city in ("London", "Birmingham", "Truro"):
+        row = results[city]
+        tf_values = [row["tf_city_l"], row["tf_city_r"]]
+        effective_u = max(max(tf_values), tf_floor)
+        expected = (base_u / effective_u) ** tf_weight
+        assert pytest.approx(row["bf_tf_adj_city"]) == expected

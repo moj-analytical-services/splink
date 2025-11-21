@@ -608,24 +608,20 @@ class ComparisonLevel:
             # In this case rather than taking the greater of the two, we take
             # whichever value exists
 
-            if self._tf_minimum_u_value == 0.0:
+            divisor_sql = f"""
+            (CASE
+                WHEN {coalesce_l_r} >= {coalesce_r_l}
+                THEN {coalesce_l_r}
+                ELSE {coalesce_r_l}
+            END)
+            """
+
+            if self._tf_minimum_u_value != 0.0:
+                # Clamp the observed u value before applying any weighting
                 divisor_sql = f"""
                 (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    THEN {coalesce_l_r}
-                    ELSE {coalesce_r_l}
-                END)
-                """
-            else:
-                # This sql works correctly even when the tf_minimum_u_value is 0.0
-                # but is less efficient to execute, hence the above if statement
-                divisor_sql = f"""
-                (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_r_l}
+                    WHEN {divisor_sql} > cast({self._tf_minimum_u_value} as float8)
+                        THEN {divisor_sql}
                     ELSE cast({self._tf_minimum_u_value} as float8)
                 END)
                 """
