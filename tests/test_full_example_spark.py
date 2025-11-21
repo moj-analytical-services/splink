@@ -17,7 +17,18 @@ from .linker_utils import _test_write_functionality, register_roc_data
 
 
 @mark_with_dialects_including("spark")
-def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
+@pytest.mark.parametrize(
+    ["break_lineage_method"],
+    [
+        ["checkpoint"],
+        ["delta_lake_table"],
+    ],
+    ids=[
+        "checkpoint",
+        "delta_lake_table",
+    ],
+)
+def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_method):
     spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
@@ -76,7 +87,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api):
         settings,
         SparkAPI(
             spark_session=spark,
-            break_lineage_method="checkpoint",
+            break_lineage_method=break_lineage_method,
             num_partitions_on_repartition=2,
         ),
     )
