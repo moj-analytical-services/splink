@@ -9,8 +9,8 @@ def _spark_major_version() -> int:
         int: e.g. pyspark == 3.0.0 returns 3
     """
 
-    major, _minor, _patch = spark.__version__.split(".")
-    return int(major)
+    major_str = spark.__version__.split(".", 1)[0]
+    return int(major_str)
 
 
 def similarity_jar_location() -> str:
