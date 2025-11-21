@@ -631,7 +631,7 @@ class ComparisonLevel:
                 (CASE WHEN {tf_adjustment_exists}
                 THEN
                 POW(
-                    cast({u_prob_exact_match} as float8) / {divisor_sql},
+                    cast({u_prob_exact_match} as float8) /{divisor_sql},
                     cast({self._tf_adjustment_weight} as float8)
                 )
                 ELSE cast(1 as float8)
