@@ -104,11 +104,7 @@ def _join_new_table_to_df_concat_with_tf_sql(
 
     for col in linker._settings_obj._term_frequency_columns:
         # Create an InputColumn for the tf column name to check membership
-        tf_col_obj = InputColumn(
-            col.tf_name,
-            column_info_settings=linker._settings_obj.column_info_settings,
-            sqlglot_dialect_str=linker._settings_obj._sqlglot_dialect,
-        )
+        tf_col_obj = linker._settings_obj._input_column(col.tf_name)
         if tf_col_obj not in input_table_columns:
             tf_cols_not_already_populated.append(col)
 

@@ -11,7 +11,6 @@ from splink.internals.graph_metrics import (
     _node_degree_centralisation_sql,
     _size_density_centralisation_sql,
 )
-from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     threshold_args_to_match_prob,
 )
@@ -100,10 +99,7 @@ class LinkerClustering:
 
         nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        match_prob_col = InputColumn(
-            "match_probability",
-            sqlglot_dialect_str=linker._settings_obj._sqlglot_dialect,
-        )
+        match_prob_col = linker._settings_obj._input_column("match_probability")
         has_match_prob_col = match_prob_col in df_predict.columns
 
         threshold_match_probability = threshold_args_to_match_prob(
@@ -264,10 +260,7 @@ class LinkerClustering:
 
         nodes_with_composite_ids = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        match_prob_col = InputColumn(
-            "match_probability",
-            sqlglot_dialect_str=linker._settings_obj._sqlglot_dialect,
-        )
+        match_prob_col = linker._settings_obj._input_column("match_probability")
         has_match_prob_col = match_prob_col in df_predict.columns
 
         threshold_match_probability = threshold_args_to_match_prob(

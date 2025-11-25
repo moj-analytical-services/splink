@@ -105,6 +105,10 @@ class BlockingRule:
     def sqlglot_dialect(self):
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
+    def _input_column(self, name: str) -> InputColumn:
+        """Create an InputColumn with this blocking rule's dialect."""
+        return InputColumn(name, sqlglot_dialect_str=self.sqlglot_dialect)
+
     @property
     def match_key(self):
         return len(self.preceding_rules)
@@ -469,8 +473,7 @@ class ExplodingBlockingRule(BlockingRule):
         """A SQL string that creates the input tables that will be joined
         for this blocking rule"""
         arrays_to_explode_cols = [
-            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect)
-            for colname in self.array_columns_to_explode
+            self._input_column(colname) for colname in self.array_columns_to_explode
         ]
 
         # Get columns not in arrays_to_explode using InputColumn equality
@@ -523,8 +526,7 @@ def materialise_exploded_id_tables(
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
         arrays_to_explode_cols = [
-            InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect)
-            for colname in br.array_columns_to_explode
+            br._input_column(colname) for colname in br.array_columns_to_explode
         ]
 
         # Use InputColumn set difference (leverages __eq__ and __hash__)

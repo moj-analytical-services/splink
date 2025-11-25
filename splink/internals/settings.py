@@ -256,6 +256,18 @@ class Settings:
 
         self._additional_col_names_to_retain = additional_columns_to_retain
 
+    def _input_column(self, name: str) -> InputColumn:
+        """Create an InputColumn with this settings object's dialect.
+
+        This is a convenience method to avoid the verbose pattern of:
+            InputColumn(name, sqlglot_dialect_str=settings._sqlglot_dialect)
+        """
+        return InputColumn(
+            name,
+            column_info_settings=self.column_info_settings,
+            sqlglot_dialect_str=self._sqlglot_dialect,
+        )
+
     # TODO: move this to Comparison
     def _warn_if_no_null_level_in_comparisons(self):
         for c in self.comparisons:
@@ -302,10 +314,7 @@ class Settings:
                     get_columns_used_from_sql(br.blocking_rule_sql, br.sqlglot_dialect)
                 )
 
-            used_by_brs = {
-                InputColumn(c, sqlglot_dialect_str=self._sqlglot_dialect)
-                for c in used_by_brs
-            }
+            used_by_brs = {self._input_column(c) for c in used_by_brs}
             already_used_cols = set(self._columns_used_by_comparisons)
 
             new_cols = used_by_brs - already_used_cols
@@ -317,14 +326,7 @@ class Settings:
     @property
     def _additional_columns_to_retain(self) -> List[InputColumn]:
         cols = self._additional_column_names_to_retain
-        return [
-            InputColumn(
-                c,
-                column_info_settings=self.column_info_settings,
-                sqlglot_dialect_str=self._sqlglot_dialect,
-            )
-            for c in cols
-        ]
+        return [self._input_column(c) for c in cols]
 
     def _get_source_dataset_column_name_is_required(self) -> bool:
         return self._link_type not in ["dedupe_only"]
