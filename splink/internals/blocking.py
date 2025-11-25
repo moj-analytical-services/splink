@@ -468,19 +468,20 @@ class ExplodingBlockingRule(BlockingRule):
     ) -> str:
         """A SQL string that creates the input tables that will be joined
         for this blocking rule"""
-        input_colnames = {col.quote().name for col in input_columns}
-
-        arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect).quote().name
+        arrays_to_explode_cols = [
+            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect)
             for colname in self.array_columns_to_explode
         ]
+
+        # Get columns not in arrays_to_explode using InputColumn equality
+        other_cols = [col for col in input_columns if col not in arrays_to_explode_cols]
 
         dialect = SplinkDialect.from_string(self._sql_dialect_str)
 
         expl_sql = dialect.explode_arrays_sql(
             input_tablename,
-            arrays_to_explode_quoted,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
+            [col.quote().name for col in arrays_to_explode_cols],
+            [col.quote().name for col in other_cols],
         )
 
         return expl_sql

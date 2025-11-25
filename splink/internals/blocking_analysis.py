@@ -222,7 +222,10 @@ def _process_unique_id_columns(
         # Get first item in splink_df_dict
         df = next(iter(splink_df_dict.values()))
         cols = df.columns
-        if source_dataset_column_name not in [col.unquote().name for col in cols]:
+        sds_input_col = InputColumn(
+            source_dataset_column_name, sqlglot_dialect_str=sqglot_dialect
+        )
+        if sds_input_col not in cols:
             raise ValueError(
                 "You have provided a single input table with link type 'link_only' or "
                 "'link_and_dedupe'. You provided a source_dataset_column_name of "

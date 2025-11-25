@@ -302,16 +302,14 @@ class Settings:
                     get_columns_used_from_sql(br.blocking_rule_sql, br.sqlglot_dialect)
                 )
 
-            used_by_brs = [
+            used_by_brs = {
                 InputColumn(c, sqlglot_dialect_str=self._sqlglot_dialect)
                 for c in used_by_brs
-            ]
+            }
+            already_used_cols = set(self._columns_used_by_comparisons)
 
-            used_by_brs = [c.unquote().name for c in used_by_brs]
-            already_used_names = self._columns_used_by_comparisons
-
-            new_cols = list(set(used_by_brs) - set(already_used_names))
-            cols_to_retain.extend(new_cols)
+            new_cols = used_by_brs - already_used_cols
+            cols_to_retain.extend([c.unquote().name for c in new_cols])
 
         cols_to_retain.extend(self._additional_col_names_to_retain)
         return cols_to_retain
@@ -333,28 +331,18 @@ class Settings:
 
     @property
     def _term_frequency_columns(self) -> list[InputColumn]:
-        cols = set()
+        cols: set[InputColumn] = set()
         for cc in self.comparisons:
-            cols.update(cc._tf_adjustment_input_col_names)
-        return [
-            InputColumn(
-                c,
-                column_info_settings=self.column_info_settings,
-                sqlglot_dialect_str=self._sqlglot_dialect,
-            )
-            for c in list(cols)
-        ]
+            cols.update(cc._tf_adjustment_input_columns)
+        return list(cols)
 
     @property
-    def _columns_used_by_comparisons(self) -> List[str]:
-        cols_used = []
+    def _columns_used_by_comparisons(self) -> List[InputColumn]:
+        cols_used: list[InputColumn] = []
         for uid_col in self.column_info_settings.unique_id_input_columns:
-            cols_used.append(uid_col.unquote().name)
+            cols_used.append(uid_col)
         for cc in self.comparisons:
-            cols = cc._input_columns_used_by_case_statement
-            cols = [c.unquote().name for c in cols]
-
-            cols_used.extend(cols)
+            cols_used.extend(cc._input_columns_used_by_case_statement)
         return dedupe_preserving_order(cols_used)
 
     @property

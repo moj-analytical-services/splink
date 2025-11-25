@@ -20,30 +20,26 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     uid_str: Optional[str] = None,
 ) -> CTEPipeline:
     input_cols: list[InputColumn] = new_records_df.columns
-    cols: list[str] = [c.unquote().name for c in input_cols]
 
     # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""
-    if sds_col := linker._settings_obj.column_info_settings.source_dataset_column_name:
-        if sds_col not in cols:
-            sds_sel_sql = f", 'new_record' as {sds_col}"
+    col_info = linker._settings_obj.column_info_settings
+    sds_input_col = col_info.source_dataset_input_column
+    if sds_input_col is not None:
+        if sds_input_col not in input_cols:
+            sds_col_name = col_info.source_dataset_column_name
+            sds_sel_sql = f", 'new_record' as {sds_col_name}"
 
     # Add unique_id column to new records if not exists
     uid_sel_sql = ""
-    uid_col_name = linker._settings_obj.column_info_settings.unique_id_column_name
-    uid_col = InputColumn(
-        uid_col_name,
-        column_info_settings=linker._settings_obj.column_info_settings,
-        sqlglot_dialect_str=linker._settings_obj._sqlglot_dialect,
-    )
-    uid_col_name = uid_col.unquote().name
+    uid_col = linker._settings_obj.column_info_settings.unique_id_input_columns[0]
 
     if uid_str is not None:
         id_literal = uid_str
     else:
         id_literal = "no_id_provided"
 
-    if uid_col_name not in cols:
+    if uid_col not in input_cols:
         uid_sel_sql = f", '{id_literal}' as {uid_col.name}"
 
     sql = f"""

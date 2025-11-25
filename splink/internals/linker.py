@@ -240,18 +240,16 @@ class Linker:
         if not include_additional_columns_to_retain:
             remove_columns.extend(self._settings_obj._additional_columns_to_retain)
 
-        remove_id_cols = [c.unquote().name for c in remove_columns]
-        columns = [col for col in columns if col.unquote().name not in remove_id_cols]
+        columns = [col for col in columns if col not in remove_columns]
 
         return columns
 
     @property
     def _source_dataset_column_already_exists(self):
-        input_cols = [c.unquote().name for c in self._input_columns()]
-        return (
-            self._settings_obj.column_info_settings.source_dataset_column_name
-            in input_cols
-        )
+        sds_col = self._settings_obj.column_info_settings.source_dataset_input_column
+        if sds_col is None:
+            return False
+        return sds_col in self._input_columns()
 
     @property
     def _concat_table_column_names(self) -> list[str]:
