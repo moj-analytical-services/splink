@@ -518,21 +518,22 @@ def materialise_exploded_id_tables(
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    input_colnames = {col.name for col in nodes_concat.columns}
+    input_columns_set = set(nodes_concat.columns)
 
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
-        arrays_to_explode_quoted = [
+        arrays_to_explode_cols = [
             InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect)
-            .quote()
-            .name
             for colname in br.array_columns_to_explode
         ]
+
+        # Use InputColumn set difference (leverages __eq__ and __hash__)
+        other_cols = input_columns_set - set(arrays_to_explode_cols)
 
         expl_sql = db_api.sql_dialect.explode_arrays_sql(
             "__splink__df_concat",
             br.array_columns_to_explode,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
+            [col.name for col in other_cols],
         )
 
         pipeline.enqueue_sql(

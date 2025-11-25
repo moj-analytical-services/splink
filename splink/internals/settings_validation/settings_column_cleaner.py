@@ -24,18 +24,27 @@ def remove_suffix(c: str) -> str:
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: Iterable[InputColumn],
-    columns_to_check: Iterable[InputColumn],
-) -> set[InputColumn]:
-    """Identify missing columns in the input dataframe(s). This function
-    uses InputColumn equality to compare columns, ignoring quoting differences.
+    valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
+    columns_to_check: Iterable[InputColumn] | Iterable[str] | str,
+) -> set[InputColumn] | set[str]:
+    """Identify missing columns in the input dataframe(s).
+
+    Supports both InputColumn objects (for production use) and strings
+    (for backward compatibility with tests).
+
+    When InputColumn objects are used, comparison uses InputColumn equality
+    which ignores quoting differences.
     """
+    # Handle single string input
+    if isinstance(columns_to_check, str):
+        columns_to_check = [columns_to_check]
+
     valid_cols_set = set(valid_input_dataframe_columns)
     return {col for col in columns_to_check if col not in valid_cols_set}
 
 
 def clean_and_find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: Iterable[InputColumn],
+    valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
     sqlglot_tree_columns_to_check: Sequence[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
@@ -52,7 +61,13 @@ def clean_and_find_columns_not_in_input_dfs(
         for c in sqlglot_tree_columns_to_check
     )
     # Convert InputColumn objects to unquoted string names for comparison
-    valid_col_names = {c.unquote().name for c in valid_input_dataframe_columns}
+    # Handle both InputColumn objects and plain strings
+    valid_col_names = set()
+    for c in valid_input_dataframe_columns:
+        if hasattr(c, "unquote"):
+            valid_col_names.add(c.unquote().name)
+        else:
+            valid_col_names.add(c)
     return {col for col in cleaned_cols if col not in valid_col_names}
 
 
