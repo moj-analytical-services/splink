@@ -94,13 +94,8 @@ class Comparison:
         for level in self.comparison_levels:
             if level.is_null_level:
                 level._comparison_vector_value = -1
-                level._max_level = False
             else:
                 level._comparison_vector_value = counter
-                if counter == num_levels - 1:
-                    level._max_level = True
-                else:
-                    level._max_level = False
                 counter -= 1
             level.default_m_probability = default_m_values[
                 level.comparison_vector_value
@@ -323,14 +318,6 @@ class Comparison:
                 c.input_name for c in self._input_columns_used_by_case_statement
             ],
         }
-
-    @property
-    def _has_estimated_m_values(self):
-        return all(cl._has_estimated_m_values for cl in self.comparison_levels)
-
-    @property
-    def _has_estimated_u_values(self):
-        return all(cl._has_estimated_u_values for cl in self.comparison_levels)
 
     @property
     def _all_m_are_trained(self):
