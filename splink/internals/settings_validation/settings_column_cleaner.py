@@ -24,33 +24,36 @@ def remove_suffix(c: str) -> str:
 
 
 def find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: Iterable[str], columns_to_check: Iterable[str] | str
-) -> set[str]:
+    valid_input_dataframe_columns: Iterable[InputColumn],
+    columns_to_check: Iterable[InputColumn],
+) -> set[InputColumn]:
     """Identify missing columns in the input dataframe(s). This function
-    does not apply any cleaning to the input column(s).
+    uses InputColumn equality to compare columns, ignoring quoting differences.
     """
-    # the key to use when producing our warning logs
-    if isinstance(columns_to_check, str):
-        columns_to_check = {columns_to_check}
-
-    return {col for col in columns_to_check if col not in valid_input_dataframe_columns}
+    valid_cols_set = set(valid_input_dataframe_columns)
+    return {col for col in columns_to_check if col not in valid_cols_set}
 
 
 def clean_and_find_columns_not_in_input_dfs(
-    valid_input_dataframe_columns: Iterable[str],
+    valid_input_dataframe_columns: Iterable[InputColumn],
     sqlglot_tree_columns_to_check: Sequence[sqlglot.Expression],
     sql_dialect: str,
 ) -> set[str]:
     """Clean a list of sqlglot column names to remove the prefix (l.)
     and suffix (_l) and then return any that are missing from the
     input dataframe(s).
+
+    Note: This function works with strings because it handles parsed SQL
+    column references that have _l and _r suffixes that need to be stripped.
     """
     sqlglot_tree_columns_to_check = deepcopy(sqlglot_tree_columns_to_check)
     cleaned_cols = set(
         remove_prefix_and_suffix_from_column(c, sql_dialect=sql_dialect)
         for c in sqlglot_tree_columns_to_check
     )
-    return find_columns_not_in_input_dfs(valid_input_dataframe_columns, cleaned_cols)
+    # Convert InputColumn objects to unquoted string names for comparison
+    valid_col_names = {c.unquote().name for c in valid_input_dataframe_columns}
+    return {col for col in cleaned_cols if col not in valid_col_names}
 
 
 def remove_prefix_and_suffix_from_column(
@@ -70,34 +73,33 @@ def remove_prefix_and_suffix_from_column(
     return remove_suffix(col_syntax_tree.sql(sql_dialect))
 
 
-def clean_list_of_column_names(col_list: List[InputColumn]) -> set[str]:
-    """Clean a list of columns names by removing the quote characters
-    that may exist.
+def clean_list_of_column_names(col_list: List[InputColumn]) -> set[InputColumn]:
+    """Return a set of InputColumn objects for comparison.
 
     Args:
         col_list (list): A list of InputColumn classes.
     """
     if col_list is None:
-        return ()  # needs to be a blank iterable
+        return set()  # needs to be a blank iterable
 
-    return set((c.unquote().name for c in col_list))
+    return set(col_list)
 
 
 @overload
 def clean_user_input_columns(
     input_columns: dict[str, SplinkDataFrame], return_as_single_column: Literal[True]
-) -> set[str]: ...
+) -> set[InputColumn]: ...
 
 
 @overload
 def clean_user_input_columns(
     input_columns: dict[str, SplinkDataFrame], return_as_single_column: Literal[False]
-) -> dict[str, set[str]]: ...
+) -> dict[str, set[InputColumn]]: ...
 
 
 def clean_user_input_columns(
     input_columns: dict[str, SplinkDataFrame], return_as_single_column: bool = True
-) -> set[str] | dict[str, set[str]]:
+) -> set[InputColumn] | dict[str, set[InputColumn]]:
     """A dictionary containing all input dataframes and the columns located
     within.
 
