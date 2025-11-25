@@ -44,6 +44,14 @@ class ColumnInfoSettings:
     def sqlglot_dialect(self):
         return SplinkDialect.from_string(self.sql_dialect).sqlglot_dialect
 
+    def _input_column(self, name: str) -> InputColumn:
+        """Create an InputColumn with this ColumnInfoSettings' dialect."""
+        return InputColumn(
+            name,
+            column_info_settings=self,
+            sqlglot_dialect_str=self.sqlglot_dialect,
+        )
+
     @property
     def source_dataset_column_name(self):
         if self._source_dataset_column_name_is_required:
@@ -54,40 +62,22 @@ class ColumnInfoSettings:
     @property
     def source_dataset_input_column(self):
         if self._source_dataset_column_name_is_required:
-            return InputColumn(
-                self._source_dataset_column_name,
-                column_info_settings=self,
-                sqlglot_dialect_str=self.sqlglot_dialect,
-            )
+            return self._input_column(self._source_dataset_column_name)
         else:
             return None
 
     @property
     def unique_id_input_column(self):
-        return InputColumn(
-            self.unique_id_column_name,
-            column_info_settings=self,
-            sqlglot_dialect_str=self.sqlglot_dialect,
-        )
+        return self._input_column(self.unique_id_column_name)
 
     @property
     def unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
         if source_dataset_column_name := (self.source_dataset_column_name):
-            col = InputColumn(
-                source_dataset_column_name,
-                column_info_settings=self,
-                sqlglot_dialect_str=self.sqlglot_dialect,
-            )
-            cols.append(col)
+            cols.append(self._input_column(source_dataset_column_name))
 
-        col = InputColumn(
-            self.unique_id_column_name,
-            column_info_settings=self,
-            sqlglot_dialect_str=self.sqlglot_dialect,
-        )
-        cols.append(col)
+        cols.append(self._input_column(self.unique_id_column_name))
 
         return cols
 
