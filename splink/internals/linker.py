@@ -246,14 +246,6 @@ class Linker:
         return columns
 
     @property
-    def _source_dataset_column_already_exists(self):
-        input_cols = [c.unquote().name for c in self._input_columns()]
-        return (
-            self._settings_obj.column_info_settings.source_dataset_column_name
-            in input_cols
-        )
-
-    @property
     def _concat_table_column_names(self) -> list[str]:
         """
         Returns the columns actually present in __splink__df_concat table.
