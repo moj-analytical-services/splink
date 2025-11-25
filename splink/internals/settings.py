@@ -346,17 +346,6 @@ class Settings:
         ]
 
     @property
-    def _needs_matchkey_column(self) -> bool:
-        """Where multiple `blocking_rules_to_generate_predictions` are specified,
-        it's useful to include a matchkey column, that indicates from which blocking
-        rule the pairwise record comparisons arose.
-
-        This column is only needed if multiple rules are specified.
-        """
-
-        return len(self._blocking_rules_to_generate_predictions) > 1
-
-    @property
     def _columns_used_by_comparisons(self) -> List[str]:
         cols_used = []
         for uid_col in self.column_info_settings.unique_id_input_columns:
@@ -390,7 +379,6 @@ class Settings:
             comparisons=self.core_model_settings.comparisons,
             retain_matching_columns=self._retain_matching_columns,
             additional_columns_to_retain=self._additional_columns_to_retain,
-            needs_matchkey_column=self._needs_matchkey_column,
         )
 
     @staticmethod
@@ -399,7 +387,6 @@ class Settings:
         comparisons: List[Comparison],
         retain_matching_columns: bool,
         additional_columns_to_retain: List[InputColumn],
-        needs_matchkey_column: bool,
     ) -> List[str]:
         cols = []
 
@@ -416,8 +403,7 @@ class Settings:
         for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if needs_matchkey_column:
-            cols.append("match_key")
+        cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols
@@ -429,7 +415,6 @@ class Settings:
         retain_matching_columns: bool,
         retain_intermediate_calculation_columns: bool,
         additional_columns_to_retain: List[InputColumn],
-        needs_matchkey_column: bool,
     ) -> List[str]:
         cols = []
 
@@ -447,8 +432,7 @@ class Settings:
         for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if needs_matchkey_column:
-            cols.append("match_key")
+        cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols
@@ -461,7 +445,6 @@ class Settings:
         retain_intermediate_calculation_columns: bool,
         training_mode: bool,
         additional_columns_to_retain: List[InputColumn],
-        needs_matchkey_column: bool,
     ) -> List[str]:
         cols = []
 
@@ -481,8 +464,7 @@ class Settings:
         for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        if needs_matchkey_column:
-            cols.append("match_key")
+        cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols

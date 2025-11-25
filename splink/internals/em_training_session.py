@@ -131,7 +131,6 @@ class EMTrainingSession:
                 comparisons=core_model_settings.comparisons,
                 retain_matching_columns=False,
                 additional_columns_to_retain=[],
-                needs_matchkey_column=False,
             )
         )
 

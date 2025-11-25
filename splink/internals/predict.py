@@ -34,7 +34,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
         retain_intermediate_calculation_columns=settings_obj._retain_intermediate_calculation_columns,
         training_mode=False,
         additional_columns_to_retain=settings_obj._additional_columns_to_retain,
-        needs_matchkey_column=settings_obj._needs_matchkey_column,
         include_clerical_match_score=include_clerical_match_score,
         sql_infinity_expression=sql_infinity_expression,
     )
@@ -51,7 +50,6 @@ def predict_from_comparison_vectors_sqls(
     retain_intermediate_calculation_columns: bool = False,
     training_mode: bool = False,
     additional_columns_to_retain: List[InputColumn] = [],
-    needs_matchkey_column: bool = False,
     include_clerical_match_score: bool = False,
     sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
@@ -63,7 +61,6 @@ def predict_from_comparison_vectors_sqls(
         retain_matching_columns=retain_matching_columns,
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         additional_columns_to_retain=additional_columns_to_retain,
-        needs_matchkey_column=needs_matchkey_column,
     )
     select_cols_expr = ",".join(select_cols)
 
@@ -90,7 +87,6 @@ def predict_from_comparison_vectors_sqls(
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         training_mode=training_mode,
         additional_columns_to_retain=additional_columns_to_retain,
-        needs_matchkey_column=needs_matchkey_column,
     )
     select_cols_expr = ",".join(select_cols)
     bf_terms = []
