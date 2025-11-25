@@ -61,13 +61,10 @@ def clean_and_find_columns_not_in_input_dfs(
         for c in sqlglot_tree_columns_to_check
     )
     # Convert InputColumn objects to unquoted string names for comparison
-    # Handle both InputColumn objects and plain strings
-    valid_col_names = set()
-    for c in valid_input_dataframe_columns:
-        if hasattr(c, "unquote"):
-            valid_col_names.add(c.unquote().name)
-        else:
-            valid_col_names.add(c)
+    valid_col_names = {
+        c.unquote().name if isinstance(c, InputColumn) else c
+        for c in valid_input_dataframe_columns
+    }
     return {col for col in cleaned_cols if col not in valid_col_names}
 
 
