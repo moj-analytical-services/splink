@@ -98,19 +98,19 @@ def _join_new_table_to_df_concat_with_tf_sql(
     or linker.inference.find_matches_to_new_records in which the user provides
     new records which need tf adjustments computed
     """
-    tf_cols_already_populated = []
+    tf_cols_not_already_populated = []
 
-    if input_table is not None:
-        tf_cols_already_populated = [
-            c.unquote().name
-            for c in input_table.columns
-            if c.unquote().name.startswith("tf_")
-        ]
-    tf_cols_not_already_populated = [
-        c
-        for c in linker._settings_obj._term_frequency_columns
-        if c.unquote().tf_name not in tf_cols_already_populated
-    ]
+    input_table_columns = input_table.columns if input_table is not None else []
+
+    for col in linker._settings_obj._term_frequency_columns:
+        # Create an InputColumn for the tf column name to check membership
+        tf_col_obj = InputColumn(
+            col.tf_name,
+            column_info_settings=linker._settings_obj.column_info_settings,
+            sqlglot_dialect_str=linker._settings_obj._sqlglot_dialect,
+        )
+        if tf_col_obj not in input_table_columns:
+            tf_cols_not_already_populated.append(col)
 
     cache = linker._intermediate_table_cache
 
