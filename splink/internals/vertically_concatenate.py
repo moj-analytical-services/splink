@@ -49,8 +49,7 @@ def vertically_concatenate_sql(
     source_dataset_column_already_exists = False
     if source_dataset_input_column:
         source_dataset_column_already_exists = (
-            source_dataset_input_column.unquote().name
-            in [c.unquote().name for c in df_obj.columns]
+            source_dataset_input_column in df_obj.columns
         )
 
     select_columns_sql = ", ".join(columns)
@@ -202,8 +201,7 @@ def concat_table_column_names(linker: Linker) -> list[str]:
         source_dataset_column_already_exists = False
         if source_dataset_input_column:
             source_dataset_column_already_exists = (
-                source_dataset_input_column.unquote().name
-                in [c.unquote().name for c in df_obj.columns]
+                source_dataset_input_column in df_obj.columns
             )
         if not source_dataset_column_already_exists:
             columns.append("source_dataset")
