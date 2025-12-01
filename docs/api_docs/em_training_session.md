@@ -11,7 +11,7 @@ tags:
     handler: python
     options:
       show_root_heading: false
-      show_root_toc: true
+      show_root_toc_entry: true
       show_source: false
       members_order: source
 
