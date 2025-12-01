@@ -13,6 +13,9 @@ on:
       - docs/**
       - CONTRIBUTING.md
       - mkdocs.yml
+      # and potentially dependencies - build is quick so shouldn't be too much pain to run this:
+      - pyproject.toml
+      - uv.lock
 
   workflow_dispatch:
 
