@@ -13,6 +13,9 @@ on:
       - docs/**
       - CONTRIBUTING.md
       - mkdocs.yml
+      # and potentially dependencies - build is quick so shouldn't be too much pain to run this:
+      - pyproject.toml
+      - uv.lock
 
   workflow_dispatch:
 
@@ -62,7 +65,7 @@ jobs:
     steps:
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.13
 
       - uses: actions/checkout@v3
         with:
