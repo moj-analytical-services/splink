@@ -11,6 +11,6 @@ tags:
       - "!^__init__$"
     options:
       show_root_heading: false
-      show_root_toc: false
+      show_root_toc_entry: false
       show_source: false
       members_order: source
