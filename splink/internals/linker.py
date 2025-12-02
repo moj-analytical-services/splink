@@ -414,6 +414,38 @@ class Linker:
                     "only a single input table",
                 )
 
+    def _get_df_concat_with_tf(
+        self, df_concat_with_tf: SplinkDataFrame | None = None
+    ) -> SplinkDataFrame:
+        """Resolve df_concat_with_tf according to the standard precedence:
+
+        1. If df_concat_with_tf argument is provided, use it directly.
+        2. Else if a cached df_concat_with_tf exists, use it.
+        3. Else compute df_concat_with_tf via table_management and cache it.
+
+        This method provides a single source of truth for resolving the
+        df_concat_with_tf table, ensuring consistent behaviour across
+        inference, training, and clustering methods.
+
+        Args:
+            df_concat_with_tf (SplinkDataFrame | None): An optional pre-computed
+                df_concat_with_tf table. If provided, this is returned directly.
+
+        Returns:
+            SplinkDataFrame: The df_concat_with_tf table.
+        """
+        if df_concat_with_tf is not None:
+            return df_concat_with_tf
+
+        cache = self._intermediate_table_cache
+
+        key = "__splink__df_concat_with_tf"
+        if key in cache:
+            return cache.get_with_logging(key)
+
+        # Will compute and cache via table_management
+        return self.table_management.compute_df_concat_with_tf()
+
     def _populate_probability_two_random_records_match_from_trained_values(self):
         recip_prop_matches_estimates = []
 

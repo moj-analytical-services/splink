@@ -15,6 +15,7 @@ from splink.internals.term_frequencies import (
     term_frequencies_for_single_column_sql,
 )
 from splink.internals.vertically_concatenate import (
+    compute_df_concat_with_tf as _compute_df_concat_with_tf,
     enqueue_df_concat,
 )
 
@@ -31,6 +32,58 @@ class LinkerTableManagement:
 
     def __init__(self, linker: Linker):
         self._linker = linker
+
+    def compute_df_concat_with_tf(self, cache: bool = True) -> SplinkDataFrame:
+        """Compute concatenated input records with term frequency columns.
+
+        This method computes the vertically concatenated input table with
+        term frequency columns added for all columns specified in the settings.
+
+        If cache=True (default), this stores the result in the intermediate
+        table cache under the key "__splink__df_concat_with_tf", so other
+        methods (e.g. predict, training) can reuse it.
+
+        Args:
+            cache (bool, optional): If True (default), cache the result in
+                `_intermediate_table_cache` under the key
+                "__splink__df_concat_with_tf". Set to False to compute without
+                populating the cache.
+
+        Returns:
+            SplinkDataFrame: The concatenated input records with term frequency
+                columns.
+
+        Examples:
+            ```py
+            # Compute and cache for later use
+            df_concat_with_tf = linker.table_management.compute_df_concat_with_tf()
+
+            # Save to disk for reuse
+            df_concat_with_tf.as_pandas_dataframe().to_parquet("checkpoint.parquet")
+
+            # Later, load and register the precomputed table
+            df = pd.read_parquet("checkpoint.parquet")
+            linker.table_management.register_table_input_nodes_concat_with_tf(df)
+            ```
+        """
+        pipeline = CTEPipeline()
+
+        # _compute_df_concat_with_tf already checks cache and populates it
+        df = _compute_df_concat_with_tf(self._linker, pipeline)
+
+        # Ensure templated name is set correctly
+        df.templated_name = "__splink__df_concat_with_tf"
+
+        # If cache=False, remove from cache (it was added by _compute_df_concat_with_tf)
+        if not cache:
+            self._linker._intermediate_table_cache.pop(
+                "__splink__df_concat_with_tf", None
+            )
+        else:
+            # Ensure it's in the cache (may already be, but this is explicit)
+            self._linker._intermediate_table_cache["__splink__df_concat_with_tf"] = df
+
+        return df
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
@@ -85,6 +138,7 @@ class LinkerTableManagement:
             sql = term_frequencies_for_single_column_sql(input_col)
             pipeline.enqueue_sql(sql, tf_tablename)
             tf_df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            tf_df.templated_name = tf_tablename
             self._linker._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
@@ -114,6 +168,51 @@ class LinkerTableManagement:
 
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
+
+    def invalidate_df_concat_with_tf(self) -> None:
+        """Invalidate just the cached df_concat_with_tf table.
+
+        This is a lighter-weight alternative to `invalidate_cache()` when you
+        only need to recompute the concatenated input records with term
+        frequency columns.
+
+        This is useful if you've changed term frequency settings or want to
+        force recomputation of this specific table.
+        """
+        cache = self._linker._intermediate_table_cache
+        key = "__splink__df_concat_with_tf"
+        if key in cache:
+            splink_df = cache[key]
+            try:
+                splink_df.drop_table_from_database_and_remove_from_cache()
+            except Exception:
+                pass
+            cache.pop(key, None)
+
+    def invalidate_tf_table(self, column_name: str) -> None:
+        """Invalidate the cached term frequency table for a specific column.
+
+        This is a lighter-weight alternative to `invalidate_cache()` when you
+        only need to recompute a specific term frequency lookup table.
+
+        Args:
+            column_name (str): The column name whose TF table should be
+                invalidated.
+        """
+        input_col = InputColumn(
+            column_name,
+            column_info_settings=self._linker._settings_obj.column_info_settings,
+            sqlglot_dialect_str=self._linker._settings_obj._sql_dialect_str,
+        )
+        tf_tablename = colname_to_tf_tablename(input_col)
+        cache = self._linker._intermediate_table_cache
+        if tf_tablename in cache:
+            splink_df = cache[tf_tablename]
+            try:
+                splink_df.drop_table_from_database_and_remove_from_cache()
+            except Exception:
+                pass
+            cache.pop(tf_tablename, None)
 
     def register_table_input_nodes_concat_with_tf(
         self, input_data: AcceptableInputTableType, overwrite: bool = False
