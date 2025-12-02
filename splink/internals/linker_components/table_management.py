@@ -16,6 +16,8 @@ from splink.internals.term_frequencies import (
 )
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf as _compute_df_concat_with_tf,
+)
+from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
 )
 
@@ -142,6 +144,133 @@ class LinkerTableManagement:
             self._linker._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
+
+    def compute_blocked_pairs(self) -> SplinkDataFrame:
+        """Compute and cache the table of blocked record pairs.
+
+        This method generates record pairs using the blocking rules specified
+        in `blocking_rules_to_generate_predictions` from your settings. The
+        resulting table contains pairs of record IDs that will be compared
+        during prediction.
+
+        The result is stored in the intermediate table cache under the key
+        `__splink__blocked_id_pairs`, so subsequent calls to `predict()` or
+        `deterministic_link()` can reuse it instead of recomputing.
+
+        This is useful when you want to:
+        - Pre-compute blocked pairs once and run multiple predictions with
+          different thresholds
+        - Save the blocked pairs to disk for later reuse
+        - Inspect the blocked pairs before running predictions
+
+        Note:
+            If you change the blocking rules in your settings, you must call
+            `invalidate_blocked_pairs()` before calling this method again to
+            ensure the cached table reflects the new rules.
+
+        Returns:
+            SplinkDataFrame: The table of blocked record pairs, with columns:
+                - `match_key`: Integer identifying which blocking rule generated
+                  this pair
+                - `join_key_l`: Composite unique ID of the left record
+                - `join_key_r`: Composite unique ID of the right record
+
+        Examples:
+            ```py
+            # Compute blocked pairs once
+            blocked_pairs = linker.table_management.compute_blocked_pairs()
+
+            # Run multiple predictions with different thresholds
+            df_09 = linker.inference.predict(threshold_match_probability=0.9)
+            df_08 = linker.inference.predict(threshold_match_probability=0.8)
+
+            # Save to disk for later reuse
+            blocked_pairs.as_pandas_dataframe().to_parquet("blocked_pairs.parquet")
+            ```
+        """
+        # Delegate to inference for the actual computation
+        blocked_pairs = self._linker.inference.compute_blocked_pairs()
+
+        # Store in cache
+        self._linker._intermediate_table_cache["__splink__blocked_id_pairs"] = (
+            blocked_pairs
+        )
+
+        return blocked_pairs
+
+    def register_blocked_pairs(
+        self, input_data: AcceptableInputTableType, overwrite: bool = False
+    ) -> SplinkDataFrame:
+        """Register a pre-computed blocked pairs table.
+
+        This method allows you to register a previously computed blocked pairs
+        table (e.g., loaded from Parquet) into the Splink cache. This table
+        will then be used by `predict()` and `deterministic_link()` instead
+        of recomputing blocked pairs.
+
+        The input table must have the same schema as the output of
+        `compute_blocked_pairs()`:
+        - `match_key`: Integer identifying which blocking rule generated this pair
+        - `join_key_l`: Composite unique ID of the left record
+        - `join_key_r`: Composite unique ID of the right record
+
+        Note:
+            The registered blocked pairs must have been computed using the same
+            blocking rules as currently specified in your settings. If you change
+            the blocking rules, you must recompute and re-register the blocked
+            pairs.
+
+        Args:
+            input_data (AcceptableInputTableType): The blocked pairs data. Can be
+                a dictionary, pandas DataFrame, PyArrow table, or Spark DataFrame.
+            overwrite (bool, optional): If True, overwrite any existing table with
+                the same name in the database. Defaults to False.
+
+        Returns:
+            SplinkDataFrame: The registered blocked pairs table.
+
+        Examples:
+            ```py
+            # Load previously saved blocked pairs
+            blocked_pairs_pd = pd.read_parquet("blocked_pairs.parquet")
+
+            # Register with the linker
+            linker.table_management.register_blocked_pairs(blocked_pairs_pd)
+
+            # Now predict() will use the registered blocked pairs
+            predictions = linker.inference.predict(threshold_match_probability=0.9)
+            ```
+        """
+        table_name_physical = "__splink__blocked_id_pairs_" + self._linker._cache_uid
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
+        splink_dataframe.templated_name = "__splink__blocked_id_pairs"
+
+        self._linker._intermediate_table_cache["__splink__blocked_id_pairs"] = (
+            splink_dataframe
+        )
+        return splink_dataframe
+
+    def invalidate_blocked_pairs(self) -> None:
+        """Invalidate the cached blocked pairs table.
+
+        This removes the blocked pairs table from the cache, so the next call
+        to `predict()` or `deterministic_link()` will recompute blocked pairs
+        (unless you explicitly provide them or call `compute_blocked_pairs()`).
+
+        You should call this method if you change the blocking rules in your
+        settings and have previously cached blocked pairs.
+        """
+        cache = self._linker._intermediate_table_cache
+        key = "__splink__blocked_id_pairs"
+        if key in cache:
+            splink_df = cache[key]
+            try:
+                splink_df.drop_table_from_database_and_remove_from_cache()
+            except Exception:
+                pass
+            cache.pop(key, None)
 
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables

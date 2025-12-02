@@ -446,6 +446,39 @@ class Linker:
         # Will compute and cache via table_management
         return self.table_management.compute_df_concat_with_tf()
 
+    def _get_blocked_pairs(
+        self, blocked_pairs: SplinkDataFrame | None = None
+    ) -> SplinkDataFrame | None:
+        """Resolve blocked_pairs according to the standard precedence:
+
+        1. If blocked_pairs argument is provided, use it directly.
+        2. Else if a cached blocked_pairs exists, return it.
+        3. Else return None (blocked pairs are NOT auto-computed).
+
+        Unlike _get_df_concat_with_tf, this method does NOT auto-compute
+        blocked pairs if they are not found. This is because blocked pairs
+        caching is opt-in only - users must explicitly call
+        `table_management.compute_blocked_pairs()` to cache them.
+
+        Args:
+            blocked_pairs (SplinkDataFrame | None): An optional pre-computed
+                blocked pairs table. If provided, this is returned directly.
+
+        Returns:
+            SplinkDataFrame | None: The blocked pairs table if found in cache
+                or provided, otherwise None.
+        """
+        if blocked_pairs is not None:
+            return blocked_pairs
+
+        cache = self._intermediate_table_cache
+
+        key = "__splink__blocked_id_pairs"
+        if key in cache:
+            return cache.get_with_logging(key)
+
+        return None
+
     def _populate_probability_two_random_records_match_from_trained_values(self):
         recip_prop_matches_estimates = []
 
