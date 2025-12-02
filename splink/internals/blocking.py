@@ -34,7 +34,6 @@ backend_link_type_options = Literal[
 class BlockingRuleDict(TypedDict):
     blocking_rule: str
     sql_dialect: str
-    salting_partitions: int | None
     arrays_to_explode: list[str] | None
 
 
@@ -48,19 +47,7 @@ def blocking_rule_to_obj(br: BlockingRule | BlockingRuleDict) -> BlockingRule:
         sql_dialect_str = br.get("sql_dialect", None)
         if sql_dialect_str is None:
             raise ValueError("Must provide a valid sql_dialect")
-        salting_partitions = br.get("salting_partitions", None)
         arrays_to_explode = br.get("arrays_to_explode", None)
-
-        if arrays_to_explode is not None and salting_partitions is not None:
-            raise ValueError(
-                "Splink does not support blocking rules that are "
-                " both salted and exploding"
-            )
-
-        if salting_partitions is not None:
-            return SaltedBlockingRule(
-                blocking_rule, sql_dialect_str, salting_partitions
-            )
 
         if arrays_to_explode is not None:
             return ExplodingBlockingRule(
@@ -289,70 +276,6 @@ class BlockingRule:
         return f"{self.descr} blocking rule using SQL: {sql}"
 
 
-class SaltedBlockingRule(BlockingRule):
-    def __init__(
-        self,
-        blocking_rule: str,
-        sqlglot_dialect: str,
-        salting_partitions: int = 1,
-    ):
-        if salting_partitions is None or salting_partitions <= 1:
-            raise ValueError("Salting partitions must be specified and > 1")
-
-        super().__init__(blocking_rule, sqlglot_dialect)
-        self.salting_partitions = salting_partitions
-
-    def as_dict(self):
-        output = super().as_dict()
-        output["salting_partitions"] = self.salting_partitions
-        return output
-
-    def _as_completed_dict(self):
-        return self.as_dict()
-
-    def _salting_condition(self, salt):
-        return f"AND ceiling(l.__splink_salt * {self.salting_partitions}) = {salt + 1}"
-
-    def create_blocked_pairs_sql(
-        self,
-        *,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-        input_tablename_l: str,
-        input_tablename_r: str,
-        where_condition: str,
-    ) -> str:
-        if source_dataset_input_column:
-            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
-        else:
-            unique_id_columns = [unique_id_input_column]
-
-        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
-
-        sqls = []
-        exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
-            source_dataset_input_column, unique_id_input_column
-        )
-        for salt in range(self.salting_partitions):
-            salt_condition = self._salting_condition(salt)
-            sql = f"""
-            select
-            '{self.match_key}' as match_key,
-            {uid_l_expr} as join_key_l,
-            {uid_r_expr} as join_key_r
-            from {input_tablename_l} as l
-            inner join {input_tablename_r} as r
-            on
-            ({self.blocking_rule_sql} {salt_condition})
-            {where_condition}
-            {exclude_sql}
-            """
-
-            sqls.append(sql)
-        return " UNION ALL ".join(sqls)
-
-
 def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
     return db_api.sql_dialect.explode_arrays_sql(
         tbl_name, columns_to_explode, other_columns_to_retain
@@ -511,7 +434,6 @@ def materialise_exploded_id_tables(
 
     sql = vertically_concatenate_sql(
         splink_df_dict,
-        salting_required=False,
         source_dataset_input_column=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")

@@ -154,10 +154,8 @@ class LinkerClustering:
         enqueue_df_concat(linker, pipeline)
 
         columns = concat_table_column_names(self._linker)
-        # don't want to include salting column in output if present
-        columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
 
-        select_columns_sql = ", ".join(columns_without_salt)
+        select_columns_sql = ", ".join(columns)
 
         sql = f"""
         select
@@ -321,10 +319,8 @@ class LinkerClustering:
         enqueue_df_concat(linker, pipeline)
 
         columns = concat_table_column_names(self._linker)
-        # don't want to include salting column in output if present
-        columns_without_salt = filter(lambda x: x != "__splink_salt", columns)
 
-        select_columns_sql = ", ".join(columns_without_salt)
+        select_columns_sql = ", ".join(columns)
 
         sql = f"""
         select

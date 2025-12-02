@@ -52,7 +52,7 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         input_tablename_r = input_dataframes[1].physical_name
     else:
         sql = vertically_concatenate_sql(
-            input_data_dict, salting_required=False, source_dataset_input_column=None
+            input_data_dict, source_dataset_input_column=None
         )
         sqls.append({"sql": sql, "output_table_name": "__splink__df_concat"})
 
@@ -162,7 +162,6 @@ def _row_counts_per_input_table(
 
     sql = vertically_concatenate_sql(
         splink_df_dict,
-        salting_required=False,
         source_dataset_input_column=source_dataset_input_column,
     )
     pipeline.enqueue_sql(sql, "__splink__df_concat")
@@ -309,7 +308,6 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     sql = vertically_concatenate_sql(
         splink_df_dict,
-        salting_required=False,
         source_dataset_input_column=source_dataset_input_column,
     )
 
