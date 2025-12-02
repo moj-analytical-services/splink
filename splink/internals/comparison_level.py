@@ -599,17 +599,6 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    def _bayes_factor_sql(self, gamma_column_name: str) -> str:
-        bayes_factor = (
-            self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
-        )
-        sql = f"""
-        WHEN
-        {gamma_column_name} = {self.comparison_vector_value}
-        THEN cast({bayes_factor} as float8)
-        """
-        return dedent(sql)
-
     def _match_weight_sql(self, gamma_column_name: str) -> str:
         """Generate SQL WHEN clause outputting the pre-computed match weight.
 
@@ -628,75 +617,6 @@ class ComparisonLevel:
         THEN cast({match_weight} as float8)
         """
         return dedent(sql)
-
-    def _tf_adjustment_sql(
-        self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
-    ) -> str:
-        gamma_colname_value_is_this_level = (
-            f"{gamma_column_name} = {self.comparison_vector_value}"
-        )
-
-        # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
-        if self.comparison_vector_value == -1:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif not self._has_tf_adjustments:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif self._tf_adjustment_weight == 0:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif self._is_else_level:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        else:
-            tf_adj_col = self._tf_adjustment_input_column
-
-            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
-            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
-
-            tf_adjustment_exists = f"{coalesce_l_r} is not null"
-            u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
-                comparison_levels
-            )
-
-            # Using coalesce protects against one of the tf adjustments being null
-            # Which would happen if the user provided their own tf adjustment table
-            # That didn't contain some of the values in this data
-
-            # In this case rather than taking the greater of the two, we take
-            # whichever value exists
-
-            if self._tf_minimum_u_value == 0.0:
-                divisor_sql = f"""
-                (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    THEN {coalesce_l_r}
-                    ELSE {coalesce_r_l}
-                END)
-                """
-            else:
-                # This sql works correctly even when the tf_minimum_u_value is 0.0
-                # but is less efficient to execute, hence the above if statement
-                divisor_sql = f"""
-                (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_r_l}
-                    ELSE cast({self._tf_minimum_u_value} as float8)
-                END)
-                """
-
-            sql = f"""
-            WHEN  {gamma_colname_value_is_this_level} then
-                (CASE WHEN {tf_adjustment_exists}
-                THEN
-                POW(
-                    cast({u_prob_exact_match} as float8) /{divisor_sql},
-                    cast({self._tf_adjustment_weight} as float8)
-                )
-                ELSE cast(1 as float8)
-                END)
-            """
-        return dedent(sql).strip()
 
     def _tf_adjustment_match_weight_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]

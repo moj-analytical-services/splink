@@ -127,11 +127,6 @@ class Comparison:
         return self.column_info_settings.comparison_vector_value_column_prefix
 
     @property
-    def _bf_column_name(self):
-        bf_prefix = self.column_info_settings.bayes_factor_column_prefix
-        return f"{bf_prefix}{self.output_column_name}".replace(" ", "_")
-
-    @property
     def _mw_column_name(self):
         """Column name for match weight (mw_) prefix."""
         mw_prefix = self.column_info_settings.match_weight_column_prefix
@@ -140,13 +135,6 @@ class Comparison:
     @property
     def _has_null_level(self):
         return any([cl.is_null_level for cl in self.comparison_levels])
-
-    @property
-    def _bf_tf_adj_column_name(self):
-        bf = self.column_info_settings.bayes_factor_column_prefix
-        tf = self.column_info_settings.term_frequency_adjustment_column_prefix
-        cc_name = self.output_column_name
-        return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
     def _mw_tf_adj_column_name(self):
@@ -233,51 +221,6 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    def _columns_to_select_for_bayes_factor_parts(
-        self,
-        retain_matching_columns: bool,
-        retain_intermediate_calculation_columns: bool,
-    ) -> List[str]:
-        input_cols = []
-        for cl in self.comparison_levels:
-            input_cols.extend(cl._input_columns_used_by_sql_condition)
-
-        output_cols = []
-        if retain_matching_columns:
-            for col in input_cols:
-                output_cols.extend(col.names_l_r)
-
-        output_cols.append(self._gamma_column_name)
-
-        if retain_intermediate_calculation_columns:
-            for cl in self.comparison_levels:
-                if cl._has_tf_adjustments:
-                    col = cl._tf_adjustment_input_column
-                    output_cols.extend(col.tf_name_l_r)
-
-        # Bayes factor case when statement
-        sqls = [
-            cl._bayes_factor_sql(self._gamma_column_name)
-            for cl in self.comparison_levels
-        ]
-        sql = " ".join(sqls)
-        sql = f"CASE {sql} END as {self._bf_column_name} "
-        output_cols.append(sql)
-
-        # tf adjustment case when statement
-
-        if self._has_tf_adjustments:
-            sqls = [
-                cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
-                for cl in self.comparison_levels
-            ]
-            sql = " ".join(sqls)
-            sql = f"CASE {sql} END as {self._bf_tf_adj_column_name} "
-            output_cols.append(sql)
-        output_cols.append(self._gamma_column_name)
-
-        return dedupe_preserving_order(output_cols)
-
     def _columns_to_select_for_match_weight_parts(
         self,
         retain_matching_columns: bool,
@@ -336,39 +279,7 @@ class Comparison:
         retain_intermediate_calculation_columns: bool,
         training_mode: bool,
     ) -> List[str]:
-        input_cols = []
-        for cl in self.comparison_levels:
-            input_cols.extend(cl._input_columns_used_by_sql_condition)
-
-        output_cols = []
-        if retain_matching_columns:
-            for col in input_cols:
-                output_cols.extend(col.names_l_r)
-            output_cols.append(self._gamma_column_name)
-        elif training_mode:
-            output_cols.append(self._gamma_column_name)
-
-        if retain_intermediate_calculation_columns:
-            for cl in self.comparison_levels:
-                if cl._has_tf_adjustments:
-                    col = cl._tf_adjustment_input_column
-                    output_cols.extend(col.tf_name_l_r)
-
-            output_cols.extend(self._match_weight_columns_to_multiply)
-
-        return dedupe_preserving_order(output_cols)
-
-    def _columns_to_select_for_predict_additive(
-        self,
-        retain_matching_columns: bool,
-        retain_intermediate_calculation_columns: bool,
-        training_mode: bool,
-    ) -> List[str]:
-        """Columns to select for final predict output (additive match weights).
-
-        Similar to _columns_to_select_for_predict but selects mw_* columns
-        instead of bf_* columns.
-        """
+        """Columns to select for final predict output (additive match weights)."""
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -390,14 +301,6 @@ class Comparison:
             output_cols.extend(self._match_weight_columns_to_sum)
 
         return dedupe_preserving_order(output_cols)
-
-    @property
-    def _match_weight_columns_to_multiply(self):
-        cols = []
-        cols.append(self._bf_column_name)
-        if self._has_tf_adjustments:
-            cols.append(self._bf_tf_adj_column_name)
-        return cols
 
     @property
     def _match_weight_columns_to_sum(self):

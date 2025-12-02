@@ -142,7 +142,6 @@ def compare_records(
 
     sqls = predict_from_comparison_vectors_sqls_using_settings(
         settings_obj,
-        sql_infinity_expression=db_api.sql_dialect.infinity_expression,
     )
     pipeline.enqueue_list_of_sqls(sqls)
 

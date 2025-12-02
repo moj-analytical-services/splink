@@ -101,7 +101,6 @@ def test_add_pref_and_suffix():
     dull_l_r = ['"l"."dull" AS "dull_l"', '"r"."dull" AS "dull_r"']
     assert dull.l_r_names_as_l_r == dull_l_r
 
-    assert dull.bf_name == '"bf_dull"'
     assert dull.tf_name_l == '"tf_dull_l"'
     tf_dull_l_r = ['"l"."tf_dull" AS "tf_dull_l"', '"r"."tf_dull" AS "tf_dull_r"']
     assert dull.l_r_tf_names_as_l_r == tf_dull_l_r
@@ -118,7 +117,6 @@ def test_add_pref_and_suffix():
 
     group = InputColumn("cluster", sqlglot_dialect_str="duckdb")
     assert group.name_l == '"cluster_l"'
-    assert group.bf_name == '"bf_cluster"'
     group_l_r_names = ['"l"."cluster" AS "cluster_l"', '"r"."cluster" AS "cluster_r"']
     assert group.l_r_names_as_l_r == group_l_r_names
 

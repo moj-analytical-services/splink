@@ -38,7 +38,7 @@ from splink.internals.misc import (
 from splink.internals.optimise_cost_of_brs import suggest_blocking_rules
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import (
-    predict_from_comparison_vectors_sqls,
+    predict_from_comparison_vectors_sqls_additive,
 )
 from splink.internals.settings_creator import SettingsCreator
 from splink.internals.settings_validation.log_invalid_columns import (
@@ -293,10 +293,6 @@ class Linker:
     @property
     def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
-
-    @property
-    def _infinity_expression(self):
-        return self._sql_dialect.infinity_expression
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
@@ -572,11 +568,10 @@ class Linker:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        sql_infos = predict_from_comparison_vectors_sqls(
+        sql_infos = predict_from_comparison_vectors_sqls_additive(
             unique_id_input_columns=uid_cols,
             core_model_settings=self._settings_obj.core_model_settings,
             sql_dialect=self._sql_dialect,
-            sql_infinity_expression=self._infinity_expression,
         )
         for sql_info in sql_infos:
             output_table_name = sql_info["output_table_name"]

@@ -32,7 +32,6 @@ class ComparisonAndLevelDict(TypedDict):
 
 @dataclass(frozen=True)
 class ColumnInfoSettings:
-    bayes_factor_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str
@@ -199,7 +198,6 @@ class Settings:
         # ColumnInfoSettings
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
-        bayes_factor_column_prefix: str = "bf_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
         match_weight_column_prefix: str = "mw_",
@@ -216,7 +214,6 @@ class Settings:
 
         self.column_info_settings = ColumnInfoSettings(
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
-            bayes_factor_column_prefix=bayes_factor_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
             match_weight_column_prefix=match_weight_column_prefix,
             unique_id_column_name=unique_id_column_name,
@@ -412,35 +409,6 @@ class Settings:
         return cols
 
     @staticmethod
-    def columns_to_select_for_bayes_factor_parts(
-        unique_id_input_columns: List[InputColumn],
-        comparisons: List[Comparison],
-        retain_matching_columns: bool,
-        retain_intermediate_calculation_columns: bool,
-        additional_columns_to_retain: List[InputColumn],
-    ) -> List[str]:
-        cols = []
-
-        for uid_col in unique_id_input_columns:
-            cols.extend(uid_col.names_l_r)
-
-        for cc in comparisons:
-            cols.extend(
-                cc._columns_to_select_for_bayes_factor_parts(
-                    retain_matching_columns,
-                    retain_intermediate_calculation_columns,
-                )
-            )
-
-        for add_col in additional_columns_to_retain:
-            cols.extend(add_col.names_l_r)
-
-        cols.append("match_key")
-
-        cols = dedupe_preserving_order(cols)
-        return cols
-
-    @staticmethod
     def columns_to_select_for_match_weight_parts(
         unique_id_input_columns: List[InputColumn],
         comparisons: List[Comparison],
@@ -448,11 +416,7 @@ class Settings:
         retain_intermediate_calculation_columns: bool,
         additional_columns_to_retain: List[InputColumn],
     ) -> List[str]:
-        """Columns to select for additive match weight calculation.
-
-        Similar to columns_to_select_for_bayes_factor_parts but uses
-        mw_* columns with pre-computed match weights.
-        """
+        """Columns to select for additive match weight calculation."""
         cols = []
 
         for uid_col in unique_id_input_columns:
@@ -483,6 +447,7 @@ class Settings:
         training_mode: bool,
         additional_columns_to_retain: List[InputColumn],
     ) -> List[str]:
+        """Columns to select for final predict output (additive match weights)."""
         cols = []
 
         for uid_col in unique_id_input_columns:
@@ -492,42 +457,6 @@ class Settings:
         for cc in comparisons:
             cols.extend(
                 cc._columns_to_select_for_predict(
-                    retain_matching_columns,
-                    retain_intermediate_calculation_columns,
-                    training_mode,
-                )
-            )
-
-        for add_col in additional_columns_to_retain:
-            cols.extend(add_col.names_l_r)
-
-        cols.append("match_key")
-
-        cols = dedupe_preserving_order(cols)
-        return cols
-
-    @staticmethod
-    def columns_to_select_for_predict_additive(
-        unique_id_input_columns: List[InputColumn],
-        comparisons: List[Comparison],
-        retain_matching_columns: bool,
-        retain_intermediate_calculation_columns: bool,
-        training_mode: bool,
-        additional_columns_to_retain: List[InputColumn],
-    ) -> List[str]:
-        """Columns to select for final predict output (additive match weights).
-
-        Similar to columns_to_select_for_predict but uses mw_* columns.
-        """
-        cols = []
-
-        for uid_col in unique_id_input_columns:
-            cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r)
-
-        for cc in comparisons:
-            cols.extend(
-                cc._columns_to_select_for_predict_additive(
                     retain_matching_columns,
                     retain_intermediate_calculation_columns,
                     training_mode,

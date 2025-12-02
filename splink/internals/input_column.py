@@ -208,11 +208,6 @@ class InputColumn:
         self.sqlglot_dialect = sql_dialect_str
 
     @property
-    def _bf_prefix(self):
-        # TODO: remove this temp compat
-        return getattr(self.column_info_settings, "bayes_factor_column_prefix", "bf_")
-
-    @property
     def _tf_prefix(self):
         return getattr(
             self.column_info_settings, "term_frequency_adjustment_column_prefix", "tf_"
@@ -261,11 +256,6 @@ class InputColumn:
     @property
     def l_r_names_as_l_r(self) -> list[str]:
         return [self.l_name_as_l, self.r_name_as_r]
-
-    @property
-    def bf_name(self) -> str:
-        new_column_name = self._bf_prefix + self.col_builder.column_name
-        return replace(self.col_builder, column_name=new_column_name).sql
 
     @property
     def tf_name(self) -> str:
