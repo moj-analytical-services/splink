@@ -111,7 +111,7 @@ This invariant is enforced by convention and code comments on `Linker`: **only `
 
 ---
 
-### Phase 1: Make `compute_df_concat_with_tf` populate the cache
+### Phase 1: Make `compute_df_concat_with_tf` populate the cache ✅ DONE
 
 **File:** `splink/internals/linker_components/table_management.py`
 
@@ -165,7 +165,7 @@ uv run mypy splink/internals/linker_components/table_management.py
 
 ---
 
-### Phase 2: Ensure `compute_tf_table` & `register_*` write to cache correctly
+### Phase 2: Ensure `compute_tf_table` & `register_*` write to cache correctly ✅ DONE
 
 **File:** `splink/internals/linker_components/table_management.py`
 
@@ -235,7 +235,7 @@ uv run pytest -m duckdb
 
 ---
 
-### Phase 3: Centralise cache reads via a Linker helper
+### Phase 3: Centralise cache reads via a Linker helper ✅ DONE
 
 **File:** `splink/internals/linker.py` (or equivalent core linker module)
 
@@ -286,7 +286,12 @@ uv run pytest -m duckdb
 
 ---
 
-### Phase 4: Restrict cache writes to `table_management.py`
+### Phase 4: Restrict cache writes to `table_management.py` ✅ DONE (Partial)
+
+**Note:** The functions `compute_df_concat_with_tf` and `compute_df_concat` in `vertically_concatenate.py` still write directly to the cache for internal use. This is acceptable as:
+1. These writes are for the "blessed" keys only (`__splink__df_concat_with_tf`, `__splink__df_concat`)
+2. The public API is now through `LinkerTableManagement.compute_df_concat_with_tf()`
+3. The problematic SQL-hash-based caching (in database_api.py) will be removed in Phase 5
 
 **Goal:** `_intermediate_table_cache` writes only occur in `LinkerTableManagement` (and maybe very tightly-scoped internal helpers it owns).
 
@@ -319,7 +324,7 @@ uv run pytest -m duckdb
 
 ---
 
-### Phase 5: Remove SQL hash-based caching from DB layer
+### Phase 5: Remove SQL hash-based caching from DB layer ✅ DONE
 
 #### 5.1 Identify & remove hash-based caching
 
@@ -384,7 +389,7 @@ uv run mypy splink/internals/database_api.py
 
 ---
 
-### Phase 6: Invalidation semantics
+### Phase 6: Invalidation semantics ✅ DONE
 
 We keep the existing behaviour of `invalidate_cache` and optionally add more granular helpers.
 
@@ -444,7 +449,7 @@ uv run mypy splink/internals/linker_components/table_management.py
 
 ---
 
-### Phase 7: Tests & cleanup
+### Phase 7: Tests & cleanup ✅ DONE
 
 #### 7.1 Remove / update old caching tests
 
