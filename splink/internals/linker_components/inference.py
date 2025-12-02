@@ -12,6 +12,7 @@ from splink.internals.blocking import (
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
+from splink.internals.chunking import validate_chunk_param
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
@@ -158,6 +159,8 @@ class LinkerInference:
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
         materialise_blocked_pairs: bool = True,
+        left_chunks: int | None = None,
+        right_chunks: int | None = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -180,15 +183,218 @@ class LinkerInference:
                 computed as part of a large CTE pipeline.   Defaults to True
             materialise_blocked_pairs: In the blocking phase, materialise the table
                 of pairs of records that will be scored
+            left_chunks (int, optional): Number of chunks to partition left side into.
+                When specified with right_chunks, runs chunked prediction
+                which processes data in smaller pieces (useful for memory
+                control or progress tracking). Results are automatically
+                combined. Defaults to None (no chunking).
+            right_chunks (int, optional): Number of chunks to partition right side
+                into. Must be specified together with left_chunks.
 
         Examples:
             ```py
             linker = linker(df, "saved_settings.json", db_api=db_api)
             splink_df = linker.inference.predict(threshold_match_probability=0.95)
             splink_df.as_pandas_dataframe(limit=5)
+
+            # Chunked prediction - processes 12 chunks (3×4) sequentially
+            # and combines results. Identical output to non-chunked version.
+            df_predict = linker.inference.predict(left_chunks=3, right_chunks=4)
             ```
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
+        """
+        # Validate chunking parameters
+        if (left_chunks is None) != (right_chunks is None):
+            raise ValueError(
+                "left_chunks and right_chunks must both be specified or both be None"
+            )
+
+        if left_chunks is not None and right_chunks is not None:
+            if left_chunks < 1:
+                raise ValueError(f"left_chunks must be >= 1, got {left_chunks}")
+            if right_chunks < 1:
+                raise ValueError(f"right_chunks must be >= 1, got {right_chunks}")
+            # Chunked prediction: loop over all chunks, combine results
+            return self._predict_with_chunking(
+                left_chunks=left_chunks,
+                right_chunks=right_chunks,
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+                materialise_blocked_pairs=materialise_blocked_pairs,
+            )
+
+        # Non-chunked prediction
+        return self._predict_core(
+            left_chunk=None,
+            right_chunk=None,
+            threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=threshold_match_weight,
+            materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+            materialise_blocked_pairs=materialise_blocked_pairs,
+        )
+
+    def predict_chunk(
+        self,
+        left_chunk: tuple[int, int],
+        right_chunk: tuple[int, int],
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+        materialise_after_computing_term_frequencies: bool = True,
+        materialise_blocked_pairs: bool = True,
+    ) -> SplinkDataFrame:
+        """Process a single chunk of pairwise comparisons.
+
+        This is a low-level method for advanced users who need fine-grained
+        control over chunking (e.g., for multi-machine distribution).
+
+        For most use cases, use `predict(left_chunks=N, right_chunks=M)` instead,
+        which handles chunking automatically.
+
+        Args:
+            left_chunk: Tuple of (chunk_number, total_chunks) for left side.
+                For example, (1, 3) means "chunk 1 of 3".
+            right_chunk: Tuple of (chunk_number, total_chunks) for right side.
+                For example, (2, 10) means "chunk 2 of 10".
+            threshold_match_probability: Filter results above this probability.
+            threshold_match_weight: Filter results above this match weight.
+            materialise_after_computing_term_frequencies: Materialise TF table.
+            materialise_blocked_pairs: Materialise blocked pairs table.
+
+        Returns:
+            SplinkDataFrame: Scored pairwise comparisons for this chunk only.
+
+        Examples:
+            ```py
+            # Process chunk (1,3) × (2,10) = 1/30th of total comparisons
+            df_chunk = linker.inference.predict_chunk(
+                left_chunk=(1, 3),
+                right_chunk=(2, 10),
+            )
+
+            # For multi-machine distribution, each machine runs different chunks
+            # Machine 1: predict_chunk((1, 3), (1, 10))
+            # Machine 2: predict_chunk((1, 3), (2, 10))
+            # ... etc
+            ```
+        """
+        validated_left = validate_chunk_param(left_chunk, "left_chunk")
+        validated_right = validate_chunk_param(right_chunk, "right_chunk")
+
+        if validated_left is None or validated_right is None:
+            raise ValueError("Both left_chunk and right_chunk are required")
+
+        return self._predict_core(
+            left_chunk=validated_left,
+            right_chunk=validated_right,
+            threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=threshold_match_weight,
+            materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+            materialise_blocked_pairs=materialise_blocked_pairs,
+        )
+
+    def _predict_with_chunking(
+        self,
+        left_chunks: int,
+        right_chunks: int,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+        materialise_after_computing_term_frequencies: bool = True,
+        materialise_blocked_pairs: bool = True,
+    ) -> SplinkDataFrame:
+        """Internal: run all chunk combinations and combine results."""
+        total_chunks = left_chunks * right_chunks
+        chunk_results: list[SplinkDataFrame] = []
+
+        # Show the predict warning once at the start, not for each chunk
+        self._linker._predict_warning()
+
+        logger.info(
+            f"Starting chunked prediction with {total_chunks} chunks "
+            f"({left_chunks} left x {right_chunks} right)"
+        )
+        overall_start_time = time.time()
+
+        for left_n in range(1, left_chunks + 1):
+            for right_n in range(1, right_chunks + 1):
+                chunk_num = (left_n - 1) * right_chunks + right_n
+
+                df_chunk = self._predict_core(
+                    left_chunk=(left_n, left_chunks),
+                    right_chunk=(right_n, right_chunks),
+                    threshold_match_probability=threshold_match_probability,
+                    threshold_match_weight=threshold_match_weight,
+                    materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+                    materialise_blocked_pairs=materialise_blocked_pairs,
+                    _show_chunk_logs=False,
+                )
+                chunk_results.append(df_chunk)
+
+                # Report progress with time estimate
+                elapsed = time.time() - overall_start_time
+                percent_complete = chunk_num / total_chunks
+                if percent_complete > 0:
+                    estimated_total = elapsed / percent_complete
+                    estimated_remaining = estimated_total - elapsed
+                    logger.info(
+                        f"Completed chunk {chunk_num}/{total_chunks} "
+                        f"({percent_complete:.0%}) | "
+                        f"Elapsed: {elapsed:.1f}s | "
+                        f"Remaining: ~{estimated_remaining:.1f}s | "
+                        f"Total: ~{estimated_total:.1f}s"
+                    )
+
+        overall_time = time.time() - overall_start_time
+        logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
+
+        # Combine all chunks via UNION ALL
+        return self._combine_chunk_results(chunk_results)
+
+    def _combine_chunk_results(
+        self, chunk_results: list[SplinkDataFrame]
+    ) -> SplinkDataFrame:
+        """Combine multiple chunk results into a single SplinkDataFrame."""
+        if len(chunk_results) == 1:
+            return chunk_results[0]
+
+        # Build UNION ALL SQL using physical names directly
+        union_parts = [f"SELECT * FROM {df.physical_name}" for df in chunk_results]
+        sql = " UNION ALL ".join(union_parts)
+
+        # Execute and materialise the combined result.
+        # We need to materialise BEFORE dropping the source chunk tables,
+        # otherwise the combined result will reference non-existent tables.
+        combined = self._linker._db_api.sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_predict"
+        )
+
+        # Force materialisation by accessing the physical table
+        # This ensures the data is written to disk/memory before we drop sources
+        _ = combined.as_record_dict(limit=1)
+
+        # Now safe to clean up intermediate chunk tables
+        for df in chunk_results:
+            df.drop_table_from_database_and_remove_from_cache()
+
+        return combined
+
+    def _predict_core(
+        self,
+        left_chunk: tuple[int, int] | None,
+        right_chunk: tuple[int, int] | None,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+        materialise_after_computing_term_frequencies: bool = True,
+        materialise_blocked_pairs: bool = True,
+        _show_chunk_logs: bool = True,
+    ) -> SplinkDataFrame:
+        """Core prediction logic, optionally filtered to a specific chunk.
+
+        Args:
+            _show_chunk_logs: If False, suppress per-chunk timing logs and the
+                predict warning. Used when called from _predict_with_chunking
+                to avoid noisy repeated output.
         """
 
         pipeline = CTEPipeline()
@@ -247,6 +453,9 @@ class LinkerInference:
             link_type=link_type,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+            dialect=self._linker._sql_dialect,
         )
 
         pipeline.enqueue_list_of_sqls(sqls)
@@ -258,7 +467,8 @@ class LinkerInference:
 
             pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
             blocking_time = time.time() - start_time
-            logger.info(f"Blocking time: {blocking_time:.2f} seconds")
+            if _show_chunk_logs:
+                logger.info(f"Blocking time: {blocking_time:.2f} seconds")
             start_time = time.time()
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
@@ -282,9 +492,9 @@ class LinkerInference:
         predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         predict_time = time.time() - start_time
-        logger.info(f"Predict time: {predict_time:.2f} seconds")
-
-        self._linker._predict_warning()
+        if _show_chunk_logs:
+            logger.info(f"Predict time: {predict_time:.2f} seconds")
+            self._linker._predict_warning()
 
         [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
         if materialise_blocked_pairs:
