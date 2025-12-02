@@ -42,6 +42,7 @@ class SettingsCreator:
     bayes_factor_column_prefix: str = "bf_"
     term_frequency_adjustment_column_prefix: str = "tf_"
     comparison_vector_value_column_prefix: str = "gamma_"
+    match_weight_column_prefix: str = "mw_"
 
     linker_uid: str | None = None
 

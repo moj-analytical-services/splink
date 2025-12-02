@@ -26,6 +26,11 @@ from splink.internals.sql_transform import sqlglot_tree_signature
 
 logger = logging.getLogger(__name__)
 
+# Constants for clamping to prevent numerical instability
+M_U_CLAMP_MIN = 1e-10  # Minimum m/u value (prevents log(0) and div/0)
+MW_CLAMP_MAX = 100  # Maximum match weight magnitude (~10^30 BF)
+TF_CLAMP_MIN = 1e-10  # Minimum term frequency (prevents div/0 in SQL)
+
 
 def _is_exact_match(sql_syntax_tree):
     signature = sqlglot_tree_signature(sql_syntax_tree)
@@ -363,6 +368,38 @@ class ComparisonLevel:
         else:
             return math.log2(self._bayes_factor)
 
+    @property
+    def _match_weight(self) -> float:
+        """Compute the match weight (log2 Bayes factor) with clamping for stability.
+
+        This property computes log2(m/u) with safeguards against numerical issues:
+        - Clamps m and u to minimum of M_U_CLAMP_MIN to prevent log(0)
+        - Clamps output to [-MW_CLAMP_MAX, +MW_CLAMP_MAX]
+
+        Returns:
+            float: The clamped match weight
+        """
+        if self.is_null_level:
+            return 0.0
+
+        m = self.m_probability
+        u = self.u_probability
+
+        # Use defaults if not set
+        if m is None:
+            m = M_U_CLAMP_MIN
+        if u is None:
+            u = M_U_CLAMP_MIN
+
+        # Clamp to prevent log(0) and division by zero
+        m = max(m, M_U_CLAMP_MIN)
+        u = max(u, M_U_CLAMP_MIN)
+
+        mw = math.log2(m / u)
+
+        # Clamp to reasonable range
+        return max(min(mw, MW_CLAMP_MAX), -MW_CLAMP_MAX)
+
     def _num_fmt_dp_or_sf(self, val):
         if val > 5000:
             return f"{val:,.0f}"
@@ -573,6 +610,25 @@ class ComparisonLevel:
         """
         return dedent(sql)
 
+    def _match_weight_sql(self, gamma_column_name: str) -> str:
+        """Generate SQL WHEN clause outputting the pre-computed match weight.
+
+        Uses the clamped _match_weight property value directly.
+
+        Args:
+            gamma_column_name: Name of the gamma column to match against
+
+        Returns:
+            SQL string with WHEN clause for this comparison level
+        """
+        match_weight = self._match_weight
+        sql = f"""
+        WHEN
+        {gamma_column_name} = {self.comparison_vector_value}
+        THEN cast({match_weight} as float8)
+        """
+        return dedent(sql)
+
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
     ) -> str:
@@ -638,6 +694,100 @@ class ComparisonLevel:
                     cast({self._tf_adjustment_weight} as float8)
                 )
                 ELSE cast(1 as float8)
+                END)
+            """
+        return dedent(sql).strip()
+
+    def _tf_adjustment_match_weight_sql(
+        self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
+    ) -> str:
+        """Generate SQL for TF adjustment in log-space (additive match weights).
+
+        This method generates SQL that computes the TF adjustment as an additive
+        contribution to the match weight, rather than a multiplicative Bayes factor.
+
+        Mathematical transform: log2(POW(x, w)) = w * log2(x)
+
+        Division-by-zero is prevented by clamping the divisor to a minimum value.
+
+        Args:
+            gamma_column_name: Name of the gamma column to match against
+            comparison_levels: List of comparison levels in the comparison
+
+        Returns:
+            SQL string with WHEN clause for TF adjustment in log-space
+        """
+        gamma_colname_value_is_this_level = (
+            f"{gamma_column_name} = {self.comparison_vector_value}"
+        )
+
+        # A tf adjustment of 0.0 in log-space is no adjustment (log2(1) = 0)
+        if self.comparison_vector_value == -1:
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+        elif not self._has_tf_adjustments:
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+        elif self._tf_adjustment_weight == 0:
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+        elif self._is_else_level:
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+        else:
+            tf_adj_col = self._tf_adjustment_input_column
+
+            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
+            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
+
+            tf_adjustment_exists = f"{coalesce_l_r} is not null"
+            u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
+                comparison_levels
+            )
+
+            # Clamp u_prob_exact_match to avoid log(0)
+            u_prob_clamped = max(u_prob_exact_match or TF_CLAMP_MIN, TF_CLAMP_MIN)
+
+            # Build divisor SQL with GREATEST(..., TF_CLAMP_MIN) to prevent div/0
+            # Also wrap in COALESCE for null protection
+            tf_clamp = TF_CLAMP_MIN
+
+            if self._tf_minimum_u_value == 0.0:
+                # Take max of the two TF values, with clamping
+                divisor_sql = f"""
+                GREATEST(
+                    (CASE
+                        WHEN {coalesce_l_r} >= {coalesce_r_l}
+                        THEN COALESCE({coalesce_l_r}, cast({tf_clamp} as float8))
+                        ELSE COALESCE({coalesce_r_l}, cast({tf_clamp} as float8))
+                    END),
+                    cast({tf_clamp} as float8)
+                )
+                """
+            else:
+                # Use tf_minimum_u_value as floor
+                min_val = max(self._tf_minimum_u_value, tf_clamp)
+                divisor_sql = f"""
+                GREATEST(
+                    (CASE
+                        WHEN {coalesce_l_r} >= {coalesce_r_l}
+                        AND {coalesce_l_r} > cast({min_val} as float8)
+                            THEN {coalesce_l_r}
+                        WHEN {coalesce_r_l} > cast({min_val} as float8)
+                            THEN {coalesce_r_l}
+                        ELSE cast({min_val} as float8)
+                    END),
+                    cast({tf_clamp} as float8)
+                )
+                """
+
+            # Compute match weight: w * log2(u_prob / tf)
+            # = w * (log2(u_prob) - log2(tf))
+            # For numerical stability, compute in SQL as:
+            # tf_adjustment_weight * log2(u_prob_clamped / divisor)
+            sql = f"""
+            WHEN  {gamma_colname_value_is_this_level} then
+                (CASE WHEN {tf_adjustment_exists}
+                THEN
+                cast({self._tf_adjustment_weight} as float8) *
+                log(cast({u_prob_clamped} as float8) / {divisor_sql}) / log(cast(2 as float8))
+                ELSE cast(0 as float8)
                 END)
             """
         return dedent(sql).strip()

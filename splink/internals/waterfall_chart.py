@@ -122,9 +122,23 @@ def _comparison_records(
             waterfall_record_2["label_for_charts"] = (
                 f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name}"
             )
-            bf = record_as_dict[c._bf_tf_adj_column_name]
-            waterfall_record_2["bayes_factor"] = bf
-            waterfall_record_2["log2_bayes_factor"] = math.log2(bf)
+            # Support both new mw_* columns and legacy bf_* columns
+            if c._mw_tf_adj_column_name in record_as_dict:
+                # Additive match weights (new approach)
+                mw = record_as_dict[c._mw_tf_adj_column_name]
+                waterfall_record_2["log2_bayes_factor"] = mw
+                waterfall_record_2["bayes_factor"] = 2**mw if mw != 0 else 1.0
+            elif c._bf_tf_adj_column_name in record_as_dict:
+                # Legacy Bayes factors
+                bf = record_as_dict[c._bf_tf_adj_column_name]
+                waterfall_record_2["bayes_factor"] = bf
+                waterfall_record_2["log2_bayes_factor"] = math.log2(bf) if bf > 0 else 0
+            else:
+                # Fallback for when neither column exists
+                waterfall_record_2["bayes_factor"] = 1.0
+                waterfall_record_2["log2_bayes_factor"] = 0.0
+
+            bf = waterfall_record_2["bayes_factor"]
             waterfall_record_2["m_probability"] = None
             waterfall_record_2["u_probability"] = None
             waterfall_record_2["bayes_factor_description"] = None
@@ -136,7 +150,7 @@ def _comparison_records(
             if bf >= 1.0:
                 text = f"{text} {bf:,.2f} times more likely to be a match"
             else:
-                mult = 1 / bf
+                mult = 1 / bf if bf > 0 else float("inf")
                 text = f"{text}  {mult:,.2f} times less likely to be a match"
 
             waterfall_record_2["bayes_factor_description"] = text
