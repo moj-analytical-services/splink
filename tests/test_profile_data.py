@@ -2,8 +2,6 @@ import sqlite3
 
 import numpy as np
 import pandas as pd
-from pyspark.sql.functions import lit
-from pyspark.sql.types import StringType
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.misc import ensure_is_list
@@ -168,6 +166,9 @@ def test_profile_using_sqlite():
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 @mark_with_dialects_including("spark")
 def test_profile_using_spark(df_spark, spark_api):
+    from pyspark.sql.functions import lit
+    from pyspark.sql.types import StringType
+
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
 
     profile_columns(

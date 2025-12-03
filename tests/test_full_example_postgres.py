@@ -1,3 +1,8 @@
+import pytest
+
+pytest.importorskip("sqlalchemy")
+# ruff: noqa: E402 (module level import not at top of file)
+
 import os
 
 import pandas as pd

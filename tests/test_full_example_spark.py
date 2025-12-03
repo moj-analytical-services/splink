@@ -1,8 +1,12 @@
+import pytest
+
+pytest.importorskip("pyspark")
+# ruff: noqa: E402 (module level import not at top of file)
+
 import os
 
 import pandas as pd
 import pyspark.sql.functions as f
-import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.internals.comparison_level_library as cll

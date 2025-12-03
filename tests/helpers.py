@@ -3,13 +3,9 @@ from abc import ABC, abstractmethod
 from collections import UserDict
 
 import pandas as pd
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import INTEGER, TEXT
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
-from splink.internals.postgres.database_api import PostgresAPI
-from splink.internals.spark.database_api import SparkAPI
 from splink.internals.sqlite.database_api import SQLiteAPI
 
 
@@ -68,6 +64,8 @@ class SparkTestHelper(TestHelper):
 
     @property
     def DatabaseAPI(self):
+        from splink.internals.spark.database_api import SparkAPI
+
         return SparkAPI
 
     def db_api_args(self):
@@ -139,6 +137,8 @@ class PostgresTestHelper(TestHelper):
 
     @property
     def DatabaseAPI(self):
+        from splink.internals.postgres.database_api import PostgresAPI
+
         return PostgresAPI
 
     def db_api_args(self):
@@ -151,6 +151,9 @@ class PostgresTestHelper(TestHelper):
         return name
 
     def convert_frame(self, df):
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.types import INTEGER, TEXT
+
         name = self._get_input_name()
         # workaround to handle array column conversion
         # manually mark any list columns so type is handled correctly
