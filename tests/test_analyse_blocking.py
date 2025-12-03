@@ -260,11 +260,7 @@ def validate_blocking_output(comparison_count_args, expected_out, db_api):
     table_or_tables = args.pop("table_or_tables")
     if isinstance(table_or_tables, (list, tuple)):
         sdfs = [
-            (
-                db_api.register(t)
-                if not isinstance(t, SplinkDataFrame)
-                else t
-            )
+            (db_api.register(t) if not isinstance(t, SplinkDataFrame) else t)
             for t in table_or_tables
         ]
     else:
@@ -275,8 +271,7 @@ def validate_blocking_output(comparison_count_args, expected_out, db_api):
         )
 
     records = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-        table_or_tables=sdfs,
-        **args
+        table_or_tables=sdfs, **args
     ).to_dict(orient="records")
 
     assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))

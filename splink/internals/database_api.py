@@ -367,9 +367,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         # Auto-generate table names if not provided
         if table_names is None:
-            table_names = [
-                f"__splink__input_table_{ascii_uid(8)}" for _ in tables_list
-            ]
+            table_names = [f"__splink__input_table_{ascii_uid(8)}" for _ in tables_list]
 
         # Auto-generate aliases if not provided
         if aliases is None:
