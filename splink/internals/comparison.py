@@ -255,7 +255,7 @@ class Comparison:
             for cl in self.comparison_levels
         ]
         sql = " ".join(sqls)
-        sql = f"CASE {sql} END as {self._mw_column_name} "
+        sql = f"CASE {sql} END as {self._mw_column_name}"
         output_cols.append(sql)
 
         # TF adjustment case when statement (additive, in log-space)
@@ -267,7 +267,7 @@ class Comparison:
                 for cl in self.comparison_levels
             ]
             sql = " ".join(sqls)
-            sql = f"CASE {sql} END as {self._mw_tf_adj_column_name} "
+            sql = f"\nCASE {sql} END as {self._mw_tf_adj_column_name}"
             output_cols.append(sql)
         output_cols.append(self._gamma_column_name)
 

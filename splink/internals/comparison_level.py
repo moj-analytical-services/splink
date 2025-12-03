@@ -662,22 +662,22 @@ class ComparisonLevel:
             u_prob_clamped = max(u_prob_exact_match or TF_CLAMP_MIN, TF_CLAMP_MIN)
             log2_u_prob = math.log2(u_prob_clamped)
 
-            # Build max_tf expression: max(tf_l, tf_r) with null handling
-            # COALESCE chain handles: both present -> max, one null -> other, both null -> clamp
+            # Build max_tf expression: GREATEST(tf_l, tf_r)
+            # TF columns are guaranteed populated after TF table join
+            # DuckDB's GREATEST ignores NULLs, so GREATEST(NULL, x) = x
             tf_clamp = TF_CLAMP_MIN
             if self._tf_minimum_u_value == 0.0:
-                max_tf_sql = f"""GREATEST(
-                    COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, cast({tf_clamp} as float8)),
-                    COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, cast({tf_clamp} as float8))
-                )"""
+                max_tf_sql = (
+                    f"GREATEST({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, "
+                    f"cast({tf_clamp} as float8))"
+                )
             else:
                 # Use tf_minimum_u_value as floor
                 min_val = max(self._tf_minimum_u_value, tf_clamp)
-                max_tf_sql = f"""GREATEST(
-                    COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, cast({min_val} as float8)),
-                    COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, cast({min_val} as float8)),
-                    cast({min_val} as float8)
-                )"""
+                max_tf_sql = (
+                    f"GREATEST({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, "
+                    f"cast({min_val} as float8))"
+                )
 
             # TF adjustment = weight * (log2(u_base) - log2(max_tf))
             # Pre-computed log2(u_base) makes the intent clearer
