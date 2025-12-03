@@ -623,12 +623,13 @@ class ComparisonLevel:
     ) -> str:
         """Generate SQL for TF adjustment in log-space (additive match weights).
 
-        This method generates SQL that computes the TF adjustment as an additive
-        contribution to the match weight, rather than a multiplicative Bayes factor.
+        The TF adjustment represents the difference between:
+        - The base match weight using u_probability for the exact match level
+        - The adjusted match weight using the actual term frequency
 
-        Mathematical transform: log2(POW(x, w)) = w * log2(x)
+        Mathematically: tf_adj = log2(u_base) - log2(max_tf)
 
-        Division-by-zero is prevented by clamping the divisor to a minimum value.
+        This is pre-computed partially in Python (log2(u_base)) for clarity.
 
         Args:
             gamma_column_name: Name of the gamma column to match against
@@ -653,63 +654,38 @@ class ComparisonLevel:
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
-            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
-            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
-
-            tf_adjustment_exists = f"{coalesce_l_r} is not null"
             u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
                 comparison_levels
             )
 
-            # Clamp u_prob_exact_match to avoid log(0)
+            # Clamp u_prob to avoid log(0), then pre-compute log2(u_prob) in Python
             u_prob_clamped = max(u_prob_exact_match or TF_CLAMP_MIN, TF_CLAMP_MIN)
+            log2_u_prob = math.log2(u_prob_clamped)
 
-            # Build divisor SQL with GREATEST(..., TF_CLAMP_MIN) to prevent div/0
-            # Also wrap in COALESCE for null protection
+            # Build max_tf expression: max(tf_l, tf_r) with null handling
+            # COALESCE chain handles: both present -> max, one null -> other, both null -> clamp
             tf_clamp = TF_CLAMP_MIN
-
             if self._tf_minimum_u_value == 0.0:
-                # Take max of the two TF values, with clamping
-                divisor_sql = f"""
-                GREATEST(
-                    (CASE
-                        WHEN {coalesce_l_r} >= {coalesce_r_l}
-                        THEN COALESCE({coalesce_l_r}, cast({tf_clamp} as float8))
-                        ELSE COALESCE({coalesce_r_l}, cast({tf_clamp} as float8))
-                    END),
-                    cast({tf_clamp} as float8)
-                )
-                """
+                max_tf_sql = f"""GREATEST(
+                    COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, cast({tf_clamp} as float8)),
+                    COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, cast({tf_clamp} as float8))
+                )"""
             else:
                 # Use tf_minimum_u_value as floor
                 min_val = max(self._tf_minimum_u_value, tf_clamp)
-                divisor_sql = f"""
-                GREATEST(
-                    (CASE
-                        WHEN {coalesce_l_r} >= {coalesce_r_l}
-                        AND {coalesce_l_r} > cast({min_val} as float8)
-                            THEN {coalesce_l_r}
-                        WHEN {coalesce_r_l} > cast({min_val} as float8)
-                            THEN {coalesce_r_l}
-                        ELSE cast({min_val} as float8)
-                    END),
-                    cast({tf_clamp} as float8)
-                )
-                """
+                max_tf_sql = f"""GREATEST(
+                    COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, cast({min_val} as float8)),
+                    COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, cast({min_val} as float8)),
+                    cast({min_val} as float8)
+                )"""
 
-            # Compute match weight: w * log2(u_prob / tf)
-            # = w * (log2(u_prob) - log2(tf))
-            # For numerical stability, compute in SQL as:
-            # tf_adjustment_weight * log2(u_prob_clamped / divisor)
-            sql = f"""
-            WHEN  {gamma_colname_value_is_this_level} then
-                (CASE WHEN {tf_adjustment_exists}
-                THEN
-                cast({self._tf_adjustment_weight} as float8) *
-                log(cast({u_prob_clamped} as float8) / {divisor_sql}) / log(cast(2 as float8))
-                ELSE cast(0 as float8)
-                END)
-            """
+            # TF adjustment = weight * (log2(u_base) - log2(max_tf))
+            # Pre-computed log2(u_base) makes the intent clearer
+            sql = f"""WHEN  {gamma_colname_value_is_this_level} then
+    cast({self._tf_adjustment_weight} as float8) * (
+        cast({log2_u_prob} as float8) -
+        log({max_tf_sql}) / log(cast(2 as float8))
+    )"""
         return dedent(sql).strip()
 
     def as_dict(self):
