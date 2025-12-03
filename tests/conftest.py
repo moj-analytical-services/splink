@@ -2,9 +2,6 @@ import logging
 
 import pytest
 
-from splink.internals.spark.database_api import SparkAPI
-from splink.internals.spark.jar_location import similarity_jar_location
-
 # ruff: noqa: F401
 # imported fixtures:
 from tests.backend_utils.postgres_conf import (
@@ -42,6 +39,8 @@ def _make_spark():
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
+    from splink.internals.spark.jar_location import similarity_jar_location
+
     conf = SparkConf()
 
     conf.set("spark.driver.memory", "6g")
@@ -75,6 +74,8 @@ def spark():
 # TODO: align this with test_helper
 @pytest.fixture(scope="function")
 def spark_api(spark):
+    from splink.internals.spark.database_api import SparkAPI
+
     yield SparkAPI(spark_session=spark, num_partitions_on_repartition=1)
 
 
