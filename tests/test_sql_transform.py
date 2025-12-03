@@ -10,6 +10,8 @@ from splink.internals.sql_transform import (
     sqlglot_tree_signature,
 )
 
+from .decorator import mark_with_dialects_including
+
 
 def move_l_r_test(br, expected_possibilities):
     # We don't test against a single expectation,
@@ -86,6 +88,7 @@ def test_cast_concat_as_varchar():
     assert transformed_sql == output.replace("l.", "")
 
 
+@mark_with_dialects_including("spark")
 def test_set_numeric_as_double():
     sql = "select cast('a' AS float8), cast(0.12345 AS float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
