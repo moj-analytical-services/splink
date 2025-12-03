@@ -58,8 +58,7 @@ def test_full_example_duckdb(tmp_path):
     )
 
     profile_columns(
-        df,
-        db_api,
+        sdf,
         [
             "first_name",
             '"SUR name"',
@@ -67,7 +66,7 @@ def test_full_example_duckdb(tmp_path):
             "concat(city, first_name)",
         ],
     )
-    completeness_chart(df, db_api)
+    completeness_chart(sdf)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")

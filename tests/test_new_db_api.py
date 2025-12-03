@@ -150,4 +150,5 @@ def test_exploratory_charts(dialect, test_helpers):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
-    profile_columns(df, db_api, "first_name")
+    sdf = db_api.register(df)
+    profile_columns(sdf, "first_name")

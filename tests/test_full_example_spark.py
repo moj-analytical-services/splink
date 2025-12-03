@@ -73,13 +73,14 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
         "max_iterations": 2,
     }
 
+    sdf_spark = spark_api.register(df_spark)
+
     profile_columns(
-        df_spark,
-        spark_api,
+        sdf_spark,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
     )
 
-    completeness_chart(df_spark, spark_api)
+    completeness_chart(sdf_spark)
 
     spark.sql("USE DATABASE `1111`")
     linker = Linker(

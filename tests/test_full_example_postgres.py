@@ -48,8 +48,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     )
 
     profile_columns(
-        df,
-        db_api,
+        sdf,
         [
             "first_name",
             '"surname"',
@@ -58,7 +57,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         ],
     )
 
-    completeness_chart(df, db_api=db_api)
+    completeness_chart(sdf)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")

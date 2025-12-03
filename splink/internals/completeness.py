@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Sequence
+from typing import Any, List, Sequence, Union
 
 from splink.internals.charts import (
     ChartReturnType,
@@ -8,9 +8,10 @@ from splink.internals.charts import (
 from splink.internals.charts import (
     completeness_chart as records_to_completeness_chart,
 )
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.sdf_utils import get_db_api_from_inputs, splink_dataframes_to_dict
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
@@ -110,8 +111,7 @@ def completeness_data(
 
 
 def completeness_chart(
-    table_or_tables: Sequence[AcceptableInputTableType],
-    db_api: DatabaseAPISubClass,
+    table_or_tables: Union[SplinkDataFrame, Sequence[SplinkDataFrame]],
     cols: List[str] = None,
     table_names_for_chart: List[str] = None,
 ) -> ChartReturnType:
@@ -120,14 +120,14 @@ def completeness_chart(
     for all columns in the input data.
 
     Args:
-        table_or_tables: A single table or a list of tables of data
-        db_api (DatabaseAPISubClass): The backend database API to use
+        table_or_tables: A SplinkDataFrame or list of SplinkDataFrames to analyze.
+            Must be registered with a database backend using db_api.register().
         cols (List[str], optional): List of column names to calculate completeness. If
             none, all columns will be computed. Default to None.
         table_names_for_chart: A list of names.  Must be the same length as
             table_or_tables.
     """
-
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    db_api = get_db_api_from_inputs(table_or_tables)
+    splink_df_dict = splink_dataframes_to_dict(table_or_tables)
     records = completeness_data(splink_df_dict, db_api, cols, table_names_for_chart)
     return records_to_completeness_chart(records)

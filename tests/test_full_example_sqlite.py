@@ -24,6 +24,7 @@ def test_full_example_sqlite(tmp_path):
 
     settings_dict = get_settings_dict()
     db_api = SQLiteAPI(con)
+    sdf = db_api.register(df)
     linker = Linker(
         "input_df_tablename",
         settings_dict,
@@ -31,7 +32,7 @@ def test_full_example_sqlite(tmp_path):
         input_table_aliases="fake_data_1",
     )
 
-    profile_columns(df, db_api, ["first_name", "surname", "first_name || surname"])
+    profile_columns(sdf, ["first_name", "surname", "first_name || surname"])
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
