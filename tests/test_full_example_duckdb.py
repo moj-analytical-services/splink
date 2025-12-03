@@ -41,12 +41,12 @@ def test_full_example_duckdb(tmp_path):
     ]
 
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+    sdf = db_api.register(df)
 
     count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        table_or_tables=sdf,
         blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 

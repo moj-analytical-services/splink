@@ -21,6 +21,8 @@ def test_full_example_postgres(tmp_path, pg_engine):
     settings_dict = get_settings_dict()
 
     db_api = PostgresAPI(engine=pg_engine)
+    sdf = db_api.register(df)
+
     linker = Linker(
         df,
         settings_dict,
@@ -28,22 +30,20 @@ def test_full_example_postgres(tmp_path, pg_engine):
     )
 
     count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        table_or_tables=sdf,
         blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-        table_or_tables=df,
+        table_or_tables=sdf,
         blocking_rules=[
             "l.first_name = r.first_name",
             "l.surname = r.surname",
             "l.city = r.city",
         ],
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 

@@ -85,12 +85,12 @@ def test_calculate_cartesian_equals_total_number_of_links(
     dfs = list(map(make_dummy_frame, frame_sizes))
 
     db_api = DuckDBAPI()
+    sdfs = [db_api.register(df) for df in dfs]
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=dfs,
+        table_or_tables=sdfs,
         blocking_rule="1=1",
         link_type=link_type,
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 

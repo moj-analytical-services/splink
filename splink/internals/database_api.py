@@ -304,6 +304,91 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         )
         return tables_dict[table_name]
 
+    def register(
+        self,
+        table: AcceptableInputTableType,
+        table_name: Optional[str] = None,
+        alias: Optional[str] = None,
+    ) -> SplinkDataFrame:
+        """Register a table with this database backend.
+
+        Args:
+            table: Input data (pandas DataFrame, pyarrow Table, etc.)
+            table_name: Optional name for the table in the database.
+                Auto-generated if not provided.
+            alias: Optional human-readable alias for the table, used in Splink outputs
+                (e.g. "customers", "contact_center_callers"). If not provided,
+                defaults to the table_name.
+
+        Returns:
+            A SplinkDataFrame bound to this database backend.
+        """
+        if table_name is None:
+            table_name = f"__splink__input_table_{ascii_uid(8)}"
+
+        sdf = self.register_table(table, table_name, overwrite=True)
+
+        # Store the alias in metadata if provided
+        if alias is not None:
+            sdf.metadata["alias"] = alias
+        else:
+            sdf.metadata["alias"] = table_name
+
+        return sdf
+
+    def register_multiple(
+        self,
+        tables: Union[
+            Dict[str, AcceptableInputTableType], List[AcceptableInputTableType]
+        ],
+        table_names: Optional[List[str]] = None,
+        aliases: Optional[List[str]] = None,
+    ) -> List[SplinkDataFrame]:
+        """Register multiple tables with this database backend.
+
+        Args:
+            tables: Input tables as a dict (keys become aliases) or list
+            table_names: Optional names for tables in the database.
+                Auto-generated if not provided.
+            aliases: Optional human-readable aliases for each table (used in
+                Splink outputs). If not provided and tables is a dict, the keys
+                are used as aliases.
+
+        Returns:
+            List of SplinkDataFrame objects
+        """
+        # Convert dict to list and extract aliases from keys
+        if isinstance(tables, dict):
+            if aliases is None:
+                aliases = list(tables.keys())
+            tables_list: List[AcceptableInputTableType] = list(tables.values())
+        else:
+            tables_list = list(tables)
+
+        # Auto-generate table names if not provided
+        if table_names is None:
+            table_names = [
+                f"__splink__input_table_{ascii_uid(8)}" for _ in tables_list
+            ]
+
+        # Auto-generate aliases if not provided
+        if aliases is None:
+            aliases = table_names.copy()
+
+        if len(tables_list) != len(table_names) or len(tables_list) != len(aliases):
+            raise ValueError(
+                "Number of tables, table_names, and aliases must match. "
+                f"Got {len(tables_list)} tables, {len(table_names)} table_names, "
+                f"and {len(aliases)} aliases."
+            )
+
+        result: List[SplinkDataFrame] = []
+        for table, table_name, alias in zip(tables_list, table_names, aliases):
+            sdf = self.register(table, table_name=table_name, alias=alias)
+            result.append(sdf)
+
+        return result
+
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         # returns sql
         # sensible default:

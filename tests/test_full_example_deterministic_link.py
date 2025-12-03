@@ -29,12 +29,12 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
         "retain_intermediate_calculation_columns": True,
     }
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-        table_or_tables=df,
+        table_or_tables=sdf,
         blocking_rules=br_for_predict,
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
