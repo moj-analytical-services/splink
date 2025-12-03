@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- New `db_api.register()` and `db_api.register_multiple()` methods for explicit data registration. This allows users to register data once and reuse the `SplinkDataFrame` across multiple functions.
+
+### Changed
+
+- **BREAKING:** Blocking analysis functions (`count_comparisons_from_blocking_rule`, `cumulative_comparisons_to_be_scored_from_blocking_rules_chart`, `cumulative_comparisons_to_be_scored_from_blocking_rules_data`, `n_largest_blocks`) now require `SplinkDataFrame` inputs and no longer accept a `db_api` parameter. Use `db_api.register()` first.
+- **BREAKING:** `profile_columns()` and `completeness_chart()` now require `SplinkDataFrame` inputs and no longer accept a `db_api` parameter. Use `db_api.register()` first.
+- **BREAKING:** `Linker` now accepts `SplinkDataFrame` inputs directly, with `db_api` inferred from the input. The `input_table_aliases` parameter is replaced by the `alias` parameter in `db_api.register()`. Legacy API (`Linker(df, settings, db_api)`) is still supported for backward compatibility.
+
 ### Removed
 
 - Dropped support for python 3.8 [#2819](https://github.com/moj-analytical-services/splink/pull/2819)

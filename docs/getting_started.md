@@ -60,6 +60,7 @@ To get a basic Splink model up and running, use the following code. It demonstra
     db_api = DuckDBAPI()
 
     df = splink_datasets.fake_1000
+    sdf = db_api.register(df)  # Register data with the database backend
 
     settings = SettingsCreator(
         link_type="dedupe_only",
@@ -79,7 +80,7 @@ To get a basic Splink model up and running, use the following code. It demonstra
         ]
     )
 
-    linker = Linker(df, settings, db_api)
+    linker = Linker(sdf, settings)  # Pass the registered data
 
     linker.training.estimate_probability_two_random_records_match(
         [block_on("first_name", "surname")],
