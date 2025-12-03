@@ -64,10 +64,10 @@ def test_run_predict(dialect, test_helpers):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
     linker = Linker(
-        df,
+        sdf,
         cl_settings,
-        db_api,
     )
     linker.inference.predict()
 
@@ -78,10 +78,10 @@ def test_full_run(dialect, test_helpers, tmp_path):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
     linker = Linker(
-        df,
+        sdf,
         cl_settings,
-        db_api,
     )
     linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
@@ -126,7 +126,7 @@ def test_charts(dialect, test_helpers, tmp_path):
         unique_id_column_name="unique_id",
     )
 
-    linker = Linker(df, cl_settings, db_api)
+    linker = Linker(sdf, cl_settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],

@@ -20,9 +20,8 @@ def test_datasets_basic_link(test_helpers):
             block_on("surname"),
         ],
     )
-    linker = helper.Linker(
+    linker = helper.linker(
         df,
         settings,
-        **helper.extra_linker_args(),
     )
     linker.inference.predict()

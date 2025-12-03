@@ -38,7 +38,7 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
         unique_id_column_name="unique_id",
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker(df, settings)
 
     df_predict = linker.inference.deterministic_link()
 

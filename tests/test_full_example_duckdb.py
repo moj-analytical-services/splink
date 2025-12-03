@@ -51,10 +51,8 @@ def test_full_example_duckdb(tmp_path):
     )
 
     linker = Linker(
-        df,
+        sdf,
         settings=settings_dict,
-        db_api=db_api,
-        # output_schema="splink_in_duckdb",
     )
 
     profile_columns(
@@ -130,9 +128,10 @@ def test_full_example_duckdb(tmp_path):
     linker.misc.save_model_to_json(path)
 
     db_api = DuckDBAPI()
-    linker_2 = Linker(df, settings=simple_settings, db_api=db_api)
+    sdf2 = db_api.register(df)
+    linker_2 = Linker(sdf2, settings=simple_settings)
 
-    linker_2 = Linker(df, db_api=db_api, settings=path)
+    linker_2 = Linker(sdf2, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -152,36 +151,43 @@ df_final = pd.concat([df_l, df_r])
 # * Two input dataframes with no specified `source_dataset` column
 # * Two input dataframes with a specified `source_dataset` column
 @pytest.mark.parametrize(
-    ("input", "source_l", "source_r"),
+    ("input", "source_l", "source_r", "table_names"),
     [
         pytest.param(
             [df, df],  # no source_dataset col
-            {"__splink__input_table_0"},
-            {"__splink__input_table_1"},
+            {"input_table_0"},
+            {"input_table_1"},
+            ["input_table_0", "input_table_1"],
             id="No source dataset column",
         ),
         pytest.param(
             df_final,  # source_dataset col
             {"my_left_ds"},
             {"my_right_ds"},
+            None,
             id="Source dataset column in a single df",
         ),
         pytest.param(
             [df_l, df_r],  # source_dataset col
             {"my_left_ds"},
             {"my_right_ds"},
+            None,
             id="Source dataset column in two dfs",
         ),
     ],
 )
 @mark_with_dialects_including("duckdb")
-def test_link_only(input, source_l, source_r):
+def test_link_only(input, source_l, source_r, table_names):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
 
     db_api = DuckDBAPI()
-    linker = Linker(input, settings, db_api=db_api)
+    if isinstance(input, list):
+        sdf = db_api.register_multiple(input, table_names=table_names)
+    else:
+        sdf = db_api.register(input)
+    linker = Linker(sdf, settings)
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -218,10 +224,10 @@ def test_duckdb_load_different_tablish_types(df):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
+    sdf = db_api.register(df)
     linker = Linker(
-        df,
+        sdf,
         settings,
-        db_api=db_api,
     )
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
@@ -229,11 +235,10 @@ def test_duckdb_load_different_tablish_types(df):
     settings["link_type"] = "link_only"
 
     db_api = DuckDBAPI()
+    sdfs = db_api.register_multiple([df, df], table_names=["testing1", "testing2"])
     linker = Linker(
-        [df, df],
+        sdfs,
         settings,
-        db_api=db_api,
-        input_table_aliases=["testing1", "testing2"],
     )
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
@@ -256,15 +261,15 @@ def test_duckdb_arrow_array():
     #     ]
 
     db_api = DuckDBAPI()
+    sdf = db_api.register(array_data)
     linker = Linker(
-        array_data,
+        sdf,
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
             "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
-        db_api=db_api,
     )
     df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
@@ -309,7 +314,8 @@ def test_small_example_duckdb(tmp_path):
     }
 
     db_api = DuckDBAPI()
-    linker = Linker(df, settings_dict, db_api=db_api)
+    sdf = db_api.register(df)
+    linker = Linker(sdf, settings_dict)
 
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"
@@ -332,5 +338,6 @@ def test_duckdb_input_is_duckdbpyrelation():
         blocking_rules_to_generate_predictions=[block_on("first_name", "surname")],
     )
     db_api = DuckDBAPI(connection=":default:")
-    linker = Linker([df1, df2], settings, db_api)
+    sdfs = db_api.register_multiple([df1, df2])
+    linker = Linker(sdfs, settings)
     linker.inference.predict()

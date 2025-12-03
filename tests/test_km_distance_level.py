@@ -124,9 +124,9 @@ def test_km_distance_levels(dialect, test_helpers):
 
     df = helper.convert_frame(df)
 
-    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
+    linker = helper.linker(df, settings_cl)
     cl_df_e = linker.inference.predict().as_pandas_dataframe()
-    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
+    linker = helper.linker(df, settings_cll)
     cll_df_e = linker.inference.predict().as_pandas_dataframe()
 
     linker_outputs = {

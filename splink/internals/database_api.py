@@ -306,16 +306,19 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     def register(
         self,
-        table: AcceptableInputTableType,
+        table: Union[AcceptableInputTableType, str],
         table_name: Optional[str] = None,
         alias: Optional[str] = None,
     ) -> SplinkDataFrame:
         """Register a table with this database backend.
 
         Args:
-            table: Input data (pandas DataFrame, pyarrow Table, etc.)
+            table: Input data. Can be:
+                - A pandas DataFrame, pyarrow Table, or other acceptable input type
+                - A string name of a table that already exists in the database
             table_name: Optional name for the table in the database.
-                Auto-generated if not provided.
+                Auto-generated if not provided. Ignored if table is a string
+                (the existing table name is used).
             alias: Optional human-readable alias for the table, used in Splink outputs
                 (e.g. "customers", "contact_center_callers"). If not provided,
                 defaults to the table_name.
@@ -323,10 +326,17 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Returns:
             A SplinkDataFrame bound to this database backend.
         """
-        if table_name is None:
-            table_name = f"__splink__input_table_{ascii_uid(8)}"
-
-        sdf = self.register_table(table, table_name, overwrite=True)
+        if isinstance(table, str):
+            # Table already exists in database - just wrap it in SplinkDataFrame
+            physical_name = table
+            if table_name is None:
+                table_name = table
+            sdf = self.table_to_splink_dataframe(table_name, physical_name)
+        else:
+            # Register new data
+            if table_name is None:
+                table_name = f"__splink__input_table_{ascii_uid(8)}"
+            sdf = self.register_table(table, table_name, overwrite=True)
 
         # Store the alias in metadata if provided
         if alias is not None:

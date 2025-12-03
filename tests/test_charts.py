@@ -133,8 +133,9 @@ def test_m_u_charts(dialect, test_helpers):
     }
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(sdf, settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
@@ -163,8 +164,9 @@ def test_parameter_estimate_charts(dialect, test_helpers):
     }
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(sdf, settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
@@ -200,8 +202,9 @@ def test_parameter_estimate_charts(dialect, test_helpers):
         ],
     }
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(sdf, settings)
     linker.training.estimate_u_using_random_sampling(1e6)
 
     linker.visualisations.parameter_estimate_comparisons_chart()
@@ -221,8 +224,9 @@ def test_tf_adjustment_chart(dialect, test_helpers):
     }
     helper = test_helpers[dialect]
     db_api = helper.DatabaseAPI(**helper.db_api_args())
+    sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(sdf, settings)
     linker.visualisations.tf_adjustment_chart("gender")
     linker.visualisations.tf_adjustment_chart("first_name")
 

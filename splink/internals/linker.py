@@ -14,7 +14,7 @@ from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
@@ -32,7 +32,6 @@ from splink.internals.linker_components.visualisations import LinkerVisualisatio
 from splink.internals.misc import (
     ascii_uid,
     bayes_factor_to_prob,
-    ensure_is_list,
     prob_to_bayes_factor,
 )
 from splink.internals.optimise_cost_of_brs import suggest_blocking_rules
@@ -74,13 +73,9 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: (
-            SplinkDataFrame | Sequence[SplinkDataFrame] | str | list[str]
-        ),
+        input_table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
         settings: SettingsCreator | dict[str, Any] | Path | str,
-        db_api: DatabaseAPISubClass | None = None,
         set_up_basic_logging: bool = True,
-        input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,
     ):
         """
@@ -89,63 +84,42 @@ class Linker:
 
         Examples:
 
-            Dedupe with SplinkDataFrame (recommended)
+            Dedupe
             ```py
             db_api = DuckDBAPI()
             sdf = db_api.register(df)
             linker = Linker(sdf, settings_dict)
             ```
-            Link with SplinkDataFrames (recommended)
+            Link two datasets
             ```py
             db_api = DuckDBAPI()
             sdf_1 = db_api.register(df_1, alias="customers")
             sdf_2 = db_api.register(df_2, alias="contact_center_callers")
             linker = Linker([sdf_1, sdf_2], settings_dict)
             ```
-            Dedupe with raw data (legacy)
+            Use a table that already exists in the database
             ```py
-            linker = Linker(df, settings_dict, db_api)
-            ```
-            Link with raw data (legacy)
-            ```py
-            df_1 = pd.read_parquet("table_1/")
-            df_2 = pd.read_parquet("table_2/")
-            linker = Linker(
-                [df_1, df_2],
-                settings_dict,
-                db_api,
-                input_table_aliases=["customers", "contact_center_callers"]
-                )
+            db_api = DuckDBAPI()
+            sdf = db_api.register("my_existing_table")
+            linker = Linker(sdf, settings_dict)
             ```
             Dedupe with a pre-trained model read from a json file
             ```py
-            df = pd.read_csv("data_to_dedupe.csv")
-            linker = Linker(df, "model.json", db_api)
+            db_api = DuckDBAPI()
+            sdf = db_api.register(df)
+            linker = Linker(sdf, "model.json")
             ```
 
         Args:
-            input_table_or_tables: Input data into the linkage model. Can be:
-                - A SplinkDataFrame or list of SplinkDataFrames (recommended).
-                  These are created using db_api.register(). The db_api is
-                  automatically extracted from the SplinkDataFrame.
-                - A single string (the name of a table in a database) for
-                  deduplication jobs, or a list of strings (the name of tables
-                  in a database) for link_only or link_and_dedupe.
-                - For some backends (DuckDB, Spark), raw dataframes can be passed
-                  but this requires also passing db_api.
+            input_table_or_tables: Input data into the linkage model. Must be a
+                SplinkDataFrame or list of SplinkDataFrames created using
+                db_api.register(). The db_api is automatically extracted from
+                the SplinkDataFrame.
             settings: A Splink settings dictionary, or a path (either as a
                 pathlib.Path object, or a string) to a json file defining a
                 settings dictionary or pre-trained model.
-            db_api: A `DatabaseAPI` object. Required when passing raw data or
-                table names. Not required when passing SplinkDataFrame inputs
-                (the db_api is extracted automatically).
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
-            input_table_aliases: Labels assigned to input tables in Splink outputs.
-                Not needed when using SplinkDataFrame inputs (aliases are set at
-                registration time). For raw data inputs, if the names of the tables
-                in the input database are long or unspecific, this argument can be
-                used to attach more easily readable/interpretable names.
             validate_settings (bool, optional): When True, check your settings
                 dictionary for any potential errors that may cause splink to fail.
         """
@@ -157,39 +131,24 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        # Check if inputs are SplinkDataFrames and extract db_api if so
-        input_is_splink_dataframe = self._check_if_input_is_splink_dataframe(
-            input_table_or_tables
-        )
-
-        if input_is_splink_dataframe:
-            # Extract db_api from SplinkDataFrame inputs
-            # Type narrow: we know it's SplinkDataFrame(s) at this point
-            sdf_inputs: SplinkDataFrame | Sequence[SplinkDataFrame]
-            if isinstance(input_table_or_tables, SplinkDataFrame):
-                sdf_inputs = input_table_or_tables
-            else:
-                # Must be a sequence of SplinkDataFrames
-                sdf_inputs = list(input_table_or_tables)  # type: ignore[arg-type]
-            self._db_api = get_db_api_from_inputs(sdf_inputs)
-            if db_api is not None and db_api is not self._db_api:
-                raise ValueError(
-                    "When passing SplinkDataFrame inputs, the db_api parameter "
-                    "should not be provided (it is extracted from the inputs). "
-                    "If you want to use a different db_api, register your data "
-                    "with that db_api first using db_api.register()."
-                )
-        else:
-            # Legacy path: raw data or table names require db_api
-            if db_api is None:
+        # Validate input is SplinkDataFrame(s) and extract db_api
+        if not isinstance(input_table_or_tables, SplinkDataFrame):
+            if not (
+                isinstance(input_table_or_tables, (list, tuple))
+                and len(input_table_or_tables) > 0
+                and isinstance(input_table_or_tables[0], SplinkDataFrame)
+            ):
                 raise TypeError(
-                    "When passing raw data or table names, the db_api parameter "
-                    "is required. Either:\n"
-                    "1. Register your data first using db_api.register() and pass "
-                    "the resulting SplinkDataFrame(s), or\n"
-                    "2. Pass the db_api parameter explicitly."
+                    "input_table_or_tables must be a SplinkDataFrame or list of "
+                    "SplinkDataFrames. Register your data first using "
+                    "db_api.register(). For example:\n\n"
+                    "    db_api = DuckDBAPI()\n"
+                    "    sdf = db_api.register(df)\n"
+                    "    linker = Linker(sdf, settings)\n"
                 )
-            self._db_api = db_api
+
+        # Extract db_api from SplinkDataFrame inputs
+        self._db_api = get_db_api_from_inputs(input_table_or_tables)
 
         # TODO: temp hack for compat
         self._intermediate_table_cache: CacheDictWithLogging = (
@@ -217,11 +176,7 @@ class Linker:
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
 
-        self._input_tables_dict = self._register_input_tables(
-            input_table_or_tables,
-            input_table_aliases,
-            input_is_splink_dataframe,
-        )
+        self._input_tables_dict = splink_dataframes_to_dict(input_table_or_tables)
 
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
@@ -357,57 +312,6 @@ class Linker:
     ):
         return self._sql_dialect.random_sample_sql(
             proportion, sample_size, seed=seed, table=table, unique_id=unique_id
-        )
-
-    def _check_if_input_is_splink_dataframe(
-        self,
-        input_table_or_tables: (
-            SplinkDataFrame | Sequence[SplinkDataFrame] | str | list[str]
-        ),
-    ) -> bool:
-        """Check if the input is a SplinkDataFrame or list of SplinkDataFrames."""
-        if isinstance(input_table_or_tables, SplinkDataFrame):
-            return True
-        if isinstance(input_table_or_tables, (list, tuple)):
-            if len(input_table_or_tables) == 0:
-                return False
-            # Check if first element is SplinkDataFrame
-            return isinstance(input_table_or_tables[0], SplinkDataFrame)
-        return False
-
-    def _register_input_tables(
-        self,
-        input_tables: (
-            SplinkDataFrame
-            | Sequence[SplinkDataFrame]
-            | Sequence[AcceptableInputTableType]
-        ),
-        input_aliases: Optional[str | List[str]],
-        input_is_splink_dataframe: bool,
-    ) -> Dict[str, SplinkDataFrame]:
-        if input_is_splink_dataframe:
-            # Input is already SplinkDataFrame(s), just convert to dict
-            # Type narrow for mypy
-            if isinstance(input_tables, SplinkDataFrame):
-                sdf_inputs: SplinkDataFrame | Sequence[SplinkDataFrame] = input_tables
-            else:
-                sdf_inputs = list(input_tables)  # type: ignore[arg-type]
-            return splink_dataframes_to_dict(sdf_inputs)
-
-        # Legacy path: register raw data
-        input_tables_list = ensure_is_list(input_tables)
-
-        if input_aliases is None:
-            input_table_aliases = [
-                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables_list)
-            ]
-            overwrite = True
-        else:
-            input_table_aliases = ensure_is_list(input_aliases)
-            overwrite = False
-
-        return self._db_api.register_multiple_tables(
-            input_tables_list, input_table_aliases, overwrite
         )
 
     def _check_for_valid_settings(self):

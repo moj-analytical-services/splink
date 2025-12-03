@@ -43,7 +43,7 @@ def test_compare_two_records_1(test_helpers, dialect):
         retain_matching_columns=True,
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker(df, settings)
 
     city_tf = pd.DataFrame(
         [
@@ -120,7 +120,7 @@ def test_compare_two_records_2(test_helpers, dialect):
         retain_matching_columns=True,
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker(df, settings)
 
     city_tf = pd.DataFrame(
         [

@@ -68,7 +68,7 @@ def test_distance_function_comparison():
 @mark_with_dialects_excluding("sqlite", "postgres", "athena")
 def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.get_db_api()
 
     test_cases = [
         {
@@ -124,7 +124,7 @@ def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_set_to_lowercase(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.get_db_api()
 
     test_cases = [
         {

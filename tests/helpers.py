@@ -1,6 +1,7 @@
 import sqlite3
 from abc import ABC, abstractmethod
 from collections import UserDict
+from typing import List, Optional, Union
 
 import pandas as pd
 from sqlalchemy.dialects import postgresql
@@ -27,8 +28,56 @@ class TestHelper(ABC):
         return {}
 
     def extra_linker_args(self):
-        # create fresh api each time
-        return {"db_api": self.DatabaseAPI(**self.db_api_args())}
+        # No longer needed - Linker only accepts SplinkDataFrame inputs
+        return {}
+
+    def get_db_api(self):
+        """Get a fresh database API instance."""
+        return self.DatabaseAPI(**self.db_api_args())
+
+    def register(
+        self,
+        data,
+        db_api=None,
+        alias: Optional[str] = None,
+    ):
+        """Register data with the database backend.
+
+        Args:
+            data: Raw data (pandas DataFrame, etc.) or list of raw data
+            db_api: Optional database API to use. If not provided, a fresh one
+                is created.
+            alias: Optional alias for single table registration
+
+        Returns:
+            SplinkDataFrame or list of SplinkDataFrames
+        """
+        if db_api is None:
+            db_api = self.get_db_api()
+
+        if isinstance(data, list):
+            # Use predictable table names for consistent ordering in tests
+            table_names = [f"__splink__input_table_{i}" for i in range(len(data))]
+            converted = [self.convert_frame(d) for d in data]
+            return db_api.register_multiple(converted, table_names=table_names)
+        else:
+            return db_api.register(self.convert_frame(data), alias=alias)
+
+    def linker(self, data, settings, **kwargs):
+        """Create a Linker after registering the data.
+
+        This is a convenience method that handles registration and Linker creation.
+
+        Args:
+            data: Raw data (pandas DataFrame, etc.) or list of raw data
+            settings: Splink settings dictionary
+            **kwargs: Additional arguments passed to Linker
+
+        Returns:
+            Linker instance
+        """
+        sdf = self.register(data)
+        return Linker(sdf, settings, **kwargs)
 
     @property
     def date_format(self):
