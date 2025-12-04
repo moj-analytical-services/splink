@@ -6,8 +6,8 @@ set -euo pipefail
 docker build -f scripts/build-test.dockerfile --progress=plain -t splink-build-test-whl .
 docker build -f scripts/build-test.dockerfile --progress=plain --build-arg BUILD_TYPE=sdist -t splink-build-test-sdist .
 
-docker run splink-build-test-sdist
-docker run splink-build-test-whl
+docker run --rm --name splink-build-sdist splink-build-test-sdist
+docker run --rm --name splink-build-whl splink-build-test-whl
 
 # comment out if not needed - for file inspection
-docker run -it --entrypoint /bin/bash splink-build-test-sdist
+docker run --rm --name splink-build-sdist -it --entrypoint /bin/bash splink-build-test-sdist
