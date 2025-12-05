@@ -170,6 +170,8 @@ To find the best place to ask a question, report a bug or get general advice, pl
 
 ## Awards
 
+🥇 OpenUK Awards 2025: Open data category - [Winner](https://openuk.uk/awards/)
+
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
 🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
