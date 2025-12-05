@@ -1,6 +1,6 @@
 [project]
 name = "splink"
-version = "4.0.11"
+version = "5.0.0.dev1"
 description = "Fast probabilistic data linkage at scale"
 authors = [
     { name = "Robin Linacre", email = "robinlinacre@hotmail.com" },
