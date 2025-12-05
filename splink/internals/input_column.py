@@ -308,6 +308,34 @@ class InputColumn:
         start, end = _get_dialect_quotes(self.sqlglot_dialect)
         return start + name + end
 
+    @property
+    def _equality_key(self) -> tuple[str | None, str | None, int | None]:
+        """Returns a tuple of values that uniquely identify this column.
+
+        Equality is based on the underlying column name, bracket key/index,
+        irrespective of whether the column is quoted or unquoted.
+        """
+        return (
+            self.col_builder.column_name,
+            self.col_builder.bracket_key,
+            self.col_builder.bracket_index,
+        )
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality with another InputColumn.
+
+        Two InputColumns are considered equal if they refer to the same
+        underlying column, regardless of quoting. This allows comparisons
+        like `quoted_col == unquoted_col` to return True.
+        """
+        if not isinstance(other, InputColumn):
+            return NotImplemented
+        return self._equality_key == other._equality_key
+
+    def __hash__(self) -> int:
+        """This allows InputColumns to be used in sets and as dict keys."""
+        return hash(self._equality_key)
+
     def __repr__(self):
         return f"{self.__class__.__name__}\n({self.col_builder.__repr__()}\n)"
 
