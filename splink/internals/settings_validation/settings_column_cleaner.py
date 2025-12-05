@@ -26,7 +26,7 @@ def remove_suffix(c: str) -> str:
 def find_columns_not_in_input_dfs(
     valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
     columns_to_check: Iterable[InputColumn] | Iterable[str] | str,
-) -> set[InputColumn] | set[str]:
+) -> set[InputColumn | str]:
     """Identify missing columns in the input dataframe(s).
 
     Supports both InputColumn objects (for production use) and strings

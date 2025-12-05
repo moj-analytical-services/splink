@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
     join_list_with_commas_final_and,
@@ -191,7 +192,7 @@ class Comparison:
         return cols
 
     @property
-    def _tf_adjustment_input_columns(self) -> list:
+    def _tf_adjustment_input_columns(self) -> list[InputColumn]:
         """Return list of InputColumn objects for TF adjustments in this comparison."""
         cols = [cl._tf_adjustment_input_column for cl in self.comparison_levels]
         return [c for c in cols if c is not None]

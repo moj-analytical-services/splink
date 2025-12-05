@@ -309,7 +309,7 @@ class InputColumn:
         return start + name + end
 
     @property
-    def _equality_key(self) -> tuple:
+    def _equality_key(self) -> tuple[str | None, str | None, int | None]:
         """Returns a tuple of values that uniquely identify this column.
 
         Equality is based on the underlying column name, bracket key/index,

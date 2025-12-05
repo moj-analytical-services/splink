@@ -23,7 +23,7 @@ class InvalidColumnsLogGenerator(NamedTuple):
     """
 
     invalid_type: str
-    invalid_columns: set
+    invalid_columns: set[object]
 
     @property
     def log_string_prefix(self):

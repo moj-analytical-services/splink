@@ -298,13 +298,13 @@ class Settings:
         # Add any columns used in blocking rules but not model
         if self._retain_matching_columns:
             # Want to add any columns not already by the model
-            used_by_brs = []
+            used_by_brs_list: list[str] = []
             for br in self._blocking_rules_to_generate_predictions:
-                used_by_brs.extend(
+                used_by_brs_list.extend(
                     get_columns_used_from_sql(br.blocking_rule_sql, br.sqlglot_dialect)
                 )
 
-            used_by_brs = {self._input_column(c) for c in used_by_brs}
+            used_by_brs = {self._input_column(c) for c in used_by_brs_list}
             already_used_cols = set(self._columns_used_by_comparisons)
 
             new_cols = used_by_brs - already_used_cols
