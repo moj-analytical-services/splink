@@ -91,25 +91,31 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Returns a SplinkDataFrame which also uses templated_name
         """
         sql = self._setup_for_execute_sql(sql, physical_name)
-        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        table_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         output_df = self._cleanup_for_execute_sql(
-            spark_df, templated_name, physical_name
+            table_df, templated_name, physical_name
         )
         self._intermediate_table_cache.executed_queries.append(output_df)
         return output_df
 
     @final
-    def sql_to_splink_dataframe_checking_cache(
+    def _execute_sql(
         self,
         sql: str,
         output_tablename_templated: str,
     ) -> SplinkDataFrame:
-        # differences from _sql_to_splink_dataframe:
-        # this _calculates_ physical name, handles debug_mode,
-        # and checks cache before querying
+        """Execute SQL and return a SplinkDataFrame.
+
+        This is a low-level method that:
+        1. Generates a unique physical table name (using hash of SQL)
+        2. Executes the SQL to create the table
+        3. Returns a SplinkDataFrame wrapping the result
+
+        For most use cases, prefer `sql_pipeline_to_splink_dataframe()` which
+        takes a CTEPipeline.
+        """
         to_hash = (sql + self._cache_uid).encode("utf-8")
         hash = hashlib.sha256(to_hash).hexdigest()[:9]
-        # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if self.debug_mode:
@@ -158,7 +164,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
-            return self.sql_to_splink_dataframe_checking_cache(
+            return self._execute_sql(
                 sql_gen,
                 output_tablename_templated,
             )
@@ -178,7 +184,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                     f"--------Creating table: {output_tablename}--------"
                 )
 
-                splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+                splink_dataframe = self._execute_sql(
                     sql,
                     output_tablename,
                 )
