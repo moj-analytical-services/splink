@@ -632,9 +632,7 @@ class LinkerInference:
 
         pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
-        )
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         self._linker._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
@@ -830,9 +828,7 @@ class LinkerInference:
 
             pipeline.enqueue_sql(sql, "__splink__found_by_blocking_rules")
 
-        predictions = linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
-        )
+        predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         linker._settings_obj._retain_matching_columns = retain_matching_columns
         linker._settings_obj._retain_intermediate_calculation_columns = (

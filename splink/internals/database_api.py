@@ -103,7 +103,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self,
         sql: str,
         output_tablename_templated: str,
-        use_cache: bool = True,
     ) -> SplinkDataFrame:
         # differences from _sql_to_splink_dataframe:
         # this _calculates_ physical name, handles debug_mode,
@@ -147,7 +146,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
-        use_cache: bool = True,
     ) -> SplinkDataFrame:
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
@@ -163,7 +161,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             return self.sql_to_splink_dataframe_checking_cache(
                 sql_gen,
                 output_tablename_templated,
-                use_cache,
             )
 
         created_views: list[str] = []
@@ -184,7 +181,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
                     sql,
                     output_tablename,
-                    use_cache=False,
                 )
                 created_views.append(output_tablename)
                 created_physicals.append(splink_dataframe.physical_name)
