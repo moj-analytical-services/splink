@@ -2,8 +2,6 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
 
 
 @pytest.fixture(scope="session")
@@ -26,6 +24,8 @@ def _engine_factory(_pg_credentials):
         user=_pg_credentials["user"],
         pw=_pg_credentials["password"],
     ):
+        from sqlalchemy import create_engine
+
         try:
             return create_engine(
                 f"postgresql+psycopg2://{user}:{pw}"
@@ -38,6 +38,12 @@ def _engine_factory(_pg_credentials):
 
 
 def _setup_test_env(_engine_factory):
+    # catch case where sqlalchemy not installed
+    try:
+        from sqlalchemy import text
+        from sqlalchemy.exc import OperationalError
+    except ModuleNotFoundError:
+        return None
     # catch case where no postgres available - if testing other backends
     try:
         engine = _engine_factory()

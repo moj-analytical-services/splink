@@ -30,7 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        # need to pin to 3.14.0 until networkx issue resolved
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14.0"]
     name: Run tests with Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4

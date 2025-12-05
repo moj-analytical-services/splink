@@ -9,7 +9,7 @@ tags:
     handler: python
     options:
       show_root_heading: false
-      show_root_toc: false
+      show_root_toc_entry: false
       show_source: false
       members_order: source
       inherited_members: false
@@ -28,6 +28,6 @@ Note that all comparisons have a `.configure()` method as follows:
     handler: python
     options:
       show_root_heading: false
-      show_root_toc: true
+      show_root_toc_entry: true
       show_source: false
 
