@@ -99,38 +99,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return output_df
 
     @final
-    def _get_table_from_cache_or_db(
-        self, table_name_hash: str, output_tablename_templated: str
-    ) -> Union[SplinkDataFrame, None]:
-        # Certain tables are put in the cache using their templated_name
-        # An example is __splink__df_concat_with_tf
-        # These tables are put in the cache when they are first calculated
-        # e.g. with compute_df_concat_with_tf()
-        # But they can also be put in the cache manually using
-        # e.g. register_table_input_nodes_concat_with_tf()
-
-        # Look for these 'named' tables in the cache prior
-        # to looking for the hashed version s
-        if output_tablename_templated in self._intermediate_table_cache:
-            return self._intermediate_table_cache.get_with_logging(
-                output_tablename_templated
-            )
-
-        if table_name_hash in self._intermediate_table_cache:
-            return self._intermediate_table_cache.get_with_logging(table_name_hash)
-
-        # If not in cache, fall back on checking the database
-        if self.table_exists_in_database(table_name_hash):
-            logger.debug(
-                f"Found cache for {output_tablename_templated} "
-                f"in database using table name with physical name {table_name_hash}"
-            )
-            return self.table_to_splink_dataframe(
-                output_tablename_templated, table_name_hash
-            )
-        return None
-
-    @final
     def sql_to_splink_dataframe_checking_cache(
         self,
         sql: str,
@@ -144,13 +112,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         hash = hashlib.sha256(to_hash).hexdigest()[:9]
         # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
-
-        if use_cache:
-            splink_dataframe = self._get_table_from_cache_or_db(
-                table_name_hash, output_tablename_templated
-            )
-            if splink_dataframe is not None:
-                return splink_dataframe
 
         if self.debug_mode:
             print(sql)  # noqa: T201
@@ -180,10 +141,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         splink_dataframe.created_by_splink = True
         splink_dataframe.sql_used_to_create = sql
-
-        physical_name = splink_dataframe.physical_name
-
-        self._intermediate_table_cache[physical_name] = splink_dataframe
 
         return splink_dataframe
 
