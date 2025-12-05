@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fixed issue where `save_offline_charts` stopped working [#2844](https://github.com/moj-analytical-services/splink/pull/2844)
+
 ### Removed
 
 - Dropped support for python 3.8 [#2819](https://github.com/moj-analytical-services/splink/pull/2819)

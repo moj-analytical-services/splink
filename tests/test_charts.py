@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
+from splink.internals.charts import save_offline_chart
 from splink.internals.linker import Linker
 from tests.decorator import mark_with_dialects_excluding
 
@@ -228,3 +229,22 @@ def test_tf_adjustment_chart(dialect, test_helpers):
 
     with pytest.raises(ValueError):
         linker.visualisations.tf_adjustment_chart("surname")
+
+
+def test_save_offline_chart(tmp_path, test_helpers):
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("gender").configure(term_frequency_adjustments=True),
+            cl.LevenshteinAtThresholds("first_name", [1]).configure(
+                term_frequency_adjustments=True
+            ),
+            cl.LevenshteinAtThresholds("surname", [1]),
+        ],
+    }
+    helper = test_helpers["duckdb"]
+    db_api = helper.DatabaseAPI(**helper.db_api_args())
+
+    linker = Linker(df, settings, db_api=db_api)
+    ch = linker.visualisations.tf_adjustment_chart("gender", as_dict=True)
+    save_offline_chart(ch, tmp_path / "test_chart.html")
