@@ -218,33 +218,30 @@ def _process_unique_id_columns(
                 InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
             )
 
-    if link_type in ("link_only", "link_and_dedupe") and len(splink_df_dict) == 1:
-        # Get first item in splink_df_dict
+    # From here on, link_type is "link_only" or "link_and_dedupe"
+    # Default source_dataset_column_name if not provided
+    effective_source_dataset_col = source_dataset_column_name or "source_dataset"
+
+    if len(splink_df_dict) == 1:
         df = next(iter(splink_df_dict.values()))
         cols = df.columns
         sds_input_col = InputColumn(
-            source_dataset_column_name, sqlglot_dialect_str=sqglot_dialect
+            effective_source_dataset_col, sqlglot_dialect_str=sqglot_dialect
         )
         if sds_input_col not in cols:
             raise ValueError(
                 "You have provided a single input table with link type 'link_only' or "
                 "'link_and_dedupe'. You provided a source_dataset_column_name of "
-                f"'{source_dataset_column_name}'.\nThis column was not found "
+                f"'{effective_source_dataset_col}'.\nThis column was not found "
                 "in the input data, so Splink does not know how to split your input "
                 "data into multiple tables.\n Either provide multiple input datasets, "
                 "or create a source dataset column name in your input table"
             )
 
-    if source_dataset_column_name is None:
-        return (
-            InputColumn("source_dataset", sqlglot_dialect_str=sqglot_dialect),
-            InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
-        )
-    else:
-        return (
-            InputColumn(source_dataset_column_name, sqlglot_dialect_str=sqglot_dialect),
-            InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
-        )
+    return (
+        InputColumn(effective_source_dataset_col, sqlglot_dialect_str=sqglot_dialect),
+        InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
+    )
 
 
 def _cumulative_comparisons_to_be_scored_from_blocking_rules(
