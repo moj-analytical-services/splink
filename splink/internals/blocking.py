@@ -529,7 +529,6 @@ def materialise_exploded_id_tables(
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
 
-        # Use InputColumn set difference (leverages __eq__ and __hash__)
         other_cols = input_columns_set - set(arrays_to_explode_cols)
 
         expl_sql = db_api.sql_dialect.explode_arrays_sql(

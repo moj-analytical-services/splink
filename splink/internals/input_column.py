@@ -333,11 +333,7 @@ class InputColumn:
         return self._equality_key == other._equality_key
 
     def __hash__(self) -> int:
-        """Return a hash based on the column identity.
-
-        This allows InputColumns to be used in sets and as dict keys.
-        The hash is based on the same properties as equality.
-        """
+        """This allows InputColumns to be used in sets and as dict keys."""
         return hash(self._equality_key)
 
     def __repr__(self):
