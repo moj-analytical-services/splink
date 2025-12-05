@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
     join_list_with_commas_final_and,
@@ -162,15 +163,7 @@ class Comparison:
         for cl in self.comparison_levels:
             cols.extend(cl._input_columns_used_by_sql_condition)
 
-        # dedupe_preserving_order on input column
-        already_observed = []
-        deduped_cols = []
-        for col in cols:
-            if col.input_name not in already_observed:
-                deduped_cols.append(col)
-                already_observed.append(col.input_name)
-
-        return deduped_cols
+        return dedupe_preserving_order(cols)
 
     def _default_output_column_name(self):
         cols = self._input_columns_used_by_case_statement
@@ -192,6 +185,12 @@ class Comparison:
         cols = [c for c in cols if c]
 
         return cols
+
+    @property
+    def _tf_adjustment_input_columns(self) -> list[InputColumn]:
+        """Return list of InputColumn objects for TF adjustments in this comparison."""
+        cols = [cl._tf_adjustment_input_column for cl in self.comparison_levels]
+        return [c for c in cols if c is not None]
 
     def _columns_to_select_for_blocking(self):
         cols = []

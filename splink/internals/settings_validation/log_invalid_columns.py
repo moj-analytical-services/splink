@@ -8,6 +8,7 @@ import sqlglot
 import sqlglot.expressions
 
 from splink.internals.comparison import Comparison
+from splink.internals.input_column import InputColumn
 from splink.internals.parse_sql import parse_columns_in_sql
 
 from .settings_column_cleaner import (
@@ -64,8 +65,8 @@ def validate_column_suffixes(
 
 def check_for_missing_settings_column(
     settings_id: str,
-    settings_column_to_check: Iterable[str],
-    valid_input_dataframe_columns: Iterable[str],
+    settings_column_to_check: Iterable[InputColumn] | Iterable[str],
+    valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
 ) -> tuple[str, InvalidColumnsLogGenerator] | None:
     """Validate simple settings columns with strings as input.
     i.e. Anything that doesn't require SQL to be parsed.
@@ -83,7 +84,7 @@ def check_for_missing_settings_column(
 def check_for_missing_or_invalid_columns_in_sql_strings(
     sqlglot_dialect: str,
     sql_strings: Iterable[str],
-    valid_input_dataframe_columns: Iterable[str],
+    valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
     additional_validation_checks: list[Validator] = [],
 ) -> dict[str, list[InvalidColumnsLogGenerator]]:
     """Evaluate whether the column(s) supplied in a series of SQL strings
@@ -150,7 +151,7 @@ def check_for_missing_or_invalid_columns_in_sql_strings(
 def check_comparison_for_missing_or_invalid_sql_strings(
     sqlglot_dialect: str,
     comparisons_to_check: Iterable[Comparison],
-    valid_input_dataframe_columns: Iterable[str],
+    valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
 ) -> list[tuple[str, dict[str, list[InvalidColumnsLogGenerator]]]]:
     """Split apart the comparison levels found within a comparison
     and review the SQL contained within.

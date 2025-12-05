@@ -196,3 +196,112 @@ def test_illegal_names_error():
     for name in token_errors:
         with pytest.raises(ValueError):
             InputColumn(name, sqlglot_dialect_str="duckdb")
+
+
+def test_input_column_equality():
+    """Test that InputColumns can be compared for equality regardless of quoting."""
+    # Basic equality - same column, different quoting
+    col_quoted = InputColumn("my_col", sqlglot_dialect_str="duckdb")
+    col_unquoted = col_quoted.unquote()
+
+    assert col_quoted == col_unquoted
+    assert col_unquoted == col_quoted
+
+    # Same column created separately
+    col1 = InputColumn("first_name", sqlglot_dialect_str="duckdb")
+    col2 = InputColumn("first_name", sqlglot_dialect_str="duckdb")
+    assert col1 == col2
+
+    # Different columns should not be equal
+    col_a = InputColumn("col_a", sqlglot_dialect_str="duckdb")
+    col_b = InputColumn("col_b", sqlglot_dialect_str="duckdb")
+    assert col_a != col_b
+
+    # Columns with spaces - quoted vs unquoted should be equal
+    col_space = InputColumn("first name", sqlglot_dialect_str="duckdb")
+    col_space_unquoted = col_space.unquote()
+    assert col_space == col_space_unquoted
+
+    # Struct columns with bracket keys should be equal regardless of quoting
+    col_struct = InputColumn("col['lat']", sqlglot_dialect_str="duckdb")
+    col_struct_unquoted = col_struct.unquote()
+    assert col_struct == col_struct_unquoted
+
+    # Different bracket keys should not be equal
+    col_lat = InputColumn("col['lat']", sqlglot_dialect_str="duckdb")
+    col_lon = InputColumn("col['lon']", sqlglot_dialect_str="duckdb")
+    assert col_lat != col_lon
+
+    # Array columns with bracket indices should be equal regardless of quoting
+    col_arr = InputColumn("col[0]", sqlglot_dialect_str="duckdb")
+    col_arr_unquoted = col_arr.unquote()
+    assert col_arr == col_arr_unquoted
+
+    # Different bracket indices should not be equal
+    col_0 = InputColumn("col[0]", sqlglot_dialect_str="duckdb")
+    col_1 = InputColumn("col[1]", sqlglot_dialect_str="duckdb")
+    assert col_0 != col_1
+
+    # Equality with non-InputColumn should return NotImplemented (handled by Python)
+    col = InputColumn("my_col", sqlglot_dialect_str="duckdb")
+    assert col != "my_col"
+    assert col != 42
+
+
+def test_input_column_in_operator():
+    """Test that InputColumns work correctly with the `in` operator."""
+    col1 = InputColumn("first_name", sqlglot_dialect_str="duckdb")
+    col2 = InputColumn("last_name", sqlglot_dialect_str="duckdb")
+    col3 = InputColumn("dob", sqlglot_dialect_str="duckdb")
+
+    cols_list = [col1, col2]
+
+    # Same column should be found in list
+    assert col1 in cols_list
+    assert col2 in cols_list
+    assert col3 not in cols_list
+
+    # Unquoted version should also be found
+    col1_unquoted = col1.unquote()
+    assert col1_unquoted in cols_list
+
+    # New instance of same column should be found
+    col1_new = InputColumn("first_name", sqlglot_dialect_str="duckdb")
+    assert col1_new in cols_list
+
+
+def test_input_column_hashable():
+    """Test that InputColumns can be used in sets and as dict keys."""
+    col1 = InputColumn("first_name", sqlglot_dialect_str="duckdb")
+    col1_unquoted = col1.unquote()
+    col2 = InputColumn("last_name", sqlglot_dialect_str="duckdb")
+
+    # Can create a set of InputColumns
+    col_set = {col1, col2}
+    assert len(col_set) == 2
+
+    # Adding the unquoted version shouldn't increase the set size
+    col_set.add(col1_unquoted)
+    assert len(col_set) == 2
+
+    # Can check membership in sets
+    assert col1 in col_set
+    assert col1_unquoted in col_set
+    assert col2 in col_set
+
+    # Can use as dict keys
+    col_dict = {col1: "first", col2: "last"}
+    assert col_dict[col1] == "first"
+    assert col_dict[col1_unquoted] == "first"  # Same key despite quoting difference
+
+    # Struct columns with bracket keys
+    col_struct = InputColumn("coords['lat']", sqlglot_dialect_str="duckdb")
+    col_struct_unquoted = col_struct.unquote()
+    struct_set = {col_struct}
+    assert col_struct_unquoted in struct_set
+
+    # Array columns with bracket indices
+    col_arr = InputColumn("items[0]", sqlglot_dialect_str="duckdb")
+    col_arr_unquoted = col_arr.unquote()
+    arr_set = {col_arr}
+    assert col_arr_unquoted in arr_set
