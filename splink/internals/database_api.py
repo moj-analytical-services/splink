@@ -92,9 +92,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Returns a SplinkDataFrame which also uses templated_name
         """
         sql = self._setup_for_execute_sql(sql, physical_name)
-        table_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         output_df = self._cleanup_for_execute_sql(
-            table_df, templated_name, physical_name
+            spark_df, templated_name, physical_name
         )
         self._intermediate_table_cache.executed_queries.append(output_df)
         self._created_tables.add(physical_name)
