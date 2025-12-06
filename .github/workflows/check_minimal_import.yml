@@ -1,9 +1,6 @@
 name: Check bare-bones install
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "pyproject.toml"
