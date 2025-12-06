@@ -344,7 +344,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             if (
                 key in self._intermediate_table_cache
                 and splink_df.created_by_splink
-                and key == splink_df.physical_name
+                and key == splink_df.templated_name
             ):
                 splink_df.drop_table_from_database_and_remove_from_cache()
 
