@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any, List, Literal, Optional, TypedDict
 
 from sqlglot import parse_one
@@ -583,6 +584,7 @@ def compute_blocked_pairs_from_concat_with_tf(
     Returns:
         SplinkDataFrame: The materialised blocked pairs table.
     """
+    start_time = time.time()
 
     blocking_input_tablename_l = df_concat_with_tf_table_name
     blocking_input_tablename_r = df_concat_with_tf_table_name
@@ -632,6 +634,9 @@ def compute_blocked_pairs_from_concat_with_tf(
     for br in blocking_rules:
         if isinstance(br, ExplodingBlockingRule):
             br.drop_materialised_id_pairs_dataframe()
+
+    blocking_time = time.time() - start_time
+    logger.info(f"Blocking time: {blocking_time:.2f} seconds")
 
     return blocked_pairs
 

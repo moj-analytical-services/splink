@@ -158,19 +158,13 @@ class LinkerInference:
         pipeline = CTEPipeline()
         df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
-        start_time = time.time()
-
         cache = self._linker._intermediate_table_cache
         if "__splink__blocked_id_pairs" in cache:
             blocked_pairs = cache.get_with_logging("__splink__blocked_id_pairs")
-            blocking_time = time.time() - start_time
-            logger.info(f"Blocking time (from cache): {blocking_time:.2f} seconds")
         else:
             blocked_pairs = (
                 self._linker.table_management.compute_blocked_pairs_for_predict()
             )
-            blocking_time = time.time() - start_time
-            logger.info(f"Blocking time: {blocking_time:.2f} seconds")
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
