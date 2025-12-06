@@ -48,6 +48,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
+        self._created_tables: set[str] = set()
 
     @final
     def _log_and_run_sql_execution(
@@ -96,6 +97,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             table_df, templated_name, physical_name
         )
         self._intermediate_table_cache.executed_queries.append(output_df)
+        self._created_tables.add(physical_name)
         return output_df
 
     @final
@@ -333,20 +335,18 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             del self._intermediate_table_cache[k]
 
     def delete_tables_created_by_splink_from_db(self):
-        # Accounts for names in cache with key which are templated names
-        keys = list(self._intermediate_table_cache.keys())
+        # Delete all tables that Splink created via SQL execution
+        # User-registered tables are never added to _created_tables, so they're safe
+        for physical_name in list(self._created_tables):
+            try:
+                self.delete_table_from_database(physical_name)
+                self._created_tables.discard(physical_name)
+            except Exception:
+                # If delete fails, still remove from tracking
+                self._created_tables.discard(physical_name)
 
-        for key in keys:
-            if key in self._intermediate_table_cache:
-                splink_df = self._intermediate_table_cache[key]
-            else:
-                continue
-            if (
-                key in self._intermediate_table_cache
-                and splink_df.created_by_splink
-                and key == splink_df.templated_name
-            ):
-                splink_df.drop_table_from_database_and_remove_from_cache()
+        # Also clear the explicit cache
+        self._intermediate_table_cache.invalidate_cache()
 
     def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
         """Expose the physical table via a backend-specific temp view."""

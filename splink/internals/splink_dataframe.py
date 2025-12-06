@@ -98,6 +98,7 @@ class SplinkDataFrame(ABC):
         """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
         self.db_api.remove_splinkdataframe_from_cache(self)
+        self.db_api._created_tables.discard(self.physical_name)
 
     def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
