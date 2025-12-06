@@ -15,6 +15,7 @@ from splink.internals.term_frequencies import (
     term_frequencies_for_single_column_sql,
 )
 from splink.internals.vertically_concatenate import (
+    compute_df_concat_with_tf,
     enqueue_df_concat,
 )
 
@@ -89,6 +90,14 @@ class LinkerTableManagement:
 
         return tf_df
 
+    def compute_df_concat_with_tf(self) -> SplinkDataFrame:
+        """Compute concatenated input records with term frequency columns."""
+        pipeline = CTEPipeline()
+
+        df = compute_df_concat_with_tf(self._linker, pipeline, use_cache=False)
+
+        return df
+
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
         will be recomputed.
@@ -115,7 +124,7 @@ class LinkerTableManagement:
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
 
-    def register_table_input_nodes_concat_with_tf(
+    def register_df_concat_with_tf(
         self, input_data: AcceptableInputTableType, overwrite: bool = False
     ) -> SplinkDataFrame:
         """Register a pre-computed version of the input_nodes_concat_with_tf table that

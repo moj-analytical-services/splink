@@ -103,11 +103,13 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
     return pipeline
 
 
-def compute_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
+def compute_df_concat_with_tf(
+    linker: Linker, pipeline: CTEPipeline, use_cache: bool = True
+) -> SplinkDataFrame:
     cache = linker._intermediate_table_cache
     db_api = linker._db_api
 
-    if "__splink__df_concat_with_tf" in cache:
+    if use_cache and "__splink__df_concat_with_tf" in cache:
         return cache.get_with_logging("__splink__df_concat_with_tf")
 
     sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
