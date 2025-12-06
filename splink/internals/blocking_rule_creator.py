@@ -20,11 +20,6 @@ class BlockingRuleCreator(ABC):
         self._salting_partitions = salting_partitions
         self._arrays_to_explode = arrays_to_explode
 
-    # @property because merged levels need logic to determine salting partitions
-    @property
-    def salting_partitions(self):
-        return self._salting_partitions
-
     @property
     def arrays_to_explode(self):
         return self._arrays_to_explode
@@ -39,12 +34,8 @@ class BlockingRuleCreator(ABC):
         level_dict: BlockingRuleDict = {
             "blocking_rule": self.create_sql(sql_dialect),
             "sql_dialect": sql_dialect_str,
-            "salting_partitions": self.salting_partitions,
             "arrays_to_explode": self.arrays_to_explode,
         }
-
-        if self.salting_partitions and self.arrays_to_explode:
-            raise ValueError("Cannot use both salting_partitions and arrays_to_explode")
 
         return level_dict
 

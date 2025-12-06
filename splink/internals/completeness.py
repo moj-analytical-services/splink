@@ -23,9 +23,7 @@ def completeness_data(
 ) -> list[dict[str, Any]]:
     pipeline = CTEPipeline()
 
-    sql = vertically_concatenate_sql(
-        splink_df_dict, salting_required=False, source_dataset_input_column=None
-    )
+    sql = vertically_concatenate_sql(splink_df_dict, source_dataset_input_column=None)
 
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 

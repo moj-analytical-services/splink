@@ -149,17 +149,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
 
     pipeline = CTEPipeline(input_dataframes=[df_sample])
 
-    if linker._sql_dialect.sql_dialect_str == "duckdb" and max_pairs > 1e4:
-        blocking_rule_dict: BlockingRuleDict = {
-            "blocking_rule": "1=1",
-            "salting_partitions": multiprocessing.cpu_count(),
-            "sql_dialect": linker._sql_dialect_str,
-            "arrays_to_explode": None,
-        }
-        br = blocking_rule_to_obj(blocking_rule_dict)
-        settings_obj._blocking_rules_to_generate_predictions = [br]
-    else:
-        settings_obj._blocking_rules_to_generate_predictions = []
+    settings_obj._blocking_rules_to_generate_predictions = []
 
     input_tablename_sample_l = "__splink__df_concat_sample"
     input_tablename_sample_r = "__splink__df_concat_sample"
