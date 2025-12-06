@@ -8,8 +8,7 @@ from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
     block_using_rules_sqls,
-    drop_exploded_id_pair_tables,
-    enqueue_blocked_pairs_from_concat_with_tf,
+    compute_blocked_pairs_from_concat_with_tf,
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
@@ -89,7 +88,7 @@ class LinkerInference:
 
         settings = self._linker._settings_obj
 
-        enqueue_blocked_pairs_from_concat_with_tf(
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
             pipeline=pipeline,
             db_api=self._linker._db_api,
             splink_df_dict=self._linker._input_tables_dict,
@@ -98,8 +97,6 @@ class LinkerInference:
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
-
-        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
@@ -118,7 +115,6 @@ class LinkerInference:
         )
         deterministic_link_df.metadata["is_deterministic_link"] = True
 
-        drop_exploded_id_pair_tables(settings._blocking_rules_to_generate_predictions)
         blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return deterministic_link_df

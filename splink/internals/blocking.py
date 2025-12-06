@@ -564,7 +564,7 @@ def materialise_exploded_id_tables(
     return exploding_blocking_rules
 
 
-def enqueue_blocked_pairs_from_concat_with_tf(
+def compute_blocked_pairs_from_concat_with_tf(
     *,
     pipeline: CTEPipeline,
     db_api: DatabaseAPISubClass,
@@ -574,11 +574,14 @@ def enqueue_blocked_pairs_from_concat_with_tf(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     df_concat_with_tf_table_name: str = "__splink__df_concat_with_tf",
-) -> None:
-    """Mutates `pipeline` to create __splink__blocked_id_pairs from df_concat_with_tf.
+) -> SplinkDataFrame:
+    """Compute __splink__blocked_id_pairs from df_concat_with_tf.
 
-    Side-effect: materialises exploded ID tables stored on ExplodingBlockingRule instances.
-    Use drop_exploded_id_pair_tables to clean them up afterwards.
+    Enqueues SQL to the pipeline, materialises the result, and cleans up
+    any exploded ID pair tables used by exploding blocking rules.
+
+    Returns:
+        SplinkDataFrame: The materialised blocked pairs table.
     """
 
     blocking_input_tablename_l = df_concat_with_tf_table_name
@@ -603,7 +606,6 @@ def enqueue_blocked_pairs_from_concat_with_tf(
         blocking_input_tablename_r = f"{df_concat_with_tf_table_name}_right"
         effective_link_type = "two_dataset_link_only"
 
-    # Side-effect: materialise exploded ID tables, stored on ExplodingBlockingRule instances
     materialise_exploded_id_tables(
         link_type=effective_link_type,
         blocking_rules=blocking_rules,
@@ -624,12 +626,14 @@ def enqueue_blocked_pairs_from_concat_with_tf(
 
     pipeline.enqueue_list_of_sqls(sqls)
 
+    blocked_pairs = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-def drop_exploded_id_pair_tables(blocking_rules: list[BlockingRule]) -> None:
-    """Drop materialised ID pair tables used by exploding blocking rules."""
+    # Clean up exploded ID pair tables
     for br in blocking_rules:
         if isinstance(br, ExplodingBlockingRule):
             br.drop_materialised_id_pairs_dataframe()
+
+    return blocked_pairs
 
 
 def _sql_gen_where_condition(

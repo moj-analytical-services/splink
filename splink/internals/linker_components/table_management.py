@@ -4,8 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from splink.internals.blocking import (
-    drop_exploded_id_pair_tables,
-    enqueue_blocked_pairs_from_concat_with_tf,
+    compute_blocked_pairs_from_concat_with_tf,
 )
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
@@ -112,7 +111,7 @@ class LinkerTableManagement:
 
         pipeline = CTEPipeline([df_concat_with_tf])
 
-        enqueue_blocked_pairs_from_concat_with_tf(
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
             pipeline=pipeline,
             db_api=linker._db_api,
             splink_df_dict=linker._input_tables_dict,
@@ -122,11 +121,7 @@ class LinkerTableManagement:
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
 
-        blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
         linker._intermediate_table_cache["__splink__blocked_id_pairs"] = blocked_pairs
-
-        drop_exploded_id_pair_tables(settings._blocking_rules_to_generate_predictions)
 
         return blocked_pairs
 
