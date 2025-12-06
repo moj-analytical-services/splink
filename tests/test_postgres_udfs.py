@@ -47,9 +47,7 @@ def test_array_intersect(pg_engine):
         dtype={"arr_l": postgresql.ARRAY(INTEGER), "arr_r": postgresql.ARRAY(INTEGER)},
     )
     sql = "SELECT array_intersect(arr_l, arr_r) AS intersects FROM intersect_vals"
-    frame = db_api.sql_to_splink_dataframe_checking_cache(
-        sql, "test_intersect_table"
-    ).as_pandas_dataframe()
+    frame = db_api._execute_sql(sql, "test_intersect_table").as_pandas_dataframe()
 
     for int_result, expected in zip(frame["intersects"], expected_intersect_vals):
         # don't care about order

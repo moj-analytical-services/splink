@@ -335,18 +335,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             del self._intermediate_table_cache[k]
 
     def delete_tables_created_by_splink_from_db(self):
-        # Delete all tables that Splink created via SQL execution
-        # User-registered tables are never added to _created_tables, so they're safe
+        # User-registered tables are never added to _created_tables,
+        # so don't need to worry about accidentally deleting them.
         for physical_name in list(self._created_tables):
-            try:
-                self.delete_table_from_database(physical_name)
-                self._created_tables.discard(physical_name)
-            except Exception:
-                # If delete fails, still remove from tracking
-                self._created_tables.discard(physical_name)
-
-        # Also clear the explicit cache
-        self._intermediate_table_cache.invalidate_cache()
+            self.delete_table_from_database(physical_name)
+            self._created_tables.discard(physical_name)
 
     def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
         """Expose the physical table via a backend-specific temp view."""
