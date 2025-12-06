@@ -3,6 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from splink.internals.blocking import (
+    drop_exploded_id_pair_tables,
+    enqueue_blocked_pairs_from_concat_with_tf,
+)
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
@@ -97,6 +101,34 @@ class LinkerTableManagement:
         df = compute_df_concat_with_tf(self._linker, pipeline, use_cache=False)
 
         return df
+
+    def compute_blocked_pairs_for_predict(self) -> SplinkDataFrame:
+        """Compute and cache blocked pairs for prediction."""
+        linker = self._linker
+        settings = linker._settings_obj
+
+        pipeline = CTEPipeline()
+        df_concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
+
+        pipeline = CTEPipeline([df_concat_with_tf])
+
+        enqueue_blocked_pairs_from_concat_with_tf(
+            pipeline=pipeline,
+            db_api=linker._db_api,
+            splink_df_dict=linker._input_tables_dict,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+        )
+
+        blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        linker._intermediate_table_cache["__splink__blocked_id_pairs"] = blocked_pairs
+
+        drop_exploded_id_pair_tables(settings._blocking_rules_to_generate_predictions)
+
+        return blocked_pairs
 
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
