@@ -239,10 +239,12 @@ class LinkerInference:
         of the data.
 
         Args:
-            left_chunk (tuple[int, int], optional): Tuple of (chunk_number, total_chunks)
-                for filtering left side records. For example, (1, 3) means chunk 1 of 3.
-            right_chunk (tuple[int, int], optional): Tuple of (chunk_number, total_chunks)
-                for filtering right side records. For example, (2, 4) means chunk 2 of 4.
+            left_chunk (tuple[int, int], optional): Tuple of
+                (chunk_number, total_chunks) for filtering left side records.
+                For example, (1, 3) means chunk 1 of 3.
+            right_chunk (tuple[int, int], optional): Tuple of
+                (chunk_number, total_chunks) for filtering right side records.
+                For example, (2, 4) means chunk 2 of 4.
             threshold_match_probability (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_probability above this threshold. Defaults to None.
