@@ -32,7 +32,7 @@ def _chunk_assignment_sql(
         SQL WHERE clause condition like: " AND (ABS(hash(...)) % 3) + 1 = 2",
         or empty string if num_chunks == 1 (no filtering needed)
     """
-    # No need for any filtering if there's only one chunk
+
     if num_chunks == 1:
         return ""
 
