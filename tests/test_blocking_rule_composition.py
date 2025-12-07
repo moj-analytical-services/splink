@@ -1,6 +1,6 @@
 import pytest
 
-from splink.internals.blocking_rule_library import And, CustomRule, Not, Or, block_on
+from splink.internals.blocking_rule_library import And, Not, Or, block_on
 from splink.internals.input_column import _get_dialect_quotes
 
 from .decorator import mark_with_dialects_excluding
