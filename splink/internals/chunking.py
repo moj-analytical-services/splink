@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from splink.internals.input_column import InputColumn
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -40,3 +40,42 @@ def _chunk_assignment_sql(
     hash_func = dialect.hash_function_name
     chunk_expr = f"(ABS({hash_func}({composite_id})) % {num_chunks}) + 1"
     return f" AND {chunk_expr} = {chunk_num}"
+
+
+def _blocked_pairs_cache_key(
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
+) -> str:
+    """Generate a cache key for blocked pairs that includes chunk info.
+
+    Args:
+        left_chunk: Optional tuple of (chunk_number, total_chunks) for left side.
+        right_chunk: Optional tuple of (chunk_number, total_chunks) for right side.
+
+    Returns:
+        Cache key string. Examples:
+            - No chunking: "__splink__blocked_id_pairs"
+            - Chunked: "__splink__blocked_id_pairs_L1of3_R2of4"
+    """
+    base = "__splink__blocked_id_pairs"
+
+    # No chunking => use base key
+    if left_chunk is None and right_chunk is None:
+        return base
+
+    # Normalize (1,1) to None for key purposes (no effective chunking)
+    if left_chunk == (1, 1):
+        left_chunk = None
+    if right_chunk == (1, 1):
+        right_chunk = None
+
+    if left_chunk is None and right_chunk is None:
+        return base
+
+    parts = [base]
+    if left_chunk is not None:
+        parts.append(f"L{left_chunk[0]}of{left_chunk[1]}")
+    if right_chunk is not None:
+        parts.append(f"R{right_chunk[0]}of{right_chunk[1]}")
+
+    return "_".join(parts)

@@ -13,6 +13,7 @@ from splink.internals.blocking import (
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
+from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
@@ -277,18 +278,28 @@ class LinkerInference:
 
         settings = self._linker._settings_obj
 
-        # Compute blocked pairs with chunking parameters
-        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
-            pipeline=pipeline,
-            db_api=self._linker._db_api,
-            splink_df_dict=self._linker._input_tables_dict,
-            blocking_rules=settings._blocking_rules_to_generate_predictions,
-            link_type=settings._link_type,
-            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
-            left_chunk=left_chunk,
-            right_chunk=right_chunk,
-        )
+        # Check cache for pre-computed blocked pairs
+        cache = self._linker._intermediate_table_cache
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+        blocked_pairs_from_cache = False
+
+        if cache_key in cache:
+            blocked_pairs = cache.get_with_logging(cache_key)
+            blocked_pairs_from_cache = True
+            logger.info(f"Using cached blocked pairs from '{cache_key}'")
+        else:
+            # Compute blocked pairs with chunking parameters
+            blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+                pipeline=pipeline,
+                db_api=self._linker._db_api,
+                splink_df_dict=self._linker._input_tables_dict,
+                blocking_rules=settings._blocking_rules_to_generate_predictions,
+                link_type=settings._link_type,
+                source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+                unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+                left_chunk=left_chunk,
+                right_chunk=right_chunk,
+            )
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
@@ -317,8 +328,9 @@ class LinkerInference:
         predict_time = time.time() - start_time
         logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
 
-        # Clean up the blocked pairs
-        blocked_pairs.drop_table_from_database_and_remove_from_cache()
+        # Only clean up blocked pairs if we computed them (not from cache)
+        if not blocked_pairs_from_cache:
+            blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         self._linker._predict_warning()
 
