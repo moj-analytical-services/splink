@@ -310,3 +310,217 @@ def test_blocked_pairs_deleted_when_not_from_cache():
     # Blocked pairs should NOT be in cache (deleted after use)
     cache_key = "__splink__blocked_id_pairs_L1of2_R1of3"
     assert cache_key not in linker._intermediate_table_cache
+
+
+@mark_with_dialects_excluding()
+def test_chunked_predict_link_only(test_helpers, dialect):
+    """Test chunked predictions work correctly with link_only (two datasets)."""
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
+    settings = get_settings_dict()
+    settings["link_type"] = "link_only"
+
+    # Split into two datasets using modulo arithmetic
+    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df1_pd = df_pd[df_pd.index % 2 == 0].copy()
+    df2_pd = df_pd[df_pd.index % 2 == 1].copy()
+
+    df1 = helper.convert_frame(df1_pd)
+    df2 = helper.convert_frame(df2_pd)
+
+    linker = Linker([df1, df2], settings, **helper.extra_linker_args())
+
+    # Get baseline predictions
+    predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
+    baseline_count = _get_comparison_count(linker, predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+
+    # Test different chunk combinations
+    chunk_configs = [
+        (2, 1),  # 2 left chunks, no right chunking
+        (1, 3),  # No left chunking, 3 right chunks
+        (3, 2),  # 3 left chunks, 2 right chunks
+    ]
+
+    for num_left, num_right in chunk_configs:
+        linker.table_management.invalidate_cache()
+
+        predictions = linker.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=num_left,
+            num_chunks_right=num_right,
+        )
+
+        assert (
+            _get_comparison_count(linker, predictions) == baseline_count
+        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+
+        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
+        pd.testing.assert_frame_equal(
+            df_baseline[["unique_id_l", "unique_id_r"]],
+            df_chunked[["unique_id_l", "unique_id_r"]],
+        )
+
+
+@mark_with_dialects_excluding()
+def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
+    """Test chunked predictions work correctly with link_only (three datasets).
+
+    Two datasets is a special case, so we test with three datasets as well.
+    """
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
+    settings = get_settings_dict()
+    settings["link_type"] = "link_only"
+
+    # Split into three datasets using modulo arithmetic
+    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df1_pd = df_pd[df_pd.index % 3 == 0].copy()
+    df2_pd = df_pd[df_pd.index % 3 == 1].copy()
+    df3_pd = df_pd[df_pd.index % 3 == 2].copy()
+
+    df1 = helper.convert_frame(df1_pd)
+    df2 = helper.convert_frame(df2_pd)
+    df3 = helper.convert_frame(df3_pd)
+
+    linker = Linker([df1, df2, df3], settings, **helper.extra_linker_args())
+
+    # Get baseline predictions
+    predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
+    baseline_count = _get_comparison_count(linker, predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+
+    # Test different chunk combinations
+    chunk_configs = [
+        (2, 1),  # 2 left chunks, no right chunking
+        (1, 3),  # No left chunking, 3 right chunks
+        (3, 2),  # 3 left chunks, 2 right chunks
+    ]
+
+    for num_left, num_right in chunk_configs:
+        linker.table_management.invalidate_cache()
+
+        predictions = linker.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=num_left,
+            num_chunks_right=num_right,
+        )
+
+        assert (
+            _get_comparison_count(linker, predictions) == baseline_count
+        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+
+        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
+        pd.testing.assert_frame_equal(
+            df_baseline[["unique_id_l", "unique_id_r"]],
+            df_chunked[["unique_id_l", "unique_id_r"]],
+        )
+
+
+@mark_with_dialects_excluding()
+def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
+    """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
+    settings = get_settings_dict()
+    settings["link_type"] = "link_and_dedupe"
+
+    # Split into two datasets using modulo arithmetic
+    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df1_pd = df_pd[df_pd.index % 2 == 0].copy()
+    df2_pd = df_pd[df_pd.index % 2 == 1].copy()
+
+    df1 = helper.convert_frame(df1_pd)
+    df2 = helper.convert_frame(df2_pd)
+
+    linker = Linker([df1, df2], settings, **helper.extra_linker_args())
+
+    # Get baseline predictions
+    predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
+    baseline_count = _get_comparison_count(linker, predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+
+    # Test different chunk combinations
+    chunk_configs = [
+        (2, 1),  # 2 left chunks, no right chunking
+        (1, 3),  # No left chunking, 3 right chunks
+        (3, 2),  # 3 left chunks, 2 right chunks
+    ]
+
+    for num_left, num_right in chunk_configs:
+        linker.table_management.invalidate_cache()
+
+        predictions = linker.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=num_left,
+            num_chunks_right=num_right,
+        )
+
+        assert (
+            _get_comparison_count(linker, predictions) == baseline_count
+        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+
+        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
+        pd.testing.assert_frame_equal(
+            df_baseline[["unique_id_l", "unique_id_r"]],
+            df_chunked[["unique_id_l", "unique_id_r"]],
+        )
+
+
+@mark_with_dialects_excluding()
+def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
+    """Test chunked predictions work correctly with link_and_dedupe (three datasets).
+
+    Two datasets is a special case, so we test with three datasets as well.
+    """
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
+    settings = get_settings_dict()
+    settings["link_type"] = "link_and_dedupe"
+
+    # Split into three datasets using modulo arithmetic
+    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df1_pd = df_pd[df_pd.index % 3 == 0].copy()
+    df2_pd = df_pd[df_pd.index % 3 == 1].copy()
+    df3_pd = df_pd[df_pd.index % 3 == 2].copy()
+
+    df1 = helper.convert_frame(df1_pd)
+    df2 = helper.convert_frame(df2_pd)
+    df3 = helper.convert_frame(df3_pd)
+
+    linker = Linker([df1, df2, df3], settings, **helper.extra_linker_args())
+
+    # Get baseline predictions
+    predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
+    baseline_count = _get_comparison_count(linker, predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+
+    # Test different chunk combinations
+    chunk_configs = [
+        (2, 1),  # 2 left chunks, no right chunking
+        (1, 3),  # No left chunking, 3 right chunks
+        (3, 2),  # 3 left chunks, 2 right chunks
+    ]
+
+    for num_left, num_right in chunk_configs:
+        linker.table_management.invalidate_cache()
+
+        predictions = linker.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=num_left,
+            num_chunks_right=num_right,
+        )
+
+        assert (
+            _get_comparison_count(linker, predictions) == baseline_count
+        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+
+        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
+        pd.testing.assert_frame_equal(
+            df_baseline[["unique_id_l", "unique_id_r"]],
+            df_chunked[["unique_id_l", "unique_id_r"]],
+        )
