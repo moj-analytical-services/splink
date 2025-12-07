@@ -190,6 +190,7 @@ class LinkerInference:
 
         total_chunks = n_left * n_right
         chunk_count = 0
+        overall_start_time = time.time()
 
         for left_idx, right_idx in product(range(1, n_left + 1), range(1, n_right + 1)):
             chunk_count += 1
@@ -208,7 +209,22 @@ class LinkerInference:
             )
             chunk_results.append(chunk_result)
 
-        # Concatenate all chunk results using UNION ALL
+            elapsed = time.time() - overall_start_time
+            percent_complete = chunk_count / total_chunks
+            if percent_complete > 0:
+                estimated_total = elapsed / percent_complete
+                estimated_remaining = estimated_total - elapsed
+                logger.info(
+                    f"Completed chunk {chunk_count}/{total_chunks} "
+                    f"({percent_complete:.0%}) | "
+                    f"Elapsed: {elapsed:.1f}s | "
+                    f"Remaining: ~{estimated_remaining:.1f}s | "
+                    f"Total: ~{estimated_total:.1f}s"
+                )
+
+        overall_time = time.time() - overall_start_time
+        logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
+
         union_parts = [
             f"SELECT * FROM {chunk_df.physical_name}" for chunk_df in chunk_results
         ]
