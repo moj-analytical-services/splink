@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from itertools import product
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
@@ -124,6 +125,8 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
+        num_chunks_left: int | None = None,
+        num_chunks_right: int | None = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -144,58 +147,84 @@ class LinkerInference:
                 joined to any term frequencies which have been asked
                 for in the settings object.  If False, this will be
                 computed as part of a large CTE pipeline.   Defaults to True
+            num_chunks_left (int, optional): If specified along with num_chunks_right,
+                the prediction will be split into chunks and processed iteratively.
+                This can help manage memory usage for large datasets.
+            num_chunks_right (int, optional): If specified along with num_chunks_left,
+                the prediction will be split into chunks and processed iteratively.
 
         Examples:
             ```py
             linker = linker(df, "saved_settings.json", db_api=db_api)
             splink_df = linker.inference.predict(threshold_match_probability=0.95)
             splink_df.as_pandas_dataframe(limit=5)
+
+            # With chunking for large datasets
+            splink_df = linker.inference.predict(
+                threshold_match_probability=0.95,
+                num_chunks_left=3,
+                num_chunks_right=4
+            )
             ```
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
         """
+        # Default to (1, 1) chunking if not specified
+        n_left = num_chunks_left if num_chunks_left is not None else 1
+        n_right = num_chunks_right if num_chunks_right is not None else 1
 
-        pipeline = CTEPipeline()
-        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-
-        cache = self._linker._intermediate_table_cache
-        if "__splink__blocked_id_pairs" in cache:
-            blocked_pairs = cache.get_with_logging("__splink__blocked_id_pairs")
-        else:
-            blocked_pairs = (
-                self._linker.table_management.compute_blocked_pairs_for_predict()
+        # If just one chunk on each side, call predict_chunk directly
+        if n_left == 1 and n_right == 1:
+            return self.predict_chunk(
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
             )
 
-        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+        # Otherwise iterate through all chunk combinations
 
-        start_time = time.time()
+        chunk_results: list[SplinkDataFrame] = []
 
-        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-            self._linker._settings_obj._columns_to_select_for_blocking,
-            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        total_chunks = n_left * n_right
+        chunk_count = 0
+
+        for left_idx, right_idx in product(range(1, n_left + 1), range(1, n_right + 1)):
+            chunk_count += 1
+            logger.info(
+                f"Processing chunk ({left_idx}, {n_left}) x "
+                f"({right_idx}, {n_right}) "
+                f"[{chunk_count}/{total_chunks}]"
+            )
+
+            chunk_result = self.predict_chunk(
+                left_chunk=(left_idx, n_left),
+                right_chunk=(right_idx, n_right),
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+            )
+            chunk_results.append(chunk_result)
+
+        # Concatenate all chunk results using UNION ALL
+        union_parts = [
+            f"SELECT * FROM {chunk_df.physical_name}" for chunk_df in chunk_results
+        ]
+        union_sql = " UNION ALL ".join(union_parts)
+
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(union_sql, "__splink__df_predict")
+
+        combined_predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
         )
-        pipeline.enqueue_list_of_sqls(sqls)
 
-        sqls = predict_from_comparison_vectors_sqls_using_settings(
-            self._linker._settings_obj,
-            threshold_match_probability,
-            threshold_match_weight,
-            sql_infinity_expression=self._linker._infinity_expression,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
+        # Clean up intermediate chunk tables
+        for chunk_df in chunk_results:
+            chunk_df.drop_table_from_database_and_remove_from_cache()
 
-        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        predict_time = time.time() - start_time
-        logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
-
-        self._linker._predict_warning()
-
-        return predictions
+        return combined_predictions
 
     def predict_chunk(
         self,

@@ -630,17 +630,15 @@ def _sql_gen_where_condition(
     # Add chunk filtering if specified
     if left_chunk is not None and sql_dialect is not None:
         chunk_num, total_chunks = left_chunk
-        chunk_sql = _chunk_assignment_sql(
-            unique_id_cols, total_chunks, "l", sql_dialect
+        where_condition += _chunk_assignment_sql(
+            unique_id_cols, chunk_num, total_chunks, "l", sql_dialect
         )
-        where_condition += f" AND {chunk_sql} = {chunk_num}"
 
     if right_chunk is not None and sql_dialect is not None:
         chunk_num, total_chunks = right_chunk
-        chunk_sql = _chunk_assignment_sql(
-            unique_id_cols, total_chunks, "r", sql_dialect
+        where_condition += _chunk_assignment_sql(
+            unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
         )
-        where_condition += f" AND {chunk_sql} = {chunk_num}"
 
     return where_condition
 
