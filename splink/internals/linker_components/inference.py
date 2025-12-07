@@ -197,6 +197,104 @@ class LinkerInference:
 
         return predictions
 
+    def predict_chunk(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+        materialise_after_computing_term_frequencies: bool = True,
+    ) -> SplinkDataFrame:
+        """Create a dataframe of scored pairwise comparisons for a specific chunk
+        of the data.
+
+        Args:
+            left_chunk (tuple[int, int], optional): Tuple of (chunk_number, total_chunks)
+                for filtering left side records. For example, (1, 3) means chunk 1 of 3.
+            right_chunk (tuple[int, int], optional): Tuple of (chunk_number, total_chunks)
+                for filtering right side records. For example, (2, 4) means chunk 2 of 4.
+            threshold_match_probability (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_probability above this threshold. Defaults to None.
+            threshold_match_weight (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_weight above this threshold. Defaults to None.
+            materialise_after_computing_term_frequencies (bool): If true, Splink
+                will materialise the table containing the input nodes (rows)
+                joined to any term frequencies which have been asked
+                for in the settings object. If False, this will be
+                computed as part of a large CTE pipeline. Defaults to True
+
+        Examples:
+            ```py
+            linker = linker(df, "saved_settings.json", db_api=db_api)
+            # Process chunk 1 of 3 on left, chunk 2 of 4 on right
+            splink_df = linker.inference.predict_chunk(
+                left_chunk=(1, 3),
+                right_chunk=(2, 4),
+                threshold_match_probability=0.5
+            )
+            splink_df.as_pandas_dataframe(limit=5)
+            ```
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons
+                for the specified chunk.
+        """
+
+        pipeline = CTEPipeline()
+        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
+
+        pipeline = CTEPipeline([df_concat_with_tf])
+
+        settings = self._linker._settings_obj
+
+        # Compute blocked pairs with chunking parameters
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+            pipeline=pipeline,
+            db_api=self._linker._db_api,
+            splink_df_dict=self._linker._input_tables_dict,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+        )
+
+        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+
+        start_time = time.time()
+
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
+            self._linker._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+            sql_infinity_expression=self._linker._infinity_expression,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        predict_time = time.time() - start_time
+        logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
+
+        # Clean up the blocked pairs
+        blocked_pairs.drop_table_from_database_and_remove_from_cache()
+
+        self._linker._predict_warning()
+
+        return predictions
+
     def _score_missing_cluster_edges(
         self,
         df_clusters: SplinkDataFrame,
