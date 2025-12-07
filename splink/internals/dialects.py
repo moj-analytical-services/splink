@@ -156,6 +156,10 @@ class SplinkDialect(ABC):
             f"hash_function_name not implemented for {self.__class__.__name__}"
         )
 
+    def hash_function_expression(self, col_expression: str) -> str:
+        """Return a SQL expression that hashes the given column expression."""
+        return f"{self.hash_function_name}({col_expression})"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -672,6 +676,10 @@ class PostgresDialect(SplinkDialect):
     def hash_function_name(self) -> str:
         # hashtext returns a 32-bit integer, cast to bigint for consistency
         return "hashtext"
+
+    def hash_function_expression(self, col_expression: str) -> str:
+        """PostgreSQL's hashtext requires text input, so cast the column."""
+        return f"hashtext(({col_expression})::text)"
 
 
 class AthenaDialect(SplinkDialect):

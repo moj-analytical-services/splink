@@ -37,8 +37,8 @@ def _chunk_assignment_sql(
         return ""
 
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    hash_func = dialect.hash_function_name
-    chunk_expr = f"(ABS({hash_func}({composite_id})) % {num_chunks}) + 1"
+    hash_expr = dialect.hash_function_expression(composite_id)
+    chunk_expr = f"(ABS({hash_expr}) % {num_chunks}) + 1"
     return f" AND {chunk_expr} = {chunk_num}"
 
 
