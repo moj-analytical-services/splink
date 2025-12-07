@@ -278,7 +278,6 @@ class LinkerInference:
 
         settings = self._linker._settings_obj
 
-        # Check cache for pre-computed blocked pairs
         cache = self._linker._intermediate_table_cache
         cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
         blocked_pairs_from_cache = False
@@ -288,7 +287,6 @@ class LinkerInference:
             blocked_pairs_from_cache = True
             logger.info(f"Using cached blocked pairs from '{cache_key}'")
         else:
-            # Compute blocked pairs with chunking parameters
             blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
                 pipeline=pipeline,
                 db_api=self._linker._db_api,
@@ -328,7 +326,6 @@ class LinkerInference:
         predict_time = time.time() - start_time
         logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
 
-        # Only clean up blocked pairs if we computed them (not from cache)
         if not blocked_pairs_from_cache:
             blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
