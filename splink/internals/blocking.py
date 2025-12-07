@@ -38,7 +38,6 @@ backend_link_type_options = Literal[
 class BlockingRuleDict(TypedDict):
     blocking_rule: str
     sql_dialect: str
-    salting_partitions: int | None
     arrays_to_explode: list[str] | None
 
 

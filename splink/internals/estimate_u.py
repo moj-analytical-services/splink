@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import logging
-import multiprocessing
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import (
-    BlockingRuleDict,
     block_using_rules_sqls,
-    blocking_rule_to_obj,
 )
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
