@@ -491,6 +491,10 @@ class SparkDialect(SplinkDialect):
         return f"""select {','.join(cols_to_select)}
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
+    @property
+    def hash_function_name(self) -> str:
+        return "hash"  # Spark's hash() returns int
+
 
 class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
@@ -546,6 +550,12 @@ class SQLiteDialect(SplinkDialect):
         return f"""ORDER BY RANDOM()
             LIMIT {sample_size}
             """
+
+    @property
+    def hash_function_name(self) -> str:
+        # SQLite doesn't have a native hash function.
+        # splink_hash is a UDF registered by Splink's SQLite backend.
+        return "splink_hash"
 
 
 class PostgresDialect(SplinkDialect):
@@ -658,6 +668,11 @@ class PostgresDialect(SplinkDialect):
             f"received: '{first_or_last}'"
         )
 
+    @property
+    def hash_function_name(self) -> str:
+        # hashtext returns a 32-bit integer, cast to bigint for consistency
+        return "hashtext"
+
 
 class AthenaDialect(SplinkDialect):
     _dialect_name_for_factory = "athena"
@@ -700,3 +715,7 @@ class AthenaDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "least"
+
+    @property
+    def hash_function_name(self) -> str:
+        return "xxhash64"  # Athena/Presto's xxhash64 returns bigint
