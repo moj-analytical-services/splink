@@ -10,6 +10,7 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
 
+from splink.internals.chunking import _chunk_assignment_sql
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
@@ -94,8 +95,12 @@ class BlockingRule:
         self.preceding_rules: List[BlockingRule] = []
 
     @property
-    def sqlglot_dialect(self):
+    def sqlglot_dialect(self) -> str:
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
+
+    @property
+    def sql_dialect(self) -> SplinkDialect:
+        return SplinkDialect.from_string(self._sql_dialect_str)
 
     def _input_column(self, name: str) -> InputColumn:
         """Create an InputColumn with this blocking rule's dialect."""
@@ -564,7 +569,11 @@ def compute_blocked_pairs_from_concat_with_tf(
 
 
 def _sql_gen_where_condition(
-    link_type: backend_link_type_options, unique_id_cols: List[InputColumn]
+    link_type: backend_link_type_options,
+    unique_id_cols: List[InputColumn],
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
+    sql_dialect: "SplinkDialect | None" = None,
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -580,6 +589,21 @@ def _sql_gen_where_condition(
             f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
+    # Add chunk filtering if specified
+    if left_chunk is not None and sql_dialect is not None:
+        chunk_num, total_chunks = left_chunk
+        chunk_sql = _chunk_assignment_sql(
+            unique_id_cols, total_chunks, "l", sql_dialect
+        )
+        where_condition += f" AND {chunk_sql} = {chunk_num}"
+
+    if right_chunk is not None and sql_dialect is not None:
+        chunk_num, total_chunks = right_chunk
+        chunk_sql = _chunk_assignment_sql(
+            unique_id_cols, total_chunks, "r", sql_dialect
+        )
+        where_condition += f" AND {chunk_sql} = {chunk_num}"
+
     return where_condition
 
 
@@ -591,6 +615,8 @@ def block_using_rules_sqls(
     link_type: "LinkTypeLiteralType",
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -598,6 +624,13 @@ def block_using_rules_sqls(
 
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
+
+    Args:
+        left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            left side records. Requires dialect to be provided.
+        right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            right side records. Requires dialect to be provided.
+        dialect: SQL dialect, required when using chunking parameters.
     """
 
     sqls = []
@@ -606,7 +639,15 @@ def block_using_rules_sqls(
         source_dataset_input_column, unique_id_input_column
     )
 
-    where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
+    sql_dialect = blocking_rules[0].sql_dialect if blocking_rules else None
+
+    where_condition = _sql_gen_where_condition(
+        link_type,
+        unique_id_input_columns,
+        left_chunk=left_chunk,
+        right_chunk=right_chunk,
+        sql_dialect=sql_dialect,
+    )
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'

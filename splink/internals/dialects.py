@@ -147,6 +147,15 @@ class SplinkDialect(ABC):
             f"Backend '{self.sql_dialect_str}' does not have a " "'Least' function"
         )
 
+    @property
+    def hash_function_name(self) -> str:
+        """Return the name of a hash function that returns a bigint/int64.
+        Used for deterministic chunking of records during prediction.
+        """
+        raise NotImplementedError(
+            f"hash_function_name not implemented for {self.__class__.__name__}"
+        )
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -271,6 +280,10 @@ class DuckDBDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "least"
+
+    @property
+    def hash_function_name(self) -> str:
+        return "hash"  # DuckDB's hash() returns int64
 
     @property
     def default_date_format(self):
