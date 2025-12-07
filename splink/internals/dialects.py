@@ -147,6 +147,19 @@ class SplinkDialect(ABC):
             f"Backend '{self.sql_dialect_str}' does not have a " "'Least' function"
         )
 
+    @property
+    def hash_function_name(self) -> str:
+        """Return the name of a hash function that returns a bigint/int64.
+        Used for deterministic chunking of records during prediction.
+        """
+        raise NotImplementedError(
+            f"hash_function_name not implemented for {self.__class__.__name__}"
+        )
+
+    def hash_function_expression(self, col_expression: str) -> str:
+        """Return a SQL expression that hashes the given column expression."""
+        return f"{self.hash_function_name}({col_expression})"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -271,6 +284,10 @@ class DuckDBDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "least"
+
+    @property
+    def hash_function_name(self) -> str:
+        return "hash"  # DuckDB's hash() returns int64
 
     @property
     def default_date_format(self):
@@ -478,6 +495,10 @@ class SparkDialect(SplinkDialect):
         return f"""select {','.join(cols_to_select)}
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
+    @property
+    def hash_function_name(self) -> str:
+        return "hash"  # Spark's hash() returns int
+
 
 class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
@@ -533,6 +554,12 @@ class SQLiteDialect(SplinkDialect):
         return f"""ORDER BY RANDOM()
             LIMIT {sample_size}
             """
+
+    @property
+    def hash_function_name(self) -> str:
+        # SQLite doesn't have a native hash function.
+        # splink_hash is a UDF registered by Splink's SQLite backend.
+        return "splink_hash"
 
 
 class PostgresDialect(SplinkDialect):
@@ -645,6 +672,15 @@ class PostgresDialect(SplinkDialect):
             f"received: '{first_or_last}'"
         )
 
+    @property
+    def hash_function_name(self) -> str:
+        # hashtext returns a 32-bit integer, cast to bigint for consistency
+        return "hashtext"
+
+    def hash_function_expression(self, col_expression: str) -> str:
+        """PostgreSQL's hashtext requires text input, so cast the column."""
+        return f"hashtext(({col_expression})::text)"
+
 
 class AthenaDialect(SplinkDialect):
     _dialect_name_for_factory = "athena"
@@ -687,3 +723,7 @@ class AthenaDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "least"
+
+    @property
+    def hash_function_name(self) -> str:
+        return "xxhash64"  # Athena/Presto's xxhash64 returns bigint

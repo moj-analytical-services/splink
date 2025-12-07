@@ -10,6 +10,7 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
 
+from splink.internals.chunking import _chunk_assignment_sql
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
@@ -94,8 +95,12 @@ class BlockingRule:
         self.preceding_rules: List[BlockingRule] = []
 
     @property
-    def sqlglot_dialect(self):
+    def sqlglot_dialect(self) -> str:
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
+
+    @property
+    def sql_dialect(self) -> SplinkDialect:
+        return SplinkDialect.from_string(self._sql_dialect_str)
 
     def _input_column(self, name: str) -> InputColumn:
         """Create an InputColumn with this blocking rule's dialect."""
@@ -314,10 +319,18 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_column: InputColumn,
         br: BlockingRule,
         link_type: "LinkTypeLiteralType",
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
     ) -> str:
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
         the preceding blocking rules
+
+        Args:
+            left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                left side records.
+            right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                right side records.
         """
 
         unique_id_col = unique_id_input_column
@@ -325,7 +338,13 @@ class ExplodingBlockingRule(BlockingRule):
             source_dataset_input_column, unique_id_input_column
         )
 
-        where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
+        where_condition = _sql_gen_where_condition(
+            link_type,
+            unique_id_input_columns,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+            sql_dialect=self.sql_dialect,
+        )
 
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
         id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
@@ -430,7 +449,17 @@ def materialise_exploded_id_tables(
     splink_df_dict: dict[str, SplinkDataFrame],
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
 ) -> list[ExplodingBlockingRule]:
+    """Materialise exploded ID pair tables for exploding blocking rules.
+
+    Args:
+        left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            left side records.
+        right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            right side records.
+    """
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
@@ -476,6 +505,8 @@ def materialise_exploded_id_tables(
             unique_id_input_column=unique_id_input_column,
             br=br,
             link_type=link_type,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
         )
 
         pipeline.enqueue_sql(sql, table_name)
@@ -497,11 +528,19 @@ def compute_blocked_pairs_from_concat_with_tf(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     df_concat_with_tf_table_name: str = "__splink__df_concat_with_tf",
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
 ) -> SplinkDataFrame:
     """Compute __splink__blocked_id_pairs from df_concat_with_tf.
 
     Enqueues SQL to the pipeline, materialises the result, and cleans up
     any exploded ID pair tables used by exploding blocking rules.
+
+    Args:
+        left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            left side records.
+        right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            right side records.
 
     Returns:
         SplinkDataFrame: The materialised blocked pairs table.
@@ -537,6 +576,8 @@ def compute_blocked_pairs_from_concat_with_tf(
         splink_df_dict=splink_df_dict,
         source_dataset_input_column=source_dataset_input_column,
         unique_id_input_column=unique_id_input_column,
+        left_chunk=left_chunk,
+        right_chunk=right_chunk,
     )
 
     sqls = block_using_rules_sqls(
@@ -546,6 +587,8 @@ def compute_blocked_pairs_from_concat_with_tf(
         link_type=effective_link_type,
         source_dataset_input_column=source_dataset_input_column,
         unique_id_input_column=unique_id_input_column,
+        left_chunk=left_chunk,
+        right_chunk=right_chunk,
     )
 
     pipeline.enqueue_list_of_sqls(sqls)
@@ -564,7 +607,11 @@ def compute_blocked_pairs_from_concat_with_tf(
 
 
 def _sql_gen_where_condition(
-    link_type: backend_link_type_options, unique_id_cols: List[InputColumn]
+    link_type: backend_link_type_options,
+    unique_id_cols: List[InputColumn],
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
+    sql_dialect: "SplinkDialect | None" = None,
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -580,6 +627,19 @@ def _sql_gen_where_condition(
             f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
+    # Add chunk filtering if specified
+    if left_chunk is not None and sql_dialect is not None:
+        chunk_num, total_chunks = left_chunk
+        where_condition += _chunk_assignment_sql(
+            unique_id_cols, chunk_num, total_chunks, "l", sql_dialect
+        )
+
+    if right_chunk is not None and sql_dialect is not None:
+        chunk_num, total_chunks = right_chunk
+        where_condition += _chunk_assignment_sql(
+            unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
+        )
+
     return where_condition
 
 
@@ -591,6 +651,8 @@ def block_using_rules_sqls(
     link_type: "LinkTypeLiteralType",
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
+    left_chunk: tuple[int, int] | None = None,
+    right_chunk: tuple[int, int] | None = None,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -598,6 +660,13 @@ def block_using_rules_sqls(
 
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
+
+    Args:
+        left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            left side records. Requires dialect to be provided.
+        right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+            right side records. Requires dialect to be provided.
+        dialect: SQL dialect, required when using chunking parameters.
     """
 
     sqls = []
@@ -606,7 +675,15 @@ def block_using_rules_sqls(
         source_dataset_input_column, unique_id_input_column
     )
 
-    where_condition = _sql_gen_where_condition(link_type, unique_id_input_columns)
+    sql_dialect = blocking_rules[0].sql_dialect if blocking_rules else None
+
+    where_condition = _sql_gen_where_condition(
+        link_type,
+        unique_id_input_columns,
+        left_chunk=left_chunk,
+        right_chunk=right_chunk,
+        sql_dialect=sql_dialect,
+    )
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'

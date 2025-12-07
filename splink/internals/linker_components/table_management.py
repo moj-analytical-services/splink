@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from splink.internals.blocking import (
     compute_blocked_pairs_from_concat_with_tf,
 )
+from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
@@ -101,8 +102,34 @@ class LinkerTableManagement:
 
         return df
 
-    def compute_blocked_pairs_for_predict(self) -> SplinkDataFrame:
-        """Compute and cache blocked pairs for prediction."""
+    def compute_blocked_pairs_for_predict(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+    ) -> SplinkDataFrame:
+        """Compute and cache blocked pairs for prediction.
+
+        Args:
+            left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                left side records. For example, (1, 3) means chunk 1 of 3.
+            right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                right side records. For example, (2, 4) means chunk 2 of 4.
+
+        Returns:
+            SplinkDataFrame: The blocked pairs table, also stored in cache.
+
+        Examples:
+            ```py
+            # Pre-compute blocked pairs for full dataset
+            linker.table_management.compute_blocked_pairs_for_predict()
+
+            # Pre-compute blocked pairs for a specific chunk
+            linker.table_management.compute_blocked_pairs_for_predict(
+                left_chunk=(1, 3),
+                right_chunk=(2, 4),
+            )
+            ```
+        """
         linker = self._linker
         settings = linker._settings_obj
 
@@ -119,9 +146,12 @@ class LinkerTableManagement:
             link_type=settings._link_type,
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
         )
 
-        linker._intermediate_table_cache["__splink__blocked_id_pairs"] = blocked_pairs
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+        linker._intermediate_table_cache[cache_key] = blocked_pairs
 
         return blocked_pairs
 
