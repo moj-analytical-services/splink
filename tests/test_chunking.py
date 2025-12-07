@@ -17,12 +17,6 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
-def _get_small_df():
-    """Load a small subset of test data for fast tests."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(100)
-    return df
-
-
 def _get_comparison_count(linker, result):
     """Get the number of comparisons in a prediction result."""
     return result.as_pandas_dataframe().shape[0]
@@ -41,9 +35,6 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
     Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # Use head(100) equivalent for the helper
-    if hasattr(df, "head"):
-        df = df.head(100)
 
     settings = get_settings_dict()
     linker = Linker(df, settings, **helper.extra_linker_args())
@@ -82,8 +73,6 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
     Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    if hasattr(df, "head"):
-        df = df.head(100)
 
     settings = get_settings_dict()
     linker = Linker(df, settings, **helper.extra_linker_args())
@@ -127,8 +116,6 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect):
     Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    if hasattr(df, "head"):
-        df = df.head(100)
 
     settings = get_settings_dict()
 
@@ -159,8 +146,6 @@ def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
     Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    if hasattr(df, "head"):
-        df = df.head(100)
 
     settings = get_settings_dict()
 
@@ -207,7 +192,7 @@ def test_cache_is_hit_for_blocked_pairs():
     compute_blocked_pairs_from_concat_with_tf is NOT called when
     blocked pairs are already in cache.
     """
-    df = _get_small_df()
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
 
@@ -233,7 +218,7 @@ def test_cache_is_hit_for_blocked_pairs():
 
 def test_cache_is_hit_for_chunked_blocked_pairs():
     """Test that cache is hit for pre-computed chunked blocked pairs."""
-    df = _get_small_df()
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
 
@@ -266,7 +251,7 @@ def test_cache_is_hit_for_chunked_blocked_pairs():
 
 def test_cache_key_normalization_1_1():
     """Test that (1,1) chunk normalizes to base cache key."""
-    df = _get_small_df()
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
 
@@ -287,7 +272,7 @@ def test_cache_key_normalization_1_1():
 
 def test_blocked_pairs_not_deleted_when_from_cache():
     """Test that cached blocked pairs are not deleted after predict."""
-    df = _get_small_df()
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
 
@@ -306,7 +291,7 @@ def test_blocked_pairs_not_deleted_when_from_cache():
 
 def test_blocked_pairs_deleted_when_not_from_cache():
     """Test that non-cached blocked pairs are deleted after predict_chunk."""
-    df = _get_small_df()
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
 
