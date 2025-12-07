@@ -100,7 +100,6 @@ def test_calculate_cartesian_equals_total_number_of_links(
     pipeline = CTEPipeline()
     sql = vertically_concatenate_sql(
         input_tables=db_api.register_multiple_tables(dfs),
-        salting_required=False,
         source_dataset_input_column=InputColumn(
             "source_dataset", sqlglot_dialect_str="duckdb"
         ),

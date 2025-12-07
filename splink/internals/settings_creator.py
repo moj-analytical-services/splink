@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -118,6 +119,16 @@ class SettingsCreator:
                     if isinstance(br, dict):
                         if "sql_dialect" in br:
                             del br["sql_dialect"]
+                        if "salting_partitions" in br:
+                            warnings.warn(
+                                "The 'salting_partitions' parameter is deprecated "
+                                "and has been ignored. This affect how Splink "
+                                "parallelises your computation, but the end result will"
+                                " be identical.",
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            del br["salting_partitions"]
             else:
                 raise ValueError(
                     f"Path {settings_path} does not point to a valid file."

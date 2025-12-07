@@ -7,13 +7,12 @@ from .decorator import mark_with_dialects_excluding
 
 @mark_with_dialects_excluding()
 def test_preceding_blocking_rules(dialect):
-    br_surname = block_on("surname", salting_partitions=4).get_blocking_rule(dialect)
+    br_surname = block_on("surname").get_blocking_rule(dialect)
 
     q, _ = _get_dialect_quotes(dialect)
     em_rule = f"l.{q}surname{q} = r.{q}surname{q}"
 
     assert br_surname.blocking_rule_sql == em_rule
-    assert br_surname.salting_partitions == 4
     assert br_surname.preceding_rules == []
 
     preceding_rules = [
@@ -31,7 +30,6 @@ def test_preceding_blocking_rules(dialect):
         blocking_rule_to_obj(
             {
                 "blocking_rule": "l.help3 = r.help3",
-                "salting_partitions": 3,
                 "sql_dialect": dialect,
             }
         ),

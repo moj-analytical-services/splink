@@ -5,10 +5,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, TypedDict
 
-from splink.internals.blocking import (
-    BlockingRule,
-    SaltedBlockingRule,
-)
+from splink.internals.blocking import BlockingRule
 from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
@@ -640,15 +637,3 @@ class Settings:
             f"assessed as follows:\n\n{comparison_desc_str}"
         )
         return desc
-
-    @property
-    def salting_required(self):
-        # see https://github.com/duckdb/duckdb/discussions/9710
-        # in duckdb to parallelise we need salting
-        if self._sql_dialect_str == "duckdb":
-            return True
-
-        for br in self._blocking_rules_to_generate_predictions:
-            if isinstance(br, SaltedBlockingRule):
-                return True
-        return False

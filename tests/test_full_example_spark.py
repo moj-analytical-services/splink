@@ -56,7 +56,9 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
         "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
+            {
+                "blocking_rule": "l.surname = r.surname",
+            },
         ],
         "comparisons": [
             cl.JaroWinklerAtThresholds("first_name", 0.9),
