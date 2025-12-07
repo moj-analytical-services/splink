@@ -323,8 +323,8 @@ def test_chunked_predict_link_only(test_helpers, dialect):
 
     # Split into two datasets using modulo arithmetic
     df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 2 == 0].copy()
-    df2_pd = df_pd[df_pd.index % 2 == 1].copy()
+    df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
+    df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
 
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
@@ -377,9 +377,9 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
 
     # Split into three datasets using modulo arithmetic
     df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 3 == 0].copy()
-    df2_pd = df_pd[df_pd.index % 3 == 1].copy()
-    df3_pd = df_pd[df_pd.index % 3 == 2].copy()
+    df1_pd = df_pd[df_pd.index % 3 == 0].copy().reset_index(drop=True)
+    df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
+    df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
 
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
@@ -430,8 +430,8 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
 
     # Split into two datasets using modulo arithmetic
     df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 2 == 0].copy()
-    df2_pd = df_pd[df_pd.index % 2 == 1].copy()
+    df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
+    df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
 
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
@@ -484,9 +484,9 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
 
     # Split into three datasets using modulo arithmetic
     df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 3 == 0].copy()
-    df2_pd = df_pd[df_pd.index % 3 == 1].copy()
-    df3_pd = df_pd[df_pd.index % 3 == 2].copy()
+    df1_pd = df_pd[df_pd.index % 3 == 0].copy().reset_index(drop=True)
+    df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
+    df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
 
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
