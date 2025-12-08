@@ -27,6 +27,10 @@ from splink.internals.sql_transform import sqlglot_tree_signature
 logger = logging.getLogger(__name__)
 
 
+M_U_CLAMP_MIN = 1e-12
+MW_CLAMP_MAX = 100
+
+
 def _is_exact_match(sql_syntax_tree):
     signature = sqlglot_tree_signature(sql_syntax_tree)
 
@@ -346,6 +350,21 @@ class ComparisonLevel:
         return self._m_is_trained and self._u_is_trained
 
     @property
+    def _match_weight(self) -> float:
+        if self.is_null_level:
+            return 0.0
+
+        m = self.m_probability
+        u = self.u_probability
+
+        m = max(m, M_U_CLAMP_MIN)
+        u = max(u, M_U_CLAMP_MIN)
+
+        mw = math.log2(m / u)
+
+        return max(min(mw, MW_CLAMP_MAX), -MW_CLAMP_MAX)
+
+    @property
     def _bayes_factor(self):
         if self.is_null_level:
             return 1.0
@@ -573,6 +592,14 @@ class ComparisonLevel:
         """
         return dedent(sql)
 
+    def _match_weight_sql(self, gamma_column_name: str) -> str:
+        sql = f"""
+        WHEN
+        {gamma_column_name} = {self.comparison_vector_value}
+        THEN cast({self._match_weight} as float8)
+        """
+        return dedent(sql)
+
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
     ) -> str:
@@ -640,6 +667,54 @@ class ComparisonLevel:
                 ELSE cast(1 as float8)
                 END)
             """
+        return dedent(sql).strip()
+
+    def _tf_adjustment_match_weight_sql(
+        self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
+    ) -> str:
+        """Generate SQL for TF adjustment in log-space (additive match weights).
+
+        The TF adjustment represents the difference between:
+        - The base match weight using u_probability for the exact match level
+        - The adjusted match weight using the actual term frequency
+
+        tf_adj = log2(u_base) - log2(max_tf)
+        tf_adj_final = adjustment_weight * tf_adj
+
+        """
+        gamma_colname_value_is_this_level = (
+            f"{gamma_column_name} = {self.comparison_vector_value}"
+        )
+
+        if (
+            self.comparison_vector_value == -1
+            or not self._has_tf_adjustments
+            or self._tf_adjustment_weight == 0
+            or self._is_else_level
+        ):
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+        else:
+            tf_adj_col = self._tf_adjustment_input_column
+
+            u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
+                comparison_levels
+            )
+
+            min_val_sql = f"cast({self._tf_minimum_u_value} as float8)"
+            # If tf values are missing, assume rare and use self._tf_minimum_u_value
+            tf_sql = f"""
+            GREATEST(
+                COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, {min_val_sql}),
+                COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, {min_val_sql})
+            )
+            """
+
+            log2_u_prob = math.log2(u_prob_exact_match)
+
+            sql = f"""WHEN  {gamma_colname_value_is_this_level} then
+            cast({self._tf_adjustment_weight} as float8) * (
+                cast({log2_u_prob} as float8) - log2({tf_sql})
+            )"""
         return dedent(sql).strip()
 
     def as_dict(self):
