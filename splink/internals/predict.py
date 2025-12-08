@@ -197,7 +197,7 @@ def _combine_prior_and_mws(
     mw_expr = f"cast({mw_prior} as float8) + " + " + ".join(mw_terms)
 
     # match_prob = 1 / (1 + 2^(-match_weight))
-    # 2^-2000 could overflow, but 2^-2000 will not
+    # 2^2000 could overflow, but 2^-2000 will not
     # So for numerical stability,
     # - When mw >= 0: 1 / (1 + 2^(-mw))
     # - When mw < 0: 2^mw / (1 + 2^mw)
