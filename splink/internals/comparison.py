@@ -286,7 +286,7 @@ class Comparison:
                     col = cl._tf_adjustment_input_column
                     output_cols.extend(col.tf_name_l_r)
 
-            output_cols.extend(self._match_weight_columns_to_multiply)
+            output_cols.extend(self._match_weight_columns_to_sum)
 
         return dedupe_preserving_order(output_cols)
 
