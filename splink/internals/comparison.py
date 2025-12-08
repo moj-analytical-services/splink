@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -68,8 +69,9 @@ class Comparison:
         comparison_description: str = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
+        sql_dialect = SplinkDialect.from_string(sqlglot_dialect)
         comparison_levels_as_objs: list[ComparisonLevel] = [
-            ComparisonLevel(**cl, sqlglot_dialect=sqlglot_dialect)
+            ComparisonLevel(**cl, sql_dialect=sql_dialect)
             if isinstance(cl, dict)
             else cl
             for cl in comparison_levels

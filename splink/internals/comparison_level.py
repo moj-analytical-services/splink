@@ -14,6 +14,7 @@ from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -132,7 +133,7 @@ class ComparisonLevel:
     def __init__(
         self,
         sql_condition: str,
-        sqlglot_dialect: str,
+        sql_dialect: SplinkDialect,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -145,7 +146,7 @@ class ComparisonLevel:
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
     ):
-        self.sqlglot_dialect = sqlglot_dialect
+        self._sql_dialect = sql_dialect
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -181,6 +182,16 @@ class ComparisonLevel:
     def copy(self):
         # define a simple copy method to make copying easy/customisable
         return copy(self)
+
+    @property
+    def sql_dialect(self) -> SplinkDialect:
+        """The SplinkDialect instance for this comparison level."""
+        return self._sql_dialect
+
+    @property
+    def sqlglot_dialect(self) -> str:
+        """The sqlglot dialect string for SQL parsing."""
+        return self._sql_dialect.sqlglot_dialect
 
     @property
     def is_null_level(self) -> bool:
@@ -627,8 +638,10 @@ class ComparisonLevel:
 
             min_val_sql = f"cast({self._tf_minimum_u_value} as float8)"
 
+            greatest_fn = self.sql_dialect.greatest_function_name
+
             tf_u_value_sql = f"""
-            GREATEST(
+            {greatest_fn}(
                 COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}),
                 COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}),
                 {min_val_sql}
