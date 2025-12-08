@@ -224,3 +224,64 @@ def test_weightand_clamp():
     # Adjustment would be 10/5.0 = 2 if no weighting was applied
 
     assert pytest.approx(bf) == bf_no_adj * 2**0.5
+
+
+def test_tf_missing_values_in_lookup():
+    """Test that missing TF values in lookup table don't cause errors
+    and fall back to no adjustment (mw_tf_adj = 0.0)"""
+
+    # Create data with cities where Paris won't be in the TF table
+    data = pd.DataFrame(
+        [
+            {"unique_id": 1, "city": "London"},
+            {"unique_id": 2, "city": "London"},
+            {"unique_id": 3, "city": "Paris"},
+            {"unique_id": 4, "city": "Paris"},
+        ]
+    )
+
+    city_comparison = get_city_comparison()
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [city_comparison],
+        "blocking_rules_to_generate_predictions": ["l.city = r.city"],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    db_api = DuckDBAPI(connection=":memory:")
+    linker = Linker(data, settings, db_api=db_api)
+
+    # Register only London in the TF table - Paris is intentionally missing
+    # u_base = 0.2, tf_london = 0.1 (half u_base), so adj mw = log2(0.2/0.1) = 1.0
+    tf_data = pd.DataFrame(
+        [
+            {
+                "city": "London",
+                "tf_city": 0.1,  # Half the u_base value of 0.2
+            },
+        ]
+    )
+    linker.table_management.register_term_frequency_lookup(tf_data, "city")
+
+    df_predict = linker.inference.predict()
+    df_e_pd = df_predict.as_pandas_dataframe()
+
+    # Get results for each city
+    london_result = (
+        df_e_pd[(df_e_pd["city_l"] == "London") & (df_e_pd["city_r"] == "London")]
+        .head(1)
+        .to_dict(orient="records")[0]
+    )
+    paris_result = (
+        df_e_pd[(df_e_pd["city_l"] == "Paris") & (df_e_pd["city_r"] == "Paris")]
+        .head(1)
+        .to_dict(orient="records")[0]
+    )
+
+    # London should have TF adjustment of 1.0 (log2(0.2/0.1) = log2(2) = 1.0)
+    assert pytest.approx(london_result["mw_tf_adj_city"]) == 1.0
+
+    # Paris should have NO TF adjustment (mw_tf_adj = 0.0)
+    assert pytest.approx(paris_result["mw_tf_adj_city"]) == 0.0
