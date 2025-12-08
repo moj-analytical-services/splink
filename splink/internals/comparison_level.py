@@ -28,8 +28,26 @@ from splink.internals.sql_transform import sqlglot_tree_signature
 logger = logging.getLogger(__name__)
 
 
-M_U_CLAMP_MIN = 1e-12
-MW_CLAMP_MAX = 100
+M_U_CLAMP_MIN = 1e-300
+
+
+def _validate_m_u_probability(
+    value: float | None | str, param_name: str, level_not_observed_text: str
+) -> None:
+    """Validate that an m or u probability value is within acceptable bounds.
+
+    Raises ValueError if the value is below M_U_CLAMP_MIN, as such small values
+    cannot be accurately represented as float64 and would underflow to 0.0.
+    """
+    if value is None or value == level_not_observed_text:
+        return
+    if isinstance(value, (int, float)) and value < M_U_CLAMP_MIN:
+        raise ValueError(
+            f"{param_name} value {value} is below the minimum allowed "
+            f"value of {M_U_CLAMP_MIN}. Values this small cannot be "
+            "represented accurately as float64 and will underflow to 0.0. "
+            f"Please use a value >= {M_U_CLAMP_MIN}."
+        )
 
 
 def _is_exact_match(sql_syntax_tree):
@@ -158,6 +176,12 @@ class ComparisonLevel:
         self._disable_tf_exact_match_detection = disable_tf_exact_match_detection
 
         # internally these can be LEVEL_NOT_OBSERVED_TEXT, so allow for this
+        _validate_m_u_probability(
+            m_probability, "m_probability", LEVEL_NOT_OBSERVED_TEXT
+        )
+        _validate_m_u_probability(
+            u_probability, "u_probability", LEVEL_NOT_OBSERVED_TEXT
+        )
         self._m_probability: float | None | str = m_probability
         self._u_probability: float | None | str = u_probability
         self.default_m_probability: float | None = None
@@ -229,7 +253,7 @@ class ComparisonLevel:
     def m_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-
+        _validate_m_u_probability(value, "m_probability", LEVEL_NOT_OBSERVED_TEXT)
         self._m_probability = value
 
     @property
@@ -247,6 +271,7 @@ class ComparisonLevel:
     def u_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
+        _validate_m_u_probability(value, "u_probability", LEVEL_NOT_OBSERVED_TEXT)
         self._u_probability = value
 
     @property
@@ -371,7 +396,7 @@ class ComparisonLevel:
 
         mw = math.log2(m / u)
 
-        return max(min(mw, MW_CLAMP_MAX), -MW_CLAMP_MAX)
+        return mw
 
     @property
     def _bayes_factor(self):
@@ -679,10 +704,10 @@ class ComparisonLevel:
         if self.label_for_charts:
             output["label_for_charts"] = self.label_for_charts
 
-        if self._m_probability and self._m_is_trained:
+        if self._m_probability is not None and self._m_is_trained:
             output["m_probability"] = self.m_probability
 
-        if self._u_probability and self._u_is_trained:
+        if self._u_probability is not None and self._u_is_trained:
             output["u_probability"] = self.u_probability
 
         output["fix_m_probability"] = self._fix_m_probability

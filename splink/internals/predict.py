@@ -192,7 +192,7 @@ def _combine_prior_and_mws(
 ) -> tuple[str, str]:
     """Compute the combined match weight and match probability expressions (additive)"""
 
-    mw_prior = prob_to_match_weight(prior, sql_dialect)
+    mw_prior = prob_to_match_weight(prior)
 
     mw_expr = f"cast({mw_prior} as float8) + " + " + ".join(mw_terms)
 
