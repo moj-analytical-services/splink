@@ -145,8 +145,8 @@ class SettingsCreator:
         # TODO: should SettingsCreator deal with the logic of sql_dialect being
         # set?
         settings_dict.pop("sql_dialect", None)
-        settings_dict.pop("bayes_factor_column_prefix", None)
-        if "bayes_factor_column_prefix" in settings_dict:
+        bf_prefix = settings_dict.pop("bayes_factor_column_prefix", None)
+        if bf_prefix is not None and bf_prefix != "bf_":
             warnings.warn(
                 "The 'bayes_factor_column_prefix' parameter is deprecated and has been "
                 "ignored. Please use 'match_weight_column_prefix' instead.",
