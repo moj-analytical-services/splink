@@ -65,18 +65,11 @@ def get_scala_udfs():
             StringType(),
         ),
         ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
+        (
+            "damerau_levenshtein",
+            "uk.gov.moj.dash.linkage.LevDamerauDistance",
+            DoubleType(),
+        ),
     ]
-
-    if _spark_major_version() >= 3:
-        # Outline spark 3+ exclusive scala functions
-        spark_3_udfs = [
-            (
-                "damerau_levenshtein",
-                "uk.gov.moj.dash.linkage.LevDamerauDistance",
-                DoubleType(),
-            ),
-        ]
-        # Register spark 3 excl. functions
-        udfs_register.extend(spark_3_udfs)
 
     return udfs_register
