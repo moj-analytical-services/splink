@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from splink.internals.misc import EverythingEncoder, read_resource
 
-from .predict import _combine_prior_and_bfs
+from .predict import _combine_prior_and_mws
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -30,13 +30,12 @@ def row_examples(
 
     # See https://github.com/moj-analytical-services/splink/issues/1651
     # This ensures we have an average match weight that isn't affected by tf
-    bf_columns_no_tf = [c._bf_column_name for c in linker._settings_obj.comparisons]
+    mw_columns_no_tf = [c._mw_column_name for c in linker._settings_obj.comparisons]
 
     p = linker._settings_obj._probability_two_random_records_match
-    bf_final_no_tf = _combine_prior_and_bfs(
+    mw_final_no_tf = _combine_prior_and_mws(
         p,
-        bf_terms=bf_columns_no_tf,
-        sql_infinity_expr=linker._infinity_expression,
+        mw_terms=mw_columns_no_tf,
         sql_dialect=linker._db_api.sql_dialect,
     )[0]
 
@@ -45,7 +44,7 @@ def row_examples(
         *,
         {uid_expr} as rec_comparison_id,
         {gam_concat} as gam_concat,
-        log2({bf_final_no_tf}) as sort_avg_match_weight,
+        {mw_final_no_tf} as sort_avg_match_weight,
         random() as rand_order
     from __splink__df_predict
     """

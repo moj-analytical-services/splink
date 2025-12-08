@@ -140,10 +140,7 @@ def compare_records(
     """
     pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict_from_comparison_vectors_sqls_using_settings(
-        settings_obj,
-        sql_infinity_expression=db_api.sql_dialect.infinity_expression,
-    )
+    sqls = predict_from_comparison_vectors_sqls_using_settings(settings_obj)
     pipeline.enqueue_list_of_sqls(sqls)
 
     if include_found_by_blocking_rules:
