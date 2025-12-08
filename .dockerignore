@@ -1,10 +1,13 @@
 *
 
+!docs/
 !tests/
 !splink/
 !scripts/
 !pyproject.toml
 !uv.lock
 !README.md
+!LICENSE
+!.gitignore
 
 **/*.pyc

@@ -18,12 +18,12 @@ class InvalidColumnsLogGenerator(NamedTuple):
         invalid_type (str): The type of invalid column
             detected. This can be one of: `invalid_cols`,
             `invalid_table_pref` or `invalid_col_suffix`.
-        invalid_columns (list): A list of the invalid
-            columns that have been detected.
+        invalid_columns (set): A set of the invalid
+            columns that have been detected. Can be strings or InputColumn objects.
     """
 
     invalid_type: str
-    invalid_columns: set[str]
+    invalid_columns: set[object]
 
     @property
     def log_string_prefix(self):
@@ -32,9 +32,12 @@ class InvalidColumnsLogGenerator(NamedTuple):
     @property
     def columns_as_text(self):
         """Returns the invalid columns as a comma-separated
-        string wrapped with backticks."""
-
-        return ", ".join(f"`{c}`" for c in self.invalid_columns)
+        string wrapped with backticks. Handles both string and InputColumn objects."""
+        # Convert InputColumn objects to their .name, leave strings as-is
+        col_names = [
+            c.name if hasattr(c, "name") else str(c) for c in self.invalid_columns
+        ]
+        return ", ".join(f"`{c}`" for c in sorted(col_names))
 
     @property
     def missing_columns(self):

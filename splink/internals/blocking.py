@@ -105,6 +105,10 @@ class BlockingRule:
     def sqlglot_dialect(self):
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
+    def _input_column(self, name: str) -> InputColumn:
+        """Create an InputColumn with this blocking rule's dialect."""
+        return InputColumn(name, sqlglot_dialect_str=self.sqlglot_dialect)
+
     @property
     def match_key(self):
         return len(self.preceding_rules)
@@ -468,19 +472,19 @@ class ExplodingBlockingRule(BlockingRule):
     ) -> str:
         """A SQL string that creates the input tables that will be joined
         for this blocking rule"""
-        input_colnames = {col.quote().name for col in input_columns}
-
-        arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect_str=self.sqlglot_dialect).quote().name
-            for colname in self.array_columns_to_explode
+        arrays_to_explode_cols = [
+            self._input_column(colname) for colname in self.array_columns_to_explode
         ]
+
+        # Get columns not in arrays_to_explode using InputColumn equality
+        other_cols = [col for col in input_columns if col not in arrays_to_explode_cols]
 
         dialect = SplinkDialect.from_string(self._sql_dialect_str)
 
         expl_sql = dialect.explode_arrays_sql(
             input_tablename,
-            arrays_to_explode_quoted,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
+            [col.quote().name for col in arrays_to_explode_cols],
+            [col.quote().name for col in other_cols],
         )
 
         return expl_sql
@@ -517,21 +521,20 @@ def materialise_exploded_id_tables(
     pipeline.enqueue_sql(sql, "__splink__df_concat")
     nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    input_colnames = {col.name for col in nodes_concat.columns}
+    input_columns_set = set(nodes_concat.columns)
 
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline([nodes_concat])
-        arrays_to_explode_quoted = [
-            InputColumn(colname, sqlglot_dialect_str=db_api.sql_dialect.sqlglot_dialect)
-            .quote()
-            .name
-            for colname in br.array_columns_to_explode
+        arrays_to_explode_cols = [
+            br._input_column(colname) for colname in br.array_columns_to_explode
         ]
+
+        other_cols = input_columns_set - set(arrays_to_explode_cols)
 
         expl_sql = db_api.sql_dialect.explode_arrays_sql(
             "__splink__df_concat",
             br.array_columns_to_explode,
-            list(input_colnames.difference(arrays_to_explode_quoted)),
+            [col.name for col in other_cols],
         )
 
         pipeline.enqueue_sql(
