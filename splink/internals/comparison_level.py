@@ -616,25 +616,35 @@ class ComparisonLevel:
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
+            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
+            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
+
+            tf_adjustment_exists = f"{coalesce_l_r} is not null"
+
             u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
                 comparison_levels
             )
 
             min_val_sql = f"cast({self._tf_minimum_u_value} as float8)"
-            # If tf values are missing, assume rare and use self._tf_minimum_u_value
-            tf_sql = f"""
+
+            tf_u_value_sql = f"""
             GREATEST(
-                COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}, {min_val_sql}),
-                COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}, {min_val_sql})
+                COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}),
+                COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}),
+                {min_val_sql}
             )
             """
 
             log2_u_prob = math.log2(u_prob_exact_match)
 
             sql = f"""WHEN  {gamma_colname_value_is_this_level} then
+            (CASE WHEN {tf_adjustment_exists}
+            THEN
             cast({self._tf_adjustment_weight} as float8) * (
-                cast({log2_u_prob} as float8) - log2({tf_sql})
-            )"""
+                cast({log2_u_prob} as float8) - log2({tf_u_value_sql})
+            )
+            ELSE cast(0 as float8)
+            END)"""
         return dedent(sql).strip()
 
     def as_dict(self):

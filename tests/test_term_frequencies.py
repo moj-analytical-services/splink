@@ -3,6 +3,7 @@ import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
+from splink.internals.misc import match_weight_to_bayes_factor
 
 
 def get_data():
@@ -85,19 +86,19 @@ def test_tf_basic():
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
-    bf_no_adj = results["London"]["bf_city"]
-    bf_adj = results["London"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["London"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["London"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf_no_adj) == 5.0
     assert pytest.approx(bf) == 50 / 40  # 40/50 or 80% of values are london
 
-    bf_no_adj = results["Birmingham"]["bf_city"]
-    bf_adj = results["Birmingham"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf) == 50 / 8
 
-    bf_no_adj = results["Truro"]["bf_city"]
-    bf_adj = results["Truro"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Truro"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Truro"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf) == 50 / 2
 
@@ -122,19 +123,19 @@ def test_tf_clamp():
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
-    bf_no_adj = results["London"]["bf_city"]
-    bf_adj = results["London"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["London"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["London"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf_no_adj) == 5.0
     assert pytest.approx(bf) == 50 / 40  # 40/50 or 80% of values are london
 
-    bf_no_adj = results["Birmingham"]["bf_city"]
-    bf_adj = results["Birmingham"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf) == 50 / 8
 
-    bf_no_adj = results["Truro"]["bf_city"]
-    bf_adj = results["Truro"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Truro"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Truro"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
     assert pytest.approx(bf) == 10
 
@@ -160,8 +161,8 @@ def test_weight():
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
-    bf_no_adj = results["London"]["bf_city"]
-    bf_adj = results["London"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["London"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["London"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
 
     # Expected value is 5.0 for no adjust
@@ -170,8 +171,8 @@ def test_weight():
 
     assert pytest.approx(bf) == bf_no_adj * 0.25**0.5
 
-    bf_no_adj = results["Birmingham"]["bf_city"]
-    bf_adj = results["Birmingham"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Birmingham"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
 
     # With no weighting, target value is 6.25
@@ -179,8 +180,8 @@ def test_weight():
 
     assert pytest.approx(bf) == bf_no_adj * 1.25**0.5
 
-    bf_no_adj = results["Truro"]["bf_city"]
-    bf_adj = results["Truro"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Truro"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Truro"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
 
     # With no weighting, target value is 4.0
@@ -211,12 +212,12 @@ def test_weightand_clamp():
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
-    bf_no_adj = results["London"]["bf_city"]
-    bf_adj = results["London"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["London"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["London"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
 
-    bf_no_adj = results["Truro"]["bf_city"]
-    bf_adj = results["Truro"]["bf_tf_adj_city"]
+    bf_no_adj = match_weight_to_bayes_factor(results["Truro"]["mw_city"])
+    bf_adj = match_weight_to_bayes_factor(results["Truro"]["mw_tf_adj_city"])
     bf = bf_no_adj * bf_adj
 
     # With no weighting, target value is 4.0
