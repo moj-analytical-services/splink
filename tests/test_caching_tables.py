@@ -95,9 +95,7 @@ def test_cache_used_when_registering_nodes_table():
 
     linker = Linker(df, settings, db_api=db_api)
     cache = linker._intermediate_table_cache
-    linker.table_management.register_table_input_nodes_concat_with_tf(
-        splink__df_concat_with_tf
-    )
+    linker.table_management.register_df_concat_with_tf(splink__df_concat_with_tf)
     linker.inference.predict()
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
     assert (
@@ -294,9 +292,7 @@ def test_table_deletions_with_preregistered():
     db_api = DuckDBAPI(connection=con)
 
     linker = Linker("my_data_table", settings, db_api=db_api)
-    linker.table_management.register_table_input_nodes_concat_with_tf(
-        "my_nodes_with_tf_table"
-    )
+    linker.table_management.register_df_concat_with_tf("my_nodes_with_tf_table")
 
     table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 

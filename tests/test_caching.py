@@ -262,7 +262,7 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     ) as mockexecute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
-        linker.table_management.register_table_input_nodes_concat_with_tf(df)
+        linker.table_management.register_df_concat_with_tf(df)
         # now this should be cached, as I have manually registered
         pipeline = CTEPipeline()
         compute_df_concat_with_tf(linker, pipeline)

@@ -8,7 +8,7 @@ from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
     block_using_rules_sqls,
-    materialise_exploded_id_tables,
+    compute_blocked_pairs_from_concat_with_tf,
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
@@ -36,7 +36,6 @@ from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sq
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
-    split_df_concat_with_tf_into_two_tables_sqls,
 )
 
 if TYPE_CHECKING:
@@ -84,61 +83,30 @@ class LinkerInference:
             ```
         """
         pipeline = CTEPipeline()
-        # Allows clustering during a deterministic linkage.
-        # This is used in `cluster_pairwise_predictions_at_threshold`
-        # to set the cluster threshold to 1
-
         df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
         pipeline = CTEPipeline([df_concat_with_tf])
-        link_type = self._linker._settings_obj._link_type
 
-        blocking_input_tablename_l = "__splink__df_concat_with_tf"
-        blocking_input_tablename_r = "__splink__df_concat_with_tf"
+        settings = self._linker._settings_obj
 
-        link_type = self._linker._settings_obj._link_type
-        if (
-            len(self._linker._input_tables_dict) == 2
-            and self._linker._settings_obj._link_type == "link_only"
-        ):
-            sqls = split_df_concat_with_tf_into_two_tables_sqls(
-                "__splink__df_concat_with_tf",
-                self._linker._settings_obj.column_info_settings.source_dataset_column_name,
-            )
-            pipeline.enqueue_list_of_sqls(sqls)
-
-            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
-            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
-            link_type = "two_dataset_link_only"
-
-        exploding_br_with_id_tables = materialise_exploded_id_tables(
-            link_type=link_type,
-            blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+            pipeline=pipeline,
             db_api=self._linker._db_api,
             splink_df_dict=self._linker._input_tables_dict,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
-
-        sqls = block_using_rules_sqls(
-            input_tablename_l=blocking_input_tablename_l,
-            input_tablename_r=blocking_input_tablename_r,
-            blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
-            link_type=link_type,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
-        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-            self._linker._settings_obj._columns_to_select_for_blocking,
+            settings._columns_to_select_for_blocking,
             ["*"],
             input_tablename_l="__splink__df_concat_with_tf",
             input_tablename_r="__splink__df_concat_with_tf",
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -147,7 +115,6 @@ class LinkerInference:
         )
         deterministic_link_df.metadata["is_deterministic_link"] = True
 
-        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
         blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return deterministic_link_df
@@ -157,7 +124,6 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
-        materialise_blocked_pairs: bool = True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -178,8 +144,6 @@ class LinkerInference:
                 joined to any term frequencies which have been asked
                 for in the settings object.  If False, this will be
                 computed as part of a large CTE pipeline.   Defaults to True
-            materialise_blocked_pairs: In the blocking phase, materialise the table
-                of pairs of records that will be scored
 
         Examples:
             ```py
@@ -192,74 +156,19 @@ class LinkerInference:
         """
 
         pipeline = CTEPipeline()
+        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
-        # If materialise_after_computing_term_frequencies=False and the user only
-        # calls predict, it runs as a single pipeline with no materialisation
-        # of anything.
-
-        # In duckdb, calls to random() in a CTE pipeline cause problems:
-        # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
-        if (
-            materialise_after_computing_term_frequencies
-            or self._linker._sql_dialect.sql_dialect_str == "duckdb"
-        ):
-            df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-            pipeline = CTEPipeline([df_concat_with_tf])
+        cache = self._linker._intermediate_table_cache
+        if "__splink__blocked_id_pairs" in cache:
+            blocked_pairs = cache.get_with_logging("__splink__blocked_id_pairs")
         else:
-            pipeline = enqueue_df_concat_with_tf(self._linker, pipeline)
+            blocked_pairs = (
+                self._linker.table_management.compute_blocked_pairs_for_predict()
+            )
+
+        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
         start_time = time.time()
-
-        blocking_input_tablename_l = "__splink__df_concat_with_tf"
-        blocking_input_tablename_r = "__splink__df_concat_with_tf"
-
-        link_type = self._linker._settings_obj._link_type
-        if (
-            len(self._linker._input_tables_dict) == 2
-            and self._linker._settings_obj._link_type == "link_only"
-        ):
-            sqls = split_df_concat_with_tf_into_two_tables_sqls(
-                "__splink__df_concat_with_tf",
-                self._linker._settings_obj.column_info_settings.source_dataset_column_name,
-            )
-            pipeline.enqueue_list_of_sqls(sqls)
-
-            blocking_input_tablename_l = "__splink__df_concat_with_tf_left"
-            blocking_input_tablename_r = "__splink__df_concat_with_tf_right"
-            link_type = "two_dataset_link_only"
-
-        # If exploded blocking rules exist, we need to materialise
-        # the tables of ID pairs
-
-        exploding_br_with_id_tables = materialise_exploded_id_tables(
-            link_type=link_type,
-            blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
-            db_api=self._linker._db_api,
-            splink_df_dict=self._linker._input_tables_dict,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-        )
-
-        sqls = block_using_rules_sqls(
-            input_tablename_l=blocking_input_tablename_l,
-            input_tablename_r=blocking_input_tablename_r,
-            blocking_rules=self._linker._settings_obj._blocking_rules_to_generate_predictions,
-            link_type=link_type,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-        )
-
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        if materialise_blocked_pairs:
-            blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-                pipeline
-            )
-
-            pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
-            blocking_time = time.time() - start_time
-            logger.info(f"Blocking time: {blocking_time:.2f} seconds")
-            start_time = time.time()
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
@@ -282,13 +191,9 @@ class LinkerInference:
         predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         predict_time = time.time() - start_time
-        logger.info(f"Predict time: {predict_time:.2f} seconds")
+        logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
 
         self._linker._predict_warning()
-
-        [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
-        if materialise_blocked_pairs:
-            blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         return predictions
 

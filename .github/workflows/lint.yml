@@ -1,9 +1,6 @@
 name: autoruff
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "**/*.py"
       - "pyproject.toml"
