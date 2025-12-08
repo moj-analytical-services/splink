@@ -146,7 +146,7 @@ class ComparisonLevel:
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
     ):
-        self._sql_dialect = sql_dialect
+        self.sql_dialect = sql_dialect
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -184,14 +184,9 @@ class ComparisonLevel:
         return copy(self)
 
     @property
-    def sql_dialect(self) -> SplinkDialect:
-        """The SplinkDialect instance for this comparison level."""
-        return self._sql_dialect
-
-    @property
     def sqlglot_dialect(self) -> str:
         """The sqlglot dialect string for SQL parsing."""
-        return self._sql_dialect.sqlglot_dialect
+        return self.sql_dialect.sqlglot_dialect
 
     @property
     def is_null_level(self) -> bool:
@@ -361,12 +356,15 @@ class ComparisonLevel:
         return self._m_is_trained and self._u_is_trained
 
     @property
-    def _match_weight(self) -> float:
+    def _match_weight(self):
         if self.is_null_level:
             return 0.0
 
         m = self.m_probability
         u = self.u_probability
+
+        if m is None or u is None:
+            return None
 
         m = max(m, M_U_CLAMP_MIN)
         u = max(u, M_U_CLAMP_MIN)
@@ -640,14 +638,16 @@ class ComparisonLevel:
 
             greatest_fn = self.sql_dialect.greatest_function_name
 
-            tf_u_value_sql = f"""
-            {greatest_fn}(
-                COALESCE({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r}),
-                COALESCE({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l}),
-                {min_val_sql}
+            # Where this is used below, we check tf_adjustment_exists
+            # so we're guaranteed that one of tf_name_l or tf_name_r is not null
+            tf_u_value_sql = (
+                f"{greatest_fn}({coalesce_l_r}, {coalesce_r_l}, {min_val_sql})"
             )
-            """
-
+            if u_prob_exact_match is None:
+                raise ValueError(
+                    "Cannot compute term frequency adjustment when "
+                    "u_probability of exact match level is not set."
+                )
             log2_u_prob = math.log2(u_prob_exact_match)
 
             sql = f"""WHEN  {gamma_colname_value_is_this_level} then
