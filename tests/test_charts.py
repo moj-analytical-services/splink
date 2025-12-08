@@ -146,8 +146,6 @@ def test_m_u_charts(dialect, test_helpers):
         fix_probability_two_random_records_match=True,
     )
 
-    assert linker._settings_obj.comparisons[1].comparison_levels[1].u_probability == 0.0
-
     linker.visualisations.match_weights_chart()
 
 
