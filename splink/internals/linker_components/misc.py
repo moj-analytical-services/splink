@@ -74,7 +74,7 @@ class LinkerMisc:
         pipeline = CTEPipeline()
         pipeline.enqueue_sql(sql, output_tablename_templated)
         splink_dataframe = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
+            pipeline
         )
 
         if output_type in ("splink_df", "splinkdf"):

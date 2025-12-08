@@ -37,9 +37,7 @@ def test_access_extreme_array_element(test_helpers, dialect):
         f"{last_element.name} AS last_element "
         f"FROM {arr_tab.physical_name} ORDER BY unique_id"
     )
-    res = db_api.sql_to_splink_dataframe_checking_cache(
-        sql, "test_first"
-    ).as_pandas_dataframe()
+    res = db_api._execute_sql(sql, "test_first").as_pandas_dataframe()
 
     pd.testing.assert_series_equal(
         res["first_element"],
@@ -80,9 +78,7 @@ def test_nullif(test_helpers, dialect):
         f"SELECT unique_id, {nullif_name_empty_or_na.name} AS cleaned_name "
         f"FROM {nully_table.physical_name} ORDER BY unique_id"
     )
-    res = db_api.sql_to_splink_dataframe_checking_cache(
-        sql, "test_first"
-    ).as_pandas_dataframe()
+    res = db_api._execute_sql(sql, "test_first").as_pandas_dataframe()
 
     pd.testing.assert_series_equal(
         res["cleaned_name"],

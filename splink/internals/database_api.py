@@ -48,6 +48,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
+        self._created_tables: set[str] = set()
 
     @final
     def _log_and_run_sql_execution(
@@ -96,61 +97,28 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             spark_df, templated_name, physical_name
         )
         self._intermediate_table_cache.executed_queries.append(output_df)
+        self._created_tables.add(physical_name)
         return output_df
 
     @final
-    def _get_table_from_cache_or_db(
-        self, table_name_hash: str, output_tablename_templated: str
-    ) -> Union[SplinkDataFrame, None]:
-        # Certain tables are put in the cache using their templated_name
-        # An example is __splink__df_concat_with_tf
-        # These tables are put in the cache when they are first calculated
-        # e.g. with compute_df_concat_with_tf()
-        # But they can also be put in the cache manually using
-        # e.g. register_table_input_nodes_concat_with_tf()
-
-        # Look for these 'named' tables in the cache prior
-        # to looking for the hashed version s
-        if output_tablename_templated in self._intermediate_table_cache:
-            return self._intermediate_table_cache.get_with_logging(
-                output_tablename_templated
-            )
-
-        if table_name_hash in self._intermediate_table_cache:
-            return self._intermediate_table_cache.get_with_logging(table_name_hash)
-
-        # If not in cache, fall back on checking the database
-        if self.table_exists_in_database(table_name_hash):
-            logger.debug(
-                f"Found cache for {output_tablename_templated} "
-                f"in database using table name with physical name {table_name_hash}"
-            )
-            return self.table_to_splink_dataframe(
-                output_tablename_templated, table_name_hash
-            )
-        return None
-
-    @final
-    def sql_to_splink_dataframe_checking_cache(
+    def _execute_sql(
         self,
         sql: str,
         output_tablename_templated: str,
-        use_cache: bool = True,
     ) -> SplinkDataFrame:
-        # differences from _sql_to_splink_dataframe:
-        # this _calculates_ physical name, handles debug_mode,
-        # and checks cache before querying
+        """Execute SQL and return a SplinkDataFrame.
+
+        This is a low-level method that:
+        1. Generates a unique physical table name (using hash of SQL)
+        2. Executes the SQL to create the table
+        3. Returns a SplinkDataFrame wrapping the result
+
+        For most use cases, prefer `sql_pipeline_to_splink_dataframe()` which
+        takes a CTEPipeline.
+        """
         to_hash = (sql + self._cache_uid).encode("utf-8")
         hash = hashlib.sha256(to_hash).hexdigest()[:9]
-        # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
-
-        if use_cache:
-            splink_dataframe = self._get_table_from_cache_or_db(
-                table_name_hash, output_tablename_templated
-            )
-            if splink_dataframe is not None:
-                return splink_dataframe
 
         if self.debug_mode:
             print(sql)  # noqa: T201
@@ -181,16 +149,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         splink_dataframe.created_by_splink = True
         splink_dataframe.sql_used_to_create = sql
 
-        physical_name = splink_dataframe.physical_name
-
-        self._intermediate_table_cache[physical_name] = splink_dataframe
-
         return splink_dataframe
 
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
-        use_cache: bool = True,
     ) -> SplinkDataFrame:
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
@@ -203,10 +166,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             sql_gen = pipeline.generate_cte_pipeline_sql()
             output_tablename_templated = pipeline.output_table_name
 
-            return self.sql_to_splink_dataframe_checking_cache(
+            return self._execute_sql(
                 sql_gen,
                 output_tablename_templated,
-                use_cache,
             )
 
         created_views: list[str] = []
@@ -224,10 +186,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                     f"--------Creating table: {output_tablename}--------"
                 )
 
-                splink_dataframe = self.sql_to_splink_dataframe_checking_cache(
+                splink_dataframe = self._execute_sql(
                     sql,
                     output_tablename,
-                    use_cache=False,
                 )
                 created_views.append(output_tablename)
                 created_physicals.append(splink_dataframe.physical_name)
@@ -374,20 +335,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             del self._intermediate_table_cache[k]
 
     def delete_tables_created_by_splink_from_db(self):
-        # Accounts for names in cache with key which are templated names
-        keys = list(self._intermediate_table_cache.keys())
-
-        for key in keys:
-            if key in self._intermediate_table_cache:
-                splink_df = self._intermediate_table_cache[key]
-            else:
-                continue
-            if (
-                key in self._intermediate_table_cache
-                and splink_df.created_by_splink
-                and key == splink_df.physical_name
-            ):
-                splink_df.drop_table_from_database_and_remove_from_cache()
+        # User-registered tables are never added to _created_tables,
+        # so don't need to worry about accidentally deleting them.
+        for physical_name in list(self._created_tables):
+            self.delete_table_from_database(physical_name)
+            self._created_tables.discard(physical_name)
 
     def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
         """Expose the physical table via a backend-specific temp view."""

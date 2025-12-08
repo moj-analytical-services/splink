@@ -221,6 +221,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     param_records = compute_proportions_for_new_parameters(param_records)
     df_params.drop_table_from_database_and_remove_from_cache()
     df_sample.drop_table_from_database_and_remove_from_cache()
+    blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
     m_u_records = [
         r
