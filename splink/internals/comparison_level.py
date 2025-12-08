@@ -565,9 +565,16 @@ class ComparisonLevel:
 
     def _u_probability_corresponding_to_exact_match(
         self, comparison_levels: list[ComparisonLevel]
-    ) -> float | None:
+    ) -> float:
         if self.disable_tf_exact_match_detection:
-            return self.u_probability
+            u_prob = self.u_probability
+            if u_prob is None:
+                raise ValueError(
+                    "Cannot compute term frequency adjustment when "
+                    "disable_tf_exact_match_detection is True but "
+                    "u_probability is not set on this level."
+                )
+            return u_prob
 
         # otherwise, default to looking for an appropriate exact match level:
 
@@ -581,7 +588,14 @@ class ComparisonLevel:
             if len(colnames) != 1:
                 continue
             if colnames[0] == self._tf_adjustment_input_column_name.lower():
-                return level.u_probability
+                u_prob = level.u_probability
+                if u_prob is None:
+                    raise ValueError(
+                        f"Found exact match level for "
+                        f"{self._tf_adjustment_input_column_name}"
+                        " but its u_probability is not set."
+                    )
+                return u_prob
 
         raise ValueError(
             "Could not find an exact match level for "
@@ -643,11 +657,7 @@ class ComparisonLevel:
             tf_u_value_sql = (
                 f"{greatest_fn}({coalesce_l_r}, {coalesce_r_l}, {min_val_sql})"
             )
-            if u_prob_exact_match is None:
-                raise ValueError(
-                    "Cannot compute term frequency adjustment when "
-                    "u_probability of exact match level is not set."
-                )
+
             log2_u_prob = math.log2(u_prob_exact_match)
 
             sql = f"""WHEN  {gamma_colname_value_is_this_level} then
