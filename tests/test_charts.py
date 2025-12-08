@@ -121,7 +121,7 @@ df = pd.DataFrame(
 
 # sqlite has weird issue unrelated to charts,
 # but with training stuff we also randomly test here
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding()
 def test_m_u_charts(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
@@ -138,12 +138,6 @@ def test_m_u_charts(dialect, test_helpers):
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
-    )
-
-    linker.training.estimate_parameters_using_expectation_maximisation(
-        "l.surname = r.surname",
-        fix_u_probabilities=False,
-        fix_probability_two_random_records_match=True,
     )
 
     linker.visualisations.match_weights_chart()
