@@ -335,7 +335,6 @@ class LinkerInference:
             self._linker._settings_obj,
             threshold_match_probability,
             threshold_match_weight,
-            sql_infinity_expression=self._linker._infinity_expression,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -510,7 +509,6 @@ class LinkerInference:
             self._linker._settings_obj,
             threshold_match_probability,
             threshold_match_weight,
-            sql_infinity_expression=self._linker._infinity_expression,
         )
         sqls[-1]["output_table_name"] = "__splink__df_predict_missing_cluster_edges"
         pipeline.enqueue_list_of_sqls(sqls)
@@ -679,8 +677,7 @@ class LinkerInference:
         pipeline.enqueue_list_of_sqls(sqls)
 
         sqls = predict_from_comparison_vectors_sqls_using_settings(
-            self._linker._settings_obj,
-            sql_infinity_expression=self._linker._infinity_expression,
+            self._linker._settings_obj
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -872,10 +869,7 @@ class LinkerInference:
         """
         pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls_using_settings(
-            linker._settings_obj,
-            sql_infinity_expression=linker._infinity_expression,
-        )
+        sqls = predict_from_comparison_vectors_sqls_using_settings(linker._settings_obj)
         pipeline.enqueue_list_of_sqls(sqls)
 
         if include_found_by_blocking_rules:

@@ -263,11 +263,6 @@ class InputColumn:
         return [self.l_name_as_l, self.r_name_as_r]
 
     @property
-    def bf_name(self) -> str:
-        new_column_name = self._bf_prefix + self.col_builder.column_name
-        return replace(self.col_builder, column_name=new_column_name).sql
-
-    @property
     def tf_name(self) -> str:
         new_column_name = self._tf_prefix + self.col_builder.column_name
         return replace(self.col_builder, column_name=new_column_name).sql

@@ -125,10 +125,7 @@ def test_splink_converges_to_known_params():
     )
 
     pipeline = CTEPipeline([cv])
-    sqls = predict_from_comparison_vectors_sqls_using_settings(
-        linker._settings_obj,
-        sql_infinity_expression=linker._infinity_expression,
-    )
+    sqls = predict_from_comparison_vectors_sqls_using_settings(linker._settings_obj)
     pipeline.enqueue_list_of_sqls(sqls)
 
     predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)

@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 import pytest
 
@@ -42,11 +44,17 @@ def test_disable_tf_exact_match_detection():
         )
         == 0.123
     )
-    assert "0.123" in comparison_level_exact_match._tf_adjustment_sql(
-        "gamma_", comparison_levels_normal
+    assert (
+        f"{str(math.log2(0.123))[:4]}"
+        in comparison_level_exact_match._tf_adjustment_sql(
+            "gamma_", comparison_levels_normal
+        )
     )
-    assert "0.234" not in comparison_level_exact_match._tf_adjustment_sql(
-        "gamma_", comparison_levels_normal
+    assert (
+        f"{str(math.log2(0.234))[:4]}"
+        not in comparison_level_exact_match._tf_adjustment_sql(
+            "gamma_", comparison_levels_normal
+        )
     )
 
     comparison_level_levenshtein = comparison_levels_normal[2]
@@ -56,11 +64,17 @@ def test_disable_tf_exact_match_detection():
         )
         == 0.123
     )
-    assert "0.123" in comparison_level_levenshtein._tf_adjustment_sql(
-        "gamma_", comparison_levels_normal
+    assert (
+        f"{str(math.log2(0.123))[:4]}"
+        in comparison_level_levenshtein._tf_adjustment_sql(
+            "gamma_", comparison_levels_normal
+        )
     )
-    assert "0.234" not in comparison_level_levenshtein._tf_adjustment_sql(
-        "gamma_", comparison_levels_normal
+    assert (
+        f"{str(math.log2(0.234))[:4]}"
+        not in comparison_level_levenshtein._tf_adjustment_sql(
+            "gamma_", comparison_levels_normal
+        )
     )
 
     arr_sql = 'array_length(list_intersect("test_array_l", "test_array_r"))>= 1'
@@ -95,7 +109,7 @@ def test_disable_tf_exact_match_detection():
         )
         == 0.456
     )
-    assert "0.456" in exact_match._tf_adjustment_sql(
+    assert f"{str(math.log2(0.456))[:4]}" in exact_match._tf_adjustment_sql(
         "gamma_", comparison_levels_disabled
     )
 
@@ -162,9 +176,9 @@ def test_with_predict_calculation():
     res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
 
     # Exact match, normal tf adjustement, Kirk
-    assert res["bf_surname"] == pytest.approx(8.0)
+    assert res["mw_surname"] == pytest.approx(math.log2(8.0))
     # Overall BF should be m/u = 0.8/0.2 = 4
-    assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+    assert res["mw_tf_adj_surname"] + res["mw_surname"] == pytest.approx(math.log2(4.0))
 
     # Levenshtein match, normal tf adustments
     sql = f"""
@@ -176,13 +190,13 @@ def test_with_predict_calculation():
     # Levenshtein match, normal tf adustments, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
-    assert res["bf_surname"] == pytest.approx(3.0)
+    assert res["mw_surname"] == pytest.approx(math.log2(3.0))
     # Overall BR should be based base of 3.0
     # TF adjustmeent is difference between:
     #    u of exact match = 0.1
     #    u of Taylor = 0.4
-    assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
-        3.0 * (0.1 / 0.4)
+    assert res["mw_surname"] + res["mw_tf_adj_surname"] == pytest.approx(
+        math.log2(3.0 * (0.1 / 0.4))
     )
 
     settings_disabled = get_settings(disable_tf_exact_match_detection=True)
@@ -203,9 +217,9 @@ def test_with_predict_calculation():
     """
     res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
     # Exact match, normal tf adjustement, Kirk
-    assert res["bf_surname"] == pytest.approx(8.0)
+    assert res["mw_surname"] == pytest.approx(math.log2(8.0))
     # Overall BF should be m/u = 0.8/0.2 = 4
-    assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+    assert res["mw_tf_adj_surname"] + res["mw_surname"] == pytest.approx(math.log2(4.0))
 
     sql = f"""
     select * from {df_predict.physical_name}
@@ -216,14 +230,14 @@ def test_with_predict_calculation():
     # Levenshtein match, tf exact match detection disabled, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
-    assert res["bf_surname"] == pytest.approx(3.0)
+    assert res["mw_surname"] == pytest.approx(math.log2(3.0))
 
     # Overall BR should be based base of 3.0
     # TF adjustmeent is difference between:
     #    u of this level = 0.3
     #    u of Taylor = 0.4
-    assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
-        3.0 * (0.3 / 0.4)
+    assert res["mw_surname"] + res["mw_tf_adj_surname"] == pytest.approx(
+        math.log2(3.0 * (0.3 / 0.4))
     )
 
     settings_disabled_with_min_tf = get_settings(
@@ -254,9 +268,11 @@ def test_with_predict_calculation():
         """
         res = linker.misc.query_sql(sql).to_dict(orient="records")[0]
         # Exact match, normal tf adjustement, Kirk
-        assert res["bf_surname"] == pytest.approx(8.0)
+        assert res["mw_surname"] == pytest.approx(math.log2(8.0))
         # Overall BF should be m/u = 0.8/0.2 = 4
-        assert res["bf_tf_adj_surname"] * res["bf_surname"] == pytest.approx(4.0)
+        assert res["mw_tf_adj_surname"] + res["mw_surname"] == pytest.approx(
+            math.log2(4.0)
+        )
 
         sql = f"""
         select * from {df_predict.physical_name}
@@ -267,12 +283,12 @@ def test_with_predict_calculation():
         # Levenshtein match, tf exact match detection disabled, Taylor
         # Splink makes the tf adjustment based on on the exact match level
         # Lev match level has bf of 0.9/0.3
-        assert res["bf_surname"] == pytest.approx(3.0)
+        assert res["mw_surname"] == pytest.approx(math.log2(3.0))
 
         # Overall BR should be based base of 3.0
         # TF adjustmeent is difference between:
         #    u of this level = 0.3
         #    u of Taylor with min tf applied = 0.1
-        assert res["bf_surname"] * res["bf_tf_adj_surname"] == pytest.approx(
-            3.0 * (0.3 / 0.1)
+        assert res["mw_surname"] + res["mw_tf_adj_surname"] == pytest.approx(
+            math.log2(3.0) + math.log2(0.3 / 0.1)
         )

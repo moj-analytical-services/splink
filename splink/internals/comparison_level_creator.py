@@ -44,7 +44,7 @@ class ComparisonLevelCreator(ABC):
         for the end user - otherwise they'd need to import a SplinkDialect"""
         sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         return ComparisonLevel(
-            sqlglot_dialect=sql_dialect.sqlglot_dialect,
+            sql_dialect=sql_dialect,
             **self.create_level_dict(sql_dialect_str),
         )
 

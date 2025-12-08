@@ -14,6 +14,7 @@ from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -25,6 +26,28 @@ from splink.internals.parse_sql import get_columns_used_from_sql
 from splink.internals.sql_transform import sqlglot_tree_signature
 
 logger = logging.getLogger(__name__)
+
+
+M_U_CLAMP_MIN = 1e-300
+
+
+def _validate_m_u_probability(
+    value: float | None | str, param_name: str, level_not_observed_text: str
+) -> None:
+    """Validate that an m or u probability value is within acceptable bounds.
+
+    Raises ValueError if the value is below M_U_CLAMP_MIN, as such small values
+    cannot be accurately represented as float64 and would underflow to 0.0.
+    """
+    if value is None or value == level_not_observed_text:
+        return
+    if isinstance(value, (int, float)) and value < M_U_CLAMP_MIN:
+        raise ValueError(
+            f"{param_name} value {value} is below the minimum allowed "
+            f"value of {M_U_CLAMP_MIN}. Values this small cannot be "
+            "represented accurately as float64 and will underflow to 0.0. "
+            f"Please use a value >= {M_U_CLAMP_MIN}."
+        )
 
 
 def _is_exact_match(sql_syntax_tree):
@@ -128,7 +151,7 @@ class ComparisonLevel:
     def __init__(
         self,
         sql_condition: str,
-        sqlglot_dialect: str,
+        sql_dialect: SplinkDialect,
         *,
         label_for_charts: str = None,
         is_null_level: bool = False,
@@ -141,7 +164,7 @@ class ComparisonLevel:
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
     ):
-        self.sqlglot_dialect = sqlglot_dialect
+        self.sql_dialect = sql_dialect
 
         self._sql_condition = sql_condition
         self._is_null_level = is_null_level
@@ -153,6 +176,12 @@ class ComparisonLevel:
         self._disable_tf_exact_match_detection = disable_tf_exact_match_detection
 
         # internally these can be LEVEL_NOT_OBSERVED_TEXT, so allow for this
+        _validate_m_u_probability(
+            m_probability, "m_probability", LEVEL_NOT_OBSERVED_TEXT
+        )
+        _validate_m_u_probability(
+            u_probability, "u_probability", LEVEL_NOT_OBSERVED_TEXT
+        )
         self._m_probability: float | None | str = m_probability
         self._u_probability: float | None | str = u_probability
         self.default_m_probability: float | None = None
@@ -177,6 +206,11 @@ class ComparisonLevel:
     def copy(self):
         # define a simple copy method to make copying easy/customisable
         return copy(self)
+
+    @property
+    def sqlglot_dialect(self) -> str:
+        """The sqlglot dialect string for SQL parsing."""
+        return self.sql_dialect.sqlglot_dialect
 
     @property
     def is_null_level(self) -> bool:
@@ -219,7 +253,7 @@ class ComparisonLevel:
     def m_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-
+        _validate_m_u_probability(value, "m_probability", LEVEL_NOT_OBSERVED_TEXT)
         self._m_probability = value
 
     @property
@@ -237,6 +271,7 @@ class ComparisonLevel:
     def u_probability(self, value: float) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
+        _validate_m_u_probability(value, "u_probability", LEVEL_NOT_OBSERVED_TEXT)
         self._u_probability = value
 
     @property
@@ -344,6 +379,24 @@ class ComparisonLevel:
     @property
     def _is_trained(self):
         return self._m_is_trained and self._u_is_trained
+
+    @property
+    def _match_weight(self):
+        if self.is_null_level:
+            return 0.0
+
+        m = self.m_probability
+        u = self.u_probability
+
+        if m is None or u is None:
+            return None
+
+        m = max(m, M_U_CLAMP_MIN)
+        u = max(u, M_U_CLAMP_MIN)
+
+        mw = math.log2(m / u)
+
+        return mw
 
     @property
     def _bayes_factor(self):
@@ -537,9 +590,16 @@ class ComparisonLevel:
 
     def _u_probability_corresponding_to_exact_match(
         self, comparison_levels: list[ComparisonLevel]
-    ) -> float | None:
+    ) -> float:
         if self.disable_tf_exact_match_detection:
-            return self.u_probability
+            u_prob = self.u_probability
+            if u_prob is None:
+                raise ValueError(
+                    "Cannot compute term frequency adjustment when "
+                    "disable_tf_exact_match_detection is True but "
+                    "u_probability is not set on this level."
+                )
+            return u_prob
 
         # otherwise, default to looking for an appropriate exact match level:
 
@@ -553,7 +613,14 @@ class ComparisonLevel:
             if len(colnames) != 1:
                 continue
             if colnames[0] == self._tf_adjustment_input_column_name.lower():
-                return level.u_probability
+                u_prob = level.u_probability
+                if u_prob is None:
+                    raise ValueError(
+                        f"Found exact match level for "
+                        f"{self._tf_adjustment_input_column_name}"
+                        " but its u_probability is not set."
+                    )
+                return u_prob
 
         raise ValueError(
             "Could not find an exact match level for "
@@ -562,33 +629,38 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    def _bayes_factor_sql(self, gamma_column_name: str) -> str:
-        bayes_factor = (
-            self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
-        )
+    def _match_weight_sql(self, gamma_column_name: str) -> str:
         sql = f"""
         WHEN
         {gamma_column_name} = {self.comparison_vector_value}
-        THEN cast({bayes_factor} as float8)
+        THEN cast({self._match_weight} as float8)
         """
         return dedent(sql)
 
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
     ) -> str:
+        """Generate SQL for TF adjustment in log-space (additive match weights).
+
+        The TF adjustment represents the difference between:
+        - The base match weight using u_probability for the exact match level
+        - The adjusted match weight using the actual term frequency
+
+        tf_adj = log2(u_base) - log2(max_tf)
+        tf_adj_final = adjustment_weight * tf_adj
+
+        """
         gamma_colname_value_is_this_level = (
             f"{gamma_column_name} = {self.comparison_vector_value}"
         )
 
-        # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
-        if self.comparison_vector_value == -1:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif not self._has_tf_adjustments:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif self._tf_adjustment_weight == 0:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
-        elif self._is_else_level:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
+        if (
+            self.comparison_vector_value == -1
+            or not self._has_tf_adjustments
+            or self._tf_adjustment_weight == 0
+            or self._is_else_level
+        ):
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
@@ -596,50 +668,31 @@ class ComparisonLevel:
             coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
+
             u_prob_exact_match = self._u_probability_corresponding_to_exact_match(
                 comparison_levels
             )
 
-            # Using coalesce protects against one of the tf adjustments being null
-            # Which would happen if the user provided their own tf adjustment table
-            # That didn't contain some of the values in this data
+            min_val_sql = f"cast({self._tf_minimum_u_value} as float8)"
 
-            # In this case rather than taking the greater of the two, we take
-            # whichever value exists
+            greatest_fn = self.sql_dialect.greatest_function_name
 
-            if self._tf_minimum_u_value == 0.0:
-                divisor_sql = f"""
-                (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    THEN {coalesce_l_r}
-                    ELSE {coalesce_r_l}
-                END)
-                """
-            else:
-                # This sql works correctly even when the tf_minimum_u_value is 0.0
-                # but is less efficient to execute, hence the above if statement
-                divisor_sql = f"""
-                (CASE
-                    WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as float8)
-                        THEN {coalesce_r_l}
-                    ELSE cast({self._tf_minimum_u_value} as float8)
-                END)
-                """
+            # Where this is used below, we check tf_adjustment_exists
+            # so we're guaranteed that one of tf_name_l or tf_name_r is not null
+            tf_u_value_sql = (
+                f"{greatest_fn}({coalesce_l_r}, {coalesce_r_l}, {min_val_sql})"
+            )
 
-            sql = f"""
-            WHEN  {gamma_colname_value_is_this_level} then
-                (CASE WHEN {tf_adjustment_exists}
-                THEN
-                POW(
-                    cast({u_prob_exact_match} as float8) /{divisor_sql},
-                    cast({self._tf_adjustment_weight} as float8)
-                )
-                ELSE cast(1 as float8)
-                END)
-            """
+            log2_u_prob = math.log2(u_prob_exact_match)
+
+            sql = f"""WHEN  {gamma_colname_value_is_this_level} then
+            (CASE WHEN {tf_adjustment_exists}
+            THEN
+            cast({self._tf_adjustment_weight} as float8) * (
+                cast({log2_u_prob} as float8) - log2({tf_u_value_sql})
+            )
+            ELSE cast(0 as float8)
+            END)"""
         return dedent(sql).strip()
 
     def as_dict(self):
@@ -651,10 +704,10 @@ class ComparisonLevel:
         if self.label_for_charts:
             output["label_for_charts"] = self.label_for_charts
 
-        if self._m_probability and self._m_is_trained:
+        if self._m_probability is not None and self._m_is_trained:
             output["m_probability"] = self.m_probability
 
-        if self._u_probability and self._u_is_trained:
+        if self._u_probability is not None and self._u_is_trained:
             output["u_probability"] = self.u_probability
 
         output["fix_m_probability"] = self._fix_m_probability
