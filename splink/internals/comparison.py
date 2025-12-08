@@ -252,9 +252,7 @@ class Comparison:
 
         if self._has_tf_adjustments:
             sqls = [
-                cl._tf_adjustment_match_weight_sql(
-                    self._gamma_column_name, self.comparison_levels
-                )
+                cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
                 for cl in self.comparison_levels
             ]
             sql = " ".join(sqls)
