@@ -2,16 +2,13 @@ from __future__ import annotations
 
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
-import math
 from textwrap import dedent
 from typing import List
 
 from splink.internals.comparison import Comparison
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import (
-    threshold_args_to_match_weight,
-)
+from splink.internals.misc import prob_to_match_weight, threshold_args_to_match_weight
 
 from .settings import CoreModelSettings, Settings
 
@@ -195,8 +192,7 @@ def _combine_prior_and_mws(
 ) -> tuple[str, str]:
     """Compute the combined match weight and match probability expressions (additive)"""
 
-    prior_odds = prior / (1 - prior)
-    mw_prior = math.log2(prior_odds)
+    mw_prior = prob_to_match_weight(prior, sql_dialect)
 
     mw_expr = f"cast({mw_prior} as float8) + " + " + ".join(mw_terms)
 
