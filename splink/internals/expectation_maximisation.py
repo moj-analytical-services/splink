@@ -260,8 +260,6 @@ def expectation_maximisation(
     # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
 
-    sql_infinity_expression = db_api.sql_dialect.infinity_expression
-
     max_iterations = training_settings.max_iterations
     em_convergence = training_settings.em_convergence
     logger.info("")  # newline
@@ -285,7 +283,6 @@ def expectation_maximisation(
                 core_model_settings.comparisons,
                 probability_two_random_records_match,
                 sql_dialect=db_api.sql_dialect,
-                sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
@@ -293,7 +290,6 @@ def expectation_maximisation(
                 core_model_settings=core_model_settings,
                 sql_dialect=db_api.sql_dialect,
                 training_mode=True,
-                sql_infinity_expression=sql_infinity_expression,
             )
 
         for sql_info in sqls:

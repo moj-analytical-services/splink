@@ -168,13 +168,6 @@ class SplinkDialect(ABC):
             "added to its dialect"
         )
 
-    @property
-    def infinity_expression(self):
-        raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' needs an infinity_expression "
-            "added to its dialect"
-        )
-
     @staticmethod
     def _wrap_in_nullif(func):
         def nullif_wrapped_function(*args, **kwargs):
@@ -318,10 +311,6 @@ class DuckDBDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    @property
-    def infinity_expression(self):
-        return "cast('infinity' as float8)"
-
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -447,10 +436,6 @@ class SparkDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    @property
-    def infinity_expression(self):
-        return "'infinity'"
-
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -524,10 +509,6 @@ class SQLiteDialect(SplinkDialect):
     @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
-
-    @property
-    def infinity_expression(self):
-        return "'infinity'"
 
     @property
     def greatest_function_name(self):
@@ -653,10 +634,6 @@ class PostgresDialect(SplinkDialect):
             """
 
     @property
-    def infinity_expression(self):
-        return "'infinity'"
-
-    @property
     def array_first_index(self):
         return 1
 
@@ -707,10 +684,6 @@ class AthenaDialect(SplinkDialect):
             return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
-
-    @property
-    def infinity_expression(self):
-        return "infinity()"
 
     @property
     def levenshtein_function_name(self):

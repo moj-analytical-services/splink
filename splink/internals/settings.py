@@ -29,7 +29,7 @@ class ComparisonAndLevelDict(TypedDict):
 
 @dataclass(frozen=True)
 class ColumnInfoSettings:
-    match_weight_column_prefix: str = "mw_"
+    match_weight_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str

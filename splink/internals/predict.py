@@ -3,9 +3,8 @@ from __future__ import annotations
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
 import math
+from textwrap import dedent
 from typing import List
-
-from texttable import dedent
 
 from splink.internals.comparison import Comparison
 from splink.internals.dialects import SplinkDialect
@@ -24,7 +23,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
     threshold_match_probability: float = None,
     threshold_match_weight: float = None,
     include_clerical_match_score: bool = False,
-    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     return predict_from_comparison_vectors_sqls(
         unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
@@ -131,7 +129,6 @@ def predict_from_agreement_pattern_counts_sqls(
     comparisons: List[Comparison],
     probability_two_random_records_match: float,
     sql_dialect: SplinkDialect,
-    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     sqls = []
 

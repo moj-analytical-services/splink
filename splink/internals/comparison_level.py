@@ -581,17 +581,6 @@ class ComparisonLevel:
             "on a comparison level that is not an exact match."
         )
 
-    def _bayes_factor_sql(self, gamma_column_name: str) -> str:
-        bayes_factor = (
-            self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
-        )
-        sql = f"""
-        WHEN
-        {gamma_column_name} = {self.comparison_vector_value}
-        THEN cast({bayes_factor} as float8)
-        """
-        return dedent(sql)
-
     def _match_weight_sql(self, gamma_column_name: str) -> str:
         sql = f"""
         WHEN
