@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Dropped support for python 3.8 [#2819](https://github.com/moj-analytical-services/splink/pull/2819)
+- Removed outdated Spark `scala-udf-similarity` jars `0.1.0_...` and `0.1.1_...` [#2854](https://github.com/moj-analytical-services/splink/pull/2854)
 
 ## [4.0.11] - 2025-11-12
 
