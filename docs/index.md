@@ -118,6 +118,10 @@ Sadly, we don't hear about the majority of our users or what they are working on
 
 ## Awards
 
+🥇 Civil Service Awards 2025: Innovation category - [Winner](https://x.com/CSWnews/status/1998488787433979981)
+
+🥇 OpenUK Awards 2025: Open data category - [Winner](https://openuk.uk/awards/)
+
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)
 
 🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
