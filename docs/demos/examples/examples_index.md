@@ -5,7 +5,6 @@ tags:
   - Examples
   - DuckDB
   - Spark
-  - Athena
 ---
 
 # Example Notebooks
@@ -83,11 +82,6 @@ This section provides a series of examples to help you get started with Splink. 
 <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/spark/deduplicate_1k_synthetic.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a> [Deduplication of a small dataset using PySpark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb)
-
-### :simple-amazonaws: Athena examples
-
-
-</a> [Deduplicating 50,000 records of realistic data based on historical persons](./athena/deduplicate_50k_synthetic.ipynb)
 
 ### :simple-sqlite: SQLite examples
 

@@ -189,7 +189,7 @@ class LinkerTraining:
                 the final model is estimated.
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
-                DuckDB and Spark, for Athena and SQLite set to None.
+                DuckDB and Spark, for SQLite set to None.
 
         Examples:
             ```py
