@@ -65,7 +65,7 @@ def test_distance_function_comparison():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
 
-@mark_with_dialects_excluding("sqlite", "postgres", "athena")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_pairwise_stringdistance_function_comparison(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.extra_linker_args()["db_api"]
