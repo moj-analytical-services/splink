@@ -1,12 +1,8 @@
 import sqlglot
 
-from splink.internals.athena.athena_helpers.athena_transforms import (
-    cast_concat_as_varchar,
-)
 from splink.internals.input_column import InputColumn
 from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
-    sqlglot_transform_sql,
     sqlglot_tree_signature,
 )
 
@@ -56,36 +52,6 @@ def test_move_l_r_table_prefix_to_column_suffix():
         "length(list_filter(name_list_l, x -> array_contains(name_list_r, x))) >= 1",
     )
     move_l_r_test(br, expected)
-
-
-def test_cast_concat_as_varchar():
-    output = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        cast(l.unique_id AS varchar) AS concat_id
-    """
-    output = sqlglot.parse_one(output).sql()
-
-    sql = "select l.source_dataset || '-__-' || l.unique_id AS concat_id"
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        l.unique_id AS concat_id
-    """
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        cast(l.unique_id AS varchar) AS concat_id
-    """
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = "select source_dataset || '-__-' || unique_id AS concat_id"
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output.replace("l.", "")
 
 
 @mark_with_dialects_including("spark")

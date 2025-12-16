@@ -32,5 +32,3 @@ It's up to the user to ensure the SQL they provide will execute successfully in 
 Occasionally some modifications are needed to the SQL to ensure it executes against the target backend.
 
 `sqlglot` is used for this purpose. For instance, a custom dialect is implemented in the Spark linker.
-
-A transformer is implemented in the Athena linker.

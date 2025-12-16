@@ -652,7 +652,7 @@ class PairwiseStringDistanceFunctionLevel(ComparisonLevelCreator):
             parameter_name="distance_threshold",
         )
 
-    @unsupported_splink_dialects(["sqlite", "postgres", "athena"])
+    @unsupported_splink_dialects(["sqlite", "postgres"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
