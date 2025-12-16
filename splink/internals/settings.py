@@ -29,7 +29,7 @@ class ComparisonAndLevelDict(TypedDict):
 
 @dataclass(frozen=True)
 class ColumnInfoSettings:
-    bayes_factor_column_prefix: str
+    match_weight_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str
@@ -186,6 +186,7 @@ class Settings:
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
         bayes_factor_column_prefix: str = "bf_",
+        match_weight_column_prefix: str = "mw_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
         # TrainingSettings
@@ -201,7 +202,7 @@ class Settings:
 
         self.column_info_settings = ColumnInfoSettings(
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
-            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            match_weight_column_prefix=match_weight_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
             unique_id_column_name=unique_id_column_name,
             _source_dataset_column_name=source_dataset_column_name,
@@ -386,7 +387,7 @@ class Settings:
         return cols
 
     @staticmethod
-    def columns_to_select_for_bayes_factor_parts(
+    def columns_to_select_for_match_weight_parts(
         unique_id_input_columns: List[InputColumn],
         comparisons: List[Comparison],
         retain_matching_columns: bool,
@@ -400,7 +401,7 @@ class Settings:
 
         for cc in comparisons:
             cols.extend(
-                cc._columns_to_select_for_bayes_factor_parts(
+                cc._columns_to_select_for_match_weight_parts(
                     retain_matching_columns,
                     retain_intermediate_calculation_columns,
                 )

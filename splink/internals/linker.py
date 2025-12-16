@@ -291,10 +291,6 @@ class Linker:
     def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
 
-    @property
-    def _infinity_expression(self):
-        return self._sql_dialect.infinity_expression
-
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -573,7 +569,6 @@ class Linker:
             unique_id_input_columns=uid_cols,
             core_model_settings=self._settings_obj.core_model_settings,
             sql_dialect=self._sql_dialect,
-            sql_infinity_expression=self._infinity_expression,
         )
         for sql_info in sql_infos:
             output_table_name = sql_info["output_table_name"]

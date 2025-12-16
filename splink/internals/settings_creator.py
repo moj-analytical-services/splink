@@ -40,7 +40,7 @@ class SettingsCreator:
 
     unique_id_column_name: str = "unique_id"
     source_dataset_column_name: str = "source_dataset"
-    bayes_factor_column_prefix: str = "bf_"
+    match_weight_column_prefix: str = "mw_"
     term_frequency_adjustment_column_prefix: str = "tf_"
     comparison_vector_value_column_prefix: str = "gamma_"
 
@@ -145,4 +145,12 @@ class SettingsCreator:
         # TODO: should SettingsCreator deal with the logic of sql_dialect being
         # set?
         settings_dict.pop("sql_dialect", None)
+        bf_prefix = settings_dict.pop("bayes_factor_column_prefix", None)
+        if bf_prefix is not None and bf_prefix != "bf_":
+            warnings.warn(
+                "The 'bayes_factor_column_prefix' parameter is deprecated and has been "
+                "ignored. Please use 'match_weight_column_prefix' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return SettingsCreator(**settings_dict)
