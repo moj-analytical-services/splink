@@ -1,9 +1,6 @@
 name: Sqlite tests
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "tests/**"

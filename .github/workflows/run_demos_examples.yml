@@ -2,9 +2,6 @@ name: Run splink example notebooks
 
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "docs/demos/examples/**"

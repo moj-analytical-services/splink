@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any, List, Literal, Optional, TypedDict
 
 from sqlglot import parse_one
@@ -16,7 +17,10 @@ from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
-from splink.internals.vertically_concatenate import vertically_concatenate_sql
+from splink.internals.vertically_concatenate import (
+    split_df_concat_with_tf_into_two_tables_sqls,
+    vertically_concatenate_sql,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -559,6 +563,82 @@ def materialise_exploded_id_tables(
         exploded_tables.append(marginal_ids_table)
 
     return exploding_blocking_rules
+
+
+def compute_blocked_pairs_from_concat_with_tf(
+    *,
+    pipeline: CTEPipeline,
+    db_api: DatabaseAPISubClass,
+    splink_df_dict: dict[str, SplinkDataFrame],
+    blocking_rules: list[BlockingRule],
+    link_type: "LinkTypeLiteralType",
+    source_dataset_input_column: Optional[InputColumn],
+    unique_id_input_column: InputColumn,
+    df_concat_with_tf_table_name: str = "__splink__df_concat_with_tf",
+) -> SplinkDataFrame:
+    """Compute __splink__blocked_id_pairs from df_concat_with_tf.
+
+    Enqueues SQL to the pipeline, materialises the result, and cleans up
+    any exploded ID pair tables used by exploding blocking rules.
+
+    Returns:
+        SplinkDataFrame: The materialised blocked pairs table.
+    """
+    start_time = time.time()
+
+    blocking_input_tablename_l = df_concat_with_tf_table_name
+    blocking_input_tablename_r = df_concat_with_tf_table_name
+    effective_link_type = link_type
+
+    # Optimisation for 2-dataset link_only
+    if len(splink_df_dict) == 2 and link_type == "link_only":
+        if not source_dataset_input_column:
+            raise ValueError(
+                "link_type='link_only' with two input tables requires a "
+                "source_dataset column"
+            )
+
+        sqls = split_df_concat_with_tf_into_two_tables_sqls(
+            df_concat_with_tf_table_name,
+            source_dataset_input_column.name,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        blocking_input_tablename_l = f"{df_concat_with_tf_table_name}_left"
+        blocking_input_tablename_r = f"{df_concat_with_tf_table_name}_right"
+        effective_link_type = "two_dataset_link_only"
+
+    materialise_exploded_id_tables(
+        link_type=effective_link_type,
+        blocking_rules=blocking_rules,
+        db_api=db_api,
+        splink_df_dict=splink_df_dict,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
+    )
+
+    sqls = block_using_rules_sqls(
+        input_tablename_l=blocking_input_tablename_l,
+        input_tablename_r=blocking_input_tablename_r,
+        blocking_rules=blocking_rules,
+        link_type=effective_link_type,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
+    )
+
+    pipeline.enqueue_list_of_sqls(sqls)
+
+    blocked_pairs = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    # Clean up exploded ID pair tables
+    for br in blocking_rules:
+        if isinstance(br, ExplodingBlockingRule):
+            br.drop_materialised_id_pairs_dataframe()
+
+    blocking_time = time.time() - start_time
+    logger.info(f"Blocking time: {blocking_time:.2f} seconds")
+
+    return blocked_pairs
 
 
 def _sql_gen_where_condition(
