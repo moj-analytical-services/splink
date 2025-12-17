@@ -258,15 +258,19 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
     ) -> SplinkDataFrame:
+        # Check what happens if the input is a string AND the user proides a source_dataset_name
         if isinstance(table, str):
             physical_name = table
-            table_name = physical_name
-            sdf = self.table_to_splink_dataframe(table_name, physical_name)
+            templated_name = source_dataset_name or physical_name
+            sdf = self.table_to_splink_dataframe(templated_name, physical_name)
         else:
-            table_name = f"__splink__input_table_{ascii_uid(8)}"
-            sdf = self.register_table(table, table_name, overwrite=False)
+            templated_name = (
+                source_dataset_name or f"__splink__input_table_{ascii_uid(8)}"
+            )
+            sdf = self.register_table(table, templated_name, overwrite=False)
 
-        sdf.source_dataset_name = source_dataset_name or table_name
+        # Keep source_dataset label aligned with the internal table name by default
+        sdf.source_dataset_name = source_dataset_name or templated_name
         return sdf
 
     @final
