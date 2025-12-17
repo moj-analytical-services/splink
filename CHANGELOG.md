@@ -9,9 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.0]
 
+### Added
+
+- Support for chunking to allow processing of very large datasets in blocking and prediction [#2850](https://github.com/moj-analytical-services/splink/pull/2850)
+- New `table_management` functions to explicitly manage table caching [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
+
+### Changed
+
+- Internal probabilistic calculations now use Match Weights (log-odds) instead of Bayes Factors to improve numerical stability [#2851](https://github.com/moj-analytical-services/splink/pull/2851)
+
+### Deprecated
+
+- `bayes_factor_column_prefix` setting is deprecated in favour of `match_weight_column_prefix` [#2851](https://github.com/moj-analytical-services/splink/pull/2851)
+
 ### Removed
 
-- Dropped support for Amazon Athena
+- Dropped support for Amazon Athena [#2858](https://github.com/moj-analytical-services/splink/pull/2858)
+- Removed implicit caching mechanism and the `use_cache` parameter from database execution methods [#2847](https://github.com/moj-analytical-services/splink/pull/2847)
+- Removed `materialise_blocked_pairs` argument from `predict` (blocked pairs are now always materialised) [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
+- Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
 
 ## [4.x.x]
 
