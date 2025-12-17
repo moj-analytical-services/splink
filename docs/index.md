@@ -68,6 +68,7 @@ Here is a list of some of our known users and their use cases:
 	- [NHS England](https://www.england.nhs.uk/) is working on developing an alternative data linkage model using splink as the core engine for a new probabilistic data linkage service. This is in order to improve linkage and linkage explainability across NHS datasets. Code now available on [github](https://github.com/nhsengland/NHSE_probabilistic_linkage).
 	- [Ministry of Defence](https://www.gov.uk/government/organisations/ministry-of-defence) launched their [Veteran's Card system](https://www.gov.uk/government/news/hm-armed-forces-veteran-cards-will-officially-launch-in-the-new-year-following-a-successful-assessment-from-the-central-digital-and-data-office) which uses Splink to verify applicants against historic records. This project was shortlisted for the [Civil Service Awards](https://www.civilserviceawards.com/creative-solutions-award/)
 	- [Ministry of Justice](https://www.gov.uk/government/organisations/ministry-of-justice) created [linked datasets (combining courts, prisons and probation data)](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) for use by researchers as part of the [Data First programme](https://www.gov.uk/guidance/ministry-of-justice-data-first)
+	- [Ministry of Justice](https://www.civilserviceawards.com/winners-2025/) and the BOLD programme used Splink to power the North Essex Probation Delivery Unit Case Information Dashboard, which won the 2025 Civil Service Award for Excellence in Delivery.
 	- [UK Health Security Agency](https://www.gov.uk/government/organisations/uk-health-security-agency) [used Splink](https://www.gov.uk/government/publications/bloodborne-viruses-opt-out-testing-in-emergency-departments/appendix-for-emergency-department-bloodborne-virus-opt-out-testing-12-month-interim-report-2023#:~:text=Appendix%202D%3A%20public%20health%20evaluation%20data%20linkage%20methodology) to link HIV testing data to national health records to [evaluate the impact of emergency department opt-out bloodborne virus testing](https://www.gov.uk/government/publications/bloodborne-viruses-opt-out-testing-in-emergency-departments/public-health-evaluation-of-bbv-opt-out-testing-in-eds-in-england-24-month-interim-report).
 	- The Department for Education uses Splink to match records from certain data providers to existing learners and reduce the volume of clerical work required for corrections
 	- [SAIL Databank](https://saildatabank.com/), in collaboration with [Secure eResearch Platform (SeRP)](https://serp.ac.uk/), uses Splink to produce linked cohorts for a wide range of population-level research applications
@@ -118,7 +119,9 @@ Sadly, we don't hear about the majority of our users or what they are working on
 
 ## Awards
 
-🥇 Civil Service Awards 2025: Innovation category - [Winner](https://x.com/CSWnews/status/1998488787433979981)
+🥇 Civil Service Awards 2025: Innovation category - [Winner](https://www.civilserviceawards.com/winners-2025/)
+
+🥇 Civil Service Awards 2025: The Excellence In Delivery Award was [won](https://www.civilserviceawards.com/winners-2025/) by a dashboard powered by Splink.
 
 🥇 OpenUK Awards 2025: Open data category - [Winner](https://openuk.uk/awards/)
 
