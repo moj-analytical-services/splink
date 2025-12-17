@@ -253,6 +253,22 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             tables_as_splink_dataframes[alias] = sdf
         return tables_as_splink_dataframes
 
+    def register(
+        self,
+        table: AcceptableInputTableType | str,
+        source_dataset_name: Optional[str] = None,
+    ) -> SplinkDataFrame:
+        if isinstance(table, str):
+            physical_name = table
+            table_name = physical_name
+            sdf = self.table_to_splink_dataframe(table_name, physical_name)
+        else:
+            table_name = f"__splink__input_table_{ascii_uid(8)}"
+            sdf = self.register_table(table, table_name, overwrite=False)
+
+        sdf.source_dataset_name = source_dataset_name or table_name
+        return sdf
+
     @final
     def register_table(
         self,
