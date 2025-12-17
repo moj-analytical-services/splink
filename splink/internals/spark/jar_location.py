@@ -1,6 +1,8 @@
 import pyspark as spark
 from pyspark.sql.types import DoubleType, StringType
 
+from ..exceptions import SplinkException
+
 
 def _spark_major_version() -> int:
     """Check which spark major version is installed
@@ -29,9 +31,9 @@ def similarity_jar_location() -> str:
             + "internals/files/spark_jars/scala-udf-similarity-0.1.2_spark3.x.jar"
         )
     else:
-        path = (
-            splink.__file__[0:-11]
-            + "internals/files/spark_jars/scala-udf-similarity-0.1.0_classic.jar"
+        raise SplinkException(
+            f"Unsupported Spark major version: {spark_major_version}. "
+            "Please use Spark 3.x or higher."
         )
 
     return path
@@ -63,18 +65,11 @@ def get_scala_udfs():
             StringType(),
         ),
         ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
+        (
+            "damerau_levenshtein",
+            "uk.gov.moj.dash.linkage.LevDamerauDistance",
+            DoubleType(),
+        ),
     ]
-
-    if _spark_major_version() >= 3:
-        # Outline spark 3+ exclusive scala functions
-        spark_3_udfs = [
-            (
-                "damerau_levenshtein",
-                "uk.gov.moj.dash.linkage.LevDamerauDistance",
-                DoubleType(),
-            ),
-        ]
-        # Register spark 3 excl. functions
-        udfs_register.extend(spark_3_udfs)
 
     return udfs_register

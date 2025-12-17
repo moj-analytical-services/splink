@@ -166,6 +166,8 @@ cython_debug/
 
 # html files opt-in only
 *.html
+!splink/**/templates/**/*.html
+!docs/**/*.html
 
 .DS_Store
 
