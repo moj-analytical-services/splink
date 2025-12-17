@@ -21,11 +21,15 @@ from splink.internals.charts import (
     ChartReturnType,
     cumulative_blocking_rule_comparisons_generated,
 )
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import calculate_cartesian, ensure_is_iterable
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splinkdataframe_utils import (
+    get_db_api_from_inputs,
+    splink_dataframes_to_dict,
+)
 from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
@@ -503,10 +507,9 @@ def _count_comparisons_generated_from_blocking_rule(
 
 def count_comparisons_from_blocking_rule(
     *,
-    table_or_tables: Sequence[AcceptableInputTableType],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
     blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
-    db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
     source_dataset_column_name: Optional[str] = None,
     compute_post_filter_count: bool = True,
@@ -518,12 +521,11 @@ def count_comparisons_from_blocking_rule(
     [here]("https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions")
 
     Args:
-        table_or_tables (dataframe, str): Input data
+        table_or_tables (SplinkDataFrame | Sequence[SplinkDataFrame]): Input data
         blocking_rule (Union[BlockingRuleCreator, str, Dict[str, Any]]): The blocking
             rule to analyse
         link_type (user_input_link_type_options): The link type - "link_only",
             "dedupe_only" or "link_and_dedupe"
-        db_api (DatabaseAPISubClass): Database API
         unique_id_column_name (str, optional):  Defaults to "unique_id".
         source_dataset_column_name (Optional[str], optional):  Defaults to None.
         compute_post_filter_count (bool, optional): Whether to use a slower methodology
@@ -536,13 +538,14 @@ def count_comparisons_from_blocking_rule(
     Returns:
         dict[str, Union[int, str]]: A dictionary containing the results
     """
+    db_api = get_db_api_from_inputs(table_or_tables)
 
     # Ensure what's been passed in is a BlockingRuleCreator
     blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.sql_dialect_str
     )
 
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    splink_df_dict = splink_dataframes_to_dict(table_or_tables)
 
     source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
         unique_id_column_name,
@@ -566,16 +569,16 @@ def count_comparisons_from_blocking_rule(
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
     *,
-    table_or_tables: Sequence[AcceptableInputTableType],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
     blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
-    db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """TODO: Add docstring here"""
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    db_api = get_db_api_from_inputs(table_or_tables)
+    splink_df_dict = splink_dataframes_to_dict(table_or_tables)
 
     # whilst they're named blocking_rules, this is actually a list of
     # BlockingRuleCreators. The followign code turns them into BlockingRule objects
@@ -610,16 +613,16 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     *,
-    table_or_tables: Sequence[AcceptableInputTableType],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
     blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
-    db_api: DatabaseAPISubClass,
     unique_id_column_name: str = "unique_id",
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
 ) -> ChartReturnType:
     """TODO: Add docstring here"""
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    db_api = get_db_api_from_inputs(table_or_tables)
+    splink_df_dict = splink_dataframes_to_dict(table_or_tables)
 
     # whilst they're named blocking_rules, this is actually a list of
     # BlockingRuleCreators. The followign code turns them into BlockingRule objects
@@ -658,10 +661,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 
 def n_largest_blocks(
     *,
-    table_or_tables: Sequence[AcceptableInputTableType],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
     blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
-    db_api: DatabaseAPISubClass,
     n_largest: int = 5,
 ) -> "SplinkDataFrame":
     """Find the values responsible for creating the largest blocks of records.
@@ -675,22 +677,23 @@ def n_largest_blocks(
     [here]("https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions")
 
     Args:
-        table_or_tables (dataframe, str): Input data
+        table_or_tables (SplinkDataFrame | Sequence[SplinkDataFrame]): Input data
         blocking_rule (Union[BlockingRuleCreator, str, Dict[str, Any]]): The blocking
             rule to analyse
         link_type (user_input_link_type_options): The link type - "link_only",
             "dedupe_only" or "link_and_dedupe"
-        db_api (DatabaseAPISubClass): Database API
         n_largest (int, optional): How many rows to return. Defaults to 5.
 
     Returns:
         SplinkDataFrame: A dataframe containing the n_largest blocks
     """
+    db_api = get_db_api_from_inputs(table_or_tables)
+
     blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
         db_api.sql_dialect.sql_dialect_str
     )
 
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    splink_df_dict = splink_dataframes_to_dict(table_or_tables)
 
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         splink_df_dict, blocking_rule_as_br, link_type, db_api
