@@ -211,16 +211,16 @@ class LinkerInference:
 
             elapsed = time.time() - overall_start_time
             percent_complete = chunk_count / total_chunks
-            if percent_complete > 0:
-                estimated_total = elapsed / percent_complete
-                estimated_remaining = estimated_total - elapsed
-                logger.info(
-                    f"Completed chunk {chunk_count}/{total_chunks} "
-                    f"({percent_complete:.0%}) | "
-                    f"Elapsed: {elapsed:.1f}s | "
-                    f"Remaining: ~{estimated_remaining:.1f}s | "
-                    f"Total: ~{estimated_total:.1f}s"
-                )
+
+            estimated_total = elapsed / percent_complete
+            estimated_remaining = estimated_total - elapsed
+            logger.info(
+                f"Completed chunk {chunk_count}/{total_chunks} "
+                f"({percent_complete:.0%}) | "
+                f"Elapsed: {elapsed:.1f}s | "
+                f"Remaining: ~{estimated_remaining:.1f}s | "
+                f"Total: ~{estimated_total:.1f}s"
+            )
 
         overall_time = time.time() - overall_start_time
         logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
