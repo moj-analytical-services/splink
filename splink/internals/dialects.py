@@ -651,7 +651,6 @@ class PostgresDialect(SplinkDialect):
 
     @property
     def hash_function_name(self) -> str:
-        # hashtext returns a 32-bit integer, cast to bigint for consistency
         return "hashtext"
 
     def hash_function_expression(self, col_expression: str) -> str:
