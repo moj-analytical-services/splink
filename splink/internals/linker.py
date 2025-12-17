@@ -4,7 +4,7 @@ import logging
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -14,7 +14,6 @@ from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
-from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
@@ -119,7 +118,7 @@ class Linker:
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             validate_settings (bool, optional): When True, check your settings
                 dictionary for any potential errors that may cause splink to fail.
-        """
+        """  # noqa: E501
         self._db_schema = "splink"
         if set_up_basic_logging:
             logging.basicConfig(

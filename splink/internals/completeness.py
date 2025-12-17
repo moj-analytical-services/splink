@@ -8,10 +8,14 @@ from splink.internals.charts import (
 from splink.internals.charts import (
     completeness_chart as records_to_completeness_chart,
 )
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
+from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splinkdataframe_utils import (
+    get_db_api_from_inputs,
+    splink_dataframes_to_dict,
+)
 from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 
@@ -108,8 +112,7 @@ def completeness_data(
 
 
 def completeness_chart(
-    table_or_tables: Sequence[AcceptableInputTableType],
-    db_api: DatabaseAPISubClass,
+    splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     cols: List[str] = None,
     table_names_for_chart: List[str] = None,
 ) -> ChartReturnType:
@@ -118,14 +121,14 @@ def completeness_chart(
     for all columns in the input data.
 
     Args:
-        table_or_tables: A single table or a list of tables of data
-        db_api (DatabaseAPISubClass): The backend database API to use
+        splink_dataframe_or_dataframes (SplinkDataFrame | Sequence[SplinkDataFrame]):
+            A single SplinkDataFrame or a sequence of SplinkDataFrames
         cols (List[str], optional): List of column names to calculate completeness. If
             none, all columns will be computed. Default to None.
         table_names_for_chart: A list of names.  Must be the same length as
-            table_or_tables.
+            splink_dataframe_or_dataframes.
     """
-
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
+    splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
     records = completeness_data(splink_df_dict, db_api, cols, table_names_for_chart)
     return records_to_completeness_chart(records)
