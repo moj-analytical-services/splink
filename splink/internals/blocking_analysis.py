@@ -506,8 +506,8 @@ def _count_comparisons_generated_from_blocking_rule(
 
 
 def count_comparisons_from_blocking_rule(
-    *,
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
+    *,
     blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
@@ -569,8 +569,8 @@ def count_comparisons_from_blocking_rule(
 
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-    *,
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
+    *,
     blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
@@ -613,8 +613,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
 
 
 def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-    *,
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
+    *,
     blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
@@ -661,8 +661,8 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 
 
 def n_largest_blocks(
-    *,
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
+    *,
     blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     n_largest: int = 5,
