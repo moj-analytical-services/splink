@@ -5,9 +5,6 @@ import math
 import os
 from typing import TYPE_CHECKING, Any, Dict, Union
 
-import numpy as np
-import pandas as pd
-
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
@@ -100,12 +97,12 @@ def match_weights_chart(records, as_dict=False):
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
 
-    df = pd.DataFrame.from_records(records)["log2_bayes_factor"]
-    df = df.replace([np.inf, -np.inf], np.nan)
-    df = df.dropna()
-
-    max_value = df.abs().max()
-    max_value = math.ceil(max_value)
+    bayes_factors = [
+        abs(l2bf)
+        for r in records
+        if (l2bf := r["log2_bayes_factor"]) is not None and not math.isinf(l2bf)
+    ]
+    max_value = math.ceil(max(bayes_factors))
 
     chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
     chart["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
