@@ -5,10 +5,20 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+    final,
+)
 
+import pyarrow as pa
 import sqlglot
-from pandas import DataFrame as PandasDataFrame
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
@@ -23,10 +33,15 @@ from .exceptions import SplinkException
 
 logger = logging.getLogger(__name__)
 
-# minimal acceptable table types
-AcceptableInputTableType = Union[
-    str, PandasDataFrame, List[Dict[str, Any]], Dict[str, Any]
-]
+BaseAcceptableInputTableType = Union[str, List[Dict[str, Any]], Dict[str, Any], pa.Table]
+
+if TYPE_CHECKING:
+    from pandas import DataFrame as PandasDataFrame
+
+    AcceptableInputTableType = Union[BaseAcceptableInputTableType, PandasDataFrame]
+else:
+    AcceptableInputTableType = BaseAcceptableInputTableType
+
 # a placeholder type. This will depend on the backend subclass - something
 # 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
 TablishType = TypeVar("TablishType")
