@@ -4,6 +4,7 @@ import os
 import re
 
 import pandas as pd
+import pyarrow as pa
 import sqlglot
 from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
@@ -64,15 +65,12 @@ class SparkAPI(DatabaseAPI[spark_df]):
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:
-        if isinstance(input, dict):
-            input = pd.DataFrame(input)
-        elif isinstance(input, list):
-            input = self.spark.createDataFrame(input)
-
         if isinstance(input, pd.DataFrame):
             input = self._clean_pandas_df(input)
-            input = self.spark.createDataFrame(input)
-
+        elif isinstance(input, dict):
+            input = pa.Table.from_pydict(input)
+        # TODO: spark 3 check for nicer arrow message
+        input = self.spark.createDataFrame(input)
         input.createOrReplaceTempView(table_name)
 
     def table_to_splink_dataframe(
@@ -125,10 +123,6 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
     def delete_table_from_database(self, name):
         self._execute_sql_against_backend(f"drop table if exists {name}")
-
-    @property
-    def accepted_df_dtypes(self):
-        return [pd.DataFrame, spark_df]
 
     def _clean_pandas_df(self, df):
         return df.fillna(nan).replace([nan, pd.NA], [None, None])

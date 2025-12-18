@@ -3,6 +3,7 @@ import sqlite3
 from typing import Union
 
 import pandas as pd
+import pyarrow as pa
 
 from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import (
@@ -84,19 +85,48 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.row_factory = self.dict_factory
         self._register_udfs(register_udfs)
 
-    def _table_registration(self, input, table_name):
-        if isinstance(input, dict):
-            input = pd.DataFrame(input)
-        elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+    def _arrow_to_sqlite_type(field: pa.Field) -> str:
+        t = field.type
 
-        # Will error if an invalid data type is passed
-        input.to_sql(
-            table_name,
-            self.con,
-            index=False,
-            if_exists="replace",
+        if pa.types.is_integer(t) or pa.types.is_boolean(t):
+            return "INTEGER"
+        if pa.types.is_floating(t):
+            return "REAL"
+        if pa.types.is_binary(t) or pa.types.is_large_binary(t):
+            return "BLOB"
+        # string, timestamp, decimal, anything else all map to TEXT
+        return "TEXT"
+
+    def _register_pyarrow_table(self, table: pa.Table, table_name: str) -> None:
+        cur = self.con.cursor()
+
+        cols = table.schema
+        col_defs = ", ".join(
+            f"{field.name} {self._arrow_to_sqlite_type(field)}" for field in cols
         )
+        cur.execute(f"CREATE OR REPLACE TABLE {table_name} ({col_defs})")
+
+        rows = zip(*(table.column(i).to_pylist() for i in range(table.num_columns)))
+
+        placeholders = ", ".join("?" * table.num_columns)
+        cur.executemany(f"INSERT INTO data VALUES ({placeholders})", rows)
+
+        self.con.commit()
+
+    def _table_registration(self, input, table_name):
+        # TODO: general utility for testing pandas if installed
+        if isinstance(input, pd.DataFrame):
+            # Will error if an invalid data type is passed
+            input.to_sql(
+                table_name,
+                self.con,
+                index=False,
+                if_exists="replace",
+            )
+        if isinstance(input, dict):
+            input = pa.Table.from_pydict(input)
+        elif isinstance(input, list):
+            input = pa.Table.from_pylist(input)
 
     def table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
