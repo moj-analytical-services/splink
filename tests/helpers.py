@@ -22,13 +22,16 @@ class TestHelper(ABC):
     def db_api_args(self):
         return {}
 
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"db_api": self.DatabaseAPI(**self.db_api_args())}
+    # def extra_linker_args(self):
+    #     # create fresh api each time
+    #     return {"db_api": self.DatabaseAPI(**self.db_api_args())}
 
     @property
     def date_format(self):
         return "yyyy-mm-dd"
+
+    def db_api(self):
+        return self.DatabaseAPI(**self.db_api_args())
 
     @abstractmethod
     def convert_frame(self, df):
@@ -43,6 +46,18 @@ class TestHelper(ABC):
     @property
     def arrays_from(self) -> int:
         return 1
+
+    def linker_with_registration(self, data, settings, input_table_aliases=None, **kwargs):
+        db_api = self.db_api()
+        if isinstance(data, (list, tuple)):
+            if input_table_aliases is None:
+                input_table_aliases = [f"table_{i}" for i in range(len(data))]
+            sdfs = [db_api.register(d, alias) for d, alias in zip(data, input_table_aliases)]
+            return Linker(sdfs, settings, **kwargs)
+        else:
+            table_name = input_table_aliases[0] if input_table_aliases else None
+            sdf = db_api.register(data, table_name)
+            return Linker(sdf, settings, **kwargs)
 
 
 class DuckDBTestHelper(TestHelper):

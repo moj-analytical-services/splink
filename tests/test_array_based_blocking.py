@@ -36,7 +36,7 @@ def test_simple_example_link_only(test_helpers, dialect):
     }
     ## the pairs returned by the first blocking rule are (1,6),(2,4),(2,6)
     ## the additional pairs returned by the second blocking rule are (1,4),(3,5)
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([data_l, data_r], settings)
     linker.debug_mode = False
     returned_triples = linker.inference.predict().as_pandas_dataframe()[
         ["unique_id_l", "unique_id_r", "match_key"]
@@ -108,7 +108,7 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
         "additional_columns_to_retain": ["cluster"],
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
-    linker = helper.Linker(input_data, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(input_data, settings)
     linker.debug_mode = False
     df_predict = linker.inference.predict().as_pandas_dataframe()
     ## check that there are no duplicates in the output
@@ -155,9 +155,7 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
         "additional_columns_to_retain": ["cluster"],
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
-    linker = helper.Linker(
-        [input_data_l, input_data_r], settings, **helper.extra_linker_args()
-    )
+    linker = helper.linker_with_registration([input_data_l, input_data_r], settings)
     linker.debug_mode = False
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
@@ -226,11 +224,10 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [df_1, df_2, df_3],
         settings,
         input_table_aliases=["a_", "b_", "c_"],
-        **helper.extra_linker_args(),
     )
     returned_triples = linker.inference.predict().as_pandas_dataframe()[
         [
