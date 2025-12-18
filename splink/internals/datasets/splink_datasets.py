@@ -4,7 +4,8 @@ import io
 from pathlib import Path
 from urllib.request import urlopen
 
-import pandas as pd
+import pyarrow.csv as pv
+import pyarrow.parquet as pq
 
 from .metadata import dataset_labels, datasets
 
@@ -46,8 +47,8 @@ def dataset_property(metadata_method):
             data_source = file_loc
 
         read_function = {
-            "csv": pd.read_csv,
-            "parquet": pd.read_parquet,
+            "csv": pv.read_csv,
+            "parquet": pq.read_table,
         }.get(data_format, None)
 
         # just in case we have an invalid format
