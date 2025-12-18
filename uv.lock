@@ -3876,7 +3876,6 @@ spark = [
 
 [package.dev-dependencies]
 core = [
-    { name = "pandas" },
     { name = "sqlglot" },
 ]
 demos = [
@@ -3912,6 +3911,9 @@ docs = [
 linting = [
     { name = "ruff" },
 ]
+pandas = [
+    { name = "pandas" },
+]
 testing = [
     { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
@@ -3945,10 +3947,7 @@ requires-dist = [
 provides-extras = ["pyspark", "spark", "postgres"]
 
 [package.metadata.requires-dev]
-core = [
-    { name = "pandas" },
-    { name = "sqlglot" },
-]
+core = [{ name = "sqlglot" }]
 demos = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "nbmake", specifier = ">=1.5.5" },
@@ -3975,6 +3974,7 @@ docs = [
     { name = "pymdown-extensions", specifier = ">=10.15" },
 ]
 linting = [{ name = "ruff", specifier = ">=0.4.2,<0.5" }]
+pandas = [{ name = "pandas", specifier = ">=1.3.5" }]
 testing = [
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "pyarrow", specifier = ">=7.0.0" },

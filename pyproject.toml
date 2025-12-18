@@ -27,6 +27,7 @@ dependencies = [
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
 postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
+# TODO: pandas optional
 
 [project.urls]
 Homepage = "https://github.com/moj-analytical-services/splink"
@@ -35,7 +36,7 @@ Repository = "https://github.com/moj-analytical-services/splink"
 [dependency-groups]
 # allows us to easily check package functionality with just these installed
 # (and not the rest of our required dependencies)
-core = ["sqlglot", "pandas"]
+core = ["sqlglot"]
 demos = [
     "ipywidgets>=8.1.7",
     "nbmake>=1.5.5",
@@ -65,6 +66,7 @@ docs = [
     "pymdown-extensions>=10.15",
 ]
 linting = ["ruff>=0.4.2,<0.5"]
+pandas = ["pandas>=1.3.5"]
 testing = [
     "pytest>=7.3",
     "pyarrow>=7.0.0",
