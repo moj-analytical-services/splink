@@ -250,3 +250,11 @@ def threshold_args_to_match_prob_list(
         )
 
     return None
+
+
+def is_pandas_frame(obj: object) -> bool:
+    try:
+        import pandas as pd
+    except ModuleNotFoundError:
+        return False
+    return isinstance(obj, pd.DataFrame)

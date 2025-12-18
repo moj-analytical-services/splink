@@ -3,10 +3,8 @@ import math
 import os
 import re
 
-import pandas as pd
 import pyarrow as pa
 import sqlglot
-from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
 
@@ -16,6 +14,7 @@ from splink.internals.dialects import (
     SparkDialect,
 )
 from splink.internals.misc import (
+    is_pandas_frame,
     major_minor_version_greater_equal_than,
 )
 
@@ -65,7 +64,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:
-        if isinstance(input, pd.DataFrame):
+        if is_pandas_frame(input):
             input = self._clean_pandas_df(input)
         elif isinstance(input, dict):
             input = pa.Table.from_pydict(input)
@@ -125,6 +124,8 @@ class SparkAPI(DatabaseAPI[spark_df]):
         self._execute_sql_against_backend(f"drop table if exists {name}")
 
     def _clean_pandas_df(self, df):
+        import pandas as pd
+        from numpy import nan
         return df.fillna(nan).replace([nan, pd.NA], [None, None])
 
     def _set_splink_datastore(self, catalog, database):

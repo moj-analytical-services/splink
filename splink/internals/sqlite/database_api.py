@@ -2,7 +2,6 @@ import math
 import sqlite3
 from typing import Union
 
-import pandas as pd
 import pyarrow as pa
 
 from splink.internals.database_api import DatabaseAPI
@@ -10,6 +9,7 @@ from splink.internals.dialects import (
     SQLiteDialect,
 )
 from splink.internals.exceptions import SplinkException
+from splink.internals.misc import is_pandas_frame
 
 from .dataframe import SQLiteDataFrame
 
@@ -114,8 +114,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.commit()
 
     def _table_registration(self, input, table_name):
-        # TODO: general utility for testing pandas if installed
-        if isinstance(input, pd.DataFrame):
+        if is_pandas_frame(input):
             # Will error if an invalid data type is passed
             input.to_sql(
                 table_name,
