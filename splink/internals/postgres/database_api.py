@@ -2,7 +2,7 @@ import logging
 from typing import Any, List, Union
 
 import duckdb
-import pandas as pd
+import pyarrow as pa
 from sqlalchemy import CursorResult, text
 from sqlalchemy.engine import Engine
 
@@ -42,10 +42,11 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
         self._register_extensions()
 
     def _table_registration(self, input, table_name):
+        # TODO: we use this a few places - move up to DatabaseAPI
         if isinstance(input, dict):
-            input = pd.DataFrame(input)
+            input = pa.Table.from_pydict(input)
         elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+            input = pa.Table.from_pylist(input)
 
         # Using Duckdb to insert the data ensures the correct datatypes
         # and faster insertion (duckdb>=0.9.2)
@@ -69,6 +70,8 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
             )
 
         except (duckdb.HTTPException, duckdb.BinderException):
+            # fallback to using pandas to_sql if duckdb fails
+            # TODO: better fallback
             input.to_sql(
                 table_name,
                 con=self._engine,
