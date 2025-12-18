@@ -3857,7 +3857,8 @@ dependencies = [
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pandas" },
+    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlglot" },
 ]
 
@@ -3934,8 +3935,8 @@ requires-dist = [
     { name = "igraph", specifier = ">=0.11.2" },
     { name = "jinja2", specifier = ">=3.0.3" },
     { name = "numpy", specifier = ">=1.19.3" },
-    { name = "pandas", specifier = ">=1.3.5" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
+    { name = "pyarrow", specifier = ">=15.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.5.0" },
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
