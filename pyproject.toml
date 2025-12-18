@@ -134,6 +134,8 @@ markers = [
     "sqlite_only",
     "postgres",
     "postgres_only",
+# optional dependendencies beyond backends
+    "needs_pandas",
 ]
 
 [tool.mypy]
