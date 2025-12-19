@@ -49,6 +49,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
         self._created_tables: set[str] = set()
+        self._input_table_counter: int = 0
+
+    def _new_input_table_name(self) -> str:
+        name = f"__splink__input_table_{self._input_table_counter}"
+        self._input_table_counter += 1
+        return name
 
     @final
     def _log_and_run_sql_execution(
@@ -224,7 +230,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         existing_tables = []
 
         if not input_aliases:
-            input_aliases = [f"__splink__{ascii_uid(8)}" for table in input_tables]
+            input_aliases = [self._new_input_table_name() for _ in input_tables]
 
         for table, alias in zip(input_tables, input_aliases):
             if isinstance(table, str):
@@ -264,9 +270,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             templated_name = source_dataset_name or physical_name
             sdf = self.table_to_splink_dataframe(templated_name, physical_name)
         else:
-            templated_name = (
-                source_dataset_name or f"__splink__input_table_{ascii_uid(8)}"
-            )
+            templated_name = source_dataset_name or self._new_input_table_name()
             sdf = self.register_table(table, templated_name, overwrite=False)
 
         # Keep source_dataset label aligned with the internal table name by default
