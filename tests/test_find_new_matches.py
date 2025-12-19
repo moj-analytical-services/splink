@@ -45,13 +45,11 @@ record = {
 @mark_with_dialects_excluding()
 def test_tf_tables_init_works(test_helpers, dialect):
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     for idx, s in enumerate(get_different_settings_dicts()):
-        linker = Linker(
+        linker = helper.linker_with_registration(
             df,
             s,
-            **helper.extra_linker_args(),
             input_table_aliases=f"test_tf_table_alias_{idx}",
         )
 
@@ -81,11 +79,10 @@ def test_tf_tables_init_works(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_matches_work(test_helpers, dialect):
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, get_settings_dict())
 
     # Train our model to get more reasonable outputs...
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)

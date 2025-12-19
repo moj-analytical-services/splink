@@ -158,7 +158,10 @@ def test_with_predict_calculation():
 
     settings_normal = get_settings(disable_tf_exact_match_detection=False)
 
-    linker = Linker(df, settings_normal, DuckDBAPI())
+    db_api_1 = DuckDBAPI()
+    df_sdf = db_api_1.register(df)
+
+    linker = Linker(df_sdf, settings_normal)
 
     tf_lookup = [
         {"surname": "Taylor", "tf_surname": 0.4},
@@ -200,7 +203,9 @@ def test_with_predict_calculation():
     )
 
     settings_disabled = get_settings(disable_tf_exact_match_detection=True)
-    linker = Linker(df, settings_disabled, DuckDBAPI())
+    db_api_2 = DuckDBAPI()
+    df_sdf_2 = db_api_2.register(df)
+    linker = Linker(df_sdf_2, settings_disabled)
 
     tf_lookup = [
         {"surname": "Taylor", "tf_surname": 0.4},
@@ -244,10 +249,16 @@ def test_with_predict_calculation():
         disable_tf_exact_match_detection=True, tf_minimum_u_value=0.1
     )
 
-    linker_base = Linker(df, settings_disabled_with_min_tf, DuckDBAPI())
+    db_api_3 = DuckDBAPI()
+    df_sdf_3 = db_api_3.register(df)
+    linker_base = Linker(df_sdf_3, settings_disabled_with_min_tf)
+
+    # Create fresh db_api for second linker to avoid table conflicts
+    db_api_4 = DuckDBAPI()
+    df_sdf_4 = db_api_4.register(df)
     linkers = [
         linker_base,
-        Linker(df, linker_base.misc.save_model_to_json(), DuckDBAPI()),
+        Linker(df_sdf_4, linker_base.misc.save_model_to_json()),
     ]
 
     # This ensures we're checking that serialisation and deserialisation
