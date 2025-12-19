@@ -713,8 +713,6 @@ def test_analyse_blocking_fast_methodology_edge_cases():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_link_only": res.iloc[0].iloc[0]}
 
-    db_api = DuckDBAPI()
-
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
             [df_l_sdf, df_r_sdf],
