@@ -264,14 +264,20 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
     ) -> SplinkDataFrame:
-        # Check what happens if the input is a string AND the user proides a source_dataset_name
+        # Legacy behaviour: string inputs represent already-registered physical tables.
+        # If `source_dataset_name` is not provided, we still generate a fresh internal
+        # templated name so that the same physical table can be used multiple times as
+        # distinct inputs (e.g. linking a table to itself).
         if isinstance(table, str):
             physical_name = table
-            templated_name = source_dataset_name or physical_name
+            templated_name = source_dataset_name or self._new_input_table_name()
             sdf = self.table_to_splink_dataframe(templated_name, physical_name)
         else:
             templated_name = source_dataset_name or self._new_input_table_name()
-            sdf = self.register_table(table, templated_name, overwrite=False)
+            # Allow overwrite of table only if Splink is assigning the name
+            # i.e. allow overwrites of tables of the form __splink__input_table_n
+            overwrite = source_dataset_name is None
+            sdf = self.register_table(table, templated_name, overwrite=overwrite)
 
         # Keep source_dataset label aligned with the internal table name by default
         sdf.source_dataset_name = source_dataset_name or templated_name
