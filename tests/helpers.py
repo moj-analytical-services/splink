@@ -47,17 +47,24 @@ class TestHelper(ABC):
     def arrays_from(self) -> int:
         return 1
 
-    def linker_with_registration(self, data, settings, input_table_aliases=None, **kwargs):
+    def linker_with_registration(
+        self, data, settings, input_table_aliases=None, **kwargs
+    ):
         db_api = self.db_api()
-        if isinstance(data, (list, tuple)):
-            if input_table_aliases is None:
-                input_table_aliases = [f"table_{i}" for i in range(len(data))]
-            sdfs = [db_api.register(d, alias) for d, alias in zip(data, input_table_aliases)]
-            return Linker(sdfs, settings, **kwargs)
+
+        data_list = list(data) if isinstance(data, (list, tuple)) else [data]
+
+        if input_table_aliases is None:
+            aliases = [None] * len(data_list)
+        elif isinstance(input_table_aliases, str):
+            aliases = [input_table_aliases]
         else:
-            table_name = input_table_aliases[0] if input_table_aliases else None
-            sdf = db_api.register(data, table_name)
-            return Linker(sdf, settings, **kwargs)
+            aliases = list(input_table_aliases)
+
+        sdfs = [db_api.register(d, alias) for d, alias in zip(data_list, aliases)]
+
+        input_frames = sdfs[0] if len(sdfs) == 1 else sdfs
+        return Linker(input_frames, settings, **kwargs)
 
 
 class DuckDBTestHelper(TestHelper):

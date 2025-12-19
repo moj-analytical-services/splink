@@ -26,35 +26,33 @@ def test_full_example_postgres(tmp_path, pg_engine):
     settings_dict = get_settings_dict()
 
     db_api = PostgresAPI(engine=pg_engine)
+    df_sdf = db_api.register(df)
+
     linker = Linker(
-        df,
+        df_sdf,
         settings_dict,
-        db_api=db_api,
     )
 
     count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        df_sdf,
         blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-        table_or_tables=df,
+        df_sdf,
         blocking_rules=[
             "l.first_name = r.first_name",
             "l.surname = r.surname",
             "l.city = r.city",
         ],
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         [
             "first_name",
             '"surname"',
@@ -63,7 +61,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         ],
     )
 
-    completeness_chart(df, db_api=db_api)
+    completeness_chart(df_sdf)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
@@ -126,7 +124,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     path = os.path.join(tmp_path, "model.json")
     linker.misc.save_model_to_json(path)
 
-    Linker(df, path, db_api=db_api)
+    Linker(df_sdf, path)
 
 
 @mark_with_dialects_including("postgres")
@@ -139,9 +137,10 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
     settings_dict = get_settings_dict()
 
     db_api = PostgresAPI(engine=pg_engine)
+    df_sdf = db_api.register(table_name)
+
     linker = Linker(
-        table_name,
-        db_api=db_api,
-        settings=settings_dict,
+        df_sdf,
+        settings_dict,
     )
     linker.inference.predict()
