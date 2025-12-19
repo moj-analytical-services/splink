@@ -9,7 +9,7 @@ from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_lev
 @mark_with_dialects_excluding("sqlite", "spark")
 def test_array_comparison_1(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -84,7 +84,7 @@ def test_array_comparison_1(test_helpers, dialect):
 @mark_with_dialects_excluding("sqlite", "postgres")
 def test_array_subset(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
