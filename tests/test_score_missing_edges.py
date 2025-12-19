@@ -21,7 +21,6 @@ df_pd = df_pd[0:200]
 def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
     helper = test_helpers[dialect]
 
-    df = helper.convert_frame(df_pd)
     settings = SettingsCreator(
         link_type=link_type,
         comparisons=[
@@ -36,7 +35,14 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
         ],
         retain_intermediate_calculation_columns=True,
     )
-    linker_input = df if copies_of_df == 1 else [df for _ in range(copies_of_df)]
+
+    if copies_of_df == 1:
+        linker_input = helper.convert_frame(df_pd)
+    else:
+        # Important for Postgres: convert_frame returns a physical table name (str).
+        # Reusing the same table name for multiple inputs would collapse datasets and
+        # prevent `source_dataset` being created in the concatenated table.
+        linker_input = [helper.convert_frame(df_pd) for _ in range(copies_of_df)]
     linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
@@ -62,7 +68,6 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
 def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_of_df):
     helper = test_helpers[dialect]
 
-    df = helper.convert_frame(df_pd)
     settings = SettingsCreator(
         link_type=link_type,
         comparisons=[
@@ -77,7 +82,12 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
         ],
         retain_intermediate_calculation_columns=True,
     )
-    linker_input = df if copies_of_df == 1 else [df for _ in range(copies_of_df)]
+
+    if copies_of_df == 1:
+        linker_input = helper.convert_frame(df_pd)
+    else:
+        # See comment in `test_score_missing_edges` for why we must re-convert per copy.
+        linker_input = [helper.convert_frame(df_pd) for _ in range(copies_of_df)]
     linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
