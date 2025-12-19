@@ -37,7 +37,7 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
         retain_intermediate_calculation_columns=True,
     )
     linker_input = df if copies_of_df == 1 else [df for _ in range(copies_of_df)]
-    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -78,7 +78,7 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
         retain_intermediate_calculation_columns=True,
     )
     linker_input = df if copies_of_df == 1 else [df for _ in range(copies_of_df)]
-    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -129,7 +129,7 @@ def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_ty
         df_2 = df.copy()
         df_2["sds"] = "frame_2"
         linker_input = [helper.convert_frame(df), helper.convert_frame(df_2)]
-    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
