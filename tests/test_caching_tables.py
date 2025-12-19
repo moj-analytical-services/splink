@@ -27,8 +27,9 @@ def test_cache_tracking_works():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
 
     assert cache.is_in_executed_queries("__splink__df_concat_with_tf") is False
@@ -92,8 +93,9 @@ def test_cache_used_when_registering_nodes_table():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
     linker.table_management.register_df_concat_with_tf(splink__df_concat_with_tf)
     linker.inference.predict()
@@ -143,8 +145,9 @@ def test_cache_used_when_registering_tf_tables():
 
     # First test do not register any tf tables
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
 
     linker.inference.predict()
@@ -154,8 +157,9 @@ def test_cache_used_when_registering_tf_tables():
 
     # Then try the same after registering surname tf table
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
     linker.table_management.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.inference.predict()
@@ -165,8 +169,9 @@ def test_cache_used_when_registering_tf_tables():
 
     # Then try the same after registering both
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
     linker.table_management.register_term_frequency_lookup(surname_tf_table, "surname")
     linker.table_management.register_term_frequency_lookup(
@@ -193,8 +198,9 @@ def test_cache_invalidation():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
 
     linker.table_management.compute_tf_table("name")
@@ -207,8 +213,9 @@ def test_cache_invalidation():
     assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
 
     linker.table_management.compute_tf_table("name")
@@ -240,8 +247,9 @@ def test_table_deletions():
     }
 
     db_api = DuckDBAPI(connection=con)
+    table_sdf = db_api.register("my_table")
 
-    linker = Linker("my_table", settings, db_api=db_api)
+    linker = Linker(table_sdf, settings)
 
     table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
 
@@ -290,8 +298,9 @@ def test_table_deletions_with_preregistered():
     }
 
     db_api = DuckDBAPI(connection=con)
+    table_sdf = db_api.register("my_data_table")
 
-    linker = Linker("my_data_table", settings, db_api=db_api)
+    linker = Linker(table_sdf, settings)
     linker.table_management.register_df_concat_with_tf("my_nodes_with_tf_table")
 
     table_names_before = set(get_duckdb_table_names_as_list(db_api._con))
@@ -325,8 +334,9 @@ def test_single_deletion():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     cache = linker._intermediate_table_cache
 
     tf_table = linker.table_management.compute_tf_table("name")
