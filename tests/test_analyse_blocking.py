@@ -762,7 +762,7 @@ def test_chart(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_n_largest_blocks(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
     df_1 = pd.DataFrame(
         [
@@ -790,8 +790,6 @@ def test_n_largest_blocks(test_helpers, dialect):
             {"unique_id": 1, "name1": "John", "name2": "Smith", "dob": "2019-01-03"},
         ]
     )
-
-    db_api = DuckDBAPI()
 
     df_1_sdf = db_api.register(df_1)
     df_2_sdf = db_api.register(df_2)
