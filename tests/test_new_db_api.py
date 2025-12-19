@@ -63,12 +63,7 @@ def test_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
-    linker = Linker(
-        df,
-        cl_settings,
-        db_api,
-    )
+    linker = helper.linker_with_registration(df, cl_settings)
     linker.inference.predict()
 
 
@@ -77,12 +72,7 @@ def test_full_run(dialect, test_helpers, tmp_path):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
-    linker = Linker(
-        df,
-        cl_settings,
-        db_api,
-    )
+    linker = helper.linker_with_registration(df, cl_settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
         0.6,
@@ -116,17 +106,17 @@ def test_charts(dialect, test_helpers, tmp_path):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
+    df_sdf = db_api.register(df)
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-        table_or_tables=df,
+        df_sdf,
         blocking_rules=[block_on("dob"), block_on("first_name")],
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
-    linker = Linker(df, cl_settings, db_api)
+    linker = Linker(df_sdf, cl_settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
@@ -149,5 +139,6 @@ def test_exploratory_charts(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
-    profile_columns(df, db_api, "first_name")
+    db_api = helper.db_api()
+    df_sdf = db_api.register(df)
+    profile_columns(df_sdf, "first_name")
