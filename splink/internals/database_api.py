@@ -259,6 +259,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             tables_as_splink_dataframes[alias] = sdf
         return tables_as_splink_dataframes
 
+    # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958
+    # for notes on this code
     def register(
         self,
         table: AcceptableInputTableType | str,
