@@ -17,7 +17,7 @@ from .decorator import mark_with_dialects_including
 
 def generate_raw_profile_dataset(table, columns_to_profile, db_api):
     input_alias = "__splink__profile_data"
-    _splink_df = db_api.register_table(table, input_alias, overwrite=True)
+    _splink_df = db_api._create_backend_table(table, input_alias, overwrite=True)
 
     pipeline = CTEPipeline()
 
