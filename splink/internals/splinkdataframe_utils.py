@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
+from splink.internals.exceptions import SplinkException
 from splink.internals.splink_dataframe import SplinkDataFrame
 
 if TYPE_CHECKING:
@@ -16,9 +17,26 @@ def get_db_api_from_inputs(
     if isinstance(table_or_tables, SplinkDataFrame):
         tables = [table_or_tables]
     else:
-        tables = table_or_tables
-    first = next(iter(tables))
-    return first.db_api
+        tables = list(table_or_tables)
+
+    if not tables:
+        raise SplinkException("At least one SplinkDataFrame must be provided.")
+
+    first = tables[0]
+    first_db_api = first.db_api
+
+    for sdf in tables[1:]:
+        if sdf.db_api is not first_db_api:
+            raise SplinkException(
+                "All input SplinkDataFrames must be registered against the same "
+                "database API.\n"
+                f"Table '{first.templated_name}' is registered with a "
+                f"{type(first_db_api).__name__}, but table '{sdf.templated_name}' "
+                f"is registered with a {type(sdf.db_api).__name__}.\n"
+                "Please ensure all tables are registered using the same db_api."
+            )
+
+    return first_db_api
 
 
 def splink_dataframes_to_dict(
