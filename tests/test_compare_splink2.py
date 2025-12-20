@@ -36,7 +36,8 @@ def test_splink_2_predict():
 @mark_with_dialects_including("spark")
 def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
-    linker = Linker(df_spark, settings_dict)
+    df_sdf = spark_api.register(df_spark)
+    linker = Linker(df_sdf, settings_dict)
 
     df_e = linker.inference.predict().as_pandas_dataframe()
     f1 = df_e["unique_id_l"] == "479"
