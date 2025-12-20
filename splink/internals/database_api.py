@@ -50,6 +50,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._cache_uid: str = ascii_uid(8)
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
+        self._registered_source_dataset_names: set[str] = set()
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"
@@ -224,6 +225,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
     ) -> SplinkDataFrame:
+        if source_dataset_name is not None:
+            if source_dataset_name in self._registered_source_dataset_names:
+                raise ValueError(
+                    f"A table has already been registered with "
+                    f"source_dataset_name='{source_dataset_name}'. "
+                    f"Each registered table must have a unique source_dataset_name."
+                )
+            self._registered_source_dataset_names.add(source_dataset_name)
+
         # String inputs represent already-registered physical tables.
         # If `source_dataset_name` is not provided, we still generate a fresh internal
         # templated name so that the same physical table can be used multiple times as
