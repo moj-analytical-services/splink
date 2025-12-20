@@ -1,7 +1,7 @@
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink import Linker, SettingsCreator, block_on
+from splink import SettingsCreator, block_on
 
 from .decorator import mark_with_dialects_excluding
 

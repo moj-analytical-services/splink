@@ -4,7 +4,6 @@ import pandas as pd
 
 import splink.internals.comparison_library as cl
 from splink import block_on
-from splink.internals.linker import Linker
 
 from .decorator import mark_with_dialects_excluding
 

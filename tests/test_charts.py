@@ -189,8 +189,6 @@ def test_parameter_estimate_charts(dialect, test_helpers):
             cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
-    db_api = helper.db_api()
-
     linker = helper.linker_with_registration(df, settings)
     linker.training.estimate_u_using_random_sampling(1e6)
 
