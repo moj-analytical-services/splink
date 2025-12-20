@@ -230,7 +230,9 @@ def profile_columns(
     identify the need for standardisation within a given column.
 
     Args:
-        splink_dataframe_or_dataframes (Union[SplinkDataFrame, Sequence[SplinkDataFrame]]):
+        splink_dataframe_or_dataframes (
+            Union[SplinkDataFrame, Sequence[SplinkDataFrame]]
+        ):
             A single SplinkDataFrame or a sequence of SplinkDataFrames
         column_expressions (list, optional): A list of strings containing the
             specified column names.
