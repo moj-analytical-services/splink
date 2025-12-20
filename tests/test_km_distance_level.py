@@ -124,9 +124,9 @@ def test_km_distance_levels(dialect, test_helpers):
 
     df = helper.convert_frame(df)
 
-    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings_cl)
     cl_df_e = linker.inference.predict().as_pandas_dataframe()
-    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings_cll)
     cll_df_e = linker.inference.predict().as_pandas_dataframe()
 
     linker_outputs = {
@@ -226,7 +226,8 @@ def test_haversine_level():
 
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, input_table_aliases="test", db_api=db_api)
+    df_sdf = db_api.register(df, source_dataset_name="test")
+    linker = Linker(df_sdf, settings)
     df_e = linker.inference.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])

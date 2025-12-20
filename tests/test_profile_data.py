@@ -17,7 +17,7 @@ from .decorator import mark_with_dialects_including
 
 def generate_raw_profile_dataset(table, columns_to_profile, db_api):
     input_alias = "__splink__profile_data"
-    _splink_df = db_api.register_table(table, input_alias, overwrite=True)
+    _splink_df = db_api._create_backend_table(table, input_alias, overwrite=True)
 
     pipeline = CTEPipeline()
 
@@ -34,11 +34,9 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
 def test_profile_default_cols_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    profile_columns(
-        df,
-        db_api,
-    )
+    profile_columns(df_sdf)
 
 
 @mark_with_dialects_including("duckdb")
@@ -46,17 +44,16 @@ def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["blank"] = None
     db_api = DuckDBAPI(connection=":memory:")
+    df_sdf = db_api.register(df)
 
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=15,
     )
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         [
             "first_name",
             ["surname"],
@@ -118,12 +115,12 @@ def test_profile_with_arrays_duckdb():
 
     df = pd.DataFrame(dic)
     db_api = DuckDBAPI(connection=":memory:")
+    df_sdf = db_api.register(df)
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         column_expressions,
         top_n=3,
         bottom_n=3,
@@ -134,12 +131,12 @@ def test_profile_with_arrays_duckdb():
 def test_profile_with_arrays_spark(spark, spark_api):
     spark_df = spark.read.parquet("tests/datasets/arrays_df.parquet")
     spark_df.persist()
+    spark_df_sdf = spark_api.register(spark_df)
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
     profile_columns(
-        spark_df,
-        spark_api,
+        spark_df_sdf,
         column_expressions,
         top_n=3,
         bottom_n=3,
@@ -155,10 +152,10 @@ def test_profile_using_sqlite():
     df.to_sql("fake_data_1", con, if_exists="replace")
 
     db_api = SQLiteAPI(con)
+    df_sdf = db_api.register(df)
 
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         ["first_name", "surname", "first_name || surname"],
     )
 
@@ -170,17 +167,16 @@ def test_profile_using_spark(df_spark, spark_api):
     from pyspark.sql.types import StringType
 
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
+    df_spark_sdf = spark_api.register(df_spark)
 
     profile_columns(
-        df_spark,
-        spark_api,
+        df_spark_sdf,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=15,
     )
     profile_columns(
-        df_spark,
-        spark_api,
+        df_spark_sdf,
         [
             "first_name",
             ["surname"],
@@ -209,8 +205,9 @@ def test_profile_null_columns(caplog):
     )
 
     db_api = DuckDBAPI(connection=":memory:")
+    df_sdf = db_api.register(df)
 
-    profile_columns(df, db_api, ["test_1", "test_2"])
+    profile_columns(df_sdf, ["test_1", "test_2"])
     captured_logs = caplog.text
 
     assert (

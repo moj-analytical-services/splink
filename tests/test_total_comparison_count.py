@@ -85,12 +85,12 @@ def test_calculate_cartesian_equals_total_number_of_links(
     dfs = list(map(make_dummy_frame, frame_sizes))
 
     db_api = DuckDBAPI()
+    dfs_sdf = [db_api.register(df) for df in dfs]
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=dfs,
+        dfs_sdf,
         blocking_rule="1=1",
         link_type=link_type,
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
@@ -98,8 +98,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     # compare with count from each frame
     pipeline = CTEPipeline()
+    dfs_sdf_dict = {df.templated_name: df for df in dfs_sdf}
     sql = vertically_concatenate_sql(
-        input_tables=db_api.register_multiple_tables(dfs),
+        input_tables=dfs_sdf_dict,
         source_dataset_input_column=InputColumn(
             "source_dataset", sqlglot_dialect_str="duckdb"
         ),

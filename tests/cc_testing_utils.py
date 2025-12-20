@@ -28,9 +28,11 @@ def nodes_and_edges_from_graph(G):
 def run_cc_implementation(nodes, edges):
     # finally, run our connected components algorithm
     db_api = DuckDBAPI()
+    nodes_sdf = db_api.register(nodes)
+    edges_sdf = db_api.register(edges)
     cc = cluster_pairwise_predictions_at_threshold(
-        nodes=nodes,
-        edges=edges,
+        nodes=nodes_sdf,
+        edges=edges_sdf,
         db_api=db_api,
         node_id_column_name="unique_id",
         edge_id_column_name_left="unique_id_l",

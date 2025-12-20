@@ -33,7 +33,7 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -86,7 +86,7 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df_1, df_2], settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -126,7 +126,7 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df_1, df_2], settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -195,7 +195,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(dfs, settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -206,7 +206,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     assert pytest.approx(prob) == 6 / 131
 
     # if we define all record pairs to be a match, then the probability should be 1
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(dfs, settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -273,7 +273,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(dfs, settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -284,7 +284,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     # (3 + 4 + 5 + 7)(3 + 4 + 5 + 7 - 1)/2 = 171 comparisons
     assert pytest.approx(prob) == 10 / 171
 
-    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(dfs, settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -348,7 +348,7 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     }
 
     # Test dedupe only
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
     with pytest.raises(ValueError):
         # all comparisons matches using this rule, so we must have perfect recall
         # using recall = 80% is inconsistent, so should get an error

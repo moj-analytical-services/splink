@@ -17,7 +17,7 @@ def test_realtime_cache_two_records(test_helpers, dialect):
 
     helper = test_helpers[dialect]
 
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     df1 = pd.DataFrame(
         [
@@ -117,7 +117,7 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
     # or not with multiple records in each DataFrame
 
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     df1 = pd.DataFrame(
         [
@@ -298,7 +298,7 @@ def test_realtime_cache_multiple_records(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_realtime_cache_different_settings(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     df1 = pd.DataFrame(
         [
@@ -363,7 +363,7 @@ def test_realtime_cache_different_settings(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     df1 = pd.DataFrame(
         [
@@ -433,7 +433,7 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_realtime_custom_join(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     df = pd.DataFrame(
         [

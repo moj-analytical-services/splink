@@ -14,8 +14,9 @@ def test_splink_2_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings_dict, db_api=db_api)
+    linker = Linker(df_sdf, settings_dict)
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
@@ -35,7 +36,8 @@ def test_splink_2_predict():
 @mark_with_dialects_including("spark")
 def test_splink_2_predict_spark(df_spark, spark_api):
     settings_dict = get_settings_dict()
-    linker = Linker(df_spark, settings_dict, spark_api)
+    df_sdf = spark_api.register(df_spark)
+    linker = Linker(df_sdf, settings_dict)
 
     df_e = linker.inference.predict().as_pandas_dataframe()
     f1 = df_e["unique_id_l"] == "479"
@@ -62,7 +64,8 @@ def test_splink_2_predict_sqlite():
     settings_dict = get_settings_dict()
 
     db_api = SQLiteAPI(con)
-    linker = Linker("fake_data_1", settings_dict, db_api=db_api)
+    df_sdf = db_api.register("fake_data_1")
+    linker = Linker(df_sdf, settings_dict)
 
     df_e = linker.inference.predict().as_pandas_dataframe()
 
@@ -83,8 +86,9 @@ def test_splink_2_em_fixed_u():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings_dict, db_api=db_api)
+    linker = Linker(df_sdf, settings_dict)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -131,8 +135,9 @@ def test_splink_2_em_no_fix():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings_dict, db_api=db_api)
+    linker = Linker(df_sdf, settings_dict)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -189,8 +194,9 @@ def test_lambda():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings_dict, db_api=db_api)
+    linker = Linker(df_sdf, settings_dict)
 
     ma = linker.inference.predict().as_pandas_dataframe()
     f1 = ma["unique_id_l"] == 924

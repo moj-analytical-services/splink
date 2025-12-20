@@ -36,8 +36,9 @@ def test_size_density_dedupe():
         ],
     }
     db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
 
-    linker = Linker(df_1, settings, db_api=db_api)
+    linker = Linker(df_1_sdf, settings)
 
     df_predict = linker.inference.predict()
     df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -70,12 +71,12 @@ def test_size_density_link():
         ],
     }
     db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1, source_dataset_name="df_left")
+    df_2_sdf = db_api.register(df_2, source_dataset_name="df_right")
 
     linker = Linker(
-        [df_1, df_2],
+        [df_1_sdf, df_2_sdf],
         settings,
-        input_table_aliases=["df_left", "df_right"],
-        db_api=db_api,
     )
 
     df_predict = linker.inference.predict()
@@ -229,10 +230,9 @@ def test_metrics(dialect, test_helpers):
     ]
 
     # pass in dummy frame to linker
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         helper.convert_frame(df_1),
         {"link_type": "dedupe_only"},
-        **helper.extra_linker_args(),
     )
     df_predict = linker.table_management.register_table(
         helper.convert_frame(df_e), "predict"
@@ -350,10 +350,9 @@ def test_is_bridge(dialect, test_helpers):
         + [{"cluster_id": 2, "unique_id": i} for i in range(5, 10 + 1)]
         + [{"cluster_id": 3, "unique_id": i} for i in range(11, 18 + 1)]
     )
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         helper.convert_frame(df_1),
         {"link_type": "dedupe_only"},
-        **helper.extra_linker_args(),
     )
     df_predict = linker.table_management.register_table(
         helper.convert_frame(df_e), "br_predict"
@@ -407,7 +406,9 @@ def test_edges_without_igraph():
             ExactMatch("dob"),
         ],
     }
-    linker = Linker(df_1, settings, DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
+    linker = Linker(df_1_sdf, settings)
 
     df_predict = linker.inference.predict()
     df_clustered = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -445,7 +446,9 @@ def test_no_threshold_provided():
     )
 
     settings = {"link_type": "dedupe_only"}
-    linker = Linker(df_1, settings, DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
+    linker = Linker(df_1_sdf, settings)
 
     df_predict = linker.table_management.register_table(df_e, "predict")
     df_clustered = linker.table_management.register_table(df_c, "clusters")
@@ -467,7 +470,9 @@ def test_override_metadata_threshold():
     )
     df_c = pd.DataFrame([{"cluster_id": 1, "unique_id": i} for i in range(1, 3 + 1)])
     settings = {"link_type": "dedupe_only"}
-    linker = Linker(df_1, settings, DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
+    linker = Linker(df_1_sdf, settings)
     # linker.debug_mode = True
     df_predict = linker.table_management.register_table(df_e, "predict")
     df_clustered = linker.table_management.register_table(df_c, "clusters")

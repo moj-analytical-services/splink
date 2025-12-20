@@ -17,7 +17,7 @@ def test_log2(pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     df = pd.DataFrame({"x": [2, 8, 0.5, 1]})
     expected_log2_vals = [1, 3, -1, 0]
-    db_api.register_table(df, "log_values")
+    db_api._create_backend_table(df, "log_values")
     sql = """SELECT log2("x") AS logs FROM log_values"""
     frame = db_api._execute_sql(sql, "test_log_table").as_pandas_dataframe()
 

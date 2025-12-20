@@ -61,7 +61,7 @@ def test_clustering(test_helpers, dialect, link_type, input_pd_tables):
         ],
     )
     linker_input = list(map(helper.convert_frame, input_pd_tables))
-    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
     linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.95)
@@ -70,8 +70,9 @@ def test_clustering(test_helpers, dialect, link_type, input_pd_tables):
 def test_clustering_mw_prob_equivalence():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
     settings_dict = get_settings_dict()
-    linker = Linker(df, settings_dict, db_api=db_api)
+    linker = Linker(df_sdf, settings_dict)
 
     df_predict = linker.inference.predict()
 
@@ -121,7 +122,7 @@ def test_clustering_no_edges(test_helpers, dialect):
         unique_id_column_name="id",
     )
     linker_input = helper.convert_frame(df)
-    linker = Linker(linker_input, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(linker_input, settings)
 
     # due to blocking rules, df_predict will be empty
     df_predict = linker.inference.predict()

@@ -60,11 +60,8 @@ def test_udf_registration(spark_api):
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
 
-    linker = Linker(
-        df_spark,
-        settings,
-        spark_api,
-    )
+    df_sdf = spark_api.register(df_spark)
+    linker = Linker(df_sdf, settings)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -82,12 +79,8 @@ def test_damerau_levenshtein(spark_api):
     df["id"] = df.index
     df_spark_dam_lev = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_dam_lev,
-        settings,
-        spark_api,
-        input_table_aliases="test_dl_df",
-    )
+    df_sdf = spark_api.register(df_spark_dam_lev, source_dataset_name="test_dl_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select
@@ -169,12 +162,8 @@ def test_jaro(spark_api):
     df["id"] = df.index
     df_spark_jaro = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_jaro,
-        settings,
-        spark_api,
-        input_table_aliases="test_jaro_df",
-    )
+    df_sdf = spark_api.register(df_spark_jaro, source_dataset_name="test_jaro_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select
@@ -251,12 +240,8 @@ def test_jaro_winkler(spark_api):
     df["id"] = df.index
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_jaro_winkler,
-        settings,
-        spark_api,
-        input_table_aliases="test_jw_df",
-    )
+    df_sdf = spark_api.register(df_spark_jaro_winkler, source_dataset_name="test_jw_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select

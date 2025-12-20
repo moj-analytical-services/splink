@@ -82,7 +82,8 @@ def test_tf_basic():
     }
 
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(data, settings, db_api=db_api)
+    data_sdf = db_api.register(data)
+    linker = Linker(data_sdf, settings)
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
@@ -119,7 +120,8 @@ def test_tf_clamp():
     }
 
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(data, settings, db_api=db_api)
+    data_sdf = db_api.register(data)
+    linker = Linker(data_sdf, settings)
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
@@ -157,7 +159,8 @@ def test_weight():
 
     db_api = DuckDBAPI(connection=":memory:")
 
-    linker = Linker(data, settings, db_api=db_api)
+    data_sdf = db_api.register(data)
+    linker = Linker(data_sdf, settings)
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
@@ -208,7 +211,8 @@ def test_weightand_clamp():
 
     db_api = DuckDBAPI(connection=":memory:")
 
-    linker = Linker(data, settings, db_api=db_api)
+    data_sdf = db_api.register(data)
+    linker = Linker(data_sdf, settings)
     df_predict = linker.inference.predict()
     results = filter_results(df_predict)
 
@@ -251,7 +255,8 @@ def test_tf_missing_values_in_lookup():
     }
 
     db_api = DuckDBAPI(connection=":memory:")
-    linker = Linker(data, settings, db_api=db_api)
+    data_sdf = db_api.register(data)
+    linker = Linker(data_sdf, settings)
 
     # Register only London in the TF table - Paris is intentionally missing
     # u_base = 0.2, tf_london = 0.1 (half u_base), so adj mw = log2(0.2/0.1) = 1.0

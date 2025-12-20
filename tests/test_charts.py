@@ -3,7 +3,6 @@ import pytest
 
 import splink.internals.comparison_library as cl
 from splink.internals.charts import save_offline_chart
-from splink.internals.linker import Linker
 from tests.decorator import mark_with_dialects_excluding
 
 # ground truth:
@@ -133,9 +132,8 @@ def test_m_u_charts(dialect, test_helpers):
         ],
     }
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = helper.linker_with_registration(df, settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
@@ -155,9 +153,8 @@ def test_parameter_estimate_charts(dialect, test_helpers):
         ],
     }
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = helper.linker_with_registration(df, settings)
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
@@ -192,9 +189,7 @@ def test_parameter_estimate_charts(dialect, test_helpers):
             cl.LevenshteinAtThresholds("first_name", [1]),
         ],
     }
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
-
-    linker = Linker(df, settings, db_api=db_api)
+    linker = helper.linker_with_registration(df, settings)
     linker.training.estimate_u_using_random_sampling(1e6)
 
     linker.visualisations.parameter_estimate_comparisons_chart()
@@ -213,9 +208,8 @@ def test_tf_adjustment_chart(dialect, test_helpers):
         ],
     }
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = helper.linker_with_registration(df, settings)
     linker.visualisations.tf_adjustment_chart("gender")
     linker.visualisations.tf_adjustment_chart("first_name")
 
@@ -235,8 +229,7 @@ def test_save_offline_chart(tmp_path, test_helpers):
         ],
     }
     helper = test_helpers["duckdb"]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = helper.linker_with_registration(df, settings)
     ch = linker.visualisations.tf_adjustment_chart("gender", as_dict=True)
     save_offline_chart(ch, tmp_path / "test_chart.html")

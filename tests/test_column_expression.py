@@ -22,7 +22,7 @@ def test_access_extreme_array_element(test_helpers, dialect):
     table_name = "arr_tab"
     table = helper.convert_frame(df_arr)
     db_api = helper.DatabaseAPI(**helper.db_api_args())
-    arr_tab = db_api.register_table(table, table_name)
+    arr_tab = db_api.register(table, table_name)
 
     # construct a SQL query from ColumnExpressions and run it against backend
     splink_dialect = SplinkDialect.from_string(dialect)
@@ -66,7 +66,7 @@ def test_nullif(test_helpers, dialect):
     table_name = "nully_name_table"
     table = helper.convert_frame(df_arr)
     db_api = helper.DatabaseAPI(**helper.db_api_args())
-    nully_table = db_api.register_table(table, table_name)
+    nully_table = db_api.register(table, table_name)
 
     # construct a SQL query from ColumnExpressions and run it against backend
     splink_dialect = SplinkDialect.from_string(dialect)

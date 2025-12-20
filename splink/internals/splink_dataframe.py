@@ -48,6 +48,17 @@ class SplinkDataFrame(ABC):
         cols = self.columns
         return [c.name for c in cols]
 
+    # source_dataset_name is just a human-readable name for the dataset that appears
+    # in the source_dataset column of match results.  It's only relevant for
+    # input dataframes
+    @property
+    def source_dataset_name(self) -> str:
+        return self.metadata.get("source_dataset", self.templated_name)
+
+    @source_dataset_name.setter
+    def source_dataset_name(self, value: str) -> None:
+        self.metadata["source_dataset"] = value
+
     @abstractmethod
     def validate(self):
         pass

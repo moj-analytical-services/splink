@@ -4,7 +4,7 @@ import logging
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -14,7 +14,6 @@ from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
@@ -32,7 +31,6 @@ from splink.internals.linker_components.visualisations import LinkerVisualisatio
 from splink.internals.misc import (
     ascii_uid,
     bayes_factor_to_prob,
-    ensure_is_list,
     prob_to_bayes_factor,
 )
 from splink.internals.optimise_cost_of_brs import suggest_blocking_rules
@@ -49,6 +47,10 @@ from splink.internals.settings_validation.valid_types import (
     _validate_dialect,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splinkdataframe_utils import (
+    get_db_api_from_inputs,
+    splink_dataframes_to_dict,
+)
 from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )
@@ -73,11 +75,9 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: str | list[str],
+        splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
         settings: SettingsCreator | dict[str, Any] | Path | str,
-        db_api: DatabaseAPISubClass,
         set_up_basic_logging: bool = True,
-        input_table_aliases: str | list[str] | None = None,
         validate_settings: bool = True,
     ):
         """
@@ -88,46 +88,37 @@ class Linker:
 
             Dedupe
             ```py
-            linker = Linker(df, settings_dict, db_api)
+            linker = Linker(df, settings_dict)
             ```
             Link
             ```py
-            df_1 = pd.read_parquet("table_1/")
-            df_2 = pd.read_parquet("table_2/")
+            df_1 = db_api.register(pd.read_parquet("table_1/"))
+            df_2 = db_api.register(pd.read_parquet("table_2/"))
             linker = Linker(
                 [df_1, df_2],
                 settings_dict,
-                input_table_aliases=["customers", "contact_center_callers"]
                 )
             ```
             Dedupe with a pre-trained model read from a json file
             ```py
-            df = pd.read_csv("data_to_dedupe.csv")
+            df = db_api.register(pd.read_csv("data_to_dedupe.csv"), "my_data")
             linker = Linker(df, "model.json")
             ```
 
         Args:
-            input_table_or_tables (Union[str, list]): Input data into the linkage model.
-                Either a single string (the name of a table in a database) for
-                deduplication jobs, or a list of strings  (the name of tables in a
-                database) for link_only or link_and_dedupe.  For some linkers, such as
-                the DuckDBLinker and the SparkLinker, it's also possible to pass in
-                dataframes (Pandas and Spark respectively) rather than strings.
+            splink_dataframe_or_dataframes (SplinkDataFrame | Sequence[SplinkDataFrame]):
+                Input data into the linkage model. Either a single SplinkDataFrame for
+                deduplication jobs, or a sequence of SplinkDataFrames for link_only
+                or link_and_dedupe. Tables should be registered using db_api.register()
+                before being passed to the Linker.
             settings_dict (dict | Path | str): A Splink settings dictionary,
                 or a path (either as a pathlib.Path object, or a string) to a json file
                 defining a settings dictionary or pre-trained model.
-            db_api (DatabaseAPI): A `DatabaseAPI` object, which manages interactions
-                with the database. You can import these for use from
-                `splink.backends.{your_backend}`
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
-            input_table_aliases (Union[str, list], optional): Labels assigned to
-                input tables in Splink outputs.  If the names of the tables in the
-                input database are long or unspecific, this argument can be used
-                to attach more easily readable/interpretable names. Defaults to None.
             validate_settings (bool, optional): When True, check your settings
                 dictionary for any potential errors that may cause splink to fail.
-        """
+        """  # noqa: E501
         self._db_schema = "splink"
         if set_up_basic_logging:
             logging.basicConfig(
@@ -136,7 +127,7 @@ class Linker:
             splink_logger = logging.getLogger("splink")
             splink_logger.setLevel(logging.INFO)
 
-        self._db_api = db_api
+        self._db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
 
         # TODO: temp hack for compat
         self._intermediate_table_cache: CacheDictWithLogging = (
@@ -158,15 +149,14 @@ class Linker:
         # Maybe overwrite it here and incompatibilities have to be dealt with
         # by comparisons/ blocking rules etc??
         self._settings_obj = settings_creator.get_settings(
-            db_api.sql_dialect.sql_dialect_str
+            self._db_api.sql_dialect.sql_dialect_str
         )
 
         # TODO: Add test of what happens if the db_api is for a different backend
         # to the sql_dialect set in the settings dict
 
-        self._input_tables_dict = self._register_input_tables(
-            input_table_or_tables,
-            input_table_aliases,
+        self._input_tables_dict = splink_dataframes_to_dict(
+            splink_dataframe_or_dataframes
         )
 
         self._validate_input_dfs()
@@ -296,26 +286,6 @@ class Linker:
     ):
         return self._sql_dialect.random_sample_sql(
             proportion, sample_size, seed=seed, table=table, unique_id=unique_id
-        )
-
-    def _register_input_tables(
-        self,
-        input_tables: Sequence[AcceptableInputTableType],
-        input_aliases: Optional[str | List[str]],
-    ) -> Dict[str, SplinkDataFrame]:
-        input_tables_list = ensure_is_list(input_tables)
-
-        if input_aliases is None:
-            input_table_aliases = [
-                f"__splink__input_table_{i}" for i, _ in enumerate(input_tables_list)
-            ]
-            overwrite = True
-        else:
-            input_table_aliases = ensure_is_list(input_aliases)
-            overwrite = False
-
-        return self._db_api.register_multiple_tables(
-            input_tables, input_table_aliases, overwrite
         )
 
     def _check_for_valid_settings(self):
