@@ -24,7 +24,8 @@ def test_m_train():
     # Train from label column
     db_api = DuckDBAPI()
 
-    linker = Linker(df, settings, db_api=db_api)
+    df_sdf = db_api.register(df)
+    linker = Linker(df_sdf, settings)
 
     linker.training.estimate_m_from_label_column("cluster")
     cc_name = linker._settings_obj.comparisons[0]
@@ -55,9 +56,10 @@ def test_m_train():
 
     db_api = DuckDBAPI()
 
-    linker_pairwise = Linker(df, settings, db_api=db_api)
+    df_sdf = db_api.register(df)
+    linker_pairwise = Linker(df_sdf, settings)
 
-    linker_pairwise.table_management.register_table(df_labels, "labels")
+    db_api.register(df_labels, "labels")
     linker_pairwise.training.estimate_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 

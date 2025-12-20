@@ -243,8 +243,9 @@ def test_settings_validation_logs(caplog):
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
         db_api = DuckDBAPI()
+        df_sdf = db_api.register(DF)
 
-        Linker(DF, settings, validate_settings=True, db_api=db_api)
+        Linker(df_sdf, settings, validate_settings=True)
 
         # Define expected log segments
         expected_log_segments = [

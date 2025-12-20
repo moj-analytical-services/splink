@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -10,8 +10,9 @@ if TYPE_CHECKING:
 
 
 def get_db_api_from_inputs(
-    table_or_tables: SplinkDataFrame | list[SplinkDataFrame],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
 ) -> DatabaseAPI[Any]:
+    tables: Iterable[SplinkDataFrame]
     if isinstance(table_or_tables, SplinkDataFrame):
         tables = [table_or_tables]
     else:
@@ -21,8 +22,9 @@ def get_db_api_from_inputs(
 
 
 def splink_dataframes_to_dict(
-    table_or_tables: SplinkDataFrame | list[SplinkDataFrame],
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
 ) -> dict[str, SplinkDataFrame]:
+    tables: Iterable[SplinkDataFrame]
     if isinstance(table_or_tables, SplinkDataFrame):
         tables = [table_or_tables]
     else:

@@ -49,6 +49,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
         self._created_tables: set[str] = set()
+        self._input_table_counter: int = 0
+
+    def _new_input_table_name(self) -> str:
+        name = f"__splink__input_table_{self._input_table_counter}"
+        self._input_table_counter += 1
+        return name
 
     @final
     def _log_and_run_sql_execution(
@@ -224,7 +230,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         existing_tables = []
 
         if not input_aliases:
-            input_aliases = [f"__splink__{ascii_uid(8)}" for table in input_tables]
+            input_aliases = [self._new_input_table_name() for _ in input_tables]
 
         for table, alias in zip(input_tables, input_aliases):
             if isinstance(table, str):
@@ -253,21 +259,27 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             tables_as_splink_dataframes[alias] = sdf
         return tables_as_splink_dataframes
 
+    # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958
+    # for notes on this code
     def register(
         self,
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
     ) -> SplinkDataFrame:
-        # Check what happens if the input is a string AND the user proides a source_dataset_name
+        # Legacy behaviour: string inputs represent already-registered physical tables.
+        # If `source_dataset_name` is not provided, we still generate a fresh internal
+        # templated name so that the same physical table can be used multiple times as
+        # distinct inputs (e.g. linking a table to itself).
         if isinstance(table, str):
             physical_name = table
-            templated_name = source_dataset_name or physical_name
+            templated_name = source_dataset_name or self._new_input_table_name()
             sdf = self.table_to_splink_dataframe(templated_name, physical_name)
         else:
-            templated_name = (
-                source_dataset_name or f"__splink__input_table_{ascii_uid(8)}"
-            )
-            sdf = self.register_table(table, templated_name, overwrite=False)
+            templated_name = source_dataset_name or self._new_input_table_name()
+            # Allow overwrite of table only if Splink is assigning the name
+            # i.e. allow overwrites of tables of the form __splink__input_table_n
+            overwrite = source_dataset_name is None
+            sdf = self.register_table(table, templated_name, overwrite=overwrite)
 
         # Keep source_dataset label aligned with the internal table name by default
         sdf.source_dataset_name = source_dataset_name or templated_name

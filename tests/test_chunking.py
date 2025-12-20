@@ -32,12 +32,11 @@ def _sort_predictions(df):
 def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
     """Test that chunked predictions produce identical results to non-chunked."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     # Get non-chunked predictions
     predictions_no_chunk = linker.inference.predict(threshold_match_weight=-10)
@@ -70,12 +69,11 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
 def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
     """Test various chunk size combinations produce consistent results."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -113,19 +111,18 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
 def test_precached_blocked_pairs_same_result(test_helpers, dialect):
     """Test that pre-caching blocked pairs produces same result as no pre-caching."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
 
     # First: run without pre-caching
-    linker1 = Linker(df, settings, **helper.extra_linker_args())
+    linker1 = helper.linker_with_registration(df, settings)
     predictions_no_cache = linker1.inference.predict(threshold_match_weight=-10)
     df_no_cache = _sort_predictions(predictions_no_cache.as_pandas_dataframe())
 
     # Second: run with pre-caching
-    linker2 = Linker(df, settings, **helper.extra_linker_args())
+    linker2 = helper.linker_with_registration(df, settings)
     linker2.table_management.compute_df_concat_with_tf()
     linker2.table_management.compute_blocked_pairs_for_predict()
     predictions_with_cache = linker2.inference.predict(threshold_match_weight=-10)
@@ -143,14 +140,13 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect):
 def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
     """Test that pre-caching chunked blocked pairs produces same result."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
 
     # First: run chunked without pre-caching
-    linker1 = Linker(df, settings, **helper.extra_linker_args())
+    linker1 = helper.linker_with_registration(df, settings)
     predictions_no_cache = linker1.inference.predict(
         threshold_match_weight=-10,
         num_chunks_left=2,
@@ -159,7 +155,7 @@ def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
     df_no_cache = _sort_predictions(predictions_no_cache.as_pandas_dataframe())
 
     # Second: run chunked with pre-caching of all chunks
-    linker2 = Linker(df, settings, **helper.extra_linker_args())
+    linker2 = helper.linker_with_registration(df, settings)
     linker2.table_management.compute_df_concat_with_tf()
 
     # Pre-compute all 4 chunk combinations (2x2)
@@ -195,8 +191,9 @@ def test_cache_is_hit_for_blocked_pairs():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs (populates cache)
     linker.table_management.compute_df_concat_with_tf()
@@ -221,8 +218,9 @@ def test_cache_is_hit_for_chunked_blocked_pairs():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs for specific chunk
     linker.table_management.compute_df_concat_with_tf()
@@ -254,8 +252,9 @@ def test_cache_key_normalization_1_1():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
 
     # Pre-compute with (1,1) x (1,1) - should normalize to base key
     linker.table_management.compute_df_concat_with_tf()
@@ -275,8 +274,9 @@ def test_blocked_pairs_not_deleted_when_from_cache():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs
     linker.table_management.compute_df_concat_with_tf()
@@ -294,8 +294,9 @@ def test_blocked_pairs_deleted_when_not_from_cache():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
 
     # Pre-compute df_concat_with_tf but NOT blocked pairs
     linker.table_management.compute_df_concat_with_tf()
@@ -316,7 +317,6 @@ def test_blocked_pairs_deleted_when_not_from_cache():
 def test_chunked_predict_link_only(test_helpers, dialect):
     """Test chunked predictions work correctly with link_only (two datasets)."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -329,7 +329,7 @@ def test_chunked_predict_link_only(test_helpers, dialect):
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
 
-    linker = Linker([df1, df2], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df1, df2], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -370,7 +370,6 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
     Two datasets is a special case, so we test with three datasets as well.
     """
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -385,7 +384,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
     df2 = helper.convert_frame(df2_pd)
     df3 = helper.convert_frame(df3_pd)
 
-    linker = Linker([df1, df2, df3], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df1, df2, df3], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -423,7 +422,6 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
 def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
     """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     settings = get_settings_dict()
     settings["link_type"] = "link_and_dedupe"
@@ -436,7 +434,7 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
     df1 = helper.convert_frame(df1_pd)
     df2 = helper.convert_frame(df2_pd)
 
-    linker = Linker([df1, df2], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df1, df2], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -477,7 +475,6 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
     Two datasets is a special case, so we test with three datasets as well.
     """
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     settings = get_settings_dict()
     settings["link_type"] = "link_and_dedupe"
@@ -492,7 +489,7 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
     df2 = helper.convert_frame(df2_pd)
     df3 = helper.convert_frame(df3_pd)
 
-    linker = Linker([df1, df2, df3], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df1, df2, df3], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
