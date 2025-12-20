@@ -106,7 +106,7 @@ def test_splink_converges_to_known_params():
 
         cvv_hashed_tablename = re.search(pattern, str(e)).group()
 
-    cvv_table = db_api.register_table(df, cvv_hashed_tablename)
+    cvv_table = db_api._create_backend_table(df, cvv_hashed_tablename)
     cvv_table.templated_name = "__splink__df_comparison_vectors"
 
     core_model_settings = em_training_session._train(cvv_table)

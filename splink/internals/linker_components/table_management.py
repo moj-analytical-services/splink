@@ -341,4 +341,6 @@ class LinkerTableManagement:
                 pipeline
         """
 
-        return self._linker._db_api.register_table(input_table, table_name, overwrite)
+        return self._linker._db_api._create_backend_table(
+            input_table, table_name, overwrite
+        )

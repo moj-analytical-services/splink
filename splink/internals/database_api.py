@@ -217,48 +217,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    @final
-    def register_multiple_tables(
-        self,
-        input_tables: Sequence[AcceptableInputTableType],
-        input_aliases: Optional[List[str]] = None,
-        overwrite: bool = False,
-    ) -> Dict[str, SplinkDataFrame]:
-        input_tables = self.process_input_tables(input_tables)
-
-        tables_as_splink_dataframes = {}
-        existing_tables = []
-
-        if not input_aliases:
-            input_aliases = [self._new_input_table_name() for _ in input_tables]
-
-        for table, alias in zip(input_tables, input_aliases):
-            if isinstance(table, str):
-                # already registered - this should be a table name
-                continue
-            exists = self.table_exists_in_database(alias)
-            # if table exists, and we are not overwriting, we have a problem!
-            if exists:
-                if not overwrite:
-                    existing_tables.append(alias)
-                else:
-                    self.delete_table_from_database(alias)
-
-        if existing_tables:
-            existing_tables_str = ", ".join(existing_tables)
-            msg = (
-                f"Table(s): {existing_tables_str} already exists in database. "
-                "Please remove or rename before retrying"
-            )
-            raise ValueError(msg)
-        for table, alias in zip(input_tables, input_aliases):
-            if not isinstance(table, str):
-                self._table_registration(table, alias)
-                table = alias
-            sdf = self.table_to_splink_dataframe(alias, table)
-            tables_as_splink_dataframes[alias] = sdf
-        return tables_as_splink_dataframes
-
     # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958
     # for notes on this code
     def register(
@@ -266,7 +224,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
     ) -> SplinkDataFrame:
-        # Legacy behaviour: string inputs represent already-registered physical tables.
+        # String inputs represent already-registered physical tables.
         # If `source_dataset_name` is not provided, we still generate a fresh internal
         # templated name so that the same physical table can be used multiple times as
         # distinct inputs (e.g. linking a table to itself).
@@ -279,23 +237,37 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             # Allow overwrite of table only if Splink is assigning the name
             # i.e. allow overwrites of tables of the form __splink__input_table_n
             overwrite = source_dataset_name is None
-            sdf = self.register_table(table, templated_name, overwrite=overwrite)
+            sdf = self._create_backend_table(table, templated_name, overwrite=overwrite)
 
         # Keep source_dataset label aligned with the internal table name by default
         sdf.source_dataset_name = source_dataset_name or templated_name
         return sdf
 
     @final
-    def register_table(
+    def _create_backend_table(
         self,
         input_table: AcceptableInputTableType,
-        table_name: str,
+        templated_name: str,
         overwrite: bool = False,
     ) -> SplinkDataFrame:
-        tables_dict = self.register_multiple_tables(
-            [input_table], [table_name], overwrite=overwrite
-        )
-        return tables_dict[table_name]
+        # If input is a string, it's already a registered table name in the database.
+        # Just create a SplinkDataFrame wrapper pointing to it using the templated
+        # name
+        if isinstance(input_table, str):
+            return self.table_to_splink_dataframe(templated_name, input_table)
+
+        exists = self.table_exists_in_database(templated_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(
+                    f"Table '{templated_name}' already exists in database. "
+                    "Please remove or rename before retrying"
+                )
+            else:
+                self.delete_table_from_database(templated_name)
+
+        self._table_registration(input_table, templated_name)
+        return self.table_to_splink_dataframe(templated_name, templated_name)
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         # returns sql
