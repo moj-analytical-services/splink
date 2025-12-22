@@ -82,6 +82,8 @@ default-groups = [
     "linting",
     "testing",
     "typechecking",
+    # TODO: temporary measure until we can depanda tests
+    "pandas",
 ]
 
 [build-system]
