@@ -239,7 +239,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
 def validate_blocking_output(comparison_count_args, expected_out):
     records = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         **comparison_count_args
-    ).to_dict(orient="records")
+    )
 
     assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
 
@@ -295,7 +295,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
         link_type="link_only",
         source_dataset_column_name="source_dataset",
     )
-    assert r1.to_dict(orient="records") == r2.to_dict(orient="records")
+    assert r1 == r2
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df_1 = df[df["unique_id"] % 3 == 0].copy()
