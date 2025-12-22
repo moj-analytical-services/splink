@@ -35,7 +35,7 @@ Repository = "https://github.com/moj-analytical-services/splink"
 [dependency-groups]
 # allows us to easily check package functionality with just these installed
 # (and not the rest of our required dependencies)
-core = ["sqlglot", "pyarrow"]
+core = ["sqlglot", "pyarrow", "duckdb"]
 demos = [
     "ipywidgets>=8.1.7",
     "nbmake>=1.5.5",

@@ -3873,6 +3873,7 @@ spark = [
 
 [package.dev-dependencies]
 core = [
+    { name = "duckdb" },
     { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlglot" },
@@ -3949,6 +3950,7 @@ provides-extras = ["pyspark", "spark", "postgres"]
 
 [package.metadata.requires-dev]
 core = [
+    { name = "duckdb" },
     { name = "pyarrow" },
     { name = "sqlglot" },
 ]
