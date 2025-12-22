@@ -83,7 +83,7 @@
                     "tf_adjustment_weight": 1.0
                 },
                 {
-                    "sql_condition": "levenshtein(dob_l, dob_r) <= 2",
+                    "sql_condition": "levenshtein(dob_l::VARCHAR, dob_r::VARCHAR) <= 2",
                     "label_for_charts": "Levenstein <= 2",
                     "m_probability": 0.3679356056637918,
                     "u_probability": 0.01711911911911912
