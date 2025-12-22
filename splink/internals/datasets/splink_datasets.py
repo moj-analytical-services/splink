@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 from urllib.request import urlopen
 
-import pyarrow.csv as pv
+import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 
 from .metadata import dataset_labels, datasets
@@ -47,7 +47,7 @@ def dataset_property(metadata_method):
             data_source = file_loc
 
         read_function = {
-            "csv": pv.read_csv,
+            "csv": pa_csv.read_csv,
             "parquet": pq.read_table,
         }.get(data_format, None)
 
@@ -58,7 +58,8 @@ def dataset_property(metadata_method):
             )
         df = read_function(data_source)
         self._in_memory_data[dataset_name] = df
-        return df
+        # TODO: temporary compat to keep as pandas until we can update notebooks
+        return df.to_pandas()
 
     return lazyload_data
 
