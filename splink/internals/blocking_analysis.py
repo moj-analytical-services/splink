@@ -255,6 +255,7 @@ def _process_unique_id_columns(
         InputColumn(unique_id_column_name, sqlglot_dialect_str=sqglot_dialect),
     )
 
+
 class CumulativeComparisonRecord(TypedDict):
     blocking_rule: str
     row_count: int
