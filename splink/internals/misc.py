@@ -9,8 +9,6 @@ from datetime import datetime, timedelta
 from math import ceil, inf, log2
 from typing import Iterable, TypeVar, overload
 
-import numpy as np
-
 T = TypeVar("T")
 
 
@@ -85,6 +83,9 @@ class EverythingEncoder(json.JSONEncoder):
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
     def default(self, obj):
+        # TODO: adjust this for safer importing
+        import numpy as np
+
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
