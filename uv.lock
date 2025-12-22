@@ -3873,6 +3873,8 @@ spark = [
 
 [package.dev-dependencies]
 core = [
+    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlglot" },
 ]
 demos = [
@@ -3946,7 +3948,10 @@ requires-dist = [
 provides-extras = ["pyspark", "spark", "postgres"]
 
 [package.metadata.requires-dev]
-core = [{ name = "sqlglot" }]
+core = [
+    { name = "pyarrow" },
+    { name = "sqlglot" },
+]
 demos = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "nbmake", specifier = ">=1.5.5" },
