@@ -786,6 +786,10 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
     def datetime_parsed_column_expression(self):
         return self.col_expression.try_parse_timestamp
 
+    @property
+    def custom_time_diff_sql_attribute_name(self) -> str:
+        return "absolute_time_difference"
+
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         """Use sqlglot to auto transpile where possible
@@ -801,8 +805,13 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
             )
 
         # If the dialect has an override, use it
-        if hasattr(sql_dialect, "absolute_time_difference"):
-            return sql_dialect.absolute_time_difference(self)
+        dialect_sql_method = getattr(
+            sql_dialect,
+            self.custom_time_diff_sql_attribute_name,
+            None,
+        )
+        if dialect_sql_method is not None:
+            return dialect_sql_method(self)
 
         sqlglot_base_dialect_sql = (
             "abs(TIME_TO_UNIX(___col____l)"
@@ -831,6 +840,10 @@ class AbsoluteDateDifferenceLevel(AbsoluteTimeDifferenceLevel):
     @property
     def datetime_parsed_column_expression(self):
         return self.col_expression.try_parse_date
+
+    @property
+    def custom_time_diff_sql_attribute_name(self) -> str:
+        return "absolute_date_difference"
 
 
 class DistanceInKMLevel(ComparisonLevelCreator):
