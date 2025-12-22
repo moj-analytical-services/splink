@@ -85,6 +85,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.row_factory = self.dict_factory
         self._register_udfs(register_udfs)
 
+    @staticmethod
     def _arrow_to_sqlite_type(field: pa.Field) -> str:
         t = field.type
 
