@@ -85,8 +85,7 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
 
     df_params = training_linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    param_records = df_params.as_pandas_dataframe()
-    param_records = compute_proportions_for_new_parameters(param_records)
+    param_records = compute_proportions_for_new_parameters(df_params)
 
     m_u_records = [
         r

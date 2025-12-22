@@ -5,7 +5,6 @@ import time
 from typing import Any, List, cast
 
 import duckdb
-import pandas as pd
 
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
@@ -119,10 +118,19 @@ def compute_proportions_for_new_parameters_sql(table_name):
 
 
 def compute_proportions_for_new_parameters(
-    m_u_df: pd.DataFrame,
+    df_params: SplinkDataFrame,
 ) -> List[dict[str, Any]]:
+    # TODO: should use arrow frame as interchange format
+    m_u_df = df_params.as_pandas_dataframe()  # noqa: F841 (unused variable)
+
     sql = compute_proportions_for_new_parameters_sql("m_u_df")
-    return duckdb.query(sql).to_df().to_dict("records")
+    # TODO: reuse connexion
+    con = duckdb.connect()
+    ddb_relation = con.query(sql)
+    # TODO: borrowed from DuckDBDataFrame.as_record_dict - reusable?
+    rows = ddb_relation.fetchall()
+    column_names = [desc[0] for desc in ddb_relation.description]
+    return [dict(zip(column_names, row)) for row in rows]
 
 
 def populate_m_u_from_lookup(
@@ -270,8 +278,7 @@ def expectation_maximisation(
         else:
             pipeline.append_input_dataframe(df_comparison_vector_values)
             df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        param_records = df_params.as_pandas_dataframe()
-        param_records = compute_proportions_for_new_parameters(param_records)
+        param_records = compute_proportions_for_new_parameters(df_params)
 
         df_params.drop_table_from_database_and_remove_from_cache()
 
