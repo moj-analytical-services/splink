@@ -3935,7 +3935,7 @@ wheels = [
 
 [[package]]
 name = "splink"
-version = "4.0.12.dev1"
+version = "4.0.12"
 source = { editable = "." }
 dependencies = [
     { name = "altair" },
