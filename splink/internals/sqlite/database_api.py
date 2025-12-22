@@ -105,12 +105,13 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         col_defs = ", ".join(
             f"{field.name} {self._arrow_to_sqlite_type(field)}" for field in cols
         )
-        cur.execute(f"CREATE OR REPLACE TABLE {table_name} ({col_defs})")
+        cur.execute(f"DROP TABLE IF EXISTS {table_name}")
+        cur.execute(f"CREATE TABLE {table_name} ({col_defs})")
 
         rows = zip(*(table.column(i).to_pylist() for i in range(table.num_columns)))
 
         placeholders = ", ".join("?" * table.num_columns)
-        cur.executemany(f"INSERT INTO data VALUES ({placeholders})", rows)
+        cur.executemany(f"INSERT INTO {table_name} VALUES ({placeholders})", rows)
 
         self.con.commit()
 
