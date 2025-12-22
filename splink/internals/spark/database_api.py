@@ -68,8 +68,9 @@ class SparkAPI(DatabaseAPI[spark_df]):
             input = self._clean_pandas_df(input)
         elif isinstance(input, dict):
             input = pa.Table.from_pydict(input)
-        # TODO: spark 3 check for nicer arrow message
-        input = self.spark.createDataFrame(input)
+        if not isinstance(input, spark_df):
+            # TODO: spark 3 check for nicer arrow message
+            input = self.spark.createDataFrame(input)
         input.createOrReplaceTempView(table_name)
 
     def table_to_splink_dataframe(
