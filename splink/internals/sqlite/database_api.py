@@ -123,10 +123,12 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
                 index=False,
                 if_exists="replace",
             )
+            return
         if isinstance(input, dict):
             input = pa.Table.from_pydict(input)
         elif isinstance(input, list):
             input = pa.Table.from_pylist(input)
+        self._register_pyarrow_table(input, table_name)
 
     def table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
