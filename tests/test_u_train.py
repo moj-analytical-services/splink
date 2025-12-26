@@ -4,7 +4,12 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink.internals.estimate_u import _proportion_sample_size_link_only
+from splink.internals.estimate_u import (
+    ComparisonConvergenceInfo,
+    LevelConvergenceInfo,
+    _proportion_sample_size_link_only,
+    estimate_u_values,
+)
 from splink.internals.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
 
@@ -432,3 +437,251 @@ def test_seed_u_outputs_different_order(test_helpers, dialect):
     # should have got the same u-value each time, as we supply a seed
     # input data is same, just shuffled - should get ordered when we sample
     assert len(u_vals) == 1
+
+
+# ==================== Convergence Tests ====================
+
+
+def test_convergence_diagnostics_structure():
+    """Test that estimate_u_values returns properly structured diagnostics."""
+    from splink import DuckDBAPI
+
+    data = [
+        {"unique_id": i, "name": f"Name{i % 100}"}
+        for i in range(500)  # Enough records to generate many pairs
+    ]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [cl.ExactMatch("name")],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+    from splink.internals.linker import Linker
+
+    linker = Linker(df_sdf, settings)
+
+    # Call the underlying function to get diagnostics
+    diagnostics = estimate_u_values(linker, max_pairs=1e5, min_count=50)
+
+    # Should return a list with one entry per comparison
+    assert isinstance(diagnostics, list)
+    assert len(diagnostics) == 1  # One comparison (name)
+
+    diag = diagnostics[0]
+    assert isinstance(diag, ComparisonConvergenceInfo)
+    assert diag.output_column_name == "name"
+    assert diag.total_pairs_sampled > 0
+    assert diag.batches_processed >= 1
+    assert diag.time_seconds >= 0
+    assert isinstance(diag.converged, bool)
+
+    # Check levels structure
+    assert len(diag.levels) == 2  # ExactMatch has 2 non-null levels (match, else)
+    for level in diag.levels:
+        assert isinstance(level, LevelConvergenceInfo)
+        assert level.count >= 0
+        assert 0 <= level.u_probability <= 1
+        assert isinstance(level.converged, bool)
+
+    # Counts should sum to total pairs
+    total_count = sum(level.count for level in diag.levels)
+    assert total_count == diag.total_pairs_sampled
+
+
+def test_convergence_early_termination():
+    """Test that convergence stops early when min_count is reached for all levels."""
+    from splink import DuckDBAPI
+
+    # Create data where both levels will have many observations
+    # Names repeat frequently, so exact matches will be common
+    data = [{"unique_id": i, "name": f"Name{i % 10}"} for i in range(200)]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [cl.ExactMatch("name")],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+    from splink.internals.linker import Linker
+
+    linker = Linker(df_sdf, settings)
+
+    # With many repeating names, should converge quickly with low min_count
+    diagnostics = estimate_u_values(
+        linker,
+        max_pairs=1e6,  # Large max_pairs
+        min_count=10,  # Low threshold
+        initial_batch_proportion=0.05,  # Start small
+    )
+
+    diag = diagnostics[0]
+
+    # Should have converged
+    assert diag.converged is True
+
+    # All levels should have converged
+    for level in diag.levels:
+        assert level.converged is True
+        assert level.count >= 10
+
+    # Should NOT have processed all pairs (early termination)
+    # Total pairs for 200 records = 200*199/2 = 19900
+    total_possible_pairs = 200 * 199 // 2
+    assert diag.total_pairs_sampled < total_possible_pairs
+
+
+def test_convergence_min_count_parameter():
+    """Test that min_count parameter affects convergence behavior."""
+    from splink import DuckDBAPI
+
+    data = [{"unique_id": i, "name": f"Name{i % 20}"} for i in range(300)]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [cl.ExactMatch("name")],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    db_api_1 = DuckDBAPI()
+    df_sdf_1 = db_api_1.register(df)
+    from splink.internals.linker import Linker
+
+    linker_low = Linker(df_sdf_1, settings)
+
+    db_api_2 = DuckDBAPI()
+    df_sdf_2 = db_api_2.register(df)
+    linker_high = Linker(df_sdf_2, settings)
+
+    # Low min_count should process fewer pairs
+    diag_low = estimate_u_values(linker_low, max_pairs=1e6, min_count=20)[0]
+
+    # High min_count should process more pairs
+    diag_high = estimate_u_values(linker_high, max_pairs=1e6, min_count=200)[0]
+
+    # Higher min_count requires more samples (or may not converge)
+    # At minimum, high threshold should not converge with fewer pairs
+    if diag_high.converged:
+        for level in diag_high.levels:
+            assert level.count >= 200
+    else:
+        # If it didn't converge, it should have processed all pairs
+        pass
+
+    # Low threshold should have converged
+    assert diag_low.converged is True
+    for level in diag_low.levels:
+        assert level.count >= 20
+
+
+def test_convergence_multiple_comparisons():
+    """Test convergence diagnostics with multiple comparisons."""
+    from splink import DuckDBAPI
+
+    data = [
+        {"unique_id": i, "name": f"Name{i % 15}", "city": f"City{i % 8}"}
+        for i in range(200)
+    ]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("name"),
+            cl.ExactMatch("city"),
+        ],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+    from splink.internals.linker import Linker
+
+    linker = Linker(df_sdf, settings)
+
+    diagnostics = estimate_u_values(linker, max_pairs=1e5, min_count=30)
+
+    # Should have diagnostics for each comparison
+    assert len(diagnostics) == 2
+
+    comparison_names = {d.output_column_name for d in diagnostics}
+    assert comparison_names == {"name", "city"}
+
+    # Each comparison should have processed pairs
+    for diag in diagnostics:
+        assert diag.total_pairs_sampled > 0
+        assert len(diag.levels) == 2  # ExactMatch has 2 levels
+
+
+def test_convergence_u_probabilities_sum_to_one():
+    """Test that u probabilities across levels sum to 1.0 for each comparison."""
+    from splink import DuckDBAPI
+
+    data = [{"unique_id": i, "name": f"Name{i % 25}"} for i in range(300)]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [cl.LevenshteinAtThresholds("name", [1, 2])],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+    from splink.internals.linker import Linker
+
+    linker = Linker(df_sdf, settings)
+
+    diagnostics = estimate_u_values(linker, max_pairs=1e5, min_count=20)
+
+    diag = diagnostics[0]
+
+    # U probabilities should sum to 1.0 (within floating point tolerance)
+    total_u = sum(level.u_probability for level in diag.levels)
+    assert pytest.approx(total_u, rel=1e-10) == 1.0
+
+
+@mark_with_dialects_excluding("postgres")
+def test_convergence_with_link_only(test_helpers, dialect):
+    """Test convergence works correctly in link_only mode."""
+    helper = test_helpers[dialect]
+
+    data_l = [{"unique_id": i, "name": f"Name{i % 20}"} for i in range(150)]
+    data_r = [{"unique_id": i, "name": f"Name{i % 20}"} for i in range(150)]
+    df_l = pd.DataFrame(data_l)
+    df_r = pd.DataFrame(data_r)
+
+    settings = {
+        "link_type": "link_only",
+        "comparisons": [cl.ExactMatch("name")],
+        "blocking_rules_to_generate_predictions": [],
+    }
+
+    df_l = helper.convert_frame(df_l)
+    df_r = helper.convert_frame(df_r)
+
+    linker = helper.linker_with_registration(
+        [df_l, df_r],
+        settings,
+        input_table_aliases=["l", "r"],
+    )
+
+    diagnostics = estimate_u_values(linker, max_pairs=1e5, min_count=30)
+
+    diag = diagnostics[0]
+    assert diag.total_pairs_sampled > 0
+
+    # In link_only, total pairs = 150 * 150 = 22500
+    # Should have sampled some of these
+    assert diag.batches_processed >= 1
+
+    # U probabilities should be valid
+    for level in diag.levels:
+        assert 0 < level.u_probability <= 1

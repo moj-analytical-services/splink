@@ -43,12 +43,17 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     include_clerical_match_score: bool = False,
+    blocked_id_pairs_table: str = "__splink__blocked_id_pairs",
 ) -> list[dict[str, str]]:
-    """Compute the comparison vectors from __splink__blocked_id_pairs, the
-    materialised dataframe of blocked pairwise record comparisons.
+    """Compute the comparison vectors from a blocked ID pairs table (the
+    materialised dataframe of blocked pairwise record comparisons).
 
     See [the fastlink paper](https://imai.fas.harvard.edu/research/files/linkage.pdf)
     for more details of what is meant by comparison vectors.
+
+    Args:
+        blocked_id_pairs_table: Name of the table containing blocked pairs.
+            Defaults to __splink__blocked_id_pairs.
     """
     sqls = []
 
@@ -63,14 +68,14 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
     # The first table selects the required columns from the input tables
-    # and alises them as `col_l`, `col_r` etc
-    # using the __splink__blocked_id_pairs as an associated (junction) table
+    # and aliases them as `col_l`, `col_r` etc
+    # using the blocked_id_pairs_table as an associated (junction) table
 
     # That is, it does the join, but doesn't compute the comparison vectors
-    sql = sql = f"""
+    sql = f"""
     select {select_cols_expr}, b.match_key
     from {input_tablename_l} as l
-    inner join __splink__blocked_id_pairs as b
+    inner join {blocked_id_pairs_table} as b
     on {uid_l_expr} = b.join_key_l
     inner join {input_tablename_r} as r
     on {uid_r_expr} = b.join_key_r

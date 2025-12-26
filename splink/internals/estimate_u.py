@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import logging
+import time
 from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
 
 from splink.internals.blocking import (
     block_using_rules_sqls,
 )
+from splink.internals.comparison import Comparison
+from splink.internals.comparison_level import M_U_CLAMP_MIN
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
+from splink.internals.input_column import InputColumn
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
@@ -22,16 +27,36 @@ from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
 )
 
-from .expectation_maximisation import (
-    compute_new_parameters_sql,
-    compute_proportions_for_new_parameters,
-)
+from .database_api import DatabaseAPISubClass
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class LevelConvergenceInfo:
+    """Diagnostics for a single comparison level's convergence."""
+
+    comparison_vector_value: int
+    label: str
+    count: int
+    u_probability: float
+    converged: bool
+
+
+@dataclass
+class ComparisonConvergenceInfo:
+    """Diagnostics for a comparison's u estimation convergence."""
+
+    output_column_name: str
+    total_pairs_sampled: int
+    batches_processed: int
+    converged: bool
+    time_seconds: float
+    levels: List[LevelConvergenceInfo] = field(default_factory=list)
 
 
 def _rows_needed_for_n_pairs(n_pairs: float) -> float:
@@ -63,9 +88,190 @@ def _proportion_sample_size_link_only(
     return proportion, sample_size
 
 
+def _estimate_u_for_comparison_with_convergence(
+    comparison: Comparison,
+    db_api: DatabaseAPISubClass,
+    blocked_pairs_with_rand: SplinkDataFrame,
+    df_sample: SplinkDataFrame,
+    input_tablename_sample_l: str,
+    input_tablename_sample_r: str,
+    unique_id_input_columns: List[InputColumn],
+    source_dataset_input_column: Optional[InputColumn],
+    unique_id_input_column: InputColumn,
+    df_sample_left: Optional[SplinkDataFrame],
+    df_sample_right: Optional[SplinkDataFrame],
+    min_count: int,
+    initial_batch_proportion: float,
+    batch_growth_factor: float,
+) -> ComparisonConvergenceInfo:
+    """Estimate u probabilities for a comparison using count-based convergence.
+
+    Iteratively samples batches of pairs, counting how many fall into each level.
+    Stops when all levels have at least `min_count` observations, or when all
+    pairs have been processed.
+
+    Returns diagnostics including per-level counts and convergence status.
+    """
+    start_time = time.time()
+
+    # Get comparison levels (excluding null - null levels don't have u probabilities)
+    levels = comparison._comparison_levels_excluding_null
+    gamma_col = comparison._gamma_column_name
+
+    # Initialize running counts per level
+    level_counts: dict[int, int] = {cl.comparison_vector_value: 0 for cl in levels}
+    total_pairs = 0
+    batches_processed = 0
+
+    # Build column lists for this comparison
+    cols_for_blocking = []
+    for uid_col in unique_id_input_columns:
+        cols_for_blocking.extend(uid_col.l_r_names_as_l_r)
+    cols_for_blocking.extend(comparison._columns_to_select_for_blocking())
+
+    cols_for_cv = Settings.columns_to_select_for_comparison_vector_values(
+        unique_id_input_columns=unique_id_input_columns,
+        comparisons=[comparison],
+        retain_matching_columns=False,
+        additional_columns_to_retain=[],
+    )
+
+    # Track batch progress using cumulative proportion of random values
+    cumulative_proportion = 0.0
+    batch_proportion = initial_batch_proportion
+
+    while True:
+        new_proportion = min(cumulative_proportion + batch_proportion, 1.0)
+
+        # Build pipeline to get counts for this batch
+        input_dfs = [blocked_pairs_with_rand, df_sample]
+        if df_sample_left is not None:
+            input_dfs.append(df_sample_left)
+        if df_sample_right is not None:
+            input_dfs.append(df_sample_right)
+
+        pipeline = CTEPipeline(input_dfs)
+
+        # Filter blocked pairs to this batch using the random column
+        sql = f"""
+        select *
+        from __splink__blocked_id_pairs_with_rand
+        where __batch_rand__ >= {cumulative_proportion}
+          and __batch_rand__ < {new_proportion}
+        """
+        pipeline.enqueue_sql(sql, "__splink__blocked_id_pairs_batch")
+
+        # Compute comparison vectors for this batch
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            cols_for_blocking,
+            cols_for_cv,
+            input_tablename_l=input_tablename_sample_l,
+            input_tablename_r=input_tablename_sample_r,
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+            blocked_id_pairs_table="__splink__blocked_id_pairs_batch",
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        # Count pairs per level
+        sql = f"""
+        select {gamma_col} as comparison_vector_value, count(*) as level_count
+        from __splink__df_comparison_vectors
+        group by {gamma_col}
+        """
+        pipeline.enqueue_sql(sql, "__splink__level_counts")
+
+        df_counts = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        batch_results = df_counts.as_record_dict()
+        df_counts.drop_table_from_database_and_remove_from_cache()
+
+        # Update running totals
+        batch_total = 0
+        for row in batch_results:
+            cv = row["comparison_vector_value"]
+            count = row["level_count"]
+            batch_total += count
+            if cv in level_counts:  # Skip null level (cv = -1)
+                level_counts[cv] += count
+
+        total_pairs += batch_total
+        batches_processed += 1
+
+        # Check convergence: all non-null levels have count >= min_count
+        all_converged = all(count >= min_count for count in level_counts.values())
+
+        logger.log(
+            7,
+            f"    Batch {batches_processed}: proportion={new_proportion:.3f}, "
+            f"batch_pairs={batch_total}, total_pairs={total_pairs}, "
+            f"converged={all_converged}",
+        )
+
+        if all_converged or new_proportion >= 1.0:
+            break
+
+        # Grow batch size geometrically for efficiency in distributed settings
+        cumulative_proportion = new_proportion
+        batch_proportion *= batch_growth_factor
+
+    # Compute u probabilities from counts
+    elapsed = time.time() - start_time
+
+    # Build level diagnostics
+    level_infos = []
+    for cl in levels:
+        cv = cl.comparison_vector_value
+        count = level_counts[cv]
+        # Clamp u probability to avoid underflow
+        u_prob = count / total_pairs if total_pairs > 0 else M_U_CLAMP_MIN
+        u_prob = max(u_prob, M_U_CLAMP_MIN)
+        level_infos.append(
+            LevelConvergenceInfo(
+                comparison_vector_value=cv,
+                label=cl.label_for_charts,
+                count=count,
+                u_probability=u_prob,
+                converged=count >= min_count,
+            )
+        )
+
+    return ComparisonConvergenceInfo(
+        output_column_name=comparison.output_column_name,
+        total_pairs_sampled=total_pairs,
+        batches_processed=batches_processed,
+        converged=all_converged,
+        time_seconds=elapsed,
+        levels=level_infos,
+    )
+
+
 def estimate_u_values(
-    linker: Linker, max_pairs: float, seed: Optional[int] = None
-) -> None:
+    linker: Linker,
+    max_pairs: float,
+    seed: Optional[int] = None,
+    min_count: int = 100,
+    initial_batch_proportion: float = 0.1,
+    batch_growth_factor: float = 2.0,
+) -> List[ComparisonConvergenceInfo]:
+    """Estimate u probabilities using random sampling with count-based convergence.
+
+    For each comparison, iteratively samples batches of pairs and counts how many
+    fall into each comparison level. Stops early when all levels have at least
+    `min_count` observations (giving ~10% relative error), or when `max_pairs`
+    worth of pairs have been processed.
+
+    Args:
+        linker: The Splink linker object.
+        max_pairs: Maximum number of pairs to sample (controls initial sample size).
+        seed: Random seed for reproducibility.
+        min_count: Minimum observations per level for convergence (default 100).
+        initial_batch_proportion: Starting batch size as proportion of pairs
+            (default 0.1).
+        batch_growth_factor: Geometric growth factor for batch sizes (default 2.0).
+
+    Returns:
+        List of ComparisonConvergenceInfo with diagnostics per comparison.
+    """
     logger.info("----- Estimating u probabilities using random sampling -----")
     pipeline = CTEPipeline()
 
@@ -193,70 +399,69 @@ def estimate_u_values(
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
     pipeline.enqueue_list_of_sqls(sql_infos)
-    blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    # Materialize blocked_pairs so it persists for debug/test inspection
+    blocked_pairs = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    # Add random column for batch selection
+    pipeline = CTEPipeline(input_dataframes=[blocked_pairs])
+    sql = """
+    select *, random() as __batch_rand__
+    from __splink__blocked_id_pairs
+    """
+    pipeline.enqueue_sql(sql, "__splink__blocked_id_pairs_with_rand")
+    blocked_pairs_with_rand = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     unique_id_input_columns = settings_obj.column_info_settings.unique_id_input_columns
+    source_dataset_input_column = (
+        settings_obj.column_info_settings.source_dataset_input_column
+    )
+    unique_id_input_column = settings_obj.column_info_settings.unique_id_input_column
 
-    # Estimate u for each comparison separately - more memory efficient
+    # Estimate u for each comparison with convergence
+    all_diagnostics: List[ComparisonConvergenceInfo] = []
+
     for i, comparison in enumerate(settings_obj.comparisons):
         original_comparison = original_settings_obj.comparisons[i]
 
         logger.info(f"  Estimating u for comparison: {comparison.output_column_name}")
 
-        # Build input dataframes for this comparison's pipeline
-        input_dfs = [blocked_pairs, df_sample]
-        if df_sample_left is not None:
-            input_dfs.append(df_sample_left)
-        if df_sample_right is not None:
-            input_dfs.append(df_sample_right)
-
-        pipeline = CTEPipeline(input_dfs)
-
-        # Use existing functions but with just this one comparison
-        cols_for_blocking = []
-        for uid_col in unique_id_input_columns:
-            cols_for_blocking.extend(uid_col.l_r_names_as_l_r)
-        cols_for_blocking.extend(comparison._columns_to_select_for_blocking())
-
-        cols_for_cv = Settings.columns_to_select_for_comparison_vector_values(
+        diagnostics = _estimate_u_for_comparison_with_convergence(
+            comparison=comparison,
+            db_api=db_api,
+            blocked_pairs_with_rand=blocked_pairs_with_rand,
+            df_sample=df_sample,
+            input_tablename_sample_l=input_tablename_sample_l,
+            input_tablename_sample_r=input_tablename_sample_r,
             unique_id_input_columns=unique_id_input_columns,
-            comparisons=[comparison],
-            retain_matching_columns=False,
-            additional_columns_to_retain=[],
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+            df_sample_left=df_sample_left,
+            df_sample_right=df_sample_right,
+            min_count=min_count,
+            initial_batch_proportion=initial_batch_proportion,
+            batch_growth_factor=batch_growth_factor,
         )
 
-        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-            cols_for_blocking,
-            cols_for_cv,
-            input_tablename_l=input_tablename_sample_l,
-            input_tablename_r=input_tablename_sample_r,
-            source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+        all_diagnostics.append(diagnostics)
+
+        # Log convergence info
+        status = "converged" if diagnostics.converged else "NOT CONVERGED"
+        logger.info(
+            f"    {status} after {diagnostics.batches_processed} batches, "
+            f"{diagnostics.total_pairs_sampled:,} pairs, "
+            f"{diagnostics.time_seconds:.2f}s"
         )
-        pipeline.enqueue_list_of_sqls(sqls)
 
-        sql = """
-        select *, cast(0.0 as float8) as match_probability
-        from __splink__df_comparison_vectors
-        """
-        pipeline.enqueue_sql(sql, "__splink__df_predict")
-
-        sql = compute_new_parameters_sql(
-            estimate_without_term_frequencies=False,
-            comparisons=[comparison],
-        )
-        pipeline.enqueue_sql(sql, "__splink__m_u_counts")
-
-        df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        param_records = df_params.as_pandas_dataframe()
-        param_records = compute_proportions_for_new_parameters(param_records)
-        df_params.drop_table_from_database_and_remove_from_cache()
-
+        # Build m_u_records from diagnostics for the existing interface
         m_u_records = [
-            r
-            for r in param_records
-            if r["output_column_name"] != "_probability_two_random_records_match"
+            {
+                "output_column_name": comparison.output_column_name,
+                "comparison_vector_value": level.comparison_vector_value,
+                "u_probability": level.u_probability,
+                "m_probability": None,  # Not estimated here
+            }
+            for level in diagnostics.levels
         ]
 
         m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
@@ -271,9 +476,12 @@ def estimate_u_values(
 
     df_sample.drop_table_from_database_and_remove_from_cache()
     blocked_pairs.drop_table_from_database_and_remove_from_cache()
+    blocked_pairs_with_rand.drop_table_from_database_and_remove_from_cache()
     if df_sample_left is not None:
         df_sample_left.drop_table_from_database_and_remove_from_cache()
     if df_sample_right is not None:
         df_sample_right.drop_table_from_database_and_remove_from_cache()
 
     logger.info("\nEstimated u probabilities using random sampling")
+
+    return all_diagnostics
