@@ -1,0 +1,48 @@
+name: CodeQL analysis
+
+on:
+  pull_request:
+    branches:
+      - master
+      - "**dev"
+  push:
+    branches:
+      - master
+
+permissions: {}
+
+jobs:
+  codeql-analysis:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+          - python
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialise CodeQL
+        id: init_codeql
+        uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4.31.9
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: CodeQL autobuild
+        id: codeql_autobuild
+        uses: github/codeql-action/autobuild@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4.31.9
+
+      - name: CodeQL analysis
+        id: codeql_analysis
+        uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4.31.9
+        with:
+          category: "language:${{ matrix.language }}"
