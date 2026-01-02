@@ -1,4 +1,4 @@
-name: DuckDB Pytest
+name: Pytest DuckDB
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions: {}
 
 jobs:
   test:
-    name: DuckDB Pytest (Python ${{ matrix.python-version }})
+    name: Pytest DuckDB (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
