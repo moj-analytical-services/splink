@@ -1,10 +1,12 @@
-name: Spark tests
+name: Pytest SQLite
+
 on:
   pull_request:
     branches:
       - master
       - "**dev"
     paths:
+      - ".github/workflows/pytest-sqlite.yml"
       - "splink/**"
       - "tests/**"
       - "pyproject.toml"
@@ -12,17 +14,24 @@ on:
 
 jobs:
   test:
+    name: Pytest SQLite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-    name: Run tests with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup uv (with cache)
-        uses: astral-sh/setup-uv@v6
+        id: setup_uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -31,11 +40,13 @@ jobs:
           cache-suffix: "${{ runner.os }}-${{ matrix.python-version }}"
 
       - name: Install Python ${{ matrix.python-version }}
+        id: install_python
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync -p ${{ matrix.python-version }}
-
+        id: install_dependencies
+        run: uv sync --python ${{ matrix.python-version }}
+  
       - name: Run tests
-        run: |
-            uv run python -m pytest -v --durations=0 -m "spark_only" tests/
+        id: run_tests
+        run: uv run python -m pytest -v --durations=0 -m "sqlite_only" tests/
