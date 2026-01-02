@@ -1,35 +1,47 @@
-name: Type hinting with mypy
+name: mypy
 on:
   pull_request:
     branches:
       - master
       - "**dev"
     paths:
+      - ".github/workflows/mypy.yml"
       - splink/**
       - tests/**
       - pyproject.toml
 
+permissions: {}
+
 jobs:
   mypy:
+    name: mypy
     runs-on: ubuntu-latest
-    name: Check type hinting with mypy
+    permissions:
+      contents: read
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup uv (with cache)
-        uses: astral-sh/setup-uv@v6
+        id: setup_uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
             uv.lock
 
-      - name: Install Python 3.10
-        run: uv python install 3.10
+      - name: Install Python 3.12
+        id: install_python312
+        run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync -p 3.10
+        id: install_dependencies
+        run: uv sync --python 3.12
 
       - name: Run mypy
+        id: mypy
         run: uv run mypy splink
