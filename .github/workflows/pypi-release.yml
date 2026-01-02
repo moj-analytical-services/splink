@@ -6,9 +6,13 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   publish-to-pypi:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         id: checkout
@@ -19,6 +23,8 @@ jobs:
       - name: Setup uv
         id: setup_uv
         uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+        with:
+          enable-cache: false
 
       - name: Install Python 3.12
         id: install_python312
