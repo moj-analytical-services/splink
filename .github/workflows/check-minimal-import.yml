@@ -1,0 +1,49 @@
+name: Check minimal import
+
+on:
+  pull_request:
+    branches:
+      - master
+      - "**dev"
+    paths:
+      - ".github/workflows/check-minimal-import.yml"
+      - "splink/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions: {}
+
+jobs:
+  test:
+    name: Check minimal-dependency Splink import
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup uv (without cache)
+        id: setup_uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+        with:
+          enable-cache: false
+
+      - name: Install Python 3.12
+        id: install_python312
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        id: install_dependencies
+        run: uv sync --python 3.12 --only-group core
+
+      - name: Check Splink imports
+        id: check_splink_imports
+        run: uv run --only-group core python -c "import splink"
+
+      - name: Check dependencies installed
+        id: check_dependencies_installed
+        run: uv pip list
