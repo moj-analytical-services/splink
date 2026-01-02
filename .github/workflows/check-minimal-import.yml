@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   test:
-    name: Check minimal-dependency Splink import
+    name: Check minimal import
     runs-on: ubuntu-latest
     permissions:
       contents: read
