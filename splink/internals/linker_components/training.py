@@ -163,7 +163,11 @@ class LinkerTraining:
         )
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: float = 1e6, seed: int = None
+        self,
+        max_pairs: float = 1e7,
+        seed: int = None,
+        min_count: int = 100,
+        min_pairs: int = 1_000_000,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -190,6 +194,16 @@ class LinkerTraining:
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for SQLite set to None.
+            min_count (int): Minimum number of observations per (non-null) comparison
+                level before we consider the u estimate 'converged'. The algorithm will
+                continue sampling until all comparison levels have at least this many
+                observations or max_pairs is reached. Defaults to 100.
+            min_pairs (int): Minimum total number of pairs to sample before stopping.
+                The algorithm will continue sampling until at least this many pairs
+                have been generated (and min_count is satisfied for all levels).
+                If the dataset is too small to generate this many pairs, estimation
+                will proceed with all available pairs and log an info message.
+                Defaults to 1,000,000.
 
         Examples:
             ```py
@@ -200,7 +214,7 @@ class LinkerTraining:
             Nothing: Updates the estimated u parameters within the linker object and
                 returns nothing.
         """
-        if max_pairs == 1e6:
+        if max_pairs == 1e7:
             # keep default value small so as not to take too long, but warn users
             logger.warning(
                 "You are using the default value for `max_pairs`, "
@@ -209,7 +223,9 @@ class LinkerTraining:
                 "result in more accurate estimates, but with a longer run time."
             )
 
-        estimate_u_values(self._linker, max_pairs, seed)
+        estimate_u_values(
+            self._linker, max_pairs, seed, min_count=min_count, min_pairs=min_pairs
+        )
         self._linker._populate_m_u_from_trained_values()
 
         self._linker._settings_obj._columns_without_estimated_parameters_message()
