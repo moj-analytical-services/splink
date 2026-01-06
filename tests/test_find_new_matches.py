@@ -85,7 +85,7 @@ def test_matches_work(test_helpers, dialect):
     linker = helper.linker_with_registration(df, get_settings_dict())
 
     # Train our model to get more reasonable outputs...
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, num_chunks=1)
     linker.visualisations.match_weights_chart().save("mwc.html")
 
     blocking_rule = block_on("first_name", "surname")

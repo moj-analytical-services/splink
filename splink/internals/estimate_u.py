@@ -385,32 +385,36 @@ def estimate_u_values(
             additional_columns_to_retain=[],
         )
 
-        probe_multiplier = 10
-        probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
+        use_probe = rhs_num_chunks > 1
 
-        converged = _process_rhs_chunk_and_check_convergence(
-            db_api=db_api,
-            df_sample=df_sample,
-            split_sqls=split_sqls,
-            input_tablename_sample_l=input_tablename_sample_l,
-            input_tablename_sample_r=input_tablename_sample_r,
-            blocking_rules_for_u=blocking_rules_for_u,
-            link_type=linker._settings_obj._link_type,
-            source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-            comparison=comparison,
-            blocking_cols=blocking_cols,
-            cv_cols=cv_cols,
-            rhs_chunk_num=1,
-            rhs_num_chunks=probe_rhs_num_chunks,
-            counts_accumulator=counts_accumulator,
-            min_count_per_level=min_count_per_level,
-            chunk_label="RHS probe chunk",
-        )
+        converged = False
+        if use_probe:
+            probe_multiplier = 10
+            probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
+            converged = _process_rhs_chunk_and_check_convergence(
+                db_api=db_api,
+                df_sample=df_sample,
+                split_sqls=split_sqls,
+                input_tablename_sample_l=input_tablename_sample_l,
+                input_tablename_sample_r=input_tablename_sample_r,
+                blocking_rules_for_u=blocking_rules_for_u,
+                link_type=linker._settings_obj._link_type,
+                source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+                unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+                comparison=comparison,
+                blocking_cols=blocking_cols,
+                cv_cols=cv_cols,
+                rhs_chunk_num=1,
+                rhs_num_chunks=probe_rhs_num_chunks,
+                counts_accumulator=counts_accumulator,
+                min_count_per_level=min_count_per_level,
+                chunk_label="RHS probe chunk",
+            )
 
         if not converged:
-            logger.info("  Probe did not converge; restarting with normal chunking")
-            counts_accumulator = _MUCountsAccumulator(comparison)
+            if use_probe:
+                logger.info("  Probe did not converge; restarting with normal chunking")
+                counts_accumulator = _MUCountsAccumulator(comparison)
 
             for rhs_chunk_num in range(1, rhs_num_chunks + 1):
                 converged = _process_rhs_chunk_and_check_convergence(
