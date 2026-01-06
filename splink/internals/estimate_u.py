@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
@@ -188,7 +189,9 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
 
         # Keep a running total of m/u counts across RHS chunks.
         # Keyed by (output_column_name, comparison_vector_value).
-        counts_lookup: dict[tuple[str, int], dict[str, float | int | str]] = {}
+        counts_lookup: defaultdict[tuple[str, int], list[float]] = defaultdict(
+            lambda: [0.0, 0.0]
+        )
 
         for rhs_chunk_num in range(1, rhs_num_chunks + 1):
             logger.info(f"  RHS chunk {rhs_chunk_num}/{rhs_num_chunks}")
@@ -277,26 +280,23 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
                 != "_probability_two_random_records_match"
             ]
 
-            for row in chunk_counts.to_dict("records"):
-                key = (row["output_column_name"], int(row["comparison_vector_value"]))
-                if key not in counts_lookup:
-                    counts_lookup[key] = {
-                        "comparison_vector_value": int(row["comparison_vector_value"]),
-                        "output_column_name": row["output_column_name"],
-                        "m_count": float(row["m_count"]),
-                        "u_count": float(row["u_count"]),
-                    }
-                else:
-                    existing_m_count = float(counts_lookup[key]["m_count"])
-                    existing_u_count = float(counts_lookup[key]["u_count"])
-                    counts_lookup[key]["m_count"] = existing_m_count + float(
-                        row["m_count"]
-                    )
-                    counts_lookup[key]["u_count"] = existing_u_count + float(
-                        row["u_count"]
-                    )
+            for r in chunk_counts.itertuples(index=False):
+                key = (r.output_column_name, int(r.comparison_vector_value))
+                totals = counts_lookup[key]
+                totals[0] += float(r.m_count)
+                totals[1] += float(r.u_count)
 
-        aggregated_counts_df = pd.DataFrame(list(counts_lookup.values()))
+        aggregated_counts_df = pd.DataFrame(
+            [
+                {
+                    "output_column_name": ocn,
+                    "comparison_vector_value": cvv,
+                    "m_count": totals[0],
+                    "u_count": totals[1],
+                }
+                for (ocn, cvv), totals in counts_lookup.items()
+            ]
+        )
 
         # Convert aggregated counts to proportions (u probabilities)
         param_records = compute_proportions_for_new_parameters(aggregated_counts_df)
