@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, List
 import pandas as pd
 
 from splink.internals.blocking import (
-    block_using_rules_sqls,
     BlockingRule,
+    block_using_rules_sqls,
 )
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
@@ -19,7 +19,7 @@ from splink.internals.m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from splink.internals.pipeline import CTEPipeline
-from splink.internals.settings import Settings
+from splink.internals.settings import LinkTypeLiteralType, Settings
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -32,9 +32,84 @@ from .expectation_maximisation import (
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
+    from splink.internals.comparison import Comparison
+    from splink.internals.database_api import DatabaseAPISubClass
+    from splink.internals.input_column import InputColumn
     from splink.internals.linker import Linker
+    from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+
+
+def _u_counts_for_comparison_rhs_chunk(
+    *,
+    db_api: "DatabaseAPISubClass",
+    df_sample: "SplinkDataFrame",
+    split_sqls: list[dict[str, str]],
+    input_tablename_sample_l: str,
+    input_tablename_sample_r: str,
+    blocking_rules_for_u: list[BlockingRule],
+    link_type: LinkTypeLiteralType,
+    source_dataset_input_column: "InputColumn | None",
+    unique_id_input_column: "InputColumn",
+    comparison: "Comparison",
+    blocking_cols: list[str],
+    cv_cols: list[str],
+    right_chunk: tuple[int, int] | None,
+) -> pd.DataFrame:
+    pipeline = CTEPipeline(input_dataframes=[df_sample])
+
+    if split_sqls:
+        pipeline.enqueue_list_of_sqls(split_sqls)
+
+    blocking_sqls = block_using_rules_sqls(
+        input_tablename_l=input_tablename_sample_l,
+        input_tablename_r=input_tablename_sample_r,
+        blocking_rules=blocking_rules_for_u,
+        link_type=link_type,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
+        right_chunk=right_chunk,
+    )
+
+    pipeline.enqueue_list_of_sqls(blocking_sqls)
+
+    cv_sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+        blocking_cols,
+        cv_cols,
+        input_tablename_l=input_tablename_sample_l,
+        input_tablename_r=input_tablename_sample_r,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
+    )
+
+    pipeline.enqueue_list_of_sqls(cv_sqls)
+
+    # Add dummy match_probability column required by compute_new_parameters_sql
+    sql = """
+    select *, cast(0.0 as float8) as match_probability
+    from __splink__df_comparison_vectors
+    """
+    pipeline.enqueue_sql(sql, "__splink__df_predict")
+
+    sql = compute_new_parameters_sql(
+        estimate_without_term_frequencies=False,
+        comparisons=[comparison],
+    )
+    pipeline.enqueue_sql(sql, "__splink__m_u_counts")
+
+    df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    try:
+        chunk_counts = df_params.as_pandas_dataframe()
+    finally:
+        # Drop final output table
+        df_params.drop_table_from_database_and_remove_from_cache()
+
+    # Drop lambda row: it isn't additive across chunks (it's already a
+    # proportion), and we don't use it here anyway.
+    return chunk_counts[
+        chunk_counts.output_column_name != "_probability_two_random_records_match"
+    ]
 
 
 def _rows_needed_for_n_pairs(n_pairs):
@@ -174,8 +249,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     rhs_num_chunks = 10
 
     uid_columns = settings_obj.column_info_settings.unique_id_input_columns
-    source_dataset_col = settings_obj.column_info_settings.source_dataset_input_column
-    uid_col = settings_obj.column_info_settings.unique_id_input_column
+    # Note: we pass the actual InputColumn objects through to helper calls.
 
     # Build common blocking columns (UID columns that all comparisons need)
     common_blocking_cols: list[str] = []
@@ -195,86 +269,37 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
             lambda: [0.0, 0.0]
         )
 
+        # Blocking needs UIDs + comparison-specific columns
+        blocking_cols = (
+            common_blocking_cols + comparison._columns_to_select_for_blocking()
+        )
+
+        # Comparison vector needs UIDs + comparison output + match_key
+        cv_cols = Settings.columns_to_select_for_comparison_vector_values(
+            unique_id_input_columns=uid_columns,
+            comparisons=[comparison],
+            retain_matching_columns=False,
+            additional_columns_to_retain=[],
+        )
+
         for rhs_chunk_num in range(1, rhs_num_chunks + 1):
             logger.info(f"  RHS chunk {rhs_chunk_num}/{rhs_num_chunks}")
 
-            pipeline = CTEPipeline(input_dataframes=[df_sample])
-
-            if split_sqls:
-                pipeline.enqueue_list_of_sqls(split_sqls)
-
-            blocking_sqls = block_using_rules_sqls(
-                input_tablename_l=input_tablename_sample_l,
-                input_tablename_r=input_tablename_sample_r,
-                blocking_rules=blocking_rules_for_u,
+            chunk_counts = _u_counts_for_comparison_rhs_chunk(
+                db_api=db_api,
+                df_sample=df_sample,
+                split_sqls=split_sqls,
+                input_tablename_sample_l=input_tablename_sample_l,
+                input_tablename_sample_r=input_tablename_sample_r,
+                blocking_rules_for_u=blocking_rules_for_u,
                 link_type=linker._settings_obj._link_type,
                 source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
                 unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+                comparison=comparison,
+                blocking_cols=blocking_cols,
+                cv_cols=cv_cols,
                 right_chunk=(rhs_chunk_num, rhs_num_chunks),
             )
-
-            # Persist each chunk's blocked pairs under a unique name, but keep
-            # `__splink__blocked_id_pairs` available for downstream SQL.
-            chunk_blocked_pairs_table = (
-                f"__splink__blocked_id_pairs_R{rhs_chunk_num}of{rhs_num_chunks}"
-            )
-            for s in blocking_sqls:
-                if s.get("output_table_name") == "__splink__blocked_id_pairs":
-                    s["output_table_name"] = chunk_blocked_pairs_table
-
-            pipeline.enqueue_list_of_sqls(blocking_sqls)
-
-            sql = f"select * from {chunk_blocked_pairs_table}"
-            pipeline.enqueue_sql(sql, "__splink__blocked_id_pairs")
-
-            # Blocking needs UIDs + comparison-specific columns
-            blocking_cols = (
-                common_blocking_cols + comparison._columns_to_select_for_blocking()
-            )
-
-            # Comparison vector needs UIDs + comparison output + match_key
-            cv_cols = Settings.columns_to_select_for_comparison_vector_values(
-                unique_id_input_columns=uid_columns,
-                comparisons=[comparison],
-                retain_matching_columns=False,
-                additional_columns_to_retain=[],
-            )
-
-            cv_sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-                blocking_cols,
-                cv_cols,
-                input_tablename_l=input_tablename_sample_l,
-                input_tablename_r=input_tablename_sample_r,
-                source_dataset_input_column=source_dataset_col,
-                unique_id_input_column=uid_col,
-            )
-
-            pipeline.enqueue_list_of_sqls(cv_sqls)
-
-            # Add dummy match_probability column required by compute_new_parameters_sql
-            sql = """
-            select *, cast(0.0 as float8) as match_probability
-            from __splink__df_comparison_vectors
-            """
-            pipeline.enqueue_sql(sql, "__splink__df_predict")
-
-            # Compute u probability counts for this comparison and chunk
-            sql = compute_new_parameters_sql(
-                estimate_without_term_frequencies=False,
-                comparisons=[comparison],
-            )
-            pipeline.enqueue_sql(sql, "__splink__m_u_counts")
-
-            df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            chunk_counts = df_params.as_pandas_dataframe()
-            df_params.drop_table_from_database_and_remove_from_cache()
-
-            # Drop lambda row: it isn't additive across chunks (it's already a
-            # proportion), and we don't use it here anyway.
-            chunk_counts = chunk_counts[
-                chunk_counts.output_column_name
-                != "_probability_two_random_records_match"
-            ]
 
             for r in chunk_counts.itertuples(index=False):
                 key = (r.output_column_name, int(r.comparison_vector_value))
