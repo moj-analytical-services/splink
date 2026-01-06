@@ -15,6 +15,7 @@ from splink.internals.m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
 )
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.settings import Settings
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -176,55 +177,87 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     pipeline.enqueue_list_of_sqls(sql_infos)
     blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    pipeline = CTEPipeline([blocked_pairs, df_sample])
+    uid_columns = settings_obj.column_info_settings.unique_id_input_columns
+    source_dataset_col = settings_obj.column_info_settings.source_dataset_input_column
+    uid_col = settings_obj.column_info_settings.unique_id_input_column
 
-    sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-        settings_obj._columns_to_select_for_blocking,
-        settings_obj._columns_to_select_for_comparison_vector_values,
-        input_tablename_l="__splink__df_concat_sample",
-        input_tablename_r="__splink__df_concat_sample",
-        source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-        unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-    )
+    # Build common blocking columns (UID columns that all comparisons need)
+    common_blocking_cols: list[str] = []
+    for uid_column in uid_columns:
+        common_blocking_cols.extend(uid_column.l_r_names_as_l_r)
 
-    pipeline.enqueue_list_of_sqls(sqls)
+    for i, comparison in enumerate(settings_obj.comparisons):
+        logger.info(
+            f"\nEstimating u for: {comparison.output_column_name} "
+            f"({i+1}/{len(settings_obj.comparisons)})"
+        )
+        original_comparison = original_settings_obj.comparisons[i]
 
-    sql = """
-    select *, cast(0.0 as float8) as match_probability
-    from __splink__df_comparison_vectors
-    """
+        pipeline = CTEPipeline([blocked_pairs, df_sample])
 
-    pipeline.enqueue_sql(sql, "__splink__df_predict")
+        # Blocking needs UIDs + comparison-specific columns
+        blocking_cols = (
+            common_blocking_cols + comparison._columns_to_select_for_blocking()
+        )
 
-    sql = compute_new_parameters_sql(
-        estimate_without_term_frequencies=False,
-        comparisons=settings_obj.comparisons,
-    )
+        # Comparison vector needs UIDs + comparison output + match_key
+        cv_cols = Settings.columns_to_select_for_comparison_vector_values(
+            unique_id_input_columns=uid_columns,
+            comparisons=[comparison],
+            retain_matching_columns=False,
+            additional_columns_to_retain=[],
+        )
 
-    pipeline.enqueue_sql(sql, "__splink__m_u_counts")
-    df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            blocking_cols,
+            cv_cols,
+            input_tablename_l="__splink__df_concat_sample",
+            input_tablename_r="__splink__df_concat_sample",
+            source_dataset_input_column=source_dataset_col,
+            unique_id_input_column=uid_col,
+        )
 
-    param_records = df_params.as_pandas_dataframe()
-    param_records = compute_proportions_for_new_parameters(param_records)
-    df_params.drop_table_from_database_and_remove_from_cache()
-    df_sample.drop_table_from_database_and_remove_from_cache()
-    blocked_pairs.drop_table_from_database_and_remove_from_cache()
+        pipeline.enqueue_list_of_sqls(sqls)
 
-    m_u_records = [
-        r
-        for r in param_records
-        if r["output_column_name"] != "_probability_two_random_records_match"
-    ]
+        # Add dummy match_probability column required by compute_new_parameters_sql
+        sql = """
+        select *, cast(0.0 as float8) as match_probability
+        from __splink__df_comparison_vectors
+        """
+        pipeline.enqueue_sql(sql, "__splink__df_predict")
 
-    m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+        # Compute u probability counts for this comparison
+        sql = compute_new_parameters_sql(
+            estimate_without_term_frequencies=False,
+            comparisons=[comparison],
+        )
+        pipeline.enqueue_sql(sql, "__splink__m_u_counts")
 
-    for c in original_settings_obj.comparisons:
-        for cl in c._comparison_levels_excluding_null:
+        df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        # Convert counts to proportions (u probabilities)
+        param_records = df_params.as_pandas_dataframe()
+        param_records = compute_proportions_for_new_parameters(param_records)
+        df_params.drop_table_from_database_and_remove_from_cache()
+
+        # Extract just the u records (filter out lambda)
+        m_u_records = [
+            r
+            for r in param_records
+            if r["output_column_name"] != "_probability_two_random_records_match"
+        ]
+        m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+
+        # Apply estimated u values to the original settings object
+        for cl in original_comparison._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
                 cl,
                 m_u_records_lookup,
-                c.output_column_name,
+                original_comparison.output_column_name,
                 "estimate u by random sampling",
             )
+
+    df_sample.drop_table_from_database_and_remove_from_cache()
+    blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
     logger.info("\nEstimated u probabilities using random sampling")
