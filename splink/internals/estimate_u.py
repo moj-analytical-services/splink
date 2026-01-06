@@ -145,18 +145,18 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    pipeline = CTEPipeline(input_dataframes=[df_sample])
-
     settings_obj._blocking_rules_to_generate_predictions = []
 
     input_tablename_sample_l = "__splink__df_concat_sample"
     input_tablename_sample_r = "__splink__df_concat_sample"
 
+    split_sqls: list[dict[str, str]] = []
+
     if (
         len(linker._input_tables_dict) == 2
         and linker._settings_obj._link_type == "link_only"
     ):
-        sqls = split_df_concat_with_tf_into_two_tables_sqls(
+        split_sqls = split_df_concat_with_tf_into_two_tables_sqls(
             "__splink__df_concat",
             linker._settings_obj.column_info_settings.source_dataset_column_name,
             sample_switch=True,
@@ -164,9 +164,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         input_tablename_sample_l = "__splink__df_concat_sample_left"
         input_tablename_sample_r = "__splink__df_concat_sample_right"
 
-        pipeline.enqueue_list_of_sqls(sqls)
-
-    sql_infos = block_using_rules_sqls(
+    blocking_sqls = block_using_rules_sqls(
         input_tablename_l=input_tablename_sample_l,
         input_tablename_r=input_tablename_sample_r,
         blocking_rules=settings_obj._blocking_rules_to_generate_predictions,
@@ -174,8 +172,6 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
     )
-    pipeline.enqueue_list_of_sqls(sql_infos)
-    blocked_pairs = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     uid_columns = settings_obj.column_info_settings.unique_id_input_columns
     source_dataset_col = settings_obj.column_info_settings.source_dataset_input_column
@@ -193,7 +189,12 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         )
         original_comparison = original_settings_obj.comparisons[i]
 
-        pipeline = CTEPipeline([blocked_pairs, df_sample])
+        pipeline = CTEPipeline(input_dataframes=[df_sample])
+
+        if split_sqls:
+            pipeline.enqueue_list_of_sqls(split_sqls)
+
+        pipeline.enqueue_list_of_sqls(blocking_sqls)
 
         # Blocking needs UIDs + comparison-specific columns
         blocking_cols = (
@@ -208,16 +209,16 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
             additional_columns_to_retain=[],
         )
 
-        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+        cv_sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             blocking_cols,
             cv_cols,
-            input_tablename_l="__splink__df_concat_sample",
-            input_tablename_r="__splink__df_concat_sample",
+            input_tablename_l=input_tablename_sample_l,
+            input_tablename_r=input_tablename_sample_r,
             source_dataset_input_column=source_dataset_col,
             unique_id_input_column=uid_col,
         )
 
-        pipeline.enqueue_list_of_sqls(sqls)
+        pipeline.enqueue_list_of_sqls(cv_sqls)
 
         # Add dummy match_probability column required by compute_new_parameters_sql
         sql = """
@@ -258,6 +259,5 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
             )
 
     df_sample.drop_table_from_database_and_remove_from_cache()
-    blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
     logger.info("\nEstimated u probabilities using random sampling")
