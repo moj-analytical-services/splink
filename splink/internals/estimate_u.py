@@ -240,9 +240,16 @@ def _proportion_sample_size_link_only(
     return proportion, sample_size
 
 
-def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> None:
+def estimate_u_values(
+    linker: Linker,
+    max_pairs: float,
+    seed: int | None = None,
+    min_count_per_level: int = 100,
+    num_chunks: int = 10,
+) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
-    min_count_per_level = 100
+    if num_chunks < 1:
+        raise ValueError("num_chunks must be >= 1")
     pipeline = CTEPipeline()
 
     pipeline = enqueue_df_concat(linker, pipeline)
@@ -345,8 +352,8 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         input_tablename_sample_l = "__splink__df_concat_sample_left"
         input_tablename_sample_r = "__splink__df_concat_sample_right"
 
-    # We chunk only the RHS. Start with a hardcoded chunk count.
-    rhs_num_chunks = 10
+    # We chunk only the RHS.
+    rhs_num_chunks = num_chunks
 
     uid_columns = settings_obj.column_info_settings.unique_id_input_columns
     # Note: we pass the actual InputColumn objects through to helper calls.
