@@ -10,6 +10,7 @@ from splink.internals.blocking import (
     BlockingRule,
     block_using_rules_sqls,
 )
+from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
@@ -359,6 +360,20 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
 
         # Convert aggregated counts to proportions (u probabilities)
         param_records = compute_proportions_for_new_parameters(aggregated_counts_df)
+
+        # Principled handling of unobserved levels:
+        # - We explicitly include every level (via enumeration) so that convergence
+        #   checks can treat missing GROUP BY rows as 0 counts.
+        # - But for the final trained u values, a level with u_count == 0 should be
+        #   treated as "not observed" (not as u_probability = 0.0).
+        u_count_by_cvv = {
+            int(row["comparison_vector_value"]): float(row["u_count"])
+            for row in aggregated_counts_df.to_dict("records")
+        }
+        for r in param_records:
+            cvv = int(r["comparison_vector_value"])
+            if u_count_by_cvv.get(cvv, 0.0) == 0.0:
+                r["u_probability"] = LEVEL_NOT_OBSERVED_TEXT
 
         m_u_records = param_records
         m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
