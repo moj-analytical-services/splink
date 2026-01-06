@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
@@ -39,6 +38,49 @@ if TYPE_CHECKING:
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+
+
+class _MUCountsAccumulator:
+    def __init__(self, comparison: "Comparison") -> None:
+        self._output_column_name = comparison.output_column_name
+        self._counts_by_cvv: dict[int, list[float]] = {
+            int(cl.comparison_vector_value): [0.0, 0.0]
+            for cl in comparison._comparison_levels_excluding_null
+        }
+
+    def update_from_chunk_counts(self, chunk_counts: pd.DataFrame) -> None:
+        for r in chunk_counts.itertuples(index=False):
+            cvv = int(r.comparison_vector_value)
+            totals = self._counts_by_cvv.get(cvv)
+            if totals is None:
+                continue
+            totals[0] += float(r.m_count)
+            totals[1] += float(r.u_count)
+
+    def min_u_count(self) -> float:
+        if not self._counts_by_cvv:
+            return 0.0
+        return min(totals[1] for totals in self._counts_by_cvv.values())
+
+    def all_levels_meet_min_u_count(self, min_count: int) -> bool:
+        return self.min_u_count() >= min_count
+
+    def to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "output_column_name": self._output_column_name,
+                    "comparison_vector_value": cvv,
+                    "m_count": totals[0],
+                    "u_count": totals[1],
+                }
+                for cvv, totals in sorted(self._counts_by_cvv.items())
+            ]
+        )
+
+    def pretty_table(self) -> str:
+        df = self.to_dataframe().drop(columns=["output_column_name"])
+        return df.to_string(index=False)
 
 
 def _u_counts_for_comparison_rhs_chunk(
@@ -143,6 +185,7 @@ def _proportion_sample_size_link_only(
 
 def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
+    min_count_per_level = 100
     pipeline = CTEPipeline()
 
     pipeline = enqueue_df_concat(linker, pipeline)
@@ -263,11 +306,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
         )
         original_comparison = original_settings_obj.comparisons[i]
 
-        # Keep a running total of m/u counts across RHS chunks.
-        # Keyed by (output_column_name, comparison_vector_value).
-        counts_lookup: defaultdict[tuple[str, int], list[float]] = defaultdict(
-            lambda: [0.0, 0.0]
-        )
+        counts_accumulator = _MUCountsAccumulator(comparison)
 
         # Blocking needs UIDs + comparison-specific columns
         blocking_cols = (
@@ -301,23 +340,22 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
                 right_chunk=(rhs_chunk_num, rhs_num_chunks),
             )
 
-            for r in chunk_counts.itertuples(index=False):
-                key = (r.output_column_name, int(r.comparison_vector_value))
-                totals = counts_lookup[key]
-                totals[0] += float(r.m_count)
-                totals[1] += float(r.u_count)
+            counts_accumulator.update_from_chunk_counts(chunk_counts)
 
-        aggregated_counts_df = pd.DataFrame(
-            [
-                {
-                    "output_column_name": ocn,
-                    "comparison_vector_value": cvv,
-                    "m_count": totals[0],
-                    "u_count": totals[1],
-                }
-                for (ocn, cvv), totals in counts_lookup.items()
-            ]
-        )
+            logger.info(
+                "  Current min u_count across levels: "
+                f"{counts_accumulator.min_u_count():,.0f}/{min_count_per_level}"
+            )
+            logger.info("\n" + counts_accumulator.pretty_table())
+
+            if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
+                logger.info(
+                    "  Stopping early: all levels reached at least "
+                    f"{min_count_per_level} u observations"
+                )
+                break
+
+        aggregated_counts_df = counts_accumulator.to_dataframe()
 
         # Convert aggregated counts to proportions (u probabilities)
         param_records = compute_proportions_for_new_parameters(aggregated_counts_df)
