@@ -10,10 +10,10 @@ from splink.internals.blocking import (
     BlockingRule,
     block_using_rules_sqls,
 )
-from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
+from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
@@ -153,6 +153,62 @@ def _u_counts_for_comparison_rhs_chunk(
     return chunk_counts[
         chunk_counts.output_column_name != "_probability_two_random_records_match"
     ]
+
+
+def _process_rhs_chunk_and_check_convergence(
+    *,
+    db_api: "DatabaseAPISubClass",
+    df_sample: "SplinkDataFrame",
+    split_sqls: list[dict[str, str]],
+    input_tablename_sample_l: str,
+    input_tablename_sample_r: str,
+    blocking_rules_for_u: list[BlockingRule],
+    link_type: LinkTypeLiteralType,
+    source_dataset_input_column: "InputColumn | None",
+    unique_id_input_column: "InputColumn",
+    comparison: "Comparison",
+    blocking_cols: list[str],
+    cv_cols: list[str],
+    rhs_chunk_num: int,
+    rhs_num_chunks: int,
+    counts_accumulator: _MUCountsAccumulator,
+    min_count_per_level: int,
+    chunk_label: str,
+) -> bool:
+    logger.info(f"  {chunk_label} {rhs_chunk_num}/{rhs_num_chunks}")
+
+    chunk_counts = _u_counts_for_comparison_rhs_chunk(
+        db_api=db_api,
+        df_sample=df_sample,
+        split_sqls=split_sqls,
+        input_tablename_sample_l=input_tablename_sample_l,
+        input_tablename_sample_r=input_tablename_sample_r,
+        blocking_rules_for_u=blocking_rules_for_u,
+        link_type=link_type,
+        source_dataset_input_column=source_dataset_input_column,
+        unique_id_input_column=unique_id_input_column,
+        comparison=comparison,
+        blocking_cols=blocking_cols,
+        cv_cols=cv_cols,
+        right_chunk=(rhs_chunk_num, rhs_num_chunks),
+    )
+
+    counts_accumulator.update_from_chunk_counts(chunk_counts)
+
+    logger.info(
+        "  Current min u_count across levels: "
+        f"{counts_accumulator.min_u_count():,.0f}/{min_count_per_level}"
+    )
+    logger.info("\n" + counts_accumulator.pretty_table())
+
+    if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
+        logger.info(
+            "  Stopping early: all levels reached at least "
+            f"{min_count_per_level} u observations"
+        )
+        return True
+
+    return False
 
 
 def _rows_needed_for_n_pairs(n_pairs):
@@ -322,39 +378,55 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
             additional_columns_to_retain=[],
         )
 
-        for rhs_chunk_num in range(1, rhs_num_chunks + 1):
-            logger.info(f"  RHS chunk {rhs_chunk_num}/{rhs_num_chunks}")
+        probe_multiplier = 10
+        probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
 
-            chunk_counts = _u_counts_for_comparison_rhs_chunk(
-                db_api=db_api,
-                df_sample=df_sample,
-                split_sqls=split_sqls,
-                input_tablename_sample_l=input_tablename_sample_l,
-                input_tablename_sample_r=input_tablename_sample_r,
-                blocking_rules_for_u=blocking_rules_for_u,
-                link_type=linker._settings_obj._link_type,
-                source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-                unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-                comparison=comparison,
-                blocking_cols=blocking_cols,
-                cv_cols=cv_cols,
-                right_chunk=(rhs_chunk_num, rhs_num_chunks),
-            )
+        converged = _process_rhs_chunk_and_check_convergence(
+            db_api=db_api,
+            df_sample=df_sample,
+            split_sqls=split_sqls,
+            input_tablename_sample_l=input_tablename_sample_l,
+            input_tablename_sample_r=input_tablename_sample_r,
+            blocking_rules_for_u=blocking_rules_for_u,
+            link_type=linker._settings_obj._link_type,
+            source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+            comparison=comparison,
+            blocking_cols=blocking_cols,
+            cv_cols=cv_cols,
+            rhs_chunk_num=1,
+            rhs_num_chunks=probe_rhs_num_chunks,
+            counts_accumulator=counts_accumulator,
+            min_count_per_level=min_count_per_level,
+            chunk_label="RHS probe chunk",
+        )
 
-            counts_accumulator.update_from_chunk_counts(chunk_counts)
+        if not converged:
+            logger.info("  Probe did not converge; restarting with normal chunking")
+            counts_accumulator = _MUCountsAccumulator(comparison)
 
-            logger.info(
-                "  Current min u_count across levels: "
-                f"{counts_accumulator.min_u_count():,.0f}/{min_count_per_level}"
-            )
-            logger.info("\n" + counts_accumulator.pretty_table())
-
-            if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
-                logger.info(
-                    "  Stopping early: all levels reached at least "
-                    f"{min_count_per_level} u observations"
+            for rhs_chunk_num in range(1, rhs_num_chunks + 1):
+                converged = _process_rhs_chunk_and_check_convergence(
+                    db_api=db_api,
+                    df_sample=df_sample,
+                    split_sqls=split_sqls,
+                    input_tablename_sample_l=input_tablename_sample_l,
+                    input_tablename_sample_r=input_tablename_sample_r,
+                    blocking_rules_for_u=blocking_rules_for_u,
+                    link_type=linker._settings_obj._link_type,
+                    source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+                    unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+                    comparison=comparison,
+                    blocking_cols=blocking_cols,
+                    cv_cols=cv_cols,
+                    rhs_chunk_num=rhs_chunk_num,
+                    rhs_num_chunks=rhs_num_chunks,
+                    counts_accumulator=counts_accumulator,
+                    min_count_per_level=min_count_per_level,
+                    chunk_label="RHS chunk",
                 )
-                break
+                if converged:
+                    break
 
         aggregated_counts_df = counts_accumulator.to_dataframe()
 
