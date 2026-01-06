@@ -149,7 +149,9 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    settings_obj._blocking_rules_to_generate_predictions = []
+    blocking_rules_for_u = [
+        BlockingRule("1=1", sql_dialect_str=db_api.sql_dialect.sql_dialect_str)
+    ]
 
     input_tablename_sample_l = "__splink__df_concat_sample"
     input_tablename_sample_r = "__splink__df_concat_sample"
@@ -201,16 +203,10 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
             if split_sqls:
                 pipeline.enqueue_list_of_sqls(split_sqls)
 
-            # Ensure chunking uses the correct backend dialect, even when there are
-            # no user-provided blocking rules.
-            blocking_rules = [
-                BlockingRule("1=1", sql_dialect_str=db_api.sql_dialect.sql_dialect_str)
-            ]
-
             blocking_sqls = block_using_rules_sqls(
                 input_tablename_l=input_tablename_sample_l,
                 input_tablename_r=input_tablename_sample_r,
-                blocking_rules=blocking_rules,
+                blocking_rules=blocking_rules_for_u,
                 link_type=linker._settings_obj._link_type,
                 source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
                 unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
