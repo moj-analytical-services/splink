@@ -166,7 +166,7 @@ class LinkerTraining:
         self,
         max_pairs: float = 1e6,
         seed: int | None = None,
-        min_count_per_level: int = 100,
+        min_count_per_level: int | None = 100,
         num_chunks: int = 10,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
@@ -194,8 +194,10 @@ class LinkerTraining:
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for SQLite set to None.
-            min_count_per_level (int): Minimum number of u observations required for
-                each comparison level before stopping chunking early. Defaults to 100.
+            min_count_per_level (int | None): Minimum number of u observations
+                required for each comparison level before stopping chunking early.
+                If None, disables the probe phase and disables early stopping (all
+                chunks are processed). Defaults to 100.
             num_chunks (int): Number of chunks to split the RHS of the cartesian
                 product into while estimating u. Defaults to 10.
 

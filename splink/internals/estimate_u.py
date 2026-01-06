@@ -172,7 +172,7 @@ def _process_rhs_chunk_and_check_convergence(
     rhs_chunk_num: int,
     rhs_num_chunks: int,
     counts_accumulator: _MUCountsAccumulator,
-    min_count_per_level: int,
+    min_count_per_level: int | None,
     chunk_label: str,
 ) -> bool:
     logger.info(f"  {chunk_label} {rhs_chunk_num}/{rhs_num_chunks}")
@@ -195,11 +195,15 @@ def _process_rhs_chunk_and_check_convergence(
 
     counts_accumulator.update_from_chunk_counts(chunk_counts)
 
+    logger.info("\n" + counts_accumulator.pretty_table())
+
+    if min_count_per_level is None:
+        return False
+
     logger.info(
         "  Current min u_count across levels: "
         f"{counts_accumulator.min_u_count():,.0f}/{min_count_per_level}"
     )
-    logger.info("\n" + counts_accumulator.pretty_table())
 
     if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
         logger.info(
@@ -244,7 +248,7 @@ def estimate_u_values(
     linker: Linker,
     max_pairs: float,
     seed: int | None = None,
-    min_count_per_level: int = 100,
+    min_count_per_level: int | None = 100,
     num_chunks: int = 10,
 ) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
@@ -385,7 +389,7 @@ def estimate_u_values(
             additional_columns_to_retain=[],
         )
 
-        use_probe = rhs_num_chunks > 1
+        use_probe = (rhs_num_chunks > 1) and (min_count_per_level is not None)
 
         converged = False
         if use_probe:
@@ -436,7 +440,7 @@ def estimate_u_values(
                     min_count_per_level=min_count_per_level,
                     chunk_label="RHS chunk",
                 )
-                if converged:
+                if converged and (min_count_per_level is not None):
                     break
 
         aggregated_counts_df = counts_accumulator.to_dataframe()
