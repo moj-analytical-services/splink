@@ -151,7 +151,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     linker._debug_mode = True
     linker._db_api.debug_keep_temp_views = True
 
-    linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs)
+    linker.training.estimate_u_using_random_sampling(max_pairs=max_pairs, num_chunks=1)
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
@@ -280,7 +280,7 @@ def test_u_train_multilink(test_helpers, dialect):
     )
     linker._debug_mode = True
     linker._db_api.debug_keep_temp_views = True
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, num_chunks=1)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -318,7 +318,7 @@ def test_u_train_multilink(test_helpers, dialect):
     )
     linker._debug_mode = True
     linker._db_api.debug_keep_temp_views = True
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6, num_chunks=1)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """

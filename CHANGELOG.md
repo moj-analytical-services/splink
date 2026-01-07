@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `estimate_u_using_random_sampling()` now estimates u probabilities using chunking and can stop early once each comparison level has enough u observations (controlled by `min_count_per_level`). This makes u estimation a lot faster and less memory intensive
 - Support for chunking to allow processing of very large datasets in blocking and prediction [#2850](https://github.com/moj-analytical-services/splink/pull/2850)
 - New `table_management` functions to explicitly manage table caching [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
 
