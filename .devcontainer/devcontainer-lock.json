@@ -1,9 +1,0 @@
-{
-  "features": {
-    "ghcr.io/ministryofjustice/devcontainer-feature/astral:": {
-      "version": "1.0.0",
-      "resolved": "ghcr.io/ministryofjustice/devcontainer-feature/astral@sha256:a6df118c6475e79fe15e63b815a5df591a24b0d25517ea941114cb6bee1af9a8",
-      "integrity": "sha256:a6df118c6475e79fe15e63b815a5df591a24b0d25517ea941114cb6bee1af9a8"
-    }
-  }
-}
