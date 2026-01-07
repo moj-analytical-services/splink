@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
 
@@ -44,10 +45,24 @@ logger = logging.getLogger(__name__)
 class _MUCountsAccumulator:
     def __init__(self, comparison: "Comparison") -> None:
         self._output_column_name = comparison.output_column_name
+        self._label_by_cvv: dict[int, str] = {}
         self._counts_by_cvv: dict[int, list[float]] = {
             int(cl.comparison_vector_value): [0.0, 0.0]
             for cl in comparison._comparison_levels_excluding_null
         }
+
+        # Prefer unique labels if there are duplicates.
+        comparison_levels = list(comparison._comparison_levels_excluding_null)
+        for cl in comparison_levels:
+            cvv = int(cl.comparison_vector_value)
+            label = cl.label_for_charts
+            if hasattr(cl, "_label_for_charts_no_duplicates"):
+                try:
+                    label = cl._label_for_charts_no_duplicates(comparison_levels)
+                except Exception:
+                    # Defensive: never let logging break estimation
+                    label = cl.label_for_charts
+            self._label_by_cvv[cvv] = str(label)
 
     def update_from_chunk_counts(self, chunk_counts: pd.DataFrame) -> None:
         for r in chunk_counts.itertuples(index=False):
@@ -62,6 +77,21 @@ class _MUCountsAccumulator:
         if not self._counts_by_cvv:
             return 0.0
         return min(totals[1] for totals in self._counts_by_cvv.values())
+
+    def min_u_count_level(self) -> tuple[float, int | None, str | None]:
+        """Return (min_u_count, cvv, label) for the current accumulator."""
+        if not self._counts_by_cvv:
+            return 0.0, None, None
+        min_cvv: int | None = None
+        min_u: float | None = None
+        for cvv in sorted(self._counts_by_cvv):
+            u_count = float(self._counts_by_cvv[cvv][1])
+            if (min_u is None) or (u_count < min_u):
+                min_u = u_count
+                min_cvv = cvv
+        assert min_u is not None
+        label = self._label_by_cvv.get(min_cvv) if min_cvv is not None else None
+        return min_u, min_cvv, label
 
     def all_levels_meet_min_u_count(self, min_count: int) -> bool:
         return self.min_u_count() >= min_count
@@ -174,8 +204,16 @@ def _process_rhs_chunk_and_check_convergence(
     counts_accumulator: _MUCountsAccumulator,
     min_count_per_level: int | None,
     chunk_label: str,
+    probe_percent_of_max_pairs: float | None = None,
 ) -> bool:
-    logger.info(f"  {chunk_label} {rhs_chunk_num}/{rhs_num_chunks}")
+    if probe_percent_of_max_pairs is not None:
+        logger.info(
+            f"  Running probe chunk (~{probe_percent_of_max_pairs:.2f}% of max_pairs)"
+        )
+    else:
+        logger.info(f"  Running chunk {rhs_chunk_num}/{rhs_num_chunks}")
+
+    t0 = time.perf_counter()
 
     chunk_counts = _u_counts_for_comparison_rhs_chunk(
         db_api=db_api,
@@ -195,22 +233,36 @@ def _process_rhs_chunk_and_check_convergence(
 
     counts_accumulator.update_from_chunk_counts(chunk_counts)
 
-    logger.info("\n" + counts_accumulator.pretty_table())
+    chunk_elapsed_s = time.perf_counter() - t0
+
+    logger.debug("\n" + counts_accumulator.pretty_table())
 
     if min_count_per_level is None:
+        logger.info(f"  Chunk took {chunk_elapsed_s:.1f} seconds")
         return False
 
-    logger.info(
-        "  Current min u_count across levels: "
-        f"{counts_accumulator.min_u_count():,.0f}/{min_count_per_level}"
+    min_u, min_cvv, min_label = counts_accumulator.min_u_count_level()
+    level_desc = (
+        f"{min_label} (cvv={min_cvv})" if (min_label is not None) else str(min_cvv)
     )
+
+    if probe_percent_of_max_pairs is not None:
+        logger.info(f"  Min u_count: {min_u:,.0f} for comparison level {level_desc}")
+    else:
+        logger.info(
+            f"  Count of {min_u:,.0f} for level {level_desc}. "
+            f"Chunk took {chunk_elapsed_s:.1f} seconds."
+        )
 
     if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
         logger.info(
-            "  Stopping early: all levels reached at least "
-            f"{min_count_per_level} u observations"
+            f"  Exiting early since min {min_u:,.0f} exceeds "
+            f"min_count_per_level = {min_count_per_level}"
         )
         return True
+
+    if probe_percent_of_max_pairs is None:
+        logger.info("  Min u_count not hit, continuing.")
 
     return False
 
@@ -252,6 +304,11 @@ def estimate_u_values(
     num_chunks: int = 10,
 ) -> None:
     logger.info("----- Estimating u probabilities using random sampling -----")
+    logger.info(
+        "Estimating u with: "
+        f"max_pairs = {max_pairs:,.0f}, min_count_per_level = {min_count_per_level}, "
+        f"num_chunks = {num_chunks}"
+    )
     if num_chunks < 1:
         raise ValueError("num_chunks must be >= 1")
     pipeline = CTEPipeline()
@@ -370,7 +427,7 @@ def estimate_u_values(
     for i, comparison in enumerate(settings_obj.comparisons):
         logger.info(
             f"\nEstimating u for: {comparison.output_column_name} "
-            f"({i+1}/{len(settings_obj.comparisons)})"
+            f"(Comparison {i+1} of {len(settings_obj.comparisons)})"
         )
         original_comparison = original_settings_obj.comparisons[i]
 
@@ -413,11 +470,14 @@ def estimate_u_values(
                 counts_accumulator=counts_accumulator,
                 min_count_per_level=min_count_per_level,
                 chunk_label="RHS probe chunk",
+                probe_percent_of_max_pairs=100.0 / (rhs_num_chunks * probe_multiplier),
             )
 
         if not converged:
             if use_probe:
-                logger.info("  Probe did not converge; restarting with normal chunking")
+                logger.info(
+                    "\n  Probe did not converge; restarting with normal chunking"
+                )
                 counts_accumulator = _MUCountsAccumulator(comparison)
 
             for rhs_chunk_num in range(1, rhs_num_chunks + 1):
