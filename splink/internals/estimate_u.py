@@ -256,7 +256,7 @@ def _process_rhs_chunk_and_check_convergence(
 
     if counts_accumulator.all_levels_meet_min_u_count(min_count_per_level):
         logger.info(
-            f"  Exiting early since min {min_u:,.0f} exceeds "
+            f"  Exiting early since min count of {min_u:,.0f} exceeds "
             f"min_count_per_level = {min_count_per_level}"
         )
         return True
@@ -476,7 +476,7 @@ def estimate_u_values(
         if not converged:
             if use_probe:
                 logger.info(
-                    "\n  Probe did not converge; restarting with normal chunking"
+                    "  Probe did not converge; restarting with normal chunking\n"
                 )
                 counts_accumulator = _MUCountsAccumulator(comparison)
 
