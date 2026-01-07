@@ -2,15 +2,6 @@
 version: 2
 
 updates:
-  - package-ecosystem: "devcontainers"
-    commit-message:
-      prefix: ":dependabot: devcontainers"
-      include: "scope"
-    cooldown:
-      default-days: 7
-    directory: "/"
-    schedule:
-      interval: "daily"
   - package-ecosystem: "github-actions"
     commit-message:
       prefix: ":dependabot: github-actions"
