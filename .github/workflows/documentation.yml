@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         id: install_dependencies
-        run: uv sync --python 3.13 --only-group docs
+        run: uv sync --python 3.13 --group docs
 
       - name: Build documentation
         id: build_documentation
@@ -62,9 +62,8 @@ jobs:
 
       - name: Upload built site
         id: upload_built_site
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
-          name: github-pages
           path: site
 
   deploy:
@@ -74,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.configure_pages.outputs.base_url }}
+      url: ${{ steps.deploy_pages.outputs.page_url }}
     permissions:
       contents: read
       id-token: write
