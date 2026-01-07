@@ -6,7 +6,6 @@ on:
       - master
       - "**dev"
     paths:
-      - ".github/workflows/demo-tutorials.yml"
       - splink/**
       - docs/demos/tutorials/**
       - pyproject.toml

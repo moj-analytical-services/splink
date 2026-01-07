@@ -6,7 +6,6 @@ on:
       - master
       - "**dev"
     paths:
-      - ".github/workflows/pytest-postgres.yml"
       - "splink/**"
       - "tests/**"
       - "pyproject.toml"

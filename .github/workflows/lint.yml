@@ -6,7 +6,6 @@ on:
       - master
       - "**dev"
     paths:
-      - ".github/workflows/lint.yml"
       - "**/*.py"
       - "pyproject.toml"
 

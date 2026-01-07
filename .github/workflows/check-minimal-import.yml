@@ -6,7 +6,6 @@ on:
       - master
       - "**dev"
     paths:
-      - ".github/workflows/check-minimal-import.yml"
       - "splink/**"
       - "pyproject.toml"
       - "uv.lock"

@@ -6,7 +6,6 @@ on:
       - master
       - "**dev"
     paths:
-      - ".github/workflows/demo-examples.yml"
       - "splink/**"
       - "docs/demos/examples/**"
       - "!docs/demos/examples/examples_index.md"
