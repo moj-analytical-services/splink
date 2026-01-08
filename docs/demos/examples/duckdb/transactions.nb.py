@@ -37,6 +37,8 @@
 # # !pip install splink
 
 # %%
+from IPython.display import display
+
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 
 df_origin = splink_datasets.transactions_origin

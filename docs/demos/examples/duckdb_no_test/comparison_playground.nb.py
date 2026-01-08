@@ -28,11 +28,12 @@
 # In the following cells, you can get similar results for custom comparisons with an arbitrary number of input columns.
 
 # %%
-import splink.comparison_library as cl
-from splink.internals.testing import comparison_vector_value, is_in_level
-from splink import DuckDBAPI
 import ipywidgets as widgets
-from IPython.display import Markdown
+from IPython.display import Markdown, display
+
+import splink.comparison_library as cl
+from splink import DuckDBAPI
+from splink.internals.testing import is_in_level
 
 
 def report_comparison_levels(comparison, values_dict, column_name):

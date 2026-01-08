@@ -41,6 +41,8 @@
 #
 
 # %%
+from IPython.display import display
+
 from splink import splink_datasets
 
 df_a = splink_datasets.febrl4a
