@@ -46,6 +46,7 @@
 import numpy as np
 import pandas as pd
 import pseudopeople as psp
+from IPython.display import display
 
 pd.set_option("display.max_columns", 7)
 
@@ -488,7 +489,7 @@ linker.visualisations.waterfall_chart(
     .head(10)  # only display some of the first such comparisons
     .sort_values(
         "mw_tf_adj_address"
-    )  # sort by lowest match weight (common addresses) first
+    )  # sort by lowest adjustment (common addresses) first
     .to_dict(orient="records")
 )
 
