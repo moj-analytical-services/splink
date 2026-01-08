@@ -183,7 +183,7 @@ print(email_comparison.get_comparison("duckdb").human_readable_description)
 # To see this as a specifications dictionary you can call
 
 # %% tags=["hide_output"]
-email_comparison.as_dict()
+email_comparison.create_comparison_dict("duckdb")
 
 # %% [markdown]
 # which can be used as the basis for a more custom comparison, as shown in the [Defining and Customising Comparisons topic guide ](customising_comparisons.ipynb#method-3-providing-the-spec-as-a-dictionary), if desired.
