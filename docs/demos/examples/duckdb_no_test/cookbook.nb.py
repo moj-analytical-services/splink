@@ -370,8 +370,8 @@ con = duckdb.connect()
 con.create_function(
     "custom_partial_ratio",
     custom_partial_ratio,
-    [VARCHAR, VARCHAR],
-    DOUBLE,
+    [duckdb.sqltypes.VARCHAR, duckdb.sqltypes.VARCHAR],
+    duckdb.sqltypes.DOUBLE,
 )
 db_api = DuckDBAPI(connection=con)
 

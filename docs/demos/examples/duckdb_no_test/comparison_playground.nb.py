@@ -95,8 +95,6 @@ def create_comparison_playground(column_name):
         'PostcodeComparison': ('SW1A 1AA', 'SW1A 1AB')
     }
 
-    db_api = DuckDBAPI()
-
     docstrings = {}
     for comp_type in comparison_types:
         class_obj = getattr(cl, comp_type)
