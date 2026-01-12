@@ -51,17 +51,10 @@ class _MUCountsAccumulator:
             for cl in comparison._comparison_levels_excluding_null
         }
 
-        # Prefer unique labels if there are duplicates.
         comparison_levels = list(comparison._comparison_levels_excluding_null)
         for cl in comparison_levels:
             cvv = int(cl.comparison_vector_value)
-            label = cl.label_for_charts
-            if hasattr(cl, "_label_for_charts_no_duplicates"):
-                try:
-                    label = cl._label_for_charts_no_duplicates(comparison_levels)
-                except Exception:
-                    # Defensive: never let logging break estimation
-                    label = cl.label_for_charts
+            label = cl._label_for_charts_no_duplicates(comparison_levels)
             self._label_by_cvv[cvv] = str(label)
 
     def update_from_chunk_counts(self, chunk_counts: pd.DataFrame) -> None:
