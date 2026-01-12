@@ -446,7 +446,7 @@ def estimate_u_values(
             additional_columns_to_retain=[],
         )
 
-        use_probe = (rhs_num_chunks > 1) and (min_count_per_level is not None)
+        use_probe = rhs_num_chunks > 1
 
         converged = False
         if use_probe:

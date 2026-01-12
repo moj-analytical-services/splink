@@ -195,11 +195,11 @@ class LinkerTraining:
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for SQLite set to None.
             min_count_per_level (int | None): Minimum number of u observations
-                required for each comparison level before stopping chunking early.
-                If None, disables the probe phase and disables early stopping (all
-                chunks are processed). Defaults to 100.
-            num_chunks (int): Number of chunks to split the RHS of the cartesian
-                product into while estimating u. Defaults to 10.
+                required for each comparison level before stopping estimation early.
+                If None, disables early stopping (all chunks are processed).
+                Defaults to 100.
+            num_chunks (int): Number of chunks to split the workload while estimating u.
+                If set to 1, disables the probe phase. Defaults to 10.
 
         Examples:
             ```py
