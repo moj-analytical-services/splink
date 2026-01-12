@@ -41,25 +41,23 @@ def test_full_example_duckdb(tmp_path):
     ]
 
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+    df_sdf = db_api.register(df)
 
     count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        df_sdf,
         blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
     linker = Linker(
-        df,
+        df_sdf,
         settings=settings_dict,
-        db_api=db_api,
         # output_schema="splink_in_duckdb",
     )
 
     profile_columns(
-        df,
-        db_api,
+        df_sdf,
         [
             "first_name",
             '"SUR name"',
@@ -67,7 +65,7 @@ def test_full_example_duckdb(tmp_path):
             "concat(city, first_name)",
         ],
     )
-    completeness_chart(df, db_api)
+    completeness_chart(df_sdf)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
@@ -131,9 +129,10 @@ def test_full_example_duckdb(tmp_path):
     linker.misc.save_model_to_json(path)
 
     db_api = DuckDBAPI()
-    linker_2 = Linker(df, settings=simple_settings, db_api=db_api)
+    df_sdf2 = db_api.register(df)
+    linker_2 = Linker(df_sdf2, settings=simple_settings)
 
-    linker_2 = Linker(df, db_api=db_api, settings=path)
+    linker_2 = Linker(df_sdf2, settings=path)
 
     # Test that writing to files works as expected
     _test_write_functionality(linker_2, pd.read_csv)
@@ -182,7 +181,12 @@ def test_link_only(input, source_l, source_r):
     settings["source_dataset_column_name"] = "source_dataset"
 
     db_api = DuckDBAPI()
-    linker = Linker(input, settings, db_api=db_api)
+    if isinstance(input, list):
+        input_sdf = [db_api.register(inp) for inp in input]
+    else:
+        input_sdf = db_api.register(input)
+
+    linker = Linker(input_sdf, settings)
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -219,10 +223,10 @@ def test_duckdb_load_different_tablish_types(df):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
     linker = Linker(
-        df,
+        df_sdf,
         settings,
-        db_api=db_api,
     )
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
@@ -230,11 +234,11 @@ def test_duckdb_load_different_tablish_types(df):
     settings["link_type"] = "link_only"
 
     db_api = DuckDBAPI()
+    df_sdf1 = db_api.register(df, source_dataset_name="testing1")
+    df_sdf2 = db_api.register(df, source_dataset_name="testing2")
     linker = Linker(
-        [df, df],
+        [df_sdf1, df_sdf2],
         settings,
-        db_api=db_api,
-        input_table_aliases=["testing1", "testing2"],
     )
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
@@ -257,15 +261,15 @@ def test_duckdb_arrow_array():
     #     ]
 
     db_api = DuckDBAPI()
+    array_data_sdf = db_api.register(array_data)
     linker = Linker(
-        array_data,
+        array_data_sdf,
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
             "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
-        db_api=db_api,
     )
     df = linker.inference.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
@@ -310,7 +314,8 @@ def test_small_example_duckdb(tmp_path):
     }
 
     db_api = DuckDBAPI()
-    linker = Linker(df, settings_dict, db_api=db_api)
+    df_sdf = db_api.register(df)
+    linker = Linker(df_sdf, settings_dict)
 
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.full_name = r.full_name"
@@ -333,5 +338,7 @@ def test_duckdb_input_is_duckdbpyrelation():
         blocking_rules_to_generate_predictions=[block_on("first_name", "surname")],
     )
     db_api = DuckDBAPI(connection=":default:")
-    linker = Linker([df1, df2], settings, db_api)
+    df1_sdf = db_api.register(df1)
+    df2_sdf = db_api.register(df2)
+    linker = Linker([df1_sdf, df2_sdf], settings)
     linker.inference.predict()

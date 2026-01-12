@@ -29,8 +29,9 @@ def test_clear_error_when_empty_block():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.training.estimate_parameters_using_expectation_maximisation(
@@ -55,13 +56,15 @@ def test_estimate_without_term_frequencies():
         ],
     }
 
-    db_api = DuckDBAPI()
+    db_api_1 = DuckDBAPI()
+    df_sdf_1 = db_api_1.register(df)
 
-    linker_0 = Linker(df, settings, db_api=db_api)
+    linker_0 = Linker(df_sdf_1, settings)
 
-    db_api = DuckDBAPI()
+    db_api_2 = DuckDBAPI()
+    df_sdf_2 = db_api_2.register(df)
 
-    linker_1 = Linker(df, settings, db_api=db_api)
+    linker_1 = Linker(df_sdf_2, settings)
 
     session_fast = linker_0.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
@@ -149,7 +152,10 @@ def test_fix_probabilities():
         additional_columns_to_retain=["cluster"],
     )
 
-    linker = Linker(df, settings, db_api=DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+
+    linker = Linker(df_sdf, settings)
 
     linker.training.estimate_u_using_random_sampling(max_pairs=1e4)
 

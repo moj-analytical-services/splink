@@ -36,7 +36,8 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
     spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
-    linker = Linker(df_spark, get_settings_dict(), spark_api)
+    df_spark_sdf = spark_api.register(df_spark)
+    linker = Linker(df_spark_sdf, get_settings_dict())
 
     # Test that writing to files works as expected
     def spark_csv_read(x):
@@ -79,24 +80,22 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
         "max_iterations": 2,
     }
 
+    df_spark_sdf_profile = spark_api.register(df_spark)
     profile_columns(
-        df_spark,
-        spark_api,
+        df_spark_sdf_profile,
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
     )
 
-    completeness_chart(df_spark, spark_api)
+    completeness_chart(df_spark_sdf_profile)
 
     spark.sql("USE DATABASE `1111`")
-    linker = Linker(
-        df_spark,
-        settings,
-        SparkAPI(
-            spark_session=spark,
-            break_lineage_method=break_lineage_method,
-            num_partitions_on_repartition=2,
-        ),
+    spark_api_2 = SparkAPI(
+        spark_session=spark,
+        break_lineage_method=break_lineage_method,
+        num_partitions_on_repartition=2,
     )
+    df_spark_sdf_2 = spark_api_2.register(df_spark)
+    linker = Linker(df_spark_sdf_2, settings)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
@@ -163,21 +162,21 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
     # Test differing inputs are accepted
     settings["link_type"] = "link_only"
 
-    linker = Linker(
-        [df_spark, df_spark.toPandas()],
-        settings,
-        SparkAPI(
-            spark_session=spark,
-            break_lineage_method="checkpoint",
-            num_partitions_on_repartition=2,
-        ),
+    spark_api_3 = SparkAPI(
+        spark_session=spark,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
     )
+    df_spark_sdf_3 = spark_api_3.register(df_spark)
+    df_pandas_sdf_3 = spark_api_3.register(df_spark.toPandas())
+    linker = Linker([df_spark_sdf_3, df_pandas_sdf_3], settings)
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
     linker.misc.save_model_to_json(path)
 
-    Linker(df_spark, settings=path, db_api=spark_api)
+    df_spark_sdf_final = spark_api.register(df_spark)
+    Linker(df_spark_sdf_final, settings=path)
 
 
 @mark_with_dialects_including("spark")
@@ -189,15 +188,14 @@ def test_link_only(spark, df_spark, spark_api):
     df_spark_a = df_spark.withColumn("source_dataset", f.lit("my_left_ds"))
     df_spark_b = df_spark.withColumn("source_dataset", f.lit("my_right_ds"))
 
-    linker = Linker(
-        [df_spark_a, df_spark_b],
-        settings,
-        SparkAPI(
-            spark_session=spark,
-            break_lineage_method="checkpoint",
-            num_partitions_on_repartition=2,
-        ),
+    spark_api_link = SparkAPI(
+        spark_session=spark,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
     )
+    df_spark_a_sdf = spark_api_link.register(df_spark_a)
+    df_spark_b_sdf = spark_api_link.register(df_spark_b)
+    linker = Linker([df_spark_a_sdf, df_spark_b_sdf], settings)
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
     assert len(df_predict) == 7257
@@ -218,10 +216,7 @@ def test_link_only(spark, df_spark, spark_api):
 def test_spark_load_from_file(df, spark, spark_api):
     settings = get_settings_dict()
 
-    linker = Linker(
-        df,
-        settings,
-        spark_api,
-    )
+    df_sdf = spark_api.register(df)
+    linker = Linker(df_sdf, settings)
 
     assert len(linker.inference.predict().as_pandas_dataframe()) == 3167

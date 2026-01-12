@@ -54,7 +54,9 @@ def vertically_concatenate_sql(
             if source_dataset_column_already_exists:
                 create_sds_if_needed = ""
             else:
-                create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
+                create_sds_if_needed = (
+                    f"'{df_obj.source_dataset_name}' as source_dataset,"
+                )
 
             sql = f"""
             select

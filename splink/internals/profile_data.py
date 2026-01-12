@@ -9,9 +9,13 @@ from splink.internals.charts import (
     load_chart_definition,
 )
 from splink.internals.column_expression import ColumnExpression
-from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splinkdataframe_utils import (
+    get_db_api_from_inputs,
+    splink_dataframes_to_dict,
+)
 from splink.internals.vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
@@ -203,8 +207,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(
-    table_or_tables: Sequence[AcceptableInputTableType],
-    db_api: DatabaseAPISubClass,
+    splink_dataframe_or_dataframes: Union[SplinkDataFrame, Sequence[SplinkDataFrame]],
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
     top_n: int = 10,
     bottom_n: int = 10,
@@ -227,7 +230,10 @@ def profile_columns(
     identify the need for standardisation within a given column.
 
     Args:
-
+        splink_dataframe_or_dataframes (
+            Union[SplinkDataFrame, Sequence[SplinkDataFrame]]
+        ):
+            A single SplinkDataFrame or a sequence of SplinkDataFrames
         column_expressions (list, optional): A list of strings containing the
             specified column names.
             If left empty this will default to all columns.
@@ -245,8 +251,8 @@ def profile_columns(
         - The `top_n` and `bottom_n` parameters determine the number of top and bottom
             values to display in the respective charts.
     """
-
-    splink_df_dict = db_api.register_multiple_tables(table_or_tables)
+    db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
+    splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
 
     pipeline = CTEPipeline()
     sql = vertically_concatenate_sql(splink_df_dict, source_dataset_input_column=None)
