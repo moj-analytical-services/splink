@@ -456,7 +456,8 @@ def estimate_u_values(
         # Convert aggregated counts to proportions (u probabilities)
         param_records = compute_proportions_for_new_parameters(aggregated_counts_df)
 
-        # Principled handling of unobserved levels:
+        # Handling of unobserved levels is consistent with splink 4
+        # 'LEVEL_NOT_OBSERVED_TEXT' behaviour whilst enabling the 'break early' check
         # - We explicitly include every level (via enumeration) so that convergence
         #   checks can treat missing GROUP BY rows as 0 counts.
         # - But for the final trained u values, a level with u_count == 0 should be
