@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from copy import deepcopy
+from functools import partial
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
@@ -181,11 +182,9 @@ def _run_rhs_chunk_and_check_convergence(
     try:
         chunk_counts = df_params.as_pandas_dataframe()
     finally:
-        # Drop final output table
         df_params.drop_table_from_database_and_remove_from_cache()
 
-    # Drop lambda row: it isn't additive across chunks (it's already a
-    # proportion), and we don't use it here anyway.
+    # Drop lambda row: it isn't additive and we don't use it here anyway
     chunk_counts = chunk_counts[
         chunk_counts.output_column_name != "_probability_two_random_records_match"
     ]
@@ -407,27 +406,32 @@ def estimate_u_values(
 
         use_probe = rhs_num_chunks > 1
 
+        # Bind invariant args once to avoid repetition
+        run_rhs_chunk = partial(
+            _run_rhs_chunk_and_check_convergence,
+            db_api=db_api,
+            df_sample=df_sample,
+            split_sqls=split_sqls,
+            input_tablename_sample_l=input_tablename_sample_l,
+            input_tablename_sample_r=input_tablename_sample_r,
+            blocking_rules_for_u=blocking_rules_for_u,
+            link_type=linker._settings_obj._link_type,
+            source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+            comparison=comparison,
+            blocking_cols=blocking_cols,
+            cv_cols=cv_cols,
+            min_count_per_level=min_count_per_level,
+        )
+
         converged = False
         if use_probe:
             probe_multiplier = 10
             probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
-            converged = _run_rhs_chunk_and_check_convergence(
-                db_api=db_api,
-                df_sample=df_sample,
-                split_sqls=split_sqls,
-                input_tablename_sample_l=input_tablename_sample_l,
-                input_tablename_sample_r=input_tablename_sample_r,
-                blocking_rules_for_u=blocking_rules_for_u,
-                link_type=linker._settings_obj._link_type,
-                source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-                unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-                comparison=comparison,
-                blocking_cols=blocking_cols,
-                cv_cols=cv_cols,
+            converged = run_rhs_chunk(
                 rhs_chunk_num=1,
                 rhs_num_chunks=probe_rhs_num_chunks,
                 counts_accumulator=counts_accumulator,
-                min_count_per_level=min_count_per_level,
                 probe_percent_of_max_pairs=100.0 / (rhs_num_chunks * probe_multiplier),
             )
 
@@ -439,23 +443,10 @@ def estimate_u_values(
                 counts_accumulator = _MUCountsAccumulator(comparison)
 
             for rhs_chunk_num in range(1, rhs_num_chunks + 1):
-                converged = _run_rhs_chunk_and_check_convergence(
-                    db_api=db_api,
-                    df_sample=df_sample,
-                    split_sqls=split_sqls,
-                    input_tablename_sample_l=input_tablename_sample_l,
-                    input_tablename_sample_r=input_tablename_sample_r,
-                    blocking_rules_for_u=blocking_rules_for_u,
-                    link_type=linker._settings_obj._link_type,
-                    source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
-                    unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
-                    comparison=comparison,
-                    blocking_cols=blocking_cols,
-                    cv_cols=cv_cols,
+                converged = run_rhs_chunk(
                     rhs_chunk_num=rhs_chunk_num,
                     rhs_num_chunks=rhs_num_chunks,
                     counts_accumulator=counts_accumulator,
-                    min_count_per_level=min_count_per_level,
                 )
                 if converged and (min_count_per_level is not None):
                     break
