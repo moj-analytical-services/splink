@@ -54,6 +54,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._registered_source_dataset_names: set[str] = set()
 
     @property
+    @final
     def id(self) -> str:
         """Useful for debugging when multiple database API instances exist."""
         return self._id
