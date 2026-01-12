@@ -406,13 +406,13 @@ def estimate_u_values(
         input_tablename_sample_l = "__splink__df_concat_sample_left"
         input_tablename_sample_r = "__splink__df_concat_sample_right"
 
-    # We chunk only the RHS.
+    # At this point we've computed our data sample and we're ready to 'block and count'
+
+    # Only chunk on RHS.  Input data is sample and thus always small enough.
     rhs_num_chunks = num_chunks
 
     uid_columns = settings_obj.column_info_settings.unique_id_input_columns
-    # Note: we pass the actual InputColumn objects through to helper calls.
 
-    # Build common blocking columns (UID columns that all comparisons need)
     common_blocking_cols: list[str] = []
     for uid_column in uid_columns:
         common_blocking_cols.extend(uid_column.l_r_names_as_l_r)
