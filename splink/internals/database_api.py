@@ -48,9 +48,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
+        self._id: str = ascii_uid(8)
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
         self._registered_source_dataset_names: set[str] = set()
+
+    @property
+    def id(self) -> str:
+        """Useful for debugging when multiple database API instances exist."""
+        return self._id
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"

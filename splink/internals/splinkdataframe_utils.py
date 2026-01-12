@@ -31,9 +31,11 @@ def get_db_api_from_inputs(
                 "All input SplinkDataFrames must be registered against the same "
                 "database API.\n"
                 f"Table '{first.templated_name}' is registered with a "
-                f"{type(first_db_api).__name__}, but table '{sdf.templated_name}' "
-                f"is registered with a {type(sdf.db_api).__name__}.\n"
-                "Please ensure all tables are registered using the same db_api."
+                f"{type(first_db_api).__name__} with id='{first_db_api.id}', "
+                f"but table '{sdf.templated_name}' is registered with a "
+                f"{type(sdf.db_api).__name__} with id='{sdf.db_api.id}'.\n"
+                "Please ensure all tables are registered using the same db_api. "
+                "You can check the id of your db_api using db_api.id"
             )
 
     return first_db_api
