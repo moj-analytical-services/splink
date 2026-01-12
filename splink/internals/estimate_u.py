@@ -107,7 +107,7 @@ class _MUCountsAccumulator:
         return df.to_string(index=False)
 
 
-def _u_counts_for_comparison_rhs_chunk(
+def _run_rhs_chunk_and_check_convergence(
     *,
     db_api: "DatabaseAPISubClass",
     df_sample: "SplinkDataFrame",
@@ -121,8 +121,21 @@ def _u_counts_for_comparison_rhs_chunk(
     comparison: "Comparison",
     blocking_cols: list[str],
     cv_cols: list[str],
-    right_chunk: tuple[int, int] | None,
-) -> pd.DataFrame:
+    rhs_chunk_num: int,
+    rhs_num_chunks: int,
+    counts_accumulator: _MUCountsAccumulator,
+    min_count_per_level: int | None,
+    probe_percent_of_max_pairs: float | None = None,
+) -> bool:
+    if probe_percent_of_max_pairs is not None:
+        logger.info(
+            f"  Running probe chunk (~{probe_percent_of_max_pairs:.2f}% of max_pairs)"
+        )
+    else:
+        logger.info(f"  Running chunk {rhs_chunk_num}/{rhs_num_chunks}")
+
+    t0 = time.perf_counter()
+
     pipeline = CTEPipeline(input_dataframes=[df_sample])
 
     if split_sqls:
@@ -135,7 +148,7 @@ def _u_counts_for_comparison_rhs_chunk(
         link_type=link_type,
         source_dataset_input_column=source_dataset_input_column,
         unique_id_input_column=unique_id_input_column,
-        right_chunk=right_chunk,
+        right_chunk=(rhs_chunk_num, rhs_num_chunks),
     )
 
     pipeline.enqueue_list_of_sqls(blocking_sqls)
@@ -173,56 +186,9 @@ def _u_counts_for_comparison_rhs_chunk(
 
     # Drop lambda row: it isn't additive across chunks (it's already a
     # proportion), and we don't use it here anyway.
-    return chunk_counts[
+    chunk_counts = chunk_counts[
         chunk_counts.output_column_name != "_probability_two_random_records_match"
     ]
-
-
-def _process_rhs_chunk_and_check_convergence(
-    *,
-    db_api: "DatabaseAPISubClass",
-    df_sample: "SplinkDataFrame",
-    split_sqls: list[dict[str, str]],
-    input_tablename_sample_l: str,
-    input_tablename_sample_r: str,
-    blocking_rules_for_u: list[BlockingRule],
-    link_type: LinkTypeLiteralType,
-    source_dataset_input_column: "InputColumn | None",
-    unique_id_input_column: "InputColumn",
-    comparison: "Comparison",
-    blocking_cols: list[str],
-    cv_cols: list[str],
-    rhs_chunk_num: int,
-    rhs_num_chunks: int,
-    counts_accumulator: _MUCountsAccumulator,
-    min_count_per_level: int | None,
-    chunk_label: str,
-    probe_percent_of_max_pairs: float | None = None,
-) -> bool:
-    if probe_percent_of_max_pairs is not None:
-        logger.info(
-            f"  Running probe chunk (~{probe_percent_of_max_pairs:.2f}% of max_pairs)"
-        )
-    else:
-        logger.info(f"  Running chunk {rhs_chunk_num}/{rhs_num_chunks}")
-
-    t0 = time.perf_counter()
-
-    chunk_counts = _u_counts_for_comparison_rhs_chunk(
-        db_api=db_api,
-        df_sample=df_sample,
-        split_sqls=split_sqls,
-        input_tablename_sample_l=input_tablename_sample_l,
-        input_tablename_sample_r=input_tablename_sample_r,
-        blocking_rules_for_u=blocking_rules_for_u,
-        link_type=link_type,
-        source_dataset_input_column=source_dataset_input_column,
-        unique_id_input_column=unique_id_input_column,
-        comparison=comparison,
-        blocking_cols=blocking_cols,
-        cv_cols=cv_cols,
-        right_chunk=(rhs_chunk_num, rhs_num_chunks),
-    )
 
     counts_accumulator.update_from_chunk_counts(chunk_counts)
 
@@ -445,7 +411,7 @@ def estimate_u_values(
         if use_probe:
             probe_multiplier = 10
             probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
-            converged = _process_rhs_chunk_and_check_convergence(
+            converged = _run_rhs_chunk_and_check_convergence(
                 db_api=db_api,
                 df_sample=df_sample,
                 split_sqls=split_sqls,
@@ -462,7 +428,6 @@ def estimate_u_values(
                 rhs_num_chunks=probe_rhs_num_chunks,
                 counts_accumulator=counts_accumulator,
                 min_count_per_level=min_count_per_level,
-                chunk_label="RHS probe chunk",
                 probe_percent_of_max_pairs=100.0 / (rhs_num_chunks * probe_multiplier),
             )
 
@@ -474,7 +439,7 @@ def estimate_u_values(
                 counts_accumulator = _MUCountsAccumulator(comparison)
 
             for rhs_chunk_num in range(1, rhs_num_chunks + 1):
-                converged = _process_rhs_chunk_and_check_convergence(
+                converged = _run_rhs_chunk_and_check_convergence(
                     db_api=db_api,
                     df_sample=df_sample,
                     split_sqls=split_sqls,
@@ -491,7 +456,6 @@ def estimate_u_values(
                     rhs_num_chunks=rhs_num_chunks,
                     counts_accumulator=counts_accumulator,
                     min_count_per_level=min_count_per_level,
-                    chunk_label="RHS chunk",
                 )
                 if converged and (min_count_per_level is not None):
                     break
