@@ -108,7 +108,7 @@ class _MUCountsAccumulator:
         return df.to_string(index=False)
 
 
-def _run_rhs_chunk_and_check_convergence(
+def _accumulate_u_counts_from_chunk_and_check_min_count(
     *,
     db_api: "DatabaseAPISubClass",
     df_sample: "SplinkDataFrame",
@@ -407,8 +407,8 @@ def estimate_u_values(
         use_probe = rhs_num_chunks > 1
 
         # Bind invariant args once to avoid repetition
-        run_rhs_chunk = partial(
-            _run_rhs_chunk_and_check_convergence,
+        run_chunk = partial(
+            _accumulate_u_counts_from_chunk_and_check_min_count,
             db_api=db_api,
             df_sample=df_sample,
             split_sqls=split_sqls,
@@ -424,18 +424,18 @@ def estimate_u_values(
             min_count_per_level=min_count_per_level,
         )
 
-        converged = False
+        min_count_condition_met = False
         if use_probe:
             probe_multiplier = 10
             probe_rhs_num_chunks = rhs_num_chunks * probe_multiplier
-            converged = run_rhs_chunk(
+            min_count_condition_met = run_chunk(
                 rhs_chunk_num=1,
                 rhs_num_chunks=probe_rhs_num_chunks,
                 counts_accumulator=counts_accumulator,
                 probe_percent_of_max_pairs=100.0 / (rhs_num_chunks * probe_multiplier),
             )
 
-        if not converged:
+        if not min_count_condition_met:
             if use_probe:
                 logger.info(
                     "  Probe did not converge; restarting with normal chunking\n"
@@ -443,12 +443,12 @@ def estimate_u_values(
                 counts_accumulator = _MUCountsAccumulator(comparison)
 
             for rhs_chunk_num in range(1, rhs_num_chunks + 1):
-                converged = run_rhs_chunk(
+                min_count_condition_met = run_chunk(
                     rhs_chunk_num=rhs_chunk_num,
                     rhs_num_chunks=rhs_num_chunks,
                     counts_accumulator=counts_accumulator,
                 )
-                if converged and (min_count_per_level is not None):
+                if min_count_condition_met and (min_count_per_level is not None):
                     break
 
         aggregated_counts_df = counts_accumulator.to_dataframe()
