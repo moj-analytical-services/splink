@@ -1,0 +1,827 @@
+{
+    "current_settings_dict": {
+        "link_type": "dedupe_only",
+        "blocking_rules": [],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": true,
+                "gamma_index": 0,
+                "data_type": "string",
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                "m_probabilities": [
+                    0.38295871197174913,
+                    0.15226716735596263,
+                    0.4647741206722884
+                ],
+                "u_probabilities": [
+                    0.99388666286368,
+                    0.0028669412982625627,
+                    0.0032463958380572937
+                ],
+                "tf_adjustment_weights": [
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "col_name": "surname",
+                "num_levels": 3,
+                "term_frequency_adjustments": true,
+                "gamma_index": 1,
+                "data_type": "string",
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                "m_probabilities": [
+                    0.39129544025833124,
+                    0.12030161113062919,
+                    0.48840294861103967
+                ],
+                "u_probabilities": [
+                    0.9926894735506957,
+                    0.002265232513862262,
+                    0.00504529393544206
+                ],
+                "tf_adjustment_weights": [
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "col_name": "dob",
+                "gamma_index": 2,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                "m_probabilities": [
+                    0.3155452170681331,
+                    0.6844547829318668
+                ],
+                "u_probabilities": [
+                    0.999744431865398,
+                    0.0002555681346020589
+                ],
+                "tf_adjustment_weights": [
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "col_name": "city",
+                "term_frequency_adjustments": true,
+                "gamma_index": 3,
+                "num_levels": 2,
+                "data_type": "string",
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                "m_probabilities": [
+                    0.28847678300721113,
+                    0.711523216992789
+                ],
+                "u_probabilities": [
+                    0.9101196115782743,
+                    0.08988038842172567
+                ],
+                "tf_adjustment_weights": [
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "col_name": "email",
+                "gamma_index": 4,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                "m_probabilities": [
+                    0.26345589294588023,
+                    0.7365441070541197
+                ],
+                "u_probabilities": [
+                    0.999752381434188,
+                    0.00024761856581195573
+                ],
+                "tf_adjustment_weights": [
+                    0.0,
+                    1.0
+                ]
+            }
+        ],
+        "additional_columns_to_retain": [
+            "group"
+        ],
+        "em_convergence": 0.01,
+        "source_dataset_column_name": "source_dataset",
+        "unique_id_column_name": "unique_id",
+        "retain_matching_columns": true,
+        "retain_intermediate_calculation_columns": false,
+        "max_iterations": 25,
+        "proportion_of_matches": 0.0050396660717059545
+    },
+    "historical_settings_dicts": [
+        {
+            "link_type": "dedupe_only",
+            "blocking_rules": [],
+            "comparison_columns": [
+                {
+                    "col_name": "first_name",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 0,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                    "m_probabilities": [
+                        0.1,
+                        0.2,
+                        0.7
+                    ],
+                    "u_probabilities": [
+                        0.7000000000000001,
+                        0.20000000000000004,
+                        0.10000000000000002
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "surname",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 1,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                    "m_probabilities": [
+                        0.1,
+                        0.2,
+                        0.7
+                    ],
+                    "u_probabilities": [
+                        0.7000000000000001,
+                        0.20000000000000004,
+                        0.10000000000000002
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "dob",
+                    "gamma_index": 2,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                    "m_probabilities": [
+                        0.1,
+                        0.9
+                    ],
+                    "u_probabilities": [
+                        0.9,
+                        0.1
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "city",
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 3,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                    "m_probabilities": [
+                        0.1,
+                        0.9
+                    ],
+                    "u_probabilities": [
+                        0.9,
+                        0.1
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "email",
+                    "gamma_index": 4,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                    "m_probabilities": [
+                        0.1,
+                        0.9
+                    ],
+                    "u_probabilities": [
+                        0.9,
+                        0.1
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            ],
+            "additional_columns_to_retain": [
+                "group"
+            ],
+            "em_convergence": 0.01,
+            "source_dataset_column_name": "source_dataset",
+            "unique_id_column_name": "unique_id",
+            "retain_matching_columns": true,
+            "retain_intermediate_calculation_columns": false,
+            "max_iterations": 25,
+            "proportion_of_matches": 0.3
+        },
+        {
+            "link_type": "dedupe_only",
+            "blocking_rules": [],
+            "comparison_columns": [
+                {
+                    "col_name": "first_name",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 0,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                    "m_probabilities": [
+                        0.3186934546499692,
+                        0.12840032519139744,
+                        0.5529062201586333
+                    ],
+                    "u_probabilities": [
+                        0.9939759786854048,
+                        0.0030314329671755963,
+                        0.002992588347419581
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "surname",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 1,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                    "m_probabilities": [
+                        0.3198128508055946,
+                        0.1012872814376532,
+                        0.5788998677567522
+                    ],
+                    "u_probabilities": [
+                        0.9928755085862229,
+                        0.0023850489513080227,
+                        0.004739442462469059
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "dob",
+                    "gamma_index": 2,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                    "m_probabilities": [
+                        0.4458241699110161,
+                        0.5541758300889841
+                    ],
+                    "u_probabilities": [
+                        0.9991201294011005,
+                        0.0008798705988996084
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "city",
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 3,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                    "m_probabilities": [
+                        0.23947578325976432,
+                        0.7605242167402356
+                    ],
+                    "u_probabilities": [
+                        0.9103126147950835,
+                        0.08968738520491662
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "email",
+                    "gamma_index": 4,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                    "m_probabilities": [
+                        0.33765358450383004,
+                        0.6623464154961699
+                    ],
+                    "u_probabilities": [
+                        0.9990162350531908,
+                        0.000983764946809028
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            ],
+            "additional_columns_to_retain": [
+                "group"
+            ],
+            "em_convergence": 0.01,
+            "source_dataset_column_name": "source_dataset",
+            "unique_id_column_name": "unique_id",
+            "retain_matching_columns": true,
+            "retain_intermediate_calculation_columns": false,
+            "max_iterations": 25,
+            "proportion_of_matches": 0.0051036575568089455
+        },
+        {
+            "link_type": "dedupe_only",
+            "blocking_rules": [],
+            "comparison_columns": [
+                {
+                    "col_name": "first_name",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 0,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                    "m_probabilities": [
+                        0.35487565573699936,
+                        0.15688609023387654,
+                        0.4882382540291243
+                    ],
+                    "u_probabilities": [
+                        0.9939453208371932,
+                        0.0028636761577645457,
+                        0.003191003005042176
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "surname",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 1,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                    "m_probabilities": [
+                        0.36256020556857577,
+                        0.12485690828706437,
+                        0.5125828861443598
+                    ],
+                    "u_probabilities": [
+                        0.9927532940008038,
+                        0.002257975949059752,
+                        0.004988730050136418
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "dob",
+                    "gamma_index": 2,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                    "m_probabilities": [
+                        0.3279820237915454,
+                        0.6720179762084547
+                    ],
+                    "u_probabilities": [
+                        0.9996008268999741,
+                        0.0003991731000261967
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "city",
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 3,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                    "m_probabilities": [
+                        0.28081937910577376,
+                        0.7191806208942262
+                    ],
+                    "u_probabilities": [
+                        0.9100766010176691,
+                        0.08992339898233102
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "email",
+                    "gamma_index": 4,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                    "m_probabilities": [
+                        0.27396677650624485,
+                        0.7260332234937552
+                    ],
+                    "u_probabilities": [
+                        0.9996263656879927,
+                        0.0003736343120073876
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            ],
+            "additional_columns_to_retain": [
+                "group"
+            ],
+            "em_convergence": 0.01,
+            "source_dataset_column_name": "source_dataset",
+            "unique_id_column_name": "unique_id",
+            "retain_matching_columns": true,
+            "retain_intermediate_calculation_columns": false,
+            "max_iterations": 25,
+            "proportion_of_matches": 0.004920247301570404
+        },
+        {
+            "link_type": "dedupe_only",
+            "blocking_rules": [],
+            "comparison_columns": [
+                {
+                    "col_name": "first_name",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 0,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                    "m_probabilities": [
+                        0.3738161602012986,
+                        0.15437008371167008,
+                        0.47181375608703136
+                    ],
+                    "u_probabilities": [
+                        0.9938954272411262,
+                        0.0028654619727581858,
+                        0.0032391107861156807
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "surname",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 1,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                    "m_probabilities": [
+                        0.38219314199949384,
+                        0.12219952769923849,
+                        0.49560733030126775
+                    ],
+                    "u_probabilities": [
+                        0.9926988136057959,
+                        0.0022628506063210436,
+                        0.005038335787882892
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "dob",
+                    "gamma_index": 2,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                    "m_probabilities": [
+                        0.3153843236207835,
+                        0.6846156763792166
+                    ],
+                    "u_probabilities": [
+                        0.9997049272927501,
+                        0.0002950727072498611
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "city",
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 3,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                    "m_probabilities": [
+                        0.2858843246576875,
+                        0.7141156753423125
+                    ],
+                    "u_probabilities": [
+                        0.9100965728213073,
+                        0.08990342717869258
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "email",
+                    "gamma_index": 4,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                    "m_probabilities": [
+                        0.2631134529996605,
+                        0.7368865470003393
+                    ],
+                    "u_probabilities": [
+                        0.9997170170485102,
+                        0.0002829829514897332
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            ],
+            "additional_columns_to_retain": [
+                "group"
+            ],
+            "em_convergence": 0.01,
+            "source_dataset_column_name": "source_dataset",
+            "unique_id_column_name": "unique_id",
+            "retain_matching_columns": true,
+            "retain_intermediate_calculation_columns": false,
+            "max_iterations": 25,
+            "proportion_of_matches": 0.004981043940754473
+        },
+        {
+            "link_type": "dedupe_only",
+            "blocking_rules": [],
+            "comparison_columns": [
+                {
+                    "col_name": "first_name",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 0,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when first_name_l is null or first_name_r is null then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
+                    "m_probabilities": [
+                        0.38295871197174913,
+                        0.15226716735596263,
+                        0.4647741206722884
+                    ],
+                    "u_probabilities": [
+                        0.99388666286368,
+                        0.0028669412982625627,
+                        0.0032463958380572937
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "surname",
+                    "num_levels": 3,
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 1,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when surname_l is null or surname_r is null then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
+                    "m_probabilities": [
+                        0.39129544025833124,
+                        0.12030161113062919,
+                        0.48840294861103967
+                    ],
+                    "u_probabilities": [
+                        0.9926894735506957,
+                        0.002265232513862262,
+                        0.00504529393544206
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "dob",
+                    "gamma_index": 2,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
+                    "m_probabilities": [
+                        0.3155452170681331,
+                        0.6844547829318668
+                    ],
+                    "u_probabilities": [
+                        0.999744431865398,
+                        0.0002555681346020589
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "city",
+                    "term_frequency_adjustments": true,
+                    "gamma_index": 3,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when city_l is null or city_r is null then -1\n    when city_l = city_r then 1\n    else 0 end as gamma_city",
+                    "m_probabilities": [
+                        0.28847678300721113,
+                        0.711523216992789
+                    ],
+                    "u_probabilities": [
+                        0.9101196115782743,
+                        0.08988038842172567
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                },
+                {
+                    "col_name": "email",
+                    "gamma_index": 4,
+                    "num_levels": 2,
+                    "data_type": "string",
+                    "term_frequency_adjustments": false,
+                    "fix_u_probabilities": false,
+                    "fix_m_probabilities": false,
+                    "case_expression": "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
+                    "m_probabilities": [
+                        0.26345589294588023,
+                        0.7365441070541197
+                    ],
+                    "u_probabilities": [
+                        0.999752381434188,
+                        0.00024761856581195573
+                    ],
+                    "tf_adjustment_weights": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            ],
+            "additional_columns_to_retain": [
+                "group"
+            ],
+            "em_convergence": 0.01,
+            "source_dataset_column_name": "source_dataset",
+            "unique_id_column_name": "unique_id",
+            "retain_matching_columns": true,
+            "retain_intermediate_calculation_columns": false,
+            "max_iterations": 25,
+            "proportion_of_matches": 0.0050396660717059545
+        }
+    ],
+    "original_settings_dict": {
+        "link_type": "dedupe_only",
+        "blocking_rules": [],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": true
+            },
+            {
+                "col_name": "surname",
+                "num_levels": 3,
+                "term_frequency_adjustments": true
+            },
+            {
+                "col_name": "dob"
+            },
+            {
+                "col_name": "city",
+                "term_frequency_adjustments": true
+            },
+            {
+                "col_name": "email"
+            }
+        ],
+        "additional_columns_to_retain": [
+            "group"
+        ],
+        "em_convergence": 0.01
+    },
+    "iteration": 4
+}
