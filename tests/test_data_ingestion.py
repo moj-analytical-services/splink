@@ -16,9 +16,9 @@ def test_register_list_data(dialect, test_helpers):
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     table_name = "test_table"
-    db_api.register_table(
+    db_api._create_backend_table(
         input_table=test_data_list,
-        table_name=table_name,
+        templated_name=table_name,
     )
     db_api.delete_table_from_database(table_name)
 
@@ -34,9 +34,9 @@ def test_register_dict_data(dialect, test_helpers):
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     table_name = "test_table"
-    db_api.register_table(
+    db_api._create_backend_table(
         input_table=test_data_dict,
-        table_name=table_name,
+        templated_name=table_name,
     )
     db_api.delete_table_from_database(table_name)
 
@@ -57,9 +57,9 @@ def test_register_pandas_data(dialect, test_helpers):
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     table_name = "test_table"
-    db_api.register_table(
+    db_api._create_backend_table(
         input_table=test_data_pd,
-        table_name=table_name,
+        templated_name=table_name,
     )
     db_api.delete_table_from_database(table_name)
 
@@ -77,8 +77,8 @@ def test_register_arrow_data(dialect, test_helpers):
     db_api = helper.DatabaseAPI(**helper.db_api_args())
 
     table_name = "test_table"
-    db_api.register_table(
+    db_api._create_backend_table(
         input_table=test_data_arrow,
-        table_name=table_name,
+        templated_name=table_name,
     )
     db_api.delete_table_from_database(table_name)
