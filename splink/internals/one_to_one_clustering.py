@@ -307,9 +307,7 @@ def one_to_one_clustering(
 
         pipeline.enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
-        )
+        root_rows_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()

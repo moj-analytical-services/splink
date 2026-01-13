@@ -1,7 +1,7 @@
 import pandas as pd
 
 import splink.comparison_library as cl
-from splink import Linker, SettingsCreator, block_on
+from splink import SettingsCreator, block_on
 
 from .decorator import mark_with_dialects_excluding
 
@@ -35,7 +35,7 @@ def test_single_best_links_correctness_example_1(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -102,7 +102,7 @@ def test_single_best_links_example_2(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -167,7 +167,7 @@ def test_single_best_links_example_3(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -230,7 +230,7 @@ def test_single_best_links_ties(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -275,7 +275,7 @@ def test_single_best_links_ties_method(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -369,7 +369,7 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
         blocking_rules_to_generate_predictions=[],
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     df_predict = linker.table_management.register_table_predict(
         predictions, overwrite=True
@@ -427,7 +427,7 @@ def test_single_best_links_one_to_one(test_helpers, dialect):
         ],
     )
 
-    linker = Linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([df_l, df_r], settings)
 
     linker.training.estimate_u_using_random_sampling(1e6)
 

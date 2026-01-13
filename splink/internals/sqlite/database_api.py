@@ -30,6 +30,14 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.create_function("pow", 2, pow)
         self.con.create_function("power", 2, pow)
 
+        # Register hash function for chunking
+        # Python's hash() can return negative values, so we use abs()
+        # and convert to ensure consistent behavior
+        def splink_hash(s):
+            return abs(hash(str(s)))
+
+        self.con.create_function("splink_hash", 1, splink_hash)
+
         if register_udfs:
             try:
                 from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev

@@ -1,15 +1,17 @@
 from pytest import mark, raises
 
 from splink.internals.comparison_level import ComparisonLevel
+from splink.internals.dialects import SplinkDialect
 
 from .decorator import mark_with_dialects_excluding
 
 
 def make_comparison_level(sql_condition, dialect):
+    sql_dialect = SplinkDialect.from_string(dialect)
     return ComparisonLevel(
         sql_condition=sql_condition,
         label_for_charts="nice_informative_label",
-        sqlglot_dialect=dialect,
+        sql_dialect=sql_dialect,
     )
 
 

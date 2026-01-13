@@ -2,15 +2,13 @@ from __future__ import annotations
 
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
+from textwrap import dedent
 from typing import List
 
 from splink.internals.comparison import Comparison
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import (
-    prob_to_bayes_factor,
-    threshold_args_to_match_weight,
-)
+from splink.internals.misc import prob_to_match_weight, threshold_args_to_match_weight
 
 from .settings import CoreModelSettings, Settings
 
@@ -22,7 +20,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
     threshold_match_probability: float = None,
     threshold_match_weight: float = None,
     include_clerical_match_score: bool = False,
-    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     return predict_from_comparison_vectors_sqls(
         unique_id_input_columns=settings_obj.column_info_settings.unique_id_input_columns,
@@ -35,7 +32,6 @@ def predict_from_comparison_vectors_sqls_using_settings(
         training_mode=False,
         additional_columns_to_retain=settings_obj._additional_columns_to_retain,
         include_clerical_match_score=include_clerical_match_score,
-        sql_infinity_expression=sql_infinity_expression,
     )
 
 
@@ -51,11 +47,10 @@ def predict_from_comparison_vectors_sqls(
     training_mode: bool = False,
     additional_columns_to_retain: List[InputColumn] = [],
     include_clerical_match_score: bool = False,
-    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     sqls = []
 
-    select_cols = Settings.columns_to_select_for_bayes_factor_parts(
+    select_cols = Settings.columns_to_select_for_match_weight_parts(
         unique_id_input_columns=unique_id_input_columns,
         comparisons=core_model_settings.comparisons,
         retain_matching_columns=retain_matching_columns,
@@ -89,15 +84,14 @@ def predict_from_comparison_vectors_sqls(
         additional_columns_to_retain=additional_columns_to_retain,
     )
     select_cols_expr = ",".join(select_cols)
-    bf_terms = []
+    mw_terms = []
     for cc in core_model_settings.comparisons:
-        bf_terms.extend(cc._match_weight_columns_to_multiply)
+        mw_terms.extend(cc._match_weight_columns_to_sum)
 
     prior = core_model_settings.probability_two_random_records_match
-    bayes_factor_expr, match_prob_expr = _combine_prior_and_bfs(
+    match_weight_expr, match_prob_expr = _combine_prior_and_mws(
         prior,
-        bf_terms,
-        sql_infinity_expression,
+        mw_terms,
         sql_dialect,
     )
 
@@ -106,13 +100,13 @@ def predict_from_comparison_vectors_sqls(
     )
 
     if threshold_as_mw is not None:
-        threshold_expr = f" where log2({bayes_factor_expr}) >= {threshold_as_mw} "
+        threshold_expr = f" where ({match_weight_expr}) >= {threshold_as_mw} "
     else:
         threshold_expr = ""
 
     sql = f"""
     select
-    log2({bayes_factor_expr}) as match_weight,
+    {match_weight_expr} as match_weight,
     {match_prob_expr} as match_probability,
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
@@ -132,7 +126,6 @@ def predict_from_agreement_pattern_counts_sqls(
     comparisons: List[Comparison],
     probability_two_random_records_match: float,
     sql_dialect: SplinkDialect,
-    sql_infinity_expression: str = "'infinity'",
 ) -> list[dict[str, str]]:
     sqls = []
 
@@ -140,10 +133,10 @@ def predict_from_agreement_pattern_counts_sqls(
 
     for cc in comparisons:
         cc_sqls = [
-            cl._bayes_factor_sql(cc._gamma_column_name) for cl in cc.comparison_levels
+            cl._match_weight_sql(cc._gamma_column_name) for cl in cc.comparison_levels
         ]
         sql = " ".join(cc_sqls)
-        sql = f"CASE {sql} END as {cc._bf_column_name}"
+        sql = f"CASE {sql} END as {cc._mw_column_name}"
         select_cols.append(cc._gamma_column_name)
         select_cols.append(sql)
     select_cols.append("agreement_pattern_count")
@@ -163,22 +156,21 @@ def predict_from_agreement_pattern_counts_sqls(
     select_cols = []
     for cc in comparisons:
         select_cols.append(cc._gamma_column_name)
-        select_cols.append(cc._bf_column_name)
+        select_cols.append(cc._mw_column_name)
     select_cols.append("agreement_pattern_count")
     select_cols_expr = ",".join(select_cols)
 
     prior = probability_two_random_records_match
-    bf_terms = [cc._bf_column_name for cc in comparisons]
-    bayes_factor_expr, match_prob_expr = _combine_prior_and_bfs(
+    mw_terms = [cc._mw_column_name for cc in comparisons]
+    match_weight_expr, match_prob_expr = _combine_prior_and_mws(
         prior,
-        bf_terms,
-        sql_infinity_expression,
+        mw_terms,
         sql_dialect,
     )
 
     sql = f"""
     select
-    log2({bayes_factor_expr}) as match_weight,
+    {match_weight_expr} as match_weight,
     {match_prob_expr} as match_probability,
     {select_cols_expr}
     from __splink__df_match_weight_parts
@@ -193,28 +185,30 @@ def predict_from_agreement_pattern_counts_sqls(
     return sqls
 
 
-def _combine_prior_and_bfs(
+def _combine_prior_and_mws(
     prior: float,
-    bf_terms: list[str],
-    sql_infinity_expr: str,
+    mw_terms: list[str],
     sql_dialect: SplinkDialect,
 ) -> tuple[str, str]:
-    """Compute the combined Bayes factor and match probability expressions"""
-    if prior == 1.0:
-        bf_expr = sql_infinity_expr
-        match_prob_expr = "1.0"
-        return bf_expr, match_prob_expr
+    """Compute the combined match weight and match probability expressions (additive)"""
 
-    bf_prior = prob_to_bayes_factor(prior)
-    bf_expr = f"cast({bf_prior} as float8) * " + " * ".join(bf_terms)
+    mw_prior = prob_to_match_weight(prior)
 
-    greatest_name = sql_dialect.greatest_function_name
-    least_name = sql_dialect.least_function_name
-    bf_expr = f"{least_name}({greatest_name}({bf_expr}, 1e-300), 1e300)"
+    mw_expr = f"cast({mw_prior} as float8) + " + " + ".join(mw_terms)
 
-    mp_raw = f"({bf_expr})/(1+({bf_expr}))"
-    # if any BF is Infinity then we need to adjust the match probability
-    any_term_inf = " OR ".join((f"{term} = {sql_infinity_expr}" for term in bf_terms))
-    match_prob_expr = f"CASE WHEN {any_term_inf} THEN 1.0 ELSE {mp_raw} END"
+    # match_prob = 1 / (1 + 2^(-match_weight))
+    # 2^2000 could overflow, but 2^-2000 will not
+    # So for numerical stability,
+    # - When mw >= 0: 1 / (1 + 2^(-mw))
+    # - When mw < 0: 2^mw / (1 + 2^mw)
+    match_prob_expr = f"""
+    CASE
+        WHEN ({mw_expr}) >= 0 THEN
+            1.0 / (1.0 + POWER(cast(2 as float8), -({mw_expr})))
+        ELSE
+            POWER(cast(2 as float8), ({mw_expr})) /
+            (1.0 + POWER(cast(2 as float8), ({mw_expr})))
+    END
+    """.strip()
 
-    return bf_expr, match_prob_expr
+    return mw_expr, dedent(match_prob_expr)

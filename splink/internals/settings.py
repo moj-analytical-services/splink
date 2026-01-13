@@ -5,10 +5,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, TypedDict
 
-from splink.internals.blocking import (
-    BlockingRule,
-    SaltedBlockingRule,
-)
+from splink.internals.blocking import BlockingRule
 from splink.internals.charts import m_u_parameters_chart, match_weights_chart
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
@@ -32,7 +29,7 @@ class ComparisonAndLevelDict(TypedDict):
 
 @dataclass(frozen=True)
 class ColumnInfoSettings:
-    bayes_factor_column_prefix: str
+    match_weight_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str
@@ -189,6 +186,7 @@ class Settings:
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
         bayes_factor_column_prefix: str = "bf_",
+        match_weight_column_prefix: str = "mw_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
         # TrainingSettings
@@ -204,7 +202,7 @@ class Settings:
 
         self.column_info_settings = ColumnInfoSettings(
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
-            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            match_weight_column_prefix=match_weight_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
             unique_id_column_name=unique_id_column_name,
             _source_dataset_column_name=source_dataset_column_name,
@@ -389,7 +387,7 @@ class Settings:
         return cols
 
     @staticmethod
-    def columns_to_select_for_bayes_factor_parts(
+    def columns_to_select_for_match_weight_parts(
         unique_id_input_columns: List[InputColumn],
         comparisons: List[Comparison],
         retain_matching_columns: bool,
@@ -403,7 +401,7 @@ class Settings:
 
         for cc in comparisons:
             cols.extend(
-                cc._columns_to_select_for_bayes_factor_parts(
+                cc._columns_to_select_for_match_weight_parts(
                     retain_matching_columns,
                     retain_intermediate_calculation_columns,
                 )
@@ -640,15 +638,3 @@ class Settings:
             f"assessed as follows:\n\n{comparison_desc_str}"
         )
         return desc
-
-    @property
-    def salting_required(self):
-        # see https://github.com/duckdb/duckdb/discussions/9710
-        # in duckdb to parallelise we need salting
-        if self._sql_dialect_str == "duckdb":
-            return True
-
-        for br in self._blocking_rules_to_generate_predictions:
-            if isinstance(br, SaltedBlockingRule):
-                return True
-        return False

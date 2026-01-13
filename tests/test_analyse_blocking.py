@@ -45,21 +45,24 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
         ]
     )
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
+    df1_sdf = db_api.register(df_1)
+    df2_sdf = db_api.register(df_2)
+    df3_sdf = db_api.register(df_3)
+
     args = {
         "link_type": "dedupe_only",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
     }
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule="1=1", **args
+        df1_sdf, blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 / 2
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=df_1, blocking_rule=block_on("first_name"), **args
+        df1_sdf, blocking_rule=block_on("first_name"), **args
     )
 
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
@@ -67,20 +70,20 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     args["link_type"] = "link_only"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
+        [df1_sdf, df2_sdf], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
 
     assert res == 4 * 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=block_on("surname"), **args
+        [df1_sdf, df2_sdf], blocking_rule=block_on("surname"), **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2],
+        [df1_sdf, df2_sdf],
         blocking_rule=block_on("first_name"),
         **args,
     )
@@ -88,14 +91,14 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     assert res == 3
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2, df_3], blocking_rule="1=1", **args
+        [df1_sdf, df2_sdf, df3_sdf], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 4 * 3 + 4 * 2 + 2 * 3
 
     args["link_type"] = "link_and_dedupe"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule="1=1", **args
+        [df1_sdf, df2_sdf], blocking_rule="1=1", **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
@@ -103,14 +106,14 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        [df1_sdf, df2_sdf], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
 
     rule = block_on("first_name", "surname")
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        [df1_sdf, df2_sdf], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 1
@@ -136,30 +139,30 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
             {"unique_id": 3, "first_name": "Jayne", "postcode": [1003]},
         ]
     )
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
 
     args = {
         "link_type": "link_only",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 6
 
     args = {
         "link_type": "link_and_dedupe",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 3 + 6 + 2
@@ -170,7 +173,7 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
 def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
     helper = test_helpers[dialect]
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
     cols = ("unique_id", "sds", "first_name", "postcode", "age", "amount")
 
@@ -191,9 +194,11 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
     ]
     df_2 = pd.DataFrame(rows_2, columns=cols)
 
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
+
     args = {
         "link_type": "link_only",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
         "source_dataset_column_name": "sds",
     }
@@ -210,7 +215,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
     }
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1, df_2], blocking_rule=rule, **args
+        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
     )
 
     sql = """
@@ -270,21 +275,22 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
     df_1.drop(columns=["src_dataset"], inplace=True)
     df_2.drop(columns=["src_dataset"], inplace=True)
 
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
+    df_concat_sdf = db_api.register(df_concat)
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
 
     r1 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-        table_or_tables=df_concat,
+        df_concat_sdf,
         blocking_rules=[block_on("first_name")],
-        db_api=db_api,
         unique_id_column_name="unique_id",
         source_dataset_column_name="src_dataset",
         link_type="link_only",
     )
 
     r2 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-        table_or_tables=[df_1, df_2],
+        [df_1_sdf, df_2_sdf],
         blocking_rules=[block_on("first_name")],
-        db_api=db_api,
         unique_id_column_name="unique_id",
         link_type="link_only",
         source_dataset_column_name="source_dataset",
@@ -306,28 +312,31 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
     df_2_no_sds = df[df["unique_id"] % 3 == 1].copy()
     df_3_no_sds = df[df["unique_id"] % 3 == 2].copy()
 
+    df_concat_2_sdf = db_api.register(df_concat_2)
+    df_concat_3_sdf = db_api.register(df_concat_3)
+    df_1_no_sds_sdf = db_api.register(df_1_no_sds)
+    df_2_no_sds_sdf = db_api.register(df_2_no_sds)
+    df_3_no_sds_sdf = db_api.register(df_3_no_sds)
+
     count_comparisons_from_blocking_rule(
-        table_or_tables=df_concat_3,
+        df_concat_3_sdf,
         blocking_rule=block_on("first_name"),
         link_type="dedupe_only",
         unique_id_column_name="unique_id",
-        db_api=db_api,
     )
 
     r1 = count_comparisons_from_blocking_rule(
-        table_or_tables=df_concat_3,
+        df_concat_3_sdf,
         blocking_rule=block_on("first_name"),
         link_type="link_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
     )
 
     r2 = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1_no_sds, df_2_no_sds, df_3_no_sds],
+        [df_1_no_sds_sdf, df_2_no_sds_sdf, df_3_no_sds_sdf],
         blocking_rule=block_on("first_name"),
         link_type="link_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
     # Both of the above use the vertical concat of the two datasets so should
@@ -340,19 +349,17 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
         assert r1[k] == r2[k]
 
     r1 = count_comparisons_from_blocking_rule(
-        table_or_tables=df_concat_2,
+        df_concat_2_sdf,
         blocking_rule=block_on("first_name"),
         link_type="link_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
     )
 
     r2 = count_comparisons_from_blocking_rule(
-        table_or_tables=[df_1_no_sds, df_2_no_sds],
+        [df_1_no_sds_sdf, df_2_no_sds_sdf],
         blocking_rule=block_on("first_name"),
         link_type="link_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
     # There's an optimisation in the case of two input dataframes only
@@ -374,7 +381,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     from numpy import nan
 
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
     # resolve an issue w/ pyspark nulls
 
@@ -385,12 +392,12 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         {"unique_id": 4, "first_name": "Kim", "surname": "Lee", "dob": None},
     ]
     df = pd.DataFrame(df).fillna(nan).replace([nan], [None])
+    df_sdf = db_api.register(df)
 
     comparison_count_args = {
-        "table_or_tables": df,
+        "splink_dataframe_or_dataframes": df_sdf,
         "blocking_rules": [block_on("first_name")],
         "link_type": "dedupe_only",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
     }
 
@@ -456,6 +463,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     df_r = pd.DataFrame(df_r).fillna(nan).replace([nan], [None])
 
+    df_l_sdf = db_api.register(df_l)
+    df_r_sdf = db_api.register(df_r)
+
     blocking_rules = [
         "l.surname = r.surname",  # 2l:2r,
         Or(
@@ -465,9 +475,8 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     ]
 
     comparison_count_args = {
-        "table_or_tables": [df_l, df_r],
+        "splink_dataframe_or_dataframes": [df_l_sdf, df_r_sdf],
         "link_type": "link_and_dedupe",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
         "blocking_rules": blocking_rules,
         "source_dataset_column_name": "source_dataset",
@@ -524,10 +533,13 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     df_3 = pd.DataFrame(df_3)
 
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
+    df_3_sdf = db_api.register(df_3)
+
     comparison_count_args = {
-        "table_or_tables": [df_1, df_2, df_3],
+        "splink_dataframe_or_dataframes": [df_1_sdf, df_2_sdf, df_3_sdf],
         "link_type": "link_and_dedupe",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
         "blocking_rules": [
             block_on("surname"),
@@ -581,11 +593,12 @@ def test_analyse_blocking_fast_methodology():
     )
 
     db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
 
     args = {
-        "table_or_tables": df_1,
+        "splink_dataframe_or_dataframes": df_1_sdf,
         "link_type": "dedupe_only",
-        "db_api": db_api,
         "unique_id_column_name": "unique_id",
         "compute_post_filter_count": False,
     }
@@ -614,7 +627,7 @@ def test_analyse_blocking_fast_methodology():
     res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
     assert res == 3 * 3 + 1 * 1 + 1 * 1
 
-    args["table_or_tables"] = [df_1, df_2]
+    args["splink_dataframe_or_dataframes"] = [df_1_sdf, df_2_sdf]
     args["link_type"] = "link_and_dedupe"
     args["blocking_rule"] = block_on("first_name")
 
@@ -661,13 +674,13 @@ def test_analyse_blocking_fast_methodology_edge_cases():
         results[br] = {"count_from_join_dedupe_only": res.iloc[0].iloc[0]}
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
-            table_or_tables=df,
+            df_sdf,
             blocking_rule=br,
             link_type="dedupe_only",
-            db_api=db_api,
             unique_id_column_name="unique_id",
         )
         c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -684,6 +697,9 @@ def test_analyse_blocking_fast_methodology_edge_cases():
     df_l = df.iloc[::2].copy()  # even-indexed rows (starting from 0)
     df_r = df.iloc[1::2].copy()  # odd-indexed rows (starting from 1)
 
+    df_l_sdf = db_api.register(df_l)
+    df_r_sdf = db_api.register(df_r)
+
     sql_template = """
     select count(*)
     from df_l as l
@@ -697,14 +713,11 @@ def test_analyse_blocking_fast_methodology_edge_cases():
         res = duckdb.sql(sql).df()
         results[br] = {"count_from_join_link_only": res.iloc[0].iloc[0]}
 
-    db_api = DuckDBAPI()
-
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
-            table_or_tables=[df_l, df_r],
+            [df_l_sdf, df_r_sdf],
             blocking_rule=br,
             link_type="link_only",
-            db_api=db_api,
             unique_id_column_name="unique_id",
         )
         c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
@@ -732,15 +745,14 @@ def test_blocking_rule_accepts_different_dialects():
 @mark_with_dialects_excluding()
 def test_chart(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    df_sdf = db_api.register(df)
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-        table_or_tables=df,
+        df_sdf,
         blocking_rules=[block_on("first_name"), "l.surname = r.surname"],
         link_type="dedupe_only",
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
@@ -748,7 +760,7 @@ def test_chart(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_n_largest_blocks(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
     df_1 = pd.DataFrame(
         [
@@ -777,13 +789,14 @@ def test_n_largest_blocks(test_helpers, dialect):
         ]
     )
 
-    db_api = DuckDBAPI()
+    df_1_sdf = db_api.register(df_1)
+    df_2_sdf = db_api.register(df_2)
+    df_3_sdf = db_api.register(df_3)
 
     n_largest_dedupe_only = n_largest_blocks(
-        table_or_tables=df_1,
+        df_1_sdf,
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="dedupe_only",
-        db_api=db_api,
     ).as_pandas_dataframe()
 
     sql = """
@@ -809,10 +822,9 @@ def test_n_largest_blocks(test_helpers, dialect):
     pd.testing.assert_frame_equal(n_largest_dedupe_only, n_largest_manual_dedupe_only)
 
     n_largest_link_and_dedupe = n_largest_blocks(
-        table_or_tables=[df_1, df_2],
+        [df_1_sdf, df_2_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_and_dedupe",
-        db_api=db_api,
     ).as_pandas_dataframe()
 
     sql = """
@@ -840,10 +852,9 @@ def test_n_largest_blocks(test_helpers, dialect):
     )
 
     n_largest_link_only = n_largest_blocks(
-        table_or_tables=[df_1, df_2],
+        [df_1_sdf, df_2_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_only",
-        db_api=db_api,
     ).as_pandas_dataframe()
 
     sql = """
@@ -869,10 +880,9 @@ def test_n_largest_blocks(test_helpers, dialect):
     pd.testing.assert_frame_equal(n_largest_link_only, n_largest_manual_link_only)
 
     n_largest_link_only_3 = n_largest_blocks(
-        table_or_tables=[df_1, df_2, df_3],
+        [df_1_sdf, df_2_sdf, df_3_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_only",
-        db_api=db_api,
     ).as_pandas_dataframe()
 
     sql = """
@@ -898,10 +908,9 @@ def test_n_largest_blocks(test_helpers, dialect):
     pd.testing.assert_frame_equal(n_largest_link_only_3, n_largest_manual_link_only_3)
 
     n_largest_link_and_dedupe_inverted = n_largest_blocks(
-        table_or_tables=[df_1, df_2],
+        [df_1_sdf, df_2_sdf],
         blocking_rule="l.name1 = r.name2 and l.name2 = r.name1",
         link_type="link_and_dedupe",
-        db_api=db_api,
     ).as_pandas_dataframe()
 
     sql = """
@@ -972,6 +981,8 @@ def test_blocking_rule_parentheses_equivalence():
     df = pd.DataFrame(data)
     db_api = DuckDBAPI()
 
+    df_sdf = db_api.register(df)
+
     # Test three variations of the same blocking rule
     br_with_brl = brl.And(
         brl.block_on("forename1_std", "forename2_std", "dob_std"),
@@ -994,24 +1005,21 @@ def test_blocking_rule_parentheses_equivalence():
 
     # Get results for each variation
     result_brl = count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        df_sdf,
         blocking_rule=br_with_brl,
         link_type="dedupe_only",
-        db_api=db_api,
     )
 
     result_with_parens = count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        df_sdf,
         blocking_rule=br_with_parens,
         link_type="dedupe_only",
-        db_api=db_api,
     )
 
     result_without_parens = count_comparisons_from_blocking_rule(
-        table_or_tables=df,
+        df_sdf,
         blocking_rule=br_without_parens,
         link_type="dedupe_only",
-        db_api=db_api,
     )
 
     # Check specific values

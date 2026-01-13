@@ -3,10 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, List, Union
 
-from splink.internals.blocking import (
-    BlockingRule,
-    SaltedBlockingRule,
-)
+from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_analysis import (
     _cumulative_comparisons_to_be_scored_from_blocking_rules,
 )
@@ -192,7 +189,7 @@ class LinkerTraining:
                 the final model is estimated.
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
-                DuckDB and Spark, for Athena and SQLite set to None.
+                DuckDB and Spark, for SQLite set to None.
 
         Examples:
             ```py
@@ -290,7 +287,7 @@ class LinkerTraining:
             self._linker._sql_dialect_str
         )
 
-        if not isinstance(blocking_rule_obj, (BlockingRule, SaltedBlockingRule)):
+        if not isinstance(blocking_rule_obj, (BlockingRule)):
             raise TypeError(
                 "EM blocking rules must be plain blocking rules, not "
                 "exploding blocking rules"

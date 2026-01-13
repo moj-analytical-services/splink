@@ -3,6 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from splink.internals.blocking import (
+    compute_blocked_pairs_from_concat_with_tf,
+)
+from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
@@ -15,6 +19,7 @@ from splink.internals.term_frequencies import (
     term_frequencies_for_single_column_sql,
 )
 from splink.internals.vertically_concatenate import (
+    compute_df_concat_with_tf,
     enqueue_df_concat,
 )
 
@@ -89,6 +94,67 @@ class LinkerTableManagement:
 
         return tf_df
 
+    def compute_df_concat_with_tf(self) -> SplinkDataFrame:
+        """Compute concatenated input records with term frequency columns."""
+        pipeline = CTEPipeline()
+
+        df = compute_df_concat_with_tf(self._linker, pipeline, use_cache=False)
+
+        return df
+
+    def compute_blocked_pairs_for_predict(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+    ) -> SplinkDataFrame:
+        """Compute and cache blocked pairs for prediction.
+
+        Args:
+            left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                left side records. For example, (1, 3) means chunk 1 of 3.
+            right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                right side records. For example, (2, 4) means chunk 2 of 4.
+
+        Returns:
+            SplinkDataFrame: The blocked pairs table, also stored in cache.
+
+        Examples:
+            ```py
+            # Pre-compute blocked pairs for full dataset
+            linker.table_management.compute_blocked_pairs_for_predict()
+
+            # Pre-compute blocked pairs for a specific chunk
+            linker.table_management.compute_blocked_pairs_for_predict(
+                left_chunk=(1, 3),
+                right_chunk=(2, 4),
+            )
+            ```
+        """
+        linker = self._linker
+        settings = linker._settings_obj
+
+        pipeline = CTEPipeline()
+        df_concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
+
+        pipeline = CTEPipeline([df_concat_with_tf])
+
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+            pipeline=pipeline,
+            db_api=linker._db_api,
+            splink_df_dict=linker._input_tables_dict,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+        )
+
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+        linker._intermediate_table_cache[cache_key] = blocked_pairs
+
+        return blocked_pairs
+
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
         will be recomputed.
@@ -115,7 +181,7 @@ class LinkerTableManagement:
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
 
-    def register_table_input_nodes_concat_with_tf(
+    def register_df_concat_with_tf(
         self, input_data: AcceptableInputTableType, overwrite: bool = False
     ) -> SplinkDataFrame:
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
@@ -275,4 +341,6 @@ class LinkerTableManagement:
                 pipeline
         """
 
-        return self._linker._db_api.register_table(input_table, table_name, overwrite)
+        return self._linker._db_api._create_backend_table(
+            input_table, table_name, overwrite
+        )

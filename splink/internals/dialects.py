@@ -147,18 +147,24 @@ class SplinkDialect(ABC):
             f"Backend '{self.sql_dialect_str}' does not have a " "'Least' function"
         )
 
+    @property
+    def hash_function_name(self) -> str:
+        """Return the name of a hash function that returns a bigint/int64.
+        Used for deterministic chunking of records during prediction.
+        """
+        raise NotImplementedError(
+            f"hash_function_name not implemented for {self.__class__.__name__}"
+        )
+
+    def hash_function_expression(self, col_expression: str) -> str:
+        """Return a SQL expression that hashes the given column expression."""
+        return f"{self.hash_function_name}({col_expression})"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
         raise NotImplementedError(
             f"Backend '{self.sql_dialect_str}' needs a random_sample_sql "
-            "added to its dialect"
-        )
-
-    @property
-    def infinity_expression(self):
-        raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' needs an infinity_expression "
             "added to its dialect"
         )
 
@@ -273,6 +279,10 @@ class DuckDBDialect(SplinkDialect):
         return "least"
 
     @property
+    def hash_function_name(self) -> str:
+        return "hash"  # DuckDB's hash() returns int64
+
+    @property
     def default_date_format(self):
         return "%Y-%m-%d"
 
@@ -300,10 +310,6 @@ class DuckDBDialect(SplinkDialect):
         self, name: str, pattern: str, capture_group: int = 0
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
-
-    @property
-    def infinity_expression(self):
-        return "cast('infinity' as float8)"
 
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
@@ -430,10 +436,6 @@ class SparkDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    @property
-    def infinity_expression(self):
-        return "'infinity'"
-
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -478,6 +480,10 @@ class SparkDialect(SplinkDialect):
         return f"""select {','.join(cols_to_select)}
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
+    @property
+    def hash_function_name(self) -> str:
+        return "hash"  # Spark's hash() returns int
+
 
 class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
@@ -505,10 +511,6 @@ class SQLiteDialect(SplinkDialect):
         return "jaro_winkler"
 
     @property
-    def infinity_expression(self):
-        return "'infinity'"
-
-    @property
     def greatest_function_name(self):
         # SQLite uses min/max scalar functions instead of least/greatest
         return "max"
@@ -533,6 +535,12 @@ class SQLiteDialect(SplinkDialect):
         return f"""ORDER BY RANDOM()
             LIMIT {sample_size}
             """
+
+    @property
+    def hash_function_name(self) -> str:
+        # SQLite doesn't have a native hash function.
+        # splink_hash is a UDF registered by Splink's SQLite backend.
+        return "splink_hash"
 
 
 class PostgresDialect(SplinkDialect):
@@ -626,10 +634,6 @@ class PostgresDialect(SplinkDialect):
             """
 
     @property
-    def infinity_expression(self):
-        return "'infinity'"
-
-    @property
     def array_first_index(self):
         return 1
 
@@ -645,45 +649,10 @@ class PostgresDialect(SplinkDialect):
             f"received: '{first_or_last}'"
         )
 
-
-class AthenaDialect(SplinkDialect):
-    _dialect_name_for_factory = "athena"
-
     @property
-    def sql_dialect_str(self):
-        return "athena"
+    def hash_function_name(self) -> str:
+        return "hashtext"
 
-    @property
-    def sqlglot_dialect(self):
-        return "presto"
-
-    @property
-    def _levenshtein_name(self):
-        return "levenshtein_distance"
-
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        percent = proportion * 100
-        if seed:
-            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
-        else:
-            return f"USING SAMPLE {percent}% (bernoulli)"
-
-    @property
-    def infinity_expression(self):
-        return "infinity()"
-
-    @property
-    def levenshtein_function_name(self):
-        return "levenshtein_distance"
-
-    @property
-    def greatest_function_name(self):
-        return "greatest"
-
-    @property
-    def least_function_name(self):
-        return "least"
+    def hash_function_expression(self, col_expression: str) -> str:
+        """PostgreSQL's hashtext requires text input, so cast the column."""
+        return f"hashtext(({col_expression})::text)"

@@ -1,6 +1,6 @@
 [project]
 name = "splink"
-version = "4.0.12"
+version = "5.0.0.dev1"
 description = "Fast probabilistic data linkage at scale"
 authors = [
     { name = "Robin Linacre", email = "robinlinacre@hotmail.com" },
@@ -26,7 +26,6 @@ dependencies = [
 [project.optional-dependencies]
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
-athena = ["awswrangler"]
 postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
 
 [project.urls]
@@ -34,9 +33,7 @@ Homepage = "https://github.com/moj-analytical-services/splink"
 Repository = "https://github.com/moj-analytical-services/splink"
 
 [dependency-groups]
-# dummy 'core' group to allow us to declare conflict with athena
-# awswrangler upper-pins packages including pyarrow, so ruins our resolution otherwise
-# additionally allows us to easily check package functionality with just these installed
+# allows us to easily check package functionality with just these installed
 # (and not the rest of our required dependencies)
 core = ["sqlglot", "pandas"]
 demos = [
@@ -84,12 +81,6 @@ default-groups = [
     "linting",
     "testing",
     "typechecking",
-]
-conflicts = [
-  [
-    { group = "core" },
-    { extra = "athena" }
-  ]
 ]
 
 [build-system]

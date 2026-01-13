@@ -49,7 +49,7 @@ def comparison_vector_value(
     sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
 
     mock_column_info_settings = ColumnInfoSettings(
-        bayes_factor_column_prefix="bm_",
+        match_weight_column_prefix="matchw_",
         term_frequency_adjustment_column_prefix="tf_",
         comparison_vector_value_column_prefix="cv_",
         unique_id_column_name="unique_id",

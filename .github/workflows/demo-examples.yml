@@ -2,9 +2,6 @@ name: Demo Example Notebooks
 
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "docs/demos/examples/**"

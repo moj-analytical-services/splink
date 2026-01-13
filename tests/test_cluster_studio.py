@@ -14,7 +14,9 @@ def test_density_sample():
         "link_type": "dedupe_only",
         "unique_id_column_name": "person_id",
     }
-    linker = Linker(df, settings, db_api=DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+    linker = Linker(df_sdf, settings)
 
     # Dummy cluster metrics table
     cluster = ["A", "B", "C", "D", "E", "F"]
