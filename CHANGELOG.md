@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `materialise_blocked_pairs` argument from `predict` (blocked pairs are now always materialised) [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
 - Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
 
-## [4.x.x]
+## [4.0.12] - 2025-12-22
 
 ### Fixed
 
@@ -282,7 +282,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.12...HEAD
+[4.0.12]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/moj-analytical-services/splink/compare/v4.0.9...v4.0.10
 [4.0.9]: https://github.com/moj-analytical-services/splink/compare/v4.0.8...v4.0.9
