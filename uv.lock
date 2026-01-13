@@ -4010,8 +4010,6 @@ dependencies = [
     { name = "duckdb" },
     { name = "igraph" },
     { name = "jinja2" },
-    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlglot" },
 ]
 
@@ -4019,6 +4017,10 @@ dependencies = [
 postgres = [
     { name = "psycopg2-binary" },
     { name = "sqlalchemy" },
+]
+pyarrow = [
+    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 pyspark = [
     { name = "pyspark", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -4032,8 +4034,6 @@ spark = [
 [package.dev-dependencies]
 core = [
     { name = "duckdb" },
-    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlglot" },
 ]
 demos = [
@@ -4099,18 +4099,17 @@ requires-dist = [
     { name = "igraph", specifier = ">=0.11.2" },
     { name = "jinja2", specifier = ">=3.0.3" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
-    { name = "pyarrow", specifier = ">=15.0.0" },
+    { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.5.0" },
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["pyspark", "spark", "postgres"]
+provides-extras = ["pyspark", "spark", "postgres", "pyarrow"]
 
 [package.metadata.requires-dev]
 core = [
     { name = "duckdb" },
-    { name = "pyarrow" },
     { name = "sqlglot" },
 ]
 demos = [
@@ -4145,7 +4144,7 @@ pandas = [
 ]
 testing = [
     { name = "networkx", specifier = ">=2.5.1" },
-    { name = "pyarrow", specifier = ">=7.0.0" },
+    { name = "pyarrow", specifier = ">=15.0.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "rapidfuzz", specifier = ">=3.0.0" },
