@@ -1,4 +1,4 @@
-name: Run splink_demos tutorial notebooks
+name: Demo Tutorials Notebooks
 
 on:
   pull_request:
@@ -10,22 +10,30 @@ on:
       - docs/demos/tutorials/**
       - pyproject.toml
       - "uv.lock"
-
   workflow_dispatch:
+
+permissions: {}
 
 jobs:
   test:
+    name: Test tutorial notebooks with Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
-    name: Run tutorial notebooks with Python ${{ matrix.python-version }}
+        python-version: ["3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup uv (with cache)
-        uses: astral-sh/setup-uv@v6
+        id: setup_uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -34,14 +42,18 @@ jobs:
           cache-suffix: "${{ runner.os }}-${{ matrix.python-version }}"
 
       - name: Install Python ${{ matrix.python-version }}
+        id: install_python
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync -p ${{ matrix.python-version }} --group demos
+        id: install_dependencies
+        run: uv sync --python ${{ matrix.python-version }} --group demos
 
-      - name: Modify Notebooks to reduce data size
+      - name: Reduce notebook size
+        id: reduce_notebook_size
         run: uv run python scripts/reduce_notebook_runtime.py
 
-      - name: Run tutorial notebooks
+      - name: Run tests
+        id: run_tests
         run: |
           uv run pytest -vv --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
