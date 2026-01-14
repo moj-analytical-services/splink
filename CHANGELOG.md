@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed implicit caching mechanism and the `use_cache` parameter from database execution methods [#2847](https://github.com/moj-analytical-services/splink/pull/2847)
 - Removed `materialise_blocked_pairs` argument from `predict` (blocked pairs are now always materialised) [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
 - Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
+- `pandas` and `numpy` are no longer required dependencies [#2883](https://github.com/moj-analytical-services/splink/pull/2883)
 
 ## [4.0.12] - 2025-12-22
 
