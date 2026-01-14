@@ -4,9 +4,6 @@ import io
 from pathlib import Path
 from urllib.request import urlopen
 
-import pyarrow.csv as pa_csv
-import pyarrow.parquet as pq
-
 from .metadata import dataset_labels, datasets
 
 DATASETDIR = Path(__file__).parent
@@ -25,6 +22,10 @@ def dataset_property(metadata_method):
     data_format = ds_meta.data_format
 
     def lazyload_data(self):
+        # TODO: nice message for users if pyarrow not installed
+        import pyarrow.csv as pa_csv
+        import pyarrow.parquet as pq
+
         if dataset_name in self._in_memory_data:
             return self._in_memory_data[dataset_name]
 

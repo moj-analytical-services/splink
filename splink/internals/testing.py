@@ -17,6 +17,8 @@ def is_in_level(
     literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> bool | List[bool]:
+    import pyarrow as pa
+
     sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
     sql_cond = comparison_level.get_comparison_level(sqlglot_dialect).sql_condition
     if sql_cond == "ELSE":
@@ -46,6 +48,8 @@ def comparison_vector_value(
     literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
     db_api: DatabaseAPISubClass,
 ) -> Dict[str, Any] | List[Dict[str, Any]]:
+    import pyarrow as pa
+
     sqlglot_dialect = db_api.sql_dialect.sqlglot_dialect
 
     mock_column_info_settings = ColumnInfoSettings(
