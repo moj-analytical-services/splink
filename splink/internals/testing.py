@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union
-
-import pyarrow as pa
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
@@ -11,6 +9,8 @@ from splink.internals.misc import ascii_uid, ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import ColumnInfoSettings
 
+if TYPE_CHECKING:
+    import pyarrow as pa
 
 def is_in_level(
     comparison_level: ComparisonLevelCreator,

@@ -17,7 +17,6 @@ from typing import (
     final,
 )
 
-import pyarrow as pa
 import sqlglot
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
@@ -37,13 +36,17 @@ BaseAcceptableInputTableType = Union[
     str,
     List[Dict[str, Any]],
     Dict[str, Any],
-    pa.Table,
 ]
 
 if TYPE_CHECKING:
     from pandas import DataFrame as PandasDataFrame
+    from pyarrow import Table as PyarrowTable
 
-    AcceptableInputTableType = Union[BaseAcceptableInputTableType, PandasDataFrame]
+    AcceptableInputTableType = Union[
+        BaseAcceptableInputTableType,
+        PandasDataFrame,
+        PyarrowTable,
+    ]
 else:
     AcceptableInputTableType = BaseAcceptableInputTableType
 
