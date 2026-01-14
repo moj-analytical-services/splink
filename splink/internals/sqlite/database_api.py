@@ -1,17 +1,18 @@
 import math
 import sqlite3
-from typing import Union
-
-import pyarrow as pa
+from typing import TYPE_CHECKING, Union
 
 from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import (
     SQLiteDialect,
 )
 from splink.internals.exceptions import SplinkException
-from splink.internals.misc import is_pandas_frame
+from splink.internals.misc import is_pandas_frame, to_pyarrow_if_list_or_dict
 
 from .dataframe import SQLiteDataFrame
+
+if TYPE_CHECKING:
+    import pyarrow as pa
 
 sql_con = sqlite3.Connection
 
@@ -87,6 +88,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
 
     @staticmethod
     def _arrow_to_sqlite_type(field: pa.Field) -> str:
+        import pyarrow as pa
         t = field.type
 
         if pa.types.is_integer(t) or pa.types.is_boolean(t):
@@ -125,10 +127,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
                 if_exists="replace",
             )
             return
-        if isinstance(input, dict):
-            input = pa.Table.from_pydict(input)
-        elif isinstance(input, list):
-            input = pa.Table.from_pylist(input)
+        input = to_pyarrow_if_list_or_dict(input)
         self._register_pyarrow_table(input, table_name)
 
     def table_to_splink_dataframe(self, templated_name, physical_name):

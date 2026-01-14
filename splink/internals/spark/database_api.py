@@ -3,7 +3,6 @@ import math
 import os
 import re
 
-import pyarrow as pa
 import sqlglot
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
@@ -16,6 +15,7 @@ from splink.internals.dialects import (
 from splink.internals.misc import (
     is_pandas_frame,
     major_minor_version_greater_equal_than,
+    to_pyarrow_if_dict,
 )
 
 from .dataframe import SparkDataFrame
@@ -66,8 +66,8 @@ class SparkAPI(DatabaseAPI[spark_df]):
     ) -> None:
         if is_pandas_frame(input):
             input = self._clean_pandas_df(input)
-        elif isinstance(input, dict):
-            input = pa.Table.from_pydict(input)
+        # spark can handle lists natively
+        input = to_pyarrow_if_dict(input)
         if not isinstance(input, spark_df):
             # TODO: spark 3 check for nicer arrow message
             input = self.spark.createDataFrame(input)

@@ -4,12 +4,12 @@ import logging
 from typing import Union
 
 import duckdb
-import pyarrow as pa
 
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
 from splink.internals.dialects import (
     DuckDBDialect,
 )
+from splink.internals.misc import to_pyarrow_if_list_or_dict
 
 from .dataframe import DuckDBDataFrame
 from .duckdb_helpers.duckdb_helpers import (
@@ -66,10 +66,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:
-        if isinstance(input, dict):
-            input = pa.Table.from_pydict(input)
-        elif isinstance(input, list):
-            input = pa.Table.from_pylist(input)
+        input = to_pyarrow_if_list_or_dict(input)
 
         self._con.register(table_name, input)
 

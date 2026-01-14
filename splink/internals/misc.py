@@ -7,9 +7,13 @@ import string
 from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
-from typing import Iterable, TypeVar, overload
+from typing import TYPE_CHECKING, Iterable, TypeVar, overload
+
+if TYPE_CHECKING:
+    import pyarrow as pa
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 def dedupe_preserving_order(list_of_items: list[T]) -> list[T]:
@@ -65,6 +69,50 @@ def join_list_with_commas_final_and(lst: list[str]) -> str:
     if len(lst) == 1:
         return lst[0]
     return ", ".join(lst[:-1]) + " and " + lst[-1]
+
+
+@overload
+def to_pyarrow_if_dict(input: dict[T, U]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_dict(input: T) -> T: ...
+
+
+def to_pyarrow_if_dict(input):
+    import pyarrow as pa
+
+    if isinstance(input, dict):
+        input = pa.Table.from_pydict(input)
+    return input
+
+
+@overload
+def to_pyarrow_if_list(input: list[T]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_list(input: T) -> T: ...
+
+
+def to_pyarrow_if_list(input):
+    import pyarrow as pa
+
+    if isinstance(input, list):
+        input = pa.Table.from_pylist(input)
+    return input
+
+
+@overload
+def to_pyarrow_if_list_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_list_or_dict(input: T) -> T: ...
+
+
+def to_pyarrow_if_list_or_dict(input):
+    return to_pyarrow_if_dict(to_pyarrow_if_list(input))
 
 
 class EverythingEncoder(json.JSONEncoder):
