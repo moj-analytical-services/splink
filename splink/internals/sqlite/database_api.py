@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import sqlite3
 from typing import TYPE_CHECKING, Union
@@ -89,6 +91,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
     @staticmethod
     def _arrow_to_sqlite_type(field: pa.Field) -> str:
         import pyarrow as pa
+
         t = field.type
 
         if pa.types.is_integer(t) or pa.types.is_boolean(t):

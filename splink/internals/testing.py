@@ -12,6 +12,7 @@ from splink.internals.settings import ColumnInfoSettings
 if TYPE_CHECKING:
     import pyarrow as pa
 
+
 def is_in_level(
     comparison_level: ComparisonLevelCreator,
     literal_values: Union[Dict[str, Any], List[Dict[str, Any]], pa.Table],
