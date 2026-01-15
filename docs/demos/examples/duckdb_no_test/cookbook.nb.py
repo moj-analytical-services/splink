@@ -295,7 +295,7 @@ linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob
 
 pairwise_predictions = linker.inference.predict(threshold_match_weight=-10)
 
-first_unique_id = df.iloc[0].unique_id
+first_unique_id = df_sdf.as_record_dict(limit=1)[0]["unique_id"]
 linker.evaluation.labelling_tool_for_specific_record(unique_id=first_unique_id, overwrite=True)
 
 
