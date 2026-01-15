@@ -42,7 +42,7 @@ settings = SettingsCreator(
         cl.JaroAtThresholds("surname", [0.9, 0.7]),
         cl.DateOfBirthComparison(
             "dob",
-            input_is_string=True,
+            input_is_string=False,
             datetime_metrics=["year", "month"],
             datetime_thresholds=[1, 1],
         ),
@@ -57,7 +57,8 @@ settings = SettingsCreator(
     retain_matching_columns=True,
 )
 
-linker = Linker(df, settings, DuckDBAPI())
+df_sdf = DuckDBAPI().register(df)
+linker = Linker(df_sdf, settings)
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = block_on("first_name", "surname")
@@ -77,13 +78,13 @@ df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
 )
 
 linker.visualisations.cluster_studio_dashboard(
-    df_predictions, df_clusters, "img/cluster_studio.html",
+    df_predictions, df_clusters, "cluster_studio.html",
     sampling_method="by_cluster_size", overwrite=True
 )
 
 # You can view the scv.html file in your browser, or inline in a notebook as follows
 from IPython.display import IFrame
-IFrame(src="./img/cluster_studio.html", width="100%", height=1200)
+IFrame(src="./cluster_studio.html", width="100%", height=1200)
 
 
 # %% [markdown]

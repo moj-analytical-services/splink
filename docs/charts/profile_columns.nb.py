@@ -20,9 +20,12 @@
 from splink import splink_datasets, DuckDBAPI
 from splink.exploratory import profile_columns
 
+db_api = DuckDBAPI()
+
 df = splink_datasets.historical_50k
 df = df[["unique_id", "full_name", "dob", "birth_place"]]
-chart = profile_columns(df, db_api=DuckDBAPI(), top_n=5, bottom_n=5)
+df_sdf = db_api.register(df)
+chart = profile_columns(df_sdf, top_n=5, bottom_n=5)
 chart
 
 
@@ -95,7 +98,7 @@ chart
 # Consider the skew of `birth_place` in our example:
 
 # %%
-profile_columns(df, column_expressions="birth_place", db_api=DuckDBAPI())
+profile_columns(df_sdf, column_expressions="birth_place")
 
 # %% [markdown]
 # Here we can see that "london" is the most common value, with many multiples more entires than the other values. In this case two records both having a `birth_place` of "london" gives far less evidence for a match than both having a rarer `birth_place` (e.g. "felthorpe").
@@ -114,13 +117,13 @@ profile_columns(df, column_expressions="birth_place", db_api=DuckDBAPI())
 # Consider the `dob` column from our example:
 
 # %%
-profile_columns(df, column_expressions="dob", db_api=DuckDBAPI())
+profile_columns(df_sdf, column_expressions="dob")
 
 # %% [markdown]
 # Here we can see a large skew towards dates which are the 1st January. We can narrow down the profiling to show the distribution of month and day to explore this further:
 
 # %%
-profile_columns(df, column_expressions="substr(dob, 6, 10)", db_api=DuckDBAPI())
+profile_columns(df_sdf, column_expressions="substr(dob, 6, 10)")
 
 # %% [markdown]
 # Here we can see that over 35% of all dates in this dataset are the 1st January. This is fairly common in manually entered datasets where if only the year of birth is known, people will generally enter the 1st January for that year.
@@ -141,4 +144,8 @@ from splink import splink_datasets, DuckDBAPI
 from splink.exploratory import profile_columns
 
 df = splink_datasets.historical_50k
-profile_columns(df, db_api=DuckDBAPI())
+
+db_api = DuckDBAPI()
+df_sdf = db_api.register(df)
+
+profile_columns(df_sdf)

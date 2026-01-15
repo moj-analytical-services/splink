@@ -17,7 +17,7 @@
 #
 
 # %% tags=["hide_input"]
-chart
+# chart TODO: display artifact
 
 # %% [markdown]
 #
@@ -87,7 +87,7 @@ settings = SettingsCreator(
         cl.JaroAtThresholds("surname", [0.9, 0.7]),
         cl.DateOfBirthComparison(
             "dob",
-            input_is_string=True,
+            input_is_string=False,
             datetime_metrics=["year", "month"],
             datetime_thresholds=[1, 1],
         ),
@@ -100,7 +100,8 @@ settings = SettingsCreator(
     ],
 )
 
-linker = Linker(df, settings, db_api)
+df_sdf = db_api.register(df)
+linker = Linker(df_sdf, settings)
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = block_on("first_name", "surname")

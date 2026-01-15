@@ -17,7 +17,7 @@
 #
 
 # %% tags=["hide_input"]
-chart
+# chart TODO: display artifact
 
 # %% [markdown]
 #
@@ -62,6 +62,16 @@ chart
 #
 
 # %%
+from splink import DuckDBAPI, block_on, splink_datasets
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+db_api = DuckDBAPI()
+
+df = splink_datasets.fake_1000
+df_sdf = db_api.register(df)
+
 blocking_rules_for_analysis = [
     block_on("surname"),
     block_on("first_name"),
@@ -69,9 +79,8 @@ blocking_rules_for_analysis = [
 ]
 
 cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-    table_or_tables=df,
+    splink_dataframe_or_dataframes=df_sdf,
     blocking_rules=blocking_rules_for_analysis,
-    db_api=db_api,
     link_type="dedupe_only",
 )
 
@@ -94,6 +103,16 @@ cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 #
 
 # %%
+from splink import DuckDBAPI, block_on, splink_datasets
+from splink.blocking_analysis import (
+    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+)
+
+db_api = DuckDBAPI()
+
+df = splink_datasets.fake_1000
+df_sdf = db_api.register(df)
+
 blocking_rules_for_analysis = [
     block_on("first_name", "dob"),
     block_on("surname"),
@@ -102,9 +121,8 @@ blocking_rules_for_analysis = [
 
 
 cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-    table_or_tables=df,
+    splink_dataframe_or_dataframes=df_sdf,
     blocking_rules=blocking_rules_for_analysis,
-    db_api=db_api,
     link_type="dedupe_only",
 )
 
@@ -130,6 +148,7 @@ from splink.blocking_analysis import (
 db_api = DuckDBAPI()
 
 df = splink_datasets.fake_1000
+df_sdf = db_api.register(df)
 
 blocking_rules_for_analysis = [
     block_on("first_name"),
@@ -138,9 +157,8 @@ blocking_rules_for_analysis = [
 ]
 
 chart = cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
-    table_or_tables=df,
+    splink_dataframe_or_dataframes=df_sdf,
     blocking_rules=blocking_rules_for_analysis,
-    db_api=db_api,
     link_type="dedupe_only",
 )
 chart

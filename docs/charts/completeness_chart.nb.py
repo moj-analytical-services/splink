@@ -17,7 +17,7 @@
 #
 
 # %% tags=["hide_input"]
-chart
+# chart TODO: display artifact
 
 # %% [markdown]
 #
@@ -69,12 +69,16 @@ chart
 from splink import splink_datasets, DuckDBAPI
 from splink.exploratory import completeness_chart
 
+db_api = DuckDBAPI()
+
 df = splink_datasets.fake_1000
 
 # Split a simple dataset into two, separate datasets which can be linked together.
 df_l = df.sample(frac=0.5)
 df_r = df.drop(df_l.index)
 
+sdf_l = db_api.register(df_l)
+sdf_r = db_api.register(df_r)
 
-chart = completeness_chart([df_l, df_r], db_api=DuckDBAPI())
+chart = completeness_chart([sdf_l, sdf_r])
 chart
