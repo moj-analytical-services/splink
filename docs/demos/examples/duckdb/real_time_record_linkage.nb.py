@@ -45,13 +45,14 @@ from pathlib import Path
 
 
 def get_settings_text() -> str:
-    # assumes cwd is folder of this notebook
-    local_path = Path.cwd() / ".." / ".." / "demo_settings" / "real_time_settings.json"
+    # assumes cwd is repo root
+    local_path = Path.cwd() / "docs" / "demos" / "demo_settings" / "real_time_settings.json"
 
     if local_path.exists():
         return local_path.read_text()
 
     # fallback location for settings - the file as it is on master, for e.g. colab use
+    # TODO: update ref
     url = "https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/demos/demo_settings/real_time_settings.json"
     with urllib.request.urlopen(url) as u:
         return u.read().decode()
