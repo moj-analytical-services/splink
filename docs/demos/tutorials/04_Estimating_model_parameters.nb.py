@@ -319,7 +319,7 @@ linker.visualisations.parameter_estimate_comparisons_chart()
 
 # %%
 settings = linker.misc.save_model_to_json(
-    "../demo_settings/saved_model_from_demo.json", overwrite=True
+    "./saved_model_from_demo.json", overwrite=True
 )
 
 # %% [markdown]
