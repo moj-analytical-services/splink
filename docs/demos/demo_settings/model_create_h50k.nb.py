@@ -26,9 +26,6 @@ db_api = DuckDBAPI()
 
 # %%
 from splink import DuckDBAPI, block_on
-from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
-)
 
 blocking_rules = [
     block_on("substr(first_name,1,3)", "substr(surname,1,4)"),
@@ -62,7 +59,8 @@ settings = SettingsCreator(
     retain_intermediate_calculation_columns=True,
 )
 
-linker = Linker(df, settings, db_api=db_api)
+df_sdf = db_api.register(df)
+linker = Linker(df_sdf, settings)
 
 # %%
 linker.training.estimate_probability_two_random_records_match(
