@@ -41,6 +41,24 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 
 which will still have a combination of matches and non-matches, but fewer record pairs to consider.
 
+### Handling Large Blocks
+
+Sometimes you need a blocking rule that creates large blocks - for example, blocking on postcode when many records share the same postcode. Rather than switching to a stricter rule (which might exclude valuable training pairs), you can use `max_records_per_block` to cap the number of pairs generated per block:
+
+```python
+from splink import block_on
+
+linker.training.estimate_parameters_using_expectation_maximisation(
+    block_on("postcode"),
+    max_records_per_block=100,
+)
+```
+
+This limits how many records from each side of a block participate in pair generation, preventing memory issues while still using your preferred blocking rule. Recommended values are 100-1000 depending on available memory.
+
+!!! note "Trade-offs"
+    Using `max_records_per_block` reduces the number of training pairs, which means less information for the EM algorithm. The capping uses deterministic ordering (by record ID), not random sampling. For most use cases this trade-off is acceptable - the algorithm needs representative pairs, not exhaustive pairs. If you notice poor model quality, try increasing the cap value.
+
 
 ## Choosing Training Rules
 

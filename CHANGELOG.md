@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added `max_records_per_block` parameter to `estimate_parameters_using_expectation_maximisation()` for capping mega-blocks during EM training, preventing memory exhaustion with high-cardinality partitions
+
 ## [4.0.12] - 2025-12-22
 
 ### Fixed

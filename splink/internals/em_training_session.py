@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
@@ -57,6 +57,7 @@ class EMTrainingSession:
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
         estimate_without_term_frequencies: bool = False,
+        max_records_per_block: Optional[int] = None,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -65,6 +66,7 @@ class EMTrainingSession:
 
         self.training_settings = training_settings
         self.unique_id_input_columns = unique_id_input_columns
+        self._max_records_per_block = max_records_per_block
 
         self.original_core_model_settings = core_model_settings.copy()
 
@@ -184,6 +186,7 @@ class EMTrainingSession:
             link_type=orig_settings._link_type,
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
+            max_records_per_block=self._max_records_per_block,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 

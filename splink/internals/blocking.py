@@ -168,6 +168,7 @@ class BlockingRule:
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
+        max_records_per_block: Optional[int] = None,
     ) -> str:
         if source_dataset_input_column:
             unique_id_columns = [source_dataset_input_column, unique_id_input_column]
@@ -177,7 +178,7 @@ class BlockingRule:
         uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
         uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
-        sql = f"""
+        base_sql = f"""
             select
             '{self.match_key}' as match_key,
             {uid_l_expr} as join_key_l,
@@ -192,7 +193,8 @@ class BlockingRule:
                 unique_id_input_column)
             }
             """
-        return sql
+
+        return _apply_max_records_per_block_cap(base_sql, max_records_per_block)
 
     def create_blocking_input_sql(
         self,
@@ -325,6 +327,7 @@ class SaltedBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
+        max_records_per_block: Optional[int] = None,
     ) -> str:
         if source_dataset_input_column:
             unique_id_columns = [source_dataset_input_column, unique_id_input_column]
@@ -354,7 +357,10 @@ class SaltedBlockingRule(BlockingRule):
             """
 
             sqls.append(sql)
-        return " UNION ALL ".join(sqls)
+
+        base_sql = " UNION ALL ".join(sqls)
+
+        return _apply_max_records_per_block_cap(base_sql, max_records_per_block)
 
 
 def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
@@ -448,11 +454,20 @@ class ExplodingBlockingRule(BlockingRule):
         input_tablename_l: str,
         input_tablename_r: str,
         where_condition: str,
+        max_records_per_block: Optional[int] = None,
     ) -> str:
         if self.exploded_id_pair_table is None:
             raise ValueError(
                 "Exploding blocking rules are not supported for the function you have"
                 " called."
+            )
+
+        if max_records_per_block is not None:
+            raise ValueError(
+                "max_records_per_block is not supported for ExplodingBlockingRule. "
+                "Exploding blocking rules pre-materialize ID pairs and do not support "
+                "per-block capping. Use a standard BlockingRule or SaltedBlockingRule "
+                "with max_records_per_block instead."
             )
 
         exploded_id_pair_table = self.exploded_id_pair_table
@@ -581,6 +596,52 @@ def _sql_gen_where_condition(
     return where_condition
 
 
+def _apply_max_records_per_block_cap(
+    base_sql: str,
+    max_records_per_block: Optional[int],
+) -> str:
+    """Wrap SQL with ROW_NUMBER capping to limit records per block.
+
+    This function applies dual-sided capping using window functions to ensure
+    that no single record dominates the training pairs. Each record on the left
+    side can pair with at most max_records_per_block records on the right, AND
+    each record on the right can pair with at most max_records_per_block records
+    on the left.
+
+    Args:
+        base_sql: The uncapped SQL query generating blocked pairs.
+        max_records_per_block: Maximum records from each side per block.
+            If None, returns base_sql unchanged.
+
+    Returns:
+        SQL string with ROW_NUMBER capping applied if max_records_per_block
+        is specified, otherwise the original base_sql.
+    """
+    if max_records_per_block is None:
+        return base_sql
+
+    return f"""
+    SELECT match_key, join_key_l, join_key_r
+    FROM (
+        SELECT
+            match_key,
+            join_key_l,
+            join_key_r,
+            ROW_NUMBER() OVER (
+                PARTITION BY join_key_l
+                ORDER BY join_key_r
+            ) as __splink_rn_l,
+            ROW_NUMBER() OVER (
+                PARTITION BY join_key_r
+                ORDER BY join_key_l
+            ) as __splink_rn_r
+        FROM ({base_sql}) as __splink_blocked_uncapped
+    ) as __splink_blocked_capped
+    WHERE __splink_rn_l <= {max_records_per_block}
+      AND __splink_rn_r <= {max_records_per_block}
+    """
+
+
 def block_using_rules_sqls(
     *,
     input_tablename_l: str,
@@ -589,6 +650,7 @@ def block_using_rules_sqls(
     link_type: "LinkTypeLiteralType",
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
+    max_records_per_block: Optional[int] = None,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -596,6 +658,12 @@ def block_using_rules_sqls(
 
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
+
+    Args:
+        max_records_per_block: If set, caps the number of records from each
+            side of a block that participate in pair generation. Uses
+            ROW_NUMBER() to limit pairs per block partition, preventing
+            memory issues from high-cardinality blocks.
     """
 
     sqls = []
@@ -622,6 +690,7 @@ def block_using_rules_sqls(
             input_tablename_l=input_tablename_l,
             input_tablename_r=input_tablename_r,
             where_condition=where_condition,
+            max_records_per_block=max_records_per_block,
         )
         br_sqls.append(sql)
 

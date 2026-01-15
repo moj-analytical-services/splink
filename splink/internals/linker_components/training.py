@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -225,6 +225,7 @@ class LinkerTraining:
         fix_m_probabilities: bool = False,
         fix_u_probabilities: bool = True,
         populate_probability_two_random_records_match_from_trained_values: bool = False,
+        max_records_per_block: Optional[int] = None,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -267,12 +268,39 @@ class LinkerTraining:
                 probabilities after each iteration. Defaults to True.
             populate_probability_two_random_records_match_from_trained_values (bool, optional):
                 If True, derive this parameter from the blocked value. Defaults to False.
+            max_records_per_block (int, optional): Maximum number of records from each
+                side of a block to include in pair generation. Uses ROW_NUMBER() window
+                function to limit how many pairs each record participates in, preventing
+                memory exhaustion from high-cardinality blocks (e.g., many records at
+                the same address).
+
+                The capping is applied symmetrically: each record on the left side
+                pairs with at most max_records_per_block records on the right, AND
+                each record on the right pairs with at most max_records_per_block
+                records on the left. This dual-sided approach ensures no single
+                record dominates the training pairs.
+
+                Recommended values: 100-1000 depending on available memory. Lower
+                values (100-200) are safer for memory-constrained environments.
+                Higher values preserve more training signal but require more memory.
+
+                Default is None (no limit). Values less than 2 raise ValueError.
+
+        Raises:
+            ValueError: If max_records_per_block is less than 2.
+            TypeError: If max_records_per_block is not an integer or None.
 
         Examples:
             ```py
             br_training = block_on("first_name", "dob")
             linker.training.estimate_parameters_using_expectation_maximisation(
                 br_training
+            )
+
+            # Cap at 100 records per side to prevent OOM on mega-blocks
+            linker.training.estimate_parameters_using_expectation_maximisation(
+                block_on("postcode", "street"),
+                max_records_per_block=100,
             )
             ```
 
@@ -285,6 +313,20 @@ class LinkerTraining:
         # to be used by the training linkers
         pipeline = CTEPipeline()
         compute_df_concat_with_tf(self._linker, pipeline)
+
+        # Validate max_records_per_block
+        if max_records_per_block is not None:
+            if not isinstance(max_records_per_block, int):
+                raise TypeError(
+                    f"max_records_per_block must be an integer or None, "
+                    f"not {type(max_records_per_block).__name__}"
+                )
+            if max_records_per_block < 2:
+                raise ValueError(
+                    f"max_records_per_block must be at least 2 to generate pairs. "
+                    f"Supplied value: {max_records_per_block}. "
+                    f"Use None for unlimited records per block."
+                )
 
         blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
             self._linker._sql_dialect_str
@@ -307,6 +349,7 @@ class LinkerTraining:
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
+            max_records_per_block=max_records_per_block,
         )
 
         core_model_settings = em_training_session._train()
