@@ -107,7 +107,8 @@ settings = SettingsCreator(
 )
 
 db_api = DuckDBAPI()
-linker = Linker(df, settings, db_api)
+df_sdf = db_api.register(df)
+linker = Linker(df_sdf, settings)
 
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 

@@ -35,7 +35,7 @@ settings = SettingsCreator(
     comparisons=[
       cl.NameComparison("first_name"),
         cl.NameComparison("surname"),
-        cl.DateOfBirthComparison("dob", input_is_string=True),
+        cl.DateOfBirthComparison("dob", input_is_string=False),
         cl.ExactMatch("city").configure(term_frequency_adjustments=True),
         cl.LevenshteinAtThresholds("email", 2),
     ],
@@ -45,7 +45,9 @@ settings = SettingsCreator(
     ]
 )
 
-linker = Linker(df, settings,DuckDBAPI())
+df_sdf = DuckDBAPI().register(df)
+
+linker = Linker(df_sdf, settings)
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 for rule in [block_on("first_name"), block_on("dob")]:
     linker.training.estimate_parameters_using_expectation_maximisation(rule)
