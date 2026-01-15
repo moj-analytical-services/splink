@@ -178,7 +178,7 @@ class BlockingRule:
         uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
         uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
-        base_sql = f"""
+        sql = f"""
             select
             '{self.match_key}' as match_key,
             {uid_l_expr} as join_key_l,
@@ -194,7 +194,7 @@ class BlockingRule:
             }
             """
 
-        return _apply_max_records_per_block_cap(base_sql, max_records_per_block)
+        return _apply_max_records_per_block_cap(sql, max_records_per_block)
 
     def create_blocking_input_sql(
         self,
@@ -358,9 +358,9 @@ class SaltedBlockingRule(BlockingRule):
 
             sqls.append(sql)
 
-        base_sql = " UNION ALL ".join(sqls)
-
-        return _apply_max_records_per_block_cap(base_sql, max_records_per_block)
+        return _apply_max_records_per_block_cap(
+            " UNION ALL ".join(sqls), max_records_per_block
+        )
 
 
 def _explode_arrays_sql(db_api, tbl_name, columns_to_explode, other_columns_to_retain):
