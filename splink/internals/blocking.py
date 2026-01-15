@@ -193,7 +193,6 @@ class BlockingRule:
                 unique_id_input_column)
             }
             """
-
         return _apply_max_records_per_block_cap(sql, max_records_per_block)
 
     def create_blocking_input_sql(
@@ -357,7 +356,6 @@ class SaltedBlockingRule(BlockingRule):
             """
 
             sqls.append(sql)
-
         return _apply_max_records_per_block_cap(
             " UNION ALL ".join(sqls), max_records_per_block
         )
