@@ -39,10 +39,8 @@ class SparkDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         spark_df = self.db_api._execute_sql_against_backend(sql)
-        cols = spark_df.columns
-        rows = spark_df.toLocalIterator()
 
-        return [{col: value for col, value in zip(cols, row)} for row in rows]
+        return [r.asDict(recursive=True) for r in spark_df.collect()]
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":
