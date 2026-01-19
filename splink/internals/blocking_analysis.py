@@ -378,9 +378,10 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
 
     # TODO: duckdb (if available) or arrow (if not)
     result_df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_pandas_dataframe()
-    table_name = "result_df"
+    table_name = "__splink__cumulative_blocking_rule_counts"
     # TODO: resuse connexion if available - see similar code in EM training
     con = duckdb.connect()
+    con.register(table_name, result_df)
 
     # The above table won't include rules that have no matches
     con.execute(

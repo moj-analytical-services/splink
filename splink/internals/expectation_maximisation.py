@@ -126,6 +126,7 @@ def compute_proportions_for_new_parameters(
     sql = compute_proportions_for_new_parameters_sql("m_u_df")
     # TODO: reuse connexion
     con = duckdb.connect()
+    con.register("m_u_df", m_u_df)
     ddb_relation = con.query(sql)
     # TODO: borrowed from DuckDBDataFrame.as_record_dict - reusable?
     rows = ddb_relation.fetchall()
