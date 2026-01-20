@@ -406,7 +406,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
                 SELECT
                     rules.blocking_rule,
                     coalesce(counts.row_count, 0) as row_count,
-                    rules.match_key,
+                    cast(rules.match_key as int) as match_key,
                     rules.cartesian
                 FROM
                     all_rules AS rules
