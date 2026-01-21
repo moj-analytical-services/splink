@@ -13,15 +13,21 @@
 # ---
 
 # %% tags=["hide_input", "hide_output"]
+import urllib.request
+
 import pandas as pd
 import json
 pd.options.display.max_colwidth = 10009
-path = ".benchmarks/Darwin-CPython-3.11-64bit/0006_b5b7ee569dab10ff304d1123984a2f446917fe9e_20241205_124128.json"
 
-# Load the JSON data from the file
-with open(path, 'r') as file:
-    data = json.load(file)
+url = (
+    "https://raw.githubusercontent.com/moj-analytical-services/splink_speed_testing/"
+    "39e235d2452793fd59a11da4a813642013404ed0/.benchmarks/Darwin-CPython-3.11-64bit/"
+    "0006_b5b7ee569dab10ff304d1123984a2f446917fe9e_20241205_124128.json"
+)
+with urllib.request.urlopen(url) as u:
+    data_text = u.read().decode()
 
+data = json.loads(data_text)
 # Extract the benchmark statistics
 benchmarks = data['benchmarks']
 
