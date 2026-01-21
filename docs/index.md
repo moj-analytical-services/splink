@@ -114,6 +114,7 @@ Here is a list of some of our known users and their use cases:
 	- [Marie Curie](https://podcasts.apple.com/gb/podcast/unlocking-data-at-marie-curie/id1724979056?i=1000649964922) have used Splink to build a single customer view on fundraising data which has been a "huge success [...] the tooling is just so much better. [...] The power of being able to select, plug in, configure and train a tool versus writing code. It's just mind boggling actually."  Amongst other benefits, the system is expected to "dramatically reduce manual reporting efforts previously required". See also the blog post [here](https://esynergy.co.uk/our-work/marie-curie/).
  	- [Club Brugge](https://www.clubbrugge.be/en) uses Splink to link football players from different data providers to their own database, simplifying and reducing the need for manual linkage labor.
 	- [GN Group](https://www.gn.com/) use Splink to deduplicate large volumes of customer records
+	- [The Data City](https://thedatacity.com/) join Companies House open data to online job postings and published financial events keyed by company name and not company registration number to create a more complete picture of company activity in the UK.
 
 Sadly, we don't hear about the majority of our users or what they are working on. If you have a use case and it is not shown here please [add it to the list](https://github.com/moj-analytical-services/splink/edit/master/docs/index.md)!
 
