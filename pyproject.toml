@@ -67,7 +67,7 @@ docs = [
     "neoteroi-mkdocs>=1.1.2",
     "pymdown-extensions>=10.15",
 ]
-linting = ["ruff>=0.4.2,<0.5"]
+linting = ["ruff>=0.4.2,<0.15"]
 testing = [
     "pytest>=7.3",
     "pyarrow>=7.0.0",
