@@ -204,8 +204,7 @@ def estimate_u_values(linker: Linker, max_pairs: float, seed: int = None) -> Non
     pipeline.enqueue_sql(sql, "__splink__m_u_counts")
     df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    param_records = df_params.as_pandas_dataframe()
-    param_records = compute_proportions_for_new_parameters(param_records)
+    param_records = compute_proportions_for_new_parameters(df_params)
     df_params.drop_table_from_database_and_remove_from_cache()
     df_sample.drop_table_from_database_and_remove_from_cache()
     blocked_pairs.drop_table_from_database_and_remove_from_cache()

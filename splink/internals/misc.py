@@ -7,11 +7,13 @@ import string
 from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
-from typing import Iterable, TypeVar, overload
+from typing import TYPE_CHECKING, Iterable, TypeVar, overload
 
-import numpy as np
+if TYPE_CHECKING:
+    import pyarrow as pa
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 def dedupe_preserving_order(list_of_items: list[T]) -> list[T]:
@@ -69,6 +71,50 @@ def join_list_with_commas_final_and(lst: list[str]) -> str:
     return ", ".join(lst[:-1]) + " and " + lst[-1]
 
 
+@overload
+def to_pyarrow_if_dict(input: dict[T, U]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_dict(input: T) -> T: ...
+
+
+def to_pyarrow_if_dict(input):
+    import pyarrow as pa
+
+    if isinstance(input, dict):
+        input = pa.Table.from_pydict(input)
+    return input
+
+
+@overload
+def to_pyarrow_if_list(input: list[T]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_list(input: T) -> T: ...
+
+
+def to_pyarrow_if_list(input):
+    import pyarrow as pa
+
+    if isinstance(input, list):
+        input = pa.Table.from_pylist(input)
+    return input
+
+
+@overload
+def to_pyarrow_if_list_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
+
+
+@overload
+def to_pyarrow_if_list_or_dict(input: T) -> T: ...
+
+
+def to_pyarrow_if_list_or_dict(input):
+    return to_pyarrow_if_dict(to_pyarrow_if_list(input))
+
+
 class EverythingEncoder(json.JSONEncoder):
     """
     Used to correctly encode data when dumping it to json where we need to
@@ -85,6 +131,9 @@ class EverythingEncoder(json.JSONEncoder):
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
     def default(self, obj):
+        # TODO: adjust this for safer importing
+        import numpy as np
+
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -250,3 +299,11 @@ def threshold_args_to_match_prob_list(
         )
 
     return None
+
+
+def is_pandas_frame(obj: object) -> bool:
+    try:
+        import pandas as pd
+    except ModuleNotFoundError:
+        return False
+    return isinstance(obj, pd.DataFrame)

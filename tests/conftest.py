@@ -105,21 +105,3 @@ def test_helpers(pg_engine):
     # if someone accessed spark, cleanup!
     if "spark" in helper_dict.accessed:
         _cleanup_spark(helper_dict["spark"].spark)
-
-
-# Function to easily see if the gamma column added to the linker matches
-# With the sets of tuples provided
-@pytest.fixture(scope="module")
-def test_gamma_assert():
-    def _test_gamma_assert(linker_output, size_gamma_lookup, col_name):
-        for gamma, id_pairs in size_gamma_lookup.items():
-            for left, right in id_pairs:
-                assert (
-                    linker_output.loc[
-                        (linker_output.unique_id_l == left)
-                        & (linker_output.unique_id_r == right)
-                    ]["gamma_" + col_name].values[0]
-                    == gamma
-                )
-
-    return _test_gamma_assert

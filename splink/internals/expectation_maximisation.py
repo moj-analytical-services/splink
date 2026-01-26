@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Any, List, cast
 
-import pandas as pd
+import duckdb
 
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
@@ -117,48 +117,21 @@ def compute_proportions_for_new_parameters_sql(table_name):
     return sql
 
 
-def compute_proportions_for_new_parameters_pandas(
-    m_u_df: pd.DataFrame,
-) -> List[dict[str, Any]]:
-    data = m_u_df.copy()
-    m_prob = "m_probability"
-    u_prob = "u_probability"
-    data.rename(columns={"m_count": m_prob, "u_count": u_prob}, inplace=True)
-
-    random_records = data[
-        data.output_column_name == "_probability_two_random_records_match"
-    ]
-    data = data[data.output_column_name != "_probability_two_random_records_match"]
-
-    data = data[data.comparison_vector_value != -1]
-    index = data.index.tolist()
-
-    m_probs = data.loc[index, m_prob] / data.groupby("output_column_name")[
-        m_prob
-    ].transform("sum")
-    u_probs = data.loc[index, u_prob] / data.groupby("output_column_name")[
-        u_prob
-    ].transform("sum")
-
-    data.loc[index, m_prob] = m_probs
-    data.loc[index, u_prob] = u_probs
-
-    data = pd.concat([random_records, data])
-
-    return data.to_dict("records")
-
-
 def compute_proportions_for_new_parameters(
-    m_u_df: pd.DataFrame,
+    df_params: SplinkDataFrame,
 ) -> List[dict[str, Any]]:
-    # Execute with duckdb if installed, otherwise default to pandas
-    try:
-        import duckdb
+    # TODO: should use arrow frame as interchange format
+    m_u_df = df_params.as_pandas_dataframe()  # noqa: F841 (unused variable)
 
-        sql = compute_proportions_for_new_parameters_sql("m_u_df")
-        return duckdb.query(sql).to_df().to_dict("records")
-    except (ImportError, ModuleNotFoundError):
-        return compute_proportions_for_new_parameters_pandas(m_u_df)
+    sql = compute_proportions_for_new_parameters_sql("m_u_df")
+    # TODO: reuse connexion
+    con = duckdb.connect()
+    con.register("m_u_df", m_u_df)
+    ddb_relation = con.query(sql)
+    # TODO: borrowed from DuckDBDataFrame.as_record_dict - reusable?
+    rows = ddb_relation.fetchall()
+    column_names = [desc[0] for desc in ddb_relation.description]
+    return [dict(zip(column_names, row)) for row in rows]
 
 
 def populate_m_u_from_lookup(
@@ -306,8 +279,7 @@ def expectation_maximisation(
         else:
             pipeline.append_input_dataframe(df_comparison_vector_values)
             df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        param_records = df_params.as_pandas_dataframe()
-        param_records = compute_proportions_for_new_parameters(param_records)
+        param_records = compute_proportions_for_new_parameters(df_params)
 
         df_params.drop_table_from_database_and_remove_from_cache()
 

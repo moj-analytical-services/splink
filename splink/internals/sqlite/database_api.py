@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 import math
 import sqlite3
-from typing import Union
-
-import pandas as pd
+from typing import TYPE_CHECKING, Union
 
 from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import (
     SQLiteDialect,
 )
 from splink.internals.exceptions import SplinkException
+from splink.internals.misc import is_pandas_frame, to_pyarrow_if_list_or_dict
 
 from .dataframe import SQLiteDataFrame
+
+if TYPE_CHECKING:
+    import pyarrow as pa
 
 sql_con = sqlite3.Connection
 
@@ -84,19 +88,50 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.row_factory = self.dict_factory
         self._register_udfs(register_udfs)
 
-    def _table_registration(self, input, table_name):
-        if isinstance(input, dict):
-            input = pd.DataFrame(input)
-        elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+    @staticmethod
+    def _arrow_to_sqlite_type(field: pa.Field) -> str:
+        import pyarrow as pa
 
-        # Will error if an invalid data type is passed
-        input.to_sql(
-            table_name,
-            self.con,
-            index=False,
-            if_exists="replace",
+        t = field.type
+
+        if pa.types.is_integer(t) or pa.types.is_boolean(t):
+            return "INTEGER"
+        if pa.types.is_floating(t):
+            return "REAL"
+        if pa.types.is_binary(t) or pa.types.is_large_binary(t):
+            return "BLOB"
+        # string, timestamp, decimal, anything else all map to TEXT
+        return "TEXT"
+
+    def _register_pyarrow_table(self, table: pa.Table, table_name: str) -> None:
+        cur = self.con.cursor()
+
+        cols = table.schema
+        col_defs = ", ".join(
+            f"{field.name} {self._arrow_to_sqlite_type(field)}" for field in cols
         )
+        cur.execute(f"DROP TABLE IF EXISTS {table_name}")
+        cur.execute(f"CREATE TABLE {table_name} ({col_defs})")
+
+        rows = zip(*(table.column(i).to_pylist() for i in range(table.num_columns)))
+
+        placeholders = ", ".join("?" * table.num_columns)
+        cur.executemany(f"INSERT INTO {table_name} VALUES ({placeholders})", rows)
+
+        self.con.commit()
+
+    def _table_registration(self, input, table_name):
+        if is_pandas_frame(input):
+            # Will error if an invalid data type is passed
+            input.to_sql(
+                table_name,
+                self.con,
+                index=False,
+                if_exists="replace",
+            )
+            return
+        input = to_pyarrow_if_list_or_dict(input)
+        self._register_pyarrow_table(input, table_name)
 
     def table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)

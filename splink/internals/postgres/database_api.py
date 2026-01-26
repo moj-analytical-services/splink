@@ -2,7 +2,6 @@ import logging
 from typing import Any, List, Union
 
 import duckdb
-import pandas as pd
 from sqlalchemy import CursorResult, text
 from sqlalchemy.engine import Engine
 
@@ -12,6 +11,7 @@ from splink.internals.dialects import (
 )
 from splink.internals.misc import (
     ensure_is_list,
+    to_pyarrow_if_list_or_dict,
 )
 
 from .dataframe import PostgresDataFrame
@@ -42,10 +42,7 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
         self._register_extensions()
 
     def _table_registration(self, input, table_name):
-        if isinstance(input, dict):
-            input = pd.DataFrame(input)
-        elif isinstance(input, list):
-            input = pd.DataFrame.from_records(input)
+        input = to_pyarrow_if_list_or_dict(input)
 
         # Using Duckdb to insert the data ensures the correct datatypes
         # and faster insertion (duckdb>=0.9.2)
@@ -69,6 +66,8 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
             )
 
         except (duckdb.HTTPException, duckdb.BinderException):
+            # fallback to using pandas to_sql if duckdb fails
+            # TODO: better fallback
             input.to_sql(
                 table_name,
                 con=self._engine,
