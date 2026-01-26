@@ -120,6 +120,12 @@ lint.ignore = [
     "B006", # Do not use mutable data structures for argument defaults"
 ]
 
+# really we want to lint docs with a looser set of rules (such as not enforcing the same line length)
+# for now we simply exclude
+exclude = [
+    "docs",
+]
+
 [tool.pytest.ini_options]
 addopts = ["-m default"]
 markers = [
