@@ -37,3 +37,9 @@ echo "Failed files:"
 for file in "${failedfilesarray[@]}"; do
   echo "$file"
 done
+
+if (( ${#failedfilesarray[@]} > 0 )); then
+  exit 1
+fi
+
+exit 0
