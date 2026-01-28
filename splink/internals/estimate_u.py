@@ -1,11 +1,10 @@
 from __future__ import annotations
-
+from splink.internals.misc import ascii_uid
 import logging
 import time
 from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING, List
-
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -33,8 +32,9 @@ from .expectation_maximisation import (
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from splink.internals.comparison import Comparison
     import pandas as pd
+
+    from splink.internals.comparison import Comparison
     from splink.internals.database_api import DatabaseAPISubClass
     from splink.internals.input_column import InputColumn
     from splink.internals.linker import Linker
@@ -455,7 +455,7 @@ def estimate_u_values(
 
         aggregated_counts_df = counts_accumulator.to_dataframe()
         aggregated_counts_sdf = db_api.register(
-            aggregated_counts_df, "__splink__aggregated_m_u_counts"
+            aggregated_counts_df, f"__splink__aggregated_m_u_counts_{ascii_uid()}"
         )
 
         # Convert aggregated counts to proportions (u probabilities)
