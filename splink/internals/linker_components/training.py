@@ -161,7 +161,11 @@ class LinkerTraining:
         )
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: float = 1e6, seed: int = None
+        self,
+        max_pairs: float = 1e6,
+        seed: int | None = None,
+        min_count_per_level: int | None = 100,
+        num_chunks: int = 10,
     ) -> None:
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -188,6 +192,12 @@ class LinkerTraining:
             seed (int): Seed for random sampling. Assign to get reproducible u
                 probabilities. Note, seed for random sampling is only supported for
                 DuckDB and Spark, for SQLite set to None.
+            min_count_per_level (int | None): Minimum number of u observations
+                required for each comparison level before stopping estimation early.
+                If None, disables early stopping (all chunks are processed).
+                Defaults to 100.
+            num_chunks (int): Number of chunks to split the workload while estimating u.
+                If set to 1, disables the probe phase. Defaults to 10.
 
         Examples:
             ```py
@@ -207,7 +217,13 @@ class LinkerTraining:
                 "result in more accurate estimates, but with a longer run time."
             )
 
-        estimate_u_values(self._linker, max_pairs, seed)
+        estimate_u_values(
+            self._linker,
+            max_pairs=max_pairs,
+            seed=seed,
+            min_count_per_level=min_count_per_level,
+            num_chunks=num_chunks,
+        )
         self._linker._populate_m_u_from_trained_values()
 
         self._linker._settings_obj._columns_without_estimated_parameters_message()
