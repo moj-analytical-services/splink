@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         id: run_tests
         run: |
-          uv run pytest -vv --nbmake -n=auto --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
+          scripts/run_notebooks.sh demos/tutorials

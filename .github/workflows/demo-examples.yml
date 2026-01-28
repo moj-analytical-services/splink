@@ -55,4 +55,4 @@ jobs:
       - name: Run tests
         id: run_tests
         run: |
-          uv run pytest -vv --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
+          scripts/run_notebooks.sh demos/examples/${{ matrix.test-group }}
