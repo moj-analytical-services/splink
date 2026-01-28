@@ -2,7 +2,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from collections import UserDict
 
-import pandas as pd
+import duckdb
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -38,9 +38,13 @@ class TestHelper(ABC):
         pass
 
     def load_frame_from_csv(self, path):
+        import pandas as pd
+
         return pd.read_csv(path)
 
     def load_frame_from_parquet(self, path):
+        import pandas as pd
+
         return pd.read_parquet(path)
 
     @property
@@ -68,12 +72,24 @@ class TestHelper(ABC):
 
 
 class DuckDBTestHelper(TestHelper):
+    def __init__(self):
+        self.con = duckdb.connect()
+
     @property
     def DatabaseAPI(self):
         return DuckDBAPI
 
+    def db_api_args(self):
+        return {"connection": self.con}
+
     def convert_frame(self, df):
         return df
+
+    def load_frame_from_csv(self, path):
+        return self.con.read_csv(path)
+
+    def load_frame_from_parquet(self, path):
+        return self.con.read_parquet(path)
 
     @property
     def date_format(self):

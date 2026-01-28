@@ -99,7 +99,7 @@ class LinkerTraining:
                 )
             )
 
-        pd_df = _cumulative_comparisons_to_be_scored_from_blocking_rules(
+        records = _cumulative_comparisons_to_be_scored_from_blocking_rules(
             splink_df_dict=self._linker._input_tables_dict,
             blocking_rules=blocking_rules,
             link_type=self._linker._settings_obj._link_type,
@@ -108,8 +108,6 @@ class LinkerTraining:
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
         )
-
-        records = pd_df.to_dict(orient="records")
 
         summary_record = records[-1]
         num_observed_matches = summary_record["cumulative_rows"]

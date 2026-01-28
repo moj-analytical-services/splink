@@ -167,6 +167,8 @@ To find the best place to ask a question, report a bug or get general advice, pl
 
 🥇 Civil Service Awards 2025: Innovation category - [Winner](https://x.com/CSWnews/status/1998488787433979981)
 
+🥇 Civil Service Awards 2025: The Excellence In Delivery Award was [won](https://www.civilserviceawards.com/winners-2025/) by a dashboard powered by Splink.
+
 🥇 OpenUK Awards 2025: Open data category - [Winner](https://openuk.uk/awards/)
 
 🥈 Civil Service Awards 2023: Best Use of Data, Science, and Technology - [Runner up](https://www.civilserviceawards.com/best-use-of-data-science-and-technology-award-2/)

@@ -2,7 +2,7 @@ import os
 
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
-from splink import block_on
+from splink import ColumnExpression, block_on
 from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
 )
@@ -40,7 +40,9 @@ comparison_city = cl.ExactMatch("city").configure(u_probabilities=[0.6, 0.4])
 comparison_email = cl.LevenshteinAtThresholds("email", 3).configure(
     m_probabilities=[0.8, 0.1, 0.1]
 )
-comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
+comparison_dob = cl.LevenshteinAtThresholds(
+    ColumnExpression("dob").cast_to_string(), [1, 2]
+)
 
 cl_settings = {
     "link_type": "dedupe_only",

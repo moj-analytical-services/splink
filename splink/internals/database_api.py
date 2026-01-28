@@ -5,10 +5,19 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+    final,
+)
 
 import sqlglot
-from pandas import DataFrame as PandasDataFrame
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
@@ -23,10 +32,24 @@ from .exceptions import SplinkException
 
 logger = logging.getLogger(__name__)
 
-# minimal acceptable table types
-AcceptableInputTableType = Union[
-    str, PandasDataFrame, List[Dict[str, Any]], Dict[str, Any]
+BaseAcceptableInputTableType = Union[
+    str,
+    List[Dict[str, Any]],
+    Dict[str, Any],
 ]
+
+if TYPE_CHECKING:
+    from pandas import DataFrame as PandasDataFrame
+    from pyarrow import Table as PyarrowTable
+
+    AcceptableInputTableType = Union[
+        BaseAcceptableInputTableType,
+        PandasDataFrame,
+        PyarrowTable,
+    ]
+else:
+    AcceptableInputTableType = BaseAcceptableInputTableType
+
 # a placeholder type. This will depend on the backend subclass - something
 # 'tabley' for that backend, such as duckdb.DuckDBPyRelation or spark.DataFrame
 TablishType = TypeVar("TablishType")
@@ -48,9 +71,16 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def __init__(self) -> None:
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
         self._cache_uid: str = ascii_uid(8)
+        self._id: str = ascii_uid(8)
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
         self._registered_source_dataset_names: set[str] = set()
+
+    @property
+    @final
+    def id(self) -> str:
+        """Useful for debugging when multiple database API instances exist."""
+        return self._id
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"
@@ -234,23 +264,22 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 )
             self._registered_source_dataset_names.add(source_dataset_name)
 
+        templated_name = source_dataset_name or self._new_input_table_name()
+
         # String inputs represent already-registered physical tables.
         # If `source_dataset_name` is not provided, we still generate a fresh internal
         # templated name so that the same physical table can be used multiple times as
         # distinct inputs (e.g. linking a table to itself).
         if isinstance(table, str):
             physical_name = table
-            templated_name = source_dataset_name or self._new_input_table_name()
             sdf = self.table_to_splink_dataframe(templated_name, physical_name)
         else:
-            templated_name = source_dataset_name or self._new_input_table_name()
             # Allow overwrite of table only if Splink is assigning the name
             # i.e. allow overwrites of tables of the form __splink__input_table_n
             overwrite = source_dataset_name is None
             sdf = self._create_backend_table(table, templated_name, overwrite=overwrite)
 
-        # Keep source_dataset label aligned with the internal table name by default
-        sdf.source_dataset_name = source_dataset_name or templated_name
+        sdf.source_dataset_name = templated_name
         return sdf
 
     @final

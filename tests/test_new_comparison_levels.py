@@ -41,17 +41,18 @@ comparison_city = {
         cll.ElseLevel(),
     ],
 }
+dob_year_as_string = ColumnExpression("dob").cast_to_string().substr(1, 4)
+dob_century_as_string = ColumnExpression("dob").cast_to_string().substr(1, 2)
 comparison_email = {
     "output_column_name": "dob",
     "comparison_levels": [
         cll.NullLevel("dob"),
         cll.ExactMatchLevel("dob"),
-        cll.CustomLevel("substr(dob_l, 1, 4) = substr(dob_r, 1, 4)", "year matches"),
-        {
-            "sql_condition": "substr(dob_l, 1, 2) = substr(dob_r, 1, 2)",
-            "label_for_charts": "century matches",
-        },
-        cll.LevenshteinLevel("dob", 3),
+        cll.ExactMatchLevel(dob_year_as_string),
+        cll.ExactMatchLevel(dob_century_as_string).configure(
+            label_for_charts="century matches"
+        ),
+        cll.LevenshteinLevel(ColumnExpression("dob").cast_to_string(), 3),
         cll.ElseLevel(),
     ],
 }
@@ -149,8 +150,9 @@ comparison_city = cl.ExactMatch("city").configure(u_probabilities=[0.6, 0.4])
 comparison_email = cl.LevenshteinAtThresholds("email", 3).configure(
     m_probabilities=[0.8, 0.1, 0.1]
 )
-comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
-
+comparison_dob = cl.LevenshteinAtThresholds(
+    ColumnExpression("dob").cast_to_string(), [1, 2]
+)
 cl_settings = {
     "link_type": "dedupe_only",
     "comparisons": [
@@ -247,7 +249,7 @@ comparison_name_cl = cl.NameComparison(
 
 comparison_dob_cl = cl.DateOfBirthComparison(
     ColumnExpression("dob"),
-    input_is_string=True,
+    input_is_string=False,
 )
 comparison_forenamesurname_cl = cl.ForenameSurnameComparison(
     "first_name",

@@ -431,6 +431,16 @@ class SparkDialect(SplinkDialect):
             timestamp_format = self.default_timestamp_format
         return f"""try_to_timestamp({name}, '{timestamp_format}')"""
 
+    def absolute_date_difference(self, clc: AbsoluteTimeDifferenceLevel) -> str:
+        # need custom solution as generic solution fails if we have date columns
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+
+        return (
+            f"abs(datediff({col.name_l}, {col.name_r})) "
+            f"<= floor({clc.time_threshold_seconds} / 86400)"
+        )
+
     def _regex_extract_raw(
         self, name: str, pattern: str, capture_group: int = 0
     ) -> str:
@@ -573,6 +583,10 @@ class PostgresDialect(SplinkDialect):
             f"- EXTRACT(EPOCH FROM {col.name_r}))"
             f"<= {clc.time_threshold_seconds}"
         )
+
+    def absolute_date_difference(self, clc: AbsoluteTimeDifferenceLevel) -> str:
+        # need to provide a date difference as well as time difference
+        return self.absolute_time_difference(clc)
 
     def _regex_extract_raw(
         self, name: str, pattern: str, capture_group: int = 0
