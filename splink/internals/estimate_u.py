@@ -1,5 +1,5 @@
 from __future__ import annotations
-from splink.internals.misc import ascii_uid
+
 import logging
 import time
 from copy import deepcopy
@@ -18,6 +18,7 @@ from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
+from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import LinkTypeLiteralType, Settings
 from splink.internals.vertically_concatenate import (
