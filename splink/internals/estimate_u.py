@@ -452,9 +452,15 @@ def estimate_u_values(
                     break
 
         aggregated_counts_df = counts_accumulator.to_dataframe()
+        aggregated_counts_sdf = db_api.register(
+            aggregated_counts_df, "__splink__aggregated_m_u_counts"
+        )
 
         # Convert aggregated counts to proportions (u probabilities)
-        param_records = compute_proportions_for_new_parameters(aggregated_counts_df)
+        param_records = compute_proportions_for_new_parameters(aggregated_counts_sdf)
+        aggregated_counts_sdf.drop_table_from_database_and_remove_from_cache(
+            force_non_splink_table=True
+        )
 
         # Handling of unobserved levels is consistent with splink 4
         # 'LEVEL_NOT_OBSERVED_TEXT' behaviour whilst enabling the 'break early' check
