@@ -6,7 +6,6 @@ from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING, List
 
-import pandas as pd
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -35,6 +34,7 @@ from .expectation_maximisation import (
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from splink.internals.comparison import Comparison
+    import pandas as pd
     from splink.internals.database_api import DatabaseAPISubClass
     from splink.internals.input_column import InputColumn
     from splink.internals.linker import Linker
@@ -91,6 +91,8 @@ class _MUCountsAccumulator:
         return self.min_u_count() >= min_count
 
     def to_dataframe(self) -> pd.DataFrame:
+        import pandas as pd
+
         return pd.DataFrame(
             [
                 {
