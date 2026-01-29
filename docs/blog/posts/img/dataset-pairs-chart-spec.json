@@ -1,0 +1,51 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Growth of cross-dataset comparisons as datasets increase",
+  "width": 400,
+  "height": 250,
+  "data": {
+    "values": [
+      {"datasets": 2, "pairs": 1},
+      {"datasets": 3, "pairs": 3},
+      {"datasets": 4, "pairs": 6},
+      {"datasets": 5, "pairs": 10},
+      {"datasets": 6, "pairs": 15},
+      {"datasets": 7, "pairs": 21},
+      {"datasets": 8, "pairs": 28},
+      {"datasets": 9, "pairs": 36},
+      {"datasets": 10, "pairs": 45}
+    ]
+  },
+  "layer": [
+    {
+      "mark": {"type": "line", "color": "#4c78a8", "strokeWidth": 2}
+    },
+    {
+      "mark": {"type": "point", "color": "#4c78a8", "filled": true, "size": 60}
+    }
+  ],
+  "encoding": {
+    "x": {
+      "field": "datasets",
+      "type": "quantitative",
+      "title": "Number of datasets (k)",
+      "axis": {"tickMinStep": 1}
+    },
+    "y": {
+      "field": "pairs",
+      "type": "quantitative",
+      "title": "Cross-dataset pairs"
+    },
+    "tooltip": [
+      {"field": "datasets", "type": "ordinal", "title": "Datasets"},
+      {"field": "pairs", "type": "quantitative", "title": "Pairs to link"}
+    ]
+  },
+  "config": {
+    "view": {"stroke": null},
+    "axis": {
+      "labelFontSize": 12,
+      "titleFontSize": 13
+    }
+  }
+}
