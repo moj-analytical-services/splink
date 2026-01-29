@@ -75,7 +75,7 @@ testing = [
     "rapidfuzz>=3.0.0",
     "pytest-cov>=5.0.0",
 ]
-typechecking = ["mypy==1.9.0"]
+typechecking = ["mypy==1.19.1"]
 
 [tool.uv]
 default-groups = [
