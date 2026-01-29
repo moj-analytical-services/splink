@@ -4489,6 +4489,10 @@ spark = [
     { name = "pyspark", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyspark", version = "4.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
+sqlite = [
+    { name = "rapidfuzz", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "rapidfuzz", version = "3.14.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
 
 [package.dev-dependencies]
 core = [
@@ -4552,19 +4556,27 @@ sql-backends = [
     { name = "psycopg2-binary" },
     { name = "pyspark", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyspark", version = "4.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "rapidfuzz", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "rapidfuzz", version = "3.14.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "sqlalchemy" },
 ]
 testing = [
     { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "psycopg2-binary" },
     { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyarrow", version = "22.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "pyspark", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pyspark", version = "4.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-cov" },
     { name = "rapidfuzz", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "rapidfuzz", version = "3.14.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "sqlalchemy" },
 ]
 typechecking = [
     { name = "mypy" },
@@ -4580,10 +4592,11 @@ requires-dist = [
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.5.0" },
+    { name = "rapidfuzz", marker = "extra == 'sqlite'", specifier = ">=3.10.0" },
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["pyspark", "spark", "postgres", "pyarrow"]
+provides-extras = ["pyspark", "spark", "sqlite", "postgres", "pyarrow"]
 
 [package.metadata.requires-dev]
 core = [
@@ -4607,7 +4620,7 @@ dev = [
     { name = "pyspark", specifier = ">=3.5.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "rapidfuzz", specifier = ">=3.0.0" },
+    { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "ruff", specifier = ">=0.4.2,<0.5" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
@@ -4633,14 +4646,20 @@ pandas = [
 sql-backends = [
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyspark", specifier = ">=3.5.0" },
+    { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
 testing = [
     { name = "networkx", specifier = ">=2.5.1" },
+    { name = "numpy", specifier = ">=1.19.3" },
+    { name = "pandas", specifier = ">=1.3.5" },
+    { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyarrow", specifier = ">=15.0.0" },
+    { name = "pyspark", specifier = ">=3.5.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "rapidfuzz", specifier = ">=3.0.0" },
+    { name = "rapidfuzz", specifier = ">=3.10.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
 typechecking = [{ name = "mypy", specifier = "==1.9.0" }]
 
