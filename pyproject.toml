@@ -44,7 +44,6 @@ demos = [
     "pytest-xdist>=3.6.1",
 ]
 dev = [
-    "tabulate>=0.8.9",
     "pyspark>=3.5.0",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
