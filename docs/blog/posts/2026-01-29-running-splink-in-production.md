@@ -52,8 +52,10 @@ Across our sources, dataset sizes range from tens to hundreds of millions of rec
 
 In practice, the challenge is less about running Splink once, and more about running linkage repeatedly when datasets differ in size, identifiers, and data quality. That is why we treat linkage as a pipeline of explicit artefacts, and why we sometimes break cross-dataset linking into smaller runs before consolidating at the end.
 
+<div style="display: flex; flex-direction: column; align-items: center;">
 <div id="dataset-pairs-chart"></div>
 <figcaption style="text-align: center; font-style: italic; margin-top: 0.5rem;">Figure 1: Cross-dataset pairs grow as k × (k − 1) ÷ 2.</figcaption>
+</div>
 
 <script type="module">
   import embed from 'https://cdn.jsdelivr.net/npm/vega-embed@6/+esm';
@@ -116,7 +118,9 @@ Our pipeline produces two primary products:
 
 In practice, it looks something like this:
 
-![Figure 2: Conceptual pipeline stages, from source tables to entities.](./img/data-linking-pipeline.png)
+<figure markdown="span">
+  ![Figure 2: Conceptual pipeline stages, from source tables to entities.](./img/data-linking-pipeline.png)
+</figure>
 
 ---
 
@@ -177,7 +181,9 @@ In practice this means
 
 To make this concrete, here is how our pipeline maps onto AWS services and tools.
 
-![Figure 3: How the linkage pipeline maps to AWS services.](./img/moj-linking-tech-stack.png)
+<figure markdown="span">
+  ![Figure 3: How the linkage pipeline maps to AWS services.](./img/moj-linking-tech-stack.png)
+</figure>
 
 **Storage**
 
@@ -316,8 +322,10 @@ This is the stage most people think of as "running Splink". We apply the model, 
 
 Operationally, this is where we are most sensitive to candidate explosion. If a blocking rule becomes too permissive, or if an upstream change reduces completeness of a key identifier and we fall back to weaker rules, edge volumes can grow quickly.
 
+<div style="display: flex; flex-direction: column; align-items: center;">
 <div id="blocking-rule-chart"></div>
 <figcaption style="text-align: center; font-style: italic; margin-top: 0.5rem;">Figure 4: Each blocking rule generates additional candidate pairs. Monitoring counts helps catch explosion early.</figcaption>
+</div>
 
 <script type="module">
   import embed from 'https://cdn.jsdelivr.net/npm/vega-embed@6/+esm';
@@ -361,11 +369,15 @@ One useful check here is looking at the cluster size distribution over time. Whe
 
 The diagram below illustrates how this works in practice. Each coloured node represents a record from a different source system, with its own internal identifier. Scored edges connect records that are likely to represent the same person. Once clustered, these disparate IDs are pulled together into a single entity, allowing us to recognise that six separate system records actually refer to one individual.
 
-![Figure 5: Records from multiple source systems, linked and clustered into a single entity.](./img/justice-user-journey1.drawio.png)
+<figure markdown="span">
+  ![Figure 5: Records from multiple source systems, linked and clustered into a single entity.](./img/justice-user-journey1.drawio.png)
+</figure>
 
 In the case of person linkage, these clusters produce a map against time of all instances in which a person has touched the justice system. This can be visualised as a timeline of interactions:
 
-![Figure 6: Timeline of a person's interactions across courts and prison, derived from linkage clusters.](./img/Person_Timeline.drawio.png)
+<figure markdown="span">
+  ![Figure 6: Timeline of a person's interactions across courts and prison, derived from linkage clusters.](./img/Person_Timeline.drawio.png)
+</figure>
 
 ### Publishing and downstream contracts
 
@@ -402,7 +414,9 @@ Downstream users join their source data to this table on `source_id` and `source
 
 Splink requires a `link_type`, which must be one of: `dedupe_only`, `link_only`, or `link_and_dedupe`.[^splink-link-type]
 
-![Figure 7: The three link types and how they change which record pairs are compared.](./img/linking_complexity_overview.png)
+<figure markdown="span">
+  ![Figure 7: The three link types and how they change which record pairs are compared.](./img/linking_complexity_overview.png)
+</figure>
 
 Under the hood, the workflow is similar, but the eligible record pairs differ. Operationally, the choice matters because it affects how much of the candidate space you generate, what signals dominate training, and how debuggable the outputs are.
 
@@ -452,7 +466,9 @@ The important rule is that we design slices so an edge is scored exactly once. I
 
 Clustering once at the end lets us combine evidence from multiple models while still publishing a single, consistent entity ID per threshold. The diagram below illustrates this pattern: datasets are grouped by shared identifiers, each group is linked by its own model to produce edges, and those edges are then consolidated and clustered via transitive closure.
 
-![Figure 8: Transient linking and consolidation. Dataset groups are linked separately, then edges are combined and clustered.](./img/transitive_links.drawio.png)
+<figure markdown="span">
+  ![Figure 8: Transient linking and consolidation. Dataset groups are linked separately, then edges are combined and clustered.](./img/transitive_links.drawio.png)
+</figure>
 
 I am planning a follow-up post on transient linking that covers how we decide these slices and how we avoid rescoring edges.
 
