@@ -50,7 +50,9 @@ By the time you get to eight datasets, that is 28 cross-dataset comparisons, bef
 
 Across our sources, dataset sizes range from tens to hundreds of millions of records.[^atr-moj-splink-master-record]
 
-In practice, the challenge is less about running Splink once, and more about running linkage repeatedly when datasets differ in size, identifiers, and data quality. That is why we treat linkage as a pipeline of explicit artefacts, and why we sometimes break cross-dataset linking into smaller runs before consolidating at the end.
+In practice, the challenge is less about running Splink once, and more about running linkage repeatedly when datasets differ in size, identifiers, and data quality. That is why we treat linkage as a pipeline of explicit artefacts[^artefacts], and why we sometimes break cross-dataset linking into smaller runs before consolidating at the end.
+
+[^artefacts]: By artefacts, we mean the intermediate and final outputs that each pipeline stage produces, such as cleaned tables, trained models, scored edges, and cluster assignments. Persisting these as explicit, versioned files lets us audit what ran, resume from checkpoints, and debug without re-running the whole pipeline. See [Clear intermediate artefacts](#clear-intermediate-artefacts) for more detail.
 
 <div style="display: flex; flex-direction: column; align-items: center;">
 <div id="dataset-pairs-chart"></div>
@@ -91,7 +93,7 @@ In practice, the challenge is less about running Splink once, and more about run
   embed('#dataset-pairs-chart', spec, {actions: false, renderer: 'svg'});
 </script>
 
-A big part of our approach is to decompose cross-dataset linkage into manageable pieces: link coherent sub-groups first, then consolidate edges and cluster once at the end.
+A big part of our approach is to decompose cross-dataset linkage into manageable pieces - link coherent sub-groups of datasets first, then consolidate edges and cluster once at the end.
 
 If you only take one lesson from the next few sections, it is this. Optimise for a run you can explain and rerun from checkpoints, because sooner or later an upstream change will force you to.
 
@@ -108,11 +110,12 @@ A weekly linkage run looks like this:
 
 !!! note
 
-    Model building is not part of the weekly run. We rerun it only when models need updating, and we persist the resulting versioned artefacts.
+    Estimation of model parameters is not part of the weekly run. We rerun it only when models need updating, and we persist the resulting versioned `.json` model spec artefacts.
 
-We orchestrate this as a directed acyclic graph (DAG) in Airflow. Each stage produces explicit outputs that the next stage consumes. The theme is simple, treat linkage as a pipeline of artefacts, not a single black box job.
+We orchestrate this as a directed acyclic graph (DAG) in Airflow. Each stage produces explicit, idempotent artefacts that act as checkpoints for the next stage to consume. The theme is simple, treat linkage as a pipeline of artefacts, not a single black box job.
 
 Our pipeline produces two primary products:
+
 - `person` level linkage, connecting individual people across systems
 - `journey` level linkage, connecting case journeys between Magistrates and Crown Courts (which was necessary prior to the introduction of Common Platform)
 
@@ -505,7 +508,7 @@ Splink gives you the building blocks for linkage, but production linkage needs m
 The pattern we have found works well is:
 
 - standardise aggressively so cross-dataset comparisons are meaningful
-- treat model building as an artefact, not something you do every run
+- treat trained models as versioned artefacts, not something you rebuild every run
 - slice multi-dataset linking into manageable pieces
 - cluster once at the end, using edges from multiple models
 
