@@ -514,11 +514,11 @@ If you take one thing from this post, let it be the pipeline shape and modular j
 
 ## Footnotes
 
-[^ap-guidance]: MoJ Analytical Platform user guidance: https://user-guidance.analytical-platform.service.justice.gov.uk/
-[^robin-aws-splink]: Robin Linacre, "Fast and cost-effective big data record matching and deduplication with Splink": https://www.robinlinacre.com/fast_deduplication/
-[^splink-link-type]: Splink documentation, "Link type: Linking, Deduping or Both": https://moj-analytical-services.github.io/splink/topic_guides/splink_fundamentals/link_type.html
-[^splink-feature-engineering]: Splink documentation, "Feature Engineering": https://moj-analytical-services.github.io/splink/topic_guides/data_preparation/feature_engineering.html
-[^splink-comparisons]: Splink documentation, "Defining and customising comparisons": https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html
-[^splink-training-rationale]: Splink documentation, "Training rationale": https://moj-analytical-services.github.io/splink/topic_guides/training/training_rationale.html
-[^splink-charts]: Splink Charts Gallery: https://moj-analytical-services.github.io/splink/charts/index.html
-[^atr-moj-splink-master-record]: MoJ Algorithmic Transparency Record, "Splink master record": https://www.gov.uk/algorithmic-transparency-records/moj-splink-master-record
+[^ap-guidance]: MoJ Analytical Platform user guidance: [https://user-guidance.analytical-platform.service.justice.gov.uk/](https://user-guidance.analytical-platform.service.justice.gov.uk/)
+[^robin-aws-splink]: Robin Linacre, "Fast and cost-effective big data record matching and deduplication with Splink": [https://www.robinlinacre.com/fast_deduplication/](https://www.robinlinacre.com/fast_deduplication/)
+[^splink-link-type]: Splink documentation, "Link type: Linking, Deduping or Both": [https://moj-analytical-services.github.io/splink/topic_guides/splink_fundamentals/link_type.html](https://moj-analytical-services.github.io/splink/topic_guides/splink_fundamentals/link_type.html)
+[^splink-feature-engineering]: Splink documentation, "Feature Engineering": [https://moj-analytical-services.github.io/splink/topic_guides/data_preparation/feature_engineering.html](https://moj-analytical-services.github.io/splink/topic_guides/data_preparation/feature_engineering.html)
+[^splink-comparisons]: Splink documentation, "Defining and customising comparisons": [https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html)
+[^splink-training-rationale]: Splink documentation, "Training rationale": [https://moj-analytical-services.github.io/splink/topic_guides/training/training_rationale.html](https://moj-analytical-services.github.io/splink/topic_guides/training/training_rationale.html)
+[^splink-charts]: Splink Charts Gallery: [https://moj-analytical-services.github.io/splink/charts/index.html](https://moj-analytical-services.github.io/splink/charts/index.html)
+[^atr-moj-splink-master-record]: MoJ Algorithmic Transparency Record, "Splink master record": [https://www.gov.uk/algorithmic-transparency-records/moj-splink-master-record](https://www.gov.uk/algorithmic-transparency-records/moj-splink-master-record)
