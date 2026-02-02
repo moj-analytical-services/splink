@@ -24,7 +24,7 @@ This post sets out how we do that at the Ministry of Justice, how we keep the pi
 This post focusses on how we compose and operate linkage pipelines:
 
 - how we structure the directed acyclic graph (DAG) and its stages
-- how we separate model building from prediction so weekly runs are cheaper and more repeatable
+- how we separate parameter estimation from prediction so weekly runs are cheaper and more repeatable
 - how we scale from "one dataset" to "many datasets" without turning it into one fragile job
 - how we persist artefacts, graphs, and evaluation charts so the process is auditable and debuggable
 
