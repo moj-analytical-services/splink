@@ -79,7 +79,7 @@ def test_input_column():
     assert c.name == "`first name`"
 
 
-@pytest.mark.parametrize("dialect", ["spark", "duckdb"])
+@pytest.mark.parametrize("dialect", ["spark", "duckdb", "postgres"])
 def test_input_column_without_expressions(dialect):
     ColumnTester = partial(ColumnTestCase, sql_dialect=dialect)
 
