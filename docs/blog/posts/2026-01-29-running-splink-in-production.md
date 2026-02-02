@@ -44,7 +44,7 @@ It is written for people who already have a working understanding of entity reso
 
 Linking a single dataset to itself (deduplication), or linking two datasets together, is a fairly contained problem. Once you start linking many datasets on a schedule, the shape of the work changes.
 
-With k datasets, there are `k × (k − 1) ÷ 2` possible cross-dataset pairs to consider. Three datasets gives you three pairs, and four gives you six.
+With k datasets, there are $k \times (k - 1) / 2$ possible cross-dataset pairs to consider. Three datasets gives you three pairs, and four gives you six.
 
 By the time you get to eight datasets, that is 28 cross-dataset comparisons, before you have even thought about deduplicating within each source.
 
@@ -54,10 +54,9 @@ In practice, the challenge is less about running Splink once, and more about run
 
 [^artefacts]: By artefacts, we mean the intermediate and final outputs that each pipeline stage produces, such as cleaned tables, trained models, scored edges, and cluster assignments. Persisting these as explicit, versioned files lets us audit what ran, resume from checkpoints, and debug without re-running the whole pipeline. See [Clear intermediate artefacts](#clear-intermediate-artefacts) for more detail.
 
-<div style="display: flex; flex-direction: column; align-items: center;">
-<div id="dataset-pairs-chart"></div>
-<figcaption style="text-align: center; font-style: italic; margin-top: 0.5rem;">Figure 1: Cross-dataset pairs grow as k × (k − 1) ÷ 2.</figcaption>
-</div>
+<figure class="chart-container">
+  <div id="dataset-pairs-chart"></div>
+</figure>
 
 <script type="module">
   import embed from 'https://cdn.jsdelivr.net/npm/vega-embed@6/+esm';
@@ -185,7 +184,7 @@ In practice this means
 To make this concrete, here is how our pipeline maps onto AWS services and tools.
 
 <figure markdown="span">
-  ![Figure 3: How the linkage pipeline maps to AWS services.](./img/moj-linking-tech-stack.png)
+  ![Figure 3: How the linkage pipeline maps to AWS services.](./img/moj-linking-tech-stack.excalidraw.png)
 </figure>
 
 **Storage**
@@ -311,7 +310,7 @@ Splink includes charts that cover exploratory analysis, blocking, training, pred
 
 **Purpose**
 
-Generate candidate pairs, score them, and output scored edges that can be clustered.
+Generate candidate pairs, score them, and output scored edges that can be clustered in the next stage.
 
 **Produces**
 
@@ -325,10 +324,9 @@ This is the stage most people think of as "running Splink". We apply the model, 
 
 Operationally, this is where we are most sensitive to candidate explosion. If a blocking rule becomes too permissive, or if an upstream change reduces completeness of a key identifier and we fall back to weaker rules, edge volumes can grow quickly.
 
-<div style="display: flex; flex-direction: column; align-items: center;">
-<div id="blocking-rule-chart"></div>
-<figcaption style="text-align: center; font-style: italic; margin-top: 0.5rem;">Figure 4: Each blocking rule generates additional candidate pairs. Monitoring counts helps catch explosion early.</figcaption>
-</div>
+<figure class="chart-container">
+  <div id="blocking-rule-chart"></div>
+</figure>
 
 <script type="module">
   import embed from 'https://cdn.jsdelivr.net/npm/vega-embed@6/+esm';
@@ -435,6 +433,7 @@ There are two naive extremes you can fall into when developing multi-dataset lin
 Instead, we aim for a middle ground that combines groupings of datasets that share similar identifiers, then consolidates edges and clusters once at the end.
 
 Our pipeline usually looks like this:
+
 - deduplicate each dataset in isolation
 - generate cross-dataset edges using a small number of linkage models, each covering a coherent subset of sources
 - consolidate edges from all models and cluster once at the end
@@ -457,6 +456,7 @@ Transient linkages are intermediate linkage runs whose primary output is an edge
 **What gets produced?**
 
 Each transient job produces:
+
 - a scored edges table for that slice
 - run metadata and charts for review
 - lineage to trace edges back to inputs and model versions
@@ -474,10 +474,6 @@ Clustering once at the end lets us combine evidence from multiple models while s
 </figure>
 
 I am planning a follow-up post on transient linking that covers how we decide these slices and how we avoid rescoring edges.
-
-!!! note
-
-    Splink v5 is planned to include a chunking strategy that handles many-dataset linking internally, reducing the need to slice jobs yourself. If you are a smaller team or prefer a simpler pipeline, that may be a better fit than the transient linking pattern described here.
 
 ---
 
