@@ -110,6 +110,12 @@ def test_input_column_without_expressions(dialect):
             alias="{q}{{prefix}}test{{suffix}}[1]{q}",
         ),
         ColumnTester(
+            # With a negative int bracket index
+            input_column="test[-1]",
+            name_out="{q}{{prefix}}test{{suffix}}{q}[-1]",
+            alias="{q}{{prefix}}test{{suffix}}[-1]{q}",
+        ),
+        ColumnTester(
             # With spacey identifier
             input_column="sur name",
             name_out="{q}{{prefix}}sur name{{suffix}}{q}",
