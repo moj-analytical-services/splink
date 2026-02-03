@@ -38,7 +38,9 @@ Repository = "https://github.com/moj-analytical-services/splink"
 core = ["sqlglot", "duckdb"]
 demos = [
     "ipywidgets>=8.1.7",
+    "jupytext>=1.18.1",
     "nbmake>=1.5.5",
+    "pseudopeople>=1.2.6",
     "pytest-xdist>=3.6.1",
 ]
 dev = [
@@ -116,6 +118,12 @@ lint.select = [
 lint.ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "B006", # Do not use mutable data structures for argument defaults"
+]
+
+# really we want to lint docs with a looser set of rules (such as not enforcing the same line length)
+# for now we simply exclude
+exclude = [
+    "docs",
 ]
 
 [tool.pytest.ini_options]
