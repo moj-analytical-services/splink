@@ -83,11 +83,11 @@ class SqlglotColumnTreeBuilder:
         def tree_to_sqlglot_column_tree_builder_args(sqlglot_tree, sqlglot_dialect):
             args = {"sqlglot_dialect": sqlglot_dialect, "quoted": True}
             if sqlglot_tree.find(exp.Bracket):
-                lit = sqlglot_tree.find(exp.Bracket).find(exp.Literal)
-                if lit.args["is_string"]:
-                    args["bracket_key"] = lit.args["this"]
+                lit = sqlglot_tree.find(exp.Bracket).expressions[0]
+                if lit.is_string:
+                    args["bracket_key"] = lit.this
                 else:
-                    args["bracket_index"] = int(lit.args["this"])
+                    args["bracket_index"] = int(lit.sql())
 
             args["column_name"] = sqlglot_tree.find(exp.Identifier).args["this"]
             return args
