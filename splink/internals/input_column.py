@@ -102,18 +102,12 @@ class SqlglotColumnTreeBuilder:
                 return f"{q_s}{input_str}{q_e}"
 
         valid_signatures = {
-            sqlglot_tree_signature(sqlglot.parse_one("col_name", read=sqlglot_dialect)),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name")),
             # negative indices are valid in certain contexts (postgres custom indexing,
             # duckdb), and are treated separately in newer sqlglot versions (28.7.0+)
-            sqlglot_tree_signature(
-                sqlglot.parse_one("col_name[-1]", read=sqlglot_dialect)
-            ),
-            sqlglot_tree_signature(
-                sqlglot.parse_one("col_name[1]", read=sqlglot_dialect)
-            ),
-            sqlglot_tree_signature(
-                sqlglot.parse_one("col_name['lat']", read=sqlglot_dialect)
-            ),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[-1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name['lat']")),
         }
 
         # If the raw string parses to a valid signature, use it
