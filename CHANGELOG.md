@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fixed issue with negative-indexed column expressions (e.g. `name_arr[-1]`) failed in newer versions of `sqlglot` [#2907](https://github.com/moj-analytical-services/splink/pull/2907)
+
 ## [4.0.12] - 2025-12-22
 
 ### Fixed
