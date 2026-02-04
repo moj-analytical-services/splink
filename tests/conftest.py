@@ -87,12 +87,11 @@ def df_spark(spark):
     yield df
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def fake_1000():
-    # TODO: not pandas
-    import pandas as pd
+    import pyarrow.csv as pv
 
-    return pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    return pv.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
 @pytest.fixture
