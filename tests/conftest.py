@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pytest
 
@@ -84,6 +85,12 @@ def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
     df.persist()
     yield df
+
+
+@pytest.fixture
+def unique_per_test_table_name(request):
+    # postgres name type limits to 63. Truncate from right as more unique
+    return re.sub(r"[^a-zA-Z0-9_]", "_", request.node.nodeid)[-63:]
 
 
 # workaround as you can't pass fixtures as param arguments in base pytest
