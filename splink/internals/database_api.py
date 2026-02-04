@@ -17,6 +17,7 @@ from typing import (
     final,
 )
 
+import duckdb
 import sqlglot
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
@@ -81,6 +82,10 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def id(self) -> str:
         """Useful for debugging when multiple database API instances exist."""
         return self._id
+
+    @property
+    def duckdb_con(self) -> duckdb.DuckDBPyConnection:
+        return duckdb.connect(":memory:")
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"

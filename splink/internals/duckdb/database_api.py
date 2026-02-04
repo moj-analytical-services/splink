@@ -52,6 +52,10 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
                 """
             )
 
+    @property
+    def duckdb_con(self) -> duckdb.DuckDBPyConnection:
+        return self._con
+
     def delete_table_from_database(self, name: str) -> None:
         # If the table is in fact a pandas dataframe that's been registered using
         # duckdb con.register() then DROP TABLE will fail with
