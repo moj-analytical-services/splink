@@ -184,9 +184,11 @@ class SplinkDataFrame(ABC):
         Returns:
             duckdb.DuckDBPyRelation: A DuckDBPyRelation object
         """
-        raise NotImplementedError(
-            "This method is only available when using the DuckDB backend"
+        # insert into local duckdb via pyarrow
+        self.db_api.duckdb_con.register(
+            self.templated_name, self.as_pyarrow_table(limit)
         )
+        return self.db_api.duckdb_con.table(self.templated_name)
 
     # Spark not guaranteed to be available so return type is not imported
     def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821

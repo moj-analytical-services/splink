@@ -75,6 +75,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
         self._registered_source_dataset_names: set[str] = set()
+        self._ddb_con = duckdb.connect(":memory:")
 
     @property
     @final
@@ -84,7 +85,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
     @property
     def duckdb_con(self) -> duckdb.DuckDBPyConnection:
-        return duckdb.connect(":memory:")
+        return self._ddb_con
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"
