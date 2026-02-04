@@ -5,7 +5,7 @@ lint:
 	uv run ruff check splink tests
 
 format:
-	uv run ruff format splink tests
+	uv run ruff format splink tests && uv run ruff check --fix splink tests
 
 format-check:
 	uv run ruff format --check splink tests
