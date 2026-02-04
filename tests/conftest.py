@@ -88,6 +88,14 @@ def df_spark(spark):
 
 
 @pytest.fixture
+def fake_1000():
+    # TODO: not pandas
+    import pandas as pd
+
+    return pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+
+@pytest.fixture
 def unique_per_test_table_name(request):
     # postgres name type limits to 63. Truncate from right as more unique
     return re.sub(r"[^a-zA-Z0-9_]", "_", request.node.nodeid)[-63:]
