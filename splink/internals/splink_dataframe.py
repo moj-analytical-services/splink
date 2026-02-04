@@ -130,6 +130,25 @@ class SplinkDataFrame(ABC):
         """
         raise NotImplementedError("as_record_dict not implemented for this linker")
 
+    def as_pyarrow_table(self, limit=None):
+        """Return the dataframe as a pyarrow Table.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+                to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            df_ten_edges = df_predict.as_pyarrow_table(10)
+            ```
+        Returns:
+            pyarrow.Table: pyarrow Table
+        """
+        raise NotImplementedError("as_pyarrow_table not implemented for this linker")
+
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
 
