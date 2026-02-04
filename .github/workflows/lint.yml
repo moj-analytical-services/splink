@@ -40,8 +40,8 @@ jobs:
 
       - name: Run Ruff lint
         id: ruff_lint
-        run: uv run ruff check . --output-format=full
+        run: make lint
 
       - name: Run Ruff format
         id: ruff_format
-        run: uv run ruff format --check .
+        run: make format-check
