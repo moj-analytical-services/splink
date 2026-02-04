@@ -8,9 +8,7 @@ from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Generic,
-    List,
     Optional,
     TypeVar,
     Union,
@@ -35,8 +33,9 @@ logger = logging.getLogger(__name__)
 
 BaseAcceptableInputTableType = Union[
     str,
-    List[Dict[str, Any]],
-    Dict[str, Any],
+    list[dict[str, Any]],
+    tuple[dict[str, Any]],
+    dict[str, list[Any]],
 ]
 
 if TYPE_CHECKING:

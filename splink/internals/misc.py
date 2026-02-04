@@ -88,31 +88,36 @@ def to_pyarrow_if_dict(input):
 
 
 @overload
-def to_pyarrow_if_list(input: list[T]) -> "pa.Table": ...
+def to_pyarrow_if_list_or_tuple(input: list[T]) -> "pa.Table": ...
 
 
 @overload
-def to_pyarrow_if_list(input: T) -> T: ...
+def to_pyarrow_if_list_or_tuple(input: tuple[T]) -> "pa.Table": ...
 
 
-def to_pyarrow_if_list(input):
+@overload
+def to_pyarrow_if_list_or_tuple(input: T) -> T: ...
+
+
+def to_pyarrow_if_list_or_tuple(input):
     import pyarrow as pa
 
-    if isinstance(input, list):
+    if isinstance(input, (list, tuple)):
+        # pyarrow method works happily with tuples
         input = pa.Table.from_pylist(input)
     return input
 
 
 @overload
-def to_pyarrow_if_list_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
+def to_pyarrow_if_list_tuple_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
 
 
 @overload
-def to_pyarrow_if_list_or_dict(input: T) -> T: ...
+def to_pyarrow_if_list_tuple_or_dict(input: T) -> T: ...
 
 
-def to_pyarrow_if_list_or_dict(input):
-    return to_pyarrow_if_dict(to_pyarrow_if_list(input))
+def to_pyarrow_if_list_tuple_or_dict(input):
+    return to_pyarrow_if_dict(to_pyarrow_if_list_or_tuple(input))
 
 
 class EverythingEncoder(json.JSONEncoder):

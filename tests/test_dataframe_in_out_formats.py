@@ -28,6 +28,14 @@ def test_splink_dataframe_from_list(dialect, test_helpers, unique_per_test_table
 
 
 @mark_with_dialects_excluding()
+def test_splink_dataframe_from_tuple(dialect, test_helpers, unique_per_test_table_name):
+    helper = test_helpers[dialect]
+
+    db_api = helper.db_api()
+    db_api.register(tuple(input_data_list), unique_per_test_table_name)
+
+
+@mark_with_dialects_excluding()
 def test_splink_dataframe_from_dict(dialect, test_helpers, unique_per_test_table_name):
     helper = test_helpers[dialect]
 
