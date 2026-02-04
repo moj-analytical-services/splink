@@ -79,7 +79,7 @@ def test_input_column():
     assert c.name == "`first name`"
 
 
-@pytest.mark.parametrize("dialect", ["spark", "duckdb"])
+@pytest.mark.parametrize("dialect", ["spark", "duckdb", "postgres"])
 def test_input_column_without_expressions(dialect):
     ColumnTester = partial(ColumnTestCase, sql_dialect=dialect)
 
@@ -105,9 +105,15 @@ def test_input_column_without_expressions(dialect):
         ),
         ColumnTester(
             # With an int bracket index
-            input_column="test[0]",
-            name_out="{q}{{prefix}}test{{suffix}}{q}[0]",
-            alias="{q}{{prefix}}test{{suffix}}[0]{q}",
+            input_column="test[1]",
+            name_out="{q}{{prefix}}test{{suffix}}{q}[1]",
+            alias="{q}{{prefix}}test{{suffix}}[1]{q}",
+        ),
+        ColumnTester(
+            # With a negative int bracket index
+            input_column="test[-1]",
+            name_out="{q}{{prefix}}test{{suffix}}{q}[-1]",
+            alias="{q}{{prefix}}test{{suffix}}[-1]{q}",
         ),
         ColumnTester(
             # With spacey identifier
@@ -233,13 +239,13 @@ def test_input_column_equality():
     assert col_lat != col_lon
 
     # Array columns with bracket indices should be equal regardless of quoting
-    col_arr = InputColumn("col[0]", sqlglot_dialect_str="duckdb")
+    col_arr = InputColumn("col[1]", sqlglot_dialect_str="duckdb")
     col_arr_unquoted = col_arr.unquote()
     assert col_arr == col_arr_unquoted
 
     # Different bracket indices should not be equal
-    col_0 = InputColumn("col[0]", sqlglot_dialect_str="duckdb")
-    col_1 = InputColumn("col[1]", sqlglot_dialect_str="duckdb")
+    col_0 = InputColumn("col[1]", sqlglot_dialect_str="duckdb")
+    col_1 = InputColumn("col[2]", sqlglot_dialect_str="duckdb")
     assert col_0 != col_1
 
     # Equality with non-InputColumn should return NotImplemented (handled by Python)
@@ -301,7 +307,7 @@ def test_input_column_hashable():
     assert col_struct_unquoted in struct_set
 
     # Array columns with bracket indices
-    col_arr = InputColumn("items[0]", sqlglot_dialect_str="duckdb")
+    col_arr = InputColumn("items[1]", sqlglot_dialect_str="duckdb")
     col_arr_unquoted = col_arr.unquote()
     arr_set = {col_arr}
     assert col_arr_unquoted in arr_set
