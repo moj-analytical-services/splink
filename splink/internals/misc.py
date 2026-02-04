@@ -71,6 +71,11 @@ def join_list_with_commas_final_and(lst: list[str]) -> str:
     return ", ".join(lst[:-1]) + " and " + lst[-1]
 
 
+def record_dict_to_list(record_dict: dict[str, list[T]]) -> list[dict[str, T]]:
+    keys = record_dict.keys()
+    return [dict(zip(keys, values)) for values in zip(*record_dict.values())]
+
+
 @overload
 def to_pyarrow_if_dict(input: dict[T, U]) -> "pa.Table": ...
 
