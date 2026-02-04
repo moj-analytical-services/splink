@@ -147,7 +147,10 @@ class SplinkDataFrame(ABC):
         Returns:
             pyarrow.Table: pyarrow Table
         """
-        raise NotImplementedError("as_pyarrow_table not implemented for this linker")
+        import pyarrow as pa
+
+        # TODO: prefer pydict - need underlying format though
+        return pa.Table.from_pylist(self.as_record_dict(limit=limit))
 
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
