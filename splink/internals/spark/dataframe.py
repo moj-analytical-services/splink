@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 Dialect["customspark"]
 if TYPE_CHECKING:
     from pandas import DataFrame as PandasDataFrame
+    from pyarrow import Table as PyArrowTable
 
     from .database_api import SparkAPI
 else:
@@ -41,6 +42,15 @@ class SparkDataFrame(SplinkDataFrame):
         spark_df = self.db_api._execute_sql_against_backend(sql)
 
         return [r.asDict(recursive=True) for r in spark_df.collect()]
+
+    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        spark_df = self.db_api._execute_sql_against_backend(sql)
+        # TODO: spark 3 guard / fallback
+        return spark_df.toArrow()
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         if self.db_api.break_lineage_method == "delta_lake_table":

@@ -13,6 +13,7 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from pandas import DataFrame as pd_DataFrame
+    from pyarrow import Table as PyArrowTable
 
     from .database_api import DuckDBAPI
 else:
@@ -63,6 +64,13 @@ class DuckDBDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         return self.db_api._execute_sql_against_backend(sql)
+
+    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        return self.db_api._execute_sql_against_backend(sql).to_arrow_table()
 
     def to_parquet(self, filepath, overwrite=False):
         if not overwrite:
