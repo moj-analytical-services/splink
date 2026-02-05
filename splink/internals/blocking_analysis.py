@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     TypedDict,
     Union,
+    cast,
 )
 
 import duckdb
@@ -452,7 +453,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
     complete_df = con.sql(sql)
 
-    return record_dicts_from_relation(complete_df)  # type: ignore  # TODO: type better?
+    return cast(
+        list[CumulativeComparisonRecord], record_dicts_from_relation(complete_df)
+    )
 
 
 def _count_comparisons_generated_from_blocking_rule(
