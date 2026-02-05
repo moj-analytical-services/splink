@@ -1,6 +1,6 @@
 import random
 
-import pandas as pd
+import pyarrow as pa
 
 import splink.internals.comparison_library as cl
 from splink.internals.blocking import materialise_exploded_id_tables
@@ -9,14 +9,14 @@ from tests.decorator import mark_with_dialects_including
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_simple_example_link_only(test_helpers, dialect):
-    data_l = pd.DataFrame.from_dict(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "gender": "m", "postcode": ["2612", "2000"]},
             {"unique_id": 2, "gender": "m", "postcode": ["2612", "2617"]},
             {"unique_id": 3, "gender": "f", "postcode": ["2617"]},
         ]
     )
-    data_r = pd.DataFrame.from_dict(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 4, "gender": "m", "postcode": ["2617", "2600"]},
             {"unique_id": 5, "gender": "f", "postcode": ["2000"]},
@@ -38,16 +38,15 @@ def test_simple_example_link_only(test_helpers, dialect):
     ## the pairs returned by the first blocking rule are (1,6),(2,4),(2,6)
     ## the additional pairs returned by the second blocking rule are (1,4),(3,5)
     linker = helper.linker_with_registration([data_l, data_r], settings)
-    linker.debug_mode = False
-    returned_triples = linker.inference.predict().as_pandas_dataframe()[
-        ["unique_id_l", "unique_id_r", "match_key"]
-    ]
-    returned_triples = {
-        (unique_id_l, unique_id_r, match_key)
-        for unique_id_l, unique_id_r, match_key in zip(
-            returned_triples.unique_id_l,
-            returned_triples.unique_id_r,
-            returned_triples.match_key,
+    returned_triples = (
+        linker.inference.predict()
+        .as_pyarrow_table()
+        .select(
+            [
+                "unique_id_l",
+                "unique_id_r",
+                "match_key",
+            ]
         )
     }
     expected_triples = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
@@ -70,7 +69,7 @@ def generate_array_based_datasets_helper(
                     col[-1].append(j)
                     random.shuffle(col[-1])
             results_dict[f"array_column_{i}"] = col
-        datasets.append(pd.DataFrame.from_dict(results_dict))
+        datasets.append(pa.Table.from_pydict(results_dict))
     return datasets
 
 
@@ -78,13 +77,15 @@ def generate_array_based_datasets_helper(
 def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
     input_data_l, input_data_r = generate_array_based_datasets_helper()
-    input_data_l = input_data_l.assign(
-        unique_id=[str(cluster_id) + "-0" for cluster_id in input_data_l.cluster]
+    input_data_l = input_data_l.append_column(
+        "unique_id",
+        [[f"{cluster_id}-0" for cluster_id in input_data_l.column("cluster")]],
     )
-    input_data_r = input_data_r.assign(
-        unique_id=[str(cluster_id) + "-1" for cluster_id in input_data_r.cluster]
+    input_data_r = input_data_r.append_column(
+        "unique_id",
+        [[f"{cluster_id}-1" for cluster_id in input_data_r.column("cluster")]],
     )
-    input_data = pd.concat([input_data_l, input_data_r])
+    input_data = pa.concat_tables([input_data_l, input_data_r])
     blocking_rules = [
         {
             "blocking_rule": """l.array_column_0 = r.array_column_0
@@ -110,22 +111,26 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
     linker = helper.linker_with_registration(input_data, settings)
-    linker.debug_mode = False
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    predict_dict = linker.inference.predict().as_dict()
     ## check that there are no duplicates in the output
-    assert (
-        df_predict.drop_duplicates(["unique_id_l", "unique_id_r"]).shape[0]
-        == df_predict.shape[0]
-    )
+    assert len(
+        set(zip(predict_dict["unique_id_l"], predict_dict["unique_id_r"]))
+    ) == len(predict_dict["unique_id_l"])
 
     ## check that the output contains no links with match_key=1,
     ## since all pairs returned by the second rule should also be
     ## returned by the first rule and so should be filtered out
-    assert df_predict[df_predict.match_key == 1].shape[0] == 0
+    assert not [mk for mk in predict_dict["match_key"] if mk == 1]
 
     ## check that all 1000 true matches are in the output
     ## (this is guaranteed by how the data was generated)
-    assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
+    assert (
+        sum(
+            c_l == c_r
+            for c_l, c_r in zip(predict_dict["cluster_l"], predict_dict["cluster_r"])
+        )
+        == 1000
+    )
 
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
@@ -157,28 +162,35 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
     linker = helper.linker_with_registration([input_data_l, input_data_r], settings)
-    linker.debug_mode = False
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    predict_dict = linker.inference.predict().as_dict()
 
     ## check that we get no within-dataset links
-    within_dataset_links = df_predict[
-        df_predict.source_dataset_l == df_predict.source_dataset_r
-    ].shape[0]
+    within_dataset_links = sum(
+        s_l == s_r
+        for s_l, s_r in zip(
+            predict_dict["source_dataset_l"], predict_dict["source_dataset_r"]
+        )
+    )
     assert within_dataset_links == 0
 
     ## check that no pair of ids appears twice in the output
-    assert (
-        df_predict.drop_duplicates(["cluster_l", "cluster_r"]).shape[0]
-        == df_predict.shape[0]
+    assert len(set(zip(predict_dict["cluster_l"], predict_dict["cluster_r"]))) == len(
+        predict_dict["cluster_l"]
     )
 
     ## check that the second blocking rule returns no matches,
     ## since every pair matching the second rule will also match the first,
     ## and so should be filtered out
-    assert df_predict[df_predict.match_key == 1].shape[0] == 0
+    assert sum(mk == 1 for mk in predict_dict["match_key"]) == 0
 
     ## check that all 1000 true matches are returned
-    assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
+    assert (
+        sum(
+            c_l == c_r
+            for c_l, c_r in zip(predict_dict["cluster_l"], predict_dict["cluster_r"])
+        )
+        == 1000
+    )
 
 
 @mark_with_dialects_including("duckdb", pass_dialect=True)
@@ -203,9 +215,9 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         {"unique_id": 4, "first_name": "John", "surname": "Doe", "postcode": ["C"]},
     ]
 
-    df_1 = pd.DataFrame(data_1)
-    df_2 = pd.DataFrame(data_2)
-    df_3 = pd.DataFrame(data_3)
+    df_1 = pa.Table.from_pylist(data_1)
+    df_2 = pa.Table.from_pylist(data_2)
+    df_3 = pa.Table.from_pylist(data_3)
 
     settings = {
         "link_type": "link_only",
@@ -230,19 +242,21 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         settings,
         input_table_aliases=["a_", "b_", "c_"],
     )
-    returned_triples = linker.inference.predict().as_pandas_dataframe()[
-        [
-            "source_dataset_l",
-            "unique_id_l",
-            "source_dataset_r",
-            "unique_id_r",
-            "match_key",
-        ]
-    ]
+    returned_triples = (
+        linker.inference.predict()
+        .as_pyarrow_table()
+        .select(
+            [
+                "source_dataset_l",
+                "unique_id_l",
+                "source_dataset_r",
+                "unique_id_r",
+                "match_key",
+            ]
+        )
+    )
 
-    actual_triples = {
-        tuple(t) for t in returned_triples.to_dict(orient="split")["data"]
-    }
+    actual_triples = {tuple(t.values()) for t in returned_triples.to_pylist()}
     assert len(returned_triples) == 5
 
     rule1_tuples = {
