@@ -4,7 +4,7 @@ import logging
 import time
 from copy import deepcopy
 from functools import partial
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -18,7 +18,7 @@ from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
-from splink.internals.misc import ascii_uid
+from splink.internals.misc import ascii_uid  #is_arrow_table, is_pandas_dataframe
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import LinkTypeLiteralType, Settings
 from splink.internals.vertically_concatenate import (
@@ -59,14 +59,16 @@ class _MUCountsAccumulator:
             label = cl._label_for_charts_no_duplicates(comparison_levels)
             self._label_by_cvv[cvv] = str(label)
 
-    def update_from_chunk_counts(self, chunk_counts: pd.DataFrame) -> None:
-        for r in chunk_counts.itertuples(index=False):
-            cvv = int(r.comparison_vector_value)
+    def update_from_chunk_counts(
+        self, chunk_counts: list[dict[str, Any]]
+    ) -> None:
+        for r in chunk_counts:
+            cvv = int(r["comparison_vector_value"])
             totals = self._counts_by_cvv.get(cvv)
             if totals is None:
                 continue
-            totals[0] += float(r.m_count)
-            totals[1] += float(r.u_count)
+            totals[0] += float(r["m_count"])
+            totals[1] += float(r["u_count"])
 
     def min_u_count(self) -> float:
         if not self._counts_by_cvv:
@@ -183,13 +185,15 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
 
     df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     try:
-        chunk_counts = df_params.as_pandas_dataframe()
+        chunk_counts = df_params.as_record_dict()
     finally:
         df_params.drop_table_from_database_and_remove_from_cache()
 
     # Drop lambda row: it isn't additive and we don't use it here anyway
-    chunk_counts = chunk_counts[
-        chunk_counts.output_column_name != "_probability_two_random_records_match"
+    chunk_counts = [
+        row
+        for row in chunk_counts
+        if row["output_column_name"] != "_probability_two_random_records_match"
     ]
 
     counts_accumulator.update_from_chunk_counts(chunk_counts)
@@ -454,7 +458,7 @@ def estimate_u_values(
                 if min_count_condition_met and (min_count_per_level is not None):
                     break
 
-        aggregated_counts_df = counts_accumulator.to_dataframe()
+        aggregated_counts_df = counts_accumulator.to_record_list()
         aggregated_counts_sdf = db_api.register(
             aggregated_counts_df, f"__splink__aggregated_m_u_counts_{ascii_uid(8)}"
         )
@@ -473,7 +477,7 @@ def estimate_u_values(
         #   treated as "not observed" (not as u_probability = 0.0).
         u_count_by_cvv = {
             int(row["comparison_vector_value"]): float(row["u_count"])
-            for row in aggregated_counts_df.to_dict("records")
+            for row in aggregated_counts_df
         }
         for r in param_records:
             cvv = int(r["comparison_vector_value"])
