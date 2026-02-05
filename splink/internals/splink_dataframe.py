@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import list_to_record_dict
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,24 @@ class SplinkDataFrame(ABC):
             list: a list of records, each of which is a dictionary
         """
         raise NotImplementedError("as_record_dict not implemented for this linker")
+
+    def as_dict(self, limit: Optional[int] = None) -> dict[str, list[Any]]:
+        """Return the dataframe as a dictionary of columns to lists of values.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            ten_edges_dict = df_predict.as_dict(10)
+            ```
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+        Returns:
+            dict: a dictionary mapping column names to lists of values
+        """
+        return list_to_record_dict(self.as_record_dict(limit=limit))
 
     def as_pyarrow_table(self, limit=None):
         """Return the dataframe as a pyarrow Table.

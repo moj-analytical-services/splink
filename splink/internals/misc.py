@@ -76,6 +76,13 @@ def record_dict_to_list(record_dict: dict[str, list[T]]) -> list[dict[str, T]]:
     return [dict(zip(keys, values)) for values in zip(*record_dict.values())]
 
 
+def list_to_record_dict(list_of_dicts: list[dict[str, T]]) -> dict[str, list[T]]:
+    if not list_of_dicts:
+        return {}
+    keys = list_of_dicts[0].keys()
+    return {k: [d[k] for d in list_of_dicts] for k in keys}
+
+
 @overload
 def to_pyarrow_if_dict(input: dict[T, U]) -> "pa.Table": ...
 

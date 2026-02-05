@@ -113,3 +113,29 @@ def test_splink_dataframe_to_pyarrow(dialect, test_helpers, unique_per_test_tabl
     )
     sdf.as_pyarrow_table()
     db_api.delete_table_from_database(unique_per_test_table_name)
+
+
+@mark_with_dialects_excluding()
+def test_splink_dataframe_to_list(dialect, test_helpers, unique_per_test_table_name):
+    helper = test_helpers[dialect]
+
+    db_api = helper.db_api()
+
+    sdf = db_api._sql_to_splink_dataframe(
+        table_sql, "test_table", unique_per_test_table_name
+    )
+    sdf.as_record_dict()
+    db_api.delete_table_from_database(unique_per_test_table_name)
+
+
+@mark_with_dialects_excluding()
+def test_splink_dataframe_to_dict(dialect, test_helpers, unique_per_test_table_name):
+    helper = test_helpers[dialect]
+
+    db_api = helper.db_api()
+
+    sdf = db_api._sql_to_splink_dataframe(
+        table_sql, "test_table", unique_per_test_table_name
+    )
+    sdf.as_dict()
+    db_api.delete_table_from_database(unique_per_test_table_name)

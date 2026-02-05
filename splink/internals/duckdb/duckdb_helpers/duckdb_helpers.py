@@ -57,3 +57,11 @@ def record_dicts_from_relation(
     rows = complete_df.fetchall()
     column_names = [desc[0] for desc in complete_df.description]
     return [dict(zip(column_names, row)) for row in rows]
+
+
+def dict_from_relation(
+    complete_df: duckdb.DuckDBPyRelation,
+) -> dict[str, list[Any]]:
+    rows = complete_df.fetchall()
+    column_names = [desc[0] for desc in complete_df.description]
+    return {col: [row[i] for row in rows] for i, col in enumerate(column_names)}

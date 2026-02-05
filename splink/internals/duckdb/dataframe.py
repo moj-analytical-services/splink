@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 
 from duckdb import DuckDBPyRelation
 
-from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
+from splink.internals.duckdb.duckdb_helpers import (
+    dict_from_relation,
+    record_dicts_from_relation,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -50,6 +53,14 @@ class DuckDBDataFrame(SplinkDataFrame):
 
         duckdb_table = self.db_api._execute_sql_against_backend(sql)
         return record_dicts_from_relation(duckdb_table)
+
+    def as_dict(self, limit=None):
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        duckdb_table = self.db_api._execute_sql_against_backend(sql)
+        return dict_from_relation(duckdb_table)
 
     def as_pandas_dataframe(self, limit: int = None) -> pd_DataFrame:
         sql = f"select * from {self.physical_name}"
