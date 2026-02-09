@@ -155,6 +155,54 @@ class LinkerTableManagement:
 
         return blocked_pairs
 
+    def register_blocked_pairs_for_predict(
+        self,
+        input_data: AcceptableInputTableType,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+        overwrite: bool = False,
+    ) -> SplinkDataFrame:
+        """Register pre-computed blocked pairs for use in prediction.
+
+        This method allows you to register a blocked pairs table in Splink's cache
+        so it will be used by `linker.inference.predict()` /
+        `linker.inference.predict_chunk()` rather than being recomputed.
+
+        Args:
+            input_data (AcceptableInputTableType): The blocked pairs table to register.
+                This can be either a dictionary, pandas dataframe, pyarrow table, or
+                a spark dataframe.
+            left_chunk: Optional tuple of (chunk_number, total_chunks) for the left
+                side. If provided, the table is cached for that chunk.
+            right_chunk: Optional tuple of (chunk_number, total_chunks) for the right
+                side. If provided, the table is cached for that chunk.
+            overwrite (bool, optional): Overwrite the table in the underlying database
+                if it exists. Defaults to False.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the registered blocked pairs
+                table.
+
+        Examples:
+            ```py
+            blocked_pairs_df = pd.read_parquet("path/to/blocked_pairs.parquet")
+            linker.table_management.register_blocked_pairs_for_predict(blocked_pairs_df)
+            predictions = linker.inference.predict()
+            ```
+        """
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+        table_name_physical = f"{cache_key}_{self._linker._cache_uid}"
+
+        splink_dataframe = self.register_table(
+            input_data,
+            table_name_physical,
+            overwrite=overwrite,
+        )
+        splink_dataframe.templated_name = "__splink__blocked_id_pairs"
+        self._linker._intermediate_table_cache[cache_key] = splink_dataframe
+
+        return splink_dataframe
+
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
         will be recomputed.
