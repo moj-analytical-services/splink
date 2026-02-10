@@ -9,6 +9,7 @@ Tests that:
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -211,6 +212,55 @@ def test_cache_is_hit_for_blocked_pairs():
 
         # The compute function should NOT have been called
         mock_compute.assert_not_called()
+
+
+def test_registered_chunked_blocked_pairs_match_from_scratch():
+    """Test chunked predict matches when blocked pairs are loaded from precompute."""
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    settings = get_settings_dict()
+
+    # Baseline: run chunked predict from scratch.
+    db_api_baseline = DuckDBAPI()
+    df_sdf_baseline = db_api_baseline.register(df)
+    linker_baseline = Linker(df_sdf_baseline, settings)
+    baseline_predictions = linker_baseline.inference.predict_chunk(
+        threshold_match_weight=-10, left_chunk=(1, 2), right_chunk=(1, 2)
+    ).as_duckdbpyrelation()
+    baseline_count = baseline_predictions.count("*").fetchone()[0]
+    baseline_match_weight_sum = baseline_predictions.aggregate(
+        "sum(match_weight)"
+    ).fetchone()[0]
+
+    # Build blocked pairs externally.
+    db_api_source = DuckDBAPI()
+    df_sdf_source = db_api_source.register(df)
+    linker_source = Linker(df_sdf_source, settings)
+
+    blocked_pairs = linker_source.table_management.compute_blocked_pairs_for_predict(
+        left_chunk=(1, 2), right_chunk=(1, 2)
+    ).as_pandas_dataframe()
+
+    # Load blocked pairs into a fresh linker and run the same chunked predict.
+    db_api_target = DuckDBAPI()
+    df_sdf_target = db_api_target.register(df)
+    linker_target = Linker(df_sdf_target, settings)
+
+    linker_target.table_management.register_blocked_pairs_for_predict(
+        blocked_pairs, left_chunk=(1, 2), right_chunk=(1, 2)
+    )
+
+    loaded_predictions = linker_target.inference.predict_chunk(
+        threshold_match_weight=-10,
+        left_chunk=(1, 2),
+        right_chunk=(1, 2),
+    ).as_pandas_dataframe()
+    loaded_count = len(loaded_predictions)
+    loaded_match_weight_sum = loaded_predictions["match_weight"].sum()
+
+    assert loaded_count == baseline_count
+    assert loaded_match_weight_sum == pytest.approx(
+        baseline_match_weight_sum, rel=1e-12, abs=1e-12
+    )
 
 
 def test_cache_is_hit_for_chunked_blocked_pairs():
