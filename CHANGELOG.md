@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.13] - 2026-02-12
+
 ### Fixed
 
 - Fixed issue with negative-indexed column expressions (e.g. `name_arr[-1]`) breaking in newer versions of `sqlglot` [#2907](https://github.com/moj-analytical-services/splink/pull/2907)
@@ -265,7 +267,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.12...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...HEAD
+[4.0.13]: https://github.com/moj-analytical-services/splink/compare/v4.0.12...v4.0.13
 [4.0.12]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/moj-analytical-services/splink/compare/v4.0.9...v4.0.10
