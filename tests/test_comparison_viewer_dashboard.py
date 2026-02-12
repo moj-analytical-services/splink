@@ -94,6 +94,8 @@ def test_comparison_viewer_table():
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
     result = df.as_pandas_dataframe()[["gamma_first_name", "count"]]
     result = result.value_counts().reset_index(name="value_count")
+    result.sort_values(by=["gamma_first_name"], inplace=True)
+    result.reset_index(drop=True, inplace=True)
 
     correct_result = pd.DataFrame(
         {

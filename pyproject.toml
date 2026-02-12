@@ -109,6 +109,9 @@ conflicts = [
   ]
 ]
 
+[tool.uv.dependency-groups]
+docs = { requires-python = ">=3.13" }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
