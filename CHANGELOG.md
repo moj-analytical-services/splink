@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed issue with negative-indexed column expressions (e.g. `name_arr[-1]`) failed in newer versions of `sqlglot` [#2907](https://github.com/moj-analytical-services/splink/pull/2907)
+- Fixed issue with negative-indexed column expressions (e.g. `name_arr[-1]`) breaking in newer versions of `sqlglot` [#2907](https://github.com/moj-analytical-services/splink/pull/2907)
+- Fixed issue where clustering code breaks in `postgres` versions before 16 [#2894](https://github.com/moj-analytical-services/splink/pull/2894)
 
 ## [4.0.12] - 2025-12-22
 
