@@ -2,51 +2,25 @@ version = 1
 revision = 3
 requires-python = ">=3.9.0, <4.0.0"
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version < '3.10' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version < '3.10' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version < '3.10' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
+    "python_full_version < '3.10'",
 ]
 conflicts = [[
     { package = "splink", extra = "athena" },
     { package = "splink", group = "core" },
 ]]
+
+[manifest]
+excludes = ["awswrangler"]
 
 [[package]]
 name = "altair"
@@ -57,8 +31,7 @@ dependencies = [
     { name = "jsonschema", version = "4.25.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "jsonschema", version = "4.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "narwhals" },
-    { name = "packaging", version = "25.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or extra != 'extra-6-splink-athena' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging" },
     { name = "typing-extensions", marker = "python_full_version < '3.15' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f7/c0/184a89bd5feba14ff3c41cfaf1dd8a82c05f5ceedbc92145e17042eb08a4/altair-6.0.0.tar.gz", hash = "sha256:614bf5ecbe2337347b590afb111929aa9c16c9527c4887d96c9bc7f6640756b4", size = 763834, upload-time = "2025-11-12T08:59:11.519Z" }
@@ -103,66 +76,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
-]
-
-[[package]]
-name = "awswrangler"
-version = "3.14.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.10'",
-]
-dependencies = [
-    { name = "boto3", marker = "python_full_version < '3.10'" },
-    { name = "botocore", marker = "python_full_version < '3.10'" },
-    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "packaging", version = "25.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/90/f7/bdac52993e1d069b9de8c8a2be2bf70a1b7b897ec1b459b79c6bcc89fbf9/awswrangler-3.14.0.tar.gz", hash = "sha256:c939bd472b5944808f0a2cb2f8896b3caa39a8ee316d63e83751fdcc9ba3a4fe", size = 265918, upload-time = "2025-10-30T20:14:45.743Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/c6/eb4d1e0a5a2e747606dad5b39e4e1dfaac435a76f45ebe2e343620efd615/awswrangler-3.14.0-py3-none-any.whl", hash = "sha256:73518f62943f08591149e573482c8e52043454764c8ffe58a81ffe95c54681c8", size = 380647, upload-time = "2025-10-30T20:14:44.3Z" },
-]
-
-[[package]]
-name = "awswrangler"
-version = "3.15.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.10.*'",
-]
-dependencies = [
-    { name = "boto3", marker = "python_full_version >= '3.10'" },
-    { name = "botocore", marker = "python_full_version >= '3.10'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version == '3.10.*' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "setuptools", marker = "python_full_version >= '3.12'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/c8/eee8c31e87b01afa182fbc4a5548668e4d9624498a3348cfe215637ec4dd/awswrangler-3.15.1.tar.gz", hash = "sha256:fe6e874d6e6996d324dfa1d4c2003722cf0563af0cb30e1401f0211adaf76e42", size = 259923, upload-time = "2026-02-05T16:11:27.324Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/50/649068b82945aa47255a5dedbeecfeec0fd01ac84a66482c847cc6a5f842/awswrangler-3.15.1-py3-none-any.whl", hash = "sha256:78c63b89346b08ed11c60222480015549b4bf4b10daddbd4dbb2bfd6530ee57f", size = 373991, upload-time = "2026-02-05T16:11:25.322Z" },
 ]
 
 [[package]]
@@ -216,35 +129,6 @@ wheels = [
 [package.optional-dependencies]
 css = [
     { name = "tinycss2", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-]
-
-[[package]]
-name = "boto3"
-version = "1.42.47"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "botocore" },
-    { name = "jmespath" },
-    { name = "s3transfer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/fe/3363024b6dda5968401f45d8b345ed95ce4fd536d58f799988b4b28184ad/boto3-1.42.47.tar.gz", hash = "sha256:74812a2e29de7c2bd19e446d765cb887394f20f1517388484b51891a410f33b2", size = 112884, upload-time = "2026-02-11T20:49:49.196Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/7b/884e30adab2339ce5cce7b800f5fa619254d36e89e50a8cf39a5524edc35/boto3-1.42.47-py3-none-any.whl", hash = "sha256:ed881ed246027028af566acbb80f008aa619be4d3fdbcc4ad3c75dbe8c34bfaf", size = 140608, upload-time = "2026-02-11T20:49:47.664Z" },
-]
-
-[[package]]
-name = "botocore"
-version = "1.42.47"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "jmespath" },
-    { name = "python-dateutil" },
-    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/a6/d15f5dfe990abd76dbdb2105a7697e0d948e04c41dfd97c058bc76c7cebd/botocore-1.42.47.tar.gz", hash = "sha256:c26e190c1b4d863ba7b44dc68cc574d8eb862ddae5f0fe3472801daee12a0378", size = 14952255, upload-time = "2026-02-11T20:49:40.157Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/5e/50e3a59b243894088eeb949a654fb21d9ab7d0d703034470de016828d85a/botocore-1.42.47-py3-none-any.whl", hash = "sha256:c60f5feaf189423e17755aca3f1d672b7466620dd2032440b32aaac64ae8cac8", size = 14625351, upload-time = "2026-02-11T20:49:36.143Z" },
 ]
 
 [[package]]
@@ -628,43 +512,16 @@ name = "coverage"
 version = "7.13.4"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/24/56/95b7e30fa389756cb56630faa728da46a27b8c6eb46f9d557c68fff12b65/coverage-7.13.4.tar.gz", hash = "sha256:e5c8f6ed1e61a8b2dcdf31eb0b9bbf0130750ca79c1c49eb898e2ad86f5ccc91", size = 827239, upload-time = "2026-02-09T12:59:03.86Z" }
 wheels = [
@@ -1067,43 +924,16 @@ name = "greenlet"
 version = "3.3.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8a/99/1cd3411c56a410994669062bd73dd58270c00cc074cac15f385a1fd91f8a/greenlet-3.3.1.tar.gz", hash = "sha256:41848f3230b58c08bb43dee542e74a2a2e34d3c59dc3076cec9151aeeedcae98", size = 184690, upload-time = "2026-01-23T15:31:02.076Z" }
 wheels = [
@@ -1293,43 +1123,16 @@ name = "iniconfig"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
@@ -1352,8 +1155,7 @@ dependencies = [
     { name = "jupyter-core", version = "5.8.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "matplotlib-inline", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "nest-asyncio", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "25.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "psutil", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pyzmq", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "tornado", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1369,43 +1171,16 @@ name = "ipykernel"
 version = "7.2.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "appnope", marker = "(python_full_version >= '3.10' and sys_platform == 'darwin') or (python_full_version < '3.10' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'darwin' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1417,7 +1192,7 @@ dependencies = [
     { name = "jupyter-core", version = "5.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "matplotlib-inline", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "nest-asyncio", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "psutil", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pyzmq", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "tornado", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1483,40 +1258,15 @@ name = "ipython"
 version = "9.10.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
     { name = "colorama", marker = "(python_full_version >= '3.11' and sys_platform == 'win32') or (python_full_version < '3.11' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1591,15 +1341,6 @@ wheels = [
 ]
 
 [[package]]
-name = "jmespath"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d3/59/322338183ecda247fb5d1763a6cbe46eff7222eaeebafd9fa65d4bf5cb11/jmespath-1.1.0.tar.gz", hash = "sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d", size = 27377, upload-time = "2026-01-22T16:35:26.279Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl", hash = "sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64", size = 20419, upload-time = "2026-01-22T16:35:24.919Z" },
-]
-
-[[package]]
 name = "jsonschema"
 version = "4.25.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1622,43 +1363,16 @@ name = "jsonschema"
 version = "4.26.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "attrs", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1709,43 +1423,16 @@ name = "jupyter-client"
 version = "8.8.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "jupyter-core", version = "5.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -1781,43 +1468,16 @@ name = "jupyter-core"
 version = "5.9.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "platformdirs", version = "4.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -2155,7 +1815,7 @@ dependencies = [
     { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "mergedeep", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "mkdocs-get-deps", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pathspec", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pyyaml-env-tag", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -2444,43 +2104,16 @@ name = "nbclient"
 version = "0.10.4"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "jupyter-client", version = "8.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -2508,7 +2141,7 @@ dependencies = [
     { name = "mistune", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "nbclient", version = "0.10.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "nbformat", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pandocfilters", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -2609,40 +2242,15 @@ name = "networkx"
 version = "3.6.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6a/51/63fe664f3908c97be9d2e4f1158eb633317598cfa6e1fc14af5383f17512/networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509", size = 2517025, upload-time = "2025-12-08T17:02:39.908Z" }
 wheels = [
@@ -2774,40 +2382,15 @@ name = "numpy"
 version = "2.4.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/57/fd/0005efbd0af48e55eb3c7208af93f2862d4b1a56cd78e84309a2d959208d/numpy-2.4.2.tar.gz", hash = "sha256:659a6107e31a83c4e33f763942275fd278b21d095094044eb35569e86a21ddae", size = 20723651, upload-time = "2026-01-31T23:13:10.135Z" }
 wheels = [
@@ -2886,61 +2469,8 @@ wheels = [
 
 [[package]]
 name = "packaging"
-version = "25.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.10'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/d4/1fc4078c65507b51b96ca8f8c3ba19e6a61c8253c72794544580a7b6c24d/packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f", size = 165727, upload-time = "2025-04-19T11:48:59.673Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484", size = 66469, upload-time = "2025-04-19T11:48:57.875Z" },
-]
-
-[[package]]
-name = "packaging"
 version = "26.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version < '3.10' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version < '3.10' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-]
 sdist = { url = "https://files.pythonhosted.org/packages/65/ee/299d360cdc32edc7d2cf530f3accf79c4fca01e96ffc950d8a52213bd8e4/packaging-26.0.tar.gz", hash = "sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4", size = 143416, upload-time = "2026-01-21T20:50:39.064Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/b9/c538f279a4e237a006a2c98387d081e9eb060d203d8ed34467cc0f0b9b53/packaging-26.0-py3-none-any.whl", hash = "sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529", size = 74366, upload-time = "2026-01-21T20:50:37.788Z" },
@@ -2962,30 +2492,13 @@ source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.10.*'",
     "python_full_version < '3.10'",
-    "python_full_version >= '3.14' and sys_platform == 'win32'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
 ]
 dependencies = [
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "python-dateutil", marker = "python_full_version < '3.11' or extra == 'extra-6-splink-athena'" },
-    { name = "pytz", marker = "python_full_version < '3.11' or extra == 'extra-6-splink-athena'" },
-    { name = "tzdata", marker = "python_full_version < '3.11' or extra == 'extra-6-splink-athena'" },
+    { name = "python-dateutil", marker = "python_full_version < '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pytz", marker = "python_full_version < '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "tzdata", marker = "python_full_version < '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/01/d40b85317f86cf08d853a4f495195c73815fdf205eef3993821720274518/pandas-2.3.3.tar.gz", hash = "sha256:e05e1af93b977f7eafa636d043f9f94c7ee3ac81af99c13508215942e64c993b", size = 4495223, upload-time = "2025-09-29T23:34:51.853Z" }
 wheels = [
@@ -3061,9 +2574,9 @@ resolution-markers = [
     "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "python-dateutil", marker = "(python_full_version >= '3.11' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "tzdata", marker = "(python_full_version >= '3.11' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena') or (python_full_version >= '3.11' and sys_platform == 'win32' and extra != 'extra-6-splink-athena') or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "python-dateutil", marker = "python_full_version >= '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "tzdata", marker = "(python_full_version >= '3.11' and sys_platform == 'emscripten') or (python_full_version >= '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/da/b1dc0481ab8d55d0f46e343cfe67d4551a0e14fcee52bd38ca1bd73258d8/pandas-3.0.0.tar.gz", hash = "sha256:0facf7e87d38f721f0af46fe70d97373a37701b1c09f7ed7aeeb292ade5c050f", size = 4633005, upload-time = "2026-01-21T15:52:04.726Z" }
 wheels = [
@@ -3172,43 +2685,16 @@ name = "platformdirs"
 version = "4.5.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cf/86/0248f086a84f01b37aaec0fa567b397df1a119f73c16f6c7a9aac73ea309/platformdirs-4.5.1.tar.gz", hash = "sha256:61d5cdcc6065745cdd94f0f878977f8de9437be93de97c1c12f853c9c0cdcbda", size = 21715, upload-time = "2025-12-05T13:52:58.638Z" }
 wheels = [
@@ -3371,23 +2857,6 @@ version = "21.0.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version < '3.10'",
-    "python_full_version >= '3.14' and sys_platform == 'win32'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
-    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ef/c2/ea068b8f00905c06329a3dfcd40d0fcc2b7d0f2e355bdb25b65e0a0e4cd4/pyarrow-21.0.0.tar.gz", hash = "sha256:5051f2dccf0e283ff56335760cbc8622cf52264d67e359d5569541ac11b6d5bc", size = 1133487, upload-time = "2025-07-18T00:57:31.761Z" }
 wheels = [
@@ -3521,43 +2990,16 @@ name = "pycparser"
 version = "3.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1b/7d/92392ff7815c21062bea51aa7b87d45576f649f16458d78b7cf94b9ab2e6/pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29", size = 103492, upload-time = "2026-01-21T14:26:51.89Z" }
 wheels = [
@@ -3603,43 +3045,16 @@ name = "pyspark"
 version = "4.1.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "py4j", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -3657,8 +3072,7 @@ dependencies = [
     { name = "colorama", marker = "(python_full_version < '3.10' and sys_platform == 'win32') or (python_full_version >= '3.10' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "exceptiongroup", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "iniconfig", version = "2.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "25.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pluggy", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pygments", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "tomli", marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -3673,49 +3087,22 @@ name = "pytest"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "colorama", marker = "(python_full_version >= '3.10' and sys_platform == 'win32') or (python_full_version < '3.10' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "exceptiongroup", marker = "python_full_version == '3.10.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "iniconfig", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "packaging", version = "26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pluggy", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pygments", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "tomli", marker = "python_full_version == '3.10.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -4083,43 +3470,16 @@ name = "rapidfuzz"
 version = "3.14.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d3/28/9d808fe62375b9aab5ba92fa9b29371297b067c2790b2d7cda648b1e2f8d/rapidfuzz-3.14.3.tar.gz", hash = "sha256:2491937177868bc4b1e469087601d53f925e8d270ccc21e07404b4b5814b7b5f", size = 57863900, upload-time = "2025-11-01T11:54:52.321Z" }
 wheels = [
@@ -4229,43 +3589,16 @@ name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 dependencies = [
     { name = "attrs", marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
@@ -4285,7 +3618,7 @@ dependencies = [
     { name = "certifi", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "charset-normalizer", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "idna", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "urllib3", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
@@ -4475,43 +3808,16 @@ name = "rpds-py"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.10.*' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/20/af/3f2f423103f1113b36230496629986e0ef7e199d2aa8392452b484b38ced/rpds_py-0.30.0.tar.gz", hash = "sha256:dd8ff7cf90014af0c0f787eea34794ebf6415242ee1d6fa91eaba725cc441e84", size = 69469, upload-time = "2025-11-30T20:24:38.837Z" }
 wheels = [
@@ -4656,27 +3962,6 @@ wheels = [
 ]
 
 [[package]]
-name = "s3transfer"
-version = "0.16.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "botocore" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/05/04/74127fc843314818edfa81b5540e26dd537353b123a4edc563109d8f17dd/s3transfer-0.16.0.tar.gz", hash = "sha256:8e990f13268025792229cd52fa10cb7163744bf56e719e0b9cb925ab79abf920", size = 153827, upload-time = "2025-12-01T02:30:59.114Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/51/727abb13f44c1fcf6d145979e1535a35794db0f6e450a0cb46aa24732fe2/s3transfer-0.16.0-py3-none-any.whl", hash = "sha256:18e25d66fed509e3868dc1572b3f427ff947dd2c56f844a5bf09481ad3f3b2fe", size = 86830, upload-time = "2025-12-01T02:30:57.729Z" },
-]
-
-[[package]]
-name = "setuptools"
-version = "82.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/f3/748f4d6f65d1756b9ae577f329c951cda23fb900e4de9f70900ced962085/setuptools-82.0.0.tar.gz", hash = "sha256:22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb", size = 1144893, upload-time = "2026-02-08T15:08:40.206Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/c6/76dc613121b793286a3f91621d7b75a2b493e0390ddca50f11993eadf192/setuptools-82.0.0-py3-none-any.whl", hash = "sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0", size = 1003468, upload-time = "2026-02-08T15:08:38.723Z" },
-]
-
-[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4715,16 +4000,12 @@ dependencies = [
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or extra == 'extra-6-splink-athena'" },
-    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "sqlglot" },
 ]
 
 [package.optional-dependencies]
-athena = [
-    { name = "awswrangler", version = "3.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "awswrangler", version = "3.15.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and extra == 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-]
 postgres = [
     { name = "psycopg2-binary" },
     { name = "sqlalchemy" },
@@ -4777,8 +4058,8 @@ testing = [
     { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
-    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or extra == 'extra-6-splink-athena'" },
-    { name = "pyarrow", version = "23.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and extra != 'extra-6-splink-athena') or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pyarrow", version = "23.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "pytest-cov" },
@@ -5065,51 +4346,8 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "1.26.20"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.10'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/e8/6ff5e6bc22095cfc59b6ea711b687e2b7ed4bdb373f7eeec370a97d7392f/urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32", size = 307380, upload-time = "2024-08-29T15:43:11.37Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e", size = 144225, upload-time = "2024-08-29T15:43:08.921Z" },
-]
-
-[[package]]
-name = "urllib3"
 version = "2.6.3"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra == 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.12.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "(python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core')",
-    "python_full_version == '3.10.*' and extra == 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-6-splink-athena' and extra != 'group-6-splink-core'",
-]
 sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
