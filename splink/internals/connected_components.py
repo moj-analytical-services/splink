@@ -299,9 +299,7 @@ def solve_connected_components(
         pipeline = CTEPipeline([filtered_neighbours])
         sql = _cc_assess_exit_condition(filtered_neighbours.templated_name)
         pipeline.enqueue_sql(sql, "__splink__root_rows")
-        root_rows_df = db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
-        )
+        root_rows_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()

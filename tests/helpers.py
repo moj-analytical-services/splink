@@ -2,7 +2,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from collections import UserDict
 
-import pandas as pd
+import duckdb
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -22,36 +22,74 @@ class TestHelper(ABC):
     def db_api_args(self):
         return {}
 
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"db_api": self.DatabaseAPI(**self.db_api_args())}
+    # def extra_linker_args(self):
+    #     # create fresh api each time
+    #     return {"db_api": self.DatabaseAPI(**self.db_api_args())}
 
     @property
     def date_format(self):
         return "yyyy-mm-dd"
+
+    def db_api(self):
+        return self.DatabaseAPI(**self.db_api_args())
 
     @abstractmethod
     def convert_frame(self, df):
         pass
 
     def load_frame_from_csv(self, path):
+        import pandas as pd
+
         return pd.read_csv(path)
 
     def load_frame_from_parquet(self, path):
+        import pandas as pd
+
         return pd.read_parquet(path)
 
     @property
     def arrays_from(self) -> int:
         return 1
 
+    def linker_with_registration(
+        self, data, settings, input_table_aliases=None, **kwargs
+    ):
+        db_api = self.db_api()
+
+        data_list = list(data) if isinstance(data, (list, tuple)) else [data]
+
+        if input_table_aliases is None:
+            aliases = [None] * len(data_list)
+        elif isinstance(input_table_aliases, str):
+            aliases = [input_table_aliases]
+        else:
+            aliases = list(input_table_aliases)
+
+        sdfs = [db_api.register(d, alias) for d, alias in zip(data_list, aliases)]
+
+        input_frames = sdfs[0] if len(sdfs) == 1 else sdfs
+        return Linker(input_frames, settings, **kwargs)
+
 
 class DuckDBTestHelper(TestHelper):
+    def __init__(self):
+        self.con = duckdb.connect()
+
     @property
     def DatabaseAPI(self):
         return DuckDBAPI
 
+    def db_api_args(self):
+        return {"connection": self.con}
+
     def convert_frame(self, df):
         return df
+
+    def load_frame_from_csv(self, path):
+        return self.con.read_csv(path)
+
+    def load_frame_from_parquet(self, path):
+        return self.con.read_parquet(path)
 
     @property
     def date_format(self):

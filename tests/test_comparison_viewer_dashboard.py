@@ -21,10 +21,12 @@ def test_comparison_viewer_dashboard(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
 
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+
     linker = Linker(
-        df,
+        df_sdf,
         settings=settings_dict,
-        db_api=DuckDBAPI(),
     )
 
     df_predict = linker.inference.predict()
@@ -68,10 +70,12 @@ def test_comparison_viewer_table():
         "retain_intermediate_calculation_columns": True,
     }
 
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+
     linker = Linker(
-        df,
+        df_sdf,
         settings=settings_dict,
-        db_api=DuckDBAPI(),
     )
 
     df_predict = linker.inference.predict()

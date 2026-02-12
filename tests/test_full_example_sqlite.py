@@ -20,18 +20,15 @@ def test_full_example_sqlite(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    df.to_sql("input_df_tablename", con)
-
     settings_dict = get_settings_dict()
     db_api = SQLiteAPI(con)
+    df_sdf = db_api.register(df, source_dataset_name="fake_data_1")
     linker = Linker(
-        "input_df_tablename",
+        df_sdf,
         settings_dict,
-        db_api=db_api,
-        input_table_aliases="fake_data_1",
     )
 
-    profile_columns(df, db_api, ["first_name", "surname", "first_name || surname"])
+    profile_columns(df_sdf, ["first_name", "surname", "first_name || surname"])
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
@@ -74,14 +71,12 @@ def test_small_link_example_sqlite():
 
     settings_dict["link_type"] = "link_only"
 
-    df.to_sql("input_df_tablename", con)
-
     db_api = SQLiteAPI(con)
+    df_1_sdf = db_api.register(df, source_dataset_name="fake_data_1")
+    df_2_sdf = db_api.register(df, source_dataset_name="fake_data_2")
     linker = Linker(
-        ["input_df_tablename", "input_df_tablename"],
+        [df_1_sdf, df_2_sdf],
         settings_dict,
-        db_api,
-        input_table_aliases=["fake_data_1", "fake_data_2"],
     )
 
     linker.inference.predict()
@@ -94,6 +89,7 @@ def test_default_conn_sqlite(tmp_path):
     settings_dict = get_settings_dict()
 
     db_api = SQLiteAPI()
-    linker = Linker(df, settings_dict, db_api)
+    df_sdf = db_api.register(df)
+    linker = Linker(df_sdf, settings_dict)
 
     linker.inference.predict()

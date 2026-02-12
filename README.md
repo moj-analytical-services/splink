@@ -21,7 +21,7 @@ It is used widely by within government, academia and the private sector - see [u
 
 ⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.<br>
 🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.<br>
-🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.<br>
+🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like Spark for 100+ million records.<br>
 🎓 **Unsupervised Learning:** No training data is required for model training.<br>
 📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.<br>
 
@@ -75,7 +75,7 @@ conda install -c conda-forge splink
 ### Installing Splink for Specific Backends
 
 
-For projects requiring specific backends, Splink offers optional installations for **Spark**, **Athena**, and **PostgreSQL**. These can be installed by appending the backend name in brackets to the pip install command:
+For projects requiring specific backends, Splink offers optional installations for **Spark** and **PostgreSQL**. These can be installed by appending the backend name in brackets to the pip install command:
 ```sh
 pip install 'splink[{backend}]'
 ```
@@ -86,11 +86,6 @@ pip install 'splink[{backend}]'
 #### Spark
 ```sh
 pip install 'splink[spark]'
-```
-
-#### Athena
-```sh
-pip install 'splink[athena]'
 ```
 
 #### PostgreSQL

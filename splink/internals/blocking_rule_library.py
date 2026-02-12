@@ -23,12 +23,9 @@ class ExactMatchRule(BlockingRuleCreator):
     def __init__(
         self,
         col_name_or_expr: Union[str, ColumnExpression],
-        salting_partitions: int = None,
         arrays_to_explode: list[str] | None = None,
     ):
-        super().__init__(
-            salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
-        )
+        super().__init__(arrays_to_explode=arrays_to_explode)
         self.col_expression = ColumnExpression.instantiate_if_str(col_name_or_expr)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
@@ -42,7 +39,6 @@ class CustomRule(BlockingRuleCreator):
         self,
         blocking_rule: str,
         sql_dialect: str = None,
-        salting_partitions: int | None = None,
         arrays_to_explode: list[str] | None = None,
     ):
         """
@@ -57,8 +53,6 @@ class CustomRule(BlockingRuleCreator):
             sql_dialect (str, optional): The SQL dialect of the provided blocking rule.
                 If specified, Splink will attempt to translate the rule to the
                 appropriate dialect.
-            salting_partitions (int, optional): The number of partitions to use for
-                salting. If provided, enables salting for this blocking rule.
             arrays_to_explode (list[str], optional): A list of array column names
                 to explode before applying the blocking rule.
 
@@ -74,17 +68,9 @@ class CustomRule(BlockingRuleCreator):
                 "SUBSTR(l.surname, 1, 3) = SUBSTR(r.surname, 1, 3)",
                 sql_dialect="sqlite"
             )
-
-            # Custom rule with salting
-            rule_3 = CustomRule(
-                "l.city = r.city",
-                salting_partitions=10
-            )
             ```
         """
-        super().__init__(
-            salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
-        )
+        super().__init__(arrays_to_explode=arrays_to_explode)
         self.sql_condition = blocking_rule
 
         self.base_dialect_str = sql_dialect
@@ -120,12 +106,9 @@ class _Merge(BlockingRuleCreator):
     def __init__(
         self,
         *blocking_rules: Union[BlockingRuleCreator, dict[str, Any]],
-        salting_partitions: int | None = None,
         arrays_to_explode: list[str] | None = None,
     ):
-        super().__init__(
-            salting_partitions=salting_partitions, arrays_to_explode=arrays_to_explode
-        )
+        super().__init__(arrays_to_explode=arrays_to_explode)
         num_levels = len(blocking_rules)
         if num_levels == 0:
             raise ValueError(
@@ -135,23 +118,6 @@ class _Merge(BlockingRuleCreator):
             CustomRule(**br) if isinstance(br, dict) else br for br in blocking_rules
         ]
         self.blocking_rules = blocking_rule_creators
-
-    @property
-    def salting_partitions(self):
-        if (
-            hasattr(self, "_salting_partitions")
-            and self._salting_partitions is not None
-        ):
-            return self._salting_partitions
-
-        return max(
-            [
-                br.salting_partitions
-                for br in self.blocking_rules
-                if br.salting_partitions is not None
-            ],
-            default=None,
-        )
 
     @property
     def arrays_to_explode(self):
@@ -182,10 +148,6 @@ class Not(BlockingRuleCreator):
         self.blocking_rule_creator = blocking_rule_creator
 
     @property
-    def salting_partitions(self):
-        return self.blocking_rule_creator.salting_partitions
-
-    @property
     def arrays_to_explode(self):
         if self.blocking_rule_creator.arrays_to_explode:
             raise ValueError("Cannot use arrays_to_explode with Not")
@@ -198,7 +160,6 @@ class Not(BlockingRuleCreator):
 
 def block_on(
     *col_names_or_exprs: Union[str, ColumnExpression],
-    salting_partitions: int | None = None,
     arrays_to_explode: list[str] | None = None,
 ) -> BlockingRuleCreator:
     """Generates blocking rules of equality conditions  based on the columns
@@ -214,9 +175,6 @@ def block_on(
     Args:
         col_names_or_exprs: A list of input columns or SQL conditions
             you wish to create blocks on.
-        salting_partitions (optional, int): Whether to add salting
-            to the blocking rule. More information on salting can
-            be found within the docs.
         arrays_to_explode (optional, List[str]): List of arrays to explode
             before applying the blocking rule.
 
@@ -240,8 +198,6 @@ def block_on(
     else:
         br = And(*[ExactMatchRule(c) for c in col_names_or_exprs])
 
-    if salting_partitions:
-        br._salting_partitions = salting_partitions
     if arrays_to_explode:
         br._arrays_to_explode = arrays_to_explode
     return br

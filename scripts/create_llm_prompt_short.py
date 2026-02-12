@@ -26,11 +26,10 @@ def extract_and_append_notebook_code(base_dir, output_filename):
         for file in files:
             if file.endswith(".ipynb") and not file.endswith("-checkpoint.ipynb"):
                 notebook_path = os.path.join(root, file)
-                # Skip files with athena or sqlite in path
+                # Skip files with sqlite in path
                 if any(
                     x in notebook_path.lower()
                     for x in [
-                        "athena",
                         "sqlite",
                         "bias_eval",
                         "febrl3",
@@ -40,7 +39,7 @@ def extract_and_append_notebook_code(base_dir, output_filename):
                         "playground",
                     ]
                 ):
-                    print(f"Skipping {notebook_path} due to athena/sqlite...")  # noqa: T201
+                    print(f"Skipping {notebook_path} due to sqlite...")  # noqa: T201
                     continue
 
                 if ".ipynb_checkpoints" not in notebook_path:

@@ -1,9 +1,6 @@
 name: mypy
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - splink/**
       - tests/**
@@ -43,4 +40,4 @@ jobs:
 
       - name: Run mypy
         id: mypy
-        run: uv run mypy splink
+        run: make typecheck

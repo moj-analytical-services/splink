@@ -14,7 +14,7 @@ from tests.literal_utils import run_comparison_vector_value_tests, run_is_in_lev
 @mark_with_dialects_excluding("sqlite")
 def test_absolute_date_difference_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -65,7 +65,7 @@ def test_absolute_date_difference_level(test_helpers, dialect):
 @mark_with_dialects_excluding("sqlite")
 def test_absolute_time_difference_levels(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -116,7 +116,7 @@ def test_absolute_time_difference_levels(test_helpers, dialect):
 @mark_with_dialects_excluding("sqlite")
 def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -155,7 +155,7 @@ def test_absolute_date_difference_at_thresholds(test_helpers, dialect):
 @mark_with_dialects_including("duckdb", pass_dialect=True)
 def test_alternative_date_format(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {

@@ -86,14 +86,14 @@ def compare_records(
     else:
         to_register_right = record_2
 
-    df_records_left = db_api.register_table(
+    df_records_left = db_api._create_backend_table(
         to_register_left,
         f"__splink__compare_records_left_{uid}",
         overwrite=True,
     )
     df_records_left.templated_name = "__splink__compare_records_left"
 
-    df_records_right = db_api.register_table(
+    df_records_right = db_api._create_backend_table(
         to_register_right,
         f"__splink__compare_records_right_{uid}",
         overwrite=True,
@@ -140,10 +140,7 @@ def compare_records(
     """
     pipeline.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict_from_comparison_vectors_sqls_using_settings(
-        settings_obj,
-        sql_infinity_expression=db_api.sql_dialect.infinity_expression,
-    )
+    sqls = predict_from_comparison_vectors_sqls_using_settings(settings_obj)
     pipeline.enqueue_list_of_sqls(sqls)
 
     if include_found_by_blocking_rules:

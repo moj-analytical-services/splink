@@ -2,9 +2,6 @@ name: Pytest DuckDB
 
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "tests/**"
@@ -48,20 +45,7 @@ jobs:
         id: install_dependencies
         run: uv sync --python ${{ matrix.python-version }}
 
-      - name: Run tests with coverage
+      - name: Run tests
         id: run_tests
         run: |
-          uv run python -m pytest -v --durations=0 -m "duckdb_only or core" --cov=splink --cov-report=xml --cov-report=term tests/
-
-      - name: Upload coverage report
-        id: upload_coverage_report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: coverage-report-${{ matrix.python-version }}
-          path: coverage.xml
-
-      - name: Upload to Codecov
-        id: upload_codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          uv run python -m pytest -v --durations=0 -m "duckdb_only or core" tests/
