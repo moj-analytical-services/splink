@@ -71,7 +71,7 @@ def _cc_generate_representatives_loop_cond(
 
         from {prev_representatives}
 
-    )
+    ) as rep_union
     group by old_rep
     """
 

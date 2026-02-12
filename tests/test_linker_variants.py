@@ -37,11 +37,11 @@ df["first_name"] = "John"
 df["surname"] = "Smith"
 df["dob"] = "01/01/1980"
 
-sds_b_only = df.query("source_ds == 'b'").drop(columns=["source_ds"], axis=1)
+sds_b_only = df.query("source_ds == 'b'").drop(columns=["source_ds"])
 
-sds_c_only = df.query("source_ds == 'c'").drop(columns=["source_ds"], axis=1)
+sds_c_only = df.query("source_ds == 'c'").drop(columns=["source_ds"])
 
-sds_d_only = df.query("source_ds == 'd'").drop(columns=["source_ds"], axis=1)
+sds_d_only = df.query("source_ds == 'd'").drop(columns=["source_ds"])
 
 
 def test_dedupe_only_join_condition():

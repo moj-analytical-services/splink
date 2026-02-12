@@ -70,8 +70,13 @@ def test_nullif(test_helpers, dialect):
 
     # construct a SQL query from ColumnExpressions and run it against backend
     splink_dialect = SplinkDialect.from_string(dialect)
+    # need to include nan as spark conerts np.nan to "nan", and in pandas 3
+    # None gets converted to np.nan in string columns
     nullif_name_empty_or_na = (
-        ColumnExpression("name", sql_dialect=splink_dialect).nullif("").nullif("NA")
+        ColumnExpression("name", sql_dialect=splink_dialect)
+        .nullif("")
+        .nullif("NA")
+        .nullif("nan")
     )
 
     sql = (
