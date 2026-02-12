@@ -91,6 +91,9 @@ conflicts = [
     { extra = "athena" }
   ]
 ]
+# problematic constraints, and we do not test or otherwise use this
+# we are removing in Splink 5 anyway
+exclude-dependencies = ["awswrangler"]
 
 [tool.uv.dependency-groups]
 docs = { requires-python = ">=3.13" }
