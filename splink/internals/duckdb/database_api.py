@@ -9,7 +9,7 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPI
 from splink.internals.dialects import (
     DuckDBDialect,
 )
-from splink.internals.misc import to_pyarrow_if_list_or_dict
+from splink.internals.misc import to_pyarrow_if_list_tuple_or_dict
 
 from .dataframe import DuckDBDataFrame
 from .duckdb_helpers.duckdb_helpers import (
@@ -52,6 +52,10 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
                 """
             )
 
+    @property
+    def duckdb_con(self) -> duckdb.DuckDBPyConnection:
+        return self._con
+
     def delete_table_from_database(self, name: str) -> None:
         # If the table is in fact a pandas dataframe that's been registered using
         # duckdb con.register() then DROP TABLE will fail with
@@ -66,7 +70,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:
-        input = to_pyarrow_if_list_or_dict(input)
+        input = to_pyarrow_if_list_tuple_or_dict(input)
 
         self._con.register(table_name, input)
 

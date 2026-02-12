@@ -11,7 +11,7 @@ from splink.internals.dialects import (
 )
 from splink.internals.misc import (
     ensure_is_list,
-    to_pyarrow_if_list_or_dict,
+    to_pyarrow_if_list_tuple_or_dict,
 )
 
 from .dataframe import PostgresDataFrame
@@ -42,7 +42,7 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
         self._register_extensions()
 
     def _table_registration(self, input, table_name):
-        input = to_pyarrow_if_list_or_dict(input)
+        input = to_pyarrow_if_list_tuple_or_dict(input)
 
         # Using Duckdb to insert the data ensures the correct datatypes
         # and faster insertion (duckdb>=0.9.2)

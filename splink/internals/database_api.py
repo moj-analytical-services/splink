@@ -8,15 +8,14 @@ from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Generic,
-    List,
     Optional,
     TypeVar,
     Union,
     final,
 )
 
+import duckdb
 import sqlglot
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
@@ -34,8 +33,9 @@ logger = logging.getLogger(__name__)
 
 BaseAcceptableInputTableType = Union[
     str,
-    List[Dict[str, Any]],
-    Dict[str, Any],
+    list[dict[str, Any]],
+    tuple[dict[str, Any]],
+    dict[str, list[Any]],
 ]
 
 if TYPE_CHECKING:
@@ -75,12 +75,17 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
         self._registered_source_dataset_names: set[str] = set()
+        self._ddb_con = duckdb.connect(":memory:")
 
     @property
     @final
     def id(self) -> str:
         """Useful for debugging when multiple database API instances exist."""
         return self._id
+
+    @property
+    def duckdb_con(self) -> duckdb.DuckDBPyConnection:
+        return self._ddb_con
 
     def _new_input_table_name(self) -> str:
         name = f"__splink__input_table_{self._input_table_counter}"

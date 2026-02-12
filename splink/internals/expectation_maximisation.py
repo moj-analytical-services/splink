@@ -4,11 +4,11 @@ import logging
 import time
 from typing import Any, List, cast
 
-import duckdb
-
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
 from splink.internals.input_column import InputColumn
 from splink.internals.m_u_records_to_parameters import m_u_records_to_lookup_dict
 from splink.internals.pipeline import CTEPipeline
@@ -120,18 +120,24 @@ def compute_proportions_for_new_parameters_sql(table_name):
 def compute_proportions_for_new_parameters(
     df_params: SplinkDataFrame,
 ) -> List[dict[str, Any]]:
-    # TODO: should use arrow frame as interchange format
-    m_u_df = df_params.as_pandas_dataframe()  # noqa: F841 (unused variable)
+    # Need to register df_params in duckdb to do computation
+    # to do so, we convert to:
+    # duckdb if that is our backend
+    # arrow if available
+    # failing that pandas
 
-    sql = compute_proportions_for_new_parameters_sql("m_u_df")
-    # TODO: reuse connexion
-    con = duckdb.connect()
-    con.register("m_u_df", m_u_df)
+    con = df_params.db_api.duckdb_con
+    if isinstance(df_params, DuckDBDataFrame):
+        table_name = df_params.physical_name
+    else:
+        # TODO: as_pyarrow wrap
+        arrow_frame = df_params.as_pyarrow_table()
+        table_name = "m_u_df"
+        con.register(table_name, arrow_frame)
+
+    sql = compute_proportions_for_new_parameters_sql(table_name)
     ddb_relation = con.query(sql)
-    # TODO: borrowed from DuckDBDataFrame.as_record_dict - reusable?
-    rows = ddb_relation.fetchall()
-    column_names = [desc[0] for desc in ddb_relation.description]
-    return [dict(zip(column_names, row)) for row in rows]
+    return record_dicts_from_relation(ddb_relation)
 
 
 def populate_m_u_from_lookup(

@@ -6,12 +6,17 @@ from typing import TYPE_CHECKING
 
 from duckdb import DuckDBPyRelation
 
+from splink.internals.duckdb.duckdb_helpers import (
+    dict_from_relation,
+    record_dicts_from_relation,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from pandas import DataFrame as pd_DataFrame
+    from pyarrow import Table as PyArrowTable
 
     from .database_api import DuckDBAPI
 else:
@@ -47,9 +52,15 @@ class DuckDBDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         duckdb_table = self.db_api._execute_sql_against_backend(sql)
-        rows = duckdb_table.fetchall()
-        column_names = [desc[0] for desc in duckdb_table.description]
-        return [dict(zip(column_names, row)) for row in rows]
+        return record_dicts_from_relation(duckdb_table)
+
+    def as_dict(self, limit=None):
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        duckdb_table = self.db_api._execute_sql_against_backend(sql)
+        return dict_from_relation(duckdb_table)
 
     def as_pandas_dataframe(self, limit: int = None) -> pd_DataFrame:
         sql = f"select * from {self.physical_name}"
@@ -64,6 +75,13 @@ class DuckDBDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         return self.db_api._execute_sql_against_backend(sql)
+
+    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        return self.db_api._execute_sql_against_backend(sql).to_arrow_table()
 
     def to_parquet(self, filepath, overwrite=False):
         if not overwrite:

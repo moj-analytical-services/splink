@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import list_to_record_dict
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,46 @@ class SplinkDataFrame(ABC):
         """
         raise NotImplementedError("as_record_dict not implemented for this linker")
 
+    def as_dict(self, limit: Optional[int] = None) -> dict[str, list[Any]]:
+        """Return the dataframe as a dictionary of columns to lists of values.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            ten_edges_dict = df_predict.as_dict(10)
+            ```
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+        Returns:
+            dict: a dictionary mapping column names to lists of values
+        """
+        return list_to_record_dict(self.as_record_dict(limit=limit))
+
+    def as_pyarrow_table(self, limit=None):
+        """Return the dataframe as a pyarrow Table.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+                to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            df_ten_edges = df_predict.as_pyarrow_table(10)
+            ```
+        Returns:
+            pyarrow.Table: pyarrow Table
+        """
+        import pyarrow as pa
+
+        # TODO: prefer pydict - need underlying format though
+        return pa.Table.from_pylist(self.as_record_dict(limit=limit))
+
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
 
@@ -162,9 +203,11 @@ class SplinkDataFrame(ABC):
         Returns:
             duckdb.DuckDBPyRelation: A DuckDBPyRelation object
         """
-        raise NotImplementedError(
-            "This method is only available when using the DuckDB backend"
+        # insert into local duckdb via pyarrow
+        self.db_api.duckdb_con.register(
+            self.templated_name, self.as_pyarrow_table(limit)
         )
+        return self.db_api.duckdb_con.table(self.templated_name)
 
     # Spark not guaranteed to be available so return type is not imported
     def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821

@@ -15,8 +15,10 @@ from splink.internals.dialects import (
 from splink.internals.misc import (
     is_pandas_frame,
     major_minor_version_greater_equal_than,
+    record_dict_to_list,
     to_pyarrow_if_dict,
 )
+from splink.internals.spark.spark_helpers.version import get_spark_major_version
 
 from .dataframe import SparkDataFrame
 from .jar_location import get_scala_udfs
@@ -66,8 +68,13 @@ class SparkAPI(DatabaseAPI[spark_df]):
     ) -> None:
         if is_pandas_frame(input):
             input = self._clean_pandas_df(input)
-        # spark can handle lists natively
-        input = to_pyarrow_if_dict(input)
+        # spark 3 has no arrow support, so we need to convert to list if it's a dict
+        if get_spark_major_version() == 3:
+            if isinstance(input, dict):
+                input = record_dict_to_list(input)
+        else:
+            # spark can handle lists natively, so let it handle those
+            input = to_pyarrow_if_dict(input)
         if not isinstance(input, spark_df):
             # TODO: spark 3 check for nicer arrow message
             input = self.spark.createDataFrame(input)

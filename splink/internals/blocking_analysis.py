@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     TypedDict,
     Union,
+    cast,
 )
 
 import duckdb
@@ -32,8 +33,12 @@ from splink.internals.charts import (
     cumulative_blocking_rule_comparisons_generated,
 )
 from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import calculate_cartesian, ensure_is_iterable
+from splink.internals.misc import (
+    calculate_cartesian,
+    ensure_is_iterable,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.splinkdataframe_utils import (
@@ -448,10 +453,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
     complete_df = con.sql(sql)
 
-    # TODO: once again we use this pattern - centralise
-    rows = complete_df.fetchall()
-    column_names = [desc[0] for desc in complete_df.description]
-    return [dict(zip(column_names, row)) for row in rows]  # type: ignore  # TODO: type better?
+    return cast(
+        list[CumulativeComparisonRecord], record_dicts_from_relation(complete_df)
+    )
 
 
 def _count_comparisons_generated_from_blocking_rule(

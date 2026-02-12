@@ -9,7 +9,7 @@ from splink.internals.dialects import (
     SQLiteDialect,
 )
 from splink.internals.exceptions import SplinkException
-from splink.internals.misc import is_pandas_frame, to_pyarrow_if_list_or_dict
+from splink.internals.misc import is_pandas_frame, to_pyarrow_if_list_tuple_or_dict
 
 from .dataframe import SQLiteDataFrame
 
@@ -130,7 +130,7 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
                 if_exists="replace",
             )
             return
-        input = to_pyarrow_if_list_or_dict(input)
+        input = to_pyarrow_if_list_tuple_or_dict(input)
         self._register_pyarrow_table(input, table_name)
 
     def table_to_splink_dataframe(self, templated_name, physical_name):

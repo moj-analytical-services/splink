@@ -6,6 +6,29 @@ import splink.internals.comparison_library as cl
 from splink import DuckDBAPI, SettingsCreator, block_on
 from splink.internals.exceptions import EMTrainingException
 from splink.internals.linker import Linker
+from tests.decorator import mark_with_dialects_excluding
+
+
+@mark_with_dialects_excluding()
+def test_expectation_maximisation_runs(fake_1000, dialect, test_helpers):
+    helper = test_helpers[dialect]
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+    )
+    db_api = helper.db_api()
+    df_sdf = db_api.register(fake_1000)
+    linker = Linker(df_sdf, settings)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name")
+    )
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("surname")
+    )
 
 
 def test_clear_error_when_empty_block():
