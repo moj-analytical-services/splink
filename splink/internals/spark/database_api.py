@@ -296,6 +296,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
             r"__splink__clusters_at_all_thresholds",
             r"__splink__clustering_output_final",
             r"__splink__stable_nodes_at_new_threshold",
+            r"__splink__filtered_neighbours.*",
         ]
 
         if re.fullmatch(r"|".join(regex_to_persist), templated_name):
