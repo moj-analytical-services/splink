@@ -289,7 +289,7 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
         "comparisons": [cl.ExactMatch("first_name")],
     }
 
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([data_l, data_r], settings)
 
     exploding = materialise_exploded_id_tables(
         link_type="two_dataset_link_only",
@@ -330,9 +330,7 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
         "comparisons": [cl.ExactMatch("first_name")],
     }
 
-    linker = helper.Linker(
-        [data_1, data_2, data_3], settings, **helper.extra_linker_args()
-    )
+    linker = helper.linker_with_registration([data_1, data_2, data_3], settings)
 
     exploding = materialise_exploded_id_tables(
         link_type="link_only",
@@ -380,11 +378,10 @@ def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialec
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [data_l, data_r],
         settings,
         input_table_aliases=["left_ds", "right_ds"],
-        **helper.extra_linker_args(),
     )
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
@@ -421,7 +418,7 @@ def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, di
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([data_l, data_r], settings)
     df_predict = linker.inference.predict().as_pandas_dataframe()
 
     pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
@@ -455,7 +452,7 @@ def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([data_l, data_r], settings)
     deterministic = linker.inference.deterministic_link().as_pandas_dataframe()
 
     pairs = set(zip(deterministic.unique_id_l, deterministic.unique_id_r))
