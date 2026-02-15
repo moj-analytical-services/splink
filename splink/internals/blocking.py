@@ -16,7 +16,10 @@ from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
-from splink.internals.vertically_concatenate import vertically_concatenate_sql
+from splink.internals.vertically_concatenate import (
+    split_df_concat_with_tf_into_two_tables_sqls,
+    vertically_concatenate_sql,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -386,6 +389,8 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_column: InputColumn,
         br: BlockingRule,
         link_type: "LinkTypeLiteralType",
+        input_tablename_l: str,
+        input_tablename_r: str,
     ) -> str:
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
@@ -402,11 +407,6 @@ class ExplodingBlockingRule(BlockingRule):
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
         id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
 
-        if link_type == "two_dataset_link_only":
-            where_condition = (
-                where_condition + " and l.source_dataset < r.source_dataset"
-            )
-
         exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
             source_dataset_input_column, unique_id_input_column
         )
@@ -414,8 +414,8 @@ class ExplodingBlockingRule(BlockingRule):
             select distinct
                 {id_expr_l} as {unique_id_col.name_l},
                 {id_expr_r} as {unique_id_col.name_r}
-            from __splink__df_concat_unnested as l
-            inner join __splink__df_concat_unnested as r
+            from {input_tablename_l} as l
+            inner join {input_tablename_r} as r
             on ({br.blocking_rule_sql})
             {where_condition}
             {exclude_sql}
@@ -531,16 +531,48 @@ def materialise_exploded_id_tables(
 
         other_cols = input_columns_set - set(arrays_to_explode_cols)
 
-        expl_sql = db_api.sql_dialect.explode_arrays_sql(
-            "__splink__df_concat",
-            br.array_columns_to_explode,
-            [col.name for col in other_cols],
-        )
+        if link_type == "two_dataset_link_only":
+            if source_dataset_input_column is None:
+                raise ValueError(
+                    "source_dataset_input_column is required for two_dataset_link_only"
+                )
 
-        pipeline.enqueue_sql(
-            expl_sql,
-            "__splink__df_concat_unnested",
-        )
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat",
+                source_dataset_input_column.name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            input_tablename_l = "__splink__df_concat_left_unnested"
+            input_tablename_r = "__splink__df_concat_right_unnested"
+
+            expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat_left",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+            pipeline.enqueue_sql(expl_sql_l, input_tablename_l)
+
+            expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat_right",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+            pipeline.enqueue_sql(expl_sql_r, input_tablename_r)
+        else:
+            input_tablename_l = "__splink__df_concat_unnested"
+            input_tablename_r = "__splink__df_concat_unnested"
+
+            expl_sql = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+
+            pipeline.enqueue_sql(
+                expl_sql,
+                input_tablename_l,
+            )
 
         base_name = "__splink__marginal_exploded_ids_blocking_rule"
         table_name = f"{base_name}_mk_{br.match_key}"
@@ -550,6 +582,8 @@ def materialise_exploded_id_tables(
             unique_id_input_column=unique_id_input_column,
             br=br,
             link_type=link_type,
+            input_tablename_l=input_tablename_l,
+            input_tablename_r=input_tablename_r,
         )
 
         pipeline.enqueue_sql(sql, table_name)
