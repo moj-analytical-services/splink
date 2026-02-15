@@ -3,6 +3,7 @@ import random
 import pandas as pd
 
 import splink.internals.comparison_library as cl
+from splink.internals.blocking import materialise_exploded_id_tables
 from tests.decorator import mark_with_dialects_including
 
 
@@ -256,3 +257,209 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
 
     all_tuples = rule1_tuples.union(rule2_tuples)
     assert actual_triples == all_tuples
+
+
+def _normalise_sql(sql: str) -> str:
+    return sql.lower().replace('"', "").replace("`", "")
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+    data_l = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "Alice", "postcode": ["A", "B"]},
+            {"unique_id": 2, "first_name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    data_r = pd.DataFrame(
+        [
+            {"unique_id": 10, "first_name": "Alice", "postcode": ["B"]},
+            {"unique_id": 11, "first_name": "Bob", "postcode": ["C"]},
+        ]
+    )
+
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("first_name")],
+    }
+
+    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+
+    exploding = materialise_exploded_id_tables(
+        link_type="two_dataset_link_only",
+        blocking_rules=linker._settings_obj._blocking_rules_to_generate_predictions,
+        db_api=linker._db_api,
+        splink_df_dict=linker._input_tables_dict,
+        source_dataset_input_column=linker._settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=linker._settings_obj.column_info_settings.unique_id_input_column,
+    )
+    try:
+        assert len(exploding) == 1
+        sql = _normalise_sql(exploding[0].exploded_id_pair_table.sql_used_to_create)
+        assert "from __splink__df_concat_left_unnested as l" in sql
+        assert "inner join __splink__df_concat_right_unnested as r" in sql
+        assert "l.source_dataset < r.source_dataset" not in sql
+    finally:
+        for br in exploding:
+            br.drop_materialised_id_pairs_dataframe()
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filters(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+    data_1 = pd.DataFrame([{"unique_id": 1, "first_name": "Alice", "postcode": ["A"]}])
+    data_2 = pd.DataFrame([{"unique_id": 2, "first_name": "Alice", "postcode": ["A"]}])
+    data_3 = pd.DataFrame([{"unique_id": 3, "first_name": "Alice", "postcode": ["A"]}])
+
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("first_name")],
+    }
+
+    linker = helper.Linker(
+        [data_1, data_2, data_3], settings, **helper.extra_linker_args()
+    )
+
+    exploding = materialise_exploded_id_tables(
+        link_type="link_only",
+        blocking_rules=linker._settings_obj._blocking_rules_to_generate_predictions,
+        db_api=linker._db_api,
+        splink_df_dict=linker._input_tables_dict,
+        source_dataset_input_column=linker._settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=linker._settings_obj.column_info_settings.unique_id_input_column,
+    )
+    try:
+        assert len(exploding) == 1
+        sql = _normalise_sql(exploding[0].exploded_id_pair_table.sql_used_to_create)
+        assert "from __splink__df_concat_unnested as l" in sql
+        assert "inner join __splink__df_concat_unnested as r" in sql
+        assert "l.source_dataset != r.source_dataset" in sql
+        assert "__splink__df_concat_left_unnested" not in sql
+    finally:
+        for br in exploding:
+            br.drop_materialised_id_pairs_dataframe()
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    data_l = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
+            {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    data_r = pd.DataFrame(
+        [
+            {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
+            {"unique_id": 11, "name": "Alice", "postcode": ["D"]},
+            {"unique_id": 12, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.name = r.name and l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("name")],
+    }
+    linker = helper.Linker(
+        [data_l, data_r],
+        settings,
+        input_table_aliases=["left_ds", "right_ds"],
+        **helper.extra_linker_args(),
+    )
+    df_predict = linker.inference.predict().as_pandas_dataframe()
+
+    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    assert pairs == {(1, 10), (2, 12)}
+    assert set(df_predict.source_dataset_l) == {"left_ds"}
+    assert set(df_predict.source_dataset_r) == {"right_ds"}
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    data_l = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
+            {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
+            {"unique_id": 3, "name": "Alice", "postcode": ["Z"]},
+        ]
+    )
+    data_r = pd.DataFrame(
+        [
+            {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
+            {"unique_id": 11, "name": "Alice", "postcode": ["Z", "Q"]},
+            {"unique_id": 12, "name": "Bob", "postcode": ["W"]},
+        ]
+    )
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.name = r.name and l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("name")],
+    }
+    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    df_predict = linker.inference.predict().as_pandas_dataframe()
+
+    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    assert pairs == {(1, 10), (3, 11)}
+
+
+@mark_with_dialects_including("duckdb", pass_dialect=True)
+def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+    data_l = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
+            {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    data_r = pd.DataFrame(
+        [
+            {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
+            {"unique_id": 12, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.name = r.name and l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("name")],
+    }
+    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    deterministic = linker.inference.deterministic_link().as_pandas_dataframe()
+
+    pairs = set(zip(deterministic.unique_id_l, deterministic.unique_id_r))
+    assert pairs == {(1, 10), (2, 12)}
