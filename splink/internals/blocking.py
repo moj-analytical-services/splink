@@ -511,20 +511,21 @@ def materialise_exploded_id_tables(
         return []
     exploded_tables = []
 
-    pipeline = CTEPipeline()
+    first_input_df = next(iter(splink_df_dict.values()))
 
-    sql = vertically_concatenate_sql(
-        splink_df_dict,
-        salting_required=False,
-        source_dataset_input_column=source_dataset_input_column,
-    )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-    nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    input_columns_set = set(nodes_concat.columns)
+    input_columns_set = set(first_input_df.columns)
+    if source_dataset_input_column:
+        input_columns_set.add(source_dataset_input_column)
 
     for br in exploding_blocking_rules:
-        pipeline = CTEPipeline([nodes_concat])
+        pipeline = CTEPipeline()
+
+        sql = vertically_concatenate_sql(
+            splink_df_dict,
+            salting_required=False,
+            source_dataset_input_column=source_dataset_input_column,
+        )
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
