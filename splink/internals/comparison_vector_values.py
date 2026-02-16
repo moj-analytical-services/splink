@@ -4,7 +4,6 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
-from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +58,16 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     select_cols_expr = ", \n".join(columns_to_select_for_blocking)
 
-    uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-    uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+    from splink.internals.unique_id_concat import (
+        _join_condition_nodes_to_blocked_pairs_sql,
+    )
+
+    join_l = _join_condition_nodes_to_blocked_pairs_sql(
+        unique_id_columns, "l", "b", "_l"
+    )
+    join_r = _join_condition_nodes_to_blocked_pairs_sql(
+        unique_id_columns, "r", "b", "_r"
+    )
 
     # The first table selects the required columns from the input tables
     # and alises them as `col_l`, `col_r` etc
@@ -71,9 +78,9 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     select {select_cols_expr}, b.match_key
     from {input_tablename_l} as l
     inner join __splink__blocked_id_pairs as b
-    on {uid_l_expr} = b.join_key_l
+    on {join_l}
     inner join {input_tablename_r} as r
-    on {uid_r_expr} = b.join_key_r
+    on {join_r}
     """
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})

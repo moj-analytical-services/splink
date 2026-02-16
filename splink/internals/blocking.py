@@ -17,7 +17,6 @@ from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
@@ -136,14 +135,18 @@ class BlockingRule:
         else:
             unique_id_columns = [unique_id_input_column]
 
-        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+        from splink.internals.unique_id_concat import (
+            _individual_uid_columns_as_select_sql,
+        )
+
+        uid_l_cols = _individual_uid_columns_as_select_sql(unique_id_columns, "l", "_l")
+        uid_r_cols = _individual_uid_columns_as_select_sql(unique_id_columns, "r", "_r")
 
         sql = f"""
             select
             '{self.match_key}' as match_key,
-            {uid_l_expr} as join_key_l,
-            {uid_r_expr} as join_key_r
+            {uid_l_cols},
+            {uid_r_cols}
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -294,7 +297,6 @@ class ExplodingBlockingRule(BlockingRule):
                 right side records.
         """
 
-        unique_id_col = unique_id_input_column
         unique_id_input_columns = combine_unique_id_input_columns(
             source_dataset_input_column, unique_id_input_column
         )
@@ -307,8 +309,17 @@ class ExplodingBlockingRule(BlockingRule):
             sql_dialect=self.sql_dialect,
         )
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
+        from splink.internals.unique_id_concat import (
+            _individual_uid_columns_as_select_sql,
+        )
+
+        # Select individual ID columns instead of concatenating them
+        uid_l_cols = _individual_uid_columns_as_select_sql(
+            unique_id_input_columns, "l", "_l"
+        )
+        uid_r_cols = _individual_uid_columns_as_select_sql(
+            unique_id_input_columns, "r", "_r"
+        )
 
         if link_type == "two_dataset_link_only":
             where_condition = (
@@ -317,8 +328,8 @@ class ExplodingBlockingRule(BlockingRule):
 
         sql = f"""
             select distinct
-                {id_expr_l} as {unique_id_col.name_l},
-                {id_expr_r} as {unique_id_col.name_r}
+                {uid_l_cols},
+                {uid_r_cols}
             from __splink__df_concat_unnested as l
             inner join __splink__df_concat_unnested as r
             on ({br.blocking_rule_sql})
@@ -347,12 +358,27 @@ class ExplodingBlockingRule(BlockingRule):
                 " called."
             )
 
+        # Build list of columns to select from exploded ID pairs table
+        # The exploded table already has columns with _l and _r suffixes
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        # Select all individual ID columns with _l and _r suffixes
+        # Use unquoted names since these are column names in the exploded table
+        select_cols = [f"'{self.match_key}' as match_key"]
+        for col in unique_id_columns:
+            col_unquoted = col.unquote().name
+            select_cols.append(f"{col_unquoted}_l")
+            select_cols.append(f"{col_unquoted}_r")
+
+        select_clause = ",\n                ".join(select_cols)
+
         exploded_id_pair_table = self.exploded_id_pair_table
         sql = f"""
             select
-                '{self.match_key}' as match_key,
-                {unique_id_input_column.name_l} as join_key_l,
-                {unique_id_input_column.name_r} as join_key_r
+                {select_clause}
             from {exploded_id_pair_table.physical_name}
         """
         return sql
@@ -558,17 +584,22 @@ def _sql_gen_where_condition(
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
 ) -> str:
-    id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
-    id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
+    from splink.internals.unique_id_concat import _tuple_comparison_order_condition_sql
 
     if link_type in ("two_dataset_link_only", "self_link"):
         where_condition = " where 1=1 "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
-        where_condition = f"where {id_expr_l} < {id_expr_r}"
+        tuple_comparison = _tuple_comparison_order_condition_sql(
+            unique_id_cols, "l", "r", "<"
+        )
+        where_condition = f"where {tuple_comparison}"
     elif link_type == "link_only":
+        tuple_comparison = _tuple_comparison_order_condition_sql(
+            unique_id_cols, "l", "r", "<"
+        )
         source_dataset_col = unique_id_cols[0]
         where_condition = (
-            f"where {id_expr_l} < {id_expr_r} "
+            f"where {tuple_comparison} "
             f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
@@ -660,13 +691,26 @@ def block_using_rules_sqls(
         {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
     )
 
-    sql = """
+    # Build GROUP BY columns dynamically based on unique ID columns
+    # Use unquoted names since we're referring to output column aliases
+    group_by_cols = []
+    select_cols = ["min(match_key) as match_key"]
+
+    for col in unique_id_input_columns:
+        col_unquoted = col.unquote().name
+        col_l = f"{col_unquoted}_l"
+        col_r = f"{col_unquoted}_r"
+        group_by_cols.extend([col_l, col_r])
+        select_cols.extend([col_l, col_r])
+
+    group_by_clause = ", ".join(group_by_cols)
+    select_clause = ",\n        ".join(select_cols)
+
+    sql = f"""
     SELECT
-        min(match_key) as match_key,
-        join_key_l,
-        join_key_r
+        {select_clause}
     FROM __splink__blocked_id_pairs_non_unique
-    GROUP BY join_key_l, join_key_r
+    GROUP BY {group_by_clause}
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})

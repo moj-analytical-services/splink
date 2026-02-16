@@ -34,7 +34,6 @@ from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
 )
-from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
@@ -471,24 +470,27 @@ class LinkerInference:
                 ]
             else:
                 unique_id_columns = [unique_id_input_column]
-            uid_l_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "l")
-            uid_r_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "r")
-            sql_predict_with_join_keys = f"""
-                SELECT *, {uid_l_expr} AS join_key_l, {uid_r_expr} AS join_key_r
-                FROM {df_predict.physical_name}
-            """
-            sqls.append(
-                {
-                    "sql": sql_predict_with_join_keys,
-                    "output_table_name": "__splink__df_predict_with_join_keys",
-                }
-            )
+
+            # Build multi-column join condition for edges table
+            # Join directly on individual columns instead of creating temporary
+            # concatenated join_key_l/join_key_r columns
+            join_conditions = []
+            for col in unique_id_columns:
+                col_l = f"{col.name}_l"
+                col_r = f"{col.name}_r"
+                join_conditions.append(f"oe.{col_l} = ne.{col_l}")
+                join_conditions.append(f"oe.{col_r} = ne.{col_r}")
+
+            join_clause = " AND ".join(join_conditions)
+
+            # Get first column for IS NULL check
+            first_col_l = f"{unique_id_columns[0].name}_l"
 
             sql = f"""
             {sql}
-            LEFT JOIN __splink__df_predict_with_join_keys oe
-            ON oe.join_key_l = ne.join_key_l AND oe.join_key_r = ne.join_key_r
-            WHERE oe.join_key_l IS NULL AND oe.join_key_r IS NULL
+            LEFT JOIN {df_predict.physical_name} oe
+            ON {join_clause}
+            WHERE oe.{first_col_l} IS NULL
             """
 
         sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})

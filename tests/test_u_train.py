@@ -92,7 +92,7 @@ def test_u_train_link_only(test_helpers, dialect):
     # Check that no records are blocked to records in the same source dataset
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
-    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
+    WHERE source_dataset_l = source_dataset_r
     """
 
     pipeline = CTEPipeline()
@@ -285,7 +285,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
-    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
+    WHERE source_dataset_l = source_dataset_r
     """
 
     pipeline = CTEPipeline()
@@ -323,7 +323,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__blocked_id_pairs
-    WHERE substr(join_key_l,1,1) = substr(join_key_r,1,1)
+    WHERE source_dataset_l = source_dataset_r
     """
 
     pipeline = CTEPipeline()
