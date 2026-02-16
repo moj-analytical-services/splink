@@ -4,7 +4,9 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
-from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
+from splink.internals.unique_id_concat import (
+    _composite_unique_id_from_nodes_sql,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,18 +64,28 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
     uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
+    # The where condition shouldn't really do anything because
+    # it's already covered by the inner join.
+    # However, Where there are large numbers of unmatched records, the DuckDB query
+    # planner can struggle with the double inner join below.  It should
+    # push the filters down to the input tables, but it doesn't always do this.
+    # This forces it.
+
     # The first table selects the required columns from the input tables
     # and alises them as `col_l`, `col_r` etc
     # using the __splink__blocked_id_pairs as an associated (junction) table
-
     # That is, it does the join, but doesn't compute the comparison vectors
-    sql = sql = f"""
+    sql = f"""
     select {select_cols_expr}, b.match_key
-    from {input_tablename_l} as l
-    inner join __splink__blocked_id_pairs as b
+    from __splink__blocked_id_pairs as b
+    inner join {input_tablename_l} as l
     on {uid_l_expr} = b.join_key_l
     inner join {input_tablename_r} as r
     on {uid_r_expr} = b.join_key_r
+    where
+    {uid_l_expr} in (select join_key_l from __splink__blocked_id_pairs)
+    or
+    {uid_r_expr} in (select join_key_r from __splink__blocked_id_pairs)
     """
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
