@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import list_to_record_dict
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +128,7 @@ class SplinkDataFrame(ABC):
         Returns:
             list: a list of records, each of which is a dictionary
         """
-        raise NotImplementedError("as_record_dict not implemented for this linker")
+        raise NotImplementedError("as_record_dict not implemented for this backend")
 
     def as_dict(self, limit: Optional[int] = None) -> dict[str, list[Any]]:
         """Return the dataframe as a dictionary of columns to lists of values.
@@ -147,7 +146,7 @@ class SplinkDataFrame(ABC):
         Returns:
             dict: a dictionary mapping column names to lists of values
         """
-        return list_to_record_dict(self.as_record_dict(limit=limit))
+        raise NotImplementedError("as_dict not implemented for this backend")
 
     def as_pyarrow_table(self, limit=None):
         """Return the dataframe as a pyarrow Table.
@@ -168,8 +167,10 @@ class SplinkDataFrame(ABC):
         """
         import pyarrow as pa
 
-        # TODO: prefer pydict - need underlying format though
-        return pa.Table.from_pylist(self.as_record_dict(limit=limit))
+        # going via dict means we get column names even with empty table
+        # also more performant as arrow is columnar anyway
+        tab_dict = self.as_dict(limit=limit)
+        return pa.Table.from_pydict(tab_dict)
 
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
@@ -204,8 +205,10 @@ class SplinkDataFrame(ABC):
             duckdb.DuckDBPyRelation: A DuckDBPyRelation object
         """
         # insert into local duckdb via pyarrow
+        arrow_tab = self.as_pyarrow_table(limit)
         self.db_api.duckdb_con.register(
-            self.templated_name, self.as_pyarrow_table(limit)
+            self.templated_name,
+            arrow_tab,
         )
         return self.db_api.duckdb_con.table(self.templated_name)
 
