@@ -6,7 +6,6 @@ from typing import List, Optional
 from splink.internals.input_column import InputColumn
 from splink.internals.unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
-    _composite_unique_id_from_edges_sql,
 )
 
 logger = logging.getLogger(__name__)
