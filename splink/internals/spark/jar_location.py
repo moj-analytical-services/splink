@@ -1,24 +1,13 @@
-import pyspark as spark
 from pyspark.sql.types import DoubleType, StringType
 
 from ..exceptions import SplinkException
-
-
-def _spark_major_version() -> int:
-    """Check which spark major version is installed
-
-    Returns:
-        int: e.g. pyspark == 3.0.0 returns 3
-    """
-
-    major_str = spark.__version__.split(".", 1)[0]
-    return int(major_str)
+from .spark_helpers.version import get_spark_major_version
 
 
 def similarity_jar_location() -> str:
     import splink
 
-    spark_major_version = _spark_major_version()
+    spark_major_version = get_spark_major_version()
 
     if spark_major_version >= 4:
         path = (

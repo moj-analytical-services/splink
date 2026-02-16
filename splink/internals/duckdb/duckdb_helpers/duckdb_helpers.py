@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+from typing import Any
 
 import duckdb
 
@@ -48,3 +49,19 @@ def create_temporary_duckdb_connection(self):
     path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
     con = duckdb.connect(database=path, read_only=False)
     return con
+
+
+def record_dicts_from_relation(
+    complete_df: duckdb.DuckDBPyRelation,
+) -> list[dict[str, Any]]:
+    rows = complete_df.fetchall()
+    column_names = [desc[0] for desc in complete_df.description]
+    return [dict(zip(column_names, row)) for row in rows]
+
+
+def dict_from_relation(
+    complete_df: duckdb.DuckDBPyRelation,
+) -> dict[str, list[Any]]:
+    rows = complete_df.fetchall()
+    column_names = [desc[0] for desc in complete_df.description]
+    return {col: [row[i] for row in rows] for i, col in enumerate(column_names)}

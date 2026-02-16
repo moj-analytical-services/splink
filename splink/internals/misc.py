@@ -71,6 +71,18 @@ def join_list_with_commas_final_and(lst: list[str]) -> str:
     return ", ".join(lst[:-1]) + " and " + lst[-1]
 
 
+def record_dict_to_list(record_dict: dict[str, list[T]]) -> list[dict[str, T]]:
+    keys = record_dict.keys()
+    return [dict(zip(keys, values)) for values in zip(*record_dict.values())]
+
+
+def list_to_record_dict(list_of_dicts: list[dict[str, T]]) -> dict[str, list[T]]:
+    if not list_of_dicts:
+        return {}
+    keys = list_of_dicts[0].keys()
+    return {k: [d[k] for d in list_of_dicts] for k in keys}
+
+
 @overload
 def to_pyarrow_if_dict(input: dict[T, U]) -> "pa.Table": ...
 
@@ -88,31 +100,36 @@ def to_pyarrow_if_dict(input):
 
 
 @overload
-def to_pyarrow_if_list(input: list[T]) -> "pa.Table": ...
+def to_pyarrow_if_list_or_tuple(input: list[T]) -> "pa.Table": ...
 
 
 @overload
-def to_pyarrow_if_list(input: T) -> T: ...
+def to_pyarrow_if_list_or_tuple(input: tuple[T]) -> "pa.Table": ...
 
 
-def to_pyarrow_if_list(input):
+@overload
+def to_pyarrow_if_list_or_tuple(input: T) -> T: ...
+
+
+def to_pyarrow_if_list_or_tuple(input):
     import pyarrow as pa
 
-    if isinstance(input, list):
+    if isinstance(input, (list, tuple)):
+        # pyarrow method works happily with tuples
         input = pa.Table.from_pylist(input)
     return input
 
 
 @overload
-def to_pyarrow_if_list_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
+def to_pyarrow_if_list_tuple_or_dict(input: list[T] | dict[T, U]) -> "pa.Table": ...
 
 
 @overload
-def to_pyarrow_if_list_or_dict(input: T) -> T: ...
+def to_pyarrow_if_list_tuple_or_dict(input: T) -> T: ...
 
 
-def to_pyarrow_if_list_or_dict(input):
-    return to_pyarrow_if_dict(to_pyarrow_if_list(input))
+def to_pyarrow_if_list_tuple_or_dict(input):
+    return to_pyarrow_if_dict(to_pyarrow_if_list_or_tuple(input))
 
 
 class EverythingEncoder(json.JSONEncoder):
