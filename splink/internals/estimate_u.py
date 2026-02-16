@@ -49,7 +49,7 @@ class _MUCountsAccumulator:
         self._output_column_name = comparison.output_column_name
         self._label_by_cvv: dict[int, str] = {}
         self._counts_by_cvv: dict[int, list[float]] = {
-            int(cl.comparison_vector_value): [0.0, 0.0]
+            int(cl.comparison_vector_value): [0.0]
             for cl in comparison._comparison_levels_excluding_null
         }
 
@@ -59,21 +59,18 @@ class _MUCountsAccumulator:
             label = cl._label_for_charts_no_duplicates(comparison_levels)
             self._label_by_cvv[cvv] = str(label)
 
-    def update_from_chunk_counts(
-        self, chunk_counts: list[dict[str, Any]]
-    ) -> None:
+    def update_from_chunk_counts(self, chunk_counts: list[dict[str, Any]]) -> None:
         for r in chunk_counts:
             cvv = int(r["comparison_vector_value"])
             totals = self._counts_by_cvv.get(cvv)
             if totals is None:
                 continue
-            totals[0] += float(r["m_count"])
-            totals[1] += float(r["u_count"])
+            totals[0] += float(r["u_count"])
 
     def min_u_count(self) -> float:
         if not self._counts_by_cvv:
             return 0.0
-        return min(totals[1] for totals in self._counts_by_cvv.values())
+        return min(totals[0] for totals in self._counts_by_cvv.values())
 
     def min_u_count_level(self) -> tuple[float, int | None, str | None]:
         """Return (min_u_count, cvv, label) for the current accumulator."""
@@ -82,7 +79,7 @@ class _MUCountsAccumulator:
         min_cvv: int | None = None
         min_u: float | None = None
         for cvv in sorted(self._counts_by_cvv):
-            u_count = float(self._counts_by_cvv[cvv][1])
+            u_count = float(self._counts_by_cvv[cvv][0])
             if (min_u is None) or (u_count < min_u):
                 min_u = u_count
                 min_cvv = cvv
