@@ -88,13 +88,19 @@ class _MUCountsAccumulator:
     def all_levels_meet_min_u_count(self, min_count: int) -> bool:
         return self.min_u_count() >= min_count
 
-    def to_record_list(self, with_dummy_m_count: bool = True) -> list[dict[str, Any]]:
+    def to_record_list(self, with_extra_columns: bool = True) -> list[dict[str, Any]]:
         return [
             {
-                "output_column_name": self._output_column_name,
                 "comparison_vector_value": cvv,
-                "m_count": 0.0 if with_dummy_m_count else None,
                 "u_count": totals[0],
+                **(
+                    {
+                        "output_column_name": self._output_column_name,
+                        "m_count": 0.0,
+                    }
+                    if with_extra_columns
+                    else {}
+                ),
             }
             for cvv, totals in sorted(self._counts_by_cvv.items())
         ]
@@ -103,10 +109,9 @@ class _MUCountsAccumulator:
         """
         Nice display, for debugging purposes.
         """
-        recs = self.to_record_list()
+        recs = self.to_record_list(with_extra_columns=False)
         if not recs:
             return ""
-        recs = [r for r in recs]
         try:
             import pyarrow as pa
 
