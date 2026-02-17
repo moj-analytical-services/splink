@@ -595,12 +595,16 @@ class Settings:
         }
 
     def match_weights_chart(self, as_dict=False):
-        records = self._parameters_as_detailed_records
+        records = list(
+            map(lambda rec: rec.as_dict(), self._parameters_as_detailed_records)
+        )
 
         return match_weights_chart(records, as_dict=as_dict)
 
     def m_u_parameters_chart(self, as_dict=False):
-        records = self._parameters_as_detailed_records
+        records = list(
+            map(lambda rec: rec.as_dict(), self._parameters_as_detailed_records)
+        )
         return m_u_parameters_chart(records, as_dict=as_dict)
 
     def _columns_without_estimated_parameters_message(self):

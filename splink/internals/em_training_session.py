@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
@@ -22,6 +23,7 @@ from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import (
     ComparisonAndLevelDict,
     CoreModelSettings,
+    ModelParameterDetailedRecord,
     Settings,
     TrainingSettings,
 )
@@ -37,6 +39,27 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
     from splink.internals.splink_dataframe import SplinkDataFrame
+
+
+@dataclass(kw_only=True)
+class ModelParameterIterationDetailedRecord(ModelParameterDetailedRecord):
+    iteration: int
+
+    @classmethod
+    def from_settings_param_detailed_record(
+        cls,
+        cl_rec: ModelParameterDetailedRecord,
+        *,
+        probability_two_random_records_match: float,
+        iteration: int,
+    ) -> ModelParameterIterationDetailedRecord:
+        cl_rec.probability_two_random_records_match = (
+            probability_two_random_records_match
+        )
+        return cls(
+            **asdict(cl_rec),
+            iteration=iteration,
+        )
 
 
 class EMTrainingSession:
@@ -320,20 +343,20 @@ class EMTrainingSession:
         return adjusted_prop_m
 
     @property
-    def _iteration_history_records(self):
+    def _iteration_history_records(self) -> list[ModelParameterIterationDetailedRecord]:
         output_records = []
 
         for iteration, core_model_settings in enumerate(
             self._core_model_settings_history
         ):
-            records = core_model_settings.parameters_as_detailed_records
-
-            for r in records:
-                r["iteration"] = iteration
-                # TODO: why lambda from current settings, not history?
-                r["probability_two_random_records_match"] = (
-                    self.core_model_settings.probability_two_random_records_match
+            records = [
+                ModelParameterIterationDetailedRecord.from_settings_param_detailed_record(
+                    r,
+                    probability_two_random_records_match=self.core_model_settings.probability_two_random_records_match,
+                    iteration=iteration,
                 )
+                for r in core_model_settings.parameters_as_detailed_records
+            ]
 
             output_records.extend(records)
         return output_records
@@ -370,7 +393,7 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        records = self._iteration_history_records
+        records = list(map(lambda rec: rec.as_dict(), self._iteration_history_records))
         return match_weights_interactive_history_chart(
             records, blocking_rule=self._blocking_rule_for_training.blocking_rule_sql
         )
@@ -382,7 +405,7 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        records = self._iteration_history_records
+        records = list(map(lambda rec: rec.as_dict(), self._iteration_history_records))
         return m_u_parameters_interactive_history_chart(records)
 
     def __repr__(self):
