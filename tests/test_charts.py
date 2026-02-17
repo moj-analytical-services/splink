@@ -143,6 +143,24 @@ def test_m_u_charts(dialect, test_helpers):
 
 
 @mark_with_dialects_excluding()
+def test_comparison_match_weight_charts(dialect, test_helpers):
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("gender"),
+            cl.ExactMatch("tm_partial"),
+            cl.LevenshteinAtThresholds("surname", [1]),
+        ],
+    }
+    helper = test_helpers[dialect]
+
+    linker = helper.linker_with_registration(df, settings)
+
+    comp = linker._settings_obj.comparisons[0]
+    comp.match_weights_chart()
+
+
+@mark_with_dialects_excluding()
 def test_parameter_estimate_charts(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
