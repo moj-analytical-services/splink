@@ -349,20 +349,6 @@ def parameter_estimate_comparisons(records, as_dict=False):
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def missingness_chart(records, as_dict=False):
-    chart_path = "missingness.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["data"]["values"] = records
-
-    record_count = records[0]["total_record_count"]
-
-    for c in chart["layer"]:
-        c["title"] = f"Missingness per column out of {record_count:,.0f} records"
-
-    return altair_or_json(chart, as_dict=as_dict)
-
-
 def unlinkables_chart(
     records,
     x_col="match_weight",
