@@ -113,7 +113,7 @@ class CoreModelSettings:
         output = []
         rr_match = self.probability_two_random_records_match
         for i, cc in enumerate(self.comparisons):
-            records = cc._as_detailed_records
+            records = list(map(lambda rec: rec.as_dict(), cc._as_detailed_records))
             for r in records:
                 r["probability_two_random_records_match"] = rr_match
                 r["comparison_sort_order"] = i

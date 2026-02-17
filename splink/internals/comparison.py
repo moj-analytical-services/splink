@@ -12,6 +12,7 @@ from splink.internals.misc import (
 
 from .comparison_level import (
     ComparisonLevel,
+    ComparisonLevelDetailedRecord,
     _default_m_values,
     _default_u_values,
 )
@@ -364,12 +365,12 @@ class Comparison:
         return self._all_m_are_trained and self._all_u_are_trained
 
     @property
-    def _as_detailed_records(self) -> list[dict[str, Any]]:
+    def _as_detailed_records(self) -> list[ComparisonLevelDetailedRecord]:
         records = []
         for cl in self.comparison_levels:
             record = cl._as_detailed_record(self._num_levels, self.comparison_levels)
             record.comparison_name = self.output_column_name
-            records.append(record.as_dict())
+            records.append(record)
         return records
 
     @property
@@ -466,5 +467,5 @@ class Comparison:
         """Display a chart of comparison levels of the comparison"""
         from splink.internals.charts import comparison_match_weights_chart
 
-        records = self._as_detailed_records
+        records = list(map(lambda rec: rec.as_dict(), self._as_detailed_records))
         return comparison_match_weights_chart(records, as_dict=as_dict)
