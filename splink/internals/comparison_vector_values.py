@@ -45,6 +45,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     include_clerical_match_score: bool = False,
+    link_type: Optional[str] = None,
+    sql_dialect_str: Optional[str] = None,
 ) -> list[dict[str, str]]:
     """Compute the comparison vectors from __splink__blocked_id_pairs, the
     materialised dataframe of blocked pairwise record comparisons.
@@ -62,10 +64,19 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     select_cols_expr = ", \n".join(columns_to_select_for_blocking)
 
     # Where there are large numbers of unmatched records, the DuckDB query planner
-    # Can struggle with the double inner join below.  It should
+    # can struggle with the double inner join below.  It should
     # push the filters down to the input tables, but it doesn't always do this.
-    # This forces it.
-    if input_tablename_l == input_tablename_r:
+    # This forces it.  it is only really relevant in the link only case,
+    # where one dataset is much larger than the other
+    # This optimisation is here due to poor performance observed in
+    # the `uk_address_matcher` package
+    # TODO: Once DuckDB 1.5 is released, check this is still needed
+    # ref https://github.com/moj-analytical-services/uk_address_matcher/issues/226
+    if (
+        input_tablename_l == input_tablename_r
+        and link_type == "two_dataset_link_only"
+        and sql_dialect_str == "duckdb"
+    ):
         uid_expr = _composite_unique_id_from_nodes_sql(unique_id_columns)
         sql = f"""
         select *

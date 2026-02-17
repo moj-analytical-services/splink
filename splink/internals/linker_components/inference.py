@@ -139,6 +139,8 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            link_type=link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -268,6 +270,8 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            link_type=link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
