@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import math
 import os
-from typing import TYPE_CHECKING, Any, Dict, Union
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, Dict, Protocol, Union
 
+from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
@@ -39,6 +41,14 @@ def altair_or_json(
         return Chart.from_dict(chart_dict)
 
     return chart_dict
+
+
+class AsDictable(Protocol):
+    def as_dict(self) -> dict[str, Any]: ...
+
+
+def list_items_as_dicts(lst: Iterable[AsDictable]) -> list[dict[str, Any]]:
+    return list(map(lambda item: item.as_dict(), lst))
 
 
 iframe_message = """
@@ -110,18 +120,21 @@ def match_weights_chart(records, as_dict=False):
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def comparison_match_weights_chart(records, as_dict=False):
+def comparison_match_weights_chart(
+    records: list[ComparisonLevelDetailedRecord], as_dict: bool = False
+) -> ChartReturnType:
     chart_path = "match_weights_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
     # Remove iteration history since this is a static chart
-    del chart["vconcat"][0]
+    # TODO: some render issue if we remove empty top panel, so leave for now
+    # del chart["vconcat"][0]
     del chart["params"]
     del chart["transform"]
 
     chart["title"]["text"] = "Comparison summary"
-    records = [r for r in records if r["comparison_vector_value"] != -1]
-    chart["data"]["values"] = records
+    records = [r for r in records if r.comparison_vector_value != -1]
+    chart["data"]["values"] = list_items_as_dicts(records)
     return altair_or_json(chart, as_dict=as_dict)
 
 

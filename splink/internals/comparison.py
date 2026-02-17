@@ -467,5 +467,5 @@ class Comparison:
         """Display a chart of comparison levels of the comparison"""
         from splink.internals.charts import comparison_match_weights_chart
 
-        records = list(map(lambda rec: rec.as_dict(), self._as_detailed_records))
+        records = self._as_detailed_records
         return comparison_match_weights_chart(records, as_dict=as_dict)
