@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+
+## [4.0.15] - 2026-02-17
+
+### Changed
+
+Faster two_dataset_link_only joins when joining small table to large in duckdb by @RobinL in https://github.com/moj-analytical-services/splink/pull/2936
+
 ## [4.0.14] - 2026-02-12
 
 ### Changed
