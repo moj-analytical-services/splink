@@ -10,7 +10,11 @@ from splink.internals.misc import (
     join_list_with_commas_final_and,
 )
 
-from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
+from .comparison_level import (
+    ComparisonLevel,
+    _default_m_values,
+    _default_u_values,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -363,15 +367,9 @@ class Comparison:
     def _as_detailed_records(self) -> list[dict[str, Any]]:
         records = []
         for cl in self.comparison_levels:
-            record = {}
-            record["comparison_name"] = self.output_column_name
-            record = {
-                **record,
-                **cl._as_detailed_record(
-                    self._num_levels, self.comparison_levels
-                ).as_dict(),
-            }
-            records.append(record)
+            record = cl._as_detailed_record(self._num_levels, self.comparison_levels)
+            record.comparison_name = self.output_column_name
+            records.append(record.as_dict())
         return records
 
     @property

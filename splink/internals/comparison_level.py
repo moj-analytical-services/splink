@@ -139,6 +139,7 @@ class ComparisonLevelDetailedRecord:
 
     comparison_vector_value: int
     max_comparison_vector_value: int
+    comparison_name: str | None = None
 
     def as_dict(self):
         return asdict(self)
