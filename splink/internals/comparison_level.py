@@ -117,14 +117,14 @@ def _default_u_values(num_levels: int) -> list[float]:
     return u_vals
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ComparisonLevelDetailedRecord:
-    sql_condition: str
+    sql_condition: str | None
     label_for_charts: str
 
     has_tf_adjustments: bool
     tf_adjustment_column: str | None
-    tf_adjustment_weight: float
+    tf_adjustment_weight: float | None
 
     is_null_level: bool
 
