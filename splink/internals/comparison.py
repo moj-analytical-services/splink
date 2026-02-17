@@ -367,7 +367,9 @@ class Comparison:
             record["comparison_name"] = self.output_column_name
             record = {
                 **record,
-                **cl._as_detailed_record(self._num_levels, self.comparison_levels),
+                **cl._as_detailed_record(
+                    self._num_levels, self.comparison_levels
+                ).as_dict(),
             }
             records.append(record)
         return records
