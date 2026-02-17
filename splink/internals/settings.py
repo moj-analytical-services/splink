@@ -600,10 +600,9 @@ class Settings:
         )
 
     def m_u_parameters_chart(self, as_dict=False):
-        records = list(
-            map(lambda rec: rec.as_dict(), self._parameters_as_detailed_records)
+        return m_u_parameters_chart(
+            self._parameters_as_detailed_records, as_dict=as_dict
         )
-        return m_u_parameters_chart(records, as_dict=as_dict)
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []

@@ -141,7 +141,9 @@ def comparison_match_weights_chart(
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def m_u_parameters_chart(records, as_dict=False):
+def m_u_parameters_chart(
+    records: list[ModelParameterDetailedRecord], as_dict: bool = False
+) -> ChartReturnType:
     chart_path = "m_u_parameters_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
@@ -152,10 +154,10 @@ def m_u_parameters_chart(records, as_dict=False):
     records = [
         r
         for r in records
-        if r["comparison_vector_value"] != -1
-        and r["comparison_name"] != "probability_two_random_records_match"
+        if r.comparison_vector_value != -1
+        and r.comparison_name != "probability_two_random_records_match"
     ]
-    chart["data"]["values"] = records
+    chart["data"]["values"] = list_items_as_dicts(records)
     return altair_or_json(chart, as_dict=as_dict)
 
 
