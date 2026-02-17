@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, Protocol, Union
 
 from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.misc import read_resource
+from splink.internals.settings import ModelParameterDetailedRecord
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
 if TYPE_CHECKING:
@@ -96,7 +97,9 @@ def save_offline_chart(
         print(iframe_message.format(filename=filename))  # noqa: T201
 
 
-def match_weights_chart(records, as_dict=False):
+def match_weights_chart(
+    records: list[ModelParameterDetailedRecord], as_dict: bool = False
+) -> ChartReturnType:
     chart_path = "match_weights_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
@@ -104,15 +107,15 @@ def match_weights_chart(records, as_dict=False):
     del chart["params"]
     del chart["transform"]
 
-    records = [r for r in records if r["comparison_vector_value"] != -1]
-    chart["data"]["values"] = records
+    records = [r for r in records if r.comparison_vector_value != -1]
 
     bayes_factors = [
         abs(l2bf)
         for r in records
-        if (l2bf := r["log2_bayes_factor"]) is not None and not math.isinf(l2bf)
+        if (l2bf := r.log2_bayes_factor) is not None and not math.isinf(l2bf)
     ]
     max_value = math.ceil(max(bayes_factors))
+    chart["data"]["values"] = list_items_as_dicts(records)
 
     chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
     chart["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
