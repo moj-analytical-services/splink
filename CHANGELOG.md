@@ -31,6 +31,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
 - `pandas` and `numpy` are no longer required dependencies [#2883](https://github.com/moj-analytical-services/splink/pull/2883)
 
+## [4.0.15] - 2026-02-17
+
+### Changed
+
+Faster two_dataset_link_only joins when joining small table to large in duckdb by @RobinL in https://github.com/moj-analytical-services/splink/pull/2936
+
+## [4.0.14] - 2026-02-12
+
+### Changed
+
+* Two dataset link only exploding blocking rule optimisation by @RobinL in https://github.com/moj-analytical-services/splink/pull/2931
+* Filtered neighbours gets persisted by @RobinL in https://github.com/moj-analytical-services/splink/pull/2933
+
 ## [4.0.13] - 2026-02-12
 
 ### Fixed
