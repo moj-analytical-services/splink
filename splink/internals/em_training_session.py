@@ -8,8 +8,8 @@ from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
     ChartReturnType,
     MatchWeightsInteractiveHistoryChart,
+    MUParametersInteractiveHistoryChart,
     ProbabilityTwoRandomRecordsMatchIterationChart,
-    m_u_parameters_interactive_history_chart,
 )
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_vector_values import (
@@ -405,7 +405,9 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        return m_u_parameters_interactive_history_chart(self._iteration_history_records)
+        return MUParametersInteractiveHistoryChart(
+            self._iteration_history_records
+        ).chart
 
     def __repr__(self):
         deactivated_cols = ", ".join(

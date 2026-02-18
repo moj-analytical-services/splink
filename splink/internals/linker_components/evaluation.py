@@ -10,9 +10,9 @@ from splink.internals.accuracy import (
 )
 from splink.internals.charts import (
     ChartReturnType,
+    PrecisionRecallChart,
+    ROCChart,
     accuracy_chart,
-    precision_recall_chart,
-    roc_chart,
     threshold_selection_tool,
     unlinkables_chart,
 )
@@ -172,9 +172,9 @@ class LinkerEvalution:
         elif output_type == "accuracy":
             return accuracy_chart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return roc_chart(recs)
+            return ROCChart(recs).chart
         elif output_type == "precision_recall":
-            return precision_recall_chart(recs)
+            return PrecisionRecallChart(recs).chart
         elif output_type == "table":
             return df_truth_space
         else:
@@ -285,9 +285,9 @@ class LinkerEvalution:
         elif output_type == "accuracy":
             return accuracy_chart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return roc_chart(recs)
+            return ROCChart(recs).chart
         elif output_type == "precision_recall":
-            return precision_recall_chart(recs)
+            return PrecisionRecallChart(recs).chart
         elif output_type == "table":
             return df_truth_space
         else:

@@ -305,26 +305,31 @@ class MatchWeightsInteractiveHistoryChart(
         return chart_spec
 
 
-def m_u_parameters_interactive_history_chart(
-    records: list[ModelParameterIterationDetailedRecord], as_dict: bool = False
-) -> ChartReturnType:
-    chart_path = "m_u_parameters_interactive_history.json"
-    chart = load_chart_definition(chart_path)
-    records = [
-        r
-        for r in records
-        if r.comparison_vector_value != -1
-        and r.comparison_name != "probability_two_random_records_match"
-    ]
+class MUParametersInteractiveHistoryChart(
+    SplinkChart[ModelParameterIterationDetailedRecord]
+):
+    @property
+    def chart_spec_file(self) -> str:
+        return "m_u_parameters_interactive_history.json"
 
-    max_iteration = 0
-    for r in records:
-        max_iteration = max(r.iteration, max_iteration)
+    @staticmethod
+    def alter_data(records):
+        return [
+            r
+            for r in records
+            if r.comparison_vector_value != -1
+            and r.comparison_name != "probability_two_random_records_match"
+        ]
 
-    chart["data"]["values"] = list_items_as_dicts(records)
-    chart["params"][0]["bind"]["max"] = max_iteration
-    chart["params"][0]["value"] = max_iteration
-    return altair_or_json(chart, as_dict=as_dict)
+    def alter_spec_from_data(self, chart_spec):
+        records = self.chart_data
+        max_iteration = 0
+        for r in records:
+            max_iteration = max(r.iteration, max_iteration)
+
+        chart_spec["params"][0]["bind"]["max"] = max_iteration
+        chart_spec["params"][0]["value"] = max_iteration
+        return chart_spec
 
 
 def waterfall_chart(
@@ -345,40 +350,50 @@ def waterfall_chart(
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def roc_chart(records, width=400, height=400, as_dict=False):
-    chart_path = "roc.json"
-    chart = load_chart_definition(chart_path)
+class ROCChart(SplinkChart[ChartRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "roc.json"
 
-    chart["data"]["values"] = records
+    @property
+    def default_width(self) -> float:
+        return 400
 
-    # If 'curve_label' not in records, remove colour coding
-    # This is for if you want to compare roc curves
-    r = records[0]
-    if "curve_label" not in r.keys():
-        del chart["encoding"]["color"]
+    @property
+    def default_height(self) -> float:
+        return 400
 
-    chart["height"] = height
-    chart["width"] = width
+    def alter_spec_from_data(self, chart_spec):
+        records = self.chart_data
+        # If 'curve_label' not in records, remove colour coding
+        # This is for if you want to compare roc curves
+        r = records[0]
+        if "curve_label" not in r.keys():
+            del chart_spec["encoding"]["color"]
+        return chart_spec
 
-    return altair_or_json(chart, as_dict=as_dict)
 
+class PrecisionRecallChart(SplinkChart[ChartRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "precision_recall.json"
 
-def precision_recall_chart(records, width=400, height=400, as_dict=False):
-    chart_path = "precision_recall.json"
-    chart = load_chart_definition(chart_path)
+    @property
+    def default_width(self) -> float:
+        return 400
 
-    chart["data"]["values"] = records
+    @property
+    def default_height(self) -> float:
+        return 400
 
-    # If 'curve_label' not in records, remove colour coding
-    # This is for if you want to compare roc curves
-    r = records[0]
-    if "curve_label" not in r.keys():
-        del chart["encoding"]["color"]
-
-    chart["height"] = height
-    chart["width"] = width
-
-    return altair_or_json(chart, as_dict=as_dict)
+    def alter_spec_from_data(self, chart_spec):
+        records = self.chart_data
+        # If 'curve_label' not in records, remove colour coding
+        # This is for if you want to compare roc curves
+        r = records[0]
+        if "curve_label" not in r.keys():
+            del chart_spec["encoding"]["color"]
+        return chart_spec
 
 
 def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]):
