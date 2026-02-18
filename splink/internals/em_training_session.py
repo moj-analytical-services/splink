@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, List
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
     ChartReturnType,
+    MatchWeightsInteractiveHistoryChart,
     ProbabilityTwoRandomRecordsMatchIterationChart,
     m_u_parameters_interactive_history_chart,
-    match_weights_interactive_history_chart,
 )
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_vector_values import (
@@ -393,10 +393,10 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        return match_weights_interactive_history_chart(
+        return MatchWeightsInteractiveHistoryChart(
             self._iteration_history_records,
-            blocking_rule=self._blocking_rule_for_training.blocking_rule_sql,
-        )
+            blocking_rule_text=self._blocking_rule_for_training.blocking_rule_sql,
+        ).chart
 
     def m_u_values_interactive_history_chart(self) -> ChartReturnType:
         """

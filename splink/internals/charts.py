@@ -274,26 +274,38 @@ class ProbabilityTwoRandomRecordsMatchIterationChart(SplinkChart[PlaceholderReco
         return "probability_two_random_records_match_iteration.json"
 
 
-def match_weights_interactive_history_chart(
-    records: list[ModelParameterIterationDetailedRecord],
-    as_dict: bool = False,
-    blocking_rule: str | None = None,
-) -> ChartReturnType:
-    chart_path = "match_weights_interactive_history.json"
-    chart = load_chart_definition(chart_path)
+class MatchWeightsInteractiveHistoryChart(
+    SplinkChart[ModelParameterIterationDetailedRecord]
+):
+    def __init__(
+        self,
+        records: list[ModelParameterIterationDetailedRecord],
+        blocking_rule_text: str,
+        as_dict: bool = False,
+    ):
+        super().__init__(records, as_dict=as_dict)
+        self.blocking_rule_text = blocking_rule_text
 
-    chart["title"]["subtitle"] = f"Training session blocked on {blocking_rule}"
+    @property
+    def chart_spec_file(self) -> str:
+        return "match_weights_interactive_history.json"
 
-    records = [r for r in records if r.comparison_vector_value != -1]
+    @staticmethod
+    def alter_data(records):
+        return [r for r in records if r.comparison_vector_value != -1]
 
-    max_iteration = 0
-    for r in records:
-        max_iteration = max(r.iteration, max_iteration)
-    chart["data"]["values"] = list_items_as_dicts(records)
+    def alter_spec_from_data(self, chart_spec):
+        records = self.chart_data
+        max_iteration = 0
+        for r in records:
+            max_iteration = max(r.iteration, max_iteration)
 
-    chart["params"][0]["bind"]["max"] = max_iteration
-    chart["params"][0]["value"] = max_iteration
-    return altair_or_json(chart, as_dict=as_dict)
+        chart_spec["params"][0]["bind"]["max"] = max_iteration
+        chart_spec["params"][0]["value"] = max_iteration
+        chart_spec["title"]["subtitle"] = (
+            f"Training session blocked on {self.blocking_rule_text}"
+        )
+        return chart_spec
 
 
 def m_u_parameters_interactive_history_chart(
