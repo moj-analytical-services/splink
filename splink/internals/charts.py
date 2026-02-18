@@ -5,7 +5,7 @@ import math
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Protocol, Sequence, TypeVar, Union
 
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
@@ -114,14 +114,11 @@ def save_offline_chart(
 class ChartRecord(Protocol): ...
 
 
-class PlaceholderRecord: ...  # TODO: placeholder until we type remaining charts
-
-
 T = TypeVar("T", bound=ChartRecord)
 
 
 class SplinkChart(ABC, Generic[T]):
-    def __init__(self, records: list[Any], as_dict: bool = False):
+    def __init__(self, records: Sequence[T], as_dict: bool = False):
         # TODO: as_dict only in methods rather than on object
         self.raw_records = records
         self.as_dict = as_dict
@@ -268,7 +265,7 @@ class MUParametersChart(SplinkChart[ModelParameterDetailedRecord]):
         return chart_spec
 
 
-class ProbabilityTwoRandomRecordsMatchIterationChart(SplinkChart[PlaceholderRecord]):
+class ProbabilityTwoRandomRecordsMatchIterationChart(SplinkChart[ChartRecord]):
     @property
     def chart_spec_file(self) -> str:
         return "probability_two_random_records_match_iteration.json"
@@ -279,7 +276,7 @@ class MatchWeightsInteractiveHistoryChart(
 ):
     def __init__(
         self,
-        records: list[ModelParameterIterationDetailedRecord],
+        records: Sequence[ModelParameterIterationDetailedRecord],
         blocking_rule_text: str,
         as_dict: bool = False,
     ):
@@ -469,7 +466,7 @@ def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
     return altair_or_json(chart, as_dict=as_dict)
 
 
-class MatchWeightsHistogramChart(SplinkChart[PlaceholderRecord]):
+class MatchWeightsHistogramChart(SplinkChart[ChartRecord]):
     @property
     def chart_spec_file(self) -> str:
         return "match_weight_histogram.json"
@@ -483,7 +480,7 @@ class MatchWeightsHistogramChart(SplinkChart[PlaceholderRecord]):
         return 250
 
 
-class ParameterEstimateComparisonsChart(SplinkChart[PlaceholderRecord]):
+class ParameterEstimateComparisonsChart(SplinkChart[ChartRecord]):
     @property
     def chart_spec_file(self) -> str:
         return "parameter_estimate_comparisons.json"
@@ -538,13 +535,13 @@ def unlinkables_chart(
     return altair_or_json(unlinkables_chart_def, as_dict=as_dict)
 
 
-class CompletenessChart(SplinkChart[PlaceholderRecord]):
+class CompletenessChart(SplinkChart[ChartRecord]):
     @property
     def chart_spec_file(self) -> str:
         return "completeness.json"
 
 
-class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[PlaceholderRecord]):
+class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
     @property
     def chart_spec_file(self) -> str:
         return "blocking_rule_generated_comparisons.json"
