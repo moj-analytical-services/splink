@@ -4,19 +4,20 @@ import json
 import math
 import os
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Dict, Protocol, Union
+from typing import TYPE_CHECKING, Any, Protocol, Union
 
-from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.misc import read_resource
-from splink.internals.settings import ModelParameterDetailedRecord
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
 if TYPE_CHECKING:
     from altair import SchemaBase
+
+    from splink.internals.comparison_level import ComparisonLevelDetailedRecord
+    from splink.internals.settings import ModelParameterDetailedRecord
 else:
     SchemaBase = None
 # type alias:
-ChartReturnType = Union[Dict[Any, Any], SchemaBase]
+ChartReturnType = Union[dict[Any, Any], SchemaBase]
 
 
 def load_chart_definition(filename):
