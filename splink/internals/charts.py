@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import math
 import os
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Protocol, Union
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar, Union
 
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
@@ -19,6 +20,8 @@ if TYPE_CHECKING:
     from splink.internals.settings import ModelParameterDetailedRecord
 else:
     SchemaBase = None
+
+    ComparisonLevelDetailedRecord = None
 # type alias:
 ChartReturnType = Union[dict[Any, Any], SchemaBase]
 
@@ -52,8 +55,12 @@ class AsDictable(Protocol):
     def as_dict(self) -> dict[str, Any]: ...
 
 
-def list_items_as_dicts(lst: Iterable[AsDictable]) -> list[dict[str, Any]]:
-    return list(map(lambda item: item.as_dict(), lst))
+def list_items_as_dicts(
+    lst: Iterable[AsDictable | dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return list(
+        map(lambda item: item if isinstance(item, dict) else item.as_dict(), lst)
+    )
 
 
 iframe_message = """
@@ -101,30 +108,91 @@ def save_offline_chart(
         print(iframe_message.format(filename=filename))  # noqa: T201
 
 
-def match_weights_chart(
-    records: list[ModelParameterDetailedRecord], as_dict: bool = False
-) -> ChartReturnType:
-    chart_path = "match_weights_interactive_history.json"
-    chart = load_chart_definition(chart_path)
+class ChartRecord(Protocol): ...
 
-    # Remove iteration history since this is a static chart
-    del chart["params"]
-    del chart["transform"]
 
-    records = [r for r in records if r.comparison_vector_value != -1]
+T = TypeVar("T", bound=ChartRecord)
 
-    bayes_factors = [
-        abs(l2bf)
-        for r in records
-        if (l2bf := r.log2_bayes_factor) is not None and not math.isinf(l2bf)
-    ]
-    max_value = math.ceil(max(bayes_factors))
-    chart["data"]["values"] = list_items_as_dicts(records)
 
-    chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
-    chart["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
+class SplinkChart(ABC, Generic[T]):
+    def __init__(self, records: list[Any], as_dict: bool = False):
+        # TODO: as_dict only in methods rather than on object
+        self.raw_records = records
+        self.as_dict = as_dict
 
-    return altair_or_json(chart, as_dict=as_dict)
+    @property
+    @abstractmethod
+    def chart_spec_file(self) -> str:
+        pass
+
+    @property
+    def chart_data(self):
+        # TODO: cache
+        return self.alter_data(self.raw_records)
+
+    @property
+    def chart_spec(self) -> dict[str, Any]:
+        chart_spec = load_chart_definition(self.chart_spec_file)
+        chart_spec = self.alter_spec_directly(chart_spec)
+        chart_spec = self.alter_spec_from_data(chart_spec)
+        return chart_spec
+
+    @property
+    def chart_dict(self) -> dict[str, Any]:
+        chart = self.chart_spec
+        chart["data"]["values"] = list_items_as_dicts(self.chart_data)
+        return chart
+
+    @property
+    def chart(self) -> ChartReturnType:
+        # TODO: split into separate methods
+        # also save etc
+        return altair_or_json(self.chart_dict, as_dict=self.as_dict)
+
+    @staticmethod
+    def alter_data(records):
+        return records
+
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        return chart_spec
+
+    def alter_spec_from_data(self, chart_spec):
+        return chart_spec
+
+
+class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "match_weights_interactive_history.json"
+
+    @staticmethod
+    def alter_data(records):
+        return [r for r in records if r.comparison_vector_value != -1]
+
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        # Remove iteration history since this is a static chart
+        del chart_spec["params"]
+        del chart_spec["transform"]
+        return chart_spec
+
+    def alter_spec_from_data(self, chart_spec):
+        bayes_factors = [
+            abs(l2bf)
+            for r in self.chart_data
+            if (l2bf := r.log2_bayes_factor) is not None and not math.isinf(l2bf)
+        ]
+        max_value = math.ceil(max(bayes_factors))
+        chart_spec["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [
+            -max_value,
+            max_value,
+        ]
+        chart_spec["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [
+            -max_value,
+            max_value,
+        ]
+        return chart_spec
 
 
 def comparison_match_weights_chart(
