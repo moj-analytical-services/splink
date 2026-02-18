@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ModelParameterIterationDetailedRecord(ModelParameterDetailedRecord):
     iteration: int
 

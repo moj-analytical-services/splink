@@ -30,7 +30,7 @@ class ComparisonAndLevelDict(TypedDict):
     comparison: Comparison
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ModelParameterDetailedRecord(ComparisonLevelDetailedRecord):
     probability_two_random_records_match: float
     comparison_sort_order: int

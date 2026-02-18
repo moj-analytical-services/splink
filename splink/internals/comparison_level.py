@@ -117,7 +117,7 @@ def _default_u_values(num_levels: int) -> list[float]:
     return u_vals
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ComparisonLevelDetailedRecord:
     sql_condition: str | None
     label_for_charts: str
@@ -139,7 +139,7 @@ class ComparisonLevelDetailedRecord:
 
     comparison_vector_value: int
     max_comparison_vector_value: int
-    comparison_name: str | None = None
+    comparison_name: str | None
 
     def as_dict(self):
         return asdict(self)
@@ -786,6 +786,7 @@ class ComparisonLevel:
             bayes_factor_description=self._bayes_factor_description,
             comparison_vector_value=self.comparison_vector_value,
             max_comparison_vector_value=comparison_num_levels - 1,
+            comparison_name=None,
         )
 
     def _parameter_estimates_as_records(
