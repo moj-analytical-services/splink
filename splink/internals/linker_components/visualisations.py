@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
     ChartReturnType,
+    MatchWeightsHistogramChart,
     ParameterEstimateComparisonsChart,
-    match_weights_histogram,
     waterfall_chart,
 )
 from splink.internals.cluster_studio import (
@@ -139,9 +139,9 @@ class LinkerVisualisations:
         """
         df = histogram_data(self._linker, df_predict, target_bins)
         recs = df.as_record_dict()
-        return match_weights_histogram(
-            recs, width=width, height=height, as_dict=as_dict
-        )
+        chart = MatchWeightsHistogramChart(recs, as_dict=as_dict)
+        chart.set_width_height(width=width, height=height)
+        return chart.chart
 
     def parameter_estimate_comparisons_chart(
         self, include_m: bool = True, include_u: bool = False, as_dict: bool = False

@@ -125,6 +125,8 @@ class SplinkChart(ABC, Generic[T]):
         # TODO: as_dict only in methods rather than on object
         self.raw_records = records
         self.as_dict = as_dict
+        self.width: float | None = self.default_width
+        self.height: float | None = self.default_height
 
     @property
     @abstractmethod
@@ -137,9 +139,18 @@ class SplinkChart(ABC, Generic[T]):
         return self.alter_data(self.raw_records)
 
     @property
+    def default_width(self) -> float | None:
+        return None
+
+    @property
+    def default_height(self) -> float | None:
+        return None
+
+    @property
     def chart_spec(self) -> dict[str, Any]:
         chart_spec = load_chart_definition(self.chart_spec_file)
         chart_spec = self.alter_spec_directly(chart_spec)
+        chart_spec = self.alter_spec_height_width(chart_spec)
         chart_spec = self.alter_spec_from_data(chart_spec)
         return chart_spec
 
@@ -165,6 +176,20 @@ class SplinkChart(ABC, Generic[T]):
 
     def alter_spec_from_data(self, chart_spec):
         return chart_spec
+
+    def alter_spec_height_width(self, chart_spec):
+        if width := self.width:
+            chart_spec["width"] = width
+        if height := self.height:
+            chart_spec["height"] = height
+        return chart_spec
+
+    def set_width_height(
+        self, *, width: float | None = None, height: float | None = None
+    ) -> None:
+        self.width = width
+        self.height = height
+        # TODO: return self?
 
 
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
@@ -432,16 +457,18 @@ def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def match_weights_histogram(records, width=500, height=250, as_dict=False):
-    chart_path = "match_weight_histogram.json"
-    chart = load_chart_definition(chart_path)
+class MatchWeightsHistogramChart(SplinkChart[PlaceholderRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "match_weight_histogram.json"
 
-    chart["data"]["values"] = records
+    @property
+    def default_width(self) -> float:
+        return 500
 
-    chart["height"] = height
-    chart["width"] = width
-
-    return altair_or_json(chart, as_dict=as_dict)
+    @property
+    def default_height(self) -> float:
+        return 250
 
 
 class ParameterEstimateComparisonsChart(SplinkChart[PlaceholderRecord]):
