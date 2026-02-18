@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from altair import SchemaBase
 
     from splink.internals.comparison_level import ComparisonLevelDetailedRecord
+    from splink.internals.em_training_session import (
+        ModelParameterIterationDetailedRecord,
+    )
     from splink.internals.settings import ModelParameterDetailedRecord
 else:
     SchemaBase = None
@@ -170,39 +173,45 @@ def probability_two_random_records_match_iteration_chart(records, as_dict=False)
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def match_weights_interactive_history_chart(records, as_dict=False, blocking_rule=None):
+def match_weights_interactive_history_chart(
+    records: list[ModelParameterIterationDetailedRecord],
+    as_dict: bool = False,
+    blocking_rule: str | None = None,
+) -> ChartReturnType:
     chart_path = "match_weights_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
     chart["title"]["subtitle"] = f"Training session blocked on {blocking_rule}"
 
-    records = [r for r in records if r["comparison_vector_value"] != -1]
-    chart["data"]["values"] = records
+    records = [r for r in records if r.comparison_vector_value != -1]
 
     max_iteration = 0
     for r in records:
-        max_iteration = max(r["iteration"], max_iteration)
+        max_iteration = max(r.iteration, max_iteration)
+    chart["data"]["values"] = list_items_as_dicts(records)
 
     chart["params"][0]["bind"]["max"] = max_iteration
     chart["params"][0]["value"] = max_iteration
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def m_u_parameters_interactive_history_chart(records, as_dict=False):
+def m_u_parameters_interactive_history_chart(
+    records: list[ModelParameterIterationDetailedRecord], as_dict: bool = False
+) -> ChartReturnType:
     chart_path = "m_u_parameters_interactive_history.json"
     chart = load_chart_definition(chart_path)
     records = [
         r
         for r in records
-        if r["comparison_vector_value"] != -1
-        and r["comparison_name"] != "probability_two_random_records_match"
+        if r.comparison_vector_value != -1
+        and r.comparison_name != "probability_two_random_records_match"
     ]
-    chart["data"]["values"] = records
 
     max_iteration = 0
     for r in records:
-        max_iteration = max(r["iteration"], max_iteration)
+        max_iteration = max(r.iteration, max_iteration)
 
+    chart["data"]["values"] = list_items_as_dicts(records)
     chart["params"][0]["bind"]["max"] = max_iteration
     chart["params"][0]["value"] = max_iteration
     return altair_or_json(chart, as_dict=as_dict)

@@ -393,9 +393,9 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        records = list(map(lambda rec: rec.as_dict(), self._iteration_history_records))
         return match_weights_interactive_history_chart(
-            records, blocking_rule=self._blocking_rule_for_training.blocking_rule_sql
+            self._iteration_history_records,
+            blocking_rule=self._blocking_rule_for_training.blocking_rule_sql,
         )
 
     def m_u_values_interactive_history_chart(self) -> ChartReturnType:
@@ -405,8 +405,7 @@ class EMTrainingSession:
         Returns:
             An interactive Altair chart.
         """
-        records = list(map(lambda rec: rec.as_dict(), self._iteration_history_records))
-        return m_u_parameters_interactive_history_chart(records)
+        return m_u_parameters_interactive_history_chart(self._iteration_history_records)
 
     def __repr__(self):
         deactivated_cols = ", ".join(
