@@ -195,22 +195,24 @@ class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
         return chart_spec
 
 
-def comparison_match_weights_chart(
-    records: list[ComparisonLevelDetailedRecord], as_dict: bool = False
-) -> ChartReturnType:
-    chart_path = "match_weights_interactive_history.json"
-    chart = load_chart_definition(chart_path)
+class ComparisonMatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "match_weights_interactive_history.json"
 
-    # Remove iteration history since this is a static chart
-    # TODO: some render issue if we remove empty top panel, so leave for now
-    # del chart["vconcat"][0]
-    del chart["params"]
-    del chart["transform"]
+    @staticmethod
+    def alter_data(records):
+        return [r for r in records if r.comparison_vector_value != -1]
 
-    chart["title"]["text"] = "Comparison summary"
-    records = [r for r in records if r.comparison_vector_value != -1]
-    chart["data"]["values"] = list_items_as_dicts(records)
-    return altair_or_json(chart, as_dict=as_dict)
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        # Remove iteration history since this is a static chart
+        # TODO: some render issue if we remove empty top panel, so leave for now
+        # del chart["vconcat"][0]
+        del chart_spec["params"]
+        del chart_spec["transform"]
+        chart_spec["title"]["text"] = "Comparison summary"
+        return chart_spec
 
 
 def m_u_parameters_chart(
