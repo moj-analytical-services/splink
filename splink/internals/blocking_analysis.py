@@ -30,7 +30,7 @@ from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.charts import (
     ChartReturnType,
-    cumulative_blocking_rule_comparisons_generated,
+    CumulativeBlockingRuleComparisonsGeneratedChart,
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
@@ -721,7 +721,9 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         )
     )
 
-    return cumulative_blocking_rule_comparisons_generated(cumulative_comparison_records)
+    return CumulativeBlockingRuleComparisonsGeneratedChart(
+        cumulative_comparison_records
+    ).chart
 
 
 def n_largest_blocks(

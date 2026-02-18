@@ -4,9 +4,7 @@ from typing import Any, List, Sequence
 
 from splink.internals.charts import (
     ChartReturnType,
-)
-from splink.internals.charts import (
-    completeness_chart as records_to_completeness_chart,
+    CompletenessChart,
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
@@ -131,4 +129,4 @@ def completeness_chart(
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
     records = completeness_data(splink_df_dict, db_api, cols, table_names_for_chart)
-    return records_to_completeness_chart(records)
+    return CompletenessChart(records).chart

@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, TypedDict
 
 from splink.internals.blocking import BlockingRule
-from splink.internals.charts import MatchWeightsChart, m_u_parameters_chart
+from splink.internals.charts import MatchWeightsChart, MUParametersChart
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import (
     ComparisonLevel,
@@ -601,9 +601,9 @@ class Settings:
         ).chart
 
     def m_u_parameters_chart(self, as_dict=False):
-        return m_u_parameters_chart(
+        return MUParametersChart(
             self._parameters_as_detailed_records, as_dict=as_dict
-        )
+        ).chart
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []

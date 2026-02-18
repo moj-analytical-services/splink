@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
     ChartReturnType,
+    ParameterEstimateComparisonsChart,
     match_weights_histogram,
-    parameter_estimate_comparisons,
     waterfall_chart,
 )
 from splink.internals.cluster_studio import (
@@ -187,8 +187,8 @@ class LinkerVisualisations:
             to_retain.append("u")
 
         records = [r for r in records if r["m_or_u"] in to_retain]
-
-        return parameter_estimate_comparisons(records, as_dict)
+        # TODO: this logic into chart object
+        return ParameterEstimateComparisonsChart(records, as_dict).chart
 
     def tf_adjustment_chart(
         self,

@@ -22,6 +22,8 @@ else:
     SchemaBase = None
 
     ComparisonLevelDetailedRecord = None
+    ModelParameterDetailedRecord = None
+    ModelParameterIterationDetailedRecord = None
 # type alias:
 ChartReturnType = Union[dict[Any, Any], SchemaBase]
 
@@ -108,7 +110,11 @@ def save_offline_chart(
         print(iframe_message.format(filename=filename))  # noqa: T201
 
 
+# TODO: we can have more detailed subclasses to hint the fields needed per chart
 class ChartRecord(Protocol): ...
+
+
+class PlaceholderRecord: ...  # TODO: placeholder until we type remaining charts
 
 
 T = TypeVar("T", bound=ChartRecord)
@@ -215,32 +221,32 @@ class ComparisonMatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
         return chart_spec
 
 
-def m_u_parameters_chart(
-    records: list[ModelParameterDetailedRecord], as_dict: bool = False
-) -> ChartReturnType:
-    chart_path = "m_u_parameters_interactive_history.json"
-    chart = load_chart_definition(chart_path)
+class MUParametersChart(SplinkChart[ModelParameterDetailedRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "m_u_parameters_interactive_history.json"
 
-    # Remove iteration history since this is a static chart
-    del chart["params"]
-    del chart["transform"]
+    @staticmethod
+    def alter_data(records):
+        return [
+            r
+            for r in records
+            if r.comparison_vector_value != -1
+            and r.comparison_name != "probability_two_random_records_match"
+        ]
 
-    records = [
-        r
-        for r in records
-        if r.comparison_vector_value != -1
-        and r.comparison_name != "probability_two_random_records_match"
-    ]
-    chart["data"]["values"] = list_items_as_dicts(records)
-    return altair_or_json(chart, as_dict=as_dict)
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        # Remove iteration history since this is a static chart
+        del chart_spec["params"]
+        del chart_spec["transform"]
+        return chart_spec
 
 
-def probability_two_random_records_match_iteration_chart(records, as_dict=False):
-    chart_path = "probability_two_random_records_match_iteration.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["data"]["values"] = records
-    return altair_or_json(chart, as_dict=as_dict)
+class ProbabilityTwoRandomRecordsMatchIterationChart(SplinkChart[PlaceholderRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "probability_two_random_records_match_iteration.json"
 
 
 def match_weights_interactive_history_chart(
@@ -438,13 +444,10 @@ def match_weights_histogram(records, width=500, height=250, as_dict=False):
     return altair_or_json(chart, as_dict=as_dict)
 
 
-def parameter_estimate_comparisons(records, as_dict=False):
-    chart_path = "parameter_estimate_comparisons.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["data"]["values"] = records
-
-    return altair_or_json(chart, as_dict=as_dict)
+class ParameterEstimateComparisonsChart(SplinkChart[PlaceholderRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "parameter_estimate_comparisons.json"
 
 
 def unlinkables_chart(
@@ -496,22 +499,16 @@ def unlinkables_chart(
     return altair_or_json(unlinkables_chart_def, as_dict=as_dict)
 
 
-def completeness_chart(records, as_dict=False):
-    chart_path = "completeness.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["data"]["values"] = records
-
-    return altair_or_json(chart, as_dict=as_dict)
+class CompletenessChart(SplinkChart[PlaceholderRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "completeness.json"
 
 
-def cumulative_blocking_rule_comparisons_generated(records, as_dict=False):
-    chart_path = "blocking_rule_generated_comparisons.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["data"]["values"] = records
-
-    return altair_or_json(chart, as_dict=as_dict)
+class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[PlaceholderRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "blocking_rule_generated_comparisons.json"
 
 
 def _comparator_score_chart(similarity_records, distance_records, as_dict=False):
