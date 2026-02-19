@@ -73,48 +73,6 @@ def list_items_as_dicts(
     )
 
 
-iframe_message = """
-To view in Jupyter you can use the following command:
-
-from IPython.display import IFrame
-IFrame(src="./{filename}", width=1000, height=500)
-"""
-
-
-def save_offline_chart(
-    chart_dict, filename="my_chart.html", overwrite=False, print_msg=True
-):
-    """Save Splink charting outputs to disk as a standalone .html file
-    which works offline
-
-    Args:
-        chart_dict (dict): A vega lite spec as a dictionary
-        filename (str, optional): Name of output file. Defaults to "my_chart.html".
-        overwrite (bool, optional): Overwrite file if it exists. Defaults to False.
-        print_msg (bool, optional): Print a message instructing the user how to view
-            the outputs. Defaults to True.
-
-    """
-
-    if os.path.isfile(filename) and not overwrite:
-        raise ValueError(
-            f"The path {filename} already exists. Please provide a different path."
-        )
-
-    template = read_resource("internals/files/templates/single_chart_template.html")
-
-    fmt_dict = _load_external_libs()
-
-    fmt_dict["mychart"] = json.dumps(chart_dict)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(template.format(**fmt_dict))
-
-    if print_msg:
-        print(f"Chart saved to {filename}")  # noqa: T201
-        print(iframe_message.format(filename=filename))  # noqa: T201
-
-
 # TODO: we can have more detailed subclasses to hint the fields needed per chart
 class ChartRecord(Protocol): ...
 
@@ -205,6 +163,49 @@ class SplinkChart(ABC, Generic[T]):
 
     def save(self, *args, **kwargs):
         self.altair_chart.save(*args, **kwargs)
+
+    def save_offline_chart(
+        self,
+        filename: str = "my_chart.html",
+        overwrite: bool = False,
+        print_msg: bool = True,
+    ) -> None:
+        """
+        Save Splink charting outputs to disk as a standalone .html file
+        which works offline
+
+        Args:
+            filename (str, optional): Name of output file. Defaults to "my_chart.html".
+            overwrite (bool, optional): Overwrite file if it exists. Defaults to False.
+            print_msg (bool, optional): Print a message instructing the user how to view
+                the outputs. Defaults to True.
+        """
+
+        iframe_message = """
+        To view in Jupyter you can use the following command:
+
+        from IPython.display import IFrame
+        IFrame(src="./{filename}", width=1000, height=500)
+        """
+
+        if os.path.isfile(filename) and not overwrite:
+            raise ValueError(
+                f"The path {filename} already exists. Please provide a different path, "
+                f"or set overwrite=True to overwrite."
+            )
+
+        template = read_resource("internals/files/templates/single_chart_template.html")
+
+        fmt_dict = _load_external_libs()
+
+        fmt_dict["mychart"] = json.dumps(self.chart_dict)
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(template.format(**fmt_dict))
+
+        if print_msg:
+            print(f"Chart saved to {filename}")  # noqa: T201
+            print(iframe_message.format(filename=filename))  # noqa: T201
 
 
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):

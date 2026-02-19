@@ -62,9 +62,8 @@ class LinkerVisualisations:
     inlined so it can be viewed offline:
 
     ```py
-    from splink.internals.charts import save_offline_chart
     c = linker.visualisations.match_weights_chart()
-    save_offline_chart(c.to_dict(), "test_chart.html")
+    c.save_offline_chart("test_chart.html")
     ```
 
     View resultant html file in Jupyter (or just load it in your browser)
