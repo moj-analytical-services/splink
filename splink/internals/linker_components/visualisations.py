@@ -6,7 +6,7 @@ from splink.internals.charts import (
     ChartReturnType,
     MatchWeightsHistogramChart,
     ParameterEstimateComparisonsChart,
-    waterfall_chart,
+    WaterfallChart,
 )
 from splink.internals.cluster_studio import (
     SamplingMethods,
@@ -26,6 +26,7 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
     tf_adjustment_chart,
 )
+from splink.internals.waterfall_chart import records_to_waterfall_data
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
@@ -288,13 +289,15 @@ class LinkerVisualisations:
         """
         self._linker._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return waterfall_chart(
-            records,
-            self._linker._settings_obj,
-            filter_nulls,
-            remove_sensitive_data,
-            as_dict,
+        data = records_to_waterfall_data(
+            records, self._linker._settings_obj, remove_sensitive_data
         )
+
+        return WaterfallChart(
+            data,
+            filter_nulls,
+            as_dict,
+        ).chart
 
     def comparison_viewer_dashboard(
         self,

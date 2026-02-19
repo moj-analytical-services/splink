@@ -17,7 +17,6 @@ from typing import (
 )
 
 from splink.internals.misc import read_resource
-from splink.internals.waterfall_chart import records_to_waterfall_data
 
 if TYPE_CHECKING:
     from altair import SchemaBase
@@ -340,22 +339,28 @@ class MUParametersInteractiveHistoryChart(
         return chart_spec
 
 
-def waterfall_chart(
-    records,
-    settings_obj,
-    filter_nulls=True,
-    remove_sensitive_data=False,
-    as_dict=False,
-):
-    data = records_to_waterfall_data(records, settings_obj, remove_sensitive_data)
-    chart_path = "match_weights_waterfall.json"
-    chart = load_chart_definition(chart_path)
-    chart["data"]["values"] = data
-    chart["params"][0]["bind"]["max"] = len(records) - 1
-    if filter_nulls:
-        chart["transform"].insert(1, {"filter": "(datum.bayes_factor !== 1.0)"})
+class WaterfallChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        filter_nulls: bool = True,
+        as_dict: bool = False,
+    ):
+        super().__init__(records, as_dict=as_dict)
+        self.filter_nulls = filter_nulls
 
-    return altair_or_json(chart, as_dict=as_dict)
+    @property
+    def chart_spec_file(self) -> str:
+        return "match_weights_waterfall.json"
+
+    def alter_spec_from_data(self, chart_spec):
+        records = self.chart_data
+        chart_spec["params"][0]["bind"]["max"] = len(records) - 1
+        if self.filter_nulls:
+            chart_spec["transform"].insert(
+                1, {"filter": "(datum.bayes_factor !== 1.0)"}
+            )
+        return chart_spec
 
 
 class ROCChart(SplinkChart[ChartRecord]):
