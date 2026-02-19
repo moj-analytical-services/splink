@@ -248,5 +248,5 @@ def test_save_offline_chart(tmp_path, test_helpers):
     helper = test_helpers["duckdb"]
 
     linker = helper.linker_with_registration(df, settings)
-    ch = linker.visualisations.tf_adjustment_chart("gender")
+    ch = linker.visualisations.match_weights_chart()
     ch.save_offline_chart(tmp_path / "test_chart.html")

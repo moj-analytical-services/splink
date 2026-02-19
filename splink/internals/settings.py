@@ -594,14 +594,13 @@ class Settings:
             **current_settings,
         }
 
-    def match_weights_chart(self, as_dict=False):
+    def match_weights_chart(self):
         return MatchWeightsChart(
             self._parameters_as_detailed_records,
-            as_dict=as_dict,
         )
 
-    def m_u_parameters_chart(self, as_dict=False):
-        return MUParametersChart(self._parameters_as_detailed_records, as_dict=as_dict)
+    def m_u_parameters_chart(self):
+        return MUParametersChart(self._parameters_as_detailed_records)
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []

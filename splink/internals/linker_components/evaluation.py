@@ -260,7 +260,7 @@ class LinkerEvalution:
                 - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
 
         Returns:
-            altair.Chart: An altair chart
+            SplinkChart | SplinkDataFrame: A SplinkChart object, or SplinkDataFrame
 
         Examples:
             ```py
@@ -353,7 +353,6 @@ class LinkerEvalution:
         self,
         x_col: Literal["match_weight", "match_probability"] = "match_weight",
         name_of_data_in_title: str | None = None,
-        as_dict: bool = False,
     ) -> UnlinkablesChart:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
@@ -367,10 +366,9 @@ class LinkerEvalution:
                 Defaults to "match_weight".
             name_of_data_in_title (str, optional): Name of the source dataset to use for
                 the title of the output chart.
-            as_dict (bool, optional): If True, return a dict version of the chart.
 
         Returns:
-            altair.Chart: An altair chart
+            SplinkChart: A SplinkChart object
 
         Examples:
             After estimating the parameters of the model, run:
@@ -382,7 +380,7 @@ class LinkerEvalution:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self._linker)
-        return UnlinkablesChart(records, x_col, name_of_data_in_title, as_dict)
+        return UnlinkablesChart(records, x_col, name_of_data_in_title)
 
     def labelling_tool_for_specific_record(
         self,

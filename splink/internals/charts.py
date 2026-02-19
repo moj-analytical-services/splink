@@ -81,10 +81,8 @@ T = TypeVar("T", bound=ChartRecord)
 
 
 class SplinkChart(ABC, Generic[T]):
-    def __init__(self, records: Sequence[T], as_dict: bool = False):
-        # TODO: as_dict only in methods rather than on object
+    def __init__(self, records: Sequence[T]):
         self.raw_records = records
-        self.as_dict = as_dict
         self.width: float | None = self.default_width
         self.height: float | None = self.default_height
 
@@ -119,14 +117,6 @@ class SplinkChart(ABC, Generic[T]):
         chart = self.chart_spec
         chart["data"]["values"] = list_items_as_dicts(self.chart_data)
         return chart
-
-    @property
-    def chart(self) -> ChartReturnType:
-        # TODO: split into separate methods
-        # also save etc
-        if self.as_dict:
-            return self.chart_dict
-        return self.altair_chart
 
     @property
     def altair_chart(self):
@@ -297,9 +287,8 @@ class MatchWeightsInteractiveHistoryChart(
         self,
         records: Sequence[ModelParameterIterationDetailedRecord],
         blocking_rule_text: str,
-        as_dict: bool = False,
     ):
-        super().__init__(records, as_dict=as_dict)
+        super().__init__(records)
         self.blocking_rule_text = blocking_rule_text
 
     @property
@@ -356,9 +345,8 @@ class WaterfallChart(SplinkChart[ChartRecord]):
         self,
         records: Sequence[ChartRecord],
         filter_nulls: bool = True,
-        as_dict: bool = False,
     ):
-        super().__init__(records, as_dict=as_dict)
+        super().__init__(records)
         self.filter_nulls = filter_nulls
 
     @property
@@ -426,9 +414,8 @@ class AccuracyChart(SplinkChart[ChartRecord]):
         self,
         records: Sequence[ChartRecord],
         add_metrics: Sequence[str] = [],  # TODO
-        as_dict: bool = False,
     ):
-        super().__init__(records, as_dict=as_dict)
+        super().__init__(records)
         # User-specified metrics to include
         self.additional_metrics = add_metrics
 
@@ -489,9 +476,8 @@ class ThresholdSelectionToolChart(SplinkChart[ChartRecord]):
         self,
         records: Sequence[ChartRecord],
         add_metrics: Sequence[str] = [],  # TODO
-        as_dict: bool = False,
     ):
-        super().__init__(records, as_dict=as_dict)
+        super().__init__(records)
         # User-specified metrics to include
         self.additional_metrics = add_metrics
 
@@ -572,13 +558,12 @@ class UnlinkablesChart(SplinkChart[ChartRecord]):
         records: Sequence[ChartRecord],
         x_col: Literal["match_weight", "match_probability"] = "match_weight",
         source_dataset: str | None = None,
-        as_dict: bool = False,
     ):
         if x_col not in ["match_weight", "match_probability"]:
             raise ValueError(
                 f"{x_col} must be 'match_weight' (default) or 'match_probability'."
             )
-        super().__init__(records, as_dict=as_dict)
+        super().__init__(records)
         self.x_col = x_col
         self.source_dataset = source_dataset
 
