@@ -166,7 +166,15 @@ class SplinkChart(ABC, Generic[T]):
     def chart(self) -> ChartReturnType:
         # TODO: split into separate methods
         # also save etc
-        return altair_or_json(self.chart_dict, as_dict=self.as_dict)
+        if self.as_dict:
+            return self.chart_dict
+        return self.altair_chart
+
+    @property
+    def altair_chart(self):
+        from altair import Chart
+
+        return Chart.from_dict(self.chart_dict)
 
     @staticmethod
     def alter_data(records):
@@ -194,6 +202,9 @@ class SplinkChart(ABC, Generic[T]):
         self.width = width
         self.height = height
         # TODO: return self?
+
+    def save(self, *args, **kwargs):
+        self.altair_chart.save(*args, **kwargs)
 
 
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
