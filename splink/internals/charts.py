@@ -184,6 +184,8 @@ class SplinkChart(ABC, Generic[T]):
     def set_width_height(
         self, *, width: float | None = None, height: float | None = None
     ) -> None:
+        # TODO: do we need to be careful with charts that can't have these set
+        # such as threshold_selection_tool
         self.width = width
         self.height = height
         # TODO: return self?
@@ -396,89 +398,129 @@ class PrecisionRecallChart(SplinkChart[ChartRecord]):
         return chart_spec
 
 
-def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]):
-    chart_path = "accuracy_chart.json"
-    chart = load_chart_definition(chart_path)
+class AccuracyChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        add_metrics: Sequence[str] = [],  # TODO
+        as_dict: bool = False,
+    ):
+        super().__init__(records, as_dict=as_dict)
+        # User-specified metrics to include
+        self.additional_metrics = add_metrics
 
-    # User-specified metrics to include
-    metrics = ["precision", "recall", *add_metrics]
-    chart["transform"][0]["fold"] = metrics
-    chart["transform"][1]["calculate"] = chart["transform"][1]["calculate"].replace(
-        "__metrics__", str(metrics)
-    )
-    chart["layer"][0]["encoding"]["color"]["sort"] = metrics
-    chart["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
+    @property
+    def chart_spec_file(self) -> str:
+        return "accuracy_chart.json"
 
-    # Metric-label mapping
-    mapping = {
-        "precision": "Precision (PPV)",
-        "recall": "Recall (TPR)",
-        "specificity": "Specificity (TNR)",
-        "accuracy": "Accuracy",
-        "npv": "NPV",
-        "f1": "F1",
-        "f2": "F2",
-        "f0_5": "F0.5",
-        "p4": "P4",
-        "phi": "\u03c6 (MCC)",
-    }
-    chart["transform"][2]["calculate"] = chart["transform"][2]["calculate"].replace(
-        "__mapping__", str(mapping)
-    )
-    chart["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart["layer"][0][
-        "encoding"
-    ]["color"]["legend"]["labelExpr"].replace("__mapping__", str(mapping))
+    @property
+    def default_width(self) -> float:
+        return 400
 
-    chart["data"]["values"] = records
+    @property
+    def default_height(self) -> float:
+        return 400
 
-    chart["height"] = height
-    chart["width"] = width
+    @property
+    def metrics(self):
+        return ["precision", "recall", *self.additional_metrics]
 
-    return altair_or_json(chart, as_dict=as_dict)
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        mapping = {
+            "precision": "Precision (PPV)",
+            "recall": "Recall (TPR)",
+            "specificity": "Specificity (TNR)",
+            "accuracy": "Accuracy",
+            "npv": "NPV",
+            "f1": "F1",
+            "f2": "F2",
+            "f0_5": "F0.5",
+            "p4": "P4",
+            "phi": "\u03c6 (MCC)",
+        }
+        chart_spec["transform"][2]["calculate"] = chart_spec["transform"][2][
+            "calculate"
+        ].replace("__mapping__", str(mapping))
+        chart_spec["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart_spec[
+            "layer"
+        ][0]["encoding"]["color"]["legend"]["labelExpr"].replace(
+            "__mapping__", str(mapping)
+        )
+
+        return chart_spec
+
+    def alter_spec_from_data(self, chart_spec):
+        metrics = self.metrics
+        chart_spec["transform"][0]["fold"] = metrics
+        chart_spec["transform"][1]["calculate"] = chart_spec["transform"][1][
+            "calculate"
+        ].replace("__metrics__", str(metrics))
+        chart_spec["layer"][0]["encoding"]["color"]["sort"] = metrics
+        chart_spec["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
+        return chart_spec
 
 
-def threshold_selection_tool(records, as_dict=False, add_metrics=[]):
-    chart_path = "threshold_selection_tool.json"
-    chart = load_chart_definition(chart_path)
+class ThresholdSelectionToolChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        add_metrics: Sequence[str] = [],  # TODO
+        as_dict: bool = False,
+    ):
+        super().__init__(records, as_dict=as_dict)
+        # User-specified metrics to include
+        self.additional_metrics = add_metrics
 
-    # Remove extremes with low precision and recall
-    records = [d for d in records if d["precision"] > 0.5 and d["recall"] > 0.5]
+    @property
+    def chart_spec_file(self) -> str:
+        return "threshold_selection_tool.json"
 
-    # User-specified metrics to include
-    metrics = ["precision", "recall", *add_metrics]
+    @property
+    def metrics(self):
+        return ["precision", "recall", *self.additional_metrics]
 
-    chart["hconcat"][1]["transform"][0]["fold"] = metrics
-    chart["hconcat"][1]["transform"][1]["calculate"] = chart["hconcat"][1]["transform"][
-        1
-    ]["calculate"].replace("__metrics__", str(metrics))
-    chart["hconcat"][1]["layer"][0]["encoding"]["color"]["sort"] = metrics
-    chart["hconcat"][1]["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
+    @staticmethod
+    def alter_data(records):
+        return [d for d in records if d["precision"] > 0.5 and d["recall"] > 0.5]
 
-    # Metric-label mapping
-    mapping = {
-        "precision": "Precision (PPV)",
-        "recall": "Recall (TPR)",
-        "specificity": "Specificity (TNR)",
-        "accuracy": "Accuracy",
-        "npv": "NPV",
-        "f1": "F1",
-        "f2": "F2",
-        "f0_5": "F0.5",
-        "p4": "P4",
-        "phi": "\u03c6 (MCC)",
-    }
-    chart["hconcat"][1]["transform"][2]["calculate"] = chart["hconcat"][1]["transform"][
-        2
-    ]["calculate"].replace("__mapping__", str(mapping))
-    chart["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart[
-        "hconcat"
-    ][1]["layer"][0]["encoding"]["color"]["legend"]["labelExpr"].replace(
-        "__mapping__", str(mapping)
-    )
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        mapping = {
+            "precision": "Precision (PPV)",
+            "recall": "Recall (TPR)",
+            "specificity": "Specificity (TNR)",
+            "accuracy": "Accuracy",
+            "npv": "NPV",
+            "f1": "F1",
+            "f2": "F2",
+            "f0_5": "F0.5",
+            "p4": "P4",
+            "phi": "\u03c6 (MCC)",
+        }
+        chart_spec["hconcat"][1]["transform"][2]["calculate"] = chart_spec["hconcat"][
+            1
+        ]["transform"][2]["calculate"].replace("__mapping__", str(mapping))
+        chart_spec["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"][
+            "labelExpr"
+        ] = chart_spec["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"][
+            "labelExpr"
+        ].replace("__mapping__", str(mapping))
 
-    chart["data"]["values"] = records
+        return chart_spec
 
-    return altair_or_json(chart, as_dict=as_dict)
+    def alter_spec_from_data(self, chart_spec):
+        metrics = self.metrics
+        chart_spec["hconcat"][1]["transform"][0]["fold"] = metrics
+        chart_spec["hconcat"][1]["transform"][1]["calculate"] = chart_spec["hconcat"][
+            1
+        ]["transform"][1]["calculate"].replace("__metrics__", str(metrics))
+        chart_spec["hconcat"][1]["layer"][0]["encoding"]["color"]["sort"] = metrics
+        chart_spec["hconcat"][1]["layer"][1]["layer"][1]["encoding"]["color"][
+            "sort"
+        ] = metrics
+
+        return chart_spec
 
 
 class MatchWeightsHistogramChart(SplinkChart[ChartRecord]):

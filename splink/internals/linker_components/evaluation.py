@@ -9,11 +9,11 @@ from splink.internals.accuracy import (
     truth_space_table_from_labels_table,
 )
 from splink.internals.charts import (
+    AccuracyChart,
     ChartReturnType,
     PrecisionRecallChart,
     ROCChart,
-    accuracy_chart,
-    threshold_selection_tool,
+    ThresholdSelectionToolChart,
     unlinkables_chart,
 )
 from splink.internals.labelling_tool import (
@@ -168,9 +168,9 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return threshold_selection_tool(recs, add_metrics=add_metrics)
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics).chart
         elif output_type == "accuracy":
-            return accuracy_chart(recs, add_metrics=add_metrics)
+            return AccuracyChart(recs, add_metrics=add_metrics).chart
         elif output_type == "roc":
             return ROCChart(recs).chart
         elif output_type == "precision_recall":
@@ -281,9 +281,9 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return threshold_selection_tool(recs, add_metrics=add_metrics)
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics).chart
         elif output_type == "accuracy":
-            return accuracy_chart(recs, add_metrics=add_metrics)
+            return AccuracyChart(recs, add_metrics=add_metrics).chart
         elif output_type == "roc":
             return ROCChart(recs).chart
         elif output_type == "precision_recall":
