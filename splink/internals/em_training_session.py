@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
-    ChartReturnType,
     MatchWeightsInteractiveHistoryChart,
     MUParametersInteractiveHistoryChart,
     ProbabilityTwoRandomRecordsMatchIterationChart,
@@ -375,7 +374,9 @@ class EMTrainingSession:
             output_records.append(r)
         return output_records
 
-    def probability_two_random_records_match_iteration_chart(self) -> ChartReturnType:
+    def probability_two_random_records_match_iteration_chart(
+        self,
+    ) -> ProbabilityTwoRandomRecordsMatchIterationChart:
         """
         Display a chart showing the iteration history of the probability that two
         random records match.
@@ -384,9 +385,11 @@ class EMTrainingSession:
             An interactive Altair chart.
         """
         records = self._lambda_history_records
-        return ProbabilityTwoRandomRecordsMatchIterationChart(records).chart
+        return ProbabilityTwoRandomRecordsMatchIterationChart(records)
 
-    def match_weights_interactive_history_chart(self) -> ChartReturnType:
+    def match_weights_interactive_history_chart(
+        self,
+    ) -> MatchWeightsInteractiveHistoryChart:
         """
         Display an interactive chart of the match weights history.
 
@@ -396,18 +399,18 @@ class EMTrainingSession:
         return MatchWeightsInteractiveHistoryChart(
             self._iteration_history_records,
             blocking_rule_text=self._blocking_rule_for_training.blocking_rule_sql,
-        ).chart
+        )
 
-    def m_u_values_interactive_history_chart(self) -> ChartReturnType:
+    def m_u_values_interactive_history_chart(
+        self,
+    ) -> MUParametersInteractiveHistoryChart:
         """
         Display an interactive chart of the m and u values.
 
         Returns:
             An interactive Altair chart.
         """
-        return MUParametersInteractiveHistoryChart(
-            self._iteration_history_records
-        ).chart
+        return MUParametersInteractiveHistoryChart(self._iteration_history_records)
 
     def __repr__(self):
         deactivated_cols = ", ".join(

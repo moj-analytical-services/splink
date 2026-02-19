@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
     ChartReturnType,
+    MatchWeightsChart,
     MatchWeightsHistogramChart,
+    MUParametersInteractiveHistoryChart,
     ParameterEstimateComparisonsChart,
     WaterfallChart,
 )
@@ -76,7 +78,7 @@ class LinkerVisualisations:
     def __init__(self, linker: Linker):
         self._linker = linker
 
-    def match_weights_chart(self, as_dict: bool = False) -> ChartReturnType:
+    def match_weights_chart(self, as_dict: bool = False) -> MatchWeightsChart:
         """Display a chart of the (partial) match weights of the linkage model
 
         Args:
@@ -92,7 +94,9 @@ class LinkerVisualisations:
         """
         return self._linker._settings_obj.match_weights_chart(as_dict)
 
-    def m_u_parameters_chart(self, as_dict: bool = False) -> ChartReturnType:
+    def m_u_parameters_chart(
+        self, as_dict: bool = False
+    ) -> MUParametersInteractiveHistoryChart:
         """Display a chart of the m and u parameters of the linkage model
 
         Args:
@@ -117,7 +121,7 @@ class LinkerVisualisations:
         width: int = 600,
         height: int = 250,
         as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> MatchWeightsHistogramChart:
         """Generate a histogram that shows the distribution of match weights in
         `df_predict`
 
@@ -142,11 +146,11 @@ class LinkerVisualisations:
         recs = df.as_record_dict()
         chart = MatchWeightsHistogramChart(recs, as_dict=as_dict)
         chart.set_width_height(width=width, height=height)
-        return chart.chart
+        return chart
 
     def parameter_estimate_comparisons_chart(
         self, include_m: bool = True, include_u: bool = False, as_dict: bool = False
-    ) -> ChartReturnType:
+    ) -> ParameterEstimateComparisonsChart:
         """Show a chart that shows how parameter estimates have differed across
         the different estimation methods you have used.
 
@@ -188,8 +192,7 @@ class LinkerVisualisations:
             to_retain.append("u")
 
         records = [r for r in records if r["m_or_u"] in to_retain]
-        # TODO: this logic into chart object
-        return ParameterEstimateComparisonsChart(records, as_dict).chart
+        return ParameterEstimateComparisonsChart(records, as_dict)
 
     def tf_adjustment_chart(
         self,
@@ -257,7 +260,7 @@ class LinkerVisualisations:
         filter_nulls: bool = True,
         remove_sensitive_data: bool = False,
         as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> WaterfallChart:
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -297,7 +300,7 @@ class LinkerVisualisations:
             data,
             filter_nulls,
             as_dict,
-        ).chart
+        )
 
     def comparison_viewer_dashboard(
         self,

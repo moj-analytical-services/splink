@@ -29,7 +29,6 @@ from splink.internals.blocking import (
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
 from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.charts import (
-    ChartReturnType,
     CumulativeBlockingRuleComparisonsGeneratedChart,
 )
 from splink.internals.database_api import DatabaseAPISubClass
@@ -684,7 +683,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
     unique_id_column_name: str = "unique_id",
     max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
-) -> ChartReturnType:
+) -> CumulativeBlockingRuleComparisonsGeneratedChart:
     """TODO: Add docstring here"""
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
@@ -723,7 +722,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 
     return CumulativeBlockingRuleComparisonsGeneratedChart(
         cumulative_comparison_records
-    ).chart
+    )
 
 
 def n_largest_blocks(

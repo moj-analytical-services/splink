@@ -10,7 +10,6 @@ from splink.internals.accuracy import (
 )
 from splink.internals.charts import (
     AccuracyChart,
-    ChartReturnType,
     PrecisionRecallChart,
     ROCChart,
     ThresholdSelectionToolChart,
@@ -109,7 +108,14 @@ class LinkerEvalution:
             ]
         ] = [],
         positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
-    ) -> Union[ChartReturnType, SplinkDataFrame]:
+    ) -> Union[
+        ThresholdSelectionToolChart,
+        AccuracyChart,
+        PrecisionRecallChart,
+        ROCChart,
+        SplinkDataFrame,
+    ]:
+        # TODO: overload for specifics
         """Generate an accuracy chart or table from ground truth data, where the ground
         truth is in a column in the input dataset called `labels_column_name`
 
@@ -168,13 +174,13 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics).chart
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)
         elif output_type == "accuracy":
-            return AccuracyChart(recs, add_metrics=add_metrics).chart
+            return AccuracyChart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return ROCChart(recs).chart
+            return ROCChart(recs)
         elif output_type == "precision_recall":
-            return PrecisionRecallChart(recs).chart
+            return PrecisionRecallChart(recs)
         elif output_type == "table":
             return df_truth_space
         else:
@@ -204,7 +210,14 @@ class LinkerEvalution:
                 "phi",
             ]
         ] = [],
-    ) -> Union[ChartReturnType, SplinkDataFrame]:
+    ) -> Union[
+        ThresholdSelectionToolChart,
+        AccuracyChart,
+        PrecisionRecallChart,
+        ROCChart,
+        SplinkDataFrame,
+    ]:
+        # TODO: overloads
         """Generate an accuracy chart or table from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -257,6 +270,7 @@ class LinkerEvalution:
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
 
+        # TODO: only need it to be iterable, & specialise error
         if not isinstance(add_metrics, list):
             raise Exception(
                 "add_metrics must be a list containing one or more of the following:",
@@ -281,13 +295,13 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics).chart
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)
         elif output_type == "accuracy":
-            return AccuracyChart(recs, add_metrics=add_metrics).chart
+            return AccuracyChart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return ROCChart(recs).chart
+            return ROCChart(recs)
         elif output_type == "precision_recall":
-            return PrecisionRecallChart(recs).chart
+            return PrecisionRecallChart(recs)
         elif output_type == "table":
             return df_truth_space
         else:
@@ -340,7 +354,7 @@ class LinkerEvalution:
         x_col: Literal["match_weight", "match_probability"] = "match_weight",
         name_of_data_in_title: str | None = None,
         as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> UnlinkablesChart:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
 
@@ -368,7 +382,7 @@ class LinkerEvalution:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self._linker)
-        return UnlinkablesChart(records, x_col, name_of_data_in_title, as_dict).chart
+        return UnlinkablesChart(records, x_col, name_of_data_in_title, as_dict)
 
     def labelling_tool_for_specific_record(
         self,

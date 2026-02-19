@@ -598,12 +598,10 @@ class Settings:
         return MatchWeightsChart(
             self._parameters_as_detailed_records,
             as_dict=as_dict,
-        ).chart
+        )
 
     def m_u_parameters_chart(self, as_dict=False):
-        return MUParametersChart(
-            self._parameters_as_detailed_records, as_dict=as_dict
-        ).chart
+        return MUParametersChart(self._parameters_as_detailed_records, as_dict=as_dict)
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []

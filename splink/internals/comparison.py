@@ -468,4 +468,4 @@ class Comparison:
         from splink.internals.charts import ComparisonMatchWeightsChart
 
         records = self._as_detailed_records
-        return ComparisonMatchWeightsChart(records, as_dict=as_dict).chart
+        return ComparisonMatchWeightsChart(records, as_dict=as_dict)
