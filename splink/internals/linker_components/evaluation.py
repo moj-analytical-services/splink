@@ -14,7 +14,7 @@ from splink.internals.charts import (
     PrecisionRecallChart,
     ROCChart,
     ThresholdSelectionToolChart,
-    unlinkables_chart,
+    UnlinkablesChart,
 )
 from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -337,7 +337,7 @@ class LinkerEvalution:
 
     def unlinkables_chart(
         self,
-        x_col: str = "match_weight",
+        x_col: Literal["match_weight", "match_probability"] = "match_weight",
         name_of_data_in_title: str | None = None,
         as_dict: bool = False,
     ) -> ChartReturnType:
@@ -349,6 +349,7 @@ class LinkerEvalution:
 
         Args:
             x_col (str, optional): Column to use for the x-axis.
+                Must be either "match_weight" or "match_probability".
                 Defaults to "match_weight".
             name_of_data_in_title (str, optional): Name of the source dataset to use for
                 the title of the output chart.
@@ -367,7 +368,7 @@ class LinkerEvalution:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self._linker)
-        return unlinkables_chart(records, x_col, name_of_data_in_title, as_dict)
+        return UnlinkablesChart(records, x_col, name_of_data_in_title, as_dict).chart
 
     def labelling_tool_for_specific_record(
         self,

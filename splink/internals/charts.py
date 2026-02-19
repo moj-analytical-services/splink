@@ -5,7 +5,16 @@ import math
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Generic, Protocol, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    Protocol,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 from splink.internals.misc import read_resource
 from splink.internals.waterfall_chart import records_to_waterfall_data
@@ -543,53 +552,52 @@ class ParameterEstimateComparisonsChart(SplinkChart[ChartRecord]):
         return "parameter_estimate_comparisons.json"
 
 
-def unlinkables_chart(
-    records,
-    x_col="match_weight",
-    source_dataset=None,
-    as_dict=False,
-):
-    if x_col not in ["match_weight", "match_probability"]:
-        raise ValueError(
-            f"{x_col} must be 'match_weight' (default) or 'match_probability'."
-        )
+class UnlinkablesChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        x_col: Literal["match_weight", "match_probability"] = "match_weight",
+        source_dataset: str | None = None,
+        as_dict: bool = False,
+    ):
+        if x_col not in ["match_weight", "match_probability"]:
+            raise ValueError(
+                f"{x_col} must be 'match_weight' (default) or 'match_probability'."
+            )
+        super().__init__(records, as_dict=as_dict)
+        self.x_col = x_col
+        self.source_dataset = source_dataset
 
-    chart_path = "unlinkables_chart_def.json"
-    unlinkables_chart_def = load_chart_definition(chart_path)
-    unlinkables_chart_def["data"]["values"] = records
+    @property
+    def chart_spec_file(self) -> str:
+        return "unlinkables_chart_def.json"
 
-    if x_col == "match_probability":
-        unlinkables_chart_def["layer"][0]["encoding"]["x"]["field"] = (
-            "match_probability"
-        )
-        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"]["title"] = (
+    def alter_spec_from_data(self, chart_spec):
+        if source_dataset := self.source_dataset:
+            chart_spec["title"]["text"] += f" - {source_dataset}"
+        if self.x_col == "match_weight":
+            return chart_spec
+        # if we have match_probability we need to update spec to match:
+        chart_spec["layer"][0]["encoding"]["x"]["field"] = "match_probability"
+        chart_spec["layer"][0]["encoding"]["x"]["axis"]["title"] = (
             "Threshold match probability"
         )
-        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"]["format"] = ".2"
+        chart_spec["layer"][0]["encoding"]["x"]["axis"]["format"] = ".2"
 
-        unlinkables_chart_def["layer"][1]["encoding"]["x"]["field"] = (
-            "match_probability"
-        )
-        unlinkables_chart_def["layer"][1]["selection"]["selector112"]["fields"] = [
+        chart_spec["layer"][1]["encoding"]["x"]["field"] = "match_probability"
+        chart_spec["layer"][1]["selection"]["selector112"]["fields"] = [
             "match_probability",
             "cum_prop",
         ]
 
-        unlinkables_chart_def["layer"][2]["encoding"]["x"]["field"] = (
-            "match_probability"
-        )
-        unlinkables_chart_def["layer"][2]["encoding"]["x"]["axis"]["title"] = (
+        chart_spec["layer"][2]["encoding"]["x"]["field"] = "match_probability"
+        chart_spec["layer"][2]["encoding"]["x"]["axis"]["title"] = (
             "Threshold match probability"
         )
 
-        unlinkables_chart_def["layer"][3]["encoding"]["x"]["field"] = (
-            "match_probability"
-        )
+        chart_spec["layer"][3]["encoding"]["x"]["field"] = "match_probability"
 
-    if source_dataset:
-        unlinkables_chart_def["title"]["text"] += f" - {source_dataset}"
-
-    return altair_or_json(unlinkables_chart_def, as_dict=as_dict)
+        return chart_spec
 
 
 class CompletenessChart(SplinkChart[ChartRecord]):
