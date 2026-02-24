@@ -279,13 +279,13 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "first_name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "first_name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "first_name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "first_name": "Bob", "postcode": ["C"]},
@@ -329,9 +329,15 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_1 = pd.DataFrame([{"unique_id": 1, "first_name": "Alice", "postcode": ["A"]}])
-    data_2 = pd.DataFrame([{"unique_id": 2, "first_name": "Alice", "postcode": ["A"]}])
-    data_3 = pd.DataFrame([{"unique_id": 3, "first_name": "Alice", "postcode": ["A"]}])
+    data_1 = pa.Table.from_pylist(
+        [{"unique_id": 1, "first_name": "Alice", "postcode": ["A"]}]
+    )
+    data_2 = pa.Table.from_pylist(
+        [{"unique_id": 2, "first_name": "Alice", "postcode": ["A"]}]
+    )
+    data_3 = pa.Table.from_pylist(
+        [{"unique_id": 3, "first_name": "Alice", "postcode": ["A"]}]
+    )
 
     settings = {
         "link_type": "link_only",
@@ -369,13 +375,13 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
 @mark_with_dialects_including("duckdb", pass_dialect=True)
 def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialect):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "name": "Alice", "postcode": ["D"]},
@@ -408,14 +414,14 @@ def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialec
 @mark_with_dialects_including("duckdb", pass_dialect=True)
 def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, dialect):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
             {"unique_id": 3, "name": "Alice", "postcode": ["Z"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "name": "Alice", "postcode": ["Z", "Q"]},
@@ -444,13 +450,13 @@ def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 12, "name": "Bob", "postcode": ["C"]},
