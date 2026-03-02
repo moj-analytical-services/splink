@@ -4,6 +4,7 @@ import logging
 import math
 import re
 from copy import copy
+from dataclasses import asdict, dataclass
 from statistics import median
 from textwrap import dedent
 from typing import Any, Optional, Union, cast
@@ -114,6 +115,34 @@ def _default_u_values(num_levels: int) -> list[float]:
         u_vals.append(u)
 
     return u_vals
+
+
+@dataclass
+class ComparisonLevelDetailedRecord:
+    sql_condition: str | None
+    label_for_charts: str
+
+    has_tf_adjustments: bool
+    tf_adjustment_column: str | None
+    tf_adjustment_weight: float | None
+
+    is_null_level: bool
+
+    m_probability: float | None
+    u_probability: float | None
+    m_probability_description: str | None
+    u_probability_description: str | None
+
+    bayes_factor: float | None
+    log2_bayes_factor: float
+    bayes_factor_description: str
+
+    comparison_vector_value: int
+    max_comparison_vector_value: int
+    comparison_name: str | None
+
+    def as_dict(self):
+        return asdict(self)
 
 
 class ComparisonLevel:
@@ -735,38 +764,30 @@ class ComparisonLevel:
 
     def _as_detailed_record(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
-    ) -> dict[str, Any]:
+    ) -> ComparisonLevelDetailedRecord:
         "A detailed representation of this level to describe it in charting outputs"
-        output: dict[str, Any] = {}
-        output["sql_condition"] = self.sql_condition
-        output["label_for_charts"] = self._label_for_charts_no_duplicates(
-            comparison_levels
+        return ComparisonLevelDetailedRecord(
+            sql_condition=self.sql_condition,
+            label_for_charts=self._label_for_charts_no_duplicates(comparison_levels),
+            has_tf_adjustments=self._has_tf_adjustments,
+            tf_adjustment_column=(
+                self._tf_adjustment_input_column.input_name
+                if self._has_tf_adjustments
+                else None
+            ),
+            tf_adjustment_weight=self._tf_adjustment_weight,
+            is_null_level=self.is_null_level,
+            m_probability=self.m_probability if not self.is_null_level else None,
+            u_probability=self.u_probability if not self.is_null_level else None,
+            m_probability_description=self._m_probability_description,
+            u_probability_description=self._u_probability_description,
+            bayes_factor=self._bayes_factor,
+            log2_bayes_factor=self._log2_bayes_factor,
+            bayes_factor_description=self._bayes_factor_description,
+            comparison_vector_value=self.comparison_vector_value,
+            max_comparison_vector_value=comparison_num_levels - 1,
+            comparison_name=None,
         )
-
-        if not self._is_null_level:
-            output["m_probability"] = self.m_probability
-            output["u_probability"] = self.u_probability
-
-            output["m_probability_description"] = self._m_probability_description
-            output["u_probability_description"] = self._u_probability_description
-
-        output["has_tf_adjustments"] = self._has_tf_adjustments
-        if self._has_tf_adjustments:
-            output["tf_adjustment_column"] = self._tf_adjustment_input_column.input_name
-        else:
-            output["tf_adjustment_column"] = None
-        output["tf_adjustment_weight"] = self._tf_adjustment_weight
-
-        output["is_null_level"] = self.is_null_level
-        output["bayes_factor"] = self._bayes_factor
-        output["log2_bayes_factor"] = self._log2_bayes_factor
-        output["comparison_vector_value"] = self.comparison_vector_value
-        output["max_comparison_vector_value"] = comparison_num_levels - 1
-        output["bayes_factor_description"] = self._bayes_factor_description
-        output["m_probability_description"] = self._m_probability_description
-        output["u_probability_description"] = self._u_probability_description
-
-        return output
 
     def _parameter_estimates_as_records(
         self, comparison_num_levels: int, comparison_levels: list[ComparisonLevel]
@@ -786,9 +807,9 @@ class ComparisonLevel:
             else:
                 record["estimated_probability_as_log_odds"] = None
 
-            record["sql_condition"] = cl_record["sql_condition"]
-            record["comparison_level_label"] = cl_record["label_for_charts"]
-            record["comparison_vector_value"] = cl_record["comparison_vector_value"]
+            record["sql_condition"] = cl_record.sql_condition
+            record["comparison_level_label"] = cl_record.label_for_charts
+            record["comparison_vector_value"] = cl_record.comparison_vector_value
             output_records.append(record)
 
         return output_records

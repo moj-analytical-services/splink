@@ -239,7 +239,9 @@ def tf_adjustment_chart(
 
     # Data for chart
     comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
-    comparison_records = comparison._as_detailed_records
+    comparison_records = list(
+        map(lambda rec: rec.as_dict(), comparison._as_detailed_records)
+    )
 
     keys_to_retain = [
         "comparison_vector_value",

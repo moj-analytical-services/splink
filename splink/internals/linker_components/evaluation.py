@@ -9,12 +9,11 @@ from splink.internals.accuracy import (
     truth_space_table_from_labels_table,
 )
 from splink.internals.charts import (
-    ChartReturnType,
-    accuracy_chart,
-    precision_recall_chart,
-    roc_chart,
-    threshold_selection_tool,
-    unlinkables_chart,
+    AccuracyChart,
+    PrecisionRecallChart,
+    ROCChart,
+    ThresholdSelectionToolChart,
+    UnlinkablesChart,
 )
 from splink.internals.labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -109,7 +108,14 @@ class LinkerEvalution:
             ]
         ] = [],
         positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
-    ) -> Union[ChartReturnType, SplinkDataFrame]:
+    ) -> Union[
+        ThresholdSelectionToolChart,
+        AccuracyChart,
+        PrecisionRecallChart,
+        ROCChart,
+        SplinkDataFrame,
+    ]:
+        # TODO: overload for specifics
         """Generate an accuracy chart or table from ground truth data, where the ground
         truth is in a column in the input dataset called `labels_column_name`
 
@@ -168,13 +174,13 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return threshold_selection_tool(recs, add_metrics=add_metrics)
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)
         elif output_type == "accuracy":
-            return accuracy_chart(recs, add_metrics=add_metrics)
+            return AccuracyChart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return roc_chart(recs)
+            return ROCChart(recs)
         elif output_type == "precision_recall":
-            return precision_recall_chart(recs)
+            return PrecisionRecallChart(recs)
         elif output_type == "table":
             return df_truth_space
         else:
@@ -204,7 +210,14 @@ class LinkerEvalution:
                 "phi",
             ]
         ] = [],
-    ) -> Union[ChartReturnType, SplinkDataFrame]:
+    ) -> Union[
+        ThresholdSelectionToolChart,
+        AccuracyChart,
+        PrecisionRecallChart,
+        ROCChart,
+        SplinkDataFrame,
+    ]:
+        # TODO: overloads
         """Generate an accuracy chart or table from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -247,7 +260,7 @@ class LinkerEvalution:
                 - `"phi"` - \u03c6 coefficient or Matthews correlation coefficient (MCC)
 
         Returns:
-            altair.Chart: An altair chart
+            SplinkChart | SplinkDataFrame: A SplinkChart object, or SplinkDataFrame
 
         Examples:
             ```py
@@ -257,6 +270,7 @@ class LinkerEvalution:
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
 
+        # TODO: only need it to be iterable, & specialise error
         if not isinstance(add_metrics, list):
             raise Exception(
                 "add_metrics must be a list containing one or more of the following:",
@@ -281,13 +295,13 @@ class LinkerEvalution:
         recs = df_truth_space.as_record_dict()
 
         if output_type == "threshold_selection":
-            return threshold_selection_tool(recs, add_metrics=add_metrics)
+            return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)
         elif output_type == "accuracy":
-            return accuracy_chart(recs, add_metrics=add_metrics)
+            return AccuracyChart(recs, add_metrics=add_metrics)
         elif output_type == "roc":
-            return roc_chart(recs)
+            return ROCChart(recs)
         elif output_type == "precision_recall":
-            return precision_recall_chart(recs)
+            return PrecisionRecallChart(recs)
         elif output_type == "table":
             return df_truth_space
         else:
@@ -337,10 +351,9 @@ class LinkerEvalution:
 
     def unlinkables_chart(
         self,
-        x_col: str = "match_weight",
+        x_col: Literal["match_weight", "match_probability"] = "match_weight",
         name_of_data_in_title: str | None = None,
-        as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> UnlinkablesChart:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
 
@@ -349,13 +362,13 @@ class LinkerEvalution:
 
         Args:
             x_col (str, optional): Column to use for the x-axis.
+                Must be either "match_weight" or "match_probability".
                 Defaults to "match_weight".
             name_of_data_in_title (str, optional): Name of the source dataset to use for
                 the title of the output chart.
-            as_dict (bool, optional): If True, return a dict version of the chart.
 
         Returns:
-            altair.Chart: An altair chart
+            SplinkChart: A SplinkChart object
 
         Examples:
             After estimating the parameters of the model, run:
@@ -367,7 +380,7 @@ class LinkerEvalution:
 
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self._linker)
-        return unlinkables_chart(records, x_col, name_of_data_in_title, as_dict)
+        return UnlinkablesChart(records, x_col, name_of_data_in_title)
 
     def labelling_tool_for_specific_record(
         self,

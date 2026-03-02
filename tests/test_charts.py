@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink.internals.charts import save_offline_chart
 from tests.decorator import mark_with_dialects_excluding
 
 # ground truth:
@@ -143,6 +142,24 @@ def test_m_u_charts(dialect, test_helpers):
 
 
 @mark_with_dialects_excluding()
+def test_comparison_match_weight_charts(dialect, test_helpers):
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            cl.ExactMatch("gender"),
+            cl.ExactMatch("tm_partial"),
+            cl.LevenshteinAtThresholds("surname", [1]),
+        ],
+    }
+    helper = test_helpers[dialect]
+
+    linker = helper.linker_with_registration(df, settings)
+
+    comp = linker._settings_obj.comparisons[0]
+    comp.match_weights_chart()
+
+
+@mark_with_dialects_excluding()
 def test_parameter_estimate_charts(dialect, test_helpers):
     settings = {
         "link_type": "dedupe_only",
@@ -231,5 +248,5 @@ def test_save_offline_chart(tmp_path, test_helpers):
     helper = test_helpers["duckdb"]
 
     linker = helper.linker_with_registration(df, settings)
-    ch = linker.visualisations.tf_adjustment_chart("gender", as_dict=True)
-    save_offline_chart(ch, tmp_path / "test_chart.html")
+    ch = linker.visualisations.match_weights_chart()
+    ch.save_offline_chart(tmp_path / "test_chart.html")
