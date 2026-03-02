@@ -197,6 +197,11 @@ class SplinkChart(ABC, Generic[T]):
             print(f"Chart saved to {filename}")  # noqa: T201
             print(iframe_message.format(filename=filename))  # noqa: T201
 
+    # allows rich representation of altair chart in IPython environments: https://ipython.readthedocs.io/en/stable/config/integrating.html
+    def _repr_mimebundle_(self, *args, **kwargs):
+        # let altair handle the display for us
+        return self.altair_chart._repr_mimebundle_(*args, **kwargs)
+
 
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
     @property
