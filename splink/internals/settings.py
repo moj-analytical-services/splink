@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, TypedDict
 
 from splink.internals.blocking import BlockingRule
-from splink.internals.charts import m_u_parameters_chart, match_weights_chart
+from splink.internals.charts import MatchWeightsChart, MUParametersChart
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import (
     ComparisonLevel,
@@ -594,15 +594,13 @@ class Settings:
             **current_settings,
         }
 
-    def match_weights_chart(self, as_dict=False):
-        return match_weights_chart(
-            self._parameters_as_detailed_records, as_dict=as_dict
+    def match_weights_chart(self):
+        return MatchWeightsChart(
+            self._parameters_as_detailed_records,
         )
 
-    def m_u_parameters_chart(self, as_dict=False):
-        return m_u_parameters_chart(
-            self._parameters_as_detailed_records, as_dict=as_dict
-        )
+    def m_u_parameters_chart(self):
+        return MUParametersChart(self._parameters_as_detailed_records)
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []

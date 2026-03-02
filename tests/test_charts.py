@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink.internals.charts import save_offline_chart
 from tests.decorator import mark_with_dialects_excluding
 
 # ground truth:
@@ -249,5 +248,5 @@ def test_save_offline_chart(tmp_path, test_helpers):
     helper = test_helpers["duckdb"]
 
     linker = helper.linker_with_registration(df, settings)
-    ch = linker.visualisations.tf_adjustment_chart("gender", as_dict=True)
-    save_offline_chart(ch, tmp_path / "test_chart.html")
+    ch = linker.visualisations.match_weights_chart()
+    ch.save_offline_chart(tmp_path / "test_chart.html")
