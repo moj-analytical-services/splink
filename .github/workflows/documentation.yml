@@ -58,7 +58,7 @@ jobs:
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
           fail: false
-          args: --offline site/ --root-dir site --verbose './site/**/*.html'
+          args: --offline site/ --root-dir site --exclude-path '.*404.*' --verbose './site/**/*.html'
 
       - name: Upload built site
         id: upload_built_site
