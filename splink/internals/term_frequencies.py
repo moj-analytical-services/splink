@@ -192,16 +192,11 @@ def compute_all_term_frequencies_sqls(
 
 
 def comparison_level_to_tf_chart_data(
-    cl: dict[str, Any], con, column_info_settings, sqlglot_dialect_str
+    cl: dict[str, Any], con
 ) -> dict[str, Any]:
-    # TODO: don't want to have to pass this around everywhere
-    input_col = InputColumn(
-        cl["tf_adjustment_column"],
-        column_info_settings=column_info_settings,
-        sqlglot_dialect_str=sqlglot_dialect_str,
-    )
-
     sdf = cl["df_tf"]
+    input_col = cl["input_col"]
+
     # ensure our duckdb connexion has access to this table
     sdf.as_duckdbpyrelation()
 
@@ -265,6 +260,9 @@ def tf_adjustment_chart(
         {k: getattr(cl, k) for k in keys_to_retain} for cl in tf_comparison_records
     ]
 
+    column_info_settings = linker._settings_obj.column_info_settings
+    sqlglot_dialect_str = linker._settings_obj._sql_dialect_str
+
     # Add data ("df_tf") to each level
     comparison_records = [
         dict(
@@ -272,19 +270,22 @@ def tf_adjustment_chart(
             **{
                 "df_tf": linker.table_management.compute_tf_table(
                     cl["tf_adjustment_column"]
+                ),
+                "input_col": InputColumn(
+                    cl["tf_adjustment_column"],
+                    column_info_settings=column_info_settings,
+                    sqlglot_dialect_str=sqlglot_dialect_str,
                 )
+
             },
         )
         for cl in comparison_records
     ]
     con = linker._db_api.duckdb_con
 
-    column_info_settings = linker._settings_obj.column_info_settings
-    sqlglot_dialect_str = linker._settings_obj._sql_dialect_str
-
     levels_chart_data = [
         comparison_level_to_tf_chart_data(
-            cl, con, column_info_settings, sqlglot_dialect_str
+            cl, con
         )
         for cl in comparison_records
     ]
