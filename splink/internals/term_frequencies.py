@@ -316,9 +316,10 @@ def tf_adjustment_chart(
         )
     )
 
-    # TODO: this is circumventing the 'standard' approach when we use duckdb.
-    # Maybe another way?
-    df_table_name = "__splink__df_tmp_tf_table_data"
+    df_table_name = (
+        f"__splink__df_td_adjustment_chart_"
+        f"data_{col}_{n_least_freq}_{n_most_freq}"
+    )
     con.register(df_table_name, df)
 
     reln = con.sql(
@@ -377,6 +378,10 @@ def tf_adjustment_chart(
         df.select("gamma", "value", "log2_bf_final", "log2_bf_tf", "log2_bf")
     )
     hist_data = record_dicts_from_relation(reln.filter(f"gamma IN {tf_levels}"))
+
+    # TODO: worth handling the case where we hit an error before and we don't drop?
+    # don't expect long-lived processes with duckdb backend, so probably not crucial
+    con.execute(f"DROP VIEW {df_table_name}")
 
     chart["datasets"]["data"] = main_chart_data
     chart["datasets"]["hist"] = hist_data
