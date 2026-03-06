@@ -95,7 +95,8 @@ def _join_condition_nodes_to_blocked_pairs_sql(
         lr_suffix: Which side to join ("_l" or "_r")
 
     Returns:
-        SQL like: l."source_dataset" = b.source_dataset_l AND l."unique_id" = b.unique_id_l
+        SQL like:
+        l."source_dataset" = b.source_dataset_l AND l."unique_id" = b.unique_id_l
 
     Example:
         >>> cols = [InputColumn("source_dataset"), InputColumn("unique_id")]
@@ -131,7 +132,8 @@ def _tuple_comparison_order_condition_sql(
         operator: Comparison operator (default "<" for ordering)
 
     Returns:
-        SQL like: (l."source_dataset", l."unique_id") < (r."source_dataset", r."unique_id")
+        SQL like:
+        (l."source_dataset", l."unique_id") < (r."source_dataset", r."unique_id")
 
     Example:
         >>> cols = [InputColumn("source_dataset"), InputColumn("unique_id")]

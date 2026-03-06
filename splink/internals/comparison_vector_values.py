@@ -11,16 +11,16 @@ from splink.internals.unique_id_concat import (
 logger = logging.getLogger(__name__)
 
 
-def _blocked_pair_id_columns_as_select_sql(
+def _node_id_tuple_sql(unique_id_columns: list[InputColumn], table_alias: str) -> str:
+    cols = [f"{table_alias}.{col.name}" for col in unique_id_columns]
+    return f"({', '.join(cols)})"
+
+
+def _blocked_pair_id_tuple_sql(
     unique_id_columns: list[InputColumn], lr_suffix: str
 ) -> str:
-    select_cols = []
-
-    for col in unique_id_columns:
-        col_unquoted = col.unquote().name
-        select_cols.append(f"{col_unquoted}{lr_suffix} as {col_unquoted}")
-
-    return ", ".join(select_cols)
+    cols = [f"{col.unquote().name}{lr_suffix}" for col in unique_id_columns]
+    return f"({', '.join(cols)})"
 
 
 def compute_comparison_vector_values_sql(
@@ -96,55 +96,24 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
         and link_type == "two_dataset_link_only"
         and sql_dialect_str == "duckdb"
     ):
-        blocked_ids_l_select = _blocked_pair_id_columns_as_select_sql(
-            unique_id_columns, "_l"
-        )
-        blocked_ids_r_select = _blocked_pair_id_columns_as_select_sql(
-            unique_id_columns, "_r"
-        )
-        filtered_join_l = _join_condition_nodes_to_blocked_pairs_sql(
-            unique_id_columns, "n", "ids", ""
-        )
-        filtered_join_r = _join_condition_nodes_to_blocked_pairs_sql(
-            unique_id_columns, "n", "ids", ""
-        )
+        node_id_tuple = _node_id_tuple_sql(unique_id_columns, "n")
+        blocked_id_tuple_l = _blocked_pair_id_tuple_sql(unique_id_columns, "_l")
+        blocked_id_tuple_r = _blocked_pair_id_tuple_sql(unique_id_columns, "_r")
 
         sql = f"""
-        select distinct
-            {blocked_ids_l_select}
-        from __splink__blocked_id_pairs
-        """
-        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_ids_l"})
-
-        sql = f"""
-        select distinct
-            {blocked_ids_r_select}
-        from __splink__blocked_id_pairs
-        """
-        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_ids_r"})
-
-        sql = f"""
-        select n.*
+        select *
         from {input_tablename_l} as n
-        inner join __splink__blocked_id_ids_l as ids
-        on {filtered_join_l}
+        where
+        {node_id_tuple} in (select {blocked_id_tuple_l} from __splink__blocked_id_pairs)
+        or
+        {node_id_tuple} in (select {blocked_id_tuple_r} from __splink__blocked_id_pairs)
         """
         sqls.append(
-            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered_l"}
+            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered"}
         )
 
-        sql = f"""
-        select n.*
-        from {input_tablename_r} as n
-        inner join __splink__blocked_id_ids_r as ids
-        on {filtered_join_r}
-        """
-        sqls.append(
-            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered_r"}
-        )
-
-        input_tablename_l = "__splink__df_concat_with_tf_filtered_l"
-        input_tablename_r = "__splink__df_concat_with_tf_filtered_r"
+        input_tablename_l = "__splink__df_concat_with_tf_filtered"
+        input_tablename_r = "__splink__df_concat_with_tf_filtered"
 
     # The first table selects the required columns from the input tables
     # and alises them as `col_l`, `col_r` etc
