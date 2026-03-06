@@ -139,8 +139,8 @@ class BlockingRule:
 
         for col in unique_id_columns:
             col_unquoted = col.unquote().name
-            select_cols.append(f'l.{col.name} as {col_unquoted}_l')
-            select_cols.append(f'r.{col.name} as {col_unquoted}_r')
+            select_cols.append(f"l.{col.name} as {col_unquoted}_l")
+            select_cols.append(f"r.{col.name} as {col_unquoted}_r")
 
         select_clause = ",\n            ".join(select_cols)
 
