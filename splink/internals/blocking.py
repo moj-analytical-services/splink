@@ -135,18 +135,18 @@ class BlockingRule:
         else:
             unique_id_columns = [unique_id_input_column]
 
-        from splink.internals.unique_id_concat import (
-            _individual_uid_columns_as_select_sql,
-        )
+        select_cols = [f"'{self.match_key}' as match_key"]
 
-        uid_l_cols = _individual_uid_columns_as_select_sql(unique_id_columns, "l", "_l")
-        uid_r_cols = _individual_uid_columns_as_select_sql(unique_id_columns, "r", "_r")
+        for col in unique_id_columns:
+            col_unquoted = col.unquote().name
+            select_cols.append(f'l.{col.name} as {col_unquoted}_l')
+            select_cols.append(f'r.{col.name} as {col_unquoted}_r')
+
+        select_clause = ",\n            ".join(select_cols)
 
         sql = f"""
             select
-            '{self.match_key}' as match_key,
-            {uid_l_cols},
-            {uid_r_cols}
+            {select_clause}
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
@@ -283,6 +283,8 @@ class ExplodingBlockingRule(BlockingRule):
         unique_id_input_column: InputColumn,
         br: BlockingRule,
         link_type: "LinkTypeLiteralType",
+        input_tablename_l: str,
+        input_tablename_r: str,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
     ) -> str:
@@ -320,18 +322,12 @@ class ExplodingBlockingRule(BlockingRule):
         uid_r_cols = _individual_uid_columns_as_select_sql(
             unique_id_input_columns, "r", "_r"
         )
-
-        if link_type == "two_dataset_link_only":
-            where_condition = (
-                where_condition + " and l.source_dataset < r.source_dataset"
-            )
-
         sql = f"""
             select distinct
                 {uid_l_cols},
                 {uid_r_cols}
-            from __splink__df_concat_unnested as l
-            inner join __splink__df_concat_unnested as r
+            from {input_tablename_l} as l
+            inner join {input_tablename_r} as r
             on ({br.blocking_rule_sql})
             {where_condition}
             """
@@ -439,34 +435,67 @@ def materialise_exploded_id_tables(
         return []
     exploded_tables = []
 
-    pipeline = CTEPipeline()
+    first_input_df = next(iter(splink_df_dict.values()))
 
-    sql = vertically_concatenate_sql(
-        splink_df_dict, source_dataset_input_column=source_dataset_input_column
-    )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-    nodes_concat = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    input_columns_set = set(nodes_concat.columns)
+    input_columns_set = set(first_input_df.columns)
+    if source_dataset_input_column:
+        input_columns_set.add(source_dataset_input_column)
 
     for br in exploding_blocking_rules:
-        pipeline = CTEPipeline([nodes_concat])
+        pipeline = CTEPipeline()
+
+        sql = vertically_concatenate_sql(
+            splink_df_dict, source_dataset_input_column=source_dataset_input_column
+        )
+        pipeline.enqueue_sql(sql, "__splink__df_concat")
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
 
         other_cols = input_columns_set - set(arrays_to_explode_cols)
 
-        expl_sql = db_api.sql_dialect.explode_arrays_sql(
-            "__splink__df_concat",
-            br.array_columns_to_explode,
-            [col.name for col in other_cols],
-        )
+        if link_type == "two_dataset_link_only":
+            if source_dataset_input_column is None:
+                raise ValueError(
+                    "source_dataset_input_column is required for two_dataset_link_only"
+                )
 
-        pipeline.enqueue_sql(
-            expl_sql,
-            "__splink__df_concat_unnested",
-        )
+            sqls = split_df_concat_with_tf_into_two_tables_sqls(
+                "__splink__df_concat",
+                source_dataset_input_column.name,
+            )
+            pipeline.enqueue_list_of_sqls(sqls)
+
+            input_tablename_l = "__splink__df_concat_left_unnested"
+            input_tablename_r = "__splink__df_concat_right_unnested"
+
+            expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat_left",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+            pipeline.enqueue_sql(expl_sql_l, input_tablename_l)
+
+            expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat_right",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+            pipeline.enqueue_sql(expl_sql_r, input_tablename_r)
+        else:
+            input_tablename_l = "__splink__df_concat_unnested"
+            input_tablename_r = "__splink__df_concat_unnested"
+
+            expl_sql = db_api.sql_dialect.explode_arrays_sql(
+                "__splink__df_concat",
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+
+            pipeline.enqueue_sql(
+                expl_sql,
+                input_tablename_l,
+            )
 
         base_name = "__splink__marginal_exploded_ids_blocking_rule"
         table_name = f"{base_name}_mk_{br.match_key}"
@@ -476,6 +505,8 @@ def materialise_exploded_id_tables(
             unique_id_input_column=unique_id_input_column,
             br=br,
             link_type=link_type,
+            input_tablename_l=input_tablename_l,
+            input_tablename_r=input_tablename_r,
             left_chunk=left_chunk,
             right_chunk=right_chunk,
         )

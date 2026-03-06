@@ -10,7 +10,12 @@ from splink.internals.misc import (
     join_list_with_commas_final_and,
 )
 
-from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
+from .comparison_level import (
+    ComparisonLevel,
+    ComparisonLevelDetailedRecord,
+    _default_m_values,
+    _default_u_values,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -360,15 +365,11 @@ class Comparison:
         return self._all_m_are_trained and self._all_u_are_trained
 
     @property
-    def _as_detailed_records(self) -> list[dict[str, Any]]:
+    def _as_detailed_records(self) -> list[ComparisonLevelDetailedRecord]:
         records = []
         for cl in self.comparison_levels:
-            record = {}
-            record["comparison_name"] = self.output_column_name
-            record = {
-                **record,
-                **cl._as_detailed_record(self._num_levels, self.comparison_levels),
-            }
+            record = cl._as_detailed_record(self._num_levels, self.comparison_levels)
+            record.comparison_name = self.output_column_name
             records.append(record)
         return records
 
@@ -462,9 +463,9 @@ class Comparison:
 
         return desc
 
-    def match_weights_chart(self, as_dict=False):
+    def match_weights_chart(self):
         """Display a chart of comparison levels of the comparison"""
-        from splink.internals.charts import comparison_match_weights_chart
+        from splink.internals.charts import ComparisonMatchWeightsChart
 
         records = self._as_detailed_records
-        return comparison_match_weights_chart(records, as_dict=as_dict)
+        return ComparisonMatchWeightsChart(records)

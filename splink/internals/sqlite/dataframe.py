@@ -64,7 +64,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         cur = self.db_api.con.cursor()
         cur.execute(drop_sql)
 
-    def as_record_dict(self, limit=None):
+    def _limit_table_as_result(self, limit):
         sql = f"""
         select *
         from {self.physical_name}
@@ -73,4 +73,14 @@ class SQLiteDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
         sql += ";"
         cur = self.db_api.con.cursor()
-        return cur.execute(sql).fetchall()
+        return cur.execute(sql)
+
+    def as_record_dict(self, limit=None):
+        return self._limit_table_as_result(limit).fetchall()
+
+    def as_dict(self, limit=None):
+        res = self._limit_table_as_result(limit)
+        row_records = res.fetchall()
+        column_names = [desc[0] for desc in res.description]
+        res_dict = {col: [row[col] for row in row_records] for col in column_names}
+        return res_dict

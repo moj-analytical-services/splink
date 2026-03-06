@@ -1,12 +1,15 @@
+import random
+
 import duckdb
-import numpy as np
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 import splink.internals.comparison_library as cl
 from splink.internals.estimate_u import _proportion_sample_size_link_only
 from splink.internals.pipeline import CTEPipeline
 from tests.decorator import mark_with_dialects_excluding
+
+random.seed(1)
 
 
 @mark_with_dialects_excluding()
@@ -20,16 +23,13 @@ def test_u_train(test_helpers, dialect):
         {"unique_id": 5, "name": "Eve"},
         {"unique_id": 6, "name": "Amanda"},
     ]
-    df = pd.DataFrame(data)
 
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
-    df_linker = helper.convert_frame(df)
-
-    linker = helper.linker_with_registration(df_linker, settings)
+    linker = helper.linker_with_registration([data], settings)
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -66,20 +66,14 @@ def test_u_train_link_only(test_helpers, dialect):
         {"unique_id": 5, "name": "Stuart"},
         {"unique_id": 6, "name": "Jimmy"},
     ]
-    df_l = pd.DataFrame(data_l)
-    df_r = pd.DataFrame(data_r)
-
     settings = {
         "link_type": "link_only",
         "comparisons": [cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    df_l = helper.convert_frame(df_l)
-    df_r = helper.convert_frame(df_r)
-
     linker = helper.linker_with_registration(
-        [df_l, df_r],
+        [data_l, data_r],
         settings,
         input_table_aliases=["l", "r"],
     )
@@ -120,16 +114,16 @@ def test_u_train_link_only(test_helpers, dialect):
 @mark_with_dialects_excluding("spark", "postgres")
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df_l = (
-        pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
-        .reset_index()
-        .rename(columns={"index": "unique_id"})
-    )
-    df_r = (
-        pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
-        .reset_index()
-        .rename(columns={"index": "unique_id"})
-    )
+    n_l = 3000
+    n_r = 3000
+    data_l = {
+        "unique_id": list(range(n_l)),
+        "name": [random.randint(0, 3000) for _ in range(n_l)],
+    }
+    data_r = {
+        "unique_id": list(range(n_r)),
+        "name": [random.randint(0, 3000) for _ in range(n_r)],
+    }
 
     # max_pairs is a good deal less than total possible pairs = 9_000_000
     max_pairs = 1_800_000
@@ -140,11 +134,8 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": [],
     }
 
-    df_l = helper.convert_frame(df_l)
-    df_r = helper.convert_frame(df_r)
-
     linker = helper.linker_with_registration(
-        [df_l, df_r],
+        [data_l, data_r],
         settings,
         input_table_aliases=["_a", "_b"],
     )
@@ -190,21 +181,22 @@ def test_u_train_link_only_sample_proportion():
     """
 
     def count_self_join(row_counts):
-        dfs = []
+        datas = []
 
         for count in row_counts:
-            df = pd.DataFrame(
+            data = pa.Table.from_pydict(
                 {
                     "source_dataset_name": [f"dataset_{count}"] * count,
                     "unique_id": range(count),
                 }
             )
-            dfs.append(df)
 
-        combined_df = pd.concat(dfs)
+            datas.append(data)
+
+        combined_table = pa.concat_tables(datas)
 
         con = duckdb.connect(database=":memory:", read_only=False)
-        con.register("combined_df", combined_df)
+        con.register("combined_df", combined_table)
 
         query = """
         SELECT count(*)
@@ -214,15 +206,15 @@ def test_u_train_link_only_sample_proportion():
         AND a.source_dataset_name || a.unique_id < b.source_dataset_name || b.unique_id
         """
 
-        result = con.execute(query).fetchdf()
-        return result.iloc[0, 0]
+        result = con.execute(query).fetchall()
+        return result[0][0]
 
     row_counts = [10, 20, 30]
     count = count_self_join(row_counts)
     # Note need to be careful that max_pairs here results in a 'nice' proportion
-    # that means the proporitoned row counts are integers
+    # that means the proportioned row counts are integers
     max_pairs = count / 4
-    proportion, sample_size = _proportion_sample_size_link_only(
+    proportion, _sample_size = _proportion_sample_size_link_only(
         row_counts_individual_dfs=row_counts, max_pairs=max_pairs
     )
 
@@ -262,7 +254,6 @@ def test_u_train_multilink(test_helpers, dialect):
             {"unique_id": 7, "name": "Adil"},
         ],
     ]
-    dfs = list(map(lambda x: helper.convert_frame(pd.DataFrame(x)), datas))
 
     expected_total_links = 2 * 3 + 2 * 4 + 2 * 7 + 3 * 4 + 3 * 7 + 4 * 7
     expected_total_links_with_dedupes = (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
@@ -274,7 +265,7 @@ def test_u_train_multilink(test_helpers, dialect):
     }
 
     linker = helper.linker_with_registration(
-        dfs,
+        datas,
         settings,
         input_table_aliases=["a", "b", "c", "d"],
     )
@@ -312,7 +303,7 @@ def test_u_train_multilink(test_helpers, dialect):
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
     linker = helper.linker_with_registration(
-        dfs,
+        datas,
         settings,
         input_table_aliases=["e", "f", "g", "h"],
     )
@@ -350,18 +341,16 @@ def test_u_train_multilink(test_helpers, dialect):
 
 # No SQLite or Postgres - don't support random seed
 @mark_with_dialects_excluding("sqlite", "postgres")
-def test_seed_u_outputs(test_helpers, dialect):
+def test_seed_u_outputs(fake_1000, test_helpers, dialect):
     helper = test_helpers[dialect]
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [cl.LevenshteinAtThresholds("first_name", 2)],
     }
 
-    linker_1 = helper.linker_with_registration(df, settings)
-    linker_2 = helper.linker_with_registration(df, settings)
-    linker_3 = helper.linker_with_registration(df, settings)
+    linker_1 = helper.linker_with_registration(fake_1000, settings)
+    linker_2 = helper.linker_with_registration(fake_1000, settings)
+    linker_3 = helper.linker_with_registration(fake_1000, settings)
 
     linker_1.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
     linker_2.training.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
@@ -393,17 +382,15 @@ def test_seed_u_outputs_different_order(test_helpers, dialect):
         2: "Sam",
         3: "Ross",
     }
-    input_frame = pd.DataFrame(
-        [
-            {
-                "unique_id": i,
-                "first_name": names[i % len(names)],
-            }
-            for i in range(n_rows)
-        ]
-    )
+    input_data = [
+        {
+            "unique_id": i,
+            "first_name": names[i % len(names)],
+        }
+        for i in range(n_rows)
+    ]
     # simple way to get a slightly uneven distribution
-    input_frame.sample(n=347, random_state=123)
+    random.sample(input_data, k=347)
 
     settings = {
         "link_type": "dedupe_only",
@@ -415,11 +402,10 @@ def test_seed_u_outputs_different_order(test_helpers, dialect):
     u_vals = set()
     # each time we shuffle the input frame
     # this simulates the non-deterministic ordering of df_concat
-    for i in range(5):
-        df_pd = input_frame.sample(frac=1, random_state=i)
+    for _ in range(5):
+        random.shuffle(input_data)
 
-        df = helper.convert_frame(df_pd)
-        linker = helper.linker_with_registration(df, settings)
+        linker = helper.linker_with_registration([input_data], settings)
         linker.training.estimate_u_using_random_sampling(67, 5330)
         u_prob = (
             linker._settings_obj.comparisons[0]

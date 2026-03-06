@@ -4,8 +4,23 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.unique_id_concat import (
+    _join_condition_nodes_to_blocked_pairs_sql,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _blocked_pair_id_columns_as_select_sql(
+    unique_id_columns: list[InputColumn], lr_suffix: str
+) -> str:
+    select_cols = []
+
+    for col in unique_id_columns:
+        col_unquoted = col.unquote().name
+        select_cols.append(f"{col_unquoted}{lr_suffix} as {col_unquoted}")
+
+    return ", ".join(select_cols)
 
 
 def compute_comparison_vector_values_sql(
@@ -42,6 +57,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     source_dataset_input_column: Optional[InputColumn],
     unique_id_input_column: InputColumn,
     include_clerical_match_score: bool = False,
+    link_type: Optional[str] = None,
+    sql_dialect_str: Optional[str] = None,
 ) -> list[dict[str, str]]:
     """Compute the comparison vectors from __splink__blocked_id_pairs, the
     materialised dataframe of blocked pairwise record comparisons.
@@ -58,10 +75,6 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     select_cols_expr = ", \n".join(columns_to_select_for_blocking)
 
-    from splink.internals.unique_id_concat import (
-        _join_condition_nodes_to_blocked_pairs_sql,
-    )
-
     join_l = _join_condition_nodes_to_blocked_pairs_sql(
         unique_id_columns, "l", "b", "_l"
     )
@@ -69,12 +82,75 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
         unique_id_columns, "r", "b", "_r"
     )
 
+    # Where there are large numbers of unmatched records, the DuckDB query planner
+    # can struggle with the double inner join below.  It should
+    # push the filters down to the input tables, but it doesn't always do this.
+    # This forces it.  it is only really relevant in the link only case,
+    # where one dataset is much larger than the other
+    # This optimisation is here due to poor performance observed in
+    # the `uk_address_matcher` package
+    # TODO: Once DuckDB 1.5 is released, check this is still needed
+    # ref https://github.com/moj-analytical-services/uk_address_matcher/issues/226
+    if (
+        input_tablename_l == input_tablename_r
+        and link_type == "two_dataset_link_only"
+        and sql_dialect_str == "duckdb"
+    ):
+        blocked_ids_l_select = _blocked_pair_id_columns_as_select_sql(
+            unique_id_columns, "_l"
+        )
+        blocked_ids_r_select = _blocked_pair_id_columns_as_select_sql(
+            unique_id_columns, "_r"
+        )
+        filtered_join_l = _join_condition_nodes_to_blocked_pairs_sql(
+            unique_id_columns, "n", "ids", ""
+        )
+        filtered_join_r = _join_condition_nodes_to_blocked_pairs_sql(
+            unique_id_columns, "n", "ids", ""
+        )
+
+        sql = f"""
+        select distinct
+            {blocked_ids_l_select}
+        from __splink__blocked_id_pairs
+        """
+        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_ids_l"})
+
+        sql = f"""
+        select distinct
+            {blocked_ids_r_select}
+        from __splink__blocked_id_pairs
+        """
+        sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_ids_r"})
+
+        sql = f"""
+        select n.*
+        from {input_tablename_l} as n
+        inner join __splink__blocked_id_ids_l as ids
+        on {filtered_join_l}
+        """
+        sqls.append(
+            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered_l"}
+        )
+
+        sql = f"""
+        select n.*
+        from {input_tablename_r} as n
+        inner join __splink__blocked_id_ids_r as ids
+        on {filtered_join_r}
+        """
+        sqls.append(
+            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered_r"}
+        )
+
+        input_tablename_l = "__splink__df_concat_with_tf_filtered_l"
+        input_tablename_r = "__splink__df_concat_with_tf_filtered_r"
+
     # The first table selects the required columns from the input tables
     # and alises them as `col_l`, `col_r` etc
     # using the __splink__blocked_id_pairs as an associated (junction) table
-
     # That is, it does the join, but doesn't compute the comparison vectors
-    sql = sql = f"""
+    sql = f"""
     select {select_cols_expr}, b.match_key
     from {input_tablename_l} as l
     inner join __splink__blocked_id_pairs as b

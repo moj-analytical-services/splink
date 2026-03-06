@@ -4,7 +4,7 @@ import logging
 import time
 from copy import deepcopy
 from functools import partial
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 
 from splink.internals.blocking import (
     BlockingRule,
@@ -33,8 +33,6 @@ from .expectation_maximisation import (
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    import pandas as pd
-
     from splink.internals.comparison import Comparison
     from splink.internals.database_api import DatabaseAPISubClass
     from splink.internals.input_column import InputColumn
@@ -49,7 +47,7 @@ class _MUCountsAccumulator:
         self._output_column_name = comparison.output_column_name
         self._label_by_cvv: dict[int, str] = {}
         self._counts_by_cvv: dict[int, list[float]] = {
-            int(cl.comparison_vector_value): [0.0, 0.0]
+            int(cl.comparison_vector_value): [0.0]
             for cl in comparison._comparison_levels_excluding_null
         }
 
@@ -59,19 +57,18 @@ class _MUCountsAccumulator:
             label = cl._label_for_charts_no_duplicates(comparison_levels)
             self._label_by_cvv[cvv] = str(label)
 
-    def update_from_chunk_counts(self, chunk_counts: pd.DataFrame) -> None:
-        for r in chunk_counts.itertuples(index=False):
-            cvv = int(r.comparison_vector_value)
+    def update_from_chunk_counts(self, chunk_counts: list[dict[str, Any]]) -> None:
+        for r in chunk_counts:
+            cvv = int(r["comparison_vector_value"])
             totals = self._counts_by_cvv.get(cvv)
             if totals is None:
                 continue
-            totals[0] += float(r.m_count)
-            totals[1] += float(r.u_count)
+            totals[0] += float(r["u_count"])
 
     def min_u_count(self) -> float:
         if not self._counts_by_cvv:
             return 0.0
-        return min(totals[1] for totals in self._counts_by_cvv.values())
+        return min(totals[0] for totals in self._counts_by_cvv.values())
 
     def min_u_count_level(self) -> tuple[float, int | None, str | None]:
         """Return (min_u_count, cvv, label) for the current accumulator."""
@@ -80,7 +77,7 @@ class _MUCountsAccumulator:
         min_cvv: int | None = None
         min_u: float | None = None
         for cvv in sorted(self._counts_by_cvv):
-            u_count = float(self._counts_by_cvv[cvv][1])
+            u_count = float(self._counts_by_cvv[cvv][0])
             if (min_u is None) or (u_count < min_u):
                 min_u = u_count
                 min_cvv = cvv
@@ -91,24 +88,49 @@ class _MUCountsAccumulator:
     def all_levels_meet_min_u_count(self, min_count: int) -> bool:
         return self.min_u_count() >= min_count
 
-    def to_dataframe(self) -> pd.DataFrame:
-        import pandas as pd
-
-        return pd.DataFrame(
-            [
-                {
-                    "output_column_name": self._output_column_name,
-                    "comparison_vector_value": cvv,
-                    "m_count": totals[0],
-                    "u_count": totals[1],
-                }
-                for cvv, totals in sorted(self._counts_by_cvv.items())
-            ]
-        )
+    def to_record_list(self, with_extra_columns: bool = True) -> list[dict[str, Any]]:
+        return [
+            {
+                "comparison_vector_value": cvv,
+                "u_count": totals[0],
+                **(
+                    {
+                        "output_column_name": self._output_column_name,
+                        "m_count": 0.0,
+                    }
+                    if with_extra_columns
+                    else {}
+                ),
+            }
+            for cvv, totals in sorted(self._counts_by_cvv.items())
+        ]
 
     def pretty_table(self) -> str:
-        df = self.to_dataframe().drop(columns=["output_column_name"])
-        return df.to_string(index=False)
+        """
+        Nice display, for debugging purposes.
+        """
+        recs = self.to_record_list(with_extra_columns=False)
+        if not recs:
+            return ""
+        try:
+            import pyarrow as pa
+
+            return pa.Table.from_pylist(recs).to_string()
+        except ModuleNotFoundError:
+            pass
+        # if no arrow, use a simple hand-rolled display
+        cols = recs[0].keys()
+        max_col_width = max(
+            max(len(str(r[col])) for r in recs for col in cols),
+            max((len(col) for col in cols)),
+        )
+        header = " | ".join(f"{col:>{max_col_width}}" for col in cols)
+        divider = "-|-".join("-" * max_col_width for _ in cols)
+        rows = []
+        for r in recs:
+            row = " | ".join(f"{str(r[col]):>{max_col_width}}" for col in cols)
+            rows.append(row)
+        return "\n".join([header, divider] + rows)
 
 
 def _accumulate_u_counts_from_chunk_and_check_min_count(
@@ -183,20 +205,23 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
 
     df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     try:
-        chunk_counts = df_params.as_pandas_dataframe()
+        chunk_counts = df_params.as_record_dict()
     finally:
         df_params.drop_table_from_database_and_remove_from_cache()
 
     # Drop lambda row: it isn't additive and we don't use it here anyway
-    chunk_counts = chunk_counts[
-        chunk_counts.output_column_name != "_probability_two_random_records_match"
+    chunk_counts = [
+        row
+        for row in chunk_counts
+        if row["output_column_name"] != "_probability_two_random_records_match"
     ]
 
     counts_accumulator.update_from_chunk_counts(chunk_counts)
 
     chunk_elapsed_s = time.perf_counter() - t0
 
-    logger.debug("\n" + counts_accumulator.pretty_table())
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("\n" + counts_accumulator.pretty_table())
 
     if min_count_per_level is None:
         logger.info(f"  Chunk took {chunk_elapsed_s:.1f} seconds")
@@ -454,7 +479,7 @@ def estimate_u_values(
                 if min_count_condition_met and (min_count_per_level is not None):
                     break
 
-        aggregated_counts_df = counts_accumulator.to_dataframe()
+        aggregated_counts_df = counts_accumulator.to_record_list()
         aggregated_counts_sdf = db_api.register(
             aggregated_counts_df, f"__splink__aggregated_m_u_counts_{ascii_uid(8)}"
         )
@@ -473,7 +498,7 @@ def estimate_u_values(
         #   treated as "not observed" (not as u_probability = 0.0).
         u_count_by_cvv = {
             int(row["comparison_vector_value"]): float(row["u_count"])
-            for row in aggregated_counts_df.to_dict("records")
+            for row in aggregated_counts_df
         }
         for r in param_records:
             cvv = int(r["comparison_vector_value"])

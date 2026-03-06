@@ -57,9 +57,9 @@ def _comparison_records(
     cl = c._get_comparison_level_by_comparison_vector_value(cv_value)
     waterfall_record = {
         field: value
-        for field, value in cl._as_detailed_record(
-            c._num_levels, c.comparison_levels
-        ).items()
+        for field, value in cl._as_detailed_record(c._num_levels, c.comparison_levels)
+        .as_dict()
+        .items()
         if field
         in [
             "label_for_charts",

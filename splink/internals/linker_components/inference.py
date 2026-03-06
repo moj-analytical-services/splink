@@ -108,6 +108,8 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            link_type=settings._link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -327,6 +329,8 @@ class LinkerInference:
             input_tablename_r="__splink__df_concat_with_tf",
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            link_type=settings._link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
@@ -476,15 +480,16 @@ class LinkerInference:
             # concatenated join_key_l/join_key_r columns
             join_conditions = []
             for col in unique_id_columns:
-                col_l = f"{col.name}_l"
-                col_r = f"{col.name}_r"
+                col_name = col.unquote().name
+                col_l = f"{col_name}_l"
+                col_r = f"{col_name}_r"
                 join_conditions.append(f"oe.{col_l} = ne.{col_l}")
                 join_conditions.append(f"oe.{col_r} = ne.{col_r}")
 
             join_clause = " AND ".join(join_conditions)
 
             # Get first column for IS NULL check
-            first_col_l = f"{unique_id_columns[0].name}_l"
+            first_col_l = f"{unique_id_columns[0].unquote().name}_l"
 
             sql = f"""
             {sql}

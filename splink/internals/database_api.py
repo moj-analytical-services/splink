@@ -175,13 +175,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 output_tablename_templated, table_name_hash
             )
 
-            df_pd = splink_dataframe.as_pandas_dataframe()
-            try:
-                from IPython.display import display
-
-                display(df_pd)
-            except ModuleNotFoundError:
-                print(df_pd)  # noqa: T201
+            splink_dataframe.as_duckdbpyrelation().show()
 
         else:
             splink_dataframe = self._sql_to_splink_dataframe(

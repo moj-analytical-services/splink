@@ -59,7 +59,7 @@ class PostgresDataFrame(SplinkDataFrame):
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.db_api.delete_table_from_database(self.physical_name)
 
-    def as_record_dict(self, limit=None):
+    def _limit_table_as_result(self, limit):
         sql = f"""
         SELECT *
         FROM {self.physical_name}
@@ -67,5 +67,14 @@ class PostgresDataFrame(SplinkDataFrame):
         if limit:
             sql += f" LIMIT {limit}"
         sql += ";"
-        res = self.db_api._execute_sql_against_backend(sql).mappings().all()
+        return self.db_api._execute_sql_against_backend(sql)
+
+    def as_record_dict(self, limit=None):
+        res = self._limit_table_as_result(limit).mappings().all()
         return [dict(r) for r in res]
+
+    def as_dict(self, limit=None):
+        res = self._limit_table_as_result(limit)
+        column_names = res.keys()
+        mappings = res.mappings().all()
+        return {col: [r[col] for r in mappings] for col in column_names}
