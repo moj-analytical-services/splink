@@ -742,6 +742,7 @@ def block_using_rules_sqls(
         {select_clause}
     FROM __splink__blocked_id_pairs_non_unique
     GROUP BY {group_by_clause}
+    ORDER BY {unique_id_input_column.name_l} asc, {unique_id_input_column.name_r} asc
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
