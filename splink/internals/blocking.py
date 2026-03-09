@@ -17,7 +17,10 @@ from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
+from splink.internals.unique_id_concat import (
+    _individual_uid_columns_as_select_sql,
+    _tuple_comparison_order_condition_sql,
+)
 from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
@@ -122,41 +125,6 @@ class BlockingRule:
             br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
-    def exclude_pairs_generated_by_this_rule_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string specifying how to exclude the results
-        of THIS blocking rule from subseqent blocking statements,
-        so that subsequent statements do not produce duplicate pairs
-        """
-
-        # Note the coalesce function is important here - otherwise
-        # you filter out any records with nulls in the previous rules
-        # meaning these comparisons get lost
-        return f"coalesce(({self.blocking_rule_sql}),false)"
-
-    def exclude_pairs_generated_by_all_preceding_rules_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string that excludes the results of ALL previous blocking rules from
-        the pairwise comparisons generated.
-        """
-        if not self.preceding_rules:
-            return ""
-        or_clauses = [
-            br.exclude_pairs_generated_by_this_rule_sql(
-                source_dataset_input_column,
-                unique_id_input_column,
-            )
-            for br in self.preceding_rules
-        ]
-        previous_rules = " OR ".join(or_clauses)
-        return f"AND NOT ({previous_rules})"
-
     def create_blocked_pairs_sql(
         self,
         *,
@@ -171,23 +139,22 @@ class BlockingRule:
         else:
             unique_id_columns = [unique_id_input_column]
 
-        uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-        uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+        select_cols = [f"{self.match_key} as match_key_int"]
+
+        for col in unique_id_columns:
+            select_cols.append(f"l.{col.name} as {col.name_l}")
+            select_cols.append(f"r.{col.name} as {col.name_r}")
+
+        select_clause = ",\n            ".join(select_cols)
 
         sql = f"""
             select
-            '{self.match_key}' as match_key,
-            {uid_l_expr} as join_key_l,
-            {uid_r_expr} as join_key_r
+            {select_clause}
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on
             ({self.blocking_rule_sql})
             {where_condition}
-            {self.exclude_pairs_generated_by_all_preceding_rules_sql(
-                source_dataset_input_column,
-                unique_id_input_column)
-            }
             """
         return sql
 
@@ -335,7 +302,6 @@ class ExplodingBlockingRule(BlockingRule):
                 right side records.
         """
 
-        unique_id_col = unique_id_input_column
         unique_id_input_columns = combine_unique_id_input_columns(
             source_dataset_input_column, unique_id_input_column
         )
@@ -348,21 +314,21 @@ class ExplodingBlockingRule(BlockingRule):
             sql_dialect=self.sql_dialect,
         )
 
-        id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
-        id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "r")
-
-        exclude_sql = self.exclude_pairs_generated_by_all_preceding_rules_sql(
-            source_dataset_input_column, unique_id_input_column
+        # Select individual ID columns instead of concatenating them
+        uid_l_cols = _individual_uid_columns_as_select_sql(
+            unique_id_input_columns, "l", "_l"
+        )
+        uid_r_cols = _individual_uid_columns_as_select_sql(
+            unique_id_input_columns, "r", "_r"
         )
         sql = f"""
             select distinct
-                {id_expr_l} as {unique_id_col.name_l},
-                {id_expr_r} as {unique_id_col.name_r}
+                {uid_l_cols},
+                {uid_r_cols}
             from {input_tablename_l} as l
             inner join {input_tablename_r} as r
             on ({br.blocking_rule_sql})
             {where_condition}
-            {exclude_sql}
             """
 
         return sql
@@ -371,18 +337,6 @@ class ExplodingBlockingRule(BlockingRule):
         if self.exploded_id_pair_table is not None:
             self.exploded_id_pair_table.drop_table_from_database_and_remove_from_cache()
         self.exploded_id_pair_table = None
-
-    def exclude_pairs_generated_by_this_rule_sql(
-        self,
-        source_dataset_input_column: Optional[InputColumn],
-        unique_id_input_column: InputColumn,
-    ) -> str:
-        """A SQL string specifying how to exclude the results
-        of THIS blocking rule from subseqent blocking statements,
-        so that subsequent statements do not produce duplicate pairs
-        """
-
-        return "false"
 
     def create_blocked_pairs_sql(
         self,
@@ -399,12 +353,26 @@ class ExplodingBlockingRule(BlockingRule):
                 " called."
             )
 
+        # Build list of columns to select from exploded ID pairs table
+        # The exploded table already has columns with _l and _r suffixes
+        if source_dataset_input_column:
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+        else:
+            unique_id_columns = [unique_id_input_column]
+
+        # Select all individual ID columns with _l and _r suffixes
+        # Use unquoted names since these are column names in the exploded table
+        select_cols = [f"{self.match_key} as match_key_int"]
+        for col in unique_id_columns:
+            select_cols.append(col.name_l)
+            select_cols.append(col.name_r)
+
+        select_clause = ",\n                ".join(select_cols)
+
         exploded_id_pair_table = self.exploded_id_pair_table
         sql = f"""
             select
-                '{self.match_key}' as match_key,
-                {unique_id_input_column.name_l} as join_key_l,
-                {unique_id_input_column.name_r} as join_key_r
+                {select_clause}
             from {exploded_id_pair_table.physical_name}
         """
         return sql
@@ -645,17 +613,20 @@ def _sql_gen_where_condition(
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
 ) -> str:
-    id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
-    id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
-
     if link_type in ("two_dataset_link_only", "self_link"):
         where_condition = " where 1=1 "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
-        where_condition = f"where {id_expr_l} < {id_expr_r}"
+        tuple_comparison = _tuple_comparison_order_condition_sql(
+            unique_id_cols, "l", "r", "<"
+        )
+        where_condition = f"where {tuple_comparison}"
     elif link_type == "link_only":
+        tuple_comparison = _tuple_comparison_order_condition_sql(
+            unique_id_cols, "l", "r", "<"
+        )
         source_dataset_col = unique_id_cols[0]
         where_condition = (
-            f"where {id_expr_l} < {id_expr_r} "
+            f"where {tuple_comparison} "
             f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
@@ -690,8 +661,9 @@ def block_using_rules_sqls(
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
 
-    Where there are multiple blocking rules, the SQL statement contains logic
-    so that duplicate comparisons are not generated.
+    Where there are multiple blocking rules, pairs are generated independently
+    by each rule and then deduplicated via GROUP BY, keeping the minimum
+    integer match_key for each unique pair.
 
     Args:
         left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
@@ -738,19 +710,28 @@ def block_using_rules_sqls(
 
     sql = " UNION ALL ".join(br_sqls)
 
-    if any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules):
-        sqls.append(
-            {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
-        )
+    sqls.append(
+        {"sql": sql, "output_table_name": "__splink__blocked_id_pairs_non_unique"}
+    )
 
-        sql = """
-        SELECT
-            min(match_key) as match_key,
-            join_key_l,
-            join_key_r
-        FROM __splink__blocked_id_pairs_non_unique
-        GROUP BY join_key_l, join_key_r
-        """
+    group_by_cols = []
+    select_cols = ["min(match_key_int) as match_key"]
+
+    for col in unique_id_input_columns:
+        group_by_cols.extend([col.name_l, col.name_r])
+        select_cols.extend([col.name_l, col.name_r])
+
+    group_by_clause = ", ".join(group_by_cols)
+    select_clause = ",\n        ".join(select_cols)
+    order_by_clause = ", ".join(group_by_cols)
+
+    sql = f"""
+    SELECT
+        {select_clause}
+    FROM __splink__blocked_id_pairs_non_unique
+    GROUP BY {group_by_clause}
+    ORDER BY {order_by_clause}
+    """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
 

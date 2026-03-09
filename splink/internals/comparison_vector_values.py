@@ -5,10 +5,25 @@ from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
 from splink.internals.unique_id_concat import (
-    _composite_unique_id_from_nodes_sql,
+    _join_condition_nodes_to_blocked_pairs_sql,
+    _uid_column_name_with_lr_suffix,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _node_id_tuple_sql(unique_id_columns: list[InputColumn], table_alias: str) -> str:
+    cols = [f"{table_alias}.{col.name}" for col in unique_id_columns]
+    return f"({', '.join(cols)})"
+
+
+def _blocked_pair_id_tuple_sql(
+    unique_id_columns: list[InputColumn], lr_suffix: str
+) -> str:
+    cols = [
+        _uid_column_name_with_lr_suffix(col, lr_suffix) for col in unique_id_columns
+    ]
+    return f"({', '.join(cols)})"
 
 
 def compute_comparison_vector_values_sql(
@@ -63,6 +78,13 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     select_cols_expr = ", \n".join(columns_to_select_for_blocking)
 
+    join_l = _join_condition_nodes_to_blocked_pairs_sql(
+        unique_id_columns, "l", "b", "_l"
+    )
+    join_r = _join_condition_nodes_to_blocked_pairs_sql(
+        unique_id_columns, "r", "b", "_r"
+    )
+
     # Where there are large numbers of unmatched records, the DuckDB query planner
     # can struggle with the double inner join below.  It should
     # push the filters down to the input tables, but it doesn't always do this.
@@ -77,24 +99,24 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
         and link_type == "two_dataset_link_only"
         and sql_dialect_str == "duckdb"
     ):
-        uid_expr = _composite_unique_id_from_nodes_sql(unique_id_columns)
+        node_id_tuple = _node_id_tuple_sql(unique_id_columns, "n")
+        blocked_id_tuple_l = _blocked_pair_id_tuple_sql(unique_id_columns, "_l")
+        blocked_id_tuple_r = _blocked_pair_id_tuple_sql(unique_id_columns, "_r")
+
         sql = f"""
         select *
-        from {input_tablename_l}
+        from {input_tablename_l} as n
         where
-        {uid_expr} in (select join_key_l from __splink__blocked_id_pairs)
+        {node_id_tuple} in (select {blocked_id_tuple_l} from __splink__blocked_id_pairs)
         or
-        {uid_expr} in (select join_key_r from __splink__blocked_id_pairs)
+        {node_id_tuple} in (select {blocked_id_tuple_r} from __splink__blocked_id_pairs)
         """
-
         sqls.append(
             {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered"}
         )
+
         input_tablename_l = "__splink__df_concat_with_tf_filtered"
         input_tablename_r = "__splink__df_concat_with_tf_filtered"
-
-    uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-    uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
 
     # The first table selects the required columns from the input tables
     # and alises them as `col_l`, `col_r` etc
@@ -102,11 +124,11 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     # That is, it does the join, but doesn't compute the comparison vectors
     sql = f"""
     select {select_cols_expr}, b.match_key
-    from __splink__blocked_id_pairs as b
-    inner join {input_tablename_l} as l
-    on {uid_l_expr} = b.join_key_l
+    from {input_tablename_l} as l
+    inner join __splink__blocked_id_pairs as b
+    on {join_l}
     inner join {input_tablename_r} as r
-    on {uid_r_expr} = b.join_key_r
+    on {join_r}
     """
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})

@@ -23,6 +23,11 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
     sql_dialect = SQLiteDialect()
 
     @staticmethod
+    def _quote_identifier(identifier: str) -> str:
+        escaped = identifier.replace('"', '""')
+        return f'"{escaped}"'
+
+    @staticmethod
     def dict_factory(cursor, row):
         d = {}
         for idx, col in enumerate(cursor.description):
@@ -108,15 +113,20 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
 
         cols = table.schema
         col_defs = ", ".join(
-            f"{field.name} {self._arrow_to_sqlite_type(field)}" for field in cols
+            f"{self._quote_identifier(field.name)} "
+            f"{self._arrow_to_sqlite_type(field)}"
+            for field in cols
         )
-        cur.execute(f"DROP TABLE IF EXISTS {table_name}")
-        cur.execute(f"CREATE TABLE {table_name} ({col_defs})")
+        quoted_table_name = self._quote_identifier(table_name)
+        cur.execute(f"DROP TABLE IF EXISTS {quoted_table_name}")
+        cur.execute(f"CREATE TABLE {quoted_table_name} ({col_defs})")
 
         rows = zip(*(table.column(i).to_pylist() for i in range(table.num_columns)))
 
         placeholders = ", ".join("?" * table.num_columns)
-        cur.executemany(f"INSERT INTO {table_name} VALUES ({placeholders})", rows)
+        cur.executemany(
+            f"INSERT INTO {quoted_table_name} VALUES ({placeholders})", rows
+        )
 
         self.con.commit()
 

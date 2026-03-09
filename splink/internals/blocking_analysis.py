@@ -265,7 +265,7 @@ class CumulativeComparisonRecord(TypedDict):
     row_count: int
     cumulative_rows: int
     cartesian: int
-    match_key: str
+    match_key: int
     start: int
 
 
@@ -376,7 +376,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         match_key
         from __splink__blocked_id_pairs
         group by match_key
-        order by cast(match_key as int) asc
+        order by match_key asc
     """
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
 
@@ -388,13 +388,13 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     # The above table won't include rules that have no matches
     con.execute(
         "CREATE TABLE all_rules "
-        "(match_key VARCHAR, blocking_rule VARCHAR, cartesian BIGINT);"
+        "(match_key BIGINT, blocking_rule VARCHAR, cartesian BIGINT);"
     )
     con.executemany(
         "INSERT INTO all_rules VALUES ($match_key, $blocking_rule, $cartesian);",
         [
             {
-                "match_key": str(i),
+                "match_key": i,
                 "blocking_rule": br.blocking_rule_sql,
                 "cartesian": cartesian_count,
             }
@@ -410,7 +410,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
                 SELECT
                     rules.blocking_rule,
                     coalesce(counts.row_count, 0) as row_count,
-                    cast(rules.match_key as int) as match_key,
+                    rules.match_key as match_key,
                     rules.cartesian
                 FROM
                     all_rules AS rules
