@@ -207,10 +207,10 @@ class SplinkDataFrame(ABC):
         # insert into local duckdb via pyarrow
         arrow_tab = self.as_pyarrow_table(limit)
         self.db_api.duckdb_con.register(
-            self.templated_name,
+            self.physical_name,
             arrow_tab,
         )
-        return self.db_api.duckdb_con.table(self.templated_name)
+        return self.db_api.duckdb_con.table(self.physical_name)
 
     # Spark not guaranteed to be available so return type is not imported
     def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821
