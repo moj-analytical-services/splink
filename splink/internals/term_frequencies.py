@@ -6,13 +6,14 @@ import logging
 import warnings
 from dataclasses import replace
 from math import ceil, floor
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from splink.internals.charts import (
     ChartReturnType,
     altair_or_json,
     load_chart_definition,
 )
+from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.duckdb.duckdb_helpers.duckdb_helpers import (
     record_dicts_from_relation,
 )
@@ -191,22 +192,21 @@ def compute_all_term_frequencies_sqls(
     return sqls
 
 
-def comparison_level_to_tf_chart_data_sql(cl: dict[str, Any]) -> str:
-    sdf = cl["df_tf"]
-    input_col = cl["input_col"]
-
+def comparison_level_to_tf_chart_data_sql(
+    cl: ComparisonLevelDetailedRecord, sdf: SplinkDataFrame, input_col: InputColumn
+) -> str:
     sql = f"""
     SELECT
         {input_col.name} AS value,
         {input_col.tf_name} AS tf,
-        {cl["u_probability"]}::DOUBLE AS u_probability,
-        {cl["tf_adjustment_weight"]}::DOUBLE AS tf_adjustment_weight,
+        {cl.u_probability}::DOUBLE AS u_probability,
+        {cl.tf_adjustment_weight}::DOUBLE AS tf_adjustment_weight,
         -- TF match weight scaled by tf_adjustment_weight
         log2(u_probability/tf) * tf_adjustment_weight AS log2_bf_tf,
         -- Tidy up columns
-        {cl["comparison_vector_value"]} AS gamma,
+        {cl.comparison_vector_value} AS gamma,
         '{input_col.unquote().name}' AS tf_col,
-        {cl["log2_bayes_factor"]}::DOUBLE AS log2_bf,
+        {cl.log2_bayes_factor}::DOUBLE AS log2_bf,
         log2_bf_tf + log2_bf AS log2_bf_final,
         row_number() OVER (
                 PARTITION BY gamma
@@ -235,56 +235,37 @@ def tf_adjustment_chart(
 ) -> ChartReturnType:
     # Data for chart
     comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
+    # Select levels with TF adjustments
     tf_comparison_records = [
         detailed_rec
         for detailed_rec in comparison._as_detailed_records
         if detailed_rec.has_tf_adjustments
     ]
 
-    keys_to_retain = [
-        "comparison_vector_value",
-        "label_for_charts",
-        "tf_adjustment_column",
-        "tf_adjustment_weight",
-        "u_probability",
-        "log2_bayes_factor",
-    ]
-
-    # Select levels with TF adjustments
-    comparison_records = [
-        {k: getattr(cl, k) for k in keys_to_retain} for cl in tf_comparison_records
-    ]
     # we want a version of column_info_settings that is tied to duckdb, for local use
+    # only need this for tf name
     column_info_settings = replace(
         linker._settings_obj.column_info_settings, sql_dialect="duckdb"
     )
 
-    # Add data ("df_tf") to each level
-    comparison_records = [
-        dict(
-            cl,
-            **{
-                # TODO: need to load it into duckdb...
-                "df_tf": linker.table_management.compute_tf_table(
-                    cl["tf_adjustment_column"]
-                ),
-                "input_col": InputColumn(
-                    cl["tf_adjustment_column"],
-                    column_info_settings=column_info_settings,
-                    sqlglot_dialect_str="duckdb",
-                ),
-            },
-        )
-        for cl in comparison_records
-    ]
     con = linker._db_api.duckdb_con
-    # register tf tables in duckdb
-    for cl in comparison_records:
-        cl["df_tf"].as_duckdbpyrelation()
+    levels_chart_data_sqls: list[str] = []
+    for comparison_record in tf_comparison_records:
+        # we know this is not None, as we have filtered out records without tf adjs
+        tf_col_name: str = cast(str, comparison_record.tf_adjustment_column)
+        sdf_tf_table = linker.table_management.compute_tf_table(tf_col_name)
+        # register tf table in duckdb
+        sdf_tf_table.as_duckdbpyrelation()
+        input_column = InputColumn(
+            tf_col_name,
+            column_info_settings=column_info_settings,
+            sqlglot_dialect_str="duckdb",
+        )
+        levels_chart_data_sql = comparison_level_to_tf_chart_data_sql(
+            comparison_record, sdf_tf_table, input_column
+        )
+        levels_chart_data_sqls.append(levels_chart_data_sql)
 
-    levels_chart_data_sqls = [
-        comparison_level_to_tf_chart_data_sql(cl) for cl in comparison_records
-    ]
     full_sql = " UNION ALL ".join(levels_chart_data_sqls)
     chart_data_table = con.sql(full_sql)
 
