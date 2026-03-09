@@ -227,21 +227,12 @@ def comparison_level_to_tf_chart_data_sql(
 
 def tf_adjustment_chart(
     linker: Linker,
-    col: str,
+    tf_comparison_records: list[ComparisonLevelDetailedRecord],
     n_most_freq: int,
     n_least_freq: int,
     vals_to_include: list[str],
     as_dict: bool,
 ) -> ChartReturnType:
-    # Data for chart
-    comparison = linker._settings_obj._get_comparison_by_output_column_name(col)
-    # Select levels with TF adjustments
-    tf_comparison_records = [
-        detailed_rec
-        for detailed_rec in comparison._as_detailed_records
-        if detailed_rec.has_tf_adjustments
-    ]
-
     # we want a version of column_info_settings that is tied to duckdb, for local use
     # only need this for tf name
     column_info_settings = replace(
@@ -294,7 +285,7 @@ def tf_adjustment_chart(
     )
 
     df_table_name = (
-        f"__splink__df_td_adjustment_chart_data_{col}_{n_least_freq}_{n_most_freq}"
+        f"__splink__df_td_adjustment_chart_data_{n_least_freq}_{n_most_freq}"
     )
     con.register(df_table_name, chart_data_table)
 

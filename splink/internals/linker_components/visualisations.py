@@ -227,16 +227,18 @@ class LinkerVisualisations:
         Returns:
             altair_chart: An Altair chart
         """
-
-        # Comparisons with TF adjustments
-        tf_comparisons = [
-            c.output_column_name
-            for c in self._linker._settings_obj.comparisons
-            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
+        comparison = self._linker._settings_obj._get_comparison_by_output_column_name(
+            output_column_name
+        )
+        # Select levels with TF adjustments
+        tf_comparison_records = [
+            detailed_rec
+            for detailed_rec in comparison._as_detailed_records
+            if detailed_rec.has_tf_adjustments
         ]
-        if output_column_name not in tf_comparisons:
+        if not tf_comparison_records:
             raise ValueError(
-                f"{output_column_name} is not a valid comparison column, or does not"
+                f"Comparison with output_column_name {output_column_name} does not"
                 f" have term frequency adjustment activated"
             )
 
@@ -246,7 +248,7 @@ class LinkerVisualisations:
 
         return tf_adjustment_chart(
             self._linker,
-            output_column_name,
+            tf_comparison_records,
             n_most_freq,
             n_least_freq,
             vals_to_include,
