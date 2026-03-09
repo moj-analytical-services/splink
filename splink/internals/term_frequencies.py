@@ -4,7 +4,7 @@ from __future__ import annotations
 # https://github.com/moj-analytical-services/splink/pull/107
 import logging
 import warnings
-from functools import reduce
+from dataclasses import replace
 from math import ceil, floor
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -191,14 +191,9 @@ def compute_all_term_frequencies_sqls(
     return sqls
 
 
-def comparison_level_to_tf_chart_data(
-    cl: dict[str, Any], con
-) -> dict[str, Any]:
+def comparison_level_to_tf_chart_data_sql(cl: dict[str, Any]) -> str:
     sdf = cl["df_tf"]
     input_col = cl["input_col"]
-
-    # ensure our duckdb connexion has access to this table
-    sdf.as_duckdbpyrelation()
 
     sql = f"""
     SELECT
@@ -227,7 +222,7 @@ def comparison_level_to_tf_chart_data(
         value IS NOT NULL
     """
 
-    return con.sql(sql)
+    return sql
 
 
 def tf_adjustment_chart(
@@ -259,43 +254,43 @@ def tf_adjustment_chart(
     comparison_records = [
         {k: getattr(cl, k) for k in keys_to_retain} for cl in tf_comparison_records
     ]
-
-    column_info_settings = linker._settings_obj.column_info_settings
-    sqlglot_dialect_str = linker._settings_obj._sql_dialect_str
+    # we want a version of column_info_settings that is tied to duckdb, for local use
+    column_info_settings = replace(
+        linker._settings_obj.column_info_settings, sql_dialect="duckdb"
+    )
 
     # Add data ("df_tf") to each level
     comparison_records = [
         dict(
             cl,
             **{
+                # TODO: need to load it into duckdb...
                 "df_tf": linker.table_management.compute_tf_table(
                     cl["tf_adjustment_column"]
                 ),
                 "input_col": InputColumn(
                     cl["tf_adjustment_column"],
                     column_info_settings=column_info_settings,
-                    sqlglot_dialect_str=sqlglot_dialect_str,
-                )
-
+                    sqlglot_dialect_str="duckdb",
+                ),
             },
         )
         for cl in comparison_records
     ]
     con = linker._db_api.duckdb_con
+    # register tf tables in duckdb
+    for cl in comparison_records:
+        cl["df_tf"].as_duckdbpyrelation()
 
-    levels_chart_data = [
-        comparison_level_to_tf_chart_data(
-            cl, con
-        )
-        for cl in comparison_records
+    levels_chart_data_sqls = [
+        comparison_level_to_tf_chart_data_sql(cl) for cl in comparison_records
     ]
-    df = reduce(
-        lambda relation_left, relation_right: relation_left.union(relation_right),
-        levels_chart_data,
-    )
+    full_sql = " UNION ALL ".join(levels_chart_data_sqls)
+    chart_data_table = con.sql(full_sql)
 
     vals_not_included = (
-        set(vals_to_include) - set(x[0] for x in df.select("value").fetchall())
+        set(vals_to_include)
+        - set(x[0] for x in chart_data_table.select("value").fetchall())
         if vals_to_include
         else {}
     )
@@ -309,8 +304,8 @@ def tf_adjustment_chart(
     # Histogram data
     bin_width = 0.5  # Specify the desired bin width
 
-    min_value = floor(min(x[0] for x in df["log2_bf_final"].fetchall()))
-    max_value = ceil(max(x[0] for x in df["log2_bf_final"].fetchall()))
+    min_value = floor(min(x[0] for x in chart_data_table["log2_bf_final"].fetchall()))
+    max_value = ceil(max(x[0] for x in chart_data_table["log2_bf_final"].fetchall()))
     bin_edges = list(
         map(
             lambda x: x / 2, range(min_value * 2, max_value * 2 + 1, int(2 * bin_width))
@@ -318,12 +313,11 @@ def tf_adjustment_chart(
     )
 
     df_table_name = (
-        f"__splink__df_td_adjustment_chart_"
-        f"data_{col}_{n_least_freq}_{n_most_freq}"
+        f"__splink__df_td_adjustment_chart_data_{col}_{n_least_freq}_{n_most_freq}"
     )
-    con.register(df_table_name, df)
+    con.register(df_table_name, chart_data_table)
 
-    reln = con.sql(
+    histogram_data_table = con.sql(
         f"""
         WITH binned AS (
             SELECT
@@ -358,11 +352,13 @@ def tf_adjustment_chart(
     )
 
     # Filter values
-    df = df.filter(
+    chart_data_table = chart_data_table.filter(
         f"least_freq_rank < {n_least_freq} OR most_freq_rank < {n_most_freq}"
     )
     if vals_to_include:
-        df = df.filter(f"value IN ('{"', '".join(vals_to_include)}')")
+        chart_data_table = chart_data_table.filter(
+            f"value IN ('{"', '".join(vals_to_include)}')"
+        )
 
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
@@ -376,9 +372,13 @@ def tf_adjustment_chart(
 
     # trim down to only the data we need for the chart
     main_chart_data = record_dicts_from_relation(
-        df.select("gamma", "value", "log2_bf_final", "log2_bf_tf", "log2_bf")
+        chart_data_table.select(
+            "gamma", "value", "log2_bf_final", "log2_bf_tf", "log2_bf"
+        )
     )
-    hist_data = record_dicts_from_relation(reln.filter(f"gamma IN {tf_levels}"))
+    hist_data = record_dicts_from_relation(
+        histogram_data_table.filter(f"gamma IN {tf_levels}")
+    )
 
     # TODO: worth handling the case where we hit an error before and we don't drop?
     # don't expect long-lived processes with duckdb backend, so probably not crucial
