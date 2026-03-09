@@ -59,10 +59,7 @@ def test_deterministic_link_uses_lowest_numeric_match_key(test_helpers, dialect)
 
     data = {
         "unique_id": [1, 2],
-        **{
-            f"c{i}": [1, 1] if i in (2, 10) else [100 + i, 200 + i]
-            for i in range(11)
-        },
+        **{f"c{i}": [1, 1] if i in (2, 10) else [100 + i, 200 + i] for i in range(11)},
     }
 
     settings = {
