@@ -475,9 +475,6 @@ class LinkerInference:
             else:
                 unique_id_columns = [unique_id_input_column]
 
-            # Build multi-column join condition for edges table
-            # Join directly on individual columns instead of creating temporary
-            # concatenated join_key_l/join_key_r columns
             join_conditions = []
             for col in unique_id_columns:
                 col_name = col.unquote().name
@@ -488,7 +485,6 @@ class LinkerInference:
 
             join_clause = " AND ".join(join_conditions)
 
-            # Get first column for IS NULL check
             first_col_l = f"{unique_id_columns[0].unquote().name}_l"
 
             sql = f"""
