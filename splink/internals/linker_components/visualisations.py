@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
-    ChartReturnType,
     MatchWeightsChart,
     MatchWeightsHistogramChart,
     MUParametersInteractiveHistoryChart,
     ParameterEstimateComparisonsChart,
+    TFAdjustmentChart,
     WaterfallChart,
 )
 from splink.internals.cluster_studio import (
@@ -26,7 +26,7 @@ from splink.internals.splink_comparison_viewer import (
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
-    tf_adjustment_chart,
+    tf_chart_data,
 )
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
@@ -199,8 +199,7 @@ class LinkerVisualisations:
         n_most_freq: int = 10,
         n_least_freq: int = 10,
         vals_to_include: str | list[str] | None = None,
-        as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> TFAdjustmentChart:
         """Display a chart showing the impact of term frequency adjustments on a
         specific comparison level.
         Each value
@@ -217,7 +216,6 @@ class LinkerVisualisations:
             vals_to_include (list, optional): Specific values for which to show term
                 frequency adjustments.
                 Defaults to None.
-            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -225,18 +223,20 @@ class LinkerVisualisations:
             ```
 
         Returns:
-            altair_chart: An Altair chart
+            TFAdjustmentChart: A SplinkChart object
         """
-
-        # Comparisons with TF adjustments
-        tf_comparisons = [
-            c.output_column_name
-            for c in self._linker._settings_obj.comparisons
-            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
+        comparison = self._linker._settings_obj._get_comparison_by_output_column_name(
+            output_column_name
+        )
+        # Select levels with TF adjustments
+        tf_comparison_records = [
+            detailed_rec
+            for detailed_rec in comparison._as_detailed_records
+            if detailed_rec.has_tf_adjustments
         ]
-        if output_column_name not in tf_comparisons:
+        if not tf_comparison_records:
             raise ValueError(
-                f"{output_column_name} is not a valid comparison column, or does not"
+                f"Comparison with output_column_name {output_column_name} does not"
                 f" have term frequency adjustment activated"
             )
 
@@ -244,14 +244,15 @@ class LinkerVisualisations:
             [] if vals_to_include is None else ensure_is_list(vals_to_include)
         )
 
-        return tf_adjustment_chart(
+        main_chart_data, hist_data = tf_chart_data(
             self._linker,
-            output_column_name,
+            tf_comparison_records,
             n_most_freq,
             n_least_freq,
             vals_to_include,
-            as_dict,
         )
+
+        return TFAdjustmentChart(main_chart_data, hist_data, tf_comparison_records)
 
     def waterfall_chart(
         self,
