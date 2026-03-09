@@ -17,6 +17,10 @@ from splink.internals.input_column import InputColumn
 from splink.internals.misc import ensure_is_list
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.unique_id_concat import (
+    _individual_uid_columns_as_select_sql,
+    _tuple_comparison_order_condition_sql,
+)
 from splink.internals.vertically_concatenate import (
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
@@ -309,10 +313,6 @@ class ExplodingBlockingRule(BlockingRule):
             left_chunk=left_chunk,
             right_chunk=right_chunk,
             sql_dialect=self.sql_dialect,
-        )
-
-        from splink.internals.unique_id_concat import (
-            _individual_uid_columns_as_select_sql,
         )
 
         # Select individual ID columns instead of concatenating them
@@ -615,8 +615,6 @@ def _sql_gen_where_condition(
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
 ) -> str:
-    from splink.internals.unique_id_concat import _tuple_comparison_order_condition_sql
-
     if link_type in ("two_dataset_link_only", "self_link"):
         where_condition = " where 1=1 "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
