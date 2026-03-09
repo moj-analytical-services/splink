@@ -324,7 +324,7 @@ def tf_chart_data(
     )
     if vals_to_include:
         chart_data_table = chart_data_table.filter(
-            f"value IN ('{"', '".join(vals_to_include)}')"
+            f"""value IN ('{"', '".join(vals_to_include)}')"""
         )
 
     # trim down to only the data we need for the chart
