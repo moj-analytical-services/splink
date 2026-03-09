@@ -18,6 +18,7 @@ from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.database_api import AcceptableInputTableType
+from splink.internals.exceptions import SplinkException
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
 )
@@ -52,6 +53,86 @@ class LinkerInference:
 
     def __init__(self, linker: Linker):
         self._linker = linker
+
+    def _registered_blocked_pairs_cache_keys(self) -> list[str]:
+        cache = self._linker._intermediate_table_cache
+        return [
+            cache_key
+            for cache_key, splink_df in cache.items()
+            if splink_df.metadata.get("registered_for_predict")
+        ]
+
+    def _get_or_compute_blocked_pairs_for_predict_chunk(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+    ) -> tuple[SplinkDataFrame, bool]:
+        pipeline = CTEPipeline()
+        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
+
+        pipeline = CTEPipeline([df_concat_with_tf])
+
+        settings = self._linker._settings_obj
+        cache = self._linker._intermediate_table_cache
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+
+        if cache_key in cache:
+            blocked_pairs = cache.get_with_logging(cache_key)
+            logger.info(f"Using cached blocked pairs from '{cache_key}'")
+            return blocked_pairs, True
+
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+            pipeline=pipeline,
+            db_api=self._linker._db_api,
+            splink_df_dict=self._linker._input_tables_dict,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+        )
+
+        cache[cache_key] = blocked_pairs
+        return blocked_pairs, False
+
+    def compute_blocked_pairs_for_predict_chunk(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+    ) -> SplinkDataFrame:
+        """Compute and cache blocked pairs for a specific prediction chunk.
+
+        Use `(1, 1)` for both `left_chunk` and `right_chunk` to compute the
+        full blocked-pairs table without effective chunking.
+
+        Args:
+            left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                left side records. For example, (1, 3) means chunk 1 of 3.
+            right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
+                right side records. For example, (2, 4) means chunk 2 of 4.
+
+        Returns:
+            SplinkDataFrame: The blocked pairs table, also stored in cache.
+
+        Examples:
+            ```py
+            linker.inference.compute_blocked_pairs_for_predict_chunk(
+                left_chunk=(1, 3),
+                right_chunk=(2, 4),
+            )
+
+            linker.inference.compute_blocked_pairs_for_predict_chunk(
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
+            ```
+        """
+        blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk(
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+        )
+        return blocked_pairs
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
@@ -137,6 +218,12 @@ class LinkerInference:
         `blocking_rules_to_generate_predictions` key of the settings to
         generate the pairwise comparisons.
 
+        This method is not supported when blocked pairs have been manually
+        registered using
+        `linker.table_management.register_blocked_pairs_for_predict()`. In that
+        workflow, call `linker.inference.predict_chunk()` with the
+        corresponding chunk instead.
+
         Args:
             threshold_match_probability (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
@@ -171,6 +258,20 @@ class LinkerInference:
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
         """
+        registered_blocked_pairs_cache_keys = (
+            self._registered_blocked_pairs_cache_keys()
+        )
+        if registered_blocked_pairs_cache_keys:
+            registered_keys = ", ".join(sorted(registered_blocked_pairs_cache_keys))
+            raise SplinkException(
+                "linker.inference.predict() cannot be used when blocked pairs "
+                "have been manually registered using "
+                "linker.table_management.register_blocked_pairs_for_predict(). "
+                "Use linker.inference.predict_chunk() with the corresponding "
+                "chunk instead. Registered blocked-pairs cache keys: "
+                f"{registered_keys}"
+            )
+
         # Default to (1, 1) chunking if not specified
         n_left = num_chunks_left if num_chunks_left is not None else 1
         n_right = num_chunks_right if num_chunks_right is not None else 1
@@ -255,6 +356,10 @@ class LinkerInference:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
         of the data.
 
+        This is the supported prediction entry point when blocked pairs have been
+        manually registered using
+        `linker.table_management.register_blocked_pairs_for_predict()`.
+
         Args:
             left_chunk (tuple[int, int], optional): Tuple of
                 (chunk_number, total_chunks) for filtering left side records.
@@ -284,6 +389,11 @@ class LinkerInference:
                 threshold_match_probability=0.5
             )
             splink_df.as_pandas_dataframe(limit=5)
+
+            splink_df = linker.inference.predict_chunk(
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
             ```
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons
@@ -293,30 +403,14 @@ class LinkerInference:
         pipeline = CTEPipeline()
         df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
 
-        pipeline = CTEPipeline([df_concat_with_tf])
-
-        settings = self._linker._settings_obj
-
-        cache = self._linker._intermediate_table_cache
-        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
-        blocked_pairs_from_cache = False
-
-        if cache_key in cache:
-            blocked_pairs = cache.get_with_logging(cache_key)
-            blocked_pairs_from_cache = True
-            logger.info(f"Using cached blocked pairs from '{cache_key}'")
-        else:
-            blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
-                pipeline=pipeline,
-                db_api=self._linker._db_api,
-                splink_df_dict=self._linker._input_tables_dict,
-                blocking_rules=settings._blocking_rules_to_generate_predictions,
-                link_type=settings._link_type,
-                source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
-                unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+        blocked_pairs, blocked_pairs_from_cache = (
+            self._get_or_compute_blocked_pairs_for_predict_chunk(
                 left_chunk=left_chunk,
                 right_chunk=right_chunk,
             )
+        )
+
+        settings = self._linker._settings_obj
 
         pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
 
