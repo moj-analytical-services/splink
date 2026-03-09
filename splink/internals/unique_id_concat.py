@@ -43,6 +43,14 @@ def _composite_unique_id_from_edges_sql(unique_id_cols, l_or_r, table_prefix=Non
     return f" || '{CONCAT_SEPARATOR}' || ".join(cols)
 
 
+def _uid_column_name_with_lr_suffix(col: InputColumn, lr_suffix: str) -> str:
+    if lr_suffix == "_l":
+        return col.name_l
+    if lr_suffix == "_r":
+        return col.name_r
+    raise ValueError(f"Unsupported lr_suffix: {lr_suffix}")
+
+
 def _individual_uid_columns_as_select_sql(
     unique_id_cols: list[InputColumn],
     table_prefix: str,
@@ -68,11 +76,8 @@ def _individual_uid_columns_as_select_sql(
     """
     cols = []
     for col in unique_id_cols:
-        # Get the unquoted column name for the output alias
-        col_unquoted = col.unquote().name
-        # Generate the full column reference with table prefix
         quoted_ref = f"{table_prefix}.{col.name}"
-        output_name = f"{col_unquoted}{lr_suffix}"
+        output_name = _uid_column_name_with_lr_suffix(col, lr_suffix)
         cols.append(f"{quoted_ref} as {output_name}")
     return ", ".join(cols)
 
@@ -105,11 +110,11 @@ def _join_condition_nodes_to_blocked_pairs_sql(
     """
     conditions = []
     for col in unique_id_cols:
-        # Generate node column reference with table prefix
         node_col = f"{node_table_alias}.{col.name}"
-        # Generate edge column reference (unquoted name with suffix)
-        col_unquoted = col.unquote().name
-        edge_col = f"{blocked_pairs_alias}.{col_unquoted}{lr_suffix}"
+        edge_col = (
+            f"{blocked_pairs_alias}."
+            f"{_uid_column_name_with_lr_suffix(col, lr_suffix)}"
+        )
         conditions.append(f"{node_col} = {edge_col}")
     return " AND ".join(conditions)
 
