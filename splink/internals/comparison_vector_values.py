@@ -6,6 +6,7 @@ from typing import List, Optional
 from splink.internals.input_column import InputColumn
 from splink.internals.unique_id_concat import (
     _join_condition_nodes_to_blocked_pairs_sql,
+    _uid_column_name_with_lr_suffix,
 )
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,9 @@ def _node_id_tuple_sql(unique_id_columns: list[InputColumn], table_alias: str) -
 def _blocked_pair_id_tuple_sql(
     unique_id_columns: list[InputColumn], lr_suffix: str
 ) -> str:
-    cols = [f"{col.unquote().name}{lr_suffix}" for col in unique_id_columns]
+    cols = [
+        _uid_column_name_with_lr_suffix(col, lr_suffix) for col in unique_id_columns
+    ]
     return f"({', '.join(cols)})"
 
 

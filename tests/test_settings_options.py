@@ -74,3 +74,39 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
     linker.visualisations.cluster_studio_dashboard(
         df_predict, df_clusters, os.path.join(tmp_path, "csd.html")
     )
+
+
+@mark_with_dialects_excluding()
+def test_link_only_supports_quoted_unique_id_and_source_dataset_names(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+
+    df_l = [
+        {"unique id": 1, "source ds": "left", "name": "Alice"},
+        {"unique id": 2, "source ds": "left", "name": "Bob"},
+    ]
+    df_r = [
+        {"unique id": 1, "source ds": "right", "name": "Alice"},
+        {"unique id": 2, "source ds": "right", "name": "Charlie"},
+    ]
+
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [block_on("name")],
+        "comparisons": [cl.ExactMatch("name")],
+        "unique_id_column_name": "unique id",
+        "source_dataset_column_name": "source ds",
+    }
+
+    linker = helper.linker_with_registration(
+        [df_l, df_r], settings, input_table_aliases=["left_input", "right_input"]
+    )
+    records = linker.inference.deterministic_link().as_record_dict()
+
+    assert len(records) == 1
+    row = records[0]
+    assert row["source ds_l"] == "left"
+    assert row["source ds_r"] == "right"
+    assert row["unique id_l"] == 1
+    assert row["unique id_r"] == 1

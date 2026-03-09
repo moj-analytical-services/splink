@@ -50,7 +50,7 @@ def test_simple_example_link_only(test_helpers, dialect):
             returned_triples.match_key,
         )
     }
-    expected_triples = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
+    expected_triples = {(1, 6, 0), (2, 4, 0), (2, 6, 0), (1, 4, 1), (3, 5, 1)}
     assert expected_triples == returned_triples
 
 
@@ -246,11 +246,11 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
     assert len(returned_triples) == 5
 
     rule1_tuples = {
-        ("a_", 1, "b_", 3, "0"),
-        ("a_", 1, "c_", 3, "0"),
-        ("b_", 3, "c_", 3, "0"),
+        ("a_", 1, "b_", 3, 0),
+        ("a_", 1, "c_", 3, 0),
+        ("b_", 3, "c_", 3, 0),
     }
-    rule2_tuples = {("a_", 1, "c_", 4, "1"), ("a_", 3, "c_", 4, "1")}
+    rule2_tuples = {("a_", 1, "c_", 4, 1), ("a_", 3, "c_", 4, 1)}
 
     all_tuples = rule1_tuples.union(rule2_tuples)
     assert actual_triples == all_tuples
