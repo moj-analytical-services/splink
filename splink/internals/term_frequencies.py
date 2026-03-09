@@ -6,11 +6,8 @@ import logging
 import warnings
 from dataclasses import replace
 from math import ceil, floor
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
-from splink.internals.charts import (
-    TFAdjustmentChart,
-)
 from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.duckdb.duckdb_helpers.duckdb_helpers import (
     record_dicts_from_relation,
@@ -223,13 +220,13 @@ def comparison_level_to_tf_chart_data_sql(
     return sql
 
 
-def tf_adjustment_chart(
+def tf_chart_data(
     linker: Linker,
     tf_comparison_records: list[ComparisonLevelDetailedRecord],
     n_most_freq: int,
     n_least_freq: int,
     vals_to_include: list[str],
-) -> TFAdjustmentChart:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     # we want a version of column_info_settings that is tied to duckdb, for local use
     # only need this for tf name
     column_info_settings = replace(
@@ -257,6 +254,11 @@ def tf_adjustment_chart(
     full_sql = " UNION ALL ".join(levels_chart_data_sqls)
     chart_data_table = con.sql(full_sql)
 
+    df_table_name = (
+        f"__splink__df_td_adjustment_chart_data_{n_least_freq}_{n_most_freq}"
+    )
+    con.register(df_table_name, chart_data_table)
+
     vals_not_included = (
         set(vals_to_include)
         - set(x[0] for x in chart_data_table.select("value").fetchall())
@@ -280,11 +282,6 @@ def tf_adjustment_chart(
             lambda x: x / 2, range(min_value * 2, max_value * 2 + 1, int(2 * bin_width))
         )
     )
-
-    df_table_name = (
-        f"__splink__df_td_adjustment_chart_data_{n_least_freq}_{n_most_freq}"
-    )
-    con.register(df_table_name, chart_data_table)
 
     histogram_data_table = con.sql(
         f"""
@@ -321,6 +318,7 @@ def tf_adjustment_chart(
     )
 
     # Filter values
+    # important we do this after we have calculated histogram data
     chart_data_table = chart_data_table.filter(
         f"least_freq_rank < {n_least_freq} OR most_freq_rank < {n_most_freq}"
     )
@@ -329,15 +327,13 @@ def tf_adjustment_chart(
             f"value IN ('{"', '".join(vals_to_include)}')"
         )
 
-    # Complete chart schema
-    tf_levels = [cl.comparison_vector_value for cl in tf_comparison_records]
-
     # trim down to only the data we need for the chart
     main_chart_data = record_dicts_from_relation(
         chart_data_table.select(
             "gamma", "value", "log2_bf_final", "log2_bf_tf", "log2_bf"
         )
     )
+    tf_levels = [cl.comparison_vector_value for cl in tf_comparison_records]
     hist_data = record_dicts_from_relation(
         histogram_data_table.filter(f"gamma IN {tf_levels}")
     )
@@ -346,4 +342,4 @@ def tf_adjustment_chart(
     # don't expect long-lived processes with duckdb backend, so probably not crucial
     con.execute(f"DROP VIEW {df_table_name}")
 
-    return TFAdjustmentChart(main_chart_data, hist_data, tf_comparison_records)
+    return main_chart_data, hist_data

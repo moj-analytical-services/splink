@@ -26,7 +26,7 @@ from splink.internals.splink_comparison_viewer import (
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
-    tf_adjustment_chart,
+    tf_chart_data,
 )
 from splink.internals.waterfall_chart import records_to_waterfall_data
 
@@ -244,13 +244,15 @@ class LinkerVisualisations:
             [] if vals_to_include is None else ensure_is_list(vals_to_include)
         )
 
-        return tf_adjustment_chart(
+        main_chart_data, hist_data = tf_chart_data(
             self._linker,
             tf_comparison_records,
             n_most_freq,
             n_least_freq,
             vals_to_include,
         )
+
+        return TFAdjustmentChart(main_chart_data, hist_data, tf_comparison_records)
 
     def waterfall_chart(
         self,
