@@ -139,7 +139,7 @@ class BlockingRule:
         else:
             unique_id_columns = [unique_id_input_column]
 
-        select_cols = [f"'{self.match_key}' as match_key"]
+        select_cols = [f"{self.match_key} as match_key_int"]
 
         for col in unique_id_columns:
             select_cols.append(f"l.{col.name} as {col.name_l}")
@@ -362,7 +362,7 @@ class ExplodingBlockingRule(BlockingRule):
 
         # Select all individual ID columns with _l and _r suffixes
         # Use unquoted names since these are column names in the exploded table
-        select_cols = [f"'{self.match_key}' as match_key"]
+        select_cols = [f"{self.match_key} as match_key_int"]
         for col in unique_id_columns:
             select_cols.append(col.name_l)
             select_cols.append(col.name_r)
@@ -715,7 +715,7 @@ def block_using_rules_sqls(
     )
 
     group_by_cols = []
-    select_cols = ["(min(cast(match_key as int)) || '') as match_key"]
+    select_cols = ["(min(match_key_int) || '') as match_key"]
 
     for col in unique_id_input_columns:
         group_by_cols.extend([col.name_l, col.name_r])
