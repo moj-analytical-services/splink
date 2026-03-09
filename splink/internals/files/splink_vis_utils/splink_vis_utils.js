@@ -8243,8 +8243,9 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	function _example_index(no_edge_selected,comparison_vector_row_lookup,cv_chart_selection,splink_vis_utils)
 	{
 	  if (!no_edge_selected) {
+	    const selected_gam_concat = get_selected_gam_concat(cv_chart_selection);
 	    let num_options =
-	      comparison_vector_row_lookup[cv_chart_selection["gam_concat"]].length;
+	      (comparison_vector_row_lookup[selected_gam_concat] || []).length;
 
 	    let select_options = [...Array(num_options).keys()];
 	    return splink_vis_utils.select(select_options, {
@@ -8368,12 +8369,23 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	)
 	)}
 
+	function get_selected_gam_concat(cv_chart_selection) {
+	  const selection = cv_chart_selection["gam_concat"];
+
+	  if (Array.isArray(selection)) {
+	    return selection[0];
+	  }
+
+	  return selection;
+	}
+
 	function _selected_edge(no_edge_selected,comparison_vector_row_lookup,cv_chart_selection,example_index)
 	{
 	  if (!no_edge_selected) {
-	    return comparison_vector_row_lookup[cv_chart_selection["gam_concat"][0]][
-	      example_index
-	    ];
+	    const selected_gam_concat = get_selected_gam_concat(cv_chart_selection);
+	    const selected_rows = comparison_vector_row_lookup[selected_gam_concat] || [];
+
+	    return selected_rows[example_index];
 	  } else {
 	    return undefined;
 	  }
@@ -8572,7 +8584,21 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  let value_l = get_data_value("l");
 	  let value_r = get_data_value("r");
 
-	  let bayes_factor = row["bf_" + col_name];
+	  const settings_dict = splink_settings.settings_dict || {};
+	  const match_weight_prefix = settings_dict.match_weight_column_prefix || "mw_";
+	  const bayes_factor_key = "bf_" + col_name;
+	  const match_weight_key = match_weight_prefix + col_name;
+
+	  let bayes_factor;
+	  let log2_bayes_factor;
+	  if (bayes_factor_key in row) {
+	    bayes_factor = row[bayes_factor_key];
+	    log2_bayes_factor = log2(bayes_factor);
+	  } else {
+	    const match_weight = row[match_weight_key];
+	    log2_bayes_factor = match_weight;
+	    bayes_factor = 2 ** match_weight;
+	  }
 
 	  let single_row = {
 	    bayes_factor: bayes_factor,
@@ -8582,7 +8608,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	    level_name: "level_" + gamma_value,
 
-	    log2_bayes_factor: log2(bayes_factor),
+	    log2_bayes_factor: log2_bayes_factor,
 	    m_probability: this_cl["m_probability"],
 
 	    num_levels: this_cc.num_levels,
@@ -8596,12 +8622,19 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  // If there's a term frequency adjustment for this column, we need a second row
 
 	  let bf_tf_col_name = "bf_tf_adj_" + col_name;
-	  if (bf_tf_col_name in row) {
+	  let mw_tf_col_name = match_weight_prefix + "tf_adj_" + col_name;
+	  if (bf_tf_col_name in row || mw_tf_col_name in row) {
 	    let tf_row = cloneDeep(single_row);
 	    tf_row["column_name"] = "tf_" + col_name;
-	    bayes_factor = row[bf_tf_col_name];
-	    tf_row["bayes_factor"] = bayes_factor;
-	    tf_row["log2_bayes_factor"] = log2(bayes_factor);
+	    if (bf_tf_col_name in row) {
+	      bayes_factor = row[bf_tf_col_name];
+	      tf_row["bayes_factor"] = bayes_factor;
+	      tf_row["log2_bayes_factor"] = log2(bayes_factor);
+	    } else {
+	      const match_weight = row[mw_tf_col_name];
+	      tf_row["bayes_factor"] = 2 ** match_weight;
+	      tf_row["log2_bayes_factor"] = match_weight;
+	    }
 	    tf_row["m_probability"] = null;
 	    tf_row["u_probability"] = null;
 
@@ -10670,6 +10703,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	function gamma_table_data(data, ss_object) {
 	  let gamma_keys = Object.keys(data[0]);
+	  const settings_dict = ss_object.settings_dict || {};
+	  const match_weight_prefix = settings_dict.match_weight_column_prefix || "mw_";
 
 	  let result_data = [];
 	  gamma_keys = gamma_keys.filter((d) => d.startsWith("gamma_"));
@@ -10690,9 +10725,15 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	      row["gam_concat"] = d["gam_concat"];
 	      row["gam_concat_id"] = counter;
 	      row["gam_key_count"] = gam_key_counter;
-	      row["bayes_factor"] = d[`bf_${data_col_name}`];
-	      const log2 = Math.log2;
-	      row["match_weight"] = log2(d[`bf_${data_col_name}`]);
+	      const bayes_factor_key = `bf_${data_col_name}`;
+	      const match_weight_key = `${match_weight_prefix}${data_col_name}`;
+	      if (bayes_factor_key in d) {
+	        row["bayes_factor"] = d[bayes_factor_key];
+	        row["match_weight"] = Math.log2(d[bayes_factor_key]);
+	      } else {
+	        row["match_weight"] = d[match_weight_key];
+	        row["bayes_factor"] = 2 ** d[match_weight_key];
+	      }
 	      row["sort_avg_match_weight"] = d["sort_avg_match_weight"];
 
 	      row["label_for_charts"] = settings_col.comparison_level_lookup[row["gam_value"]]["label_for_charts"];
