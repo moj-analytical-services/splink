@@ -662,8 +662,8 @@ def block_using_rules_sqls(
     according to the blocking rule(s).
 
     Where there are multiple blocking rules, pairs are generated independently
-    by each rule and then deduplicated via GROUP BY, keeping the minimum match_key
-    for each unique pair.
+    by each rule and then deduplicated via GROUP BY, keeping the minimum
+    integer match_key for each unique pair.
 
     Args:
         left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
@@ -715,7 +715,7 @@ def block_using_rules_sqls(
     )
 
     group_by_cols = []
-    select_cols = ["(min(match_key_int) || '') as match_key"]
+    select_cols = ["min(match_key_int) as match_key"]
 
     for col in unique_id_input_columns:
         group_by_cols.extend([col.name_l, col.name_r])

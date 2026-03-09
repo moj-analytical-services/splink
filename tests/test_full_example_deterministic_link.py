@@ -77,4 +77,4 @@ def test_deterministic_link_uses_lowest_numeric_match_key(test_helpers, dialect)
     records = linker.inference.deterministic_link().as_record_dict()
 
     assert len(records) == 1
-    assert int(records[0]["match_key"]) == 2
+    assert records[0]["match_key"] == 2
