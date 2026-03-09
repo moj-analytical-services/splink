@@ -616,6 +616,63 @@ class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
         return "blocking_rule_generated_comparisons.json"
 
 
+class TFAdjustmentChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        hist_records: Sequence[ChartRecord],
+        tf_comparison_records: Sequence[ComparisonLevelDetailedRecord],
+    ):
+        super().__init__(records)
+        self.hist_records = hist_records
+        self.tf_levels = [cl.comparison_vector_value for cl in tf_comparison_records]
+        self.labels = [
+            f"{cl.label_for_charts} (TF col: {cl.tf_adjustment_column})"
+            for cl in tf_comparison_records
+        ]
+
+    @property
+    def chart_spec_file(self) -> str:
+        return "tf_adjustment_chart.json"
+
+    @property
+    def chart_dict(self) -> dict[str, Any]:
+        chart = self.chart_spec
+        chart["datasets"]["data"] = self.raw_records
+        chart["datasets"]["hist"] = self.hist_records
+        return chart
+
+    @staticmethod
+    def alter_spec_directly(chart_spec):
+        # filters = [
+        #     f"datum.most_freq_rank < {n_most_freq}",
+        #     f"datum.least_freq_rank < {n_least_freq}",
+        #     " | ".join([f"datum.value == '{v}'" for v in vals_to_include])
+        # ]
+        # filter_text = " | ".join(filters)
+        # chart["hconcat"][0]["layer"][0]["transform"][2]["filter"] = filter_text
+        # chart["hconcat"][0]["layer"][2]["transform"][2]["filter"] = filter_text
+
+        # PLACEHOLDER (until we work out adding a dynamic title based on the
+        # filtered data)
+        chart_spec["hconcat"][0]["layer"][0]["encoding"]["x"]["title"] = (
+            "TF column value"
+        )
+        chart_spec["hconcat"][0]["layer"][-1]["encoding"]["x"]["title"] = (
+            "TF column value"
+        )
+        chart_spec["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = (
+            "Value"
+        )
+        return chart_spec
+
+    def alter_spec_from_data(self, chart_spec):
+        chart_spec["config"]["params"][0]["value"] = max(self.tf_levels)
+        chart_spec["config"]["params"][0]["bind"]["options"] = self.tf_levels
+        chart_spec["config"]["params"][0]["bind"]["labels"] = self.labels
+        return chart_spec
+
+
 def _comparator_score_chart(similarity_records, distance_records, as_dict=False):
     chart_path = "comparator_score_chart.json"
     chart = load_chart_definition(chart_path)

@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.charts import (
-    ChartReturnType,
     MatchWeightsChart,
     MatchWeightsHistogramChart,
     MUParametersInteractiveHistoryChart,
     ParameterEstimateComparisonsChart,
+    TFAdjustmentChart,
     WaterfallChart,
 )
 from splink.internals.cluster_studio import (
@@ -199,8 +199,7 @@ class LinkerVisualisations:
         n_most_freq: int = 10,
         n_least_freq: int = 10,
         vals_to_include: str | list[str] | None = None,
-        as_dict: bool = False,
-    ) -> ChartReturnType:
+    ) -> TFAdjustmentChart:
         """Display a chart showing the impact of term frequency adjustments on a
         specific comparison level.
         Each value
@@ -217,7 +216,6 @@ class LinkerVisualisations:
             vals_to_include (list, optional): Specific values for which to show term
                 frequency adjustments.
                 Defaults to None.
-            as_dict (bool, optional): If True, return the chart as a dictionary.
 
         Examples:
             ```py
@@ -225,7 +223,7 @@ class LinkerVisualisations:
             ```
 
         Returns:
-            altair_chart: An Altair chart
+            TFAdjustmentChart: A SplinkChart object
         """
         comparison = self._linker._settings_obj._get_comparison_by_output_column_name(
             output_column_name
@@ -252,7 +250,6 @@ class LinkerVisualisations:
             n_most_freq,
             n_least_freq,
             vals_to_include,
-            as_dict,
         )
 
     def waterfall_chart(

@@ -9,9 +9,7 @@ from math import ceil, floor
 from typing import TYPE_CHECKING, Optional, cast
 
 from splink.internals.charts import (
-    ChartReturnType,
-    altair_or_json,
-    load_chart_definition,
+    TFAdjustmentChart,
 )
 from splink.internals.comparison_level import ComparisonLevelDetailedRecord
 from splink.internals.duckdb.duckdb_helpers.duckdb_helpers import (
@@ -231,8 +229,7 @@ def tf_adjustment_chart(
     n_most_freq: int,
     n_least_freq: int,
     vals_to_include: list[str],
-    as_dict: bool,
-) -> ChartReturnType:
+) -> TFAdjustmentChart:
     # we want a version of column_info_settings that is tied to duckdb, for local use
     # only need this for tf name
     column_info_settings = replace(
@@ -332,15 +329,8 @@ def tf_adjustment_chart(
             f"value IN ('{"', '".join(vals_to_include)}')"
         )
 
-    chart_path = "tf_adjustment_chart.json"
-    chart = load_chart_definition(chart_path)
-
     # Complete chart schema
     tf_levels = [cl.comparison_vector_value for cl in tf_comparison_records]
-    labels = [
-        f"{cl.label_for_charts} (TF col: {cl.tf_adjustment_column})"
-        for cl in tf_comparison_records
-    ]
 
     # trim down to only the data we need for the chart
     main_chart_data = record_dicts_from_relation(
@@ -356,24 +346,4 @@ def tf_adjustment_chart(
     # don't expect long-lived processes with duckdb backend, so probably not crucial
     con.execute(f"DROP VIEW {df_table_name}")
 
-    chart["datasets"]["data"] = main_chart_data
-    chart["datasets"]["hist"] = hist_data
-    chart["config"]["params"][0]["value"] = max(tf_levels)
-    chart["config"]["params"][0]["bind"]["options"] = tf_levels
-    chart["config"]["params"][0]["bind"]["labels"] = labels
-
-    # filters = [
-    #     f"datum.most_freq_rank < {n_most_freq}",
-    #     f"datum.least_freq_rank < {n_least_freq}",
-    #     " | ".join([f"datum.value == '{v}'" for v in vals_to_include])
-    # ]
-    # filter_text = " | ".join(filters)
-    # chart["hconcat"][0]["layer"][0]["transform"][2]["filter"] = filter_text
-    # chart["hconcat"][0]["layer"][2]["transform"][2]["filter"] = filter_text
-
-    # PLACEHOLDER (until we work out adding a dynamic title based on the filtered data)
-    chart["hconcat"][0]["layer"][0]["encoding"]["x"]["title"] = "TF column value"
-    chart["hconcat"][0]["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
-    chart["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
-
-    return altair_or_json(chart, as_dict=as_dict)
+    return TFAdjustmentChart(main_chart_data, hist_data, tf_comparison_records)
