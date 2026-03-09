@@ -3,11 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from splink.internals.blocking import (
-    compute_blocked_pairs_from_concat_with_tf,
-)
 from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.database_api import AcceptableInputTableType
+from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
@@ -102,59 +100,6 @@ class LinkerTableManagement:
 
         return df
 
-    def compute_blocked_pairs_for_predict(
-        self,
-        left_chunk: tuple[int, int] | None = None,
-        right_chunk: tuple[int, int] | None = None,
-    ) -> SplinkDataFrame:
-        """Compute and cache blocked pairs for prediction.
-
-        Args:
-            left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
-                left side records. For example, (1, 3) means chunk 1 of 3.
-            right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
-                right side records. For example, (2, 4) means chunk 2 of 4.
-
-        Returns:
-            SplinkDataFrame: The blocked pairs table, also stored in cache.
-
-        Examples:
-            ```py
-            # Pre-compute blocked pairs for full dataset
-            linker.table_management.compute_blocked_pairs_for_predict()
-
-            # Pre-compute blocked pairs for a specific chunk
-            linker.table_management.compute_blocked_pairs_for_predict(
-                left_chunk=(1, 3),
-                right_chunk=(2, 4),
-            )
-            ```
-        """
-        linker = self._linker
-        settings = linker._settings_obj
-
-        pipeline = CTEPipeline()
-        df_concat_with_tf = compute_df_concat_with_tf(linker, pipeline)
-
-        pipeline = CTEPipeline([df_concat_with_tf])
-
-        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
-            pipeline=pipeline,
-            db_api=linker._db_api,
-            splink_df_dict=linker._input_tables_dict,
-            blocking_rules=settings._blocking_rules_to_generate_predictions,
-            link_type=settings._link_type,
-            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
-            left_chunk=left_chunk,
-            right_chunk=right_chunk,
-        )
-
-        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
-        linker._intermediate_table_cache[cache_key] = blocked_pairs
-
-        return blocked_pairs
-
     def register_blocked_pairs_for_predict(
         self,
         input_data: AcceptableInputTableType,
@@ -165,17 +110,25 @@ class LinkerTableManagement:
         """Register pre-computed blocked pairs for use in prediction.
 
         This method allows you to register a blocked pairs table in Splink's cache
-        so it will be used by `linker.inference.predict()` /
-        `linker.inference.predict_chunk()` rather than being recomputed.
+        so it will be used by `linker.inference.predict_chunk()` rather than
+        being recomputed.
+
+        You must explicitly provide the chunk identifiers the table corresponds
+        to. Use `(1, 1)` for both `left_chunk` and `right_chunk` when
+        registering a full blocked-pairs table with no effective chunking.
+
+        Once blocked pairs have been manually registered, use
+        `linker.inference.predict_chunk()` with the corresponding chunk.
+        `linker.inference.predict()` is not supported in this workflow.
 
         Args:
             input_data (AcceptableInputTableType): The blocked pairs table to register.
                 This can be either a dictionary, pandas dataframe, pyarrow table, or
                 a spark dataframe.
-            left_chunk: Optional tuple of (chunk_number, total_chunks) for the left
-                side. If provided, the table is cached for that chunk.
-            right_chunk: Optional tuple of (chunk_number, total_chunks) for the right
-                side. If provided, the table is cached for that chunk.
+            left_chunk: Tuple of (chunk_number, total_chunks) for the left side.
+                Use `(1, 1)` for the full table.
+            right_chunk: Tuple of (chunk_number, total_chunks) for the right side.
+                Use `(1, 1)` for the full table.
             overwrite (bool, optional): Overwrite the table in the underlying database
                 if it exists. Defaults to False.
 
@@ -186,10 +139,23 @@ class LinkerTableManagement:
         Examples:
             ```py
             blocked_pairs_df = pd.read_parquet("path/to/blocked_pairs.parquet")
-            linker.table_management.register_blocked_pairs_for_predict(blocked_pairs_df)
-            predictions = linker.inference.predict()
+            linker.table_management.register_blocked_pairs_for_predict(
+                blocked_pairs_df,
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
+            predictions = linker.inference.predict_chunk(
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
             ```
         """
+        if left_chunk is None or right_chunk is None:
+            raise SplinkException(
+                "register_blocked_pairs_for_predict() requires both left_chunk "
+                "and right_chunk. Use (1, 1) for a full blocked-pairs table."
+            )
+
         cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
         table_name_physical = f"{cache_key}_{self._linker._cache_uid}"
 
@@ -199,6 +165,9 @@ class LinkerTableManagement:
             overwrite=overwrite,
         )
         splink_dataframe.templated_name = "__splink__blocked_id_pairs"
+        splink_dataframe.metadata["registered_for_predict"] = True
+        splink_dataframe.metadata["registered_left_chunk"] = left_chunk
+        splink_dataframe.metadata["registered_right_chunk"] = right_chunk
         self._linker._intermediate_table_cache[cache_key] = splink_dataframe
 
         return splink_dataframe
