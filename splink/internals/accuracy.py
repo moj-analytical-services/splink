@@ -381,7 +381,7 @@ def truth_space_table_from_labels_column(
         when ({label_colname}_l = {label_colname}_r)
         then cast(1.0 as float8) else cast(0.0 as float8)
     end AS clerical_match_score,
-    match_key != {new_matchkey}
+    not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
     from {df_predict.physical_name}
@@ -536,6 +536,7 @@ def prediction_errors_from_label_column(
 
     # Clerical match score is 1 where the label_colname is equal else zero
 
+    # _predict_from_label_column_sql will add a match key for matching on labels
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
     pipeline = CTEPipeline()
     sql = f"""
@@ -544,7 +545,7 @@ def prediction_errors_from_label_column(
         when ({label_colname}_l = {label_colname}_r)
         then cast(1.0 as float8) else cast(0.0 as float8)
     end AS clerical_match_score,
-    match_key != {new_matchkey}
+    not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
     from {df_predict.physical_name}

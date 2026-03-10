@@ -8,8 +8,6 @@ from splink.internals.lower_id_on_lhs import lower_id_to_left_hand_side
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
-MATCH_KEY_FROM_LABELS = -1
-
 
 def block_from_labels(
     linker: Linker, labels_table_name: str, include_clerical_match_score: bool = False
@@ -72,7 +70,7 @@ def block_from_labels(
     sql = f"""
     select
         {sql_select_expr},
-        {MATCH_KEY_FROM_LABELS} as match_key
+        'from_labels' as match_key
         {clerical_match_score}
 
 

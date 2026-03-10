@@ -139,11 +139,12 @@ class BlockingRule:
         else:
             unique_id_columns = [unique_id_input_column]
 
-        select_cols = [f"{self.match_key} as match_key_int"]
+        select_cols = [f"'{self.match_key}' as match_key"]
 
         for col in unique_id_columns:
-            select_cols.append(f"l.{col.name} as {col.name_l}")
-            select_cols.append(f"r.{col.name} as {col.name_r}")
+            col_unquoted = col.unquote().name
+            select_cols.append(f"l.{col.name} as {col_unquoted}_l")
+            select_cols.append(f"r.{col.name} as {col_unquoted}_r")
 
         select_clause = ",\n            ".join(select_cols)
 
@@ -362,10 +363,11 @@ class ExplodingBlockingRule(BlockingRule):
 
         # Select all individual ID columns with _l and _r suffixes
         # Use unquoted names since these are column names in the exploded table
-        select_cols = [f"{self.match_key} as match_key_int"]
+        select_cols = [f"'{self.match_key}' as match_key"]
         for col in unique_id_columns:
-            select_cols.append(col.name_l)
-            select_cols.append(col.name_r)
+            col_unquoted = col.unquote().name
+            select_cols.append(f"{col_unquoted}_l")
+            select_cols.append(f"{col_unquoted}_r")
 
         select_clause = ",\n                ".join(select_cols)
 
@@ -662,8 +664,8 @@ def block_using_rules_sqls(
     according to the blocking rule(s).
 
     Where there are multiple blocking rules, pairs are generated independently
-    by each rule and then deduplicated via GROUP BY, keeping the minimum
-    integer match_key for each unique pair.
+    by each rule and then deduplicated via GROUP BY, keeping the minimum match_key
+    for each unique pair.
 
     Args:
         left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
@@ -715,22 +717,24 @@ def block_using_rules_sqls(
     )
 
     group_by_cols = []
-    select_cols = ["min(match_key_int) as match_key"]
+    select_cols = ["min(match_key) as match_key"]
 
     for col in unique_id_input_columns:
-        group_by_cols.extend([col.name_l, col.name_r])
-        select_cols.extend([col.name_l, col.name_r])
+        col_unquoted = col.unquote().name
+        col_l = f"{col_unquoted}_l"
+        col_r = f"{col_unquoted}_r"
+        group_by_cols.extend([col_l, col_r])
+        select_cols.extend([col_l, col_r])
 
     group_by_clause = ", ".join(group_by_cols)
     select_clause = ",\n        ".join(select_cols)
-    order_by_clause = ", ".join(group_by_cols)
 
     sql = f"""
     SELECT
         {select_clause}
     FROM __splink__blocked_id_pairs_non_unique
     GROUP BY {group_by_clause}
-    ORDER BY {order_by_clause}
+    ORDER BY {unique_id_input_column.name_l} asc, {unique_id_input_column.name_r} asc
     """
 
     sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
