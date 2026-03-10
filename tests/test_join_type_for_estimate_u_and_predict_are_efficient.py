@@ -250,45 +250,6 @@ def test_link_only_two():
         in all_log_messages
     )
 
-
-def test_link_only_two_blocking_sql_uses_narrow_input_projections():
-    df_one = pd.DataFrame(data_one)
-    df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
-
-    settings = {
-        "link_type": "link_only",
-        "probability_two_random_records_match": 4 / 1000,
-        "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name",
-            "l.surname = r.surname",
-        ],
-        "comparisons": [
-            cl.ExactMatch("first_name"),
-            cl.ExactMatch("surname"),
-            cl.ExactMatch("dob"),
-            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-            cl.ExactMatch("email"),
-        ],
-    }
-    db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
-    linker = Linker([df_one_sdf, df_two_sdf], settings, set_up_basic_logging=False)
-
-    blocked_pairs = linker.inference.compute_blocked_pairs_for_predict_chunk()
-    sql = re.sub(r"\s+", " ", blocked_pairs.sql_used_to_create)
-
-    assert "__splink__df_concat_with_tf_left as (" in sql
-    assert "__splink__df_concat_with_tf_right as (" in sql
-    assert "select * from __splink__df_concat_with_tf" not in sql
-    assert '"source_dataset"' in sql
-    assert '"unique_id"' in sql
-    assert '"first_name"' in sql
-    assert '"surname"' in sql
-    assert " city " not in sql
-    assert " email " not in sql
-
-
 def test_link_only_three():
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")

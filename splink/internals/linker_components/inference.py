@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
+    _columns_needed_for_blocking,
     block_using_rules_sqls,
     materialise_exploded_id_tables,
 )
@@ -100,9 +101,15 @@ class LinkerInference:
             len(self._linker._input_tables_dict) == 2
             and self._linker._settings_obj._link_type == "link_only"
         ):
+            input_columns = _columns_needed_for_blocking(
+                self._linker._settings_obj._blocking_rules_to_generate_predictions,
+                source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+                unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            )
             sqls = split_df_concat_with_tf_into_two_tables_sqls(
                 "__splink__df_concat_with_tf",
                 self._linker._settings_obj.column_info_settings.source_dataset_column_name,
+                input_columns=input_columns,
             )
             pipeline.enqueue_list_of_sqls(sqls)
 
@@ -220,9 +227,15 @@ class LinkerInference:
             len(self._linker._input_tables_dict) == 2
             and self._linker._settings_obj._link_type == "link_only"
         ):
+            input_columns = _columns_needed_for_blocking(
+                self._linker._settings_obj._blocking_rules_to_generate_predictions,
+                source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+                unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            )
             sqls = split_df_concat_with_tf_into_two_tables_sqls(
                 "__splink__df_concat_with_tf",
                 self._linker._settings_obj.column_info_settings.source_dataset_column_name,
+                input_columns=input_columns,
             )
             pipeline.enqueue_list_of_sqls(sqls)
 
