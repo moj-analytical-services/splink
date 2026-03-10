@@ -91,6 +91,14 @@ data_three = [
 ]
 
 
+def _assert_self_join_logged(log_output: str, table_name: str) -> None:
+    pattern = (
+        rf"from {re.escape(table_name)}(?:_[a-z0-9]+)? as l inner join "
+        rf"{re.escape(table_name)}(?:_[a-z0-9]+)? as r"
+    )
+    assert re.search(pattern, log_output)
+
+
 def test_dedupe_only():
     df_one = pd.DataFrame(data_one)
 
@@ -126,10 +134,7 @@ def test_dedupe_only():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    assert (
-        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_sample")
 
     handler.log_list.clear()
 
@@ -138,10 +143,7 @@ def test_dedupe_only():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    assert (
-        "from __splink__df_concat_with_tf as l inner join __splink__df_concat_with_tf as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")
 
 
 def test_link_and_dedupe():
@@ -181,10 +183,7 @@ def test_link_and_dedupe():
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
-    assert (
-        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_sample")
 
     log_list.clear()
 
@@ -193,10 +192,7 @@ def test_link_and_dedupe():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    assert (
-        "from __splink__df_concat_with_tf as l inner join __splink__df_concat_with_tf as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")
 
 
 def test_link_only_two():
@@ -294,10 +290,7 @@ def test_link_only_three():
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
-    assert (
-        "from __splink__df_concat_sample as l inner join __splink__df_concat_sample as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_sample")
 
     log_list.clear()
 
@@ -306,7 +299,4 @@ def test_link_only_three():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    assert (
-        "from __splink__df_concat_with_tf as l inner join __splink__df_concat_with_tf as r"  # noqa: E501
-        in all_log_messages
-    )
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")

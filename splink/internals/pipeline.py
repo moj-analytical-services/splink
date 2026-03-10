@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlglot
@@ -75,11 +76,37 @@ class CTEPipeline:
     def append_input_dataframe(self, df: SplinkDataFrame) -> None:
         self.input_dataframes.append(df)
 
-    def _input_dataframes_as_cte(self):
-        return [
-            CTE(f"\nselect * from {df.physical_name}", df.templated_name)
+    def _input_dataframe_replacements(self) -> list[tuple[str, str]]:
+        replacements = [
+            (df.templated_name, df.physical_name)
             for df in self.input_dataframes
             if not df.physical_and_template_names_equal
+        ]
+        return sorted(replacements, key=lambda pair: len(pair[0]), reverse=True)
+
+    @staticmethod
+    def _replace_identifier(sql: str, templated_name: str, physical_name: str) -> str:
+        pattern = (
+            rf'(?<![A-Za-z0-9_])(?P<quote>["`]?)'
+            rf"{re.escape(templated_name)}"
+            rf"(?P=quote)(?![A-Za-z0-9_])"
+        )
+
+        def _replacement(match: re.Match[str]) -> str:
+            quote = match.group("quote")
+            return f"{quote}{physical_name}{quote}"
+
+        return re.sub(pattern, _replacement, sql)
+
+    def _resolve_input_references(self, sql: str) -> str:
+        for templated_name, physical_name in self._input_dataframe_replacements():
+            sql = self._replace_identifier(sql, templated_name, physical_name)
+        return sql
+
+    def _resolved_queue(self) -> List[CTE]:
+        return [
+            CTE(self._resolve_input_references(cte.sql), cte.output_table_name)
+            for cte in self.queue
         ]
 
     def _log_pipeline(self, parts):
@@ -96,7 +123,7 @@ class CTEPipeline:
 
     def ctes_pipeline(self) -> List[CTE]:
         """Common table expressions"""
-        return self._input_dataframes_as_cte() + self.queue
+        return self._resolved_queue()
 
     def generate_cte_pipeline_sql(self) -> str:
         self.spent = True
