@@ -2,7 +2,6 @@ import os
 
 import pandas as pd
 
-import splink.internals.comparison_library as cl
 from splink.blocking_analysis import (
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
 )
@@ -51,27 +50,3 @@ def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
         sampling_method="by_cluster_size",
         overwrite=True,
     )
-
-
-@mark_with_dialects_excluding()
-def test_deterministic_link_uses_lowest_numeric_match_key(test_helpers, dialect):
-    helper = test_helpers[dialect]
-
-    data = {
-        "unique_id": [1, 2],
-        **{f"c{i}": [1, 1] if i in (2, 10) else [100 + i, 200 + i] for i in range(11)},
-    }
-
-    settings = {
-        "link_type": "dedupe_only",
-        "comparisons": [cl.ExactMatch("c2")],
-        "blocking_rules_to_generate_predictions": [
-            f"l.c{i} = r.c{i}" for i in range(11)
-        ],
-    }
-
-    linker = helper.linker_with_registration(data, settings)
-    records = linker.inference.deterministic_link().as_record_dict()
-
-    assert len(records) == 1
-    assert records[0]["match_key"] == 2

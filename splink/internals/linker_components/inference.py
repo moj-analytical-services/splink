@@ -35,6 +35,7 @@ from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
     colname_to_tf_tablename,
 )
+from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
 from splink.internals.vertically_concatenate import (
     compute_df_concat_with_tf,
     enqueue_df_concat_with_tf,
@@ -568,24 +569,24 @@ class LinkerInference:
                 ]
             else:
                 unique_id_columns = [unique_id_input_column]
-
-            join_conditions = []
-            for col in unique_id_columns:
-                col_name = col.unquote().name
-                col_l = f"{col_name}_l"
-                col_r = f"{col_name}_r"
-                join_conditions.append(f"oe.{col_l} = ne.{col_l}")
-                join_conditions.append(f"oe.{col_r} = ne.{col_r}")
-
-            join_clause = " AND ".join(join_conditions)
-
-            first_col_l = f"{unique_id_columns[0].unquote().name}_l"
+            uid_l_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "l")
+            uid_r_expr = _composite_unique_id_from_edges_sql(unique_id_columns, "r")
+            sql_predict_with_join_keys = f"""
+                SELECT *, {uid_l_expr} AS join_key_l, {uid_r_expr} AS join_key_r
+                FROM {df_predict.physical_name}
+            """
+            sqls.append(
+                {
+                    "sql": sql_predict_with_join_keys,
+                    "output_table_name": "__splink__df_predict_with_join_keys",
+                }
+            )
 
             sql = f"""
             {sql}
-            LEFT JOIN {df_predict.physical_name} oe
-            ON {join_clause}
-            WHERE oe.{first_col_l} IS NULL
+            LEFT JOIN __splink__df_predict_with_join_keys oe
+            ON oe.join_key_l = ne.join_key_l AND oe.join_key_r = ne.join_key_r
+            WHERE oe.join_key_l IS NULL AND oe.join_key_r IS NULL
             """
 
         sqls.append({"sql": sql, "output_table_name": "__splink__blocked_id_pairs"})
