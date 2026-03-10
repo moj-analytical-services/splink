@@ -13,7 +13,7 @@ from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import dedupe_preserving_order, ensure_is_list
-from splink.internals.parse_sql import get_columns_used_from_sql
+from splink.internals.parse_sql import parse_columns_in_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -97,11 +97,11 @@ def _columns_needed_for_blocking(
     )
 
     for br in blocking_rules:
-        column_names = get_columns_used_from_sql(
-            br.blocking_rule_sql,
-            sqlglot_dialect=br.sqlglot_dialect,
+        # Preserve first-seen column order so the projected blocking SQL is stable.
+        parsed_columns = parse_columns_in_sql(
+            br.blocking_rule_sql, sqlglot_dialect=br.sqlglot_dialect
         )
-        input_columns.extend(br._input_column(name) for name in column_names)
+        input_columns.extend(br._input_column(col.name) for col in parsed_columns)
 
     return dedupe_preserving_order(input_columns)
 
