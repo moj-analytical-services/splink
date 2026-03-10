@@ -12,7 +12,8 @@ from sqlglot.optimizer.simplify import flatten
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ensure_is_list
+from splink.internals.misc import dedupe_preserving_order, ensure_is_list
+from splink.internals.parse_sql import parse_columns_in_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -84,6 +85,25 @@ def combine_unique_id_input_columns(
         unique_id_input_columns.append(source_dataset_input_column)
     unique_id_input_columns.append(unique_id_input_column)
     return unique_id_input_columns
+
+
+def _columns_needed_for_blocking(
+    blocking_rules: List["BlockingRule"],
+    source_dataset_input_column: Optional[InputColumn],
+    unique_id_input_column: InputColumn,
+) -> List[InputColumn]:
+    input_columns = combine_unique_id_input_columns(
+        source_dataset_input_column, unique_id_input_column
+    )
+
+    for br in blocking_rules:
+        # Preserve first-seen column order so the projected blocking SQL is stable.
+        parsed_columns = parse_columns_in_sql(
+            br.blocking_rule_sql, sqlglot_dialect=br.sqlglot_dialect
+        )
+        input_columns.extend(br._input_column(col.name) for col in parsed_columns)
+
+    return dedupe_preserving_order(input_columns)
 
 
 class BlockingRule:
