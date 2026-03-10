@@ -77,8 +77,16 @@ class CTEPipeline:
         self.input_dataframes.append(df)
 
     @staticmethod
-    def _replace_identifier(sql: str, templated_name: str, physical_name: str) -> str:
+    def _replace_templated_identifier_with_physical_name(
+        sql: str, templated_name: str, physical_name: str
+    ) -> str:
         # Replace only whole SQL identifiers, preserving optional matching quotes.
+        # This matches cases like:
+        #   from __splink__df_concat_with_tf)
+        #   from __splink__df_concat_with_tf,
+        #   from "__splink__df_concat_with_tf" as l
+        # but not longer identifiers like:
+        #   __splink__df_concat_with_tf_left
         pattern = rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}(?P=quote)(?!\w)'
 
         def _replacement(match: re.Match[str]) -> str:
@@ -87,7 +95,7 @@ class CTEPipeline:
 
         return re.sub(pattern, _replacement, sql)
 
-    def _resolve_input_references(self, sql: str) -> str:
+    def _replace_templated_references_with_physical_names(self, sql: str) -> str:
         replacements = sorted(
             (
                 (df.templated_name, df.physical_name)
@@ -98,12 +106,17 @@ class CTEPipeline:
             reverse=True,
         )
         for templated_name, physical_name in replacements:
-            sql = self._replace_identifier(sql, templated_name, physical_name)
+            sql = self._replace_templated_identifier_with_physical_name(
+                sql, templated_name, physical_name
+            )
         return sql
 
     def _resolved_queue(self) -> List[CTE]:
         return [
-            CTE(self._resolve_input_references(cte.sql), cte.output_table_name)
+            CTE(
+                self._replace_templated_references_with_physical_names(cte.sql),
+                cte.output_table_name,
+            )
             for cte in self.queue
         ]
 
