@@ -14,7 +14,8 @@ from splink.internals.chunking import _chunk_assignment_sql
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import ensure_is_list
+from splink.internals.misc import dedupe_preserving_order, ensure_is_list
+from splink.internals.parse_sql import get_columns_used_from_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -74,6 +75,25 @@ def combine_unique_id_input_columns(
         unique_id_input_columns.append(source_dataset_input_column)
     unique_id_input_columns.append(unique_id_input_column)
     return unique_id_input_columns
+
+
+def _columns_needed_for_blocking(
+    blocking_rules: List["BlockingRule"],
+    source_dataset_input_column: Optional[InputColumn],
+    unique_id_input_column: InputColumn,
+) -> List[InputColumn]:
+    input_columns = combine_unique_id_input_columns(
+        source_dataset_input_column, unique_id_input_column
+    )
+
+    for br in blocking_rules:
+        column_names = get_columns_used_from_sql(
+            br.blocking_rule_sql,
+            sqlglot_dialect=br.sqlglot_dialect,
+        )
+        input_columns.extend(br._input_column(name) for name in column_names)
+
+    return dedupe_preserving_order(input_columns)
 
 
 class BlockingRule:
@@ -591,9 +611,15 @@ def compute_blocked_pairs_from_concat_with_tf(
                 "source_dataset column"
             )
 
+        input_columns = _columns_needed_for_blocking(
+            blocking_rules,
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+        )
         sqls = split_df_concat_with_tf_into_two_tables_sqls(
             df_concat_with_tf_table_name,
             source_dataset_input_column.name,
+            input_columns=input_columns,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
