@@ -48,9 +48,10 @@ def test_simple_example_link_only(test_helpers, dialect):
                 "match_key",
             ]
         )
-    }
+    )
+    actual_triples = {tuple(t.values()) for t in returned_triples.to_pylist()}
     expected_triples = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
-    assert expected_triples == returned_triples
+    assert expected_triples == actual_triples
 
 
 def generate_array_based_datasets_helper(
@@ -403,12 +404,12 @@ def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialec
         settings,
         input_table_aliases=["left_ds", "right_ds"],
     )
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_dict()
 
-    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    pairs = set(zip(df_predict["unique_id_l"], df_predict["unique_id_r"]))
     assert pairs == {(1, 10), (2, 12)}
-    assert set(df_predict.source_dataset_l) == {"left_ds"}
-    assert set(df_predict.source_dataset_r) == {"right_ds"}
+    assert set(df_predict["source_dataset_l"]) == {"left_ds"}
+    assert set(df_predict["source_dataset_r"]) == {"right_ds"}
 
 
 @mark_with_dialects_including("duckdb", pass_dialect=True)
@@ -439,9 +440,9 @@ def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, di
         "comparisons": [cl.ExactMatch("name")],
     }
     linker = helper.linker_with_registration([data_l, data_r], settings)
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_dict()
 
-    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    pairs = set(zip(df_predict["unique_id_l"], df_predict["unique_id_r"]))
     assert pairs == {(1, 10), (3, 11)}
 
 
@@ -473,7 +474,7 @@ def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
         "comparisons": [cl.ExactMatch("name")],
     }
     linker = helper.linker_with_registration([data_l, data_r], settings)
-    deterministic = linker.inference.deterministic_link().as_pandas_dataframe()
+    deterministic = linker.inference.deterministic_link().as_dict()
 
-    pairs = set(zip(deterministic.unique_id_l, deterministic.unique_id_r))
+    pairs = set(zip(deterministic["unique_id_l"], deterministic["unique_id_r"]))
     assert pairs == {(1, 10), (2, 12)}
