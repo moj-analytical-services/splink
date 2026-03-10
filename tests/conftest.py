@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import dataclass
 
 import pytest
 
@@ -92,6 +93,24 @@ def fake_1000():
     import pyarrow.csv as pv
 
     return pv.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+
+@pytest.fixture(scope="function")
+def duckdb_with_fake_1000():
+    import duckdb
+
+    con = duckdb.connect()
+    fake_1000 = con.query(
+        "select * "
+        "from read_csv_auto('./tests/datasets/fake_1000_from_splink_demos.csv')"
+    )
+
+    @dataclass
+    class DuckDB:
+        con: duckdb.DuckDBPyConnection
+        fake_1000: duckdb.DuckDBPyRelation
+
+    return DuckDB(con, fake_1000)
 
 
 @pytest.fixture
