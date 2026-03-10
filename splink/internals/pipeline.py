@@ -76,21 +76,10 @@ class CTEPipeline:
     def append_input_dataframe(self, df: SplinkDataFrame) -> None:
         self.input_dataframes.append(df)
 
-    def _input_dataframe_replacements(self) -> list[tuple[str, str]]:
-        replacements = [
-            (df.templated_name, df.physical_name)
-            for df in self.input_dataframes
-            if not df.physical_and_template_names_equal
-        ]
-        return sorted(replacements, key=lambda pair: len(pair[0]), reverse=True)
-
     @staticmethod
     def _replace_identifier(sql: str, templated_name: str, physical_name: str) -> str:
-        pattern = (
-            rf'(?<![A-Za-z0-9_])(?P<quote>["`]?)'
-            rf"{re.escape(templated_name)}"
-            rf"(?P=quote)(?![A-Za-z0-9_])"
-        )
+        # Replace only whole SQL identifiers, preserving optional matching quotes.
+        pattern = rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}(?P=quote)(?!\w)'
 
         def _replacement(match: re.Match[str]) -> str:
             quote = match.group("quote")
@@ -99,7 +88,16 @@ class CTEPipeline:
         return re.sub(pattern, _replacement, sql)
 
     def _resolve_input_references(self, sql: str) -> str:
-        for templated_name, physical_name in self._input_dataframe_replacements():
+        replacements = sorted(
+            (
+                (df.templated_name, df.physical_name)
+                for df in self.input_dataframes
+                if not df.physical_and_template_names_equal
+            ),
+            key=lambda pair: len(pair[0]),
+            reverse=True,
+        )
+        for templated_name, physical_name in replacements:
             sql = self._replace_identifier(sql, templated_name, physical_name)
         return sql
 
