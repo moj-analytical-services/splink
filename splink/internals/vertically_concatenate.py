@@ -223,9 +223,7 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     sqls = []
     sample_text = "_sample" if sample_switch else ""
     select_cols = (
-        "*"
-        if input_columns is None
-        else ", ".join(col.name for col in input_columns)
+        "*" if input_columns is None else ", ".join(col.name for col in input_columns)
     )
 
     sql = f"""

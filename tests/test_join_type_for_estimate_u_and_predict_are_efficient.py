@@ -250,6 +250,7 @@ def test_link_only_two():
         in all_log_messages
     )
 
+
 def test_link_only_three():
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
