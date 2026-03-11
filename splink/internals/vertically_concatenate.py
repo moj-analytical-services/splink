@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
@@ -253,10 +253,82 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     return sqls
 
 
-def _select_input_columns_from_table_sql(
+def _two_dataset_link_only_source_dataset_column_exists(
+    input_tables: Dict[str, SplinkDataFrame],
+    source_dataset_input_column: InputColumn | None,
+) -> bool:
+    if source_dataset_input_column is None:
+        return False
+
+    first_df_obj = next(iter(input_tables.values()))
+    return source_dataset_input_column in first_df_obj.columns
+
+
+def _two_dataset_link_only_sql_literal(value: Any) -> str:
+    if isinstance(value, str):
+        escaped = value.replace("'", "''")
+        return f"'{escaped}'"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def _two_dataset_link_only_first_source_dataset_value(
+    df_obj: SplinkDataFrame,
+    source_dataset_input_column: InputColumn,
+) -> Any | None:
+    records = df_obj.as_record_dict(limit=1)
+    source_dataset_column_key = source_dataset_input_column.unquote().name
+    return None if not records else records[0][source_dataset_column_key]
+
+
+def _two_dataset_link_only_left_and_right_inputs(
+    input_tables: Dict[str, SplinkDataFrame],
+    source_dataset_input_column: InputColumn | None,
+) -> tuple[
+    tuple[SplinkDataFrame, Any | None],
+    tuple[SplinkDataFrame, Any | None],
+]:
+    input_dataframes = list(input_tables.values())
+    left_df_obj = min(input_dataframes, key=lambda df_obj: df_obj.templated_name)
+    right_df_obj = max(input_dataframes, key=lambda df_obj: df_obj.templated_name)
+
+    source_dataset_column_exists = _two_dataset_link_only_source_dataset_column_exists(
+        input_tables,
+        source_dataset_input_column,
+    )
+
+    if not source_dataset_column_exists:
+        return (left_df_obj, None), (right_df_obj, None)
+
+    if source_dataset_input_column is None:
+        raise ValueError(
+            "source_dataset_input_column is required for source dataset ordering"
+        )
+
+    left_value = _two_dataset_link_only_first_source_dataset_value(
+        left_df_obj,
+        source_dataset_input_column,
+    )
+    right_value = _two_dataset_link_only_first_source_dataset_value(
+        right_df_obj,
+        source_dataset_input_column,
+    )
+
+    if left_value is None or right_value is None:
+        return (left_df_obj, left_value), (right_df_obj, right_value)
+
+    if left_value <= right_value:
+        return (left_df_obj, left_value), (right_df_obj, right_value)
+
+    return (right_df_obj, right_value), (left_df_obj, left_value)
+
+
+def _two_dataset_link_only_select_input_columns_sql(
     df_obj: SplinkDataFrame,
     input_columns: list[InputColumn],
     source_dataset_input_column: InputColumn | None,
+    source_dataset_value_to_keep: Any | None = None,
 ) -> str:
     source_dataset_column_already_exists = False
     if source_dataset_input_column:
@@ -275,9 +347,25 @@ def _select_input_columns_from_table_sql(
             select_cols.append(col.name)
 
     select_cols_sql = ", ".join(select_cols)
+    where_sql = ""
+    if (
+        source_dataset_column_already_exists
+        and source_dataset_value_to_keep is not None
+    ):
+        if source_dataset_input_column is None:
+            raise ValueError(
+                "source_dataset_input_column is required when filtering "
+                "by source dataset"
+            )
+        where_sql = (
+            f"\n        where {source_dataset_input_column.name} = "
+            f"{_two_dataset_link_only_sql_literal(source_dataset_value_to_keep)}"
+        )
+
     return f"""
         select {select_cols_sql}
         from {df_obj.physical_name}
+        {where_sql}
         """
 
 
@@ -286,14 +374,22 @@ def select_two_dataset_link_only_input_tables_sqls(
     input_columns: list[InputColumn],
     source_dataset_input_column: InputColumn | None,
 ) -> list[str]:
-    if len(input_tables) != 2:
-        raise ValueError("Expected exactly two input tables for two_dataset_link_only.")
+    left_selection, right_selection = _two_dataset_link_only_left_and_right_inputs(
+        input_tables,
+        source_dataset_input_column,
+    )
 
-    return [
-        _select_input_columns_from_table_sql(
-            df_obj,
-            input_columns,
-            source_dataset_input_column,
-        )
-        for df_obj in input_tables.values()
-    ]
+    left_sql = _two_dataset_link_only_select_input_columns_sql(
+        left_selection[0],
+        input_columns,
+        source_dataset_input_column,
+        source_dataset_value_to_keep=left_selection[1],
+    )
+    right_sql = _two_dataset_link_only_select_input_columns_sql(
+        right_selection[0],
+        input_columns,
+        source_dataset_input_column,
+        source_dataset_value_to_keep=right_selection[1],
+    )
+
+    return [left_sql, right_sql]
