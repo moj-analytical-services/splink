@@ -18,7 +18,7 @@ from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import (
-    split_df_concat_with_tf_into_two_tables_sqls,
+    select_two_dataset_link_only_input_tables_sqls,
     vertically_concatenate_sql,
 )
 
@@ -533,13 +533,6 @@ def materialise_exploded_id_tables(
 
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline()
-
-        sql = vertically_concatenate_sql(
-            splink_df_dict,
-            salting_required=False,
-            source_dataset_input_column=source_dataset_input_column,
-        )
-        pipeline.enqueue_sql(sql, "__splink__df_concat")
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
@@ -556,30 +549,36 @@ def materialise_exploded_id_tables(
                     "source_dataset_input_column is required for two_dataset_link_only"
                 )
 
-            sqls = split_df_concat_with_tf_into_two_tables_sqls(
-                "__splink__df_concat",
-                source_dataset_input_column.name,
+            left_sql, right_sql = select_two_dataset_link_only_input_tables_sqls(
+                splink_df_dict,
                 input_columns=input_columns,
+                source_dataset_input_column=source_dataset_input_column,
             )
-            pipeline.enqueue_list_of_sqls(sqls)
 
             input_tablename_l = "__splink__df_concat_left_unnested"
             input_tablename_r = "__splink__df_concat_right_unnested"
 
             expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
-                "__splink__df_concat_left",
+                f"({left_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
             pipeline.enqueue_sql(expl_sql_l, input_tablename_l)
 
             expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
-                "__splink__df_concat_right",
+                f"({right_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
             pipeline.enqueue_sql(expl_sql_r, input_tablename_r)
         else:
+            sql = vertically_concatenate_sql(
+                splink_df_dict,
+                salting_required=False,
+                source_dataset_input_column=source_dataset_input_column,
+            )
+            pipeline.enqueue_sql(sql, "__splink__df_concat")
+
             input_tablename_l = "__splink__df_concat_unnested"
             input_tablename_r = "__splink__df_concat_unnested"
 
