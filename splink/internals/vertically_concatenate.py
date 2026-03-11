@@ -251,3 +251,49 @@ def split_df_concat_with_tf_into_two_tables_sqls(
         }
     )
     return sqls
+
+
+def _select_input_columns_from_table_sql(
+    df_obj: SplinkDataFrame,
+    input_columns: list[InputColumn],
+    source_dataset_input_column: InputColumn | None,
+) -> str:
+    source_dataset_column_already_exists = False
+    if source_dataset_input_column:
+        source_dataset_column_already_exists = (
+            source_dataset_input_column in df_obj.columns
+        )
+
+    select_cols: list[str] = []
+    for col in input_columns:
+        if (
+            col == source_dataset_input_column
+            and not source_dataset_column_already_exists
+        ):
+            select_cols.append(f"'{df_obj.templated_name}' as {col.name}")
+        else:
+            select_cols.append(col.name)
+
+    select_cols_sql = ", ".join(select_cols)
+    return f"""
+        select {select_cols_sql}
+        from {df_obj.physical_name}
+        """
+
+
+def select_two_dataset_link_only_input_tables_sqls(
+    input_tables: Dict[str, SplinkDataFrame],
+    input_columns: list[InputColumn],
+    source_dataset_input_column: InputColumn | None,
+) -> list[str]:
+    if len(input_tables) != 2:
+        raise ValueError("Expected exactly two input tables for two_dataset_link_only.")
+
+    return [
+        _select_input_columns_from_table_sql(
+            df_obj,
+            input_columns,
+            source_dataset_input_column,
+        )
+        for df_obj in input_tables.values()
+    ]

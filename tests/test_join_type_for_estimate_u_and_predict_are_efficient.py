@@ -249,6 +249,18 @@ def test_link_only_two():
         "from __splink__df_concat_with_tf_left as l inner join __splink__df_concat_with_tf_right as r"  # noqa: E501
         in all_log_messages
     )
+    assert (
+        "__splink__df_concat_with_tf_left as ( select 'df_one' as "
+        '"source_dataset", "unique_id", "first_name", "surname" from df_one )'
+        in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_right as ( select 'df_two' as "
+        '"source_dataset", "unique_id", "first_name", "surname" from df_two )'
+        in all_log_messages
+    )
+    assert "select min(" not in all_log_messages
+    assert "select max(" not in all_log_messages
 
 
 def test_link_only_three():
