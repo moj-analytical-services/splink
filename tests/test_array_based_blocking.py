@@ -263,7 +263,7 @@ def _normalise_sql(sql: str) -> str:
     return sql.lower().replace('"', "").replace("`", "")
 
 
-@mark_with_dialects_including("duckdb", pass_dialect=True)
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
     test_helpers, dialect
 ):
@@ -318,7 +318,118 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
             br.drop_materialised_id_pairs_dataframe()
 
 
-@mark_with_dialects_including("duckdb", pass_dialect=True)
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
+def test_two_dataset_link_only_predict_orders_by_min_synthetic_source_dataset(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+    data_first = pd.DataFrame(
+        [
+            {"unique_id": 1, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
+            {"unique_id": 2, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
+        ]
+    )
+    data_second = pd.DataFrame(
+        [
+            {"unique_id": 10, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
+            {"unique_id": 20, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
+        ]
+    )
+
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.surname = r.surname",
+            {
+                "blocking_rule": "l.name = r.name and l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            },
+        ],
+        "comparisons": [cl.ExactMatch("name")],
+    }
+
+    linker = helper.Linker(
+        [data_first, data_second],
+        settings,
+        input_table_aliases=["df_2", "df_1"],
+        **helper.extra_linker_args(),
+    )
+    df_predict = linker.inference.predict().as_pandas_dataframe()
+
+    actual_pairs = set(
+        zip(
+            df_predict.source_dataset_l,
+            df_predict.unique_id_l,
+            df_predict.source_dataset_r,
+            df_predict.unique_id_r,
+        )
+    )
+    expected_pairs = {
+        ("df_1", 10, "df_2", 1),
+        ("df_1", 20, "df_2", 2),
+    }
+
+    assert actual_pairs == expected_pairs
+
+
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
+def test_two_dataset_link_only_exploding_materialised_sql_uses_literal_sds_filters(
+    test_helpers, dialect
+):
+    helper = test_helpers[dialect]
+    data_first = pd.DataFrame(
+        [
+            {"unique_id": 1, "sds": 2, "name": "Alice", "postcode": ["A", "B"]},
+            {"unique_id": 2, "sds": 2, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+    data_second = pd.DataFrame(
+        [
+            {"unique_id": 10, "sds": 1, "name": "Alice", "postcode": ["B"]},
+            {"unique_id": 11, "sds": 1, "name": "Bob", "postcode": ["C"]},
+        ]
+    )
+
+    settings = {
+        "link_type": "link_only",
+        "source_dataset_column_name": "sds",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            }
+        ],
+        "comparisons": [cl.ExactMatch("name")],
+    }
+
+    linker = helper.Linker(
+        [data_first, data_second],
+        settings,
+        input_table_aliases=["df_2", "df_1"],
+        **helper.extra_linker_args(),
+    )
+
+    exploding = materialise_exploded_id_tables(
+        link_type="two_dataset_link_only",
+        blocking_rules=linker._settings_obj._blocking_rules_to_generate_predictions,
+        db_api=linker._db_api,
+        splink_df_dict=linker._input_tables_dict,
+        source_dataset_input_column=linker._settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=linker._settings_obj.column_info_settings.unique_id_input_column,
+    )
+    try:
+        assert len(exploding) == 1
+        sql = _normalise_sql(exploding[0].exploded_id_pair_table.sql_used_to_create)
+        assert "where sds = 1" in sql
+        assert "where sds = 2" in sql
+        assert "select min(" not in sql
+        assert "select max(" not in sql
+    finally:
+        for br in exploding:
+            br.drop_materialised_id_pairs_dataframe()
+
+
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filters(
     test_helpers, dialect
 ):
@@ -362,7 +473,7 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
             br.drop_materialised_id_pairs_dataframe()
 
 
-@mark_with_dialects_including("duckdb", pass_dialect=True)
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialect):
     helper = test_helpers[dialect]
     data_l = pd.DataFrame(
@@ -402,7 +513,7 @@ def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialec
     assert set(df_predict.source_dataset_r) == {"right_ds"}
 
 
-@mark_with_dialects_including("duckdb", pass_dialect=True)
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, dialect):
     helper = test_helpers[dialect]
     data_l = pd.DataFrame(
@@ -436,7 +547,7 @@ def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, di
     assert pairs == {(1, 10), (3, 11)}
 
 
-@mark_with_dialects_including("duckdb", pass_dialect=True)
+@mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
     test_helpers, dialect
 ):
