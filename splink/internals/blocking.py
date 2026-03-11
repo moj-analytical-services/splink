@@ -531,12 +531,6 @@ def materialise_exploded_id_tables(
         return []
     exploded_tables = []
 
-    first_input_df = next(iter(splink_df_dict.values()))
-
-    input_columns_set = set(first_input_df.columns)
-    if source_dataset_input_column:
-        input_columns_set.add(source_dataset_input_column)
-
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline()
 
@@ -549,8 +543,12 @@ def materialise_exploded_id_tables(
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
-
-        other_cols = input_columns_set - set(arrays_to_explode_cols)
+        input_columns = _columns_needed_for_blocking(
+            [*br.preceding_rules, br],
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+        )
+        other_cols = [col for col in input_columns if col not in arrays_to_explode_cols]
 
         if link_type == "two_dataset_link_only":
             if source_dataset_input_column is None:
@@ -561,6 +559,7 @@ def materialise_exploded_id_tables(
             sqls = split_df_concat_with_tf_into_two_tables_sqls(
                 "__splink__df_concat",
                 source_dataset_input_column.name,
+                input_columns=input_columns,
             )
             pipeline.enqueue_list_of_sqls(sqls)
 

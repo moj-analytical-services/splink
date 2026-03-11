@@ -308,6 +308,11 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
         assert "from __splink__df_concat_left_unnested as l" in sql
         assert "inner join __splink__df_concat_right_unnested as r" in sql
         assert "l.source_dataset < r.source_dataset" not in sql
+        assert "select * from __splink__df_concat" not in sql
+        assert (
+            "select source_dataset, unique_id, postcode from __splink__df_concat"
+            in sql
+        )
     finally:
         for br in exploding:
             br.drop_materialised_id_pairs_dataframe()
