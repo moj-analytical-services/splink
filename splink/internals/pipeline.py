@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlglot
@@ -75,11 +76,50 @@ class CTEPipeline:
     def append_input_dataframe(self, df: SplinkDataFrame) -> None:
         self.input_dataframes.append(df)
 
-    def _input_dataframes_as_cte(self):
+    @staticmethod
+    def _replace_templated_identifier_with_physical_name(
+        sql: str, templated_name: str, physical_name: str
+    ) -> str:
+        # Replace only whole SQL identifiers, preserving matching quotes.
+        # This matches cases like:
+        #   from __splink__df_concat_with_tf)
+        #   from __splink__df_concat_with_tf,
+        #   from "__splink__df_concat_with_tf" as l
+        # but not longer identifiers like:
+        #   __splink__df_concat_with_tf_left
+        pattern = (
+            rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}' rf"(?P=quote)(?!\w)"
+        )
+
+        def _replacement(match: re.Match[str]) -> str:
+            quote = match.group("quote")
+            return f"{quote}{physical_name}{quote}"
+
+        return re.sub(pattern, _replacement, sql)
+
+    def _replace_templated_references_with_physical_names(self, sql: str) -> str:
+        replacements = sorted(
+            (
+                (df.templated_name, df.physical_name)
+                for df in self.input_dataframes
+                if not df.physical_and_template_names_equal
+            ),
+            key=lambda pair: len(pair[0]),
+            reverse=True,
+        )
+        for templated_name, physical_name in replacements:
+            sql = self._replace_templated_identifier_with_physical_name(
+                sql, templated_name, physical_name
+            )
+        return sql
+
+    def _resolved_queue(self):
         return [
-            CTE(f"\nselect * from {df.physical_name}", df.templated_name)
-            for df in self.input_dataframes
-            if not df.physical_and_template_names_equal
+            CTE(
+                self._replace_templated_references_with_physical_names(cte.sql),
+                cte.output_table_name,
+            )
+            for cte in self.queue
         ]
 
     def _log_pipeline(self, parts):
@@ -96,7 +136,7 @@ class CTEPipeline:
 
     def ctes_pipeline(self) -> List[CTE]:
         """Common table expressions"""
-        return self._input_dataframes_as_cte() + self.queue
+        return self._resolved_queue()
 
     def generate_cte_pipeline_sql(self) -> str:
         self.spent = True
