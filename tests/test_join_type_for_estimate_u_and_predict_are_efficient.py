@@ -259,9 +259,15 @@ def test_link_only_two():
         "__splink__df_concat_with_tf_left",
         "__splink__df_concat_with_tf_right",
     )
-    assert re.search(
-        r'select "source_dataset", "unique_id", "first_name", "surname" from __splink__df_concat_with_tf(?:_[a-z0-9]+)?',  # noqa: E501
-        all_log_messages,
+    assert (
+        "__splink__df_concat_with_tf_left as ( select 'df_one' as "
+        '"source_dataset", "unique_id", "first_name", "surname" from df_one )'
+        in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_right as ( select 'df_two' as "
+        '"source_dataset", "unique_id", "first_name", "surname" from df_two )'
+        in all_log_messages
     )
     assert (
         "__splink__df_concat_with_tf_left as ( select * from __splink__df_concat_with_tf"  # noqa: E501
@@ -271,6 +277,8 @@ def test_link_only_two():
         "__splink__df_concat_with_tf_right as ( select * from __splink__df_concat_with_tf"  # noqa: E501
         not in all_log_messages
     )
+    assert "select min(" not in all_log_messages
+    assert "select max(" not in all_log_messages
 
 
 def test_link_only_three():
