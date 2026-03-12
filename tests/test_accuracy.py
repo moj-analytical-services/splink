@@ -1,5 +1,5 @@
 import duckdb
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 from splink import SettingsCreator
@@ -12,28 +12,66 @@ from splink.internals.comparison_library import ExactMatch
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict
 
 
-def test_scored_labels_table():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.head(5)
-    labels = [
-        (0, 1, 0.8),
-        (2, 0, 0.9),
-        (0, 3, 0.95),
-        (1, 2, 1.0),
-        (3, 1, 1.0),
-        (3, 2, 1.0),
+def get_id_pairs_from_splink_dataframe(sdf: SplinkDataFrame) -> list[tuple[int, int]]:
+    return [
+        tuple((record["unique_id_l"], record["unique_id_r"]))
+        for record in sdf.as_record_dict()
     ]
 
-    df_labels = pd.DataFrame(
-        labels, columns=["unique_id_l", "unique_id_r", "clerical_match_score"]
+
+def test_scored_labels_table(fake_1000):
+    df = fake_1000.slice(length=5)
+
+    source_dataset_names = {
+        "source_dataset_l": "fake_data_1",
+        "source_dataset_r": "fake_data_1",
+    }
+    df_labels = pa.Table.from_pylist(
+        [
+            {
+                "unique_id_l": 0,
+                "unique_id_r": 1,
+                "clerical_match_score": 0.8,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 2,
+                "unique_id_r": 0,
+                "clerical_match_score": 0.9,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 0,
+                "unique_id_r": 3,
+                "clerical_match_score": 0.95,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 1,
+                "unique_id_r": 2,
+                "clerical_match_score": 1.0,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 3,
+                "unique_id_r": 1,
+                "clerical_match_score": 1.0,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 3,
+                "unique_id_r": 2,
+                "clerical_match_score": 1.0,
+                **source_dataset_names,
+            },
+        ]
     )
-    df_labels["source_dataset_l"] = "fake_data_1"
-    df_labels["source_dataset_r"] = "fake_data_1"
 
     settings = {
         "link_type": "dedupe_only",
@@ -64,40 +102,42 @@ def test_scored_labels_table():
 
     df_scores_labels = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    df_scores_labels = df_scores_labels.as_pandas_dataframe()
-    df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
+    df_scores_labels = df_scores_labels.as_duckdbpyrelation()
+    df_scores_labels = df_scores_labels.order("unique_id_l, unique_id_r")
+    scores_labels_records = df_scores_labels.fetchall()
 
-    assert len(df_scores_labels) == 6
+    assert len(scores_labels_records) == 6
 
     # Check predictions are the same as the labels
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_duckdbpyrelation()
 
-    f1 = df_predict["unique_id_l"] == 1
-    f2 = df_predict["unique_id_r"] == 2
-    predict_weight = df_predict.loc[f1 & f2, "match_weight"]
+    predict_12_mw = df_predict.filter("unique_id_l == 1 AND unique_id_r == 2").select(
+        "match_weight"
+    )
+    labels_12_mw = df_scores_labels.filter(
+        "unique_id_l == 1 AND unique_id_r == 2"
+    ).select("match_weight")
 
-    f1 = df_scores_labels["unique_id_l"] == 1
-    f2 = df_scores_labels["unique_id_r"] == 2
-    labels_weight = df_scores_labels.loc[f1 & f2, "match_weight"]
-
-    assert pytest.approx(predict_weight) == labels_weight
+    assert pytest.approx(predict_12_mw.fetchone()[0]) == labels_12_mw.fetchone()[0]
 
     # Test 0 vs 1 has found_by_blocking_rules false
-    f1 = df_scores_labels["unique_id_l"] == 0
-    f2 = df_scores_labels["unique_id_r"] == 1
-    val = df_scores_labels.loc[f1 & f2, "found_by_blocking_rules"].iloc[0]
+    val = (
+        df_scores_labels.filter("unique_id_l == 0 AND unique_id_r == 1")
+        .select("found_by_blocking_rules")
+        .fetchone()[0]
+    )
     assert bool(val) is False
 
     # Test 1 vs 2 has found_by_blocking_rules false
-    f1 = df_scores_labels["unique_id_l"] == 1
-    f2 = df_scores_labels["unique_id_r"] == 2
-    val = df_scores_labels.loc[f1 & f2, "found_by_blocking_rules"].iloc[0]
+    val = (
+        df_scores_labels.filter("unique_id_l == 1 AND unique_id_r == 2")
+        .select("found_by_blocking_rules")
+        .fetchone()[0]
+    )
     assert bool(val) is True
 
 
-def test_truth_space_table():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_truth_space_table(fake_1000):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -112,7 +152,7 @@ def test_truth_space_table():
     }
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -139,7 +179,7 @@ def test_truth_space_table():
             "clerical_match_score": 0.01,
         },
     ]
-    labels_with_predictions = pd.DataFrame(labels_with_predictions)
+    labels_with_predictions = pa.Table.from_pylist(labels_with_predictions)
 
     linker.table_management.register_table(
         labels_with_predictions, "__splink__labels_with_predictions"
@@ -148,16 +188,13 @@ def test_truth_space_table():
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     pipeline.enqueue_list_of_sqls(sqls)
 
-    df_roc = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    df_roc = df_roc.as_pandas_dataframe()
+    df_roc = linker._db_api.sql_pipeline_to_splink_dataframe(
+        pipeline
+    ).as_duckdbpyrelation()
 
     # Note that our critiera are great than or equal to
     # meaning match prob of 0.40 is treated as a match at threshold 0.40
-    f1 = df_roc["truth_threshold"] > 0.39
-    f2 = df_roc["truth_threshold"] < 0.41
-
-    row = df_roc[f1 & f2].to_dict(orient="records")[0]
+    row = df_roc.filter("truth_threshold > 0.39 AND truth_threshold < 0.41")
 
     # FPR = FP/(FP+TN) = FP/N
     # At 0.4 we have
@@ -165,37 +202,37 @@ def test_truth_space_table():
     # 2,12 is a P at 40% against a clerical N (45%) so is a FP
     # 3,13 is a FP as well
 
-    assert pytest.approx(row["fp_rate"]) == 2 / 3
+    assert pytest.approx(row.select("fp_rate").fetchone()[0]) == 2 / 3
 
     # Precision = TP/TP+FP
-    assert row["precision"] == 0.0
+    assert row.select("precision").fetchone()[0] == 0.0
 
 
-def test_roc_chart_dedupe_only():
+def test_roc_chart_dedupe_only(duckdb_with_fake_1000):
     # No source_dataset required in labels
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(10)
+    fake_1000 = duckdb_with_fake_1000.fake_1000
+    con = duckdb_with_fake_1000.con
+    df = fake_1000.filter("unique_id < 10")
 
-    df["source_dataset"] = "fake_data_1"
-    df["merge"] = 1
-
-    df_l = df[["unique_id", "source_dataset", "cluster", "merge"]].copy()
-    df_r = df_l.copy()
-
-    df_labels = df_l.merge(df_r, on="merge", suffixes=("_l", "_r"))
-    f1 = df_labels["unique_id_l"] < df_labels["unique_id_r"]
-    df_labels = df_labels[f1]
-
-    df_labels["clerical_match_score"] = (
-        df_labels["cluster_l"] == df_labels["cluster_r"]
-    ).astype(float)
-
-    df_labels = df_labels.drop(
-        ["cluster_l", "cluster_r", "source_dataset_l", "source_dataset_r", "merge"],
-        axis=1,
+    df_labels = df.query(
+        "fake_1000_trimmed",
+        """
+        SELECT
+            l.unique_id AS unique_id_l,
+            r.unique_id AS unique_id_r,
+            (l.cluster = r.cluster)::INT AS clerical_match_score
+        FROM
+            fake_1000_trimmed l
+        JOIN
+            fake_1000_trimmed r
+        ON 1=1
+        WHERE unique_id_l < unique_id_r
+        """,
     )
+
     settings_dict = get_settings_dict()
-    db_api = DuckDBAPI(connection=":memory:")
+    db_api = DuckDBAPI(connection=con)
     df_sdf = db_api.register(df)
 
     linker = Linker(df_sdf, settings_dict)
@@ -205,29 +242,35 @@ def test_roc_chart_dedupe_only():
     linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf, output_type="roc")
 
 
-def test_roc_chart_link_and_dedupe():
+def test_roc_chart_link_and_dedupe(duckdb_with_fake_1000):
     # Source dataset required in labels
+    fake_1000 = duckdb_with_fake_1000.fake_1000
+    con = duckdb_with_fake_1000.con
+    df = fake_1000.filter("unique_id < 10").query(
+        "fake_1000_trimmed",
+        "SELECT 'fake_data_1' AS source_dataset, * FROM fake_1000_trimmed",
+    )
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(10)
-
-    df["source_dataset"] = "fake_data_1"
-    df["merge"] = 1
-
-    df_l = df[["unique_id", "source_dataset", "cluster", "merge"]].copy()
-    df_r = df_l.copy()
-
-    df_labels = df_l.merge(df_r, on="merge", suffixes=("_l", "_r"))
-    f1 = df_labels["unique_id_l"] < df_labels["unique_id_r"]
-    df_labels = df_labels[f1]
-
-    df_labels["clerical_match_score"] = (
-        df_labels["cluster_l"] == df_labels["cluster_r"]
-    ).astype(float)
-
-    df_labels = df_labels.drop(["cluster_l", "cluster_r", "merge"], axis=1)
+    df_labels = df.query(
+        "fake_1000_trimmed_with_source",
+        """
+        SELECT
+            l.source_dataset AS source_dataset_l,
+            r.source_dataset AS source_dataset_r,
+            l.unique_id AS unique_id_l,
+            r.unique_id AS unique_id_r,
+            (l.cluster = r.cluster)::INT AS clerical_match_score
+        FROM
+            fake_1000_trimmed_with_source l
+        JOIN
+            fake_1000_trimmed_with_source r
+        ON 1=1
+        WHERE unique_id_l < unique_id_r
+        """,
+    )
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
-    db_api = DuckDBAPI(connection=":memory:")
+    db_api = DuckDBAPI(connection=con)
     df_sdf = db_api.register(df, source_dataset_name="fake_data_1")
 
     linker = Linker(df_sdf, settings_dict)
@@ -245,20 +288,40 @@ def test_prediction_errors_from_labels_table():
         {"unique_id": 4, "first_name": "david", "cluster": 2},
         {"unique_id": 5, "first_name": "david", "cluster": 3},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
-    labels = [
-        (1, 2, 0.8),
-        (1, 3, 0.8),
-        (2, 3, 0.8),
-        (4, 5, 0.1),
-    ]
-
-    df_labels = pd.DataFrame(
-        labels, columns=["unique_id_l", "unique_id_r", "clerical_match_score"]
+    source_dataset_names = {
+        "source_dataset_l": "fake_data_1",
+        "source_dataset_r": "fake_data_1",
+    }
+    df_labels = pa.Table.from_pylist(
+        [
+            {
+                "unique_id_l": 0,
+                "unique_id_r": 1,
+                "clerical_match_score": 0.8,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 1,
+                "unique_id_r": 3,
+                "clerical_match_score": 0.8,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 2,
+                "unique_id_r": 3,
+                "clerical_match_score": 0.8,
+                **source_dataset_names,
+            },
+            {
+                "unique_id_l": 4,
+                "unique_id_r": 5,
+                "clerical_match_score": 0.1,
+                **source_dataset_names,
+            },
+        ]
     )
-    df_labels["source_dataset_l"] = "fake_data_1"
-    df_labels["source_dataset_r"] = "fake_data_1"
 
     sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
     settings = {
@@ -300,12 +363,8 @@ def test_prediction_errors_from_labels_table():
     pipeline = CTEPipeline()
     compute_df_concat_with_tf(linker, pipeline)
 
-    df_res = linker.evaluation.prediction_errors_from_labels_table(
-        "labels"
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    df_res = linker.evaluation.prediction_errors_from_labels_table("labels")
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) in records  # fn
     assert (2, 3) in records  # fn
@@ -324,10 +383,8 @@ def test_prediction_errors_from_labels_table():
 
     df_res = linker.evaluation.prediction_errors_from_labels_table(
         "labels", include_false_negatives=False
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    )
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) not in records  # fn
     assert (2, 3) not in records  # fn
@@ -345,10 +402,8 @@ def test_prediction_errors_from_labels_table():
 
     df_res = linker.evaluation.prediction_errors_from_labels_table(
         "labels", include_false_positives=False
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    )
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) in records  # fn
     assert (2, 3) in records  # fn
@@ -364,7 +419,7 @@ def test_prediction_errors_from_labels_column():
         {"unique_id": 4, "first_name": "david", "cluster": 2},
         {"unique_id": 5, "first_name": "david", "cluster": 3},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
     settings = {
@@ -403,12 +458,8 @@ def test_prediction_errors_from_labels_column():
 
     linker = Linker(df_sdf, settings)
 
-    df_res = linker.evaluation.prediction_errors_from_labels_column(
-        "cluster"
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    df_res = linker.evaluation.prediction_errors_from_labels_column("cluster")
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) in records  # FN
     assert (2, 3) in records  # FN
@@ -423,10 +474,8 @@ def test_prediction_errors_from_labels_column():
 
     df_res = linker.evaluation.prediction_errors_from_labels_column(
         "cluster", include_false_positives=False
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    )
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) in records  # FN
     assert (2, 3) in records  # FN
@@ -441,10 +490,8 @@ def test_prediction_errors_from_labels_column():
 
     df_res = linker.evaluation.prediction_errors_from_labels_column(
         "cluster", include_false_negatives=False
-    ).as_pandas_dataframe()
-    df_res = df_res[["unique_id_l", "unique_id_r"]]
-    records = list(df_res.to_records(index=False))
-    records = [tuple(p) for p in records]
+    )
+    records = get_id_pairs_from_splink_dataframe(df_res)
 
     assert (1, 3) not in records  # FN
     assert (2, 3) not in records  # FN
@@ -463,7 +510,7 @@ def test_truth_space_table_from_labels_column_dedupe_only():
         {"unique_id": 6, "first_name": "mary", "cluster": 3},
     ]
 
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -534,8 +581,8 @@ def test_truth_space_table_from_labels_column_link_only():
         {"unique_id": 3, "first_name": "eve", "ground_truth": 3},
     ]
 
-    df_left = pd.DataFrame(data_left)
-    df_right = pd.DataFrame(data_right)
+    df_left = pa.Table.from_pylist(data_left)
+    df_right = pa.Table.from_pylist(data_right)
 
     settings = {
         "link_type": "link_only",
@@ -594,23 +641,40 @@ def test_truth_space_table_from_labels_column_link_only():
     assert truth_dict["fn"] == 2
 
 
-def compute_tp_tn_fp_fn(predictions_pd_df, threshold):
+def compute_tp_tn_fp_fn(predictions_sdf: SplinkDataFrame, threshold: float):
+    predictions_dict = predictions_sdf.as_dict()
     # Note that in Splink, our critiera are great than or equal to
     # meaning match prob of 0.40 is treated as a match at threshold 0.40
-    predicted_match = predictions_pd_df["match_weight"] >= threshold
-    actual_match = predictions_pd_df["cluster_l"] == predictions_pd_df["cluster_r"]
+    predicted_matches = [mw >= threshold for mw in predictions_dict["match_weight"]]
+    actual_matches = [
+        cl == cr
+        for cl, cr in zip(predictions_dict["cluster_l"], predictions_dict["cluster_r"])
+    ]
 
-    TP = (predicted_match & actual_match).sum()
-    TN = (~predicted_match & ~actual_match).sum()
-    FP = (predicted_match & ~actual_match).sum()
-    FN = (~predicted_match & actual_match).sum()
+    TP = sum(
+        predicted_match and actual_match
+        for predicted_match, actual_match in zip(predicted_matches, actual_matches)
+    )
+    TN = sum(
+        not predicted_match and not actual_match
+        for predicted_match, actual_match in zip(predicted_matches, actual_matches)
+    )
+    FP = sum(
+        predicted_match and not actual_match
+        for predicted_match, actual_match in zip(predicted_matches, actual_matches)
+    )
+    FN = sum(
+        not predicted_match and actual_match
+        for predicted_match, actual_match in zip(predicted_matches, actual_matches)
+    )
 
     return TP, TN, FP, FN
 
 
-def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.head(50)
+def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked(
+    fake_1000,
+):
+    df = fake_1000.slice(length=50)
 
     settings = SettingsCreator(
         link_type="dedupe_only",
@@ -647,7 +711,7 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
         match_key
     from {df_predictions_raw.physical_name}
     """
-    df_predictions = linker_for_predictions.misc.query_sql(sql)
+    df_predictions = linker_for_predictions.misc.query_sql(sql, output_type="splink_df")
 
     settings = SettingsCreator(
         link_type="dedupe_only",
@@ -663,15 +727,15 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
     db_api_answer = DuckDBAPI()
     df_sdf_answer = db_api_answer.register(df)
     linker_for_splink_answer = Linker(df_sdf_answer, settings)
-    df_from_splink = (
+    splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_column(
             "cluster",
             output_type="table",
             positives_not_captured_by_blocking_rules_scored_as_zero=False,
-        ).as_pandas_dataframe()
+        ).as_record_dict()
     )
 
-    for _, splink_row in df_from_splink.iterrows():
+    for splink_row in splink_rows:
         threshold = splink_row["truth_threshold"]
         # Compute stats using slow pandas methodology
         TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)
@@ -681,12 +745,11 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked():
         assert FN == splink_row["fn"], f"FN: {FN} != {splink_row['fn']}"
 
 
-def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.head(100)
+def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked(fake_1000):
+    df = fake_1000.slice(length=100)
 
-    df_1 = df[df["unique_id"] % 2 == 0]
-    df_2 = df[df["unique_id"] % 2 == 1]
+    df_1 = df.filter(pa.array([True, False] * 50))
+    df_2 = df.filter(pa.array([False, True] * 50))
 
     # Get a dataframe of predictions vs labels from splink
     # Note we need to add the 1-1 blocking rule
@@ -722,7 +785,7 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
         match_key
     from {df_predictions_raw.physical_name}
     """
-    df_predictions = linker_for_predictions.misc.query_sql(sql)
+    df_predictions = linker_for_predictions.misc.query_sql(sql, output_type="splink_df")
 
     settings = SettingsCreator(
         link_type="link_only",
@@ -740,15 +803,15 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
     df_2_sdf_answer = db_api_answer.register(df_2)
     linker_for_splink_answer = Linker([df_1_sdf_answer, df_2_sdf_answer], settings)
 
-    df_from_splink = (
+    splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_column(
             "cluster",
             output_type="table",
             positives_not_captured_by_blocking_rules_scored_as_zero=True,
-        ).as_pandas_dataframe()
+        ).as_record_dict()
     )
 
-    for _, splink_row in df_from_splink.iterrows():
+    for splink_row in splink_rows:
         threshold = splink_row["truth_threshold"]
         # Compute stats using slow pandas methodology
         TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)
@@ -759,11 +822,8 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked():
         assert FN == splink_row["fn"], f"FN: {FN} != {splink_row['fn']}"
 
 
-def test_truth_space_table_from_table_vs_pandas_cartesian():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df
-
-    df_first_50 = df.head(50).copy()
+def test_truth_space_table_from_table_vs_pandas_cartesian(fake_1000):
+    df_first_50 = fake_1000.slice(length=50)
     sql = """
     SELECT
         l.unique_id as unique_id_l,
@@ -773,7 +833,8 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
     inner join df_first_50 as r
     on l.unique_id < r.unique_id
     """
-    labels_table = duckdb.sql(sql).df()
+    con = duckdb.connect()
+    labels_table = con.sql(sql)
 
     # Predictions for this lael
     settings = SettingsCreator(
@@ -787,24 +848,24 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
         additional_columns_to_retain=["cluster"],
     )
 
-    db_api_pred = DuckDBAPI()
+    db_api_pred = DuckDBAPI(con)
     df_first_50_sdf = db_api_pred.register(df_first_50)
     linker_for_predictions = Linker(df_first_50_sdf, settings)
-    df_predictions = linker_for_predictions.inference.predict().as_pandas_dataframe()
+    df_predictions = linker_for_predictions.inference.predict()
 
-    db_api_answer = DuckDBAPI()
-    df_sdf_answer = db_api_answer.register(df)
+    db_api_answer = DuckDBAPI(con)
+    df_sdf_answer = db_api_answer.register(fake_1000)
     linker_for_splink_answer = Linker(df_sdf_answer, settings)
     labels_input = linker_for_splink_answer.table_management.register_labels_table(
         labels_table
     )
-    df_from_splink = (
+    splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(
             labels_input, output_type="table"
-        ).as_pandas_dataframe()
+        ).as_record_dict()
     )
 
-    for _, splink_row in df_from_splink.iterrows():
+    for splink_row in splink_rows:
         threshold = splink_row["truth_threshold"]
         # Compute stats using slow pandas methodology
         TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)
@@ -814,16 +875,14 @@ def test_truth_space_table_from_table_vs_pandas_cartesian():
         assert FN == splink_row["fn"], f"FN: {FN} != {splink_row['fn']}"
 
 
-def test_truth_space_table_from_table_vs_pandas_with_blocking():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+def test_truth_space_table_from_table_vs_pandas_with_blocking(fake_1000):
+    df_1 = fake_1000.filter([True, False] * 500)
+    df_2 = fake_1000.filter([False, True] * 500)
+    df_1 = df_1.append_column("source_dataset", pa.array(["left"] * df_1.num_rows))
+    df_2 = df_2.append_column("source_dataset", pa.array(["right"] * df_2.num_rows))
 
-    df_1 = df[df["unique_id"] % 2 == 0].copy()
-    df_1["source_dataset"] = "left"
-    df_2 = df[df["unique_id"] % 2 == 1].copy()
-    df_2["source_dataset"] = "right"
-
-    df_1_first_50 = df_1.head(50)
-    df_2_first_50 = df_2.head(50)
+    df_1_first_50 = df_1.slice(length=50)
+    df_2_first_50 = df_2.slice(length=50)
 
     sql = """
     SELECT
@@ -836,7 +895,8 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
     inner join df_2_first_50 as r
     on concat(l.source_dataset,l.unique_id) < concat(r.source_dataset,r.unique_id)
     """
-    labels_table = duckdb.sql(sql).df()
+    con = duckdb.connect()
+    labels_table = con.sql(sql)
 
     # Predictions for this lael
     settings = SettingsCreator(
@@ -850,12 +910,11 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
         additional_columns_to_retain=["cluster"],
     )
 
-    db_api_pred = DuckDBAPI()
+    db_api_pred = DuckDBAPI(con)
     df_1_first_50_sdf = db_api_pred.register(df_1_first_50)
     df_2_first_50_sdf = db_api_pred.register(df_2_first_50)
     linker_for_predictions = Linker([df_1_first_50_sdf, df_2_first_50_sdf], settings)
     df_predictions_raw = linker_for_predictions.inference.predict()
-    df_predictions_raw.as_pandas_dataframe()
     sql = f"""
     select
         case when match_key = 1 then -999.0 else match_weight end as match_weight,
@@ -868,7 +927,7 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
         cluster_r,
     from {df_predictions_raw.physical_name}
     """
-    df_predictions = linker_for_predictions.misc.query_sql(sql)
+    df_predictions = linker_for_predictions.misc.query_sql(sql, output_type="splink_df")
 
     settings = SettingsCreator(
         link_type="link_only",
@@ -881,20 +940,20 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking():
         additional_columns_to_retain=["cluster"],
     )
 
-    db_api_answer = DuckDBAPI()
+    db_api_answer = DuckDBAPI(con)
     df_1_sdf_answer = db_api_answer.register(df_1)
     df_2_sdf_answer = db_api_answer.register(df_2)
     linker_for_splink_answer = Linker([df_1_sdf_answer, df_2_sdf_answer], settings)
     labels_input = linker_for_splink_answer.table_management.register_labels_table(
         labels_table
     )
-    df_from_splink = (
+    splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(
             labels_input, output_type="table"
-        ).as_pandas_dataframe()
+        ).as_record_dict()
     )
 
-    for _, splink_row in df_from_splink.iterrows():
+    for splink_row in splink_rows:
         threshold = splink_row["truth_threshold"]
         # Compute stats using slow pandas methodology
         TP, TN, FP, FN = compute_tp_tn_fp_fn(df_predictions, threshold)

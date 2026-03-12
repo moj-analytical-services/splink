@@ -1,5 +1,5 @@
 import duckdb
-import pandas as pd
+import pyarrow as pa
 
 from splink.internals.comparison_library import ExactMatch, LevenshteinAtThresholds
 from splink.internals.duckdb.database_api import DuckDBAPI
@@ -18,7 +18,7 @@ def test_cache_tracking_works():
         {"unique_id": 2, "name": "Robin"},
         {"unique_id": 3, "name": "Robyn"},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -73,14 +73,14 @@ def test_cache_used_when_registering_nodes_table():
         {"unique_id": 2, "name": "Robin"},
         {"unique_id": 3, "name": "Robyn"},
     ]
-    df = pd.DataFrame(df)
+    df = pa.Table.from_pylist(df)
 
     splink__df_concat_with_tf = [
         {"unique_id": 1, "name": "Amanda", "tf_name": 0.3},
         {"unique_id": 2, "name": "Robin", "tf_name": 0.2},
         {"unique_id": 3, "name": "Robyn", "tf_name": 0.5},
     ]
-    splink__df_concat_with_tf = pd.DataFrame(splink__df_concat_with_tf)
+    splink__df_concat_with_tf = pa.Table.from_pylist(splink__df_concat_with_tf)
 
     settings = {
         "link_type": "dedupe_only",
@@ -117,16 +117,16 @@ def test_cache_used_when_registering_tf_tables():
         {"unique_id": 3, "first_name": "Robyn", "surname": "Jones"},
     ]
 
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
-    surname_tf_table = pd.DataFrame(
+    surname_tf_table = pa.Table.from_pylist(
         [
             {"surname": "Smith", "tf_surname": 0.3333333333333333},
             {"surname": "Jones", "tf_surname": 0.6666666666666666},
         ]
     )
 
-    first_name_tf_table = pd.DataFrame(
+    first_name_tf_table = pa.Table.from_pylist(
         [
             {"first_name": "Amanda", "tf_first_name": 0.1},
             {"first_name": "Robin", "tf_first_name": 0.5},
@@ -189,7 +189,7 @@ def test_cache_invalidation():
         {"unique_id": 2, "name": "Robin"},
         {"unique_id": 3, "name": "Robyn"},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -230,7 +230,7 @@ def test_cache_invalidation():
 
 def test_table_deletions():
     con = duckdb.connect()
-    df = pd.DataFrame(  # noqa: F841
+    df = pa.Table.from_pylist(  # noqa: F841
         [
             {"unique_id": 1, "name": "Amanda"},
             {"unique_id": 2, "name": "Robin"},
@@ -271,7 +271,7 @@ def test_table_deletions_with_preregistered():
         {"unique_id": 2, "name": "Robin"},
         {"unique_id": 3, "name": "Robyn"},
     ]
-    df = pd.DataFrame(df)
+    df = pa.Table.from_pylist(df)
     con.execute("CREATE TABLE my_data_table AS SELECT * FROM df")
 
     splink__df_concat_with_tf = [
@@ -279,7 +279,7 @@ def test_table_deletions_with_preregistered():
         {"unique_id": 2, "name": "Robin", "tf_name": 0.2},
         {"unique_id": 3, "name": "Robyn", "tf_name": 0.5},
     ]
-    splink__df_concat_with_tf = pd.DataFrame(splink__df_concat_with_tf)
+    splink__df_concat_with_tf = pa.Table.from_pylist(splink__df_concat_with_tf)
     con.execute(
         """
         CREATE TABLE my_nodes_with_tf_table
@@ -325,7 +325,7 @@ def test_single_deletion():
         {"unique_id": 2, "name": "Robin"},
         {"unique_id": 3, "name": "Robyn"},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     settings = {
         "link_type": "dedupe_only",
