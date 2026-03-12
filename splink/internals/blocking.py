@@ -20,6 +20,7 @@ from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import (
+    select_two_dataset_link_only_input_tables_sqls,
     split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
 )
@@ -484,24 +485,17 @@ def materialise_exploded_id_tables(
         return []
     exploded_tables = []
 
-    first_input_df = next(iter(splink_df_dict.values()))
-
-    input_columns_set = set(first_input_df.columns)
-    if source_dataset_input_column:
-        input_columns_set.add(source_dataset_input_column)
-
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline()
-
-        sql = vertically_concatenate_sql(
-            splink_df_dict, source_dataset_input_column=source_dataset_input_column
-        )
-        pipeline.enqueue_sql(sql, "__splink__df_concat")
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
-
-        other_cols = input_columns_set - set(arrays_to_explode_cols)
+        input_columns = _columns_needed_for_blocking(
+            [*br.preceding_rules, br],
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+        )
+        other_cols = [col for col in input_columns if col not in arrays_to_explode_cols]
 
         if link_type == "two_dataset_link_only":
             if source_dataset_input_column is None:
@@ -509,29 +503,34 @@ def materialise_exploded_id_tables(
                     "source_dataset_input_column is required for two_dataset_link_only"
                 )
 
-            sqls = split_df_concat_with_tf_into_two_tables_sqls(
-                "__splink__df_concat",
-                source_dataset_input_column.name,
+            left_sql, right_sql = select_two_dataset_link_only_input_tables_sqls(
+                splink_df_dict,
+                input_columns=input_columns,
+                source_dataset_input_column=source_dataset_input_column,
             )
-            pipeline.enqueue_list_of_sqls(sqls)
 
             input_tablename_l = "__splink__df_concat_left_unnested"
             input_tablename_r = "__splink__df_concat_right_unnested"
 
             expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
-                "__splink__df_concat_left",
+                f"({left_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
             pipeline.enqueue_sql(expl_sql_l, input_tablename_l)
 
             expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
-                "__splink__df_concat_right",
+                f"({right_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
             pipeline.enqueue_sql(expl_sql_r, input_tablename_r)
         else:
+            sql = vertically_concatenate_sql(
+                splink_df_dict, source_dataset_input_column=source_dataset_input_column
+            )
+            pipeline.enqueue_sql(sql, "__splink__df_concat")
+
             input_tablename_l = "__splink__df_concat_unnested"
             input_tablename_r = "__splink__df_concat_unnested"
 
@@ -615,12 +614,13 @@ def compute_blocked_pairs_from_concat_with_tf(
             source_dataset_input_column=source_dataset_input_column,
             unique_id_input_column=unique_id_input_column,
         )
-        sqls = split_df_concat_with_tf_into_two_tables_sqls(
-            df_concat_with_tf_table_name,
-            source_dataset_input_column.name,
+        left_sql, right_sql = select_two_dataset_link_only_input_tables_sqls(
+            splink_df_dict,
             input_columns=input_columns,
+            source_dataset_input_column=source_dataset_input_column,
         )
-        pipeline.enqueue_list_of_sqls(sqls)
+        pipeline.enqueue_sql(left_sql, f"{df_concat_with_tf_table_name}_left")
+        pipeline.enqueue_sql(right_sql, f"{df_concat_with_tf_table_name}_right")
 
         blocking_input_tablename_l = f"{df_concat_with_tf_table_name}_left"
         blocking_input_tablename_r = f"{df_concat_with_tf_table_name}_right"
