@@ -96,6 +96,10 @@ testing = [
     { "include-group" = "spark-4" },
 ]
 typechecking = ["mypy==1.9.0"]
+# we will migrate to ty, but won't happen all at once, so run in parallel
+typechecking-dev = [
+    "ty>=0.0.21",
+]
 
 [tool.uv]
 default-groups = [

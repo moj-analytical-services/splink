@@ -13,5 +13,9 @@ format-check:
 typecheck:
 	uv run mypy splink
 
+# before we switch over we don't let this count as a proper 'fail'
+typecheck-dev:
+	uv run ty check --exit-zero splink
+
 check: format-check lint typecheck
 
