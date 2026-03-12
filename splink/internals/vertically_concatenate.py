@@ -198,7 +198,10 @@ def concat_table_column_names(linker: Linker) -> list[str]:
 
 
 def split_df_concat_with_tf_into_two_tables_sqls(
-    input_tablename: str, source_dataset_col: str, sample_switch: bool = False
+    input_tablename: str,
+    source_dataset_col: str,
+    sample_switch: bool = False,
+    input_columns: list[InputColumn] | None = None,
 ) -> list[dict[str, str]]:
     # For the two dataset link only, rather than a self join of
     # __splink__df_concat_with_tf, it's much faster to split the input
@@ -208,9 +211,12 @@ def split_df_concat_with_tf_into_two_tables_sqls(
 
     sqls = []
     sample_text = "_sample" if sample_switch else ""
+    select_cols = (
+        "*" if input_columns is None else ", ".join(col.name for col in input_columns)
+    )
 
     sql = f"""
-        select * from {input_tablename}{sample_text}
+        select {select_cols} from {input_tablename}{sample_text}
         where {source_dataset_col} =
             (select min({source_dataset_col}) from {input_tablename}{sample_text})
         """
@@ -223,7 +229,7 @@ def split_df_concat_with_tf_into_two_tables_sqls(
     )
 
     sql = f"""
-        select * from {input_tablename}{sample_text}
+        select {select_cols} from {input_tablename}{sample_text}
         where {source_dataset_col} =
             (select max({source_dataset_col}) from {input_tablename}{sample_text})
         """

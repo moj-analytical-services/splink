@@ -253,6 +253,18 @@ def test_link_only_two():
         "from __splink__df_concat_with_tf_left as l inner join __splink__df_concat_with_tf_right as r"  # noqa: E501
         in all_log_messages
     )
+    assert (
+        'select "source_dataset", "unique_id", "first_name", "surname" from __splink__df_concat_with_tf'  # noqa: E501
+        in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_left as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        not in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_right as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        not in all_log_messages
+    )
 
 
 def test_link_only_three():
