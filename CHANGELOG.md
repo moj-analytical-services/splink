@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Internal probabilistic calculations now use Match Weights (log-odds) instead of Bayes Factors to improve numerical stability [#2851](https://github.com/moj-analytical-services/splink/pull/2851)
+- `linker.misc.query_sql()` now outputs `SplinkDataFrame` as default, rather than a `pandas.DataFrame` [#2970](https://github.com/moj-analytical-services/splink/pull/2970)
 
 ### Deprecated
 
