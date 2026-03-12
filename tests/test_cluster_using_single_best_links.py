@@ -455,5 +455,5 @@ def test_single_best_links_one_to_one(test_helpers, dialect):
         """
     )
 
-    count = result["count"][0]
+    count = result.as_dict()["count"][0]
     assert count == 0
