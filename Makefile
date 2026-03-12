@@ -13,5 +13,8 @@ format-check:
 typecheck:
 	uv run mypy splink
 
+typecheck-dev:
+	uv run ty check --exit-zero splink
+
 check: format-check lint typecheck
 
