@@ -1,4 +1,4 @@
-name: mypy
+name: typechecking
 on:
   pull_request:
     paths:
@@ -9,8 +9,8 @@ on:
 permissions: {}
 
 jobs:
-  mypy:
-    name: mypy
+  typecheck:
+    name: typecheck
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,3 +41,7 @@ jobs:
       - name: Run mypy
         id: mypy
         run: make typecheck
+
+      - name: Run ty, but don't fail on error
+        id: ty
+        run: make typecheck-dev
