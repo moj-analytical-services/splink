@@ -103,7 +103,7 @@ def test_damerau_levenshtein(spark_api):
     decimals = 4
 
     # Test damerau-levenshtein outputs are correct
-    dl_w_out = tuple(udf_out.dl_test.round(decimals=decimals))
+    dl_w_out = tuple(map(lambda x: round(x, decimals), udf_out.as_dict()["dl_test"]))
     dl_expected = (2.0, 4.0, 0.0, 5.0, 2.0, 4.0)
 
     assert dl_w_out == dl_expected
@@ -186,7 +186,9 @@ def test_jaro(spark_api):
     decimals = 4
 
     # Test jaro-winkler outputs are correct
-    jaro_w_out = tuple(udf_out.jaro_test.round(decimals=decimals))
+    jaro_w_out = tuple(
+        map(lambda x: round(x, decimals), udf_out.as_dict()["jaro_test"])
+    )
     jaro_expected = (0.7833, 0.0, 1.0, 0.0, 0.7833, 0.0)
 
     assert jaro_w_out == jaro_expected
@@ -264,7 +266,9 @@ def test_jaro_winkler(spark_api):
     decimals = 4
 
     # Test jaro-winkler outputs are correct
-    jaro_w_out = tuple(udf_out.jaro_winkler_test.round(decimals=decimals))
+    jaro_w_out = tuple(
+        map(lambda x: round(x, decimals), udf_out.as_dict()["jaro_winkler_test"])
+    )
     jaro_expected = (0.8483, 0.0, 1.0, 0.0, 0.8483, 0.0)
 
     assert jaro_w_out == jaro_expected

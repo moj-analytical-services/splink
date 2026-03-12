@@ -51,7 +51,7 @@ class LinkerMisc:
                 json.dump(model_dict, f, indent=4)
         return model_dict
 
-    def query_sql(self, sql, output_type="pandas"):
+    def query_sql(self, sql, output_type="splink_df"):
         """
         Run a SQL query against your backend database and return
         the resulting output.
