@@ -81,9 +81,14 @@ class CTEPipeline:
         sql: str, templated_name: str, physical_name: str
     ) -> str:
         # Replace only whole SQL identifiers, preserving matching quotes.
+        # This matches cases like:
+        #   from __splink__df_concat_with_tf)
+        #   from __splink__df_concat_with_tf,
+        #   from "__splink__df_concat_with_tf" as l
+        # but not longer identifiers like:
+        #   __splink__df_concat_with_tf_left
         pattern = (
-            rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}'
-            rf'(?P=quote)(?!\w)'
+            rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}' rf"(?P=quote)(?!\w)"
         )
 
         def _replacement(match: re.Match[str]) -> str:
