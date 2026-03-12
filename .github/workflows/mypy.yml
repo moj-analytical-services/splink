@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies
         id: install_dependencies
-        run: uv sync --python 3.12
+        run: uv sync --python 3.12 --group typechecking-dev
 
       - name: Run mypy
         id: mypy
