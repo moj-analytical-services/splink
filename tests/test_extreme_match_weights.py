@@ -1,6 +1,6 @@
 import math
 
-import pandas as pd
+import pyarrow as pa
 
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator
@@ -27,7 +27,7 @@ def test_extreme_match_weights_high_similarity():
         {"id": 1, "c1": "a", "c2": "a", "c3": "a", "c4": "a", "c5": "a"},
         {"id": 2, "c1": "a", "c2": "a", "c3": "a", "c4": "a", "c5": "a"},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     # Each exact match level has BF = m/u = 0.999 / 1e-300 ≈ 1e92
     # 5 columns * 92 = 460 > 308, so would overflow without clamping
@@ -49,17 +49,17 @@ def test_extreme_match_weights_high_similarity():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(df)
     linker = Linker(df_sdf, settings)
-    predictions = linker.inference.predict().as_pandas_dataframe()
+    predictions = linker.inference.predict().as_record_dict()
 
     # Should get exactly one prediction (comparing record 1 with record 2)
     assert len(predictions) == 1
 
     # Match probability should be very high (close to 1.0)
-    match_prob = predictions["match_probability"].iloc[0]
+    match_prob = predictions[0]["match_probability"]
     assert match_prob == 1.0, f"Expected very high match probability, got {match_prob}"
 
     # Match weight should be finite (not inf or nan)
-    match_weight = predictions["match_weight"].iloc[0]
+    match_weight = predictions[0]["match_weight"]
     assert math.isfinite(match_weight), f"Match weight is not finite: {match_weight}"
 
 
@@ -68,7 +68,7 @@ def test_extreme_match_weights_low_similarity():
         {"id": 1, "c1": "a", "c2": "a", "c3": "a", "c4": "a", "c5": "a"},
         {"id": 2, "c1": "b", "c2": "b", "c3": "b", "c4": "b", "c5": "b"},
     ]
-    df = pd.DataFrame(data)
+    df = pa.Table.from_pylist(data)
 
     comparisons = _create_extreme_comparisons(
         m_match=0.999,
@@ -88,11 +88,11 @@ def test_extreme_match_weights_low_similarity():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(df)
     linker = Linker(df_sdf, settings)
-    predictions = linker.inference.predict().as_pandas_dataframe()
+    predictions = linker.inference.predict().as_record_dict()
 
-    match_prob = predictions["match_probability"].iloc[0]
+    match_prob = predictions[0]["match_probability"]
     assert match_prob < 1e-300, f"Expected very low match probability, got {match_prob}"
 
     # Match weight should be finite (not -inf or nan)
-    match_weight = predictions["match_weight"].iloc[0]
+    match_weight = predictions[0]["match_weight"]
     assert math.isfinite(match_weight), f"Match weight is not finite: {match_weight}"
