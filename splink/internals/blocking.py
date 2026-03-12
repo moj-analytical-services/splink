@@ -21,7 +21,6 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import (
     select_two_dataset_link_only_input_tables_sqls,
-    split_df_concat_with_tf_into_two_tables_sqls,
     vertically_concatenate_sql,
 )
 
