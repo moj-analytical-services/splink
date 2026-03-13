@@ -687,3 +687,47 @@ class AthenaDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "least"
+
+
+class SnowflakeDialect(SplinkDialect):
+    _dialect_name_for_factory = "snowflake"
+
+    @property
+    def sql_dialect_str(self):
+        return "snowflake"
+
+    @property
+    def levenshtein_function_name(self) -> str:
+        return "EDITDISTANCE"
+
+    @property
+    def jaro_winkler_function_name(self) -> str:
+        return "JAROWINKLER_SIMILARITY"
+
+    @property
+    def cosine_similarity_function_name(self) -> str:
+        return "VECTOR_COSINE_SIMILARITY"
+
+    @property
+    def array_max_function_name(self) -> str:
+        return "ARRAY_MAX"
+
+    @property
+    def array_min_function_name(self) -> str:
+        return "ARRAY_MIN"
+
+    @property
+    def array_transform_function_name(self) -> str:
+        return "TRANSFORM"
+
+    @property
+    def array_first_index(self) -> int:
+        return 0
+
+    @property
+    def greatest_function_name(self) -> str:
+        return "GREATEST"
+
+    @property
+    def least_function_name(self) -> str:
+        return "LEAST"
