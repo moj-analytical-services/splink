@@ -332,10 +332,13 @@ def estimate_u_values(
         proportion = sample_size / total_nodes
 
     if settings_obj._link_type == "link_only":
-        sql = """
-        select count(source_dataset) as count
+        source_dataset_col = (
+            settings_obj.column_info_settings.source_dataset_input_column
+        )
+        sql = f"""
+        select count({source_dataset_col.name}) as count
         from __splink__df_concat
-        group by source_dataset
+        group by {source_dataset_col.name}
         """
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         counts_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
