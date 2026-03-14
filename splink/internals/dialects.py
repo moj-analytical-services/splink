@@ -693,7 +693,7 @@ class SnowflakeDialect(SplinkDialect):
     _dialect_name_for_factory = "snowflake"
 
     @property
-    def sql_dialect_str(self):
+    def sql_dialect_str(self) -> str:
         return "snowflake"
 
     @property
@@ -731,3 +731,39 @@ class SnowflakeDialect(SplinkDialect):
     @property
     def least_function_name(self) -> str:
         return "LEAST"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f"SAMPLE BERNOULLI({percent}) REPEATABLE({seed})"
+        else:
+            return f"SAMPLE BERNOULLI({percent})"
+
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
+        return f"REGEXP_SUBSTR({name}, '{pattern}', {capture_group})"
+
+    @property
+    def default_timestamp_format(self):
+        return "YYYY-MM-DD HH24:MI:SS.FF3"
+
+    @property
+    def default_date_format(self):
+        return "YYYY-MM-DD"
+
+    def try_parse_date(self, name: str, date_format: str | None = None) -> str:
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""TRY_TO_DATE({name}, '{date_format}')"""
+
+    def try_parse_timestamp(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""TRY_TO_TIMESTAMP({name}, '{timestamp_format}')"""
