@@ -2,10 +2,9 @@ import logging
 from typing import Any, Union
 
 import pandas as pd
-
+import snowflake.connector.pandas_tools as sf_pd_tools
 from snowflake.connector.connection import SnowflakeConnection
 from snowflake.connector.cursor import SnowflakeCursor
-import snowflake.connector.pandas_tools as sf_pd_tools
 
 from splink.internals.database_api import DatabaseAPI
 from splink.internals.dialects import SnowflakeDialect
@@ -30,9 +29,9 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
         assert result is not None, "cursor.execute() returned None"
         return result
 
-    def _table_registration(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def _table_registration(  # type: ignore -- Ignore more concrete types defined
         self, input: Union[dict, list, pd.DataFrame], table_name: str
-    ) -> None:  # ty:ignore[invalid-method-override]
+    ) -> None:
         # Try and use same approach as for postgres where we
         # process everything as snowflake DataFrames
         if isinstance(input, dict):
