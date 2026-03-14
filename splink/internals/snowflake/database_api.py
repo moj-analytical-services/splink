@@ -12,7 +12,7 @@ from .dataframe import SnowflakeDataframe
 logger = logging.getLogger(__name__)
 
 
-class SnowflakeAPI(DatabaseAPI[SnowflakeCursor[Any]]):
+class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
     sql_dialect = SnowflakeDialect()
     _con: SnowflakeConnection
 
@@ -21,5 +21,7 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor[Any]]):
 
         self._con = connection
 
-    def _execute_sql_against_backend(self, final_sql: str) -> SnowflakeCursor | None:
-        return self._con.cursor().execute(final_sql)
+    def _execute_sql_against_backend(self, final_sql: str) -> SnowflakeCursor:
+        result = self._con.cursor().execute(final_sql)
+        assert result is not None, "cursor.execute() returned None"
+        return result
