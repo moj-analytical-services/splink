@@ -1,7 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Union
 
+from splink.internals.database_api import DatabaseAPI
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
+import pandas as pd
 
 if TYPE_CHECKING:
     from .database_api import SnowflakeAPI
@@ -33,3 +35,6 @@ class SnowflakeDataframe(SplinkDataFrame):
         self.db_api._execute_sql_against_backend(
             f"CREATE TEMP VIEW {name} AS SELECT * FROM {physical}"
         )
+
+
+
