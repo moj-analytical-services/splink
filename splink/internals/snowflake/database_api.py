@@ -23,6 +23,35 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
         super().__init__()
 
         self._con = connection
+        self.__set_snowflake_quoted_identifiers_ignore()
+
+        if register_udfs:
+            self._register_udfs()
+
+    def _register_udfs(self):
+        # if people have issues with permissions we can allow these to be optional
+        # need for predict_from_comparison_vectors_sql (could adjust)
+        self._create_log2_function()
+
+    def _create_log2_function(self):
+        sql = """
+            CREATE TEMPORARY FUNCTION IF NOT EXISTS LOG2(FLOAT_IN FLOAT)
+            RETURNS FLOAT
+            AS
+            $$
+            LOG(2, FLOAT_IN)
+            $$;
+            """
+        self._con.cursor().execute(sql)
+
+    def __set_snowflake_quoted_identifiers_ignore(self) -> None:
+        logger.warning(
+            "Setting snowflake session to ignore quoted identifiers for greater"
+            " compatibility"
+        )
+        self._con.cursor().execute(
+            "ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = TRUE;"
+        )
 
     def _execute_sql_against_backend(self, final_sql: str) -> SnowflakeCursor:
         result = self._con.cursor().execute(final_sql)
@@ -39,6 +68,9 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
+        # HACK: Force table names to be upper to allow more flexible use cases
+        table_name = table_name.upper()
+
         # Use snowflake helper library rather than faff around
         # TODO: Maybe just import explicit libraries
         sf_pd_tools.write_pandas(self._con, input, table_name, auto_create_table=True)
@@ -53,7 +85,7 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
         sql = f"""
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_name = '{table_name}';
+        WHERE table_name = '{table_name.upper()}';
         """
 
         res = self._execute_sql_against_backend(sql).fetchall()
