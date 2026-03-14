@@ -746,7 +746,7 @@ class SnowflakeDialect(SplinkDialect):
     def _regex_extract_raw(
         self, name: str, pattern: str, capture_group: int = 0
     ) -> str:
-        return f"REGEXP_SUBSTR({name}, '{pattern}', {capture_group})"
+        return f"REGEXP_SUBSTR({name}, '{pattern}', {capture_group + 1})"
 
     @property
     def default_timestamp_format(self):
@@ -767,3 +767,7 @@ class SnowflakeDialect(SplinkDialect):
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""TRY_TO_TIMESTAMP({name}, '{timestamp_format}')"""
+
+    @property
+    def infinity_expression(self):
+        return "'inf'"
