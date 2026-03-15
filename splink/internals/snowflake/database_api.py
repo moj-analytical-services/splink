@@ -19,11 +19,17 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
     sql_dialect = SnowflakeDialect()
     _con: SnowflakeConnection
 
-    def __init__(self, connection: SnowflakeConnection, register_udfs: bool = True):
+    def __init__(
+        self,
+        connection: SnowflakeConnection,
+        register_udfs: bool = True,
+        use_transient_tables: bool = True,
+    ):
         super().__init__()
 
         self._con = connection
         self.__set_snowflake_quoted_identifiers_ignore()
+        self._use_transient_tables = use_transient_tables
 
         if register_udfs:
             self._register_udfs()
@@ -91,3 +97,18 @@ class SnowflakeAPI(DatabaseAPI[SnowflakeCursor]):
         res = self._execute_sql_against_backend(sql).fetchall()
 
         return len(res) > 0
+
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        """
+        When pushing queries to Snowflake engine, allow the outputs to be materialised
+        as Transient tables to prevent excessive consumption of time travel utilisation
+
+        This is a rational default that the user can override through the class
+        attribute `_use_transient_tables`
+        """
+        self.delete_table_from_database(physical_name)
+        sql = (
+            f"CREATE {'TRANSIENT' if self._use_transient_tables else ''}"
+            f"TABLE {physical_name} AS {sql}"
+        )
+        return sql
