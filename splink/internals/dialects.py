@@ -771,3 +771,9 @@ class SnowflakeDialect(SplinkDialect):
     @property
     def infinity_expression(self):
         return "'inf'"
+
+    def array_intersect(self, clc: ArrayIntersectLevel) -> str:
+        clc.col_expression.sql_dialect = self
+        col = clc.col_expression
+        thres = clc.min_intersection
+        return f"ARRAY_SIZE(ARRAY_INTERSECTION({col.name_l}, {col.name_r})) >= {thres}"
