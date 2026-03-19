@@ -390,7 +390,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         "(match_key BIGINT, blocking_rule VARCHAR, cartesian BIGINT);"
     )
     con.executemany(
-        f"INSERT INTO {all_rules_table_name} VALUES ($match_key, $blocking_rule, $cartesian);",
+        f"INSERT INTO {all_rules_table_name} VALUES "
+        "($match_key, $blocking_rule, $cartesian);",
         [
             {
                 "match_key": str(i),
