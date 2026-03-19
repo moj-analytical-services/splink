@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
@@ -74,11 +74,11 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     def make_dummy_frame(row_count):
         # don't need meaningful differences as only interested in total count
-        return pd.DataFrame(
-            data={
+        return pa.Table.from_pydict(
+            {
                 "unique_id": range(0, row_count),
-                "forename": "Claire",
-                "surname": "Brown",
+                "forename": ["Claire"] * row_count,
+                "surname": ["Brown"] * row_count,
             },
         )
 

@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 import splink.internals.comparison_level_library as cll
@@ -6,7 +6,7 @@ from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
-df_pandas = pd.DataFrame(
+df_pandas = pa.Table.from_pylist(
     [
         {
             "unique_id": 1,

@@ -61,20 +61,18 @@ cl_settings = {
 
 
 @mark_with_dialects_excluding()
-def test_run_predict(dialect, test_helpers):
+def test_run_predict(dialect, test_helpers, fake_1000):
     helper = test_helpers[dialect]
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.linker_with_registration(df, cl_settings)
+    linker = helper.linker_with_registration(fake_1000, cl_settings)
     linker.inference.predict()
 
 
 @mark_with_dialects_excluding()
-def test_full_run(dialect, test_helpers, tmp_path):
+def test_full_run(dialect, test_helpers, tmp_path, fake_1000):
     helper = test_helpers[dialect]
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.linker_with_registration(df, cl_settings)
+    linker = helper.linker_with_registration(fake_1000, cl_settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.first_name = r.first_name AND l.surname = r.surname"],
         0.6,
@@ -104,12 +102,11 @@ def test_full_run(dialect, test_helpers, tmp_path):
 
 
 @mark_with_dialects_excluding()
-def test_charts(dialect, test_helpers, tmp_path):
+def test_charts(dialect, test_helpers, fake_1000):
     helper = test_helpers[dialect]
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.db_api()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         df_sdf,
@@ -137,10 +134,9 @@ def test_charts(dialect, test_helpers, tmp_path):
 
 
 @mark_with_dialects_excluding()
-def test_exploratory_charts(dialect, test_helpers):
+def test_exploratory_charts(dialect, test_helpers, fake_1000):
     helper = test_helpers[dialect]
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     db_api = helper.db_api()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
     profile_columns(df_sdf, "first_name")

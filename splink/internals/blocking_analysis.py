@@ -15,7 +15,6 @@ from typing import (
     cast,
 )
 
-import duckdb
 import sqlglot
 
 from splink.internals.blocking import (
@@ -380,18 +379,19 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     """
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
 
-    # TODO: duckdb (if available) or arrow (if not)
-    result_df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_pandas_dataframe()
-    # TODO: resuse connexion if available - see similar code in EM training
-    con = duckdb.connect()
+    result_df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_duckdbpyrelation()
+    con = db_api.duckdb_con
+    con.register("result_df", result_df)
 
     # The above table won't include rules that have no matches
+    all_rules_table_name = "__splink__df_blocking_rule_counts"
     con.execute(
-        "CREATE TABLE all_rules "
-        "(match_key VARCHAR, blocking_rule VARCHAR, cartesian BIGINT);"
+        f"CREATE OR REPLACE TABLE {all_rules_table_name} "
+        "(match_key BIGINT, blocking_rule VARCHAR, cartesian BIGINT);"
     )
     con.executemany(
-        "INSERT INTO all_rules VALUES ($match_key, $blocking_rule, $cartesian);",
+        f"INSERT INTO {all_rules_table_name} VALUES "
+        "($match_key, $blocking_rule, $cartesian);",
         [
             {
                 "match_key": str(i),
@@ -402,8 +402,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         ],
     )
 
+    table_name = "__splink__cumulative_blocking_rule_counts"
     if len(result_df) > 0:
-        table_name = "__splink__cumulative_blocking_rule_counts"
         con.register(table_name, result_df)
         sql = f"""
             WITH simple_counts AS (
@@ -413,7 +413,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
                     cast(rules.match_key as int) as match_key,
                     rules.cartesian
                 FROM
-                    all_rules AS rules
+                    {all_rules_table_name} AS rules
                 LEFT JOIN
                     {table_name} AS counts
                 ON
@@ -437,7 +437,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     else:
         # TODO: can we join onto empty arrow table? if so, we don't need separate case
         # simpler sql as we have no data to join onto
-        sql = """
+        sql = f"""
             select
                 blocking_rule,
                 0 as row_count,
@@ -446,15 +446,18 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
                 match_key,
                 0 as start,
             from
-                all_rules
+                {all_rules_table_name}
         """
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
     complete_df = con.sql(sql)
-
-    return cast(
+    counts_data = cast(
         list[CumulativeComparisonRecord], record_dicts_from_relation(complete_df)
     )
+    # clean up temporary tables
+    con.execute(f"DROP VIEW IF EXISTS {table_name}")
+    con.execute(f"DROP TABLE {all_rules_table_name}")
+    return counts_data
 
 
 def _count_comparisons_generated_from_blocking_rule(

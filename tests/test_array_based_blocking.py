@@ -1,6 +1,5 @@
 import random
 
-import pandas as pd
 import pyarrow as pa
 
 import splink.internals.comparison_library as cl
@@ -336,13 +335,13 @@ def test_two_dataset_link_only_predict_orders_by_min_synthetic_source_dataset(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_first = pd.DataFrame(
+    data_first = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
             {"unique_id": 2, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
         ]
     )
-    data_second = pd.DataFrame(
+    data_second = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
             {"unique_id": 20, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
@@ -366,14 +365,14 @@ def test_two_dataset_link_only_predict_orders_by_min_synthetic_source_dataset(
         settings,
         input_table_aliases=["df_2", "df_1"],
     )
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_dict()
 
     actual_pairs = set(
         zip(
-            df_predict.source_dataset_l,
-            df_predict.unique_id_l,
-            df_predict.source_dataset_r,
-            df_predict.unique_id_r,
+            df_predict["source_dataset_l"],
+            df_predict["unique_id_l"],
+            df_predict["source_dataset_r"],
+            df_predict["unique_id_r"],
         )
     )
     expected_pairs = {
@@ -389,13 +388,13 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_literal_sds_filte
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_first = pd.DataFrame(
+    data_first = pa.Table.from_pylist(
         [
             {"unique_id": 1, "sds": 2, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "sds": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_second = pd.DataFrame(
+    data_second = pa.Table.from_pylist(
         [
             {"unique_id": 10, "sds": 1, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "sds": 1, "name": "Bob", "postcode": ["C"]},
