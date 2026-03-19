@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 
 import splink.internals.comparison_library as cl
 from splink.internals.blocking_rule_library import block_on
@@ -31,7 +32,7 @@ record = {
     "unique_id": 1,
     "first_name": "Eliza",
     "surname": "Smith",
-    "dob": "1971-05-24",
+    "dob": datetime(1971, 5, 24),
     "city": "London",
     "email": "eliza@smith.net",
     "cluster": 10000,
