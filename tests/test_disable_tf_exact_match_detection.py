@@ -1,6 +1,6 @@
 import math
 
-import pandas as pd
+import pyarrow.compute as pc
 import pytest
 
 import splink.internals.comparison_level_library as cll
@@ -114,10 +114,9 @@ def test_disable_tf_exact_match_detection():
     )
 
 
-def test_with_predict_calculation():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+def test_with_predict_calculation(fake_1000):
 
-    df = df[df["unique_id"].isin([835, 836, 147, 975])]
+    df = fake_1000.filter(pc.field("unique_id").isin([835, 836, 147, 975]))
 
     def get_settings(disable_tf_exact_match_detection, tf_minimum_u_value=None):
         comparison_level = {
