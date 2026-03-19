@@ -148,17 +148,20 @@ class EverythingEncoder(json.JSONEncoder):
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
     def default(self, obj):
-        # TODO: adjust this for safer importing
-        import numpy as np
+        try:
+            import numpy as np
+        except ModuleNotFoundError:
+            pass
+        else:
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
 
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.bool_):
-            return bool(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
         try:
             return json.JSONEncoder.default(self, obj)
         except TypeError:
