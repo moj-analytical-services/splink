@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 
 import splink.internals.comparison_level_library as cll
 from splink.internals.linker import Linker
@@ -54,8 +54,9 @@ settings = {
 
 @mark_with_dialects_including("spark")
 def test_udf_registration(spark_api):
-    spark = spark_api.spark
     # Integration test to ensure spark loads our udfs without any issues
+    # need to load this carefully so that we get the types right
+    spark = spark_api.spark
     df_spark = spark.read.csv(
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
@@ -75,8 +76,12 @@ def test_udf_registration(spark_api):
 def test_damerau_levenshtein(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_dam_lev = spark.createDataFrame(df)
 
     df_sdf = spark_api.register(df_spark_dam_lev, source_dataset_name="test_dl_df")
@@ -158,8 +163,12 @@ def test_damerau_levenshtein(spark_api):
 def test_jaro(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_jaro = spark.createDataFrame(df)
 
     df_sdf = spark_api.register(df_spark_jaro, source_dataset_name="test_jaro_df")
@@ -238,8 +247,12 @@ def test_jaro(spark_api):
 def test_jaro_winkler(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
     df_sdf = spark_api.register(df_spark_jaro_winkler, source_dataset_name="test_jw_df")
