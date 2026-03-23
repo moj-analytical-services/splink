@@ -13,7 +13,6 @@ from .decorator import mark_with_dialects_excluding
 def test_deterministic_link_full_example(dialect, tmp_path, test_helpers):
     helper = test_helpers[dialect]
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = helper.convert_frame(df)
 
     br_for_predict = [
         "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",

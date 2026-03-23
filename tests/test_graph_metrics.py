@@ -231,15 +231,11 @@ def test_metrics(dialect, test_helpers):
 
     # pass in dummy frame to linker
     linker = helper.linker_with_registration(
-        helper.convert_frame(df_1),
+        df_1,
         {"link_type": "dedupe_only"},
     )
-    df_predict = linker.table_management.register_table(
-        helper.convert_frame(df_e), "predict"
-    )
-    df_clustered = linker.table_management.register_table(
-        helper.convert_frame(df_c), "clusters"
-    )
+    df_predict = linker.table_management.register_table(df_e, "predict")
+    df_clustered = linker.table_management.register_table(df_c, "clusters")
 
     cm = linker.clustering.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
@@ -351,15 +347,11 @@ def test_is_bridge(dialect, test_helpers):
         + [{"cluster_id": 3, "unique_id": i} for i in range(11, 18 + 1)]
     )
     linker = helper.linker_with_registration(
-        helper.convert_frame(df_1),
+        df_1,
         {"link_type": "dedupe_only"},
     )
-    df_predict = linker.table_management.register_table(
-        helper.convert_frame(df_e), "br_predict"
-    )
-    df_clustered = linker.table_management.register_table(
-        helper.convert_frame(df_c), "br_clusters"
-    )
+    df_predict = linker.table_management.register_table(df_e, "br_predict")
+    df_clustered = linker.table_management.register_table(df_c, "br_clusters")
 
     # linker.debug_mode = True
     cm = linker.clustering.compute_graph_metrics(

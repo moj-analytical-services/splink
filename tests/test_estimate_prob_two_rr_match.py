@@ -19,7 +19,6 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
             {"unique_id": 6, "first_name": "Jane", "surname": "Taylor"},
         ]
     )
-    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",
@@ -71,8 +70,6 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
             {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
         ]
     )
-    df_1 = helper.convert_frame(df_1)
-    df_2 = helper.convert_frame(df_2)
 
     settings = {
         "link_type": "link_only",
@@ -114,8 +111,6 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
             {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
         ]
     )
-    df_1 = helper.convert_frame(df_1)
-    df_2 = helper.convert_frame(df_2)
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -181,10 +176,6 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
         map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
     )
 
-    df_1 = helper.convert_frame(df_1)
-    df_2 = helper.convert_frame(df_2)
-    df_3 = helper.convert_frame(df_3)
-    df_4 = helper.convert_frame(df_4)
     dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
@@ -259,10 +250,6 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
         map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
     )
 
-    df_1 = helper.convert_frame(df_1)
-    df_2 = helper.convert_frame(df_2)
-    df_3 = helper.convert_frame(df_3)
-    df_4 = helper.convert_frame(df_4)
     dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
@@ -340,7 +327,6 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
             },
         ]
     )
-    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",

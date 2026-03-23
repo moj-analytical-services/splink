@@ -29,9 +29,6 @@ class TestHelper(ABC):
     def db_api(self):
         return self.DatabaseAPI(**self.db_api_args())
 
-    def convert_frame(self, df):
-        return df
-
     def load_frame_from_csv(self, path):
         import pyarrow.csv as pv
 

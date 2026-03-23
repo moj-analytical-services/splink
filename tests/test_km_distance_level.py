@@ -122,8 +122,6 @@ def test_km_distance_levels(dialect, test_helpers):
 
     settings_cll = {"link_type": "dedupe_only", "comparisons": [km_diff]}
 
-    df = helper.convert_frame(df)
-
     linker = helper.linker_with_registration(df, settings_cl)
     cl_df_e = linker.inference.predict().as_pandas_dataframe()
     linker = helper.linker_with_registration(df, settings_cll)

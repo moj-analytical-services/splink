@@ -434,10 +434,7 @@ def test_chunked_predict_link_only(test_helpers, dialect):
     df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
     df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
 
-    df1 = helper.convert_frame(df1_pd)
-    df2 = helper.convert_frame(df2_pd)
-
-    linker = helper.linker_with_registration([df1, df2], settings)
+    linker = helper.linker_with_registration([df1_pd, df2_pd], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -488,11 +485,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
     df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
     df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
 
-    df1 = helper.convert_frame(df1_pd)
-    df2 = helper.convert_frame(df2_pd)
-    df3 = helper.convert_frame(df3_pd)
-
-    linker = helper.linker_with_registration([df1, df2, df3], settings)
+    linker = helper.linker_with_registration([df1_pd, df2_pd, df3_pd], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -539,10 +532,7 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
     df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
     df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
 
-    df1 = helper.convert_frame(df1_pd)
-    df2 = helper.convert_frame(df2_pd)
-
-    linker = helper.linker_with_registration([df1, df2], settings)
+    linker = helper.linker_with_registration([df1_pd, df2_pd], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -593,11 +583,7 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
     df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
     df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
 
-    df1 = helper.convert_frame(df1_pd)
-    df2 = helper.convert_frame(df2_pd)
-    df3 = helper.convert_frame(df3_pd)
-
-    linker = helper.linker_with_registration([df1, df2, df3], settings)
+    linker = helper.linker_with_registration([df1_pd, df2_pd, df3_pd], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
