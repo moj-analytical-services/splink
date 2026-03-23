@@ -92,7 +92,10 @@ def df_spark(spark):
 def fake_1000():
     import pyarrow.csv as pv
 
-    return pv.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    return pv.read_csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv",
+        convert_options=pv.ConvertOptions(strings_can_be_null=True),
+    )
 
 
 @pytest.fixture(scope="function")

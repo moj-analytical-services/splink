@@ -35,7 +35,10 @@ class TestHelper(ABC):
     def load_frame_from_csv(self, path):
         import pyarrow.csv as pv
 
-        return pv.read_csv(path)
+        return pv.read_csv(
+            path,
+            convert_options=pv.ConvertOptions(strings_can_be_null=True),
+        )
 
     def load_frame_from_parquet(self, path):
         import pyarrow.parquet as pq
