@@ -106,4 +106,4 @@ def test_matches_work(test_helpers, dialect, fake_1000, tmp_path):
     )
 
     matches = matches.as_record_dict()
-    assert len(matches) == 1
+    assert len(matches) == 2
