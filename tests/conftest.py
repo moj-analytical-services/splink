@@ -31,6 +31,9 @@ def pytest_collection_modifyitems(items, config):
     our_marks = {*marks, *dialect_groups.keys()}
 
     for item in items:
+        # Any test without backend-specific marker gets 'core' marker (by definition)
+        # Also a dialect marker for each specified dialect
+        # Does not get {dialect}_only, as these are specifically for non-core tests
         if not any(marker.name in our_marks for marker in item.iter_markers()):
             item.add_marker("core")
             for mark in our_marks:
