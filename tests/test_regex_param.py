@@ -128,8 +128,7 @@ def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
 
     comparison_name = level_set["output_column_name"]
 
-    df = helper.convert_frame(df_pandas)
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration(df_pandas, settings)
 
     linker_output = linker.inference.predict().as_pandas_dataframe()
 

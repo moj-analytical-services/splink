@@ -31,6 +31,9 @@ def pytest_collection_modifyitems(items, config):
     our_marks = {*marks, *dialect_groups.keys()}
 
     for item in items:
+        # Any test without backend-specific marker gets 'core' marker (by definition)
+        # Also a dialect marker for each specified dialect
+        # Does not get {dialect}_only, as these are specifically for non-core tests
         if not any(marker.name in our_marks for marker in item.iter_markers()):
             item.add_marker("core")
             for mark in our_marks:
@@ -92,7 +95,10 @@ def df_spark(spark):
 def fake_1000():
     import pyarrow.csv as pv
 
-    return pv.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    return pv.read_csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv",
+        convert_options=pv.ConvertOptions(strings_can_be_null=True),
+    )
 
 
 @pytest.fixture(scope="function")

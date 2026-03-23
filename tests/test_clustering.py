@@ -60,8 +60,7 @@ def test_clustering(test_helpers, dialect, link_type, input_pd_tables):
             block_on("dob"),
         ],
     )
-    linker_input = list(map(helper.convert_frame, input_pd_tables))
-    linker = helper.linker_with_registration(linker_input, settings)
+    linker = helper.linker_with_registration(input_pd_tables, settings)
 
     df_predict = linker.inference.predict()
     linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.95)
@@ -121,8 +120,7 @@ def test_clustering_no_edges(test_helpers, dialect):
         ],
         unique_id_column_name="id",
     )
-    linker_input = helper.convert_frame(df)
-    linker = helper.linker_with_registration(linker_input, settings)
+    linker = helper.linker_with_registration(df, settings)
 
     # due to blocking rules, df_predict will be empty
     df_predict = linker.inference.predict()
