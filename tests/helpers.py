@@ -143,12 +143,6 @@ class SQLiteTestHelper(TestHelper):
         cls._frame_counter += 1
         return name
 
-    def load_frame_from_csv(self, path):
-        return self.convert_frame(super().load_frame_from_csv(path))
-
-    def load_frame_from_parquet(self, path):
-        return self.convert_frame(super().load_frame_from_parquet(path))
-
 
 class PostgresTestHelper(TestHelper):
     _frame_counter = 0
@@ -172,12 +166,6 @@ class PostgresTestHelper(TestHelper):
         name = f"input_alias_{cls._frame_counter}"
         cls._frame_counter += 1
         return name
-
-    def load_frame_from_csv(self, path):
-        return self.convert_frame(super().load_frame_from_csv(path))
-
-    def load_frame_from_parquet(self, path):
-        return self.convert_frame(super().load_frame_from_parquet(path))
 
 
 class SplinkTestException(Exception):
