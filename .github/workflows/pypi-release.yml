@@ -11,6 +11,8 @@ permissions: {}
 jobs:
   publish-to-pypi:
     runs-on: ubuntu-latest
+    environment:
+      name: release
     permissions:
       contents: read
     steps:
