@@ -1,12 +1,8 @@
 import sqlglot
 
-from splink.internals.athena.athena_helpers.athena_transforms import (
-    cast_concat_as_varchar,
-)
 from splink.internals.input_column import InputColumn
 from splink.internals.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
-    sqlglot_transform_sql,
     sqlglot_tree_signature,
 )
 
@@ -58,36 +54,6 @@ def test_move_l_r_table_prefix_to_column_suffix():
     move_l_r_test(br, expected)
 
 
-def test_cast_concat_as_varchar():
-    output = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        cast(l.unique_id AS varchar) AS concat_id
-    """
-    output = sqlglot.parse_one(output).sql()
-
-    sql = "select l.source_dataset || '-__-' || l.unique_id AS concat_id"
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        l.unique_id AS concat_id
-    """
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = """
-        select cast(l.source_dataset AS varchar) || '-__-' ||
-        cast(l.unique_id AS varchar) AS concat_id
-    """
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output
-
-    sql = "select source_dataset || '-__-' || unique_id AS concat_id"
-    transformed_sql = sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-    assert transformed_sql == output.replace("l.", "")
-
-
 @mark_with_dialects_including("spark")
 def test_set_numeric_as_double():
     sql = "select cast('a' AS float8), cast(0.12345 AS float8)"
@@ -104,7 +70,6 @@ def test_add_pref_and_suffix():
     dull_l_r = ['"l"."dull" AS "dull_l"', '"r"."dull" AS "dull_r"']
     assert dull.l_r_names_as_l_r == dull_l_r
 
-    assert dull.bf_name == '"bf_dull"'
     assert dull.tf_name_l == '"tf_dull_l"'
     tf_dull_l_r = ['"l"."tf_dull" AS "tf_dull_l"', '"r"."tf_dull" AS "tf_dull_r"']
     assert dull.l_r_tf_names_as_l_r == tf_dull_l_r
@@ -121,7 +86,7 @@ def test_add_pref_and_suffix():
 
     group = InputColumn("cluster", sqlglot_dialect_str="duckdb")
     assert group.name_l == '"cluster_l"'
-    assert group.bf_name == '"bf_cluster"'
+
     group_l_r_names = ['"l"."cluster" AS "cluster_l"', '"r"."cluster" AS "cluster_r"']
     assert group.l_r_names_as_l_r == group_l_r_names
 

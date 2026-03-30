@@ -4,8 +4,6 @@ import logging
 import string
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
 
-import pandas as pd
-
 from splink.internals.blocking import BlockingRule
 from splink.internals.blocking_analysis import (
     _count_comparisons_generated_from_blocking_rule,
@@ -17,7 +15,12 @@ from splink.internals.database_api import DatabaseAPISubClass
 from .input_column import InputColumn
 
 if TYPE_CHECKING:
+    from pandas import DataFrame as pd_DataFrame
+
     from splink.internals.linker import Linker
+else:
+    pd_DataFrame = ...
+
 logger = logging.getLogger(__name__)
 
 
@@ -216,7 +219,7 @@ def find_blocking_rules_below_threshold_comparison_count(
     max_comparisons_per_rule: int,
     column_expressions: Optional[Sequence[str | InputColumn]] = None,
     max_results: Optional[int] = None,
-) -> pd.DataFrame:
+) -> pd_DataFrame:
     """
     Finds blocking rules which return a comparison count below a given threshold.
 
@@ -242,6 +245,7 @@ def find_blocking_rules_below_threshold_comparison_count(
     Returns:
         pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
     """
+    import pandas as pd
 
     if column_expressions is None:
         column_expressions = linker._input_columns(

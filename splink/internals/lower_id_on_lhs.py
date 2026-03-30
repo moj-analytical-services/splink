@@ -1,4 +1,9 @@
-from pandas import DataFrame
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pandas import DataFrame as pd_DataFrame
+else:
+    pd_DataFrame = ...
 
 
 def _sql_expr_move_left_to_right(
@@ -45,7 +50,7 @@ def _sql_expr_move_left_to_right(
 
 
 def lower_id_to_left_hand_side(
-    df: DataFrame,
+    df: pd_DataFrame,
     source_dataset_col: str = "source_dataset",
     unique_id_col: str = "unique_id",
 ) -> str:

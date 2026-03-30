@@ -99,6 +99,14 @@ def _assert_self_join_logged(log_output: str, table_name: str) -> None:
     assert re.search(pattern, log_output)
 
 
+def _assert_join_logged(log_output: str, left_table: str, right_table: str) -> None:
+    pattern = (
+        rf"from {re.escape(left_table)}(?:_[a-z0-9]+)? as l inner join "
+        rf"{re.escape(right_table)}(?:_[a-z0-9]+)? as r"
+    )
+    assert re.search(pattern, log_output)
+
+
 def test_dedupe_only():
     df_one = pd.DataFrame(data_one)
 
@@ -122,10 +130,10 @@ def test_dedupe_only():
         ],
     }
     db_api = DuckDBAPI()
+    df_one_sdf = db_api.register(df_one)
     linker = Linker(
-        df_one,
+        df_one_sdf,
         settings,
-        db_api=db_api,
         set_up_basic_logging=False,
     )
     logging.getLogger("splink").setLevel(1)
@@ -169,11 +177,11 @@ def test_link_and_dedupe():
         ],
     }
     db_api = DuckDBAPI()
+    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
     linker = Linker(
-        [df_one, df_two],
+        [df_one_sdf, df_two_sdf],
         settings,
-        db_api=db_api,
-        input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
 
@@ -219,11 +227,11 @@ def test_link_only_two():
         ],
     }
     db_api = DuckDBAPI()
+    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
     linker = Linker(
-        [df_one, df_two],
+        [df_one_sdf, df_two_sdf],
         settings,
-        db_api=db_api,
-        input_table_aliases=["df_one", "df_two"],
         set_up_basic_logging=False,
     )
 
@@ -233,9 +241,10 @@ def test_link_only_two():
 
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
-    assert (
-        "from __splink__df_concat_sample_left as l inner join __splink__df_concat_sample_right as r"  # noqa: E501
-        in all_log_messages
+    _assert_join_logged(
+        all_log_messages,
+        "__splink__df_concat_sample_left",
+        "__splink__df_concat_sample_right",
     )
 
     log_list.clear()
@@ -245,9 +254,10 @@ def test_link_only_two():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    assert (
-        "from __splink__df_concat_with_tf_left as l inner join __splink__df_concat_with_tf_right as r"  # noqa: E501
-        in all_log_messages
+    _assert_join_logged(
+        all_log_messages,
+        "__splink__df_concat_with_tf_left",
+        "__splink__df_concat_with_tf_right",
     )
     assert (
         "__splink__df_concat_with_tf_left as ( select 'df_one' as "
@@ -258,6 +268,14 @@ def test_link_only_two():
         "__splink__df_concat_with_tf_right as ( select 'df_two' as "
         '"source_dataset", "unique_id", "first_name", "surname" from df_two )'
         in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_left as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        not in all_log_messages
+    )
+    assert (
+        "__splink__df_concat_with_tf_right as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        not in all_log_messages
     )
     assert "select min(" not in all_log_messages
     assert "select max(" not in all_log_messages
@@ -288,11 +306,12 @@ def test_link_only_three():
         ],
     }
     db_api = DuckDBAPI()
+    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
+    df_three_sdf = db_api.register(df_three, source_dataset_name="df_three")
     linker = Linker(
-        [df_one, df_two, df_three],
+        [df_one_sdf, df_two_sdf, df_three_sdf],
         settings,
-        db_api=db_api,
-        input_table_aliases=["df_one", "df_two", "df_three"],
         set_up_basic_logging=False,
     )
 

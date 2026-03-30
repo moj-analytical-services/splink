@@ -48,6 +48,17 @@ class SplinkDataFrame(ABC):
         cols = self.columns
         return [c.name for c in cols]
 
+    # source_dataset_name is just a human-readable name for the dataset that appears
+    # in the source_dataset column of match results.  It's only relevant for
+    # input dataframes
+    @property
+    def source_dataset_name(self) -> str:
+        return self.metadata.get("source_dataset", self.templated_name)
+
+    @source_dataset_name.setter
+    def source_dataset_name(self, value: str) -> None:
+        self.metadata["source_dataset"] = value
+
     @abstractmethod
     def validate(self):
         pass
@@ -98,6 +109,7 @@ class SplinkDataFrame(ABC):
         """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
         self.db_api.remove_splinkdataframe_from_cache(self)
+        self.db_api._created_tables.discard(self.physical_name)
 
     def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
@@ -116,7 +128,49 @@ class SplinkDataFrame(ABC):
         Returns:
             list: a list of records, each of which is a dictionary
         """
-        raise NotImplementedError("as_record_dict not implemented for this linker")
+        raise NotImplementedError("as_record_dict not implemented for this backend")
+
+    def as_dict(self, limit: Optional[int] = None) -> dict[str, list[Any]]:
+        """Return the dataframe as a dictionary of columns to lists of values.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            ten_edges_dict = df_predict.as_dict(10)
+            ```
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+        Returns:
+            dict: a dictionary mapping column names to lists of values
+        """
+        raise NotImplementedError("as_dict not implemented for this backend")
+
+    def as_pyarrow_table(self, limit=None):
+        """Return the dataframe as a pyarrow Table.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+                to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            df_ten_edges = df_predict.as_pyarrow_table(10)
+            ```
+        Returns:
+            pyarrow.Table: pyarrow Table
+        """
+        import pyarrow as pa
+
+        # going via dict means we get column names even with empty table
+        # also more performant as arrow is columnar anyway
+        tab_dict = self.as_dict(limit=limit)
+        return pa.Table.from_pydict(tab_dict)
 
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
@@ -150,9 +204,14 @@ class SplinkDataFrame(ABC):
         Returns:
             duckdb.DuckDBPyRelation: A DuckDBPyRelation object
         """
-        raise NotImplementedError(
-            "This method is only available when using the DuckDB backend"
+        # insert into local duckdb via pyarrow
+        arrow_tab = self.as_pyarrow_table(limit)
+        table_name_for_duckdb = self.physical_name
+        self.db_api.duckdb_con.register(
+            table_name_for_duckdb,
+            arrow_tab,
         )
+        return self.db_api.duckdb_con.table(table_name_for_duckdb)
 
     # Spark not guaranteed to be available so return type is not imported
     def as_spark_dataframe(self) -> "SparkDataFrame":  # type: ignore # noqa: F821

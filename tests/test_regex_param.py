@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 import splink.internals.comparison_level_library as cll
@@ -6,7 +6,7 @@ from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
 
-df_pandas = pd.DataFrame(
+df_pandas = pa.Table.from_pylist(
     [
         {
             "unique_id": 1,
@@ -128,8 +128,7 @@ def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
 
     comparison_name = level_set["output_column_name"]
 
-    df = helper.convert_frame(df_pandas)
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df_pandas, settings)
 
     linker_output = linker.inference.predict().as_pandas_dataframe()
 

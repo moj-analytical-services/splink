@@ -29,8 +29,6 @@ Clone **your fork** to whatever directory you want to work in with `git clone ht
 Developing Splink requires Python, as well as uv (the package manager we use to install Python package dependencies).
 Python can be installed using uv, so does not need to be installed independently (although it can be).
 Running Spark or PostgreSQL on your computer to test those backends requires additional dependencies.
-Athena only runs in the AWS cloud, so to locally run the tests for that backend you will need to create an AWS account and
-configure Splink to use it.
 
 There are two ways to install these system dependencies: globally on your computer, or in an isolated conda environment.
 

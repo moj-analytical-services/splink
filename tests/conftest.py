@@ -1,4 +1,6 @@
 import logging
+import re
+from dataclasses import dataclass
 
 import pytest
 
@@ -29,6 +31,9 @@ def pytest_collection_modifyitems(items, config):
     our_marks = {*marks, *dialect_groups.keys()}
 
     for item in items:
+        # Any test without backend-specific marker gets 'core' marker (by definition)
+        # Also a dialect marker for each specified dialect
+        # Does not get {dialect}_only, as these are specifically for non-core tests
         if not any(marker.name in our_marks for marker in item.iter_markers()):
             item.add_marker("core")
             for mark in our_marks:
@@ -86,6 +91,40 @@ def df_spark(spark):
     yield df
 
 
+@pytest.fixture(scope="session")
+def fake_1000():
+    import pyarrow.csv as pv
+
+    return pv.read_csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv",
+        convert_options=pv.ConvertOptions(strings_can_be_null=True),
+    )
+
+
+@pytest.fixture(scope="function")
+def duckdb_with_fake_1000():
+    import duckdb
+
+    con = duckdb.connect()
+    fake_1000 = con.query(
+        "select * "
+        "from read_csv_auto('./tests/datasets/fake_1000_from_splink_demos.csv')"
+    )
+
+    @dataclass
+    class DuckDB:
+        con: duckdb.DuckDBPyConnection
+        fake_1000: duckdb.DuckDBPyRelation
+
+    return DuckDB(con, fake_1000)
+
+
+@pytest.fixture
+def unique_per_test_table_name(request):
+    # postgres name type limits to 63. Truncate from right as more unique
+    return re.sub(r"[^a-zA-Z0-9_]", "_", request.node.nodeid)[-63:]
+
+
 # workaround as you can't pass fixtures as param arguments in base pytest
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
@@ -105,21 +144,3 @@ def test_helpers(pg_engine):
     # if someone accessed spark, cleanup!
     if "spark" in helper_dict.accessed:
         _cleanup_spark(helper_dict["spark"].spark)
-
-
-# Function to easily see if the gamma column added to the linker matches
-# With the sets of tuples provided
-@pytest.fixture(scope="module")
-def test_gamma_assert():
-    def _test_gamma_assert(linker_output, size_gamma_lookup, col_name):
-        for gamma, id_pairs in size_gamma_lookup.items():
-            for left, right in id_pairs:
-                assert (
-                    linker_output.loc[
-                        (linker_output.unique_id_l == left)
-                        & (linker_output.unique_id_r == right)
-                    ]["gamma_" + col_name].values[0]
-                    == gamma
-                )
-
-    return _test_gamma_assert

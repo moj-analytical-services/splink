@@ -3,13 +3,19 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
     join_list_with_commas_final_and,
 )
 
-from .comparison_level import ComparisonLevel, _default_m_values, _default_u_values
+from .comparison_level import (
+    ComparisonLevel,
+    ComparisonLevelDetailedRecord,
+    _default_m_values,
+    _default_u_values,
+)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -68,8 +74,9 @@ class Comparison:
         comparison_description: str = None,
         column_info_settings: ColumnInfoSettings = None,
     ):
+        sql_dialect = SplinkDialect.from_string(sqlglot_dialect)
         comparison_levels_as_objs: list[ComparisonLevel] = [
-            ComparisonLevel(**cl, sqlglot_dialect=sqlglot_dialect)
+            ComparisonLevel(**cl, sql_dialect=sql_dialect)
             if isinstance(cl, dict)
             else cl
             for cl in comparison_levels
@@ -128,20 +135,22 @@ class Comparison:
         return self.column_info_settings.comparison_vector_value_column_prefix
 
     @property
-    def _bf_column_name(self):
-        bf_prefix = self.column_info_settings.bayes_factor_column_prefix
-        return f"{bf_prefix}{self.output_column_name}".replace(" ", "_")
+    def _mw_column_name(self):
+        """Column name for match weight (mw_) prefix."""
+        mw_prefix = self.column_info_settings.match_weight_column_prefix
+        return f"{mw_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def _has_null_level(self):
         return any([cl.is_null_level for cl in self.comparison_levels])
 
     @property
-    def _bf_tf_adj_column_name(self):
-        bf = self.column_info_settings.bayes_factor_column_prefix
+    def _mw_tf_adj_column_name(self):
+        """Column name for match weight TF adjustment (mw_tf_adj_) prefix."""
+        mw = self.column_info_settings.match_weight_column_prefix
         tf = self.column_info_settings.term_frequency_adjustment_column_prefix
         cc_name = self.output_column_name
-        return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
+        return f"{mw}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
     def _has_tf_adjustments(self):
@@ -218,7 +227,7 @@ class Comparison:
 
         return dedupe_preserving_order(output_cols)
 
-    def _columns_to_select_for_bayes_factor_parts(
+    def _columns_to_select_for_match_weight_parts(
         self,
         retain_matching_columns: bool,
         retain_intermediate_calculation_columns: bool,
@@ -240,16 +249,13 @@ class Comparison:
                     col = cl._tf_adjustment_input_column
                     output_cols.extend(col.tf_name_l_r)
 
-        # Bayes factor case when statement
         sqls = [
-            cl._bayes_factor_sql(self._gamma_column_name)
+            cl._match_weight_sql(self._gamma_column_name)
             for cl in self.comparison_levels
         ]
         sql = " ".join(sqls)
-        sql = f"CASE {sql} END as {self._bf_column_name} "
+        sql = f"CASE {sql} END as {self._mw_column_name}"
         output_cols.append(sql)
-
-        # tf adjustment case when statement
 
         if self._has_tf_adjustments:
             sqls = [
@@ -257,7 +263,7 @@ class Comparison:
                 for cl in self.comparison_levels
             ]
             sql = " ".join(sqls)
-            sql = f"CASE {sql} END as {self._bf_tf_adj_column_name} "
+            sql = f"\nCASE {sql} END as {self._mw_tf_adj_column_name}"
             output_cols.append(sql)
         output_cols.append(self._gamma_column_name)
 
@@ -287,16 +293,16 @@ class Comparison:
                     col = cl._tf_adjustment_input_column
                     output_cols.extend(col.tf_name_l_r)
 
-            output_cols.extend(self._match_weight_columns_to_multiply)
+            output_cols.extend(self._match_weight_columns_to_sum)
 
         return dedupe_preserving_order(output_cols)
 
     @property
-    def _match_weight_columns_to_multiply(self):
+    def _match_weight_columns_to_sum(self):
         cols = []
-        cols.append(self._bf_column_name)
+        cols.append(self._mw_column_name)
         if self._has_tf_adjustments:
-            cols.append(self._bf_tf_adj_column_name)
+            cols.append(self._mw_tf_adj_column_name)
         return cols
 
     def as_dict(self):
@@ -359,15 +365,11 @@ class Comparison:
         return self._all_m_are_trained and self._all_u_are_trained
 
     @property
-    def _as_detailed_records(self) -> list[dict[str, Any]]:
+    def _as_detailed_records(self) -> list[ComparisonLevelDetailedRecord]:
         records = []
         for cl in self.comparison_levels:
-            record = {}
-            record["comparison_name"] = self.output_column_name
-            record = {
-                **record,
-                **cl._as_detailed_record(self._num_levels, self.comparison_levels),
-            }
+            record = cl._as_detailed_record(self._num_levels, self.comparison_levels)
+            record.comparison_name = self.output_column_name
             records.append(record)
         return records
 
@@ -461,9 +463,9 @@ class Comparison:
 
         return desc
 
-    def match_weights_chart(self, as_dict=False):
+    def match_weights_chart(self):
         """Display a chart of comparison levels of the comparison"""
-        from splink.internals.charts import comparison_match_weights_chart
+        from splink.internals.charts import ComparisonMatchWeightsChart
 
         records = self._as_detailed_records
-        return comparison_match_weights_chart(records, as_dict=as_dict)
+        return ComparisonMatchWeightsChart(records)

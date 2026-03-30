@@ -4,8 +4,6 @@ import logging
 from random import randint
 from typing import TypeVar
 
-import pandas as pd
-
 from splink.internals.cost_of_blocking_rules import calculate_cost_of_combination_of_brs
 
 logger = logging.getLogger(__name__)
@@ -151,6 +149,9 @@ def suggest_blocking_rules(
             'suggested_EM_training_statements', and various cost information
 
     """
+    # TODO: don't do calc in pandas
+    import pandas as pd
+
     if len(df_block_stats) == 0:
         return None
 

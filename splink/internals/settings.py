@@ -5,13 +5,13 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, List, Literal, TypedDict
 
-from splink.internals.blocking import (
-    BlockingRule,
-    SaltedBlockingRule,
-)
-from splink.internals.charts import m_u_parameters_chart, match_weights_chart
+from splink.internals.blocking import BlockingRule
+from splink.internals.charts import MatchWeightsChart, MUParametersChart
 from splink.internals.comparison import Comparison
-from splink.internals.comparison_level import ComparisonLevel
+from splink.internals.comparison_level import (
+    ComparisonLevel,
+    ComparisonLevelDetailedRecord,
+)
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
@@ -30,9 +30,29 @@ class ComparisonAndLevelDict(TypedDict):
     comparison: Comparison
 
 
+@dataclass
+class ModelParameterDetailedRecord(ComparisonLevelDetailedRecord):
+    probability_two_random_records_match: float
+    comparison_sort_order: int
+
+    @classmethod
+    def from_cl_detailed_record(
+        cls,
+        cl_rec: ComparisonLevelDetailedRecord,
+        *,
+        probability_two_random_records_match: float,
+        comparison_sort_order: int,
+    ) -> ModelParameterDetailedRecord:
+        return cls(
+            **asdict(cl_rec),
+            probability_two_random_records_match=probability_two_random_records_match,
+            comparison_sort_order=comparison_sort_order,
+        )
+
+
 @dataclass(frozen=True)
 class ColumnInfoSettings:
-    bayes_factor_column_prefix: str
+    match_weight_column_prefix: str
     term_frequency_adjustment_column_prefix: str
     comparison_vector_value_column_prefix: str
     unique_id_column_name: str
@@ -112,14 +132,18 @@ class CoreModelSettings:
         return deepcopy(self)
 
     @property
-    def parameters_as_detailed_records(self):
+    def parameters_as_detailed_records(self) -> list[ModelParameterDetailedRecord]:
         output = []
         rr_match = self.probability_two_random_records_match
         for i, cc in enumerate(self.comparisons):
-            records = cc._as_detailed_records
-            for r in records:
-                r["probability_two_random_records_match"] = rr_match
-                r["comparison_sort_order"] = i
+            records = [
+                ModelParameterDetailedRecord.from_cl_detailed_record(
+                    r,
+                    probability_two_random_records_match=rr_match,
+                    comparison_sort_order=i,
+                )
+                for r in cc._as_detailed_records
+            ]
             output.extend(records)
 
         prior_description = (
@@ -131,26 +155,26 @@ class CoreModelSettings:
         )
 
         # Finally add a record for probability_two_random_records_match
-        prop_record = {
-            "comparison_name": "probability_two_random_records_match",
-            "sql_condition": None,
-            "label_for_charts": "",
-            "m_probability": None,
-            "u_probability": None,
-            "m_probability_description": None,
-            "u_probability_description": None,
-            "has_tf_adjustments": False,
-            "tf_adjustment_column": None,
-            "tf_adjustment_weight": None,
-            "is_null_level": False,
-            "bayes_factor": prob_to_bayes_factor(rr_match),
-            "log2_bayes_factor": prob_to_match_weight(rr_match),
-            "comparison_vector_value": 0,
-            "max_comparison_vector_value": 0,
-            "bayes_factor_description": prior_description,
-            "probability_two_random_records_match": rr_match,
-            "comparison_sort_order": -1,
-        }
+        prop_record = ModelParameterDetailedRecord(
+            comparison_name="probability_two_random_records_match",
+            sql_condition=None,
+            label_for_charts="",
+            m_probability=None,
+            u_probability=None,
+            m_probability_description=None,
+            u_probability_description=None,
+            has_tf_adjustments=False,
+            tf_adjustment_column=None,
+            tf_adjustment_weight=None,
+            is_null_level=False,
+            bayes_factor=prob_to_bayes_factor(rr_match),
+            log2_bayes_factor=prob_to_match_weight(rr_match),
+            comparison_vector_value=0,
+            max_comparison_vector_value=0,
+            bayes_factor_description=prior_description,
+            probability_two_random_records_match=rr_match,
+            comparison_sort_order=-1,
+        )
         output.insert(0, prop_record)
         return output
 
@@ -189,6 +213,7 @@ class Settings:
         unique_id_column_name: str = "unique_id",
         source_dataset_column_name: str = "source_dataset",
         bayes_factor_column_prefix: str = "bf_",
+        match_weight_column_prefix: str = "mw_",
         term_frequency_adjustment_column_prefix: str = "tf_",
         comparison_vector_value_column_prefix: str = "gamma_",
         # TrainingSettings
@@ -204,7 +229,7 @@ class Settings:
 
         self.column_info_settings = ColumnInfoSettings(
             comparison_vector_value_column_prefix=comparison_vector_value_column_prefix,
-            bayes_factor_column_prefix=bayes_factor_column_prefix,
+            match_weight_column_prefix=match_weight_column_prefix,
             term_frequency_adjustment_column_prefix=term_frequency_adjustment_column_prefix,
             unique_id_column_name=unique_id_column_name,
             _source_dataset_column_name=source_dataset_column_name,
@@ -389,7 +414,7 @@ class Settings:
         return cols
 
     @staticmethod
-    def columns_to_select_for_bayes_factor_parts(
+    def columns_to_select_for_match_weight_parts(
         unique_id_input_columns: List[InputColumn],
         comparisons: List[Comparison],
         retain_matching_columns: bool,
@@ -403,7 +428,7 @@ class Settings:
 
         for cc in comparisons:
             cols.extend(
-                cc._columns_to_select_for_bayes_factor_parts(
+                cc._columns_to_select_for_match_weight_parts(
                     retain_matching_columns,
                     retain_intermediate_calculation_columns,
                 )
@@ -569,14 +594,13 @@ class Settings:
             **current_settings,
         }
 
-    def match_weights_chart(self, as_dict=False):
-        records = self._parameters_as_detailed_records
+    def match_weights_chart(self):
+        return MatchWeightsChart(
+            self._parameters_as_detailed_records,
+        )
 
-        return match_weights_chart(records, as_dict=as_dict)
-
-    def m_u_parameters_chart(self, as_dict=False):
-        records = self._parameters_as_detailed_records
-        return m_u_parameters_chart(records, as_dict=as_dict)
+    def m_u_parameters_chart(self):
+        return MUParametersChart(self._parameters_as_detailed_records)
 
     def _columns_without_estimated_parameters_message(self):
         message_lines = []
@@ -640,15 +664,3 @@ class Settings:
             f"assessed as follows:\n\n{comparison_desc_str}"
         )
         return desc
-
-    @property
-    def salting_required(self):
-        # see https://github.com/duckdb/duckdb/discussions/9710
-        # in duckdb to parallelise we need salting
-        if self._sql_dialect_str == "duckdb":
-            return True
-
-        for br in self._blocking_rules_to_generate_predictions:
-            if isinstance(br, SaltedBlockingRule):
-                return True
-        return False

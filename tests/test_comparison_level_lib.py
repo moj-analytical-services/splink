@@ -9,7 +9,7 @@ from .decorator import mark_with_dialects_excluding, mark_with_dialects_includin
 @mark_with_dialects_excluding()
 def test_columns_reversed_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -104,7 +104,7 @@ def test_columns_reversed_level(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_perc_difference(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     perc_comparison = cl.CustomComparison(
         comparison_description="amount",
@@ -162,7 +162,7 @@ def test_perc_difference(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     levenshtein_comparison = cl.CustomComparison(
         comparison_description="name",
@@ -227,7 +227,7 @@ def test_levenshtein_level(test_helpers, dialect):
 @mark_with_dialects_excluding("postgres")
 def test_damerau_levenshtein_level(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     damerau_levenshtein_comparison = cl.CustomComparison(
         comparison_description="name",
@@ -297,7 +297,7 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_absolute_difference(test_helpers, dialect):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     abs_comparison = cl.CustomComparison(
         comparison_description="amount",
@@ -370,7 +370,7 @@ def test_cosine_similarity_level(test_helpers, dialect):
     import pyarrow as pa
 
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     EMBEDDING_DIMENSION = 4
 

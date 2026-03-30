@@ -2,7 +2,6 @@
 tags:
   - Spark
   - DuckDB
-  - Athena
   - SQLite
   - Postgres
   - Backends
@@ -66,14 +65,6 @@ If working with Databricks note that the Splink development team does not have a
 
 See the Spark [deduplication example notebook](../../../demos/examples/spark/deduplicate_1k_synthetic.ipynb) for an example of how Splink works with Spark.
 
-### :simple-amazonaws: Athena
-
-Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for fuzzy matching functions, see [Presto](https://prestodb.io/docs/current/functions/string.html). At this time, the Athena backend is being used sparingly by the Splink development team so receives minimal levels of support.
-
-In addition, from a development perspective, the necessity for an AWS connection makes testing Athena code more difficult, so there may be occasional bugs that would normally be caught by our testing framework.
-
-See the Athena [deduplication example notebook](../../../demos/examples/athena/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with Athena.
-
 ### :simple-sqlite: SQLite
 
 SQLite is similar to DuckDB in that it is, generally, more suited to smaller datasets. SQLite is simple to setup and can be run directly in a Jupyter notebook, but is not as performant as DuckDB. SQLite has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../../api_docs/comparison_level_library.md), with gaps in array and date comparisons. String fuzzy matching, while not native to SQLite is available via python UDFs which has some [performance implications](#additional-information-for-specific-backends). SQLite is not actively been used by the Splink team so receives minimal levels of support.
@@ -104,14 +95,6 @@ Once you have initialised the `linker` object, there is no difference in the sub
     from splink import Linker, SparkAPI
 
     linker = Linker(df, settings, db_api=SparkAPI(...))
-    ```
-
-=== ":simple-amazonaws: Athena"
-
-    ```python
-    from splink import Linker, AthenaAPI
-
-    linker = Linker(df, settings, db_api=AthenaAPI(...))
     ```
 
 === ":simple-sqlite: SQLite"

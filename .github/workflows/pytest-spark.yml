@@ -2,9 +2,6 @@ name: Pytest Spark
 
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "tests/**"
@@ -51,4 +48,4 @@ jobs:
       - name: Run tests
         id: run_tests
         run: |
-            uv run python -m pytest -v --durations=0 -m "spark_only" tests/
+          uv run python -m pytest -v --durations=0 -m "spark_only" tests/

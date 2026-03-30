@@ -6,6 +6,29 @@ import splink.internals.comparison_library as cl
 from splink import DuckDBAPI, SettingsCreator, block_on
 from splink.internals.exceptions import EMTrainingException
 from splink.internals.linker import Linker
+from tests.decorator import mark_with_dialects_excluding
+
+
+@mark_with_dialects_excluding()
+def test_expectation_maximisation_runs(fake_1000, dialect, test_helpers):
+    helper = test_helpers[dialect]
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+    )
+    db_api = helper.db_api()
+    df_sdf = db_api.register(fake_1000)
+    linker = Linker(df_sdf, settings)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name")
+    )
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("surname")
+    )
 
 
 def test_clear_error_when_empty_block():
@@ -29,8 +52,9 @@ def test_clear_error_when_empty_block():
     }
 
     db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df_sdf, settings)
     linker._debug_mode = True
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.training.estimate_parameters_using_expectation_maximisation(
@@ -55,13 +79,15 @@ def test_estimate_without_term_frequencies():
         ],
     }
 
-    db_api = DuckDBAPI()
+    db_api_1 = DuckDBAPI()
+    df_sdf_1 = db_api_1.register(df)
 
-    linker_0 = Linker(df, settings, db_api=db_api)
+    linker_0 = Linker(df_sdf_1, settings)
 
-    db_api = DuckDBAPI()
+    db_api_2 = DuckDBAPI()
+    df_sdf_2 = db_api_2.register(df)
 
-    linker_1 = Linker(df, settings, db_api=db_api)
+    linker_1 = Linker(df_sdf_2, settings)
 
     session_fast = linker_0.training.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
@@ -149,7 +175,10 @@ def test_fix_probabilities():
         additional_columns_to_retain=["cluster"],
     )
 
-    linker = Linker(df, settings, db_api=DuckDBAPI())
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+
+    linker = Linker(df_sdf, settings)
 
     linker.training.estimate_u_using_random_sampling(max_pairs=1e4)
 

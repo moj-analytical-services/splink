@@ -1,9 +1,6 @@
-name: mypy
+name: typechecking
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - splink/**
       - tests/**
@@ -12,8 +9,8 @@ on:
 permissions: {}
 
 jobs:
-  mypy:
-    name: mypy
+  typecheck:
+    name: typecheck
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,8 +36,12 @@ jobs:
 
       - name: Install dependencies
         id: install_dependencies
-        run: uv sync --python 3.12
+        run: uv sync --python 3.12 --group typechecking-dev
 
       - name: Run mypy
         id: mypy
-        run: uv run mypy splink
+        run: make typecheck
+
+      - name: Run ty, but don't fail on error
+        id: ty
+        run: make typecheck-dev

@@ -188,7 +188,7 @@ def test_composition_outputs(test_helpers, dialect):
         "comparisons": [full_name],
     }
 
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     pred = linker.inference.predict()
     out = pred.as_pandas_dataframe().sort_values(by=["unique_id_l", "unique_id_r"])

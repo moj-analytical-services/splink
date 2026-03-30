@@ -422,7 +422,6 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     sqls_2 = predict_from_comparison_vectors_sqls_using_settings(
         linker._settings_obj,
         include_clerical_match_score=True,
-        sql_infinity_expression=linker._infinity_expression,
     )
 
     sqls.extend(sqls_2)

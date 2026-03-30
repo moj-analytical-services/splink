@@ -820,6 +820,7 @@ class DateOfBirthComparison(ComparisonCreator):
                         threshold=threshold,
                         metric=metric,
                         input_is_string=self.input_is_string,
+                        datetime_format=self.datetime_format,
                     ).configure(
                         label_for_charts=f"Abs date difference <= {threshold} {metric}"
                     )

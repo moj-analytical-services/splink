@@ -1,6 +1,6 @@
 [project]
 name = "splink"
-version = "4.0.16"
+version = "5.0.0.dev2"
 description = "Fast probabilistic data linkage at scale"
 authors = [
     { name = "Robin Linacre", email = "robinlinacre@hotmail.com" },
@@ -14,42 +14,47 @@ requires-python = ">=3.9.0,<4.0.0"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "pandas>=1.3.5",
     "duckdb>=0.9.2",
     "sqlglot>=17.6.0",
     "altair>=5.0.1",
     "Jinja2>=3.0.3",
-    "numpy>=1.19.3",
     "igraph>=0.11.2",
 ]
 
 [project.optional-dependencies]
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
-athena = ["awswrangler"]
+# sqlite doesn't _require_ this functionality, but it's used if we want to use fuzzy levels
+sqlite = ["rapidfuzz>=3.10.0"]
 postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
+pyarrow = ["pyarrow>=15.0.0"]
+# TODO: pandas optional
 
 [project.urls]
 Homepage = "https://github.com/moj-analytical-services/splink"
 Repository = "https://github.com/moj-analytical-services/splink"
 
 [dependency-groups]
-# dummy 'core' group to allow us to declare conflict with athena
-# awswrangler upper-pins packages including pyarrow, so ruins our resolution otherwise
-# additionally allows us to easily check package functionality with just these installed
+# allows us to easily check package functionality with just these installed
 # (and not the rest of our required dependencies)
-core = ["sqlglot", "pandas"]
+core = ["sqlglot", "duckdb"]
 demos = [
     "ipywidgets>=8.1.7",
+    "jupytext>=1.18.1",
     "nbmake>=1.5.5",
+    "pseudopeople>=1.2.6",
     "pytest-xdist>=3.6.1",
 ]
+# dev deliberately doesn't include spark, so we can opt in to different spark versions
 dev = [
-    "tabulate>=0.8.9",
-    "pyspark>=3.5.0",
-    "sqlalchemy>=2.0.0",
-    "psycopg2-binary>=2.9.0",
+    { "include-group" = "linting" },
+    { "include-group" = "testing-core" },
+    { "include-group" = "typechecking" },
 ]
+spark-3 = [
+  "pyspark<4; python_version < '3.12'",
+]
+spark-4 = ["pyspark>=4.0.0"]
 docs = [
     "griffe>=1.4.0",
     # keep jinja2 relaxed so it doesn't constrain us in rest of dev
@@ -68,32 +73,45 @@ docs = [
     "pymdown-extensions>=10.15",
 ]
 linting = ["ruff>=0.4.2,<0.5"]
-testing = [
+pandas = ["pandas>=1.3.5", "numpy>=1.19.3"]
+postgres = [
+    "psycopg2-binary>=2.9.0",
+    "sqlalchemy>=2.0.0",
+]
+sqlite = [
+    "rapidfuzz>=3.10.0",
+]
+testing-core = [
     "pytest>=7.3",
-    "pyarrow>=7.0.0",
+    "pyarrow>=15.0.0",
     "networkx>=2.5.1",
-    "rapidfuzz>=3.0.0",
     "pytest-cov>=5.0.0",
+    { "include-group" = "postgres" },
+    { "include-group" = "sqlite" },
+    # TODO: temporary measure until we can depanda tests
+    { "include-group" = "pandas" },
+]
+testing = [
+    { "include-group" = "testing-core" },
+    { "include-group" = "spark-4" },
 ]
 typechecking = ["mypy==1.9.0"]
+# we will migrate to ty, but won't happen all at once, so run in parallel
+typechecking-dev = [
+    "ty>=0.0.21",
+]
 
 [tool.uv]
 default-groups = [
-    "core",
     "dev",
-    "linting",
-    "testing",
-    "typechecking",
+    "spark-4"
 ]
 conflicts = [
   [
-    { group = "core" },
-    { extra = "athena" }
+    { group = "spark-4" },
+    { group = "spark-3" },
   ]
 ]
-# problematic constraints, and we do not test or otherwise use this
-# we are removing in Splink 5 anyway
-exclude-dependencies = ["awswrangler"]
 
 [tool.uv.dependency-groups]
 docs = { requires-python = ">=3.13" }
@@ -130,6 +148,13 @@ lint.ignore = [
     "B006", # Do not use mutable data structures for argument defaults"
 ]
 
+# really we want to lint docs with a looser set of rules (such as not enforcing the same line length)
+# for now we simply exclude
+exclude = [
+    "docs",
+]
+
+
 [tool.pytest.ini_options]
 addopts = ["-m default"]
 markers = [
@@ -147,6 +172,8 @@ markers = [
     "sqlite_only",
     "postgres",
     "postgres_only",
+# optional dependendencies beyond backends
+    "needs_pandas",
 ]
 
 [tool.mypy]

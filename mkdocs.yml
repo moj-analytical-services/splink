@@ -143,8 +143,6 @@ nav:
         - Pseudopeople Census to ACS link: "demos/examples/duckdb_no_test/pseudopeople-acs.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/examples/spark/deduplicate_1k_synthetic.ipynb"
-      - Athena:
-        - Deduplicate 50k rows historical persons: "demos/examples/athena/deduplicate_50k_synthetic.ipynb"
       - SQLite:
         - Deduplicate 50k rows historical persons: "demos/examples/sqlite/deduplicate_50k_synthetic.ipynb"
   - API Docs:

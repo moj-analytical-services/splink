@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 import pytest
 
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
@@ -74,23 +74,23 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     def make_dummy_frame(row_count):
         # don't need meaningful differences as only interested in total count
-        return pd.DataFrame(
-            data={
+        return pa.Table.from_pydict(
+            {
                 "unique_id": range(0, row_count),
-                "forename": "Claire",
-                "surname": "Brown",
+                "forename": ["Claire"] * row_count,
+                "surname": ["Brown"] * row_count,
             },
         )
 
     dfs = list(map(make_dummy_frame, frame_sizes))
 
     db_api = DuckDBAPI()
+    dfs_sdf = [db_api.register(df) for df in dfs]
 
     res_dict = count_comparisons_from_blocking_rule(
-        table_or_tables=dfs,
+        dfs_sdf,
         blocking_rule="1=1",
         link_type=link_type,
-        db_api=db_api,
         unique_id_column_name="unique_id",
     )
 
@@ -98,9 +98,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     # compare with count from each frame
     pipeline = CTEPipeline()
+    dfs_sdf_dict = {df.templated_name: df for df in dfs_sdf}
     sql = vertically_concatenate_sql(
-        input_tables=db_api.register_multiple_tables(dfs),
-        salting_required=False,
+        input_tables=dfs_sdf_dict,
         source_dataset_input_column=InputColumn(
             "source_dataset", sqlglot_dialect_str="duckdb"
         ),

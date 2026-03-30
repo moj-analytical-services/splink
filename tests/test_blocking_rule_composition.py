@@ -1,6 +1,6 @@
 import pytest
 
-from splink.internals.blocking_rule_library import And, CustomRule, Not, Or, block_on
+from splink.internals.blocking_rule_library import And, Not, Or, block_on
 from splink.internals.input_column import _get_dialect_quotes
 
 from .decorator import mark_with_dialects_excluding
@@ -26,27 +26,6 @@ def binary_composition_internals(clause, comp_fun, dialect):
         comp_fun(block_on("first_name"), block_on("surname")),
     ).get_blocking_rule(dialect)
     assert level.blocking_rule_sql == f"NOT ({exact_match_sql})"
-
-    # Check salting outputs
-    # salting included in the composition function
-    salt = (
-        comp_fun(
-            CustomRule("l.help2 = r.help2"),
-            CustomRule("l.help3 = r.help3", salting_partitions=10),
-            block_on("help4"),
-            salting_partitions=4,
-        ).get_blocking_rule(dialect)
-    ).salting_partitions
-
-    # salting included in one of the levels
-    salt_2 = comp_fun(
-        CustomRule("l.help2 = r.help2"),
-        CustomRule("l.help3 = r.help3", salting_partitions=3),
-        block_on("help4"),
-    ).salting_partitions
-
-    assert salt == 4
-    assert salt_2 == 3
 
     with pytest.raises(ValueError):
         comp_fun()

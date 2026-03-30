@@ -51,7 +51,7 @@ class LinkerMisc:
                 json.dump(model_dict, f, indent=4)
         return model_dict
 
-    def query_sql(self, sql, output_type="pandas"):
+    def query_sql(self, sql, output_type="splink_df"):
         """
         Run a SQL query against your backend database and return
         the resulting output.
@@ -74,7 +74,7 @@ class LinkerMisc:
         pipeline = CTEPipeline()
         pipeline.enqueue_sql(sql, output_tablename_templated)
         splink_dataframe = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline, use_cache=False
+            pipeline
         )
 
         if output_type in ("splink_df", "splinkdf"):

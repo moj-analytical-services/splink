@@ -295,14 +295,12 @@
       "examples": [
         "spark",
         "duckdb",
-        "athena",
         "sqlite",
         "postgres"
       ],
       "enum": [
         "spark",
         "duckdb",
-        "athena",
         "sqlite",
         "postgres"
       ]

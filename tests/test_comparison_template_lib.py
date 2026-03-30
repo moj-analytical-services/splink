@@ -6,7 +6,7 @@ from tests.literal_utils import run_comparison_vector_value_tests
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_email_comparison(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -52,7 +52,7 @@ def test_email_comparison(dialect, test_helpers):
 @mark_with_dialects_excluding("sqlite")
 def test_date_of_birth_comparison_levels(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -108,7 +108,7 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers):
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_postcode_comparison(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -156,7 +156,7 @@ def test_postcode_comparison(dialect, test_helpers):
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_name_comparison(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {
@@ -202,7 +202,7 @@ def test_name_comparison(dialect, test_helpers):
 @mark_with_dialects_excluding("postgres", "sqlite")
 def test_forename_surname_comparison(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.extra_linker_args()["db_api"]
+    db_api = helper.db_api()
 
     test_cases = [
         {

@@ -31,11 +31,6 @@ conda install -c conda-forge splink
         pip install 'splink[spark]'
         ```
 
-    === ":simple-amazonaws: Athena"
-        ```sh
-        pip install 'splink[athena]'
-        ```
-
     === ":simple-postgresql: PostgreSQL"
         ```sh
         pip install 'splink[postgres]'

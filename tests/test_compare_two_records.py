@@ -19,7 +19,6 @@ def test_compare_two_records_1(test_helpers, dialect):
     # - User provides a city tf tble
     # - But first_name tf table derived from input data
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_parquet(
         "./tests/datasets/fake_1000_from_splink_demos_strip_datetypes.parquet"
@@ -43,7 +42,7 @@ def test_compare_two_records_1(test_helpers, dialect):
         retain_matching_columns=True,
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     city_tf = pd.DataFrame(
         [
@@ -96,7 +95,6 @@ def test_compare_two_records_2(test_helpers, dialect):
     # - But specific values provided in input data, which take precedence
 
     helper = test_helpers[dialect]
-    Linker = helper.Linker
 
     df = helper.load_frame_from_parquet(
         "./tests/datasets/fake_1000_from_splink_demos_strip_datetypes.parquet"
@@ -120,7 +118,7 @@ def test_compare_two_records_2(test_helpers, dialect):
         retain_matching_columns=True,
     )
 
-    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 
     city_tf = pd.DataFrame(
         [

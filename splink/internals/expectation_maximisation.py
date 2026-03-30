@@ -4,11 +4,11 @@ import logging
 import time
 from typing import Any, List, cast
 
-import pandas as pd
-
 from splink.internals.comparison import Comparison
 from splink.internals.comparison_level import ComparisonLevel
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.duckdb.dataframe import DuckDBDataFrame
+from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
 from splink.internals.input_column import InputColumn
 from splink.internals.m_u_records_to_parameters import m_u_records_to_lookup_dict
 from splink.internals.pipeline import CTEPipeline
@@ -117,48 +117,27 @@ def compute_proportions_for_new_parameters_sql(table_name):
     return sql
 
 
-def compute_proportions_for_new_parameters_pandas(
-    m_u_df: pd.DataFrame,
-) -> List[dict[str, Any]]:
-    data = m_u_df.copy()
-    m_prob = "m_probability"
-    u_prob = "u_probability"
-    data.rename(columns={"m_count": m_prob, "u_count": u_prob}, inplace=True)
-
-    random_records = data[
-        data.output_column_name == "_probability_two_random_records_match"
-    ]
-    data = data[data.output_column_name != "_probability_two_random_records_match"]
-
-    data = data[data.comparison_vector_value != -1]
-    index = data.index.tolist()
-
-    m_probs = data.loc[index, m_prob] / data.groupby("output_column_name")[
-        m_prob
-    ].transform("sum")
-    u_probs = data.loc[index, u_prob] / data.groupby("output_column_name")[
-        u_prob
-    ].transform("sum")
-
-    data.loc[index, m_prob] = m_probs
-    data.loc[index, u_prob] = u_probs
-
-    data = pd.concat([random_records, data])
-
-    return data.to_dict("records")
-
-
 def compute_proportions_for_new_parameters(
-    m_u_df: pd.DataFrame,
+    df_params: SplinkDataFrame,
 ) -> List[dict[str, Any]]:
-    # Execute with duckdb if installed, otherwise default to pandas
-    try:
-        import duckdb
+    # Need to register df_params in duckdb to do computation
+    # to do so, we convert to:
+    # duckdb if that is our backend
+    # arrow if available
+    # failing that pandas
 
-        sql = compute_proportions_for_new_parameters_sql("m_u_df")
-        return duckdb.query(sql).to_df().to_dict("records")
-    except (ImportError, ModuleNotFoundError):
-        return compute_proportions_for_new_parameters_pandas(m_u_df)
+    con = df_params.db_api.duckdb_con
+    if isinstance(df_params, DuckDBDataFrame):
+        table_name = df_params.physical_name
+    else:
+        # TODO: as_pyarrow wrap
+        arrow_frame = df_params.as_pyarrow_table()
+        table_name = "m_u_df"
+        con.register(table_name, arrow_frame)
+
+    sql = compute_proportions_for_new_parameters_sql(table_name)
+    ddb_relation = con.query(sql)
+    return record_dicts_from_relation(ddb_relation)
 
 
 def populate_m_u_from_lookup(
@@ -260,8 +239,6 @@ def expectation_maximisation(
     # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
 
-    sql_infinity_expression = db_api.sql_dialect.infinity_expression
-
     max_iterations = training_settings.max_iterations
     em_convergence = training_settings.em_convergence
     logger.info("")  # newline
@@ -285,7 +262,6 @@ def expectation_maximisation(
                 core_model_settings.comparisons,
                 probability_two_random_records_match,
                 sql_dialect=db_api.sql_dialect,
-                sql_infinity_expression=db_api.sql_dialect.infinity_expression,
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
@@ -293,7 +269,6 @@ def expectation_maximisation(
                 core_model_settings=core_model_settings,
                 sql_dialect=db_api.sql_dialect,
                 training_mode=True,
-                sql_infinity_expression=sql_infinity_expression,
             )
 
         for sql_info in sqls:
@@ -310,8 +285,7 @@ def expectation_maximisation(
         else:
             pipeline.append_input_dataframe(df_comparison_vector_values)
             df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        param_records = df_params.as_pandas_dataframe()
-        param_records = compute_proportions_for_new_parameters(param_records)
+        param_records = compute_proportions_for_new_parameters(df_params)
 
         df_params.drop_table_from_database_and_remove_from_cache()
 

@@ -1,6 +1,6 @@
 import random
 
-import pandas as pd
+import pyarrow as pa
 
 import splink.internals.comparison_library as cl
 from splink.internals.blocking import materialise_exploded_id_tables
@@ -9,14 +9,14 @@ from tests.decorator import mark_with_dialects_including
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_simple_example_link_only(test_helpers, dialect):
-    data_l = pd.DataFrame.from_dict(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "gender": "m", "postcode": ["2612", "2000"]},
             {"unique_id": 2, "gender": "m", "postcode": ["2612", "2617"]},
             {"unique_id": 3, "gender": "f", "postcode": ["2617"]},
         ]
     )
-    data_r = pd.DataFrame.from_dict(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 4, "gender": "m", "postcode": ["2617", "2600"]},
             {"unique_id": 5, "gender": "f", "postcode": ["2000"]},
@@ -37,21 +37,21 @@ def test_simple_example_link_only(test_helpers, dialect):
     }
     ## the pairs returned by the first blocking rule are (1,6),(2,4),(2,6)
     ## the additional pairs returned by the second blocking rule are (1,4),(3,5)
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
-    linker.debug_mode = False
-    returned_triples = linker.inference.predict().as_pandas_dataframe()[
-        ["unique_id_l", "unique_id_r", "match_key"]
-    ]
-    returned_triples = {
-        (unique_id_l, unique_id_r, match_key)
-        for unique_id_l, unique_id_r, match_key in zip(
-            returned_triples.unique_id_l,
-            returned_triples.unique_id_r,
-            returned_triples.match_key,
+    linker = helper.linker_with_registration([data_l, data_r], settings)
+    returned_triples = (
+        linker.inference.predict()
+        .as_pyarrow_table()
+        .select(
+            [
+                "unique_id_l",
+                "unique_id_r",
+                "match_key",
+            ]
         )
-    }
+    )
+    actual_triples = {tuple(t.values()) for t in returned_triples.to_pylist()}
     expected_triples = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
-    assert expected_triples == returned_triples
+    assert expected_triples == actual_triples
 
 
 def generate_array_based_datasets_helper(
@@ -70,7 +70,7 @@ def generate_array_based_datasets_helper(
                     col[-1].append(j)
                     random.shuffle(col[-1])
             results_dict[f"array_column_{i}"] = col
-        datasets.append(pd.DataFrame.from_dict(results_dict))
+        datasets.append(pa.Table.from_pydict(results_dict))
     return datasets
 
 
@@ -78,13 +78,15 @@ def generate_array_based_datasets_helper(
 def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
     input_data_l, input_data_r = generate_array_based_datasets_helper()
-    input_data_l = input_data_l.assign(
-        unique_id=[str(cluster_id) + "-0" for cluster_id in input_data_l.cluster]
+    input_data_l = input_data_l.append_column(
+        "unique_id",
+        [[f"{cluster_id}-0" for cluster_id in input_data_l.column("cluster")]],
     )
-    input_data_r = input_data_r.assign(
-        unique_id=[str(cluster_id) + "-1" for cluster_id in input_data_r.cluster]
+    input_data_r = input_data_r.append_column(
+        "unique_id",
+        [[f"{cluster_id}-1" for cluster_id in input_data_r.column("cluster")]],
     )
-    input_data = pd.concat([input_data_l, input_data_r])
+    input_data = pa.concat_tables([input_data_l, input_data_r])
     blocking_rules = [
         {
             "blocking_rule": """l.array_column_0 = r.array_column_0
@@ -109,23 +111,27 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
         "additional_columns_to_retain": ["cluster"],
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
-    linker = helper.Linker(input_data, settings, **helper.extra_linker_args())
-    linker.debug_mode = False
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    linker = helper.linker_with_registration(input_data, settings)
+    predict_dict = linker.inference.predict().as_dict()
     ## check that there are no duplicates in the output
-    assert (
-        df_predict.drop_duplicates(["unique_id_l", "unique_id_r"]).shape[0]
-        == df_predict.shape[0]
-    )
+    assert len(
+        set(zip(predict_dict["unique_id_l"], predict_dict["unique_id_r"]))
+    ) == len(predict_dict["unique_id_l"])
 
     ## check that the output contains no links with match_key=1,
     ## since all pairs returned by the second rule should also be
     ## returned by the first rule and so should be filtered out
-    assert df_predict[df_predict.match_key == 1].shape[0] == 0
+    assert not [mk for mk in predict_dict["match_key"] if mk == 1]
 
     ## check that all 1000 true matches are in the output
     ## (this is guaranteed by how the data was generated)
-    assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
+    assert (
+        sum(
+            c_l == c_r
+            for c_l, c_r in zip(predict_dict["cluster_l"], predict_dict["cluster_r"])
+        )
+        == 1000
+    )
 
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
@@ -156,31 +162,36 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
         "additional_columns_to_retain": ["cluster"],
         "comparisons": [cl.ArrayIntersectAtSizes("array_column_1", [1])],
     }
-    linker = helper.Linker(
-        [input_data_l, input_data_r], settings, **helper.extra_linker_args()
-    )
-    linker.debug_mode = False
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    linker = helper.linker_with_registration([input_data_l, input_data_r], settings)
+    predict_dict = linker.inference.predict().as_dict()
 
     ## check that we get no within-dataset links
-    within_dataset_links = df_predict[
-        df_predict.source_dataset_l == df_predict.source_dataset_r
-    ].shape[0]
+    within_dataset_links = sum(
+        s_l == s_r
+        for s_l, s_r in zip(
+            predict_dict["source_dataset_l"], predict_dict["source_dataset_r"]
+        )
+    )
     assert within_dataset_links == 0
 
     ## check that no pair of ids appears twice in the output
-    assert (
-        df_predict.drop_duplicates(["cluster_l", "cluster_r"]).shape[0]
-        == df_predict.shape[0]
+    assert len(set(zip(predict_dict["cluster_l"], predict_dict["cluster_r"]))) == len(
+        predict_dict["cluster_l"]
     )
 
     ## check that the second blocking rule returns no matches,
     ## since every pair matching the second rule will also match the first,
     ## and so should be filtered out
-    assert df_predict[df_predict.match_key == 1].shape[0] == 0
+    assert sum(mk == 1 for mk in predict_dict["match_key"]) == 0
 
     ## check that all 1000 true matches are returned
-    assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
+    assert (
+        sum(
+            c_l == c_r
+            for c_l, c_r in zip(predict_dict["cluster_l"], predict_dict["cluster_r"])
+        )
+        == 1000
+    )
 
 
 @mark_with_dialects_including("duckdb", pass_dialect=True)
@@ -205,9 +216,9 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         {"unique_id": 4, "first_name": "John", "surname": "Doe", "postcode": ["C"]},
     ]
 
-    df_1 = pd.DataFrame(data_1)
-    df_2 = pd.DataFrame(data_2)
-    df_3 = pd.DataFrame(data_3)
+    df_1 = pa.Table.from_pylist(data_1)
+    df_2 = pa.Table.from_pylist(data_2)
+    df_3 = pa.Table.from_pylist(data_3)
 
     settings = {
         "link_type": "link_only",
@@ -227,25 +238,26 @@ def test_link_only_unique_id_ambiguity(test_helpers, dialect):
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [df_1, df_2, df_3],
         settings,
         input_table_aliases=["a_", "b_", "c_"],
-        **helper.extra_linker_args(),
     )
-    returned_triples = linker.inference.predict().as_pandas_dataframe()[
-        [
-            "source_dataset_l",
-            "unique_id_l",
-            "source_dataset_r",
-            "unique_id_r",
-            "match_key",
-        ]
-    ]
+    returned_triples = (
+        linker.inference.predict()
+        .as_pyarrow_table()
+        .select(
+            [
+                "source_dataset_l",
+                "unique_id_l",
+                "source_dataset_r",
+                "unique_id_r",
+                "match_key",
+            ]
+        )
+    )
 
-    actual_triples = {
-        tuple(t) for t in returned_triples.to_dict(orient="split")["data"]
-    }
+    actual_triples = {tuple(t.values()) for t in returned_triples.to_pylist()}
     assert len(returned_triples) == 5
 
     rule1_tuples = {
@@ -268,13 +280,13 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "first_name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "first_name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "first_name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "first_name": "Bob", "postcode": ["C"]},
@@ -292,7 +304,7 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_split_tables(
         "comparisons": [cl.ExactMatch("first_name")],
     }
 
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration([data_l, data_r], settings)
 
     exploding = materialise_exploded_id_tables(
         link_type="two_dataset_link_only",
@@ -323,13 +335,13 @@ def test_two_dataset_link_only_predict_orders_by_min_synthetic_source_dataset(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_first = pd.DataFrame(
+    data_first = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
             {"unique_id": 2, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
         ]
     )
-    data_second = pd.DataFrame(
+    data_second = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "surname": "Smith", "postcode": ["A"]},
             {"unique_id": 20, "name": "Bob", "surname": "Brown", "postcode": ["B"]},
@@ -348,20 +360,19 @@ def test_two_dataset_link_only_predict_orders_by_min_synthetic_source_dataset(
         "comparisons": [cl.ExactMatch("name")],
     }
 
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [data_first, data_second],
         settings,
         input_table_aliases=["df_2", "df_1"],
-        **helper.extra_linker_args(),
     )
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_dict()
 
     actual_pairs = set(
         zip(
-            df_predict.source_dataset_l,
-            df_predict.unique_id_l,
-            df_predict.source_dataset_r,
-            df_predict.unique_id_r,
+            df_predict["source_dataset_l"],
+            df_predict["unique_id_l"],
+            df_predict["source_dataset_r"],
+            df_predict["unique_id_r"],
         )
     )
     expected_pairs = {
@@ -377,13 +388,13 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_literal_sds_filte
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_first = pd.DataFrame(
+    data_first = pa.Table.from_pylist(
         [
             {"unique_id": 1, "sds": 2, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "sds": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_second = pd.DataFrame(
+    data_second = pa.Table.from_pylist(
         [
             {"unique_id": 10, "sds": 1, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "sds": 1, "name": "Bob", "postcode": ["C"]},
@@ -402,11 +413,10 @@ def test_two_dataset_link_only_exploding_materialised_sql_uses_literal_sds_filte
         "comparisons": [cl.ExactMatch("name")],
     }
 
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [data_first, data_second],
         settings,
         input_table_aliases=["df_2", "df_1"],
-        **helper.extra_linker_args(),
     )
 
     exploding = materialise_exploded_id_tables(
@@ -434,9 +444,15 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_1 = pd.DataFrame([{"unique_id": 1, "first_name": "Alice", "postcode": ["A"]}])
-    data_2 = pd.DataFrame([{"unique_id": 2, "first_name": "Alice", "postcode": ["A"]}])
-    data_3 = pd.DataFrame([{"unique_id": 3, "first_name": "Alice", "postcode": ["A"]}])
+    data_1 = pa.Table.from_pylist(
+        [{"unique_id": 1, "first_name": "Alice", "postcode": ["A"]}]
+    )
+    data_2 = pa.Table.from_pylist(
+        [{"unique_id": 2, "first_name": "Alice", "postcode": ["A"]}]
+    )
+    data_3 = pa.Table.from_pylist(
+        [{"unique_id": 3, "first_name": "Alice", "postcode": ["A"]}]
+    )
 
     settings = {
         "link_type": "link_only",
@@ -449,9 +465,7 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
         "comparisons": [cl.ExactMatch("first_name")],
     }
 
-    linker = helper.Linker(
-        [data_1, data_2, data_3], settings, **helper.extra_linker_args()
-    )
+    linker = helper.linker_with_registration([data_1, data_2, data_3], settings)
 
     exploding = materialise_exploded_id_tables(
         link_type="link_only",
@@ -476,13 +490,13 @@ def test_link_only_three_dataset_exploding_materialised_sql_keeps_standard_filte
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialect):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "name": "Alice", "postcode": ["D"]},
@@ -499,31 +513,30 @@ def test_two_dataset_link_only_exploding_with_input_aliases(test_helpers, dialec
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker(
+    linker = helper.linker_with_registration(
         [data_l, data_r],
         settings,
         input_table_aliases=["left_ds", "right_ds"],
-        **helper.extra_linker_args(),
     )
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    df_predict = linker.inference.predict().as_dict()
 
-    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    pairs = set(zip(df_predict["unique_id_l"], df_predict["unique_id_r"]))
     assert pairs == {(1, 10), (2, 12)}
-    assert set(df_predict.source_dataset_l) == {"left_ds"}
-    assert set(df_predict.source_dataset_r) == {"right_ds"}
+    assert set(df_predict["source_dataset_l"]) == {"left_ds"}
+    assert set(df_predict["source_dataset_r"]) == {"right_ds"}
 
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, dialect):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
             {"unique_id": 3, "name": "Alice", "postcode": ["Z"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 11, "name": "Alice", "postcode": ["Z", "Q"]},
@@ -540,10 +553,10 @@ def test_two_dataset_link_only_exploding_predict_expected_pairs(test_helpers, di
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    linker = helper.linker_with_registration([data_l, data_r], settings)
+    df_predict = linker.inference.predict().as_dict()
 
-    pairs = set(zip(df_predict.unique_id_l, df_predict.unique_id_r))
+    pairs = set(zip(df_predict["unique_id_l"], df_predict["unique_id_r"]))
     assert pairs == {(1, 10), (3, 11)}
 
 
@@ -552,13 +565,13 @@ def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
     test_helpers, dialect
 ):
     helper = test_helpers[dialect]
-    data_l = pd.DataFrame(
+    data_l = pa.Table.from_pylist(
         [
             {"unique_id": 1, "name": "Alice", "postcode": ["A", "B"]},
             {"unique_id": 2, "name": "Bob", "postcode": ["C"]},
         ]
     )
-    data_r = pd.DataFrame(
+    data_r = pa.Table.from_pylist(
         [
             {"unique_id": 10, "name": "Alice", "postcode": ["B"]},
             {"unique_id": 12, "name": "Bob", "postcode": ["C"]},
@@ -574,8 +587,8 @@ def test_two_dataset_link_only_exploding_deterministic_link_expected_pairs(
         ],
         "comparisons": [cl.ExactMatch("name")],
     }
-    linker = helper.Linker([data_l, data_r], settings, **helper.extra_linker_args())
-    deterministic = linker.inference.deterministic_link().as_pandas_dataframe()
+    linker = helper.linker_with_registration([data_l, data_r], settings)
+    deterministic = linker.inference.deterministic_link().as_dict()
 
-    pairs = set(zip(deterministic.unique_id_l, deterministic.unique_id_r))
+    pairs = set(zip(deterministic["unique_id_l"], deterministic["unique_id_r"]))
     assert pairs == {(1, 10), (2, 12)}

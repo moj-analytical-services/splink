@@ -11,33 +11,30 @@ from tests.decorator import mark_with_dialects_excluding
 @mark_with_dialects_excluding("sqlite")
 def test_completeness_chart(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    completeness_chart(df, db_api)
-    completeness_chart(df, db_api, cols=["first_name", "surname"])
-    completeness_chart(df, db_api, cols=["first_name"], table_names_for_chart=["t1"])
+    df_sdf = db_api.register(df)
+    completeness_chart(df_sdf)
+    completeness_chart(df_sdf, cols=["first_name", "surname"])
+    completeness_chart(df_sdf, cols=["first_name"], table_names_for_chart=["t1"])
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_completeness_chart_mismatched_columns(dialect, test_helpers):
+def test_completeness_chart_mismatched_columns(dialect, test_helpers, fake_1000):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
 
-    df_l = helper.load_frame_from_csv(
-        "./tests/datasets/fake_1000_from_splink_demos.csv"
-    )
-    df_r = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df_r.rename(columns={"surname": "surname_2"}, inplace=True)
-    df_r = helper.convert_frame(df_r)
+    df_l_sdf = db_api.register(fake_1000)
+    df_r_sdf = db_api.register(fake_1000.rename_columns(names={"surname": "surname_2"}))
 
     with raises(SplinkException):
-        completeness_chart([df_l, df_r], db_api)
+        completeness_chart([df_l_sdf, df_r_sdf])
 
 
 @mark_with_dialects_excluding("sqlite")
 def test_completeness_chart_complex_columns(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
     df = pd.DataFrame(
         {
             "id": [1, 2, 3, 4, 5],
@@ -52,18 +49,18 @@ def test_completeness_chart_complex_columns(dialect, test_helpers):
             ],
         }
     )
-    df = helper.convert_frame(df)
+    df_sdf = db_api.register(df)
     first = helper.arrays_from
     # check completeness when we have more complicated column constructs, such as
     # indexing into array columns
-    completeness_chart(df, db_api, cols=["first_name", "surname", f"city_arr[{first}]"])
+    completeness_chart(df_sdf, cols=["first_name", "surname", f"city_arr[{first}]"])
 
 
 @mark_with_dialects_excluding("sqlite")
 def test_completeness_chart_source_dataset(dialect, test_helpers):
     helper = test_helpers[dialect]
-    db_api = helper.DatabaseAPI(**helper.db_api_args())
+    db_api = helper.db_api()
     df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df_pd["source_dataset"] = "fake_1000"
-    df = helper.convert_frame(df_pd)
-    completeness_chart(df, db_api)
+    df_sdf = db_api.register(df_pd)
+    completeness_chart(df_sdf)

@@ -32,10 +32,6 @@ The documentation is [here](https://duckdb.org/docs/api/python/reference/#duckdb
 
 Note that performance will generally be substantially slower than using native DuckDB functions.  Consider using vectorised UDFs were possible - see [here](https://github.com/duckdb/duckdb/pull/7171).
 
-## :simple-amazonaws: Athena
-
-Athena supports [UDFs written in Java](https://docs.aws.amazon.com/athena/latest/ug/querying-udf.html), however these have not yet been implemented in Splink.
-
 ## :simple-sqlite: SQLite
 
 Python UDFs can be registered to a SQLite connection using the [`create_function` function](https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.create_function).  An example is as follows:

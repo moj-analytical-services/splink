@@ -2,9 +2,6 @@ name: Pytest SQLite
 
 on:
   pull_request:
-    branches:
-      - master
-      - "**dev"
     paths:
       - "splink/**"
       - "tests/**"

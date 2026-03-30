@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.database_api import AcceptableInputTableType
+from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
@@ -15,6 +17,7 @@ from splink.internals.term_frequencies import (
     term_frequencies_for_single_column_sql,
 )
 from splink.internals.vertically_concatenate import (
+    compute_df_concat_with_tf,
     enqueue_df_concat,
 )
 
@@ -89,6 +92,86 @@ class LinkerTableManagement:
 
         return tf_df
 
+    def compute_df_concat_with_tf(self) -> SplinkDataFrame:
+        """Compute concatenated input records with term frequency columns."""
+        pipeline = CTEPipeline()
+
+        df = compute_df_concat_with_tf(self._linker, pipeline, use_cache=False)
+
+        return df
+
+    def register_blocked_pairs_for_predict(
+        self,
+        input_data: AcceptableInputTableType,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+        overwrite: bool = False,
+    ) -> SplinkDataFrame:
+        """Register pre-computed blocked pairs for use in prediction.
+
+        This method allows you to register a blocked pairs table in Splink's cache
+        so it will be used by `linker.inference.predict_chunk()` rather than
+        being recomputed.
+
+        You must explicitly provide the chunk identifiers the table corresponds
+        to. Use `(1, 1)` for both `left_chunk` and `right_chunk` when
+        registering a full blocked-pairs table with no effective chunking.
+
+        Once blocked pairs have been manually registered, use
+        `linker.inference.predict_chunk()` with the corresponding chunk.
+        `linker.inference.predict()` is not supported in this workflow.
+
+        Args:
+            input_data (AcceptableInputTableType): The blocked pairs table to register.
+                This can be either a dictionary, pandas dataframe, pyarrow table, or
+                a spark dataframe.
+            left_chunk: Tuple of (chunk_number, total_chunks) for the left side.
+                Use `(1, 1)` for the full table.
+            right_chunk: Tuple of (chunk_number, total_chunks) for the right side.
+                Use `(1, 1)` for the full table.
+            overwrite (bool, optional): Overwrite the table in the underlying database
+                if it exists. Defaults to False.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the registered blocked pairs
+                table.
+
+        Examples:
+            ```py
+            blocked_pairs_df = pd.read_parquet("path/to/blocked_pairs.parquet")
+            linker.table_management.register_blocked_pairs_for_predict(
+                blocked_pairs_df,
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
+            predictions = linker.inference.predict_chunk(
+                left_chunk=(1, 1),
+                right_chunk=(1, 1),
+            )
+            ```
+        """
+        if left_chunk is None or right_chunk is None:
+            raise SplinkException(
+                "register_blocked_pairs_for_predict() requires both left_chunk "
+                "and right_chunk. Use (1, 1) for a full blocked-pairs table."
+            )
+
+        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
+        table_name_physical = f"{cache_key}_{self._linker._cache_uid}"
+
+        splink_dataframe = self.register_table(
+            input_data,
+            table_name_physical,
+            overwrite=overwrite,
+        )
+        splink_dataframe.templated_name = "__splink__blocked_id_pairs"
+        splink_dataframe.metadata["registered_for_predict"] = True
+        splink_dataframe.metadata["registered_left_chunk"] = left_chunk
+        splink_dataframe.metadata["registered_right_chunk"] = right_chunk
+        self._linker._intermediate_table_cache[cache_key] = splink_dataframe
+
+        return splink_dataframe
+
     def invalidate_cache(self):
         """Invalidate the Splink cache.  Any previously-computed tables
         will be recomputed.
@@ -115,7 +198,7 @@ class LinkerTableManagement:
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
 
-    def register_table_input_nodes_concat_with_tf(
+    def register_df_concat_with_tf(
         self, input_data: AcceptableInputTableType, overwrite: bool = False
     ) -> SplinkDataFrame:
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
@@ -275,4 +358,6 @@ class LinkerTableManagement:
                 pipeline
         """
 
-        return self._linker._db_api.register_table(input_table, table_name, overwrite)
+        return self._linker._db_api._create_backend_table(
+            input_table, table_name, overwrite
+        )

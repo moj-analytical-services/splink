@@ -80,14 +80,16 @@ class CTEPipeline:
     def _replace_templated_identifier_with_physical_name(
         sql: str, templated_name: str, physical_name: str
     ) -> str:
-        # Replace only whole SQL identifiers, preserving optional matching quotes.
+        # Replace only whole SQL identifiers, preserving matching quotes.
         # This matches cases like:
         #   from __splink__df_concat_with_tf)
         #   from __splink__df_concat_with_tf,
         #   from "__splink__df_concat_with_tf" as l
         # but not longer identifiers like:
         #   __splink__df_concat_with_tf_left
-        pattern = rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}(?P=quote)(?!\w)'
+        pattern = (
+            rf'(?<!\w)(?P<quote>["`]?){re.escape(templated_name)}' rf"(?P=quote)(?!\w)"
+        )
 
         def _replacement(match: re.Match[str]) -> str:
             quote = match.group("quote")
@@ -111,7 +113,7 @@ class CTEPipeline:
             )
         return sql
 
-    def _resolved_queue(self) -> List[CTE]:
+    def _resolved_queue(self):
         return [
             CTE(
                 self._replace_templated_references_with_physical_names(cte.sql),

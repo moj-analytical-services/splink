@@ -1,4 +1,4 @@
-import pandas as pd
+import pyarrow as pa
 
 import splink.internals.comparison_level_library as cll
 from splink.internals.linker import Linker
@@ -54,17 +54,15 @@ settings = {
 
 @mark_with_dialects_including("spark")
 def test_udf_registration(spark_api):
-    spark = spark_api.spark
     # Integration test to ensure spark loads our udfs without any issues
+    # need to load this carefully so that we get the types right
+    spark = spark_api.spark
     df_spark = spark.read.csv(
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
 
-    linker = Linker(
-        df_spark,
-        settings,
-        spark_api,
-    )
+    df_sdf = spark_api.register(df_spark)
+    linker = Linker(df_sdf, settings)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -78,16 +76,16 @@ def test_udf_registration(spark_api):
 def test_damerau_levenshtein(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_dam_lev = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_dam_lev,
-        settings,
-        spark_api,
-        input_table_aliases="test_dl_df",
-    )
+    df_sdf = spark_api.register(df_spark_dam_lev, source_dataset_name="test_dl_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select
@@ -110,7 +108,7 @@ def test_damerau_levenshtein(spark_api):
     decimals = 4
 
     # Test damerau-levenshtein outputs are correct
-    dl_w_out = tuple(udf_out.dl_test.round(decimals=decimals))
+    dl_w_out = tuple(map(lambda x: round(x, decimals), udf_out.as_dict()["dl_test"]))
     dl_expected = (2.0, 4.0, 0.0, 5.0, 2.0, 4.0)
 
     assert dl_w_out == dl_expected
@@ -165,16 +163,16 @@ def test_damerau_levenshtein(spark_api):
 def test_jaro(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_jaro = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_jaro,
-        settings,
-        spark_api,
-        input_table_aliases="test_jaro_df",
-    )
+    df_sdf = spark_api.register(df_spark_jaro, source_dataset_name="test_jaro_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select
@@ -197,7 +195,9 @@ def test_jaro(spark_api):
     decimals = 4
 
     # Test jaro-winkler outputs are correct
-    jaro_w_out = tuple(udf_out.jaro_test.round(decimals=decimals))
+    jaro_w_out = tuple(
+        map(lambda x: round(x, decimals), udf_out.as_dict()["jaro_test"])
+    )
     jaro_expected = (0.7833, 0.0, 1.0, 0.0, 0.7833, 0.0)
 
     assert jaro_w_out == jaro_expected
@@ -247,16 +247,16 @@ def test_jaro(spark_api):
 def test_jaro_winkler(spark_api):
     spark = spark_api.spark
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=["test_names"])
-    df["id"] = df.index
+    df = pa.Table.from_pydict(
+        {
+            "test_names": data,
+            "id": range(len(data)),
+        }
+    )
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
-    linker = Linker(
-        df_spark_jaro_winkler,
-        settings,
-        spark_api,
-        input_table_aliases="test_jw_df",
-    )
+    df_sdf = spark_api.register(df_spark_jaro_winkler, source_dataset_name="test_jw_df")
+    linker = Linker(df_sdf, settings)
 
     sql = """
         select
@@ -279,7 +279,9 @@ def test_jaro_winkler(spark_api):
     decimals = 4
 
     # Test jaro-winkler outputs are correct
-    jaro_w_out = tuple(udf_out.jaro_winkler_test.round(decimals=decimals))
+    jaro_w_out = tuple(
+        map(lambda x: round(x, decimals), udf_out.as_dict()["jaro_winkler_test"])
+    )
     jaro_expected = (0.8483, 0.0, 1.0, 0.0, 0.8483, 0.0)
 
     assert jaro_w_out == jaro_expected

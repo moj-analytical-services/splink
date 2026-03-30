@@ -2,7 +2,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from collections import UserDict
 
-import pandas as pd
+import duckdb
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -22,36 +22,66 @@ class TestHelper(ABC):
     def db_api_args(self):
         return {}
 
-    def extra_linker_args(self):
-        # create fresh api each time
-        return {"db_api": self.DatabaseAPI(**self.db_api_args())}
-
     @property
     def date_format(self):
         return "yyyy-mm-dd"
 
-    @abstractmethod
-    def convert_frame(self, df):
-        pass
+    def db_api(self):
+        return self.DatabaseAPI(**self.db_api_args())
 
     def load_frame_from_csv(self, path):
-        return pd.read_csv(path)
+        import pyarrow.csv as pv
+
+        return pv.read_csv(
+            path,
+            convert_options=pv.ConvertOptions(strings_can_be_null=True),
+        )
 
     def load_frame_from_parquet(self, path):
-        return pd.read_parquet(path)
+        import pyarrow.parquet as pq
+
+        return pq.read_table(path)
 
     @property
     def arrays_from(self) -> int:
         return 1
 
+    def linker_with_registration(
+        self, data, settings, input_table_aliases=None, **kwargs
+    ):
+        db_api = self.db_api()
+
+        data_list = list(data) if isinstance(data, (list, tuple)) else [data]
+
+        if input_table_aliases is None:
+            aliases = [None] * len(data_list)
+        elif isinstance(input_table_aliases, str):
+            aliases = [input_table_aliases]
+        else:
+            aliases = list(input_table_aliases)
+
+        sdfs = [db_api.register(d, alias) for d, alias in zip(data_list, aliases)]
+
+        input_frames = sdfs[0] if len(sdfs) == 1 else sdfs
+        return Linker(input_frames, settings, **kwargs)
+
 
 class DuckDBTestHelper(TestHelper):
+    def __init__(self):
+        self.con = duckdb.connect()
+
     @property
     def DatabaseAPI(self):
         return DuckDBAPI
 
-    def convert_frame(self, df):
-        return df
+    def db_api_args(self):
+        return {"connection": self.con}
+
+    def load_frame_from_csv(self, path):
+        return self.con.read_csv(path)
+
+    def load_frame_from_parquet(self, path):
+        return self.con.read_parquet(path)
 
     @property
     def date_format(self):
@@ -74,11 +104,6 @@ class SparkTestHelper(TestHelper):
             "num_partitions_on_repartition": 2,
             "break_lineage_method": "parquet",
         }
-
-    def convert_frame(self, df):
-        spark_frame = self.spark.createDataFrame(df)
-        spark_frame.persist()
-        return spark_frame
 
     def load_frame_from_csv(self, path):
         df = self.spark.read.csv(path, header=True)
@@ -115,17 +140,6 @@ class SQLiteTestHelper(TestHelper):
         cls._frame_counter += 1
         return name
 
-    def convert_frame(self, df):
-        name = self._get_input_name()
-        df.to_sql(name, self.con, if_exists="replace")
-        return name
-
-    def load_frame_from_csv(self, path):
-        return self.convert_frame(super().load_frame_from_csv(path))
-
-    def load_frame_from_parquet(self, path):
-        return self.convert_frame(super().load_frame_from_parquet(path))
-
 
 class PostgresTestHelper(TestHelper):
     _frame_counter = 0
@@ -149,32 +163,6 @@ class PostgresTestHelper(TestHelper):
         name = f"input_alias_{cls._frame_counter}"
         cls._frame_counter += 1
         return name
-
-    def convert_frame(self, df):
-        from sqlalchemy.dialects import postgresql
-        from sqlalchemy.types import INTEGER, TEXT
-
-        name = self._get_input_name()
-        # workaround to handle array column conversion
-        # manually mark any list columns so type is handled correctly
-        dtypes = {}
-        for colname, values in df.items():
-            # TODO: will fail if first value is null
-            if isinstance(values[0], list):
-                # TODO: will fail if first array is empty
-                initial_array_val = values[0][0]
-                if isinstance(initial_array_val, int):
-                    dtypes[colname] = postgresql.ARRAY(INTEGER)
-                elif isinstance(initial_array_val, str):
-                    dtypes[colname] = postgresql.ARRAY(TEXT)
-        df.to_sql(name, con=self.engine, if_exists="replace", dtype=dtypes)
-        return name
-
-    def load_frame_from_csv(self, path):
-        return self.convert_frame(super().load_frame_from_csv(path))
-
-    def load_frame_from_parquet(self, path):
-        return self.convert_frame(super().load_frame_from_parquet(path))
 
 
 class SplinkTestException(Exception):

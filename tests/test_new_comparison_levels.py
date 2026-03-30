@@ -41,17 +41,18 @@ comparison_city = {
         cll.ElseLevel(),
     ],
 }
+dob_year_as_string = ColumnExpression("dob").cast_to_string().substr(1, 4)
+dob_century_as_string = ColumnExpression("dob").cast_to_string().substr(1, 2)
 comparison_email = {
     "output_column_name": "dob",
     "comparison_levels": [
         cll.NullLevel("dob"),
         cll.ExactMatchLevel("dob"),
-        cll.CustomLevel("substr(dob_l, 1, 4) = substr(dob_r, 1, 4)", "year matches"),
-        {
-            "sql_condition": "substr(dob_l, 1, 2) = substr(dob_r, 1, 2)",
-            "label_for_charts": "century matches",
-        },
-        cll.LevenshteinLevel("dob", 3),
+        cll.ExactMatchLevel(dob_year_as_string),
+        cll.ExactMatchLevel(dob_century_as_string).configure(
+            label_for_charts="century matches"
+        ),
+        cll.LevenshteinLevel(ColumnExpression("dob").cast_to_string(), 3),
         cll.ElseLevel(),
     ],
 }
@@ -76,7 +77,7 @@ def test_cll_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.Linker(df, cll_settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, cll_settings)
     linker.inference.predict()
 
 
@@ -149,8 +150,9 @@ comparison_city = cl.ExactMatch("city").configure(u_probabilities=[0.6, 0.4])
 comparison_email = cl.LevenshteinAtThresholds("email", 3).configure(
     m_probabilities=[0.8, 0.1, 0.1]
 )
-comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
-
+comparison_dob = cl.LevenshteinAtThresholds(
+    ColumnExpression("dob").cast_to_string(), [1, 2]
+)
 cl_settings = {
     "link_type": "dedupe_only",
     "comparisons": [
@@ -171,7 +173,7 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, cl_settings)
 
     linker.inference.predict()
 
@@ -201,7 +203,7 @@ def test_regex_fall_through(dialect, test_helpers):
         ],
     }
 
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
     df_e = linker.inference.predict().as_pandas_dataframe()
 
     # only entry should be in Else level
@@ -231,7 +233,7 @@ def test_null_pattern_match(dialect, test_helpers):
         ],
     }
 
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
     df_e = linker.inference.predict().as_pandas_dataframe()
 
     # only entry should be in Null level
@@ -247,7 +249,7 @@ comparison_name_cl = cl.NameComparison(
 
 comparison_dob_cl = cl.DateOfBirthComparison(
     ColumnExpression("dob"),
-    input_is_string=True,
+    input_is_string=False,
 )
 comparison_forenamesurname_cl = cl.ForenameSurnameComparison(
     "first_name",
@@ -275,7 +277,7 @@ def test_ctl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.Linker(df, cl_settings_2, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, cl_settings_2)
     linker.inference.predict()
 
 
