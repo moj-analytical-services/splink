@@ -27,11 +27,6 @@ from tests.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def _spark_worker_count() -> int:
-    cpu_count = os.cpu_count() or 2
-    return max(2, min(4, cpu_count))
-
-
 def pytest_collection_modifyitems(items, config):
     # any tests without backend-group markers will always run
     marks = {gp for groups in dialect_groups.values() for gp in groups}
@@ -54,7 +49,6 @@ def _make_spark():
 
     from splink.internals.spark.jar_location import similarity_jar_location
 
-    worker_count = _spark_worker_count()
     base_tmp = os.environ.get("RUNNER_TEMP", tempfile.gettempdir())
     scratch_dir = tempfile.mkdtemp(prefix="splink-spark-", dir=base_tmp)
     checkpoint_dir = os.path.join(scratch_dir, "checkpoints")
@@ -64,10 +58,10 @@ def _make_spark():
     os.makedirs(warehouse_dir, exist_ok=True)
 
     conf = SparkConf(False)
-    conf.setMaster(f"local[{worker_count}]")
+    conf.setMaster("local[*]")
     conf.setAppName("splink-tests")
-    conf.set("spark.default.parallelism", str(worker_count))
-    conf.set("spark.sql.shuffle.partitions", str(worker_count * 2))
+    conf.set("spark.default.parallelism", "1")
+    conf.set("spark.sql.shuffle.partitions", "1")
     conf.set("spark.ui.enabled", "false")
     conf.set("spark.ui.showConsoleProgress", "false")
     conf.set("spark.local.dir", scratch_dir)
@@ -91,26 +85,7 @@ def _cleanup_spark(spark):
     return
 
 
-def _reset_spark_state(spark):
-    spark.catalog.clearCache()
-    for table in spark.catalog.listTables():
-        if table.isTemporary:
-            spark.catalog.dropTempView(table.name)
-
-    try:
-        for table in spark.catalog.listTables("global_temp"):
-            if table.isTemporary:
-                spark.catalog.dropGlobalTempView(table.name)
-    except Exception:
-        pass
-
-    try:
-        spark.catalog.setCurrentDatabase("default")
-    except Exception:
-        pass
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def spark():
     spark = _make_spark()
     yield spark
@@ -122,16 +97,14 @@ def spark():
 def spark_api(spark):
     from splink.internals.spark.database_api import SparkAPI
 
-    yield SparkAPI(spark_session=spark, num_partitions_on_repartition=2)
+    yield SparkAPI(spark_session=spark, num_partitions_on_repartition=1)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
-    df = df.cache()
-    df.count()
+    df.persist()
     yield df
-    df.unpersist()
 
 
 @pytest.fixture(scope="session")
@@ -172,30 +145,18 @@ def unique_per_test_table_name(request):
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
 @pytest.fixture
-def test_helpers(pg_engine, request):
+def test_helpers(pg_engine):
     # LazyDict to lazy-load helpers
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
     helper_dict = LazyDict(
         duckdb=(DuckDBTestHelper, []),
-        spark=(SparkTestHelper, [lambda: request.getfixturevalue("spark")]),
+        spark=(SparkTestHelper, [_make_spark]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )
     yield helper_dict
-
-
-@pytest.fixture(autouse=True)
-def _cleanup_shared_spark_state(request):
-    yield
-
-    uses_shared_spark = any(
-        name in request.fixturenames for name in ("spark", "spark_api", "df_spark")
-    )
-
-    if not uses_shared_spark and "dialect" in request.fixturenames:
-        uses_shared_spark = request.getfixturevalue("dialect") == "spark"
-
-    if uses_shared_spark:
-        _reset_spark_state(request.getfixturevalue("spark"))
+    # if someone accessed spark, cleanup!
+    if "spark" in helper_dict.accessed:
+        _cleanup_spark(helper_dict["spark"].spark)
