@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
@@ -46,6 +46,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+PredictUntrainedWarningMode = Literal["auto", "always", "never"]
+
 
 class LinkerInference:
     """Use your Splink model to make predictions (perform inference). Accessed via
@@ -62,6 +64,16 @@ class LinkerInference:
             for cache_key, splink_df in cache.items()
             if splink_df.metadata.get("registered_for_predict")
         ]
+
+    @staticmethod
+    def _validate_predict_warning_mode(
+        warning_mode: PredictUntrainedWarningMode,
+    ) -> None:
+        if warning_mode not in {"auto", "always", "never"}:
+            raise ValueError(
+                "warning_mode must be one of 'auto', 'always' or 'never'. "
+                f"Supplied value was {warning_mode!r}."
+            )
 
     def _get_or_compute_blocked_pairs_for_predict_chunk(
         self,
@@ -211,6 +223,7 @@ class LinkerInference:
         materialise_after_computing_term_frequencies: bool = True,
         num_chunks_left: int | None = None,
         num_chunks_right: int | None = None,
+        warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -242,6 +255,10 @@ class LinkerInference:
                 This can help manage memory usage for large datasets.
             num_chunks_right (int, optional): If specified along with num_chunks_left,
                 the prediction will be split into chunks and processed iteratively.
+            warning_mode (str, optional): Control emission of the warning shown when
+                predict runs with untrained model parameters. Use "auto" to emit
+                once per call to `predict()`, "always" to force emission once per
+                call to `predict()`, or "never" to suppress this warning.
 
         Examples:
             ```py
@@ -262,6 +279,8 @@ class LinkerInference:
         registered_blocked_pairs_cache_keys = (
             self._registered_blocked_pairs_cache_keys()
         )
+        self._validate_predict_warning_mode(warning_mode)
+
         if registered_blocked_pairs_cache_keys:
             registered_keys = ", ".join(sorted(registered_blocked_pairs_cache_keys))
             raise SplinkException(
@@ -279,13 +298,17 @@ class LinkerInference:
 
         # If just one chunk on each side, call predict_chunk directly
         if n_left == 1 and n_right == 1:
-            return self.predict_chunk(
+            predictions = self.predict_chunk(
                 left_chunk=(1, 1),
                 right_chunk=(1, 1),
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
                 materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+                warning_mode="never",
             )
+            if warning_mode in {"auto", "always"}:
+                self._linker._predict_warning()
+            return predictions
 
         # Otherwise iterate through all chunk combinations
 
@@ -309,6 +332,7 @@ class LinkerInference:
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
                 materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
+                warning_mode="never",
             )
             chunk_results.append(chunk_result)
 
@@ -340,6 +364,9 @@ class LinkerInference:
             pipeline
         )
 
+        if warning_mode in {"auto", "always"}:
+            self._linker._predict_warning()
+
         # Clean up intermediate chunk tables
         for chunk_df in chunk_results:
             chunk_df.drop_table_from_database_and_remove_from_cache()
@@ -353,6 +380,7 @@ class LinkerInference:
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
         materialise_after_computing_term_frequencies: bool = True,
+        warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
         of the data.
@@ -379,6 +407,10 @@ class LinkerInference:
                 joined to any term frequencies which have been asked
                 for in the settings object. If False, this will be
                 computed as part of a large CTE pipeline. Defaults to True
+            warning_mode (str, optional): Control emission of the warning shown when
+                predict runs with untrained model parameters. Use "auto" to emit
+                once per direct call to `predict_chunk()`, "always" to force
+                emission, or "never" to suppress this warning.
 
         Examples:
             ```py
@@ -400,6 +432,7 @@ class LinkerInference:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons
                 for the specified chunk.
         """
+        self._validate_predict_warning_mode(warning_mode)
 
         pipeline = CTEPipeline()
         df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
@@ -444,7 +477,8 @@ class LinkerInference:
         if not blocked_pairs_from_cache:
             blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
-        self._linker._predict_warning()
+        if warning_mode in {"auto", "always"}:
+            self._linker._predict_warning()
 
         return predictions
 
