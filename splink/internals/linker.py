@@ -353,7 +353,7 @@ class Linker:
                 "You have called predict(), but there are some parameter "
                 "estimates which have neither been estimated or specified in your "
                 "settings dictionary.  To produce predictions the following"
-                " untrained trained parameters will use default values."
+                " untrained parameters will use default values."
             )
             messages = self._settings_obj._not_trained_messages()
 
