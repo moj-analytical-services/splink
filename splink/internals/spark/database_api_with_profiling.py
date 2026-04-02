@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 from os import PathLike
 from pathlib import Path
@@ -130,30 +129,6 @@ class SparkAPIWithProfiling(SparkAPI):
             ]
         )
 
-    def _should_break_lineage(self, templated_name: str) -> bool:
-        regex_to_persist = [
-            r"__splink__df_comparison_vectors",
-            r"__splink__df_concat_sample",
-            r"__splink__df_concat_with_tf",
-            r"__splink__df_predict",
-            r"__splink__df_tf_.+",
-            r"__splink__df_representatives.*",
-            r"__splink__representatives.*",
-            r"__splink__df_neighbours",
-            r"__splink__df_connected_components_df",
-            r"__splink__blocked_id_pairs",
-            r"__splink__marginal_exploded_ids_blocking_rule.*",
-            r"__splink__nodes_in_play",
-            r"__splink__edges_in_play",
-            r"__splink__clusters_at_threshold",
-            r"__splink__distinct_clusters_at_threshold",
-            r"__splink__clusters_at_all_thresholds",
-            r"__splink__clustering_output_final",
-            r"__splink__stable_nodes_at_new_threshold",
-            r"__splink__filtered_neighbours.*",
-        ]
-        return re.fullmatch(r"|".join(regex_to_persist), templated_name) is not None
-
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         if self._should_profile_sql(sql):
             self._pending_profile_path = self._next_query_profile_path(physical_name)
@@ -172,44 +147,15 @@ class SparkAPIWithProfiling(SparkAPI):
             )
 
         try:
-            spark_df = self._repartition_if_needed(table, templated_name)
-            profile_source = spark_df
             start_time_ns = perf_counter_ns()
-
-            if self._should_break_lineage(templated_name):
-                if self.break_lineage_method == "persist":
-                    spark_df = spark_df.persist()
-                    profile_source = spark_df
-                    profile_source.count()
-                elif self.break_lineage_method == "checkpoint":
-                    spark_df = spark_df.checkpoint()
-                elif self.break_lineage_method == "parquet":
-                    checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
-                    write_path = os.path.join(checkpoint_dir, physical_name)
-                    spark_df.write.mode("overwrite").parquet(write_path)
-                    spark_df = self.spark.read.parquet(write_path)
-                elif self.break_lineage_method == "delta_lake_files":
-                    checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
-                    write_path = os.path.join(checkpoint_dir, physical_name)
-                    spark_df.write.mode("overwrite").format("delta").save()
-                    spark_df = self.spark.read.format("delta").load(write_path)
-                elif self.break_lineage_method == "delta_lake_table":
-                    write_path = f"{self.splink_data_store}.{physical_name}"
-                    spark_df.write.mode("overwrite").saveAsTable(write_path)
-                    spark_df = self.spark.table(write_path)
-                else:
-                    raise ValueError(
-                        f"Unknown break_lineage_method: {self.break_lineage_method}"
-                    )
-            else:
-                profile_source.count()
-
-            if templated_name == "__splink__blocked_id_pairs":
-                spark_df = spark_df.repartition(self.num_partitions_on_repartition)
+            spark_df = self._break_lineage_and_repartition(
+                table, templated_name, physical_name
+            )
+            spark_df.count()
 
             duration_ns = perf_counter_ns() - start_time_ns
             profile_path.write_text(
-                self._spark_profile_text(profile_source, duration_ns),
+                self._spark_profile_text(spark_df, duration_ns),
                 encoding="utf-8",
             )
 
