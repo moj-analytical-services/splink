@@ -13,6 +13,7 @@ from splink.internals.duckdb.duckdb_helpers.duckdb_helpers import (
     record_dicts_from_relation,
 )
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import indent_sql, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -32,12 +33,20 @@ def term_frequencies_for_single_column_sql(
     input_column: InputColumn, table_name: str = "__splink__df_concat"
 ) -> str:
     col_name = input_column.name
+    select_cols = [
+        col_name,
+        f"""
+        cast(count(*) as float8) / (
+            select count({col_name}) as total
+            from {table_name}
+        ) as {input_column.tf_name}
+        """,
+    ]
+    select_cols_str = ",\n".join(indent_sql(col) for col in select_cols)
 
     sql = f"""
     select
-    {col_name}, cast(count(*) as float8) / (select
-        count({col_name}) as total from {table_name})
-            as {input_column.tf_name}
+{select_cols_str}
     from {table_name}
     where {col_name} is not null
     group by {col_name}
@@ -87,11 +96,12 @@ def _join_tf_to_input_table_sql(
             f"left join {tbl} on {input_tablename}.{col.name} = {tbl}.{col.name}"
         )
 
-    select_cols_str = ", ".join(select_cols)
+    select_cols_str = ",\n".join(indent_sql(col) for col in select_cols)
     left_joins_str = "\n".join(left_joins)
 
     sql = f"""
-    select {select_cols_str}
+    select
+{select_cols_str}
     from {input_tablename}
     {left_joins_str}
     """
@@ -182,7 +192,7 @@ def tf_chart_data(
         )
         levels_chart_data_sqls.append(levels_chart_data_sql)
 
-    full_sql = " UNION ALL ".join(levels_chart_data_sqls)
+    full_sql = join_sql_with_union_all(levels_chart_data_sqls)
     chart_data_table = con.sql(full_sql)
 
     df_table_name = (

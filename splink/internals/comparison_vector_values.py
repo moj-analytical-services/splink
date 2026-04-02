@@ -4,6 +4,7 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import indent_sql
 from splink.internals.unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
@@ -22,15 +23,15 @@ def compute_comparison_vector_values_sql(
     See [the fastlink paper](https://imai.fas.harvard.edu/research/files/linkage.pdf)
     for more details of what is meant by comparison vectors.
     """
-    select_cols_expr = ",".join(columns_to_select_for_comparison_vector_values)
-
+    select_columns = list(columns_to_select_for_comparison_vector_values)
     if include_clerical_match_score:
-        clerical_match_score = ", clerical_match_score"
-    else:
-        clerical_match_score = ""
+        select_columns.append("clerical_match_score")
+
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     sql = f"""
-    select {select_cols_expr} {clerical_match_score}
+    select
+{select_cols_expr}
     from __splink__df_blocked
     """
 
@@ -61,7 +62,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     else:
         unique_id_columns = [unique_id_input_column]
 
-    select_cols_expr = ", \n".join(columns_to_select_for_blocking)
+    select_columns = [*columns_to_select_for_blocking, "b.match_key"]
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     # Where there are large numbers of unmatched records, the DuckDB query planner
     # can struggle with the double inner join below.  It should
@@ -101,7 +103,8 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     # using the __splink__blocked_id_pairs as an associated (junction) table
     # That is, it does the join, but doesn't compute the comparison vectors
     sql = f"""
-    select {select_cols_expr}, b.match_key
+    select
+{select_cols_expr}
     from __splink__blocked_id_pairs as b
     inner join {input_tablename_l} as l
     on {uid_l_expr} = b.join_key_l
@@ -111,16 +114,16 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     sqls.append({"sql": sql, "output_table_name": "blocked_with_cols"})
 
-    select_cols_expr = ", \n".join(columns_to_select_for_comparison_vector_values)
-
+    select_columns = list(columns_to_select_for_comparison_vector_values)
     if include_clerical_match_score:
-        clerical_match_score = ", clerical_match_score"
-    else:
-        clerical_match_score = ""
+        select_columns.append("clerical_match_score")
+
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     # The second table computes the comparison vectors from these aliases
     sql = f"""
-    select {select_cols_expr} {clerical_match_score}
+    select
+{select_cols_expr}
     from blocked_with_cols
     """
 

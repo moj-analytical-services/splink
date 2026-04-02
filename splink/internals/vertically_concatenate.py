@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import indent_sql, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -41,41 +42,33 @@ def vertically_concatenate_sql(
     df_obj = next(iter(input_tables.values()))
     columns = df_obj.columns_escaped
 
-    select_columns_sql = ", ".join(columns)
-
     source_dataset_column_already_exists = False
     if source_dataset_input_column:
         source_dataset_column_already_exists = (
             source_dataset_input_column in df_obj.columns
         )
 
-    select_columns_sql = ", ".join(columns)
-    if len(input_tables) > 1:
-        sqls_to_union = []
+    sqls = []
+    for df_obj in input_tables.values():
+        select_expressions = list(columns)
+        if len(input_tables) > 1 and not source_dataset_column_already_exists:
+            select_expressions.insert(
+                0, f"'{df_obj.source_dataset_name}' as source_dataset"
+            )
 
-        for df_obj in input_tables.values():
-            if source_dataset_column_already_exists:
-                create_sds_if_needed = ""
-            else:
-                create_sds_if_needed = (
-                    f"'{df_obj.source_dataset_name}' as source_dataset,"
-                )
+        select_columns_sql = ",\n".join(indent_sql(expr) for expr in select_expressions)
 
-            sql = f"""
-            select
-            {create_sds_if_needed}
-            {select_columns_sql}
-            from {df_obj.physical_name}
-            """
-            sqls_to_union.append(sql)
-        sql = " UNION ALL ".join(sqls_to_union)
-    else:
         sql = f"""
-            select {select_columns_sql}
+            select
+{select_columns_sql}
             from {df_obj.physical_name}
             """
+        sqls.append(sql)
 
-    return sql
+    if len(sqls) == 1:
+        return sqls[0]
+
+    return join_sql_with_union_all(sqls)
 
 
 def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:

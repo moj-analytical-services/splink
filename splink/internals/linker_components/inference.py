@@ -25,6 +25,7 @@ from splink.internals.find_matches_to_new_records import (
 from splink.internals.misc import (
     ascii_uid,
     ensure_is_list,
+    join_sql_with_union_all,
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import (
@@ -347,7 +348,7 @@ class LinkerInference:
         union_parts = [
             f"SELECT * FROM {chunk_df.physical_name}" for chunk_df in chunk_results
         ]
-        union_sql = " UNION ALL ".join(union_parts)
+        union_sql = join_sql_with_union_all(union_parts)
 
         pipeline = CTEPipeline()
         pipeline.enqueue_sql(union_sql, "__splink__df_predict")

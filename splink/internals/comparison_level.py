@@ -89,7 +89,7 @@ def _get_and_subclauses(expr: Expression) -> list[Expression]:
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     # or if no AND, return expression as a list, e.g. 'A' -> ['A']
     if isinstance(expr, sqlglot.exp.And):
-        return cast(list[Expression], list(expr.flatten()))
+        return [cast(Expression, subclause) for subclause in expr.flatten()]
     return [expr]
 
 
@@ -660,11 +660,10 @@ class ComparisonLevel:
 
     def _match_weight_sql(self, gamma_column_name: str) -> str:
         sql = f"""
-        WHEN
-        {gamma_column_name} = {self.comparison_vector_value}
-        THEN cast({self._match_weight} as float8)
+        WHEN {gamma_column_name} = {self.comparison_vector_value} THEN
+            cast({self._match_weight} as float8)
         """
-        return dedent(sql)
+        return dedent(sql).strip()
 
     def _tf_adjustment_sql(
         self, gamma_column_name: str, comparison_levels: list[ComparisonLevel]
@@ -689,7 +688,9 @@ class ComparisonLevel:
             or self._tf_adjustment_weight == 0
             or self._is_else_level
         ):
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(0 as float8)"
+            sql = f"""
+            WHEN {gamma_colname_value_is_this_level} THEN cast(0 as float8)
+            """
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
@@ -714,14 +715,16 @@ class ComparisonLevel:
 
             log2_u_prob = math.log2(u_prob_exact_match)
 
-            sql = f"""WHEN  {gamma_colname_value_is_this_level} then
-            (CASE WHEN {tf_adjustment_exists}
-            THEN
-            cast({self._tf_adjustment_weight} as float8) * (
-                cast({log2_u_prob} as float8) - log2({tf_u_value_sql})
-            )
-            ELSE cast(0 as float8)
-            END)"""
+            sql = f"""
+            WHEN {gamma_colname_value_is_this_level} THEN
+                CASE
+                    WHEN {tf_adjustment_exists} THEN
+                        cast({self._tf_adjustment_weight} as float8) * (
+                            cast({log2_u_prob} as float8) - log2({tf_u_value_sql})
+                        )
+                    ELSE cast(0 as float8)
+                END
+            """
         return dedent(sql).strip()
 
     def as_dict(self):

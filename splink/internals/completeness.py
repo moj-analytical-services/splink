@@ -7,6 +7,7 @@ from splink.internals.charts import (
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
+from splink.internals.misc import join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.splinkdataframe_utils import (
@@ -75,7 +76,7 @@ def completeness_data(
         """
         sqls.append(sql)
 
-    sql = " union all ".join(sqls)
+    sql = join_sql_with_union_all(sqls)
 
     pipeline.enqueue_sql(sql, "__splink__df_all_column_completeness")
 

@@ -14,7 +14,11 @@ from splink.internals.chunking import _chunk_assignment_sql
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import dedupe_preserving_order, ensure_is_list
+from splink.internals.misc import (
+    dedupe_preserving_order,
+    ensure_is_list,
+    join_sql_with_union_all,
+)
 from splink.internals.parse_sql import parse_columns_in_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -760,7 +764,7 @@ def block_using_rules_sqls(
         )
         br_sqls.append(sql)
 
-    sql = " UNION ALL ".join(br_sqls)
+    sql = join_sql_with_union_all(br_sqls)
 
     if any(isinstance(br, ExplodingBlockingRule) for br in blocking_rules):
         sqls.append(

@@ -16,6 +16,7 @@ import time
 from typing import Optional
 
 from splink.internals.database_api import DatabaseAPISubClass
+from splink.internals.misc import join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -316,7 +317,7 @@ def solve_connected_components(
 
     pipeline = CTEPipeline()
 
-    sql = " UNION ALL ".join(
+    sql = join_sql_with_union_all(
         [
             f"""select node_id as {node_id_column_name}, representative as cluster_id
             from {t.physical_name}"""

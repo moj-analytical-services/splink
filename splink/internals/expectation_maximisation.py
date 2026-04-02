@@ -11,6 +11,7 @@ from splink.internals.duckdb.dataframe import DuckDBDataFrame
 from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
 from splink.internals.input_column import InputColumn
 from splink.internals.m_u_records_to_parameters import m_u_records_to_lookup_dict
+from splink.internals.misc import indent_sql, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.predict import (
     predict_from_agreement_pattern_counts_sqls,
@@ -28,14 +29,14 @@ def count_agreement_patterns_sql(comparisons: List[Comparison]) -> str:
     """Count how many times each realized agreement pattern
     was observed across the blocked dataset."""
     gamma_cols = [cc._gamma_column_name for cc in comparisons]
-    gamma_cols_expr = ",".join(gamma_cols)
+    gamma_cols_expr = ",\n".join(indent_sql(col) for col in gamma_cols)
 
     sql = f"""
     select
-    {gamma_cols_expr},
+{gamma_cols_expr},
     count(*) as agreement_pattern_count
     from __splink__df_comparison_vectors
-    group by {gamma_cols_expr}
+    group by {", ".join(gamma_cols)}
     """
 
     return sql
@@ -80,7 +81,7 @@ def compute_new_parameters_sql(
     """
     union_sqls.append(sql)
 
-    sql = " union all ".join(union_sqls)
+    sql = join_sql_with_union_all(union_sqls)
 
     return sql
 

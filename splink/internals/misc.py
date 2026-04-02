@@ -7,6 +7,7 @@ import string
 from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
+from textwrap import dedent, indent
 from typing import TYPE_CHECKING, Iterable, TypeVar, overload
 
 if TYPE_CHECKING:
@@ -69,6 +70,19 @@ def join_list_with_commas_final_and(lst: list[str]) -> str:
     if len(lst) == 1:
         return lst[0]
     return ", ".join(lst[:-1]) + " and " + lst[-1]
+
+
+def normalise_sql(sql: str) -> str:
+    return dedent(sql).strip()
+
+
+def indent_sql(sql: str, num_spaces: int = 4) -> str:
+    return indent(normalise_sql(sql), " " * num_spaces)
+
+
+def join_sql_with_union_all(sql_fragments: Iterable[str]) -> str:
+    fragments = [normalise_sql(fragment) for fragment in sql_fragments]
+    return "\n\nUNION ALL\n\n".join(fragments)
 
 
 def record_dict_to_list(record_dict: dict[str, list[T]]) -> list[dict[str, T]]:
