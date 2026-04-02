@@ -17,7 +17,6 @@ from splink.internals.term_frequencies import (
     term_frequencies_for_single_column_sql,
 )
 from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
     enqueue_df_concat,
 )
 
@@ -91,14 +90,6 @@ class LinkerTableManagement:
             self._linker._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
-
-    def compute_df_concat_with_tf(self) -> SplinkDataFrame:
-        """Compute concatenated input records with term frequency columns."""
-        pipeline = CTEPipeline()
-
-        df = compute_df_concat_with_tf(self._linker, pipeline, use_cache=False)
-
-        return df
 
     def register_blocked_pairs_for_predict(
         self,
@@ -197,38 +188,6 @@ class LinkerTableManagement:
 
         # As a result, any previously cached tables will not be found
         self._linker._intermediate_table_cache.invalidate_cache()
-
-    def register_df_concat_with_tf(
-        self, input_data: AcceptableInputTableType, overwrite: bool = False
-    ) -> SplinkDataFrame:
-        """Register a pre-computed version of the input_nodes_concat_with_tf table that
-        you want to re-use e.g. that you created in a previous run.
-
-        This method allows you to register this table in the Splink cache so it will be
-        used rather than Splink computing this table anew.
-
-        Args:
-            input_data (AcceptableInputTableType): The data you wish to register. This
-                can be either a dictionary, pandas dataframe, pyarrow table or a spark
-                dataframe.
-            overwrite (bool): Overwrite the table in the underlying database if it
-                exists.
-
-        Returns:
-            SplinkDataFrame: An abstraction representing the table created by the sql
-                pipeline
-        """
-
-        table_name_physical = "__splink__df_concat_with_tf_" + self._linker._cache_uid
-        splink_dataframe = self.register_table(
-            input_data, table_name_physical, overwrite=overwrite
-        )
-        splink_dataframe.templated_name = "__splink__df_concat_with_tf"
-
-        self._linker._intermediate_table_cache["__splink__df_concat_with_tf"] = (
-            splink_dataframe
-        )
-        return splink_dataframe
 
     def register_table_predict(self, input_data, overwrite=False):
         """Register a pre-computed version of the prediction table for use in Splink.

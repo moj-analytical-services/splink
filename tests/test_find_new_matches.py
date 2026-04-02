@@ -3,8 +3,6 @@ from datetime import datetime
 
 import splink.internals.comparison_library as cl
 from splink.internals.blocking_rule_library import block_on
-from splink.internals.pipeline import CTEPipeline
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -62,14 +60,6 @@ def test_tf_tables_init_works(test_helpers, dialect, fake_1000):
             [record],
             blocking_rules=[],
             match_weight_threshold=-10000,
-        )
-
-        # Trial for if _df_concat_with_tf already exists...
-        pipeline = CTEPipeline()
-        compute_df_concat_with_tf(linker, pipeline)
-
-        linker.inference.find_matches_to_new_records(
-            [record], blocking_rules=[], match_weight_threshold=-10000
         )
 
 

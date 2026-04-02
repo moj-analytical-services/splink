@@ -7,8 +7,6 @@ import pytest
 import splink.internals.comparison_library as cl
 from splink import SettingsCreator
 from splink.internals.blocking_rule_library import block_on
-from splink.internals.pipeline import CTEPipeline
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
 
 from .decorator import mark_with_dialects_excluding
 
@@ -51,10 +49,6 @@ def test_compare_two_records_1(test_helpers, dialect):
         ]
     )
     linker.table_management.register_term_frequency_lookup(city_tf, "city")
-
-    # Compute the df_concat_with_tf so it's cached
-    pipeline = CTEPipeline()
-    compute_df_concat_with_tf(linker, pipeline)
 
     # Test with dictionary inputs
     r1 = {

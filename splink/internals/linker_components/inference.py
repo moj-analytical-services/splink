@@ -33,11 +33,11 @@ from splink.internals.predict import (
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
-    colname_to_tf_tablename,
+    append_term_frequencies_to_pipeline,
 )
 from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
 from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
+    enqueue_df_concat,
     enqueue_df_concat_with_tf,
 )
 
@@ -81,9 +81,7 @@ class LinkerInference:
         right_chunk: tuple[int, int] | None = None,
     ) -> tuple[SplinkDataFrame, bool]:
         pipeline = CTEPipeline()
-        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-
-        pipeline = CTEPipeline([df_concat_with_tf])
+        enqueue_df_concat(self._linker, pipeline)
 
         settings = self._linker._settings_obj
         cache = self._linker._intermediate_table_cache
@@ -102,6 +100,7 @@ class LinkerInference:
             link_type=settings._link_type,
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            df_concat_with_tf_table_name="__splink__df_concat",
             left_chunk=left_chunk,
             right_chunk=right_chunk,
         )
@@ -178,8 +177,7 @@ class LinkerInference:
             ```
         """
         pipeline = CTEPipeline()
-        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-        pipeline = CTEPipeline([df_concat_with_tf])
+        enqueue_df_concat(self._linker, pipeline)
 
         settings = self._linker._settings_obj
 
@@ -191,9 +189,11 @@ class LinkerInference:
             link_type=settings._link_type,
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            df_concat_with_tf_table_name="__splink__df_concat",
         )
 
-        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+        pipeline = CTEPipeline([blocked_pairs])
+        enqueue_df_concat_with_tf(self._linker, pipeline)
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             settings._columns_to_select_for_blocking,
@@ -220,7 +220,6 @@ class LinkerInference:
         self,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
-        materialise_after_computing_term_frequencies: bool = True,
         num_chunks_left: int | None = None,
         num_chunks_right: int | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
@@ -245,11 +244,6 @@ class LinkerInference:
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_weight above this threshold. Defaults to None.
-            materialise_after_computing_term_frequencies (bool): If true, Splink
-                will materialise the table containing the input nodes (rows)
-                joined to any term frequencies which have been asked
-                for in the settings object.  If False, this will be
-                computed as part of a large CTE pipeline.   Defaults to True
             num_chunks_left (int, optional): If specified along with num_chunks_right,
                 the prediction will be split into chunks and processed iteratively.
                 This can help manage memory usage for large datasets.
@@ -303,7 +297,6 @@ class LinkerInference:
                 right_chunk=(1, 1),
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
-                materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
                 warning_mode="never",
             )
             if warning_mode in {"auto", "always"}:
@@ -331,7 +324,6 @@ class LinkerInference:
                 right_chunk=(right_idx, n_right),
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
-                materialise_after_computing_term_frequencies=materialise_after_computing_term_frequencies,
                 warning_mode="never",
             )
             chunk_results.append(chunk_result)
@@ -379,7 +371,6 @@ class LinkerInference:
         right_chunk: tuple[int, int] | None = None,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
-        materialise_after_computing_term_frequencies: bool = True,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
@@ -402,11 +393,6 @@ class LinkerInference:
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_weight above this threshold. Defaults to None.
-            materialise_after_computing_term_frequencies (bool): If true, Splink
-                will materialise the table containing the input nodes (rows)
-                joined to any term frequencies which have been asked
-                for in the settings object. If False, this will be
-                computed as part of a large CTE pipeline. Defaults to True
             warning_mode (str, optional): Control emission of the warning shown when
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per direct call to `predict_chunk()`, "always" to force
@@ -434,9 +420,6 @@ class LinkerInference:
         """
         self._validate_predict_warning_mode(warning_mode)
 
-        pipeline = CTEPipeline()
-        df_concat_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-
         blocked_pairs, blocked_pairs_from_cache = (
             self._get_or_compute_blocked_pairs_for_predict_chunk(
                 left_chunk=left_chunk,
@@ -446,7 +429,8 @@ class LinkerInference:
 
         settings = self._linker._settings_obj
 
-        pipeline = CTEPipeline([blocked_pairs, df_concat_with_tf])
+        pipeline = CTEPipeline([blocked_pairs])
+        enqueue_df_concat_with_tf(self._linker, pipeline)
 
         start_time = time.time()
 
@@ -727,10 +711,8 @@ class LinkerInference:
             "__splink__df_new_records", new_records_tablename
         )
 
-        pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self._linker, pipeline)
-
-        pipeline = CTEPipeline([nodes_with_tf, new_records_df])
+        pipeline = CTEPipeline([new_records_df])
+        enqueue_df_concat(self._linker, pipeline)
         if len(blocking_rule_list) == 0:
             blocking_rule_list = ["1=1"]
 
@@ -756,7 +738,7 @@ class LinkerInference:
         )
         settings = self._linker._settings_obj
         sqls = block_using_rules_sqls(
-            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_l="__splink__df_concat",
             input_tablename_r="__splink__df_new_records_uid_fix",
             blocking_rules=blocking_rules_dialected,
             link_type="two_dataset_link_only",
@@ -767,22 +749,8 @@ class LinkerInference:
 
         blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline = CTEPipeline([blocked_pairs, new_records_df, nodes_with_tf])
-
-        cache = self._linker._intermediate_table_cache
-        for tf_col in self._linker._settings_obj._term_frequency_columns:
-            tf_table_name = colname_to_tf_tablename(tf_col)
-            if tf_table_name in cache:
-                tf_table = cache.get_with_logging(tf_table_name)
-                pipeline.append_input_dataframe(tf_table)
-            else:
-                if "__splink__df_concat_with_tf" not in cache:
-                    logger.warning(
-                        f"No term frequencies found for column {tf_col.name}.\n"
-                        "To apply term frequency adjustments, you need to register"
-                        " a lookup using "
-                        "`linker.table_management.register_term_frequency_lookup`."
-                    )
+        pipeline = CTEPipeline([blocked_pairs, new_records_df])
+        enqueue_df_concat_with_tf(self._linker, pipeline)
 
         sql = _join_new_table_to_df_concat_with_tf_sql(
             self._linker, "__splink__df_new_records"
@@ -900,8 +868,6 @@ class LinkerInference:
         linker._settings_obj._retain_matching_columns = True
         linker._settings_obj._retain_intermediate_calculation_columns = True
 
-        cache = linker._intermediate_table_cache
-
         uid = ascii_uid(8)
 
         # Check if input is a DuckDB relation without importing DuckDB
@@ -931,26 +897,7 @@ class LinkerInference:
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
         pipeline = CTEPipeline([df_records_left, df_records_right])
-
-        if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-            pipeline.append_input_dataframe(nodes_with_tf)
-
-        tf_cols = linker._settings_obj._term_frequency_columns
-
-        for tf_col in tf_cols:
-            tf_table_name = colname_to_tf_tablename(tf_col)
-            if tf_table_name in cache:
-                tf_table = cache.get_with_logging(tf_table_name)
-                pipeline.append_input_dataframe(tf_table)
-            else:
-                if "__splink__df_concat_with_tf" not in cache:
-                    logger.warning(
-                        f"No term frequencies found for column {tf_col.name}.\n"
-                        "To apply term frequency adjustments, you need to register"
-                        " a lookup using "
-                        "`linker.table_management.register_term_frequency_lookup`."
-                    )
+        append_term_frequencies_to_pipeline(linker, pipeline)
 
         sql_join_tf = _join_new_table_to_df_concat_with_tf_sql(
             linker, "__splink__compare_two_records_left", df_records_left

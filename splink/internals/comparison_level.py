@@ -10,7 +10,7 @@ from textwrap import dedent
 from typing import Any, Optional, Union, cast
 
 import sqlglot
-from sqlglot.expressions import Column, Identifier
+from sqlglot.expressions import Column, Expression, Identifier
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.simplify import simplify
 
@@ -84,12 +84,12 @@ def _exact_match_colname(sql_syntax_tree):
     return cols[0]
 
 
-def _get_and_subclauses(expr: sqlglot.Expression) -> list[sqlglot.Expression]:
+def _get_and_subclauses(expr: Expression) -> list[Expression]:
     # get list of subclauses joined together by 'AND' at top-level
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     # or if no AND, return expression as a list, e.g. 'A' -> ['A']
     if isinstance(expr, sqlglot.exp.And):
-        return list(expr.flatten())
+        return cast(list[Expression], list(expr.flatten()))
     return [expr]
 
 

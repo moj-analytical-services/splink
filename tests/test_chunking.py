@@ -126,7 +126,6 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect):
 
     # Second: run with pre-caching
     linker2 = helper.linker_with_registration(df, settings)
-    linker2.table_management.compute_df_concat_with_tf()
     linker2.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
@@ -162,7 +161,6 @@ def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
 
     # Second: run chunked with pre-caching of all chunks
     linker2 = helper.linker_with_registration(df, settings)
-    linker2.table_management.compute_df_concat_with_tf()
 
     # Pre-compute all 4 chunk combinations (2x2)
     for left_chunk_num in [1, 2]:
@@ -202,7 +200,6 @@ def test_cache_is_hit_for_blocked_pairs():
     linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs (populates cache)
-    linker.table_management.compute_df_concat_with_tf()
     linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
@@ -281,7 +278,6 @@ def test_cache_is_hit_for_chunked_blocked_pairs():
     linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs for specific chunk
-    linker.table_management.compute_df_concat_with_tf()
     linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 2), right_chunk=(2, 3)
     )
@@ -315,7 +311,6 @@ def test_cache_key_normalization_1_1():
     linker = Linker(df_sdf, settings)
 
     # Pre-compute with (1,1) x (1,1) - should normalize to base key
-    linker.table_management.compute_df_concat_with_tf()
     linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1), right_chunk=(1, 1)
     )
@@ -337,7 +332,6 @@ def test_blocked_pairs_not_deleted_when_from_cache():
     linker = Linker(df_sdf, settings)
 
     # Pre-compute blocked pairs
-    linker.table_management.compute_df_concat_with_tf()
     linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
@@ -407,7 +401,6 @@ def test_blocked_pairs_deleted_when_not_from_cache():
     linker = Linker(df_sdf, settings)
 
     # Pre-compute df_concat_with_tf but NOT blocked pairs
-    linker.table_management.compute_df_concat_with_tf()
 
     # Run predict_chunk (which computes blocked pairs internally)
     linker.inference.predict_chunk(

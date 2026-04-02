@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from splink.internals.misc import EverythingEncoder, read_resource
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import enqueue_df_concat_with_tf
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -25,9 +25,7 @@ def generate_labelling_tool_comparisons(
 ) -> SplinkDataFrame:
     # ensure the tf table exists
     pipeline = CTEPipeline()
-    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-
-    pipeline = CTEPipeline([nodes_with_tf])
+    enqueue_df_concat_with_tf(linker, pipeline)
     settings = linker._settings_obj
 
     source_dataset_condition = ""

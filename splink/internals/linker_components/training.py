@@ -16,10 +16,7 @@ from splink.internals.m_training import estimate_m_values_from_label_column
 from splink.internals.misc import (
     ensure_is_iterable,
 )
-from splink.internals.pipeline import CTEPipeline
-from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
-)
+from splink.internals.term_frequencies import ensure_term_frequencies_for_linker
 
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
@@ -292,10 +289,8 @@ class LinkerTraining:
                 session such as how parameters changed during the iteration history
 
         """  # noqa: E501
-        # Ensure this has been run on the main linker so that it's in the cache
-        # to be used by the training linkers
-        pipeline = CTEPipeline()
-        compute_df_concat_with_tf(self._linker, pipeline)
+        # Ensure TF lookups exist on the main linker so training linkers can reuse them.
+        ensure_term_frequencies_for_linker(self._linker)
 
         blocking_rule_obj = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
             self._linker._sql_dialect_str
@@ -404,10 +399,8 @@ class LinkerTraining:
             Nothing: Updates the estimated m parameters within the linker object.
         """
 
-        # Ensure this has been run on the main linker so that it can be used by
-        # training linker when it checks the cache
-        pipeline = CTEPipeline()
-        compute_df_concat_with_tf(self._linker, pipeline)
+        # Ensure TF lookups exist on the main linker so training linkers can reuse them.
+        ensure_term_frequencies_for_linker(self._linker)
 
         estimate_m_values_from_label_column(
             self._linker,

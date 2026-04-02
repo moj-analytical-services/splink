@@ -26,7 +26,10 @@ from splink.internals.settings import (
     Settings,
     TrainingSettings,
 )
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import (
+    enqueue_df_concat,
+    enqueue_df_concat_with_tf,
+)
 
 from .database_api import DatabaseAPISubClass
 from .exceptions import EMTrainingException
@@ -195,13 +198,12 @@ class EMTrainingSession:
         self._training_log_message()
 
         pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self._original_linker, pipeline)
-        pipeline = CTEPipeline([nodes_with_tf])
+        enqueue_df_concat(self._original_linker, pipeline)
 
         orig_settings = self._original_linker._settings_obj
         sqls = block_using_rules_sqls(
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l="__splink__df_concat",
+            input_tablename_r="__splink__df_concat",
             blocking_rules=[self._blocking_rule_for_training],
             link_type=orig_settings._link_type,
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
@@ -211,7 +213,8 @@ class EMTrainingSession:
 
         blocked_pairs = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+        pipeline = CTEPipeline([blocked_pairs])
+        enqueue_df_concat_with_tf(self._original_linker, pipeline)
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             orig_settings._columns_to_select_for_blocking,

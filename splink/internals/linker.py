@@ -55,8 +55,9 @@ from splink.internals.unique_id_concat import (
     _composite_unique_id_from_edges_sql,
 )
 from splink.internals.vertically_concatenate import (
-    compute_df_concat_with_tf,
     concat_table_column_names,
+    enqueue_df_concat,
+    enqueue_df_concat_with_tf,
 )
 
 logger = logging.getLogger(__name__)
@@ -507,13 +508,11 @@ class Linker:
         )
 
         pipeline = CTEPipeline()
-        nodes_with_tf = compute_df_concat_with_tf(self, pipeline)
-
-        pipeline = CTEPipeline([nodes_with_tf])
+        enqueue_df_concat(self, pipeline)
 
         sqls = block_using_rules_sqls(
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l="__splink__df_concat",
+            input_tablename_r="__splink__df_concat",
             blocking_rules=[blocking_rule],
             link_type="self_link",
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
@@ -523,7 +522,8 @@ class Linker:
 
         blocked_pairs = self._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+        pipeline = CTEPipeline([blocked_pairs])
+        enqueue_df_concat_with_tf(self, pipeline)
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             settings._columns_to_select_for_blocking,

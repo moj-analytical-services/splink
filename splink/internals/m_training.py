@@ -11,7 +11,7 @@ from splink.internals.expectation_maximisation import (
     compute_proportions_for_new_parameters,
 )
 from splink.internals.pipeline import CTEPipeline
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import enqueue_df_concat
 
 from .m_u_records_to_parameters import (
     append_m_probability_to_comparison_level_trained_probabilities,
@@ -38,13 +38,11 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
             cl._tf_adjustment_column = None
 
     pipeline = CTEPipeline()
-    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-
-    pipeline = CTEPipeline([nodes_with_tf])
+    enqueue_df_concat(linker, pipeline)
 
     sqls = block_using_rules_sqls(
-        input_tablename_l="__splink__df_concat_with_tf",
-        input_tablename_r="__splink__df_concat_with_tf",
+        input_tablename_l="__splink__df_concat",
+        input_tablename_r="__splink__df_concat",
         blocking_rules=[
             BlockingRule(
                 f"l.{label_colname} = r.{label_colname}", linker._sql_dialect_str
@@ -58,13 +56,14 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
 
     blocked_pairs = training_linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    pipeline = CTEPipeline([blocked_pairs, nodes_with_tf])
+    pipeline = CTEPipeline([blocked_pairs])
+    enqueue_df_concat(linker, pipeline)
 
     sqls = compute_comparison_vector_values_from_id_pairs_sqls(
         training_linker._settings_obj._columns_to_select_for_blocking,
         training_linker._settings_obj._columns_to_select_for_comparison_vector_values,
-        input_tablename_l="__splink__df_concat_with_tf",
-        input_tablename_r="__splink__df_concat_with_tf",
+        input_tablename_l="__splink__df_concat",
+        input_tablename_r="__splink__df_concat",
         source_dataset_input_column=training_linker._settings_obj.column_info_settings.source_dataset_input_column,
         unique_id_input_column=training_linker._settings_obj.column_info_settings.unique_id_input_column,
     )
