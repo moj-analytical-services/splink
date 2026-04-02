@@ -19,6 +19,10 @@ conflicts = [[
     { package = "splink", group = "core" },
 ]]
 
+[options]
+exclude-newer = "2026-03-25T12:04:01.369294Z"
+exclude-newer-span = "P7D"
+
 [manifest]
 excludes = ["awswrangler"]
 
