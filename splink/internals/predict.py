@@ -57,7 +57,7 @@ def predict_from_comparison_vectors_sqls(
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         additional_columns_to_retain=additional_columns_to_retain,
     )
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = ",\n".join(select_cols)
 
     if include_clerical_match_score:
         clerical_match_score = ", clerical_match_score"
@@ -83,7 +83,7 @@ def predict_from_comparison_vectors_sqls(
         training_mode=training_mode,
         additional_columns_to_retain=additional_columns_to_retain,
     )
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = ",\n".join(select_cols)
     mw_terms = []
     for cc in core_model_settings.comparisons:
         mw_terms.extend(cc._match_weight_columns_to_sum)
@@ -140,7 +140,7 @@ def predict_from_agreement_pattern_counts_sqls(
         select_cols.append(cc._gamma_column_name)
         select_cols.append(sql)
     select_cols.append("agreement_pattern_count")
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = ",\n".join(select_cols)
 
     sql = f"""
     select {select_cols_expr}
@@ -158,7 +158,7 @@ def predict_from_agreement_pattern_counts_sqls(
         select_cols.append(cc._gamma_column_name)
         select_cols.append(cc._mw_column_name)
     select_cols.append("agreement_pattern_count")
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = ",\n".join(select_cols)
 
     prior = probability_two_random_records_match
     mw_terms = [cc._mw_column_name for cc in comparisons]

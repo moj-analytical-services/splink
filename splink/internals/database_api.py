@@ -92,6 +92,15 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._input_table_counter += 1
         return name
 
+    def _format_sql_for_logging(self, sql: str) -> str:
+        try:
+            return sqlglot.parse_one(
+                sql,
+                read=self.sql_dialect.sqlglot_dialect,
+            ).sql(pretty=True, indent=4, pad=4)
+        except Exception:
+            return sql
+
     @final
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
@@ -102,19 +111,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         names are only relevant for logging, not execution
         """
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(final_sql))
+        logger.log(5, log_sql(self._format_sql_for_logging(final_sql)))
         try:
             return self._execute_sql_against_backend(final_sql)
         except Exception as e:
-            # Parse our SQL through sqlglot to pretty print
-            try:
-                final_sql = sqlglot.parse_one(
-                    final_sql,
-                    read=self.sql_dialect.sqlglot_dialect,
-                ).sql(pretty=True)
-                # if sqlglot produces any errors, just report the raw SQL
-            except Exception:
-                pass
+            final_sql = self._format_sql_for_logging(final_sql)
 
             raise SplinkException(
                 f"Error executing the following sql for table "
