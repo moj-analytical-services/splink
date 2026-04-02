@@ -56,7 +56,7 @@ Our PyData Global 2024 talk provides a brief introduction to Splink and is avail
 
 ## Support
 
-If after reading the documentatation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
+If after reading the documentation you still have questions, please feel free to post on our [discussion forum](https://github.com/moj-analytical-services/splink/discussions).
 
 ## Use Cases
 
