@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import duckdb
 
@@ -19,9 +19,30 @@ from .duckdb_helpers.duckdb_helpers import (
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from splink.internals.pipeline import CTEPipeline
+
 
 class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     sql_dialect = DuckDBDialect()
+
+    def sql_pipeline_to_explain_result(
+        self,
+        pipeline: "CTEPipeline",
+        analyze: bool = False,
+    ) -> str:
+        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
+        output_table_name = pipeline.output_table_name
+        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
+        explain_sql = f"{explain_prefix}\n{sql}"
+
+        explain_result = self._log_and_run_sql_execution(
+            explain_sql,
+            f"__splink__explain__{output_table_name}",
+            f"__splink__explain__{output_table_name}",
+        )
+        rows = explain_result.fetchall()
+        return rows[0][1]
 
     def __init__(
         self,

@@ -46,6 +46,7 @@ BaseAcceptableInputTableType = Union[
 if TYPE_CHECKING:
     from pandas import DataFrame as PandasDataFrame
     from pyarrow import Table as PyarrowTable
+
     from splink.internals.pipeline import CTE
 
     AcceptableInputTableType = Union[
@@ -284,17 +285,11 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self,
         pipeline: CTEPipeline,
         analyze: bool = False,
-    ) -> TablishType:
-        """Run EXPLAIN or EXPLAIN ANALYZE against a pipeline's final output."""
-        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
-        output_table_name = pipeline.output_table_name
-        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
-        explain_sql = f"{explain_prefix}\n{sql}"
-
-        return self._log_and_run_sql_execution(
-            explain_sql,
-            f"__splink__explain__{output_table_name}",
-            f"__splink__explain__{output_table_name}",
+    ) -> str:
+        """Run backend-specific explain support against a pipeline's final output."""
+        raise NotImplementedError(
+            "sql_pipeline_to_explain_result is not implemented for "
+            f"{type(self).__name__}"
         )
 
     # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958

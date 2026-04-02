@@ -2,6 +2,8 @@ import logging
 import math
 import os
 import re
+from time import perf_counter_ns
+from typing import TYPE_CHECKING, Any
 
 import sqlglot
 from pyspark.sql.dataframe import DataFrame as spark_df
@@ -25,9 +27,129 @@ from .jar_location import get_scala_udfs
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from splink.internals.pipeline import CTEPipeline
+
 
 class SparkAPI(DatabaseAPI[spark_df]):
     sql_dialect = SparkDialect()
+
+    @staticmethod
+    def _iter_scala_seq(seq):
+        for i in range(seq.size()):
+            yield seq.apply(i)
+
+    @staticmethod
+    def _format_spark_metric_value(metric: Any) -> str:
+        value = metric.value()
+        metric_type = metric.metricType()
+
+        if metric_type == "timing":
+            return f"{value} ms"
+
+        if metric_type == "nsTiming":
+            return f"{value} ns ({value / 1_000_000:.3f} ms)"
+
+        if metric_type == "size":
+            return f"{value} bytes"
+
+        if metric_type == "average":
+            return f"{value / 10:.1f}"
+
+        if metric_type == "sum":
+            return str(value)
+
+        return f"{value} ({metric_type})"
+
+    @staticmethod
+    def _spark_metric_name(metric: Any, fallback_name: str) -> str:
+        try:
+            metric_name = metric.name()
+            if metric_name.isDefined():
+                return metric_name.get()
+        except Exception:
+            pass
+
+        return fallback_name
+
+    def _spark_plan_metrics_as_text(self, node: Any, depth: int = 0) -> str:
+        indent = "  " * depth
+        lines = [f"{indent}{node.nodeName()}"]
+
+        metrics = node.metrics()
+        keys = metrics.keys().toSeq()
+        for i in range(keys.size()):
+            key = keys.apply(i)
+            metric = metrics.apply(key)
+            metric_name = self._spark_metric_name(metric, str(key))
+            metric_value = self._format_spark_metric_value(metric)
+            lines.append(f"{indent}  {metric_name} = {metric_value}")
+
+        children = list(self._iter_scala_seq(node.children()))
+        if not children:
+            try:
+                stage_plan = node.plan()
+            except Exception:
+                stage_plan = None
+            if stage_plan is not None:
+                children = [stage_plan]
+
+        for child in children:
+            lines.append(self._spark_plan_metrics_as_text(child, depth + 1))
+
+        return "\n".join(lines)
+
+    def _spark_executed_plan_with_metrics(self, sql: str) -> str:
+        df = self.spark.sql(sql)
+        start_time_ns = perf_counter_ns()
+        for _ in df.toLocalIterator():
+            pass
+        duration_ns = perf_counter_ns() - start_time_ns
+
+        executed_plan = df._jdf.queryExecution().executedPlan()
+        try:
+            final_plan = executed_plan.finalPhysicalPlan()
+        except Exception:
+            final_plan = executed_plan
+
+        return "\n\n".join(
+            [
+                "== Final Physical Plan ==",
+                final_plan.treeString().strip(),
+                "== Total Runtime ==",
+                f"{duration_ns} ns ({duration_ns / 1_000_000:.3f} ms)",
+                "== Runtime Metrics ==",
+                self._spark_plan_metrics_as_text(final_plan),
+            ]
+        )
+
+    def sql_pipeline_to_explain_result(
+        self,
+        pipeline: "CTEPipeline",
+        analyze: bool = False,
+    ) -> str:
+        """Return a Spark explain plan for the final pipeline SQL.
+
+        Spark SQL does not support EXPLAIN ANALYZE.  For analyze=True, execute the
+        query and return the final physical plan plus runtime metrics.
+        """
+        output_table_name = pipeline.output_table_name
+        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
+        sql = self._setup_for_execute_sql(sql, output_table_name)
+
+        if analyze:
+            return self._spark_executed_plan_with_metrics(sql)
+
+        explain_prefix = "EXPLAIN FORMATTED"
+        explain_sql = f"{explain_prefix}\n{sql}"
+
+        explain_result = self._log_and_run_sql_execution(
+            explain_sql,
+            f"__splink__explain__{output_table_name}",
+            f"__splink__explain__{output_table_name}",
+        )
+        rows = explain_result.collect()
+        return "\n".join(row[0] for row in rows)
 
     def __init__(
         self,
