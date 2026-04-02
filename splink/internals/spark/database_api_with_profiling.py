@@ -38,6 +38,7 @@ class SparkAPIWithProfiling(SparkAPI):
         self.query_profiling_dir.mkdir(parents=True, exist_ok=True)
         self._query_profile_counter = 0
         self._pending_profile_path: Path | None = None
+        self._pending_profile_sql: str | None = None
 
     def _should_profile_sql(self, sql: str) -> bool:
         stripped_sql = sql.lstrip().upper()
@@ -111,7 +112,7 @@ class SparkAPIWithProfiling(SparkAPI):
 
         return "\n".join(lines)
 
-    def _spark_profile_text(self, df: spark_df, duration_ns: int) -> str:
+    def _spark_profile_text(self, sql: str, df: spark_df, duration_ns: int) -> str:
         executed_plan = df._jdf.queryExecution().executedPlan()
         try:
             final_plan = executed_plan.finalPhysicalPlan()
@@ -120,6 +121,8 @@ class SparkAPIWithProfiling(SparkAPI):
 
         return "\n\n".join(
             [
+                "== SQL ==",
+                sql.strip(),
                 "== Final Physical Plan ==",
                 final_plan.treeString().strip(),
                 "== Total Runtime ==",
@@ -130,18 +133,23 @@ class SparkAPIWithProfiling(SparkAPI):
         )
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        final_sql = super()._setup_for_execute_sql(sql, physical_name)
+
         if self._should_profile_sql(sql):
             self._pending_profile_path = self._next_query_profile_path(physical_name)
+            self._pending_profile_sql = final_sql
         else:
             self._pending_profile_path = None
+            self._pending_profile_sql = None
 
-        return super()._setup_for_execute_sql(sql, physical_name)
+        return final_sql
 
     def _cleanup_for_execute_sql(
         self, table: spark_df, templated_name: str, physical_name: str
     ) -> SparkDataFrame:
         profile_path = self._pending_profile_path
-        if profile_path is None:
+        profile_sql = self._pending_profile_sql
+        if profile_path is None or profile_sql is None:
             return super()._cleanup_for_execute_sql(
                 table, templated_name, physical_name
             )
@@ -155,7 +163,7 @@ class SparkAPIWithProfiling(SparkAPI):
 
             duration_ns = perf_counter_ns() - start_time_ns
             profile_path.write_text(
-                self._spark_profile_text(spark_df, duration_ns),
+                self._spark_profile_text(profile_sql, spark_df, duration_ns),
                 encoding="utf-8",
             )
 
@@ -163,3 +171,4 @@ class SparkAPIWithProfiling(SparkAPI):
             return self.table_to_splink_dataframe(templated_name, physical_name)
         finally:
             self._pending_profile_path = None
+            self._pending_profile_sql = None
