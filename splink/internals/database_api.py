@@ -19,13 +19,7 @@ import duckdb
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
-from splink.internals.misc import (
-    ascii_uid,
-    ensure_is_list,
-    indent_sql,
-    normalise_sql,
-    parse_duration,
-)
+from splink.internals.misc import ascii_uid, ensure_is_list, parse_duration
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -46,8 +40,6 @@ BaseAcceptableInputTableType = Union[
 if TYPE_CHECKING:
     from pandas import DataFrame as PandasDataFrame
     from pyarrow import Table as PyarrowTable
-
-    from splink.internals.pipeline import CTE
 
     AcceptableInputTableType = Union[
         BaseAcceptableInputTableType,
@@ -184,24 +176,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def _render_sql_from_pipeline_parts(
-        self, pipeline: CTEPipeline, parts: Sequence[CTE]
-    ) -> str:
-        pipeline._log_pipeline(parts)
-
-        with_ctes_pipeline = parts[:-1]
-        final_query = parts[-1]
-
-        with_ctes = [
-            f"{p.output_table_name} as (\n{indent_sql(p.sql)}\n)"
-            for p in with_ctes_pipeline
-        ]
-        with_ctes_str = ", \n\n".join(with_ctes)
-        if with_ctes_str:
-            with_ctes_str = f"WITH\n\n{with_ctes_str}\n"
-
-        return with_ctes_str + normalise_sql(final_query.sql)
-
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
@@ -210,7 +184,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         Execute a given pipeline using input_dataframes as seeds if provided.
         self.debug_mode controls whether this is CTE or individual tables.
         pipeline is set to spent after execution ensuring it cannot be
-        accidentally reused.
+        acidentally reused
         """
 
         if not self.debug_mode:
@@ -261,17 +235,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             raise SplinkException("Debug pipeline execution produced no output tables.")
 
         return splink_dataframe
-
-    def sql_pipeline_to_explain_result(
-        self,
-        pipeline: CTEPipeline,
-        analyze: bool = False,
-    ) -> str:
-        """Run backend-specific explain support against a pipeline's final output."""
-        raise NotImplementedError(
-            "sql_pipeline_to_explain_result is not implemented for "
-            f"{type(self).__name__}"
-        )
 
     # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958
     # for notes on this code

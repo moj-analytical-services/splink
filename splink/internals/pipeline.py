@@ -135,24 +135,10 @@ class CTEPipeline:
                 logger.log(7, f"    Pipeline part {i+1}: {part.cte_description}")
 
     def ctes_pipeline(self) -> List[CTE]:
-        """Common table expressions."""
+        """Common table expressions"""
         return self._resolved_queue()
 
-    def ctes_pipeline_until(self, output_table_name: str) -> List[CTE]:
-        pipeline = self._resolved_queue()
-
-        for index, cte in enumerate(pipeline):
-            if cte.output_table_name == output_table_name:
-                return pipeline[: index + 1]
-
-        raise ValueError(
-            f"Output table name '{output_table_name}' not found in pipeline"
-        )
-
     def generate_cte_pipeline_sql(self) -> str:
-        if self.spent:
-            raise ValueError("This pipeline has already been used")
-
         self.spent = True
 
         pipeline = self.ctes_pipeline()
