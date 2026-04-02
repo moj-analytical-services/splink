@@ -9,7 +9,7 @@ from splink.internals.charts import (
     load_chart_definition,
 )
 from splink.internals.column_expression import ColumnExpression
-from splink.internals.misc import ensure_is_list
+from splink.internals.misc import ensure_is_list, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 from splink.internals.splinkdataframe_utils import (
@@ -148,7 +148,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
         for g in expressions
     ]
 
-    sql = " union all ".join(to_union)
+    sql = join_sql_with_union_all(to_union)
 
     return sql
 
@@ -192,7 +192,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         """
         sqls.append(sql)
 
-    return " union all ".join(sqls)
+    return join_sql_with_union_all(sqls)
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):

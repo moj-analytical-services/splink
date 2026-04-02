@@ -9,6 +9,7 @@ from splink.internals.database_api import AcceptableInputTableType, DatabaseAPIS
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     ascii_uid,
+    join_sql_with_union_all,
     prob_to_match_weight,
     threshold_args_to_match_prob,
     threshold_args_to_match_prob_list,
@@ -338,7 +339,7 @@ def _generate_cluster_summary_stats_sql(
         for threshold in thresholds
     ]
 
-    sql = "\nUNION ALL\n".join(select_statements)
+    sql = join_sql_with_union_all(select_statements)
 
     return sql
 

@@ -16,7 +16,6 @@ from typing import (
 )
 
 import duckdb
-import sqlglot
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
@@ -106,16 +105,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         try:
             return self._execute_sql_against_backend(final_sql)
         except Exception as e:
-            # Parse our SQL through sqlglot to pretty print
-            try:
-                final_sql = sqlglot.parse_one(
-                    final_sql,
-                    read=self.sql_dialect.sqlglot_dialect,
-                ).sql(pretty=True)
-                # if sqlglot produces any errors, just report the raw SQL
-            except Exception:
-                pass
-
             raise SplinkException(
                 f"Error executing the following sql for table "
                 f"`{templated_name}`({physical_name}):\n{final_sql}"
@@ -311,7 +300,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         # returns sql
         # sensible default:
         self.delete_table_from_database(physical_name)
-        sql = f"CREATE TABLE {physical_name} AS {sql}"
+        sql = f"CREATE TABLE {physical_name} AS\n{sql}"
         return sql
 
     def _cleanup_for_execute_sql(

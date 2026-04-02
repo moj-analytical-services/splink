@@ -8,7 +8,12 @@ from typing import List
 from splink.internals.comparison import Comparison
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import prob_to_match_weight, threshold_args_to_match_weight
+from splink.internals.misc import (
+    indent_sql,
+    join_sql_fragments,
+    prob_to_match_weight,
+    threshold_args_to_match_weight,
+)
 
 from .settings import CoreModelSettings, Settings
 
@@ -57,15 +62,14 @@ def predict_from_comparison_vectors_sqls(
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         additional_columns_to_retain=additional_columns_to_retain,
     )
-    select_cols_expr = ",".join(select_cols)
-
     if include_clerical_match_score:
-        clerical_match_score = ", clerical_match_score"
-    else:
-        clerical_match_score = ""
+        select_cols.append("clerical_match_score")
+
+    select_cols_expr = join_sql_fragments(select_cols, ",\n", indent_size=4)
 
     sql = f"""
-    select {select_cols_expr} {clerical_match_score}
+    select
+{select_cols_expr}
     from __splink__df_comparison_vectors
     """
 
@@ -83,7 +87,6 @@ def predict_from_comparison_vectors_sqls(
         training_mode=training_mode,
         additional_columns_to_retain=additional_columns_to_retain,
     )
-    select_cols_expr = ",".join(select_cols)
     mw_terms = []
     for cc in core_model_settings.comparisons:
         mw_terms.extend(cc._match_weight_columns_to_sum)
@@ -104,11 +107,19 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
+    select_expressions = [
+        f"{match_weight_expr} as match_weight",
+        f"{match_prob_expr} as match_probability",
+        *select_cols,
+    ]
+    if include_clerical_match_score:
+        select_expressions.append("clerical_match_score")
+
+    select_cols_expr = join_sql_fragments(select_expressions, ",\n", indent_size=4)
+
     sql = f"""
     select
-    {match_weight_expr} as match_weight,
-    {match_prob_expr} as match_probability,
-    {select_cols_expr} {clerical_match_score}
+{select_cols_expr}
     from __splink__df_match_weight_parts
     {threshold_expr}
     """
@@ -135,15 +146,16 @@ def predict_from_agreement_pattern_counts_sqls(
         cc_sqls = [
             cl._match_weight_sql(cc._gamma_column_name) for cl in cc.comparison_levels
         ]
-        sql = " ".join(cc_sqls)
-        sql = f"CASE {sql} END as {cc._mw_column_name}"
+        sql = join_sql_fragments(cc_sqls, "\n")
+        sql = f"CASE\n{indent_sql(sql)}\nEND as {cc._mw_column_name}"
         select_cols.append(cc._gamma_column_name)
         select_cols.append(sql)
     select_cols.append("agreement_pattern_count")
-    select_cols_expr = ",".join(select_cols)
+    select_cols_expr = join_sql_fragments(select_cols, ",\n", indent_size=4)
 
     sql = f"""
-    select {select_cols_expr}
+    select
+{select_cols_expr}
     from __splink__agreement_pattern_counts
     """
 
@@ -158,7 +170,6 @@ def predict_from_agreement_pattern_counts_sqls(
         select_cols.append(cc._gamma_column_name)
         select_cols.append(cc._mw_column_name)
     select_cols.append("agreement_pattern_count")
-    select_cols_expr = ",".join(select_cols)
 
     prior = probability_two_random_records_match
     mw_terms = [cc._mw_column_name for cc in comparisons]
@@ -168,11 +179,16 @@ def predict_from_agreement_pattern_counts_sqls(
         sql_dialect,
     )
 
+    select_expressions = [
+        f"{match_weight_expr} as match_weight",
+        f"{match_prob_expr} as match_probability",
+        *select_cols,
+    ]
+    select_cols_expr = join_sql_fragments(select_expressions, ",\n", indent_size=4)
+
     sql = f"""
     select
-    {match_weight_expr} as match_weight,
-    {match_prob_expr} as match_probability,
-    {select_cols_expr}
+{select_cols_expr}
     from __splink__df_match_weight_parts
     """
 

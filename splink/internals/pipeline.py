@@ -8,7 +8,7 @@ import sqlglot
 from sqlglot.errors import ParseError
 from sqlglot.expressions import Table
 
-from splink.internals.misc import ensure_is_list
+from splink.internals.misc import ensure_is_list, indent_sql, normalise_sql
 
 from .splink_dataframe import SplinkDataFrame
 
@@ -148,12 +148,15 @@ class CTEPipeline:
         with_ctes_pipeline = pipeline[:-1]
         final_query = pipeline[-1]
 
-        with_ctes = [f"{p.output_table_name} as ({p.sql})" for p in with_ctes_pipeline]
+        with_ctes = [
+            f"{p.output_table_name} as (\n{indent_sql(p.sql)}\n)"
+            for p in with_ctes_pipeline
+        ]
         with_ctes_str = ", \n\n".join(with_ctes)
         if with_ctes_str:
-            with_ctes_str = f"\nWITH\n\n{with_ctes_str} "
+            with_ctes_str = f"WITH\n\n{with_ctes_str}\n"
 
-        final_sql = with_ctes_str + "\n" + final_query.sql
+        final_sql = with_ctes_str + normalise_sql(final_query.sql)
 
         return final_sql
 
