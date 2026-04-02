@@ -20,6 +20,13 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
+def _helper_for_chunking(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    if dialect == "spark":
+        helper.break_lineage_method = "parquet"
+    return helper
+
+
 def _get_comparison_count(linker, result):
     """Get the number of comparisons in a prediction result."""
     return result.as_pandas_dataframe().shape[0]
@@ -34,7 +41,7 @@ def _sort_predictions(df):
 @mark_with_dialects_excluding()
 def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
     """Test that chunked predictions produce identical results to non-chunked."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -71,7 +78,7 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
     """Test various chunk size combinations produce consistent results."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -113,7 +120,7 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_precached_blocked_pairs_same_result(test_helpers, dialect):
     """Test that pre-caching blocked pairs produces same result as no pre-caching."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -145,7 +152,7 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
     """Test that pre-caching chunked blocked pairs produces same result."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -424,7 +431,7 @@ def test_blocked_pairs_deleted_when_not_from_cache():
 @mark_with_dialects_excluding()
 def test_chunked_predict_link_only(test_helpers, dialect):
     """Test chunked predictions work correctly with link_only (two datasets)."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -474,7 +481,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
 
     Two datasets is a special case, so we test with three datasets as well.
     """
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -522,7 +529,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
     """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     settings = get_settings_dict()
     settings["link_type"] = "link_and_dedupe"
@@ -572,7 +579,7 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
 
     Two datasets is a special case, so we test with three datasets as well.
     """
-    helper = test_helpers[dialect]
+    helper = _helper_for_chunking(test_helpers, dialect)
 
     settings = get_settings_dict()
     settings["link_type"] = "link_and_dedupe"

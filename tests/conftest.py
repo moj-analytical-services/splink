@@ -81,7 +81,11 @@ def spark():
 def spark_api(spark):
     from splink.internals.spark.database_api import SparkAPI
 
-    yield SparkAPI(spark_session=spark, num_partitions_on_repartition=1)
+    yield SparkAPI(
+        spark_session=spark,
+        num_partitions_on_repartition=1,
+        break_lineage_method="checkpoint",
+    )
 
 
 @pytest.fixture(scope="module")

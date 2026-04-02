@@ -91,6 +91,7 @@ class DuckDBTestHelper(TestHelper):
 class SparkTestHelper(TestHelper):
     def __init__(self, spark_creator_function):
         self.spark = spark_creator_function()
+        self.break_lineage_method = "checkpoint"
 
     @property
     def DatabaseAPI(self):
@@ -102,7 +103,7 @@ class SparkTestHelper(TestHelper):
         return {
             "spark_session": self.spark,
             "num_partitions_on_repartition": 2,
-            "break_lineage_method": "parquet",
+            "break_lineage_method": self.break_lineage_method,
         }
 
     def load_frame_from_csv(self, path):
