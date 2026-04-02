@@ -47,39 +47,28 @@ def vertically_concatenate_sql(
         source_dataset_column_already_exists = (
             source_dataset_input_column in df_obj.columns
         )
-    if len(input_tables) > 1:
-        sqls_to_union = []
 
-        for df_obj in input_tables.values():
-            select_expressions = []
-            if source_dataset_column_already_exists:
-                pass
-            else:
-                select_expressions.append(
-                    f"'{df_obj.source_dataset_name}' as source_dataset"
-                )
-
-            select_expressions.extend(columns)
-            select_columns_sql = ",\n".join(
-                indent_sql(expr) for expr in select_expressions
+    sqls = []
+    for df_obj in input_tables.values():
+        select_expressions = list(columns)
+        if len(input_tables) > 1 and not source_dataset_column_already_exists:
+            select_expressions.insert(
+                0, f"'{df_obj.source_dataset_name}' as source_dataset"
             )
 
-            sql = f"""
-            select
-{select_columns_sql}
-            from {df_obj.physical_name}
-            """
-            sqls_to_union.append(sql)
-        sql = join_sql_with_union_all(sqls_to_union)
-    else:
-        select_columns_sql = ",\n".join(indent_sql(col) for col in columns)
+        select_columns_sql = ",\n".join(indent_sql(expr) for expr in select_expressions)
+
         sql = f"""
             select
 {select_columns_sql}
             from {df_obj.physical_name}
             """
+        sqls.append(sql)
 
-    return sql
+    if len(sqls) == 1:
+        return sqls[0]
+
+    return join_sql_with_union_all(sqls)
 
 
 def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
