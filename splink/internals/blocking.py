@@ -122,6 +122,10 @@ class BlockingRule:
         return SplinkDialect.from_string(self._sql_dialect_str).sqlglot_dialect
 
     @property
+    def requires_blocking_input_materialisation(self) -> bool:
+        return False
+
+    @property
     def sql_dialect(self) -> SplinkDialect:
         return SplinkDialect.from_string(self._sql_dialect_str)
 
@@ -406,6 +410,10 @@ class ExplodingBlockingRule(BlockingRule):
         """
 
         return "false"
+
+    @property
+    def requires_blocking_input_materialisation(self) -> bool:
+        return True
 
     def create_blocked_pairs_sql(
         self,
