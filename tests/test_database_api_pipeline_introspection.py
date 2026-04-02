@@ -69,6 +69,9 @@ def _three_step_pipeline() -> CTEPipeline:
 
 
 def _register_input_tables_spark(spark_api: SparkAPI) -> None:
+    spark_api.spark.catalog.dropTempView("data_1")
+    spark_api.spark.catalog.dropTempView("data_2")
+
     spark_api.register(
         spark_api.spark.sql(
             """
@@ -112,6 +115,37 @@ def test_sql_pipeline_explain_analyze_duckdb():
     assert "count(*) as pair_count" in explain_result
 
 
+@mark_with_dialects_including("duckdb")
+def test_sql_pipeline_profiling_duckdb(tmp_path):
+    from splink.internals.duckdb.database_api import DuckDBAPIWithProfiling
+
+    db_api = DuckDBAPIWithProfiling(query_profiling_dir=tmp_path)
+    _register_input_tables(db_api)
+
+    result = db_api.sql_pipeline_to_splink_dataframe(_three_step_pipeline())
+
+    assert result.as_record_dict() == [{"total_pairs": 3, "distinct_names": 2}]
+
+    profile_paths = list(tmp_path.glob("*.txt"))
+    assert len(profile_paths) == 1
+
+    profile_text = profile_paths[0].read_text(encoding="utf-8")
+    assert "Query Profiling Information" in profile_text
+    assert "__splink__blocked_pairs" in profile_text
+
+
+@mark_with_dialects_including("duckdb")
+def test_sql_pipeline_explain_does_not_profile_duckdb(tmp_path):
+    from splink.internals.duckdb.database_api import DuckDBAPIWithProfiling
+
+    db_api = DuckDBAPIWithProfiling(query_profiling_dir=tmp_path)
+    _register_input_tables(db_api)
+
+    db_api.sql_pipeline_to_explain_result(_three_step_pipeline(), analyze=False)
+
+    assert list(tmp_path.glob("*.txt")) == []
+
+
 @mark_with_dialects_including("spark")
 def test_sql_pipeline_explain_analyze_spark(spark_api):
     _register_input_tables_spark(spark_api)
@@ -130,6 +164,48 @@ def test_sql_pipeline_explain_analyze_spark(spark_api):
     assert "duration = " in explain_result
     assert " ms" in explain_result
     assert " ns (" in explain_result
+
+
+@mark_with_dialects_including("spark")
+def test_sql_pipeline_profiling_spark(spark_api, tmp_path):
+    from splink.internals.spark.database_api import SparkAPIWithProfiling
+
+    profiling_api = SparkAPIWithProfiling(
+        spark_session=spark_api.spark,
+        break_lineage_method="persist",
+        num_partitions_on_repartition=1,
+        query_profiling_dir=tmp_path,
+    )
+    _register_input_tables_spark(profiling_api)
+
+    result = profiling_api.sql_pipeline_to_splink_dataframe(_three_step_pipeline())
+
+    assert result.as_record_dict() == [{"total_pairs": 3, "distinct_names": 2}]
+
+    profile_paths = list(tmp_path.glob("*.txt"))
+    assert len(profile_paths) == 1
+
+    profile_text = profile_paths[0].read_text(encoding="utf-8")
+    assert "== Final Physical Plan ==" in profile_text
+    assert "== Total Runtime ==" in profile_text
+    assert "== Runtime Metrics ==" in profile_text
+
+
+@mark_with_dialects_including("spark")
+def test_sql_pipeline_explain_does_not_profile_spark(spark_api, tmp_path):
+    from splink.internals.spark.database_api import SparkAPIWithProfiling
+
+    profiling_api = SparkAPIWithProfiling(
+        spark_session=spark_api.spark,
+        break_lineage_method="persist",
+        num_partitions_on_repartition=1,
+        query_profiling_dir=tmp_path,
+    )
+    _register_input_tables_spark(profiling_api)
+
+    profiling_api.sql_pipeline_to_explain_result(_three_step_pipeline(), analyze=False)
+
+    assert list(tmp_path.glob("*.txt")) == []
 
 
 @mark_with_dialects_including("spark")
