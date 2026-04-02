@@ -10,7 +10,7 @@ from splink.internals.expectation_maximisation import (
     compute_proportions_for_new_parameters,
 )
 from splink.internals.pipeline import CTEPipeline
-from splink.internals.vertically_concatenate import compute_df_concat_with_tf
+from splink.internals.vertically_concatenate import enqueue_df_concat_with_tf
 
 from .m_u_records_to_parameters import (
     append_m_probability_to_comparison_level_trained_probabilities,
@@ -24,8 +24,7 @@ logger = logging.getLogger(__name__)
 
 def estimate_m_from_pairwise_labels(linker: "Linker", table_name: str) -> None:
     pipeline = CTEPipeline()
-    nodes_with_tf = compute_df_concat_with_tf(linker, pipeline)
-    pipeline = CTEPipeline([nodes_with_tf])
+    enqueue_df_concat_with_tf(linker, pipeline)
     sqls = block_from_labels(linker, table_name)
 
     pipeline.enqueue_list_of_sqls(sqls)

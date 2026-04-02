@@ -7,7 +7,10 @@ from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
-from .term_frequencies import compute_all_term_frequencies_sqls
+from .term_frequencies import (
+    _join_tf_to_df_concat_sql,
+    append_term_frequencies_to_pipeline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,67 +79,16 @@ def vertically_concatenate_sql(
 
 
 def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
-    cache = linker._intermediate_table_cache
-    if "__splink__df_concat_with_tf" in cache:
-        nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-        pipeline.append_input_dataframe(nodes_with_tf)
-        return pipeline
-
-    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
-
-    sql = vertically_concatenate_sql(
-        input_tables=linker._input_tables_dict,
-        source_dataset_input_column=sds_ic,
+    enqueue_df_concat(linker, pipeline)
+    append_term_frequencies_to_pipeline(linker, pipeline)
+    pipeline.enqueue_sql(
+        _join_tf_to_df_concat_sql(linker),
+        "__splink__df_concat_with_tf",
     )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-    sqls = compute_all_term_frequencies_sqls(linker, pipeline)
-    pipeline.enqueue_list_of_sqls(sqls)
-
     return pipeline
-
-
-def compute_df_concat_with_tf(
-    linker: Linker, pipeline: CTEPipeline, use_cache: bool = True
-) -> SplinkDataFrame:
-    cache = linker._intermediate_table_cache
-    db_api = linker._db_api
-
-    if use_cache and "__splink__df_concat_with_tf" in cache:
-        return cache.get_with_logging("__splink__df_concat_with_tf")
-
-    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
-
-    sql = vertically_concatenate_sql(
-        input_tables=linker._input_tables_dict,
-        source_dataset_input_column=sds_ic,
-    )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-    sqls = compute_all_term_frequencies_sqls(linker, pipeline)
-    pipeline.enqueue_list_of_sqls(sqls)
-
-    nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    cache["__splink__df_concat_with_tf"] = nodes_with_tf
-    return nodes_with_tf
 
 
 def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
-    cache = linker._intermediate_table_cache
-
-    if "__splink__df_concat" in cache:
-        nodes_with_tf = cache.get_with_logging("__splink__df_concat")
-        pipeline.append_input_dataframe(nodes_with_tf)
-        return pipeline
-
-    # __splink__df_concat_with_tf is a superset of __splink__df_concat
-    # so if it exists, use it instead
-    elif "__splink__df_concat_with_tf" in cache:
-        nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-        nodes_with_tf.templated_name = "__splink__df_concat"
-        pipeline.append_input_dataframe(nodes_with_tf)
-        return pipeline
-
     sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
@@ -146,30 +98,6 @@ def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
     pipeline.enqueue_sql(sql, "__splink__df_concat")
 
     return pipeline
-
-
-def compute_df_concat(linker: Linker, pipeline: CTEPipeline) -> SplinkDataFrame:
-    cache = linker._intermediate_table_cache
-    db_api = linker._db_api
-
-    if "__splink__df_concat" in cache:
-        return cache.get_with_logging("__splink__df_concat")
-    if "__splink__df_concat_with_tf" in cache:
-        df = cache.get_with_logging("__splink__df_concat_with_tf")
-        df.templated_name = "__splink__df_concat"
-        return df
-
-    sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
-
-    sql = vertically_concatenate_sql(
-        input_tables=linker._input_tables_dict,
-        source_dataset_input_column=sds_ic,
-    )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
-
-    nodes_with_tf = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    cache["__splink__df_concat"] = nodes_with_tf
-    return nodes_with_tf
 
 
 def concat_table_column_names(linker: Linker) -> list[str]:
