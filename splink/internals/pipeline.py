@@ -172,12 +172,12 @@ class CTEPipeline:
 
         return final_sql
 
-    def generate_cte_pipeline_sql(self, output_table_name: Optional[str] = None) -> str:
+    def generate_cte_pipeline_sql(self) -> str:
         if self.spent:
             raise ValueError("This pipeline has already been used")
 
         self.spent = True
-        return self.preview_cte_pipeline_sql(output_table_name)
+        return self.preview_cte_pipeline_sql()
 
     @property
     def output_table_name(self):

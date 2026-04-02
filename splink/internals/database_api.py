@@ -132,11 +132,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return output_df
 
     @final
-    def _execute_query(self, sql: str, query_name: str) -> TablishType:
-        """Execute a read-only query and return the backend-native result."""
-        return self._log_and_run_sql_execution(sql, query_name, query_name)
-
-    @final
     def _execute_sql(
         self,
         sql: str,
@@ -181,32 +176,24 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def _sql_pipeline_to_splink_dataframe(
+    def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
-        output_table_name: Optional[str] = None,
     ) -> SplinkDataFrame:
         """
         Execute a given pipeline using input_dataframes as seeds if provided.
         self.debug_mode controls whether this is CTE or individual tables.
-        Optionally execute only the prefix up to a named output table.
         pipeline is set to spent after execution ensuring it cannot be
         accidentally reused.
         """
 
-        if pipeline.spent:
-            raise ValueError("This pipeline has already been used")
-
-        pipeline.spent = True
-
-        selected_output_table = output_table_name or pipeline.output_table_name
-
         if not self.debug_mode:
-            sql_gen = pipeline.preview_cte_pipeline_sql(output_table_name)
+            sql_gen = pipeline.generate_cte_pipeline_sql()
+            output_tablename_templated = pipeline.output_table_name
 
             return self._execute_sql(
                 sql_gen,
-                selected_output_table,
+                output_tablename_templated,
             )
 
         created_views: list[str] = []
@@ -215,7 +202,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         splink_dataframe: Optional[SplinkDataFrame] = None
 
         try:
-            for cte in pipeline.ctes_pipeline(output_table_name):
+            for cte in pipeline.ctes_pipeline():
                 start_time = time.time()
                 output_tablename = cte.output_table_name
                 sql = cte.sql
@@ -249,40 +236,23 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def sql_pipeline_to_splink_dataframe(
-        self,
-        pipeline: CTEPipeline,
-    ) -> SplinkDataFrame:
-        """Execute a pipeline and return its final output."""
-        return self._sql_pipeline_to_splink_dataframe(pipeline)
-
-    def sql_pipeline_to_splink_dataframe_at_output(
+    def partial_sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
         output_table_name: str,
     ) -> SplinkDataFrame:
-        """Execute a pipeline up to and including a named output table."""
-        return self._sql_pipeline_to_splink_dataframe(
-            pipeline, output_table_name=output_table_name
-        )
+        """Execute a pipeline up to and including a named output table.
 
-    def _sql_pipeline_to_explain_result(
-        self,
-        pipeline: CTEPipeline,
-        output_table_name: Optional[str] = None,
-        analyze: bool = False,
-    ) -> TablishType:
-        """Run EXPLAIN or EXPLAIN ANALYZE against a pipeline or pipeline prefix."""
+        This method always executes as a single CTE query and does not support
+        debug mode.
+        """
+        if self.debug_mode:
+            raise ValueError(
+                "partial_sql_pipeline_to_splink_dataframe does not support debug mode"
+            )
 
-        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
-        selected_output_table = output_table_name or pipeline.output_table_name
         sql = pipeline.preview_cte_pipeline_sql(output_table_name)
-        explain_sql = f"{explain_prefix}\n{sql}"
-
-        return self._execute_query(
-            explain_sql,
-            f"__splink__explain__{selected_output_table}",
-        )
+        return self._execute_sql(sql, output_table_name)
 
     def sql_pipeline_to_explain_result(
         self,
@@ -290,19 +260,32 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         analyze: bool = False,
     ) -> TablishType:
         """Run EXPLAIN or EXPLAIN ANALYZE against a pipeline's final output."""
-        return self._sql_pipeline_to_explain_result(pipeline, analyze=analyze)
+        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
+        output_table_name = pipeline.output_table_name
+        sql = pipeline.preview_cte_pipeline_sql()
+        explain_sql = f"{explain_prefix}\n{sql}"
 
-    def sql_pipeline_to_explain_result_at_output(
+        return self._log_and_run_sql_execution(
+            explain_sql,
+            f"__splink__explain__{output_table_name}",
+            f"__splink__explain__{output_table_name}",
+        )
+
+    def partial_sql_pipeline_to_explain_result(
         self,
         pipeline: CTEPipeline,
         output_table_name: str,
         analyze: bool = False,
     ) -> TablishType:
         """Run EXPLAIN or EXPLAIN ANALYZE against a named pipeline output."""
-        return self._sql_pipeline_to_explain_result(
-            pipeline,
-            output_table_name=output_table_name,
-            analyze=analyze,
+        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
+        sql = pipeline.preview_cte_pipeline_sql(output_table_name)
+        explain_sql = f"{explain_prefix}\n{sql}"
+
+        return self._log_and_run_sql_execution(
+            explain_sql,
+            f"__splink__explain__{output_table_name}",
+            f"__splink__explain__{output_table_name}",
         )
 
     # See https://github.com/moj-analytical-services/splink/pull/2863#issue-3738534958
