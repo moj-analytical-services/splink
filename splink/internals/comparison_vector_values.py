@@ -4,7 +4,7 @@ import logging
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import join_sql_fragments
+from splink.internals.misc import indent_sql
 from splink.internals.unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
 )
@@ -27,7 +27,7 @@ def compute_comparison_vector_values_sql(
     if include_clerical_match_score:
         select_columns.append("clerical_match_score")
 
-    select_cols_expr = join_sql_fragments(select_columns, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     sql = f"""
     select
@@ -63,7 +63,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
         unique_id_columns = [unique_id_input_column]
 
     select_columns = [*columns_to_select_for_blocking, "b.match_key"]
-    select_cols_expr = join_sql_fragments(select_columns, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     # Where there are large numbers of unmatched records, the DuckDB query planner
     # can struggle with the double inner join below.  It should
@@ -118,7 +118,7 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     if include_clerical_match_score:
         select_columns.append("clerical_match_score")
 
-    select_cols_expr = join_sql_fragments(select_columns, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
     # The second table computes the comparison vectors from these aliases
     sql = f"""

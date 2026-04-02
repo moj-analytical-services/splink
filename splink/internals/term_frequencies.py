@@ -13,7 +13,7 @@ from splink.internals.duckdb.duckdb_helpers.duckdb_helpers import (
     record_dicts_from_relation,
 )
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import join_sql_fragments, join_sql_with_union_all
+from splink.internals.misc import indent_sql, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -42,7 +42,7 @@ def term_frequencies_for_single_column_sql(
         ) as {input_column.tf_name}
         """,
     ]
-    select_cols_str = join_sql_fragments(select_cols, ",\n", indent_size=4)
+    select_cols_str = ",\n".join(indent_sql(col) for col in select_cols)
 
     sql = f"""
     select
@@ -96,7 +96,7 @@ def _join_tf_to_input_table_sql(
             f"left join {tbl} on {input_tablename}.{col.name} = {tbl}.{col.name}"
         )
 
-    select_cols_str = join_sql_fragments(select_cols, ",\n", indent_size=4)
+    select_cols_str = ",\n".join(indent_sql(col) for col in select_cols)
     left_joins_str = "\n".join(left_joins)
 
     sql = f"""

@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 from splink.internals.input_column import InputColumn
-from splink.internals.misc import join_sql_fragments, join_sql_with_union_all
+from splink.internals.misc import indent_sql, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -60,8 +60,8 @@ def vertically_concatenate_sql(
                 )
 
             select_expressions.extend(columns)
-            select_columns_sql = join_sql_fragments(
-                select_expressions, ",\n", indent_size=4
+            select_columns_sql = ",\n".join(
+                indent_sql(expr) for expr in select_expressions
             )
 
             sql = f"""
@@ -72,7 +72,7 @@ def vertically_concatenate_sql(
             sqls_to_union.append(sql)
         sql = join_sql_with_union_all(sqls_to_union)
     else:
-        select_columns_sql = join_sql_fragments(columns, ",\n", indent_size=4)
+        select_columns_sql = ",\n".join(indent_sql(col) for col in columns)
         sql = f"""
             select
 {select_columns_sql}

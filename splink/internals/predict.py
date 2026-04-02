@@ -10,7 +10,6 @@ from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     indent_sql,
-    join_sql_fragments,
     prob_to_match_weight,
     threshold_args_to_match_weight,
 )
@@ -65,7 +64,7 @@ def predict_from_comparison_vectors_sqls(
     if include_clerical_match_score:
         select_cols.append("clerical_match_score")
 
-    select_cols_expr = join_sql_fragments(select_cols, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_cols)
 
     sql = f"""
     select
@@ -115,7 +114,7 @@ def predict_from_comparison_vectors_sqls(
     if include_clerical_match_score:
         select_expressions.append("clerical_match_score")
 
-    select_cols_expr = join_sql_fragments(select_expressions, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_expressions)
 
     sql = f"""
     select
@@ -146,12 +145,12 @@ def predict_from_agreement_pattern_counts_sqls(
         cc_sqls = [
             cl._match_weight_sql(cc._gamma_column_name) for cl in cc.comparison_levels
         ]
-        sql = join_sql_fragments(cc_sqls, "\n")
+        sql = "\n".join(cc_sqls)
         sql = f"CASE\n{indent_sql(sql)}\nEND as {cc._mw_column_name}"
         select_cols.append(cc._gamma_column_name)
         select_cols.append(sql)
     select_cols.append("agreement_pattern_count")
-    select_cols_expr = join_sql_fragments(select_cols, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_cols)
 
     sql = f"""
     select
@@ -184,7 +183,7 @@ def predict_from_agreement_pattern_counts_sqls(
         f"{match_prob_expr} as match_probability",
         *select_cols,
     ]
-    select_cols_expr = join_sql_fragments(select_expressions, ",\n", indent_size=4)
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_expressions)
 
     sql = f"""
     select

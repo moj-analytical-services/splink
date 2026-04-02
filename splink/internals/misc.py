@@ -80,18 +80,9 @@ def indent_sql(sql: str, num_spaces: int = 4) -> str:
     return indent(normalise_sql(sql), " " * num_spaces)
 
 
-def join_sql_fragments(
-    sql_fragments: Iterable[str], separator: str, indent_size: int = 0
-) -> str:
-    fragments = [normalise_sql(fragment) for fragment in sql_fragments]
-    if indent_size:
-        prefix = " " * indent_size
-        fragments = [indent(fragment, prefix) for fragment in fragments]
-    return separator.join(fragments)
-
-
 def join_sql_with_union_all(sql_fragments: Iterable[str]) -> str:
-    return join_sql_fragments(sql_fragments, "\n\nUNION ALL\n\n")
+    fragments = [normalise_sql(fragment) for fragment in sql_fragments]
+    return "\n\nUNION ALL\n\n".join(fragments)
 
 
 def record_dict_to_list(record_dict: dict[str, list[T]]) -> list[dict[str, T]]:

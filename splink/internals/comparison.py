@@ -9,7 +9,6 @@ from splink.internals.misc import (
     dedupe_preserving_order,
     indent_sql,
     join_list_with_commas_final_and,
-    join_sql_fragments,
 )
 
 from .comparison_level import (
@@ -163,7 +162,7 @@ class Comparison:
         sqls = [
             cl._when_then_comparison_vector_value_sql for cl in self.comparison_levels
         ]
-        sql = join_sql_fragments(sqls, "\n")
+        sql = "\n".join(sqls)
         sql = f"CASE\n{indent_sql(sql)}\nEND as {self._gamma_column_name}"
 
         return sql
@@ -255,7 +254,7 @@ class Comparison:
             cl._match_weight_sql(self._gamma_column_name)
             for cl in self.comparison_levels
         ]
-        sql = join_sql_fragments(sqls, "\n")
+        sql = "\n".join(sqls)
         sql = f"CASE\n{indent_sql(sql)}\nEND as {self._mw_column_name}"
         output_cols.append(sql)
 
@@ -264,7 +263,7 @@ class Comparison:
                 cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
                 for cl in self.comparison_levels
             ]
-            sql = join_sql_fragments(sqls, "\n")
+            sql = "\n".join(sqls)
             sql = f"CASE\n{indent_sql(sql)}\nEND as {self._mw_tf_adj_column_name}"
             output_cols.append(sql)
         output_cols.append(self._gamma_column_name)
