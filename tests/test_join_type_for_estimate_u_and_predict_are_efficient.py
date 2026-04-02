@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import List
 
 import pandas as pd
 
@@ -110,7 +111,7 @@ def _assert_join_logged(log_output: str, left_table: str, right_table: str) -> N
 def test_dedupe_only():
     df_one = pd.DataFrame(data_one)
 
-    log_list = []
+    log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
 
@@ -151,14 +152,14 @@ def test_dedupe_only():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat")
 
 
 def test_link_and_dedupe():
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
-    log_list = []
+    log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
     settings = {
@@ -200,14 +201,14 @@ def test_link_and_dedupe():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat")
 
 
 def test_link_only_two():
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
-    log_list = []
+    log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
 
@@ -256,25 +257,25 @@ def test_link_only_two():
 
     _assert_join_logged(
         all_log_messages,
-        "__splink__df_concat_with_tf_left",
-        "__splink__df_concat_with_tf_right",
+        "__splink__df_concat_left",
+        "__splink__df_concat_right",
     )
     assert (
-        "__splink__df_concat_with_tf_left as ( select 'df_one' as "
+        "__splink__df_concat_left as ( select 'df_one' as "
         '"source_dataset", "unique_id", "first_name", "surname" from df_one )'
         in all_log_messages
     )
     assert (
-        "__splink__df_concat_with_tf_right as ( select 'df_two' as "
+        "__splink__df_concat_right as ( select 'df_two' as "
         '"source_dataset", "unique_id", "first_name", "surname" from df_two )'
         in all_log_messages
     )
     assert (
-        "__splink__df_concat_with_tf_left as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        "__splink__df_concat_left as ( select * from __splink__df_concat"  # noqa: E501
         not in all_log_messages
     )
     assert (
-        "__splink__df_concat_with_tf_right as ( select * from __splink__df_concat_with_tf"  # noqa: E501
+        "__splink__df_concat_right as ( select * from __splink__df_concat"  # noqa: E501
         not in all_log_messages
     )
     assert "select min(" not in all_log_messages
@@ -286,7 +287,7 @@ def test_link_only_three():
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
     df_three = pd.DataFrame(data_three)
 
-    log_list = []
+    log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
 
@@ -330,4 +331,4 @@ def test_link_only_three():
     all_log_messages = "\n".join(log_list)
     all_log_messages = re.sub(r"\s+", " ", all_log_messages)
 
-    _assert_self_join_logged(all_log_messages, "__splink__df_concat_with_tf")
+    _assert_self_join_logged(all_log_messages, "__splink__df_concat")
