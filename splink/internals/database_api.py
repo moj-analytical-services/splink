@@ -19,7 +19,13 @@ import duckdb
 
 from splink.internals.cache_dict_with_logging import CacheDictWithLogging
 from splink.internals.logging_messages import execute_sql_logging_message_info, log_sql
-from splink.internals.misc import ascii_uid, ensure_is_list, parse_duration
+from splink.internals.misc import (
+    ascii_uid,
+    ensure_is_list,
+    indent_sql,
+    normalise_sql,
+    parse_duration,
+)
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
 
@@ -40,6 +46,7 @@ BaseAcceptableInputTableType = Union[
 if TYPE_CHECKING:
     from pandas import DataFrame as PandasDataFrame
     from pyarrow import Table as PyarrowTable
+    from splink.internals.pipeline import CTE
 
     AcceptableInputTableType = Union[
         BaseAcceptableInputTableType,
@@ -176,6 +183,24 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
+    def _sql_from_pipeline_parts(
+        self, pipeline: CTEPipeline, parts: Sequence[CTE]
+    ) -> str:
+        pipeline._log_pipeline(parts)
+
+        with_ctes_pipeline = parts[:-1]
+        final_query = parts[-1]
+
+        with_ctes = [
+            f"{p.output_table_name} as (\n{indent_sql(p.sql)}\n)"
+            for p in with_ctes_pipeline
+        ]
+        with_ctes_str = ", \n\n".join(with_ctes)
+        if with_ctes_str:
+            with_ctes_str = f"WITH\n\n{with_ctes_str}\n"
+
+        return with_ctes_str + normalise_sql(final_query.sql)
+
     def sql_pipeline_to_splink_dataframe(
         self,
         pipeline: CTEPipeline,
@@ -251,7 +276,8 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 "partial_sql_pipeline_to_splink_dataframe does not support debug mode"
             )
 
-        sql = pipeline.preview_cte_pipeline_sql_until(output_table_name)
+        parts = pipeline.ctes_pipeline_until(output_table_name)
+        sql = self._sql_from_pipeline_parts(pipeline, parts)
         return self._execute_sql(sql, output_table_name)
 
     def sql_pipeline_to_explain_result(
@@ -262,7 +288,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         """Run EXPLAIN or EXPLAIN ANALYZE against a pipeline's final output."""
         explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
         output_table_name = pipeline.output_table_name
-        sql = pipeline.preview_cte_pipeline_sql()
+        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
         explain_sql = f"{explain_prefix}\n{sql}"
 
         return self._log_and_run_sql_execution(

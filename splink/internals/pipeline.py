@@ -149,7 +149,14 @@ class CTEPipeline:
             f"Output table name '{output_table_name}' not found in pipeline"
         )
 
-    def _generate_pipeline_sql(self, pipeline: List[CTE]) -> str:
+    def generate_cte_pipeline_sql(self) -> str:
+        if self.spent:
+            raise ValueError("This pipeline has already been used")
+
+        self.spent = True
+
+        pipeline = self.ctes_pipeline()
+
         self._log_pipeline(pipeline)
 
         with_ctes_pipeline = pipeline[:-1]
@@ -166,19 +173,6 @@ class CTEPipeline:
         final_sql = with_ctes_str + normalise_sql(final_query.sql)
 
         return final_sql
-
-    def preview_cte_pipeline_sql(self) -> str:
-        return self._generate_pipeline_sql(self.ctes_pipeline())
-
-    def preview_cte_pipeline_sql_until(self, output_table_name: str) -> str:
-        return self._generate_pipeline_sql(self.ctes_pipeline_until(output_table_name))
-
-    def generate_cte_pipeline_sql(self) -> str:
-        if self.spent:
-            raise ValueError("This pipeline has already been used")
-
-        self.spent = True
-        return self.preview_cte_pipeline_sql()
 
     @property
     def output_table_name(self):
