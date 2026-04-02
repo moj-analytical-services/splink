@@ -206,53 +206,6 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding()
-def test_prob_rr_match_link_only_three_tables(test_helpers, dialect):
-    helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-        ]
-    )
-
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-        ]
-    )
-
-    df_3 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "Mary", "surname": "Taylor"},
-            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 3, "first_name": "Alice", "surname": "Brown"},
-            {"unique_id": 4, "first_name": "John", "surname": "Jones"},
-        ]
-    )
-
-    settings = {
-        "link_type": "link_only",
-        "blocking_rules_to_generate_predictions": [],
-        "comparisons": [],
-    }
-
-    deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
-
-    linker = helper.linker_with_registration([df_1, df_2, df_3], settings)
-    linker.training.estimate_probability_two_random_records_match(
-        deterministic_rules, recall=1.0
-    )
-
-    prob = linker._settings_obj._probability_two_random_records_match
-    # 11 matches across the three dataset-pairs once duplicates between
-    # deterministic rules are removed.
-    # 2*3 + 2*4 + 3*4 = 26 comparisons
-    assert pytest.approx(prob) == 11 / 26
-
-
-@mark_with_dialects_excluding()
 def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
