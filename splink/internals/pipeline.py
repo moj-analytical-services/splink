@@ -134,14 +134,26 @@ class CTEPipeline:
             for i, part in enumerate(parts):
                 logger.log(7, f"    Pipeline part {i+1}: {part.cte_description}")
 
-    def ctes_pipeline(self) -> List[CTE]:
-        """Common table expressions"""
-        return self._resolved_queue()
+    def _pipeline_until(self, output_table_name: Optional[str] = None) -> List[CTE]:
+        pipeline = self._resolved_queue()
 
-    def generate_cte_pipeline_sql(self) -> str:
-        self.spent = True
+        if output_table_name is None:
+            return pipeline
 
-        pipeline = self.ctes_pipeline()
+        for index, cte in enumerate(pipeline):
+            if cte.output_table_name == output_table_name:
+                return pipeline[: index + 1]
+
+        raise ValueError(
+            f"Output table name '{output_table_name}' not found in pipeline"
+        )
+
+    def ctes_pipeline(self, output_table_name: Optional[str] = None) -> List[CTE]:
+        """Common table expressions."""
+        return self._pipeline_until(output_table_name)
+
+    def preview_cte_pipeline_sql(self, output_table_name: Optional[str] = None) -> str:
+        pipeline = self.ctes_pipeline(output_table_name)
 
         self._log_pipeline(pipeline)
 
@@ -159,6 +171,13 @@ class CTEPipeline:
         final_sql = with_ctes_str + normalise_sql(final_query.sql)
 
         return final_sql
+
+    def generate_cte_pipeline_sql(self, output_table_name: Optional[str] = None) -> str:
+        if self.spent:
+            raise ValueError("This pipeline has already been used")
+
+        self.spent = True
+        return self.preview_cte_pipeline_sql(output_table_name)
 
     @property
     def output_table_name(self):
