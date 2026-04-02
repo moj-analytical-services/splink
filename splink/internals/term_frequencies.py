@@ -83,7 +83,9 @@ def _join_tf_to_input_table_sql(
 
         tbl = colname_to_tf_tablename(col)
         select_cols.append(f"{tbl}.{col.tf_name}")
-        left_joins.append(f"left join {tbl} on {input_tablename}.{col.name} = {tbl}.{col.name}")
+        left_joins.append(
+            f"left join {tbl} on {input_tablename}.{col.name} = {tbl}.{col.name}"
+        )
 
     select_cols_str = ", ".join(select_cols)
     left_joins_str = "\n".join(left_joins)
