@@ -33,7 +33,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     ) -> str:
         explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
         output_table_name = pipeline.output_table_name
-        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
+        sql = self._render_sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
         explain_sql = f"{explain_prefix}\n{sql}"
 
         explain_result = self._log_and_run_sql_execution(

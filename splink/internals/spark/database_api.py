@@ -134,7 +134,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
         query and return the final physical plan plus runtime metrics.
         """
         output_table_name = pipeline.output_table_name
-        sql = self._sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
+        sql = self._render_sql_from_pipeline_parts(pipeline, pipeline.ctes_pipeline())
         sql = self._setup_for_execute_sql(sql, output_table_name)
 
         if analyze:

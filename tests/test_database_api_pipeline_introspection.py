@@ -2,6 +2,7 @@ import pandas as pd
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.spark.database_api import SparkAPI
 
 from .decorator import mark_with_dialects_including
 
@@ -67,7 +68,7 @@ def _three_step_pipeline() -> CTEPipeline:
     return pipeline
 
 
-def _register_input_tables_spark(spark_api) -> None:
+def _register_input_tables_spark(spark_api: SparkAPI) -> None:
     spark_api.register(
         spark_api.spark.sql(
             """
@@ -94,22 +95,6 @@ def _register_input_tables_spark(spark_api) -> None:
         ),
         source_dataset_name="data_2",
     )
-
-
-@mark_with_dialects_including("duckdb")
-def test_sql_pipeline_can_materialise_intermediate_output_duckdb():
-    db_api = DuckDBAPI()
-    _register_input_tables(db_api)
-
-    result = db_api.partial_sql_pipeline_to_splink_dataframe(
-        _three_step_pipeline(),
-        output_table_name="__splink__pair_counts_by_name",
-    )
-
-    assert sorted(result.as_record_dict(), key=lambda row: row["first_name_l"]) == [
-        {"first_name_l": "John", "pair_count": 1},
-        {"first_name_l": "Robin", "pair_count": 2},
-    ]
 
 
 @mark_with_dialects_including("duckdb")

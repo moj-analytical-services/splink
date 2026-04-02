@@ -184,7 +184,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         return splink_dataframe
 
-    def _sql_from_pipeline_parts(
+    def _render_sql_from_pipeline_parts(
         self, pipeline: CTEPipeline, parts: Sequence[CTE]
     ) -> str:
         pipeline._log_pipeline(parts)
@@ -261,25 +261,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             raise SplinkException("Debug pipeline execution produced no output tables.")
 
         return splink_dataframe
-
-    def partial_sql_pipeline_to_splink_dataframe(
-        self,
-        pipeline: CTEPipeline,
-        output_table_name: str,
-    ) -> SplinkDataFrame:
-        """Execute a pipeline up to and including a named output table.
-
-        This method always executes as a single CTE query and does not support
-        debug mode.
-        """
-        if self.debug_mode:
-            raise ValueError(
-                "partial_sql_pipeline_to_splink_dataframe does not support debug mode"
-            )
-
-        parts = pipeline.ctes_pipeline_until(output_table_name)
-        sql = self._sql_from_pipeline_parts(pipeline, parts)
-        return self._execute_sql(sql, output_table_name)
 
     def sql_pipeline_to_explain_result(
         self,
