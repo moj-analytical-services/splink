@@ -134,11 +134,12 @@ class CTEPipeline:
             for i, part in enumerate(parts):
                 logger.log(7, f"    Pipeline part {i+1}: {part.cte_description}")
 
-    def _pipeline_until(self, output_table_name: Optional[str] = None) -> List[CTE]:
-        pipeline = self._resolved_queue()
+    def ctes_pipeline(self) -> List[CTE]:
+        """Common table expressions."""
+        return self._resolved_queue()
 
-        if output_table_name is None:
-            return pipeline
+    def ctes_pipeline_until(self, output_table_name: str) -> List[CTE]:
+        pipeline = self._resolved_queue()
 
         for index, cte in enumerate(pipeline):
             if cte.output_table_name == output_table_name:
@@ -148,13 +149,7 @@ class CTEPipeline:
             f"Output table name '{output_table_name}' not found in pipeline"
         )
 
-    def ctes_pipeline(self, output_table_name: Optional[str] = None) -> List[CTE]:
-        """Common table expressions."""
-        return self._pipeline_until(output_table_name)
-
-    def preview_cte_pipeline_sql(self, output_table_name: Optional[str] = None) -> str:
-        pipeline = self.ctes_pipeline(output_table_name)
-
+    def _generate_pipeline_sql(self, pipeline: List[CTE]) -> str:
         self._log_pipeline(pipeline)
 
         with_ctes_pipeline = pipeline[:-1]
@@ -171,6 +166,12 @@ class CTEPipeline:
         final_sql = with_ctes_str + normalise_sql(final_query.sql)
 
         return final_sql
+
+    def preview_cte_pipeline_sql(self) -> str:
+        return self._generate_pipeline_sql(self.ctes_pipeline())
+
+    def preview_cte_pipeline_sql_until(self, output_table_name: str) -> str:
+        return self._generate_pipeline_sql(self.ctes_pipeline_until(output_table_name))
 
     def generate_cte_pipeline_sql(self) -> str:
         if self.spent:

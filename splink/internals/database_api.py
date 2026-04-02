@@ -251,7 +251,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 "partial_sql_pipeline_to_splink_dataframe does not support debug mode"
             )
 
-        sql = pipeline.preview_cte_pipeline_sql(output_table_name)
+        sql = pipeline.preview_cte_pipeline_sql_until(output_table_name)
         return self._execute_sql(sql, output_table_name)
 
     def sql_pipeline_to_explain_result(
@@ -263,23 +263,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
         output_table_name = pipeline.output_table_name
         sql = pipeline.preview_cte_pipeline_sql()
-        explain_sql = f"{explain_prefix}\n{sql}"
-
-        return self._log_and_run_sql_execution(
-            explain_sql,
-            f"__splink__explain__{output_table_name}",
-            f"__splink__explain__{output_table_name}",
-        )
-
-    def partial_sql_pipeline_to_explain_result(
-        self,
-        pipeline: CTEPipeline,
-        output_table_name: str,
-        analyze: bool = False,
-    ) -> TablishType:
-        """Run EXPLAIN or EXPLAIN ANALYZE against a named pipeline output."""
-        explain_prefix = "EXPLAIN ANALYZE" if analyze else "EXPLAIN"
-        sql = pipeline.preview_cte_pipeline_sql(output_table_name)
         explain_sql = f"{explain_prefix}\n{sql}"
 
         return self._log_and_run_sql_execution(
