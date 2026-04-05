@@ -6,21 +6,16 @@ from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING, Any, List
 
-from splink.internals.blocking import (
-    BlockingRule,
-    block_using_rules_sqls,
-)
-from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_from_id_pairs_sqls,
-)
+from splink.internals.blocking import _sql_gen_where_condition
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
 from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
-from splink.internals.misc import ascii_uid
+from splink.internals.misc import ascii_uid, indent_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import LinkTypeLiteralType, Settings
+from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -40,6 +35,65 @@ if TYPE_CHECKING:
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+
+
+def _estimate_u_comparison_vector_sqls(
+    *,
+    db_api: "DatabaseAPISubClass",
+    input_tablename_l: str,
+    input_tablename_r: str,
+    link_type: LinkTypeLiteralType,
+    source_dataset_input_column: "InputColumn | None",
+    unique_id_input_column: "InputColumn",
+    blocking_cols: list[str],
+    cv_cols: list[str],
+    rhs_chunk_num: int,
+    rhs_num_chunks: int,
+) -> list[dict[str, str]]:
+    unique_id_columns = [unique_id_input_column]
+    if source_dataset_input_column is not None:
+        unique_id_columns = [source_dataset_input_column, *unique_id_columns]
+
+    where_condition = _sql_gen_where_condition(
+        link_type,
+        unique_id_columns,
+        right_chunk=(rhs_chunk_num, rhs_num_chunks),
+        sql_dialect=db_api.sql_dialect,
+    )
+
+    uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+    uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
+    blocked_cols_expr = ",\n".join(
+        indent_sql(col)
+        for col in [
+            f"{uid_l_expr} as join_key_l",
+            f"{uid_r_expr} as join_key_r",
+            *blocking_cols,
+            "'0' as match_key",
+        ]
+    )
+    blocked_sql = f"""
+    select
+{blocked_cols_expr}
+    from {input_tablename_l} as l
+    inner join {input_tablename_r} as r
+    on
+    (1=1)
+    {where_condition}
+    """
+
+    cv_cols_expr = ",\n".join(indent_sql(col) for col in cv_cols)
+    cv_sql = f"""
+    select
+{cv_cols_expr}
+    from __splink__blocked_id_pairs
+    """
+
+    return [
+        {"sql": blocked_sql, "output_table_name": "__splink__blocked_id_pairs"},
+        {"sql": cv_sql, "output_table_name": "__splink__df_comparison_vectors"},
+    ]
 
 
 class _MUCountsAccumulator:
@@ -140,7 +194,6 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
     split_sqls: list[dict[str, str]],
     input_tablename_sample_l: str,
     input_tablename_sample_r: str,
-    blocking_rules_for_u: list[BlockingRule],
     link_type: LinkTypeLiteralType,
     source_dataset_input_column: "InputColumn | None",
     unique_id_input_column: "InputColumn",
@@ -167,28 +220,20 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
     if split_sqls:
         pipeline.enqueue_list_of_sqls(split_sqls)
 
-    blocking_sqls = block_using_rules_sqls(
+    comparison_vector_sqls = _estimate_u_comparison_vector_sqls(
+        db_api=db_api,
         input_tablename_l=input_tablename_sample_l,
         input_tablename_r=input_tablename_sample_r,
-        blocking_rules=blocking_rules_for_u,
         link_type=link_type,
         source_dataset_input_column=source_dataset_input_column,
         unique_id_input_column=unique_id_input_column,
-        right_chunk=(rhs_chunk_num, rhs_num_chunks),
+        blocking_cols=blocking_cols,
+        cv_cols=cv_cols,
+        rhs_chunk_num=rhs_chunk_num,
+        rhs_num_chunks=rhs_num_chunks,
     )
 
-    pipeline.enqueue_list_of_sqls(blocking_sqls)
-
-    cv_sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-        blocking_cols,
-        cv_cols,
-        input_tablename_l=input_tablename_sample_l,
-        input_tablename_r=input_tablename_sample_r,
-        source_dataset_input_column=source_dataset_input_column,
-        unique_id_input_column=unique_id_input_column,
-    )
-
-    pipeline.enqueue_list_of_sqls(cv_sqls)
+    pipeline.enqueue_list_of_sqls(comparison_vector_sqls)
 
     # Add dummy match_probability column required by compute_new_parameters_sql
     sql = """
@@ -381,10 +426,6 @@ def estimate_u_values(
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
     df_sample = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    blocking_rules_for_u = [
-        BlockingRule("1=1", sql_dialect_str=db_api.sql_dialect.sql_dialect_str)
-    ]
-
     input_tablename_sample_l = "__splink__df_concat_sample"
     input_tablename_sample_r = "__splink__df_concat_sample"
 
@@ -445,7 +486,6 @@ def estimate_u_values(
             split_sqls=split_sqls,
             input_tablename_sample_l=input_tablename_sample_l,
             input_tablename_sample_r=input_tablename_sample_r,
-            blocking_rules_for_u=blocking_rules_for_u,
             link_type=linker._settings_obj._link_type,
             source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
