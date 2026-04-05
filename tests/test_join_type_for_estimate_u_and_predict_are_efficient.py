@@ -108,6 +108,14 @@ def _assert_join_logged(log_output: str, left_table: str, right_table: str) -> N
     assert re.search(pattern, log_output)
 
 
+def _count_self_joins_logged(log_output: str, table_name: str) -> int:
+    pattern = (
+        rf"from {re.escape(table_name)}(?:_[a-z0-9]+)? as l inner join "
+        rf"{re.escape(table_name)}(?:_[a-z0-9]+)? as r"
+    )
+    return len(re.findall(pattern, log_output))
+
+
 def test_dedupe_only():
     df_one = pd.DataFrame(data_one)
 

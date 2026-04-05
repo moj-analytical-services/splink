@@ -20,7 +20,7 @@ from splink.internals.m_u_records_to_parameters import (
 )
 from splink.internals.misc import ascii_uid
 from splink.internals.pipeline import CTEPipeline
-from splink.internals.settings import LinkTypeLiteralType, Settings
+from splink.internals.settings import Settings
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     split_df_concat_with_tf_into_two_tables_sqls,
@@ -40,6 +40,25 @@ if TYPE_CHECKING:
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
+
+
+def _sampled_blocked_pairs_chunk_sql(
+    *,
+    db_api: "DatabaseAPISubClass",
+    rhs_chunk_num: int,
+    rhs_num_chunks: int,
+) -> str:
+    where_clause = ""
+    if rhs_num_chunks > 1:
+        hash_expr = db_api.sql_dialect.hash_function_expression("bp.join_key_r")
+        where_clause = (
+            f"\n    where (ABS({hash_expr}) % {rhs_num_chunks}) + 1 = {rhs_chunk_num}"
+        )
+
+    return f"""
+    select *
+    from __splink__blocked_id_pairs_full as bp{where_clause}
+    """
 
 
 class _MUCountsAccumulator:
@@ -137,11 +156,10 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
     *,
     db_api: "DatabaseAPISubClass",
     df_sample: "SplinkDataFrame",
+    df_sample_blocked_pairs: "SplinkDataFrame",
     split_sqls: list[dict[str, str]],
     input_tablename_sample_l: str,
     input_tablename_sample_r: str,
-    blocking_rules_for_u: list[BlockingRule],
-    link_type: LinkTypeLiteralType,
     source_dataset_input_column: "InputColumn | None",
     unique_id_input_column: "InputColumn",
     comparison: "Comparison",
@@ -162,22 +180,19 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
 
     t0 = time.perf_counter()
 
-    pipeline = CTEPipeline(input_dataframes=[df_sample])
+    pipeline = CTEPipeline(input_dataframes=[df_sample, df_sample_blocked_pairs])
 
     if split_sqls:
         pipeline.enqueue_list_of_sqls(split_sqls)
 
-    blocking_sqls = block_using_rules_sqls(
-        input_tablename_l=input_tablename_sample_l,
-        input_tablename_r=input_tablename_sample_r,
-        blocking_rules=blocking_rules_for_u,
-        link_type=link_type,
-        source_dataset_input_column=source_dataset_input_column,
-        unique_id_input_column=unique_id_input_column,
-        right_chunk=(rhs_chunk_num, rhs_num_chunks),
+    pipeline.enqueue_sql(
+        _sampled_blocked_pairs_chunk_sql(
+            db_api=db_api,
+            rhs_chunk_num=rhs_chunk_num,
+            rhs_num_chunks=rhs_num_chunks,
+        ),
+        "__splink__blocked_id_pairs",
     )
-
-    pipeline.enqueue_list_of_sqls(blocking_sqls)
 
     cv_sqls = compute_comparison_vector_values_from_id_pairs_sqls(
         blocking_cols,
@@ -402,6 +417,22 @@ def estimate_u_values(
         input_tablename_sample_l = "__splink__df_concat_sample_left"
         input_tablename_sample_r = "__splink__df_concat_sample_right"
 
+    pipeline = CTEPipeline(input_dataframes=[df_sample])
+    if split_sqls:
+        pipeline.enqueue_list_of_sqls(split_sqls)
+
+    blocking_sqls = block_using_rules_sqls(
+        input_tablename_l=input_tablename_sample_l,
+        input_tablename_r=input_tablename_sample_r,
+        blocking_rules=blocking_rules_for_u,
+        link_type=linker._settings_obj._link_type,
+        source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
+        unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
+    )
+    blocking_sqls[-1]["output_table_name"] = "__splink__blocked_id_pairs_full"
+    pipeline.enqueue_list_of_sqls(blocking_sqls)
+    df_sample_blocked_pairs = db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
     # At this point we've computed our data sample and we're ready to 'block and count'
 
     # Only chunk on RHS.  Input data is sample and thus always small enough.
@@ -442,11 +473,10 @@ def estimate_u_values(
             _accumulate_u_counts_from_chunk_and_check_min_count,
             db_api=db_api,
             df_sample=df_sample,
+            df_sample_blocked_pairs=df_sample_blocked_pairs,
             split_sqls=split_sqls,
             input_tablename_sample_l=input_tablename_sample_l,
             input_tablename_sample_r=input_tablename_sample_r,
-            blocking_rules_for_u=blocking_rules_for_u,
-            link_type=linker._settings_obj._link_type,
             source_dataset_input_column=settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings_obj.column_info_settings.unique_id_input_column,
             comparison=comparison,
@@ -520,6 +550,7 @@ def estimate_u_values(
                 "estimate u by random sampling",
             )
 
+    df_sample_blocked_pairs.drop_table_from_database_and_remove_from_cache()
     df_sample.drop_table_from_database_and_remove_from_cache()
 
     logger.info("\nEstimated u probabilities using random sampling")
