@@ -76,22 +76,23 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
         input_tablename_l = "__splink__df_concat"
         input_tablename_r = "__splink__df_concat"
 
-    sql = blocking_rule.create_blocking_input_sql(
-        input_tablename=input_tablename_l,
-        input_columns=input_dataframes[0].columns,
-    )
+    if blocking_rule.requires_blocking_input_materialisation:
+        sql = blocking_rule.create_blocking_input_sql(
+            input_tablename=input_tablename_l,
+            input_columns=input_dataframes[0].columns,
+        )
 
-    sqls.append({"sql": sql, "output_table_name": "__splink__br_input_l"})
+        sqls.append({"sql": sql, "output_table_name": "__splink__br_input_l"})
 
-    sql = blocking_rule.create_blocking_input_sql(
-        input_tablename=input_tablename_r,
-        input_columns=input_dataframes[0].columns,
-    )
+        sql = blocking_rule.create_blocking_input_sql(
+            input_tablename=input_tablename_r,
+            input_columns=input_dataframes[0].columns,
+        )
 
-    sqls.append({"sql": sql, "output_table_name": "__splink__br_input_r"})
+        sqls.append({"sql": sql, "output_table_name": "__splink__br_input_r"})
 
-    input_tablename_l = "__splink__br_input_l"
-    input_tablename_r = "__splink__br_input_r"
+        input_tablename_l = "__splink__br_input_l"
+        input_tablename_r = "__splink__br_input_r"
 
     l_cols_sel = []
     r_cols_sel = []
