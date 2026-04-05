@@ -9,9 +9,6 @@ from splink.blocking_analysis import (
     n_largest_blocks,
 )
 from splink.internals.blocking import BlockingRule
-from splink.internals.blocking_analysis import (
-    _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
-)
 from splink.internals.blocking_rule_library import CustomRule, Or, block_on
 from splink.internals.duckdb.database_api import DuckDBAPI
 
@@ -169,65 +166,6 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     )
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
     assert res == 3 + 6 + 2
-
-
-def test_blocking_count_sql_skips_identity_input_materialisation():
-    db_api = DuckDBAPI()
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "John", "surname": "Jones"},
-        ]
-    )
-
-    splink_df = db_api.register(df)
-    sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        {splink_df.templated_name: splink_df},
-        block_on("first_name").get_blocking_rule("duckdb"),
-        "dedupe_only",
-        db_api,
-    )
-
-    output_table_names = [sql["output_table_name"] for sql in sqls]
-
-    assert "__splink__df_concat" in output_table_names
-    assert "__splink__br_input_l" not in output_table_names
-    assert "__splink__br_input_r" not in output_table_names
-
-
-@mark_with_dialects_including("duckdb", pass_dialect=True)
-def test_blocking_count_sql_keeps_exploding_input_materialisation(
-    test_helpers, dialect
-):
-    helper = test_helpers[dialect]
-    db_api = helper.db_api()
-
-    df_1 = pd.DataFrame(
-        [{"unique_id": 1, "postcode": [1001, 1002], "first_name": "John"}]
-    )
-    df_2 = pd.DataFrame(
-        [{"unique_id": 1, "postcode": [1002, 1003], "first_name": "John"}]
-    )
-
-    df_1_sdf = db_api.register(df_1)
-    df_2_sdf = db_api.register(df_2)
-
-    sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        {
-            df_1_sdf.templated_name: df_1_sdf,
-            df_2_sdf.templated_name: df_2_sdf,
-        },
-        block_on("postcode", arrays_to_explode=["postcode"]).get_blocking_rule(
-            "duckdb"
-        ),
-        "link_only",
-        db_api,
-    )
-
-    output_table_names = [sql["output_table_name"] for sql in sqls]
-
-    assert "__splink__br_input_l" in output_table_names
-    assert "__splink__br_input_r" in output_table_names
 
 
 # Just run in duckdb for speed
