@@ -140,6 +140,13 @@ def solve_complete_linkage(
             f"{conflict_count} conflicting edge(s) remaining. "
             f"({elapsed:.2f}s)"
         )
+        if iteration > 20:
+            logger.warning(
+                f"Complete linkage is on iteration {iteration} with "
+                f"{conflict_count} conflicting edge(s) still remaining. "
+                "This may indicate many conflicts in your data — consider "
+                "checking your match probability threshold or model calibration."
+            )
 
         # Step 4: done when no conflicts remain.
         if conflict_count == 0:
