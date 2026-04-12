@@ -12,6 +12,17 @@ from splink.exploratory import completeness_chart, profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
+
+
+def get_snowflake_settings_dict():
+    """Like get_settings_dict() but replaces hardcoded levenshtein SQL with
+    comparison creators so the Snowflake dialect can translate to EDITDISTANCE."""
+    settings = get_settings_dict()
+    settings["comparisons"][0] = cl.LevenshteinAtThresholds("first_name", 2).configure(
+        m_probabilities=[0.7, 0.2, 0.1],
+        u_probabilities=[0.1, 0.1, 0.8],
+    )
+    return settings
 from .linker_utils import (
     _test_table_registration,
     _test_write_functionality,
@@ -27,7 +38,7 @@ simple_settings = {
 def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})
-    settings_dict = get_settings_dict()
+    settings_dict = get_snowflake_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
@@ -173,7 +184,7 @@ df_final = pd.concat([df_l, df_r])
 )
 @mark_with_dialects_including("snowflake")
 def test_link_only(input, source_l, source_r, snowflake_api: SnowflakeAPI):
-    settings = get_settings_dict()
+    settings = get_snowflake_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
 
