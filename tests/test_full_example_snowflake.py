@@ -10,7 +10,7 @@ from splink.backends.snowflake import SnowflakeAPI
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.exploratory import completeness_chart, profile_columns
 
-from .basic_settings import get_settings_dict, name_comparison
+from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
 
 
@@ -37,45 +37,29 @@ simple_settings = {
 @mark_with_dialects_including("snowflake")
 def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.rename(columns={"surname": "SUR name"})
     settings_dict = get_snowflake_settings_dict()
 
-    # Overwrite the surname comparison to include duck-db specific syntax
-    settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
-    settings_dict["comparisons"][1] = cl.LevenshteinAtThresholds("SUR name")
-
-    settings_dict["blocking_rules_to_generate_predictions"] = [
-        'l."SUR name" = r."SUR name"',
-    ]
-
-    db_api = snowflake_api
-
     count_comparisons_from_blocking_rule(
-        table_or_tables=df,
-        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
+        table_or_tables=[df],
+        blocking_rule='l.first_name = r.first_name and l.surname = r.surname',
         link_type="dedupe_only",
-        db_api=db_api,
+        db_api=snowflake_api,
         unique_id_column_name="unique_id",
     )
 
-    linker = Linker(
-        df,
-        settings=settings_dict,
-        db_api=db_api,
-        # output_schema="splink_in_duckdb",
-    )
+    linker = Linker(df, settings=settings_dict, db_api=snowflake_api)
 
     profile_columns(
         df,
-        db_api,
+        snowflake_api,
         [
             "first_name",
-            '"SUR name"',
-            'first_name || "SUR name"',
+            "surname",
+            'first_name || surname',
             "concat(city, first_name)",
         ],
     )
-    completeness_chart(df, db_api)
+    completeness_chart(df, snowflake_api)
 
     linker.table_management.compute_tf_table("city")
     linker.table_management.compute_tf_table("first_name")
@@ -85,7 +69,7 @@ def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
         ["l.email = r.email"], recall=0.3
     )
 
-    blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
+    blocking_rule = 'l.first_name = r.first_name and l.surname = r.surname'
     linker.training.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
@@ -94,7 +78,7 @@ def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
     df_predict = linker.inference.predict()
 
     linker.visualisations.comparison_viewer_dashboard(
-        df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
+        df_predict, os.path.join(tmp_path, "test_scv_snowflake.html"), True, 2
     )
 
     df_e = df_predict.as_pandas_dataframe(limit=5)
@@ -123,7 +107,7 @@ def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
     record = {
         "unique_id": 1,
         "first_name": "John",
-        "SUR name": "Smith",
+        "surname": "Smith",
         "dob": "1971-05-24",
         "city": "London",
         "email": "john@smith.net",
@@ -139,7 +123,6 @@ def test_full_example_snowflake(tmp_path, snowflake_api: SnowflakeAPI):
     linker.misc.save_model_to_json(path)
 
     linker_2 = Linker(df, settings=simple_settings, db_api=snowflake_api)
-
     linker_2 = Linker(df, db_api=snowflake_api, settings=path)
 
     # Test that writing to files works as expected
