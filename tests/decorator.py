@@ -5,14 +5,22 @@ dialect_groups = {
     "spark": [],
     "sqlite": [],
     "postgres": [],
+    "snowflake": [],
 }
 for groups in dialect_groups.values():
     groups.append("all")
 
+# Dialects that require explicit opt-in (e.g. external credentials).
+# Excluded from mark_with_dialects_excluding so they don't appear in
+# the standard test rotation.
+opt_in_dialects = {"snowflake"}
+
 
 def invert(sql_dialects_missing):
     return (
-        sql_d for sql_d in dialect_groups.keys() if sql_d not in sql_dialects_missing
+        sql_d
+        for sql_d in dialect_groups.keys()
+        if sql_d not in sql_dialects_missing and sql_d not in opt_in_dialects
     )
 
 

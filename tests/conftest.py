@@ -10,6 +10,10 @@ from tests.backend_utils.postgres_conf import (
     _postgres,
     pg_engine,
 )
+from tests.backend_utils.snowflake_conf import (
+    snowflake_api,
+    snowflake_connection,
+)
 from tests.decorator import dialect_groups
 from tests.helpers import (
     DuckDBTestHelper,

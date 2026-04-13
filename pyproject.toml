@@ -148,6 +148,8 @@ markers = [
     "sqlite_only",
     "postgres",
     "postgres_only",
+    "snowflake",
+    "snowflake_only",
 ]
 
 [tool.mypy]
