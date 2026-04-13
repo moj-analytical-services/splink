@@ -58,9 +58,9 @@ def test_complete_linkage_splits_chained_cluster():
         edge_id_column_name_right="id_r",
         threshold_match_probability=threshold,
     ).as_pandas_dataframe()
-    assert cc_df["cluster_id"].nunique() == 1, (
-        "Connected components should put all three nodes in one cluster"
-    )
+    assert (
+        cc_df["cluster_id"].nunique() == 1
+    ), "Connected components should put all three nodes in one cluster"
 
     # Complete linkage must separate node 1 from node 3.
     cl_df = cluster_pairwise_predictions_at_threshold_complete_linkage(
@@ -74,9 +74,9 @@ def test_complete_linkage_splits_chained_cluster():
     ).as_pandas_dataframe()
 
     clusters = _cluster_map(cl_df)
-    assert cl_df["cluster_id"].nunique() == 2, (
-        "Complete linkage should produce exactly 2 clusters"
-    )
+    assert (
+        cl_df["cluster_id"].nunique() == 2
+    ), "Complete linkage should produce exactly 2 clusters"
     # 2 and 3 must be together; 1 must be separate.
     assert clusters[2] == clusters[3], "Nodes 2 and 3 should share a cluster"
     assert clusters[1] != clusters[2], "Node 1 should be in its own cluster"

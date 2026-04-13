@@ -80,6 +80,34 @@ def solve_complete_linkage(
 
     uid = ascii_uid(8)
 
+    # Warn if the edges table contains no below-threshold edges.  This is the
+    # most common mistake: the user pre-filtered their predictions to
+    # above-threshold only (e.g. linker.predict(threshold_match_probability=X))
+    # before passing them here.  In that case there are no conflict edges for
+    # the algorithm to detect, so it will always terminate on the first
+    # iteration and produce the same result as connected components — silently.
+    pipeline = CTEPipeline([edges_table])
+    sql = f"""
+    select count(*) as below_threshold_count
+    from {edges_table.templated_name}
+    where match_probability < {threshold_match_probability}
+    """
+    pipeline.enqueue_sql(sql, f"__splink__cl_below_threshold_check_{uid}")
+    below_df = db_api.sql_pipeline_to_splink_dataframe(pipeline, use_cache=False)
+    below_count = below_df.as_record_dict()[0]["below_threshold_count"]
+    below_df.drop_table_from_database_and_remove_from_cache()
+
+    if below_count == 0:
+        logger.warning(
+            "Complete linkage: the edges table contains no edges below the "
+            f"threshold ({threshold_match_probability}). Conflict detection "
+            "requires below-threshold edges to be present — without them the "
+            "result is identical to connected components. "
+            "Ensure you pass the full (unfiltered) predictions table, e.g. "
+            "linker.predict() with no threshold, or a threshold lower than "
+            f"{threshold_match_probability}."
+        )
+
     # Build E_work: the working set of edges (only those at or above threshold).
     # Below-threshold edges in edges_table are "conflict" edges — they remain
     # visible to the algorithm for conflict detection but are never added to

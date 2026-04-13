@@ -205,6 +205,8 @@ nav:
         - Regular expressions: "topic_guides/comparisons/regular_expressions.ipynb"
     - Training:
       - Training rationale: "topic_guides/training/training_rationale.md"
+    - Clustering:
+      - Clustering algorithms: "topic_guides/clustering/clustering_algorithms.md"
     - Evaluation:
       - Overview: "topic_guides/evaluation/overview.md"
       - Model: "topic_guides/evaluation/model.md"

@@ -188,8 +188,15 @@ def cluster_pairwise_predictions_at_threshold_complete_linkage(
 
     Args:
         nodes: The table containing node information.
-        edges: The table containing edge information.  Must include a
-            ``match_probability`` column when a threshold is given.
+        edges: The table containing edge information.  **Must include
+            both above- and below-threshold edges** — conflict detection
+            relies on observing below-threshold edges within a candidate
+            cluster.  If you pass only above-threshold edges (e.g. the
+            output of ``linker.predict(threshold_match_probability=X)``),
+            no conflicts can be detected and the result will be identical
+            to connected components.  Use ``linker.predict()`` with no
+            threshold, or a threshold lower than
+            ``threshold_match_probability``, to obtain the full edge set.
         db_api: The database API to use.
         node_id_column_name: Column name for node IDs in ``nodes``.
         edge_id_column_name_left: Column name for left node IDs in ``edges``.
