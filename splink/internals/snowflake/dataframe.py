@@ -1,7 +1,12 @@
+import os
 from typing import TYPE_CHECKING, Any, Optional
 
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pandas as pd
 
 if TYPE_CHECKING:
     from .database_api import SnowflakeAPI
@@ -48,3 +53,49 @@ class SnowflakeDataframe(SplinkDataFrame):
     def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.db_api.delete_table_from_database(self.physical_name)
+
+    def to_parquet(self, filepath, overwrite=False):
+        """
+        Snowflake implementation for parquet writing
+        """
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".parquet"):
+            raise SyntaxError(
+                f"The filepath you've entered to '{filepath}' is "
+                "not a parquet file. Please ensure that the filepath "
+                "ends with `.parquet` before retrying."
+            )
+
+        # create the directories recursively if they don't exist
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        # Use fetch arrow all in first instance; can stream batches in future if that large
+        sql = f"SELECT * FROM {self.physical_name};"
+        arrow_table: pa.Table = self.db_api._execute_sql_against_backend(sql).fetch_arrow_all()
+
+        pq.write_table(table=arrow_table, where=filepath)
+
+    def to_csv(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".csv"):
+            raise SyntaxError(
+                f"The filepath you've entered to '{filepath}' is "
+                "not a csv file. Please ensure that the filepath "
+                "ends with `.csv` before retrying."
+            )
+
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        # Use fetch arrow all in first instance; can stream batches in future if that large
+        sql = f"SELECT * FROM {self.physical_name};"
+        df: pd.DataFrame = self.db_api._execute_sql_against_backend(sql).fetch_pandas_all()
+
+        df.to_csv(filepath)
