@@ -78,6 +78,7 @@ testing = [
 typechecking = ["mypy==1.9.0"]
 
 [tool.uv]
+exclude-newer = "7 days"
 default-groups = [
     "core",
     "dev",

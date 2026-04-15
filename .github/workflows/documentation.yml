@@ -53,13 +53,6 @@ jobs:
         id: build_documentation
         run: uv run mkdocs build
 
-      - name: Check links
-        id: check_links
-        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
-        with:
-          fail: false
-          args: --offline site/ --root-dir site --exclude-path '.*404.*' --verbose './site/**/*.html'
-
       - name: Upload built site
         id: upload_built_site
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
