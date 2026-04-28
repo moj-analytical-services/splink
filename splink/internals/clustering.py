@@ -4,6 +4,7 @@ import logging
 import math
 from typing import Optional
 
+from splink.internals.complete_linkage import solve_complete_linkage
 from splink.internals.connected_components import solve_connected_components
 from splink.internals.database_api import AcceptableInputTableType, DatabaseAPISubClass
 from splink.internals.input_column import InputColumn
@@ -142,6 +143,132 @@ def cluster_pairwise_predictions_at_threshold(
     )
 
     cc = solve_connected_components(
+        nodes_table=nodes_sdf,
+        edges_table=edges_sdf,
+        node_id_column_name=node_id_column_name,
+        edge_id_column_name_left=edge_id_column_name_left,
+        edge_id_column_name_right=edge_id_column_name_right,
+        db_api=db_api,
+        threshold_match_probability=threshold_match_probability,
+    )
+    cc.metadata["threshold_match_probability"] = threshold_match_probability
+    return cc
+
+
+def cluster_pairwise_predictions_at_threshold_complete_linkage(
+    nodes: AcceptableInputTableType,
+    edges: AcceptableInputTableType,
+    db_api: DatabaseAPISubClass,
+    node_id_column_name: str,
+    edge_id_column_name_left: Optional[str] = None,
+    edge_id_column_name_right: Optional[str] = None,
+    threshold_match_probability: Optional[float] = None,
+    threshold_match_weight: Optional[float] = None,
+) -> SplinkDataFrame:
+    """Clusters pairwise match predictions using complete-linkage clustering.
+
+    Unlike connected components (which creates one cluster for every set of
+    records transitively linked by high-probability edges), complete-linkage
+    only merges two nodes into the same cluster when *no directly-observed*
+    edge between any pair of nodes in the cluster falls below the threshold.
+
+    This prevents the "chaining" problem: if A≈B and B≈C but A-C is a
+    known poor match, connected components puts all three in one cluster,
+    while complete-linkage separates them.
+
+    A cluster produced by this function satisfies:
+        For every pair (u, v) within the cluster where an edge exists in the
+        edges table, that edge has match_probability >= threshold.
+
+    If no match probability or match weight is provided, all edges are treated
+    as links and the result is identical to connected components.
+
+    If your node and edge column names follow Splink naming conventions you can
+    omit edge_id_column_name_left and edge_id_column_name_right.
+
+    Args:
+        nodes: The table containing node information.
+        edges: The table containing edge information.  **Must include
+            both above- and below-threshold edges** — conflict detection
+            relies on observing below-threshold edges within a candidate
+            cluster.  If you pass only above-threshold edges (e.g. the
+            output of ``linker.predict(threshold_match_probability=X)``),
+            no conflicts can be detected and the result will be identical
+            to connected components.  Use ``linker.predict()`` with no
+            threshold, or a threshold lower than
+            ``threshold_match_probability``, to obtain the full edge set.
+        db_api: The database API to use.
+        node_id_column_name: Column name for node IDs in ``nodes``.
+        edge_id_column_name_left: Column name for left node IDs in ``edges``.
+            Defaults to ``f"{node_id_column_name}_l"``.
+        edge_id_column_name_right: Column name for right node IDs in ``edges``.
+            Defaults to ``f"{node_id_column_name}_r"``.
+        threshold_match_probability: Edges at or above this probability are
+            eligible to form links.  Edges below this probability are treated
+            as confirmed non-matches and will prevent their endpoints from
+            appearing in the same cluster.
+        threshold_match_weight: Alternative threshold expressed as a log-odds
+            match weight.  Only one of the two threshold arguments may be given.
+
+    Returns:
+        SplinkDataFrame with columns ``(node_id_column_name, cluster_id)``.
+
+    Examples:
+        ```python
+        from splink import DuckDBAPI
+        from splink.clustering import (
+            cluster_pairwise_predictions_at_threshold_complete_linkage,
+        )
+
+        db_api = DuckDBAPI()
+
+        nodes = [{"id": 1}, {"id": 2}, {"id": 3}]
+
+        # A-B and B-C are good matches; A-C is a poor match.
+        # Connected components would put all three in one cluster.
+        # Complete linkage separates them.
+        edges = [
+            {"id_l": 1, "id_r": 2, "match_probability": 0.9},
+            {"id_l": 2, "id_r": 3, "match_probability": 0.95},
+            {"id_l": 1, "id_r": 3, "match_probability": 0.3},
+        ]
+
+        clusters = cluster_pairwise_predictions_at_threshold_complete_linkage(
+            nodes,
+            edges,
+            node_id_column_name="id",
+            edge_id_column_name_left="id_l",
+            edge_id_column_name_right="id_r",
+            db_api=db_api,
+            threshold_match_probability=0.8,
+        )
+        clusters.as_pandas_dataframe()
+        ```
+    """
+    uid = ascii_uid(8)
+
+    if isinstance(nodes, SplinkDataFrame):
+        nodes_sdf = nodes
+    else:
+        nodes_sdf = db_api.register_table(nodes, f"__splink__df_nodes_{uid}")
+
+    if isinstance(edges, SplinkDataFrame):
+        edges_sdf = edges
+    else:
+        edges_sdf = db_api.register_table(edges, f"__splink__df_edges_{uid}")
+
+    edge_id_column_name_left, edge_id_column_name_right = _get_edge_id_column_names(
+        node_id_column_name,
+        db_api,
+        edge_id_column_name_left,
+        edge_id_column_name_right,
+    )
+
+    threshold_match_probability = threshold_args_to_match_prob(
+        threshold_match_probability, threshold_match_weight
+    )
+
+    cc = solve_complete_linkage(
         nodes_table=nodes_sdf,
         edges_table=edges_sdf,
         node_id_column_name=node_id_column_name,

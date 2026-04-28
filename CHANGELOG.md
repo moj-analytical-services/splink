@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `cluster_pairwise_predictions_at_threshold_complete_linkage` in `splink.clustering`: a complete-linkage clustering algorithm that prevents the "chaining" problem by only placing two nodes in the same cluster when no directly-observed edge within the cluster falls below the match probability threshold. Unlike connected components, it requires below-threshold edges to be present in the edges table so conflicts can be detected.
+
 ## [4.0.16] - 2026-03-11
 
 ### Fixed

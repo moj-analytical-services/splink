@@ -10,6 +10,6 @@ The user guide is broken up into the following categories:
 4. [Blocking](blocking/blocking_rules.md) - for an introduction to Blocking Rules and their purpose within record linkage. Including how blocking rules are used in different contexts within Splink.
 5. [Comparing Records](comparisons/customising_comparisons.ipynb) - for guidance on defining `Comparison`s withing a Splink model. Including how comparing records are structured within `Comparison`s, how to utilise string comparators for fuzzy matching and how deal with skewed data with Term Frequency Adjustments.
 6. Model Training - for guidance on the methods for training a Splink model, and how to choose them for specific use cases. (Coming soon)
-7. Clustering - for guidance on how records are clustered together. (Coming Soon)
+7. [Clustering](clustering/clustering_algorithms.md) - for guidance on how records are clustered together, including when to use connected components vs. complete linkage.
 8. [Evaluation](./evaluation/overview.md) - for guidance on how to evaluate Splink models, links and clusters (including Clerical Labelling).
 9. [Performance](performance/drivers_of_performance.md) - for guidance on how to make Splink models run more efficiently.
