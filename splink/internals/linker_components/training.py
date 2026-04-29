@@ -233,6 +233,9 @@ class LinkerTraining:
         fix_m_probabilities: bool = False,
         fix_u_probabilities: bool = True,
         populate_probability_two_random_records_match_from_trained_values: bool = False,
+        max_pairs: float | None = None,
+        probe_proportion: float = 0.01,
+        seed: int | None = None,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -275,6 +278,18 @@ class LinkerTraining:
                 probabilities after each iteration. Defaults to True.
             populate_probability_two_random_records_match_from_trained_values (bool, optional):
                 If True, derive this parameter from the blocked value. Defaults to False.
+            max_pairs (float, optional): If set, limit the approximate number of
+                blocked pairwise comparisons used in EM training to this value.
+                A small probe blocking pass is run to estimate the full pair
+                count, and a deterministic hash-based filter is applied to the
+                input records (independently on left and right sides) so that
+                the resulting blocked pair count is approximately `max_pairs`.
+                Defaults to None (no sampling).
+            probe_proportion (float, optional): Fraction of records used in the
+                probe blocking pass that drives the `max_pairs` calculation.
+                Only relevant when `max_pairs` is set.  Defaults to 0.01 (1%).
+            seed (int, optional): If provided alongside `max_pairs`, makes the
+                EM record sampling reproducible across runs.  Defaults to None.
 
         Examples:
             ```py
@@ -313,6 +328,9 @@ class LinkerTraining:
             fix_m_probabilities=fix_m_probabilities,
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
+            max_pairs=max_pairs,
+            probe_proportion=probe_proportion,
+            seed=seed,
         )
 
         core_model_settings = em_training_session._train()

@@ -42,6 +42,46 @@ def _chunk_assignment_sql(
     return f" AND {chunk_expr} = {chunk_num}"
 
 
+def _em_sample_filter_sql(
+    unique_id_cols: list[InputColumn],
+    sample_threshold: int,
+    sample_modulus: int,
+    table_prefix: str,
+    dialect: "SplinkDialect",
+    salt: str = "__em_sample__",
+) -> str:
+    """Generate a SQL WHERE clause condition that retains a deterministic
+    pseudo-random subset of input records, using a salted hash so that this
+    filter is statistically independent of the chunking filter produced by
+    `_chunk_assignment_sql`.
+
+    Returns SQL like:
+        " AND (ABS(hash(<composite_uid> || '__em_sample__')) % 10000) < 325"
+
+    Args:
+        unique_id_cols: The columns that form the unique ID.
+        sample_threshold: Integer in [0, sample_modulus]. A row is retained
+            iff (ABS(hash(...)) % sample_modulus) < sample_threshold.
+        sample_modulus: Integer giving the resolution of the sampling fraction.
+        table_prefix: Table alias prefix (e.g. 'l' or 'r').
+        dialect: SQL dialect for the hash function.
+        salt: String concatenated to the composite uid before hashing.
+
+    Returns:
+        SQL WHERE-clause fragment, or empty string if no filtering is needed.
+    """
+    if sample_threshold >= sample_modulus:
+        return ""
+    if sample_threshold <= 0:
+        # All rows excluded — caller should normally avoid this case.
+        return " AND 1=0"
+
+    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
+    salted_id = f"({composite_id}) || '{salt}'"
+    hash_expr = dialect.hash_function_expression(salted_id)
+    return f" AND (ABS({hash_expr}) % {sample_modulus}) < {sample_threshold}"
+
+
 def _blocked_pairs_cache_key(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,

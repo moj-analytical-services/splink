@@ -10,7 +10,10 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
 
-from splink.internals.chunking import _chunk_assignment_sql
+from splink.internals.chunking import (
+    _chunk_assignment_sql,
+    _em_sample_filter_sql,
+)
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
@@ -680,6 +683,9 @@ def _sql_gen_where_condition(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
+    sample_salt: str = "__em_sample__",
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -708,6 +714,31 @@ def _sql_gen_where_condition(
             unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
         )
 
+    # Add EM sample filtering if specified.  Applied to both sides
+    # independently using a salted hash, so it is statistically
+    # independent of the chunking filter above.
+    if (
+        sample_threshold is not None
+        and sample_modulus is not None
+        and sql_dialect is not None
+    ):
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols,
+            sample_threshold,
+            sample_modulus,
+            "l",
+            sql_dialect,
+            salt=sample_salt,
+        )
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols,
+            sample_threshold,
+            sample_modulus,
+            "r",
+            sql_dialect,
+            salt=sample_salt,
+        )
+
     return where_condition
 
 
@@ -721,6 +752,9 @@ def block_using_rules_sqls(
     unique_id_input_column: InputColumn,
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
+    sample_salt: str = "__em_sample__",
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -751,6 +785,9 @@ def block_using_rules_sqls(
         left_chunk=left_chunk,
         right_chunk=right_chunk,
         sql_dialect=sql_dialect,
+        sample_threshold=sample_threshold,
+        sample_modulus=sample_modulus,
+        sample_salt=sample_salt,
     )
 
     # Cover the case where there are no blocking rules
