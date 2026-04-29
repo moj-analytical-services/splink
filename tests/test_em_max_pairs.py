@@ -109,8 +109,13 @@ def test_probe_sample_threshold_arithmetic():
     assert _probe_sample_threshold(0.1) == 1000
     # full sample
     assert _probe_sample_threshold(1.0) == _PROBE_SAMPLE_MODULUS
-    # very small probe still gets at least 1
-    assert _probe_sample_threshold(0.0) == 1
+    # invalid: zero or negative or above 1 must raise
+    with pytest.raises(ValueError):
+        _probe_sample_threshold(0.0)
+    with pytest.raises(ValueError):
+        _probe_sample_threshold(-0.1)
+    with pytest.raises(ValueError):
+        _probe_sample_threshold(1.5)
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +133,6 @@ def test_resolve_em_sample_threshold_no_max_pairs(fake_1000_df, caplog):
             blocking_rule=br,
             max_pairs=None,
             probe_proportion=0.01,
-            sample_salt="__em_sample__",
         )
 
     assert sample_threshold is None
@@ -151,7 +155,6 @@ def test_resolve_em_sample_threshold_no_op_when_max_pairs_already_high(
             blocking_rule=br,
             max_pairs=1e9,
             probe_proportion=0.1,
-            sample_salt="__em_sample__",
         )
 
     # Estimated pair count for fake_1000 + first_name block is in the low
@@ -200,7 +203,6 @@ def test_resolve_em_sample_threshold_estimates_pair_count_within_tolerance(
         blocking_rule=br,
         max_pairs=10,  # forces sampling, but we only care about the estimate
         probe_proportion=0.5,
-        sample_salt="__em_sample__",
     )
 
     estimated = info["estimated_total_pairs"]
@@ -388,7 +390,7 @@ def test_em_max_pairs_independent_of_chunking_hash(fake_1000_df):
     session = _train_and_get_session(
         linker, max_pairs=500, probe_proportion=0.2, seed=None
     )
-    assert session._sample_salt == "__em_sample__"
+    assert session._sample_salt == "__splink_em_sample_default__"
     # And with a seed it should differ
     linker2 = _make_dedupe_linker(fake_1000_df)
     linker2.training.estimate_u_using_random_sampling(max_pairs=1e5)
@@ -396,3 +398,231 @@ def test_em_max_pairs_independent_of_chunking_hash(fake_1000_df):
         linker2, max_pairs=500, probe_proportion=0.2, seed=99
     )
     assert "99" in session2._sample_salt
+
+
+# ---------------------------------------------------------------------------
+# Argument validation
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_em_sample_threshold_rejects_bad_max_pairs(fake_1000_df):
+    linker = _make_dedupe_linker(fake_1000_df)
+    br = block_on("first_name").get_blocking_rule("duckdb")
+    with pytest.raises(ValueError):
+        resolve_em_sample_threshold(
+            linker=linker, blocking_rule=br, max_pairs=0, probe_proportion=0.1
+        )
+    with pytest.raises(ValueError):
+        resolve_em_sample_threshold(
+            linker=linker, blocking_rule=br, max_pairs=-1, probe_proportion=0.1
+        )
+
+
+def test_resolve_em_sample_threshold_rejects_bad_probe_proportion(fake_1000_df):
+    linker = _make_dedupe_linker(fake_1000_df)
+    br = block_on("first_name").get_blocking_rule("duckdb")
+    for bad in (0.0, -0.1, 1.5, 2.0):
+        with pytest.raises(ValueError):
+            resolve_em_sample_threshold(
+                linker=linker,
+                blocking_rule=br,
+                max_pairs=500,
+                probe_proportion=bad,
+            )
+
+
+def test_em_training_max_pairs_rejected_positionally(fake_1000_df):
+    linker = _make_dedupe_linker(fake_1000_df)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
+    # max_pairs is keyword-only; positional must raise TypeError.
+    with pytest.raises(TypeError):
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            block_on("first_name"), False, False, False, True, False, 500
+        )
+
+
+# ---------------------------------------------------------------------------
+# SQL-shape regression: positive modulo (no ABS)
+# ---------------------------------------------------------------------------
+
+
+def test_em_sample_filter_uses_positive_modulo():
+    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.dialects import DuckDBDialect
+    from splink.internals.input_column import InputColumn
+
+    sql = _em_sample_filter_sql(
+        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
+        sample_threshold=42,
+        sample_modulus=10_000,
+        table_prefix="l",
+        dialect=DuckDBDialect(),
+        salt="__em_sample__",
+    )
+    # Positive modulo form: ((expr % M) + M) % M  — must NOT use ABS.
+    assert "ABS(" not in sql
+    assert "+ 10000) % 10000" in sql
+    assert "< 42" in sql
+
+
+def test_chunk_assignment_uses_positive_modulo():
+    from splink.internals.chunking import _chunk_assignment_sql
+    from splink.internals.dialects import DuckDBDialect
+    from splink.internals.input_column import InputColumn
+
+    sql = _chunk_assignment_sql(
+        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
+        chunk_num=2,
+        num_chunks=5,
+        table_prefix="l",
+        dialect=DuckDBDialect(),
+    )
+    assert "ABS(" not in sql
+    assert "+ 5) % 5" in sql
+
+
+# ---------------------------------------------------------------------------
+# Salt escaping
+# ---------------------------------------------------------------------------
+
+
+def test_em_sample_filter_escapes_salt_quote():
+    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.dialects import DuckDBDialect
+    from splink.internals.input_column import InputColumn
+
+    sql = _em_sample_filter_sql(
+        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
+        sample_threshold=42,
+        sample_modulus=10_000,
+        table_prefix="l",
+        dialect=DuckDBDialect(),
+        salt="o'malley",
+    )
+    # The single quote must be doubled, never appear as a bare single quote
+    # that would terminate the SQL string literal.
+    assert "'o''malley'" in sql
+
+
+def test_em_sample_filter_works_in_duckdb_with_quote_in_salt(fake_1000_df):
+    """End-to-end: salt containing apostrophe should not break SQL."""
+    import duckdb
+
+    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.dialects import DuckDBDialect
+    from splink.internals.input_column import InputColumn
+
+    sql_filter = _em_sample_filter_sql(
+        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
+        sample_threshold=5_000,
+        sample_modulus=10_000,
+        table_prefix="t",
+        dialect=DuckDBDialect(),
+        salt="o'malley",
+    )
+    # _em_sample_filter_sql returns a leading " AND ..."; strip the AND.
+    where_clause = sql_filter.replace(" AND ", "WHERE ", 1)
+    con = duckdb.connect()
+    con.register("t", fake_1000_df)
+    n = con.execute(f"select count(*) as c from t {where_clause}").fetchone()[0]
+    # Should retain ~half of 1000 rows.
+    assert 350 < n < 650
+
+
+# ---------------------------------------------------------------------------
+# Independence of probe vs final sample salt
+# ---------------------------------------------------------------------------
+
+
+def test_probe_and_sample_salts_differ(fake_1000_df):
+    linker = _make_dedupe_linker(fake_1000_df)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
+    session = _train_and_get_session(
+        linker, max_pairs=500, probe_proportion=0.2, seed=42
+    )
+    info = session._sample_info
+    assert info["probe_salt"] != info["sample_salt"]
+    assert "probe" in info["probe_salt"]
+    assert "sample" in info["sample_salt"]
+
+
+# ---------------------------------------------------------------------------
+# Different seeds select different records
+# ---------------------------------------------------------------------------
+
+
+def _selected_uids_for_session(session) -> set:
+    """Return the set of unique_ids retained after sampling."""
+    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.input_column import InputColumn
+
+    linker = session._original_linker
+    db_api = linker._db_api
+
+    sql_filter = _em_sample_filter_sql(
+        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
+        sample_threshold=session._sample_threshold,
+        sample_modulus=session._sample_modulus,
+        table_prefix="t",
+        dialect=db_api.sql_dialect,
+        salt=session._sample_salt,
+    )
+    where_clause = sql_filter.replace(" AND ", "WHERE ", 1)
+    from splink.internals.pipeline import CTEPipeline
+    from splink.internals.vertically_concatenate import enqueue_df_concat
+
+    pipe = CTEPipeline()
+    enqueue_df_concat(linker, pipe)
+    pipe.enqueue_sql(
+        f"select unique_id from __splink__df_concat t {where_clause}",
+        "__splink__em_selected_uids",
+    )
+    df = db_api.sql_pipeline_to_splink_dataframe(pipe)
+    rows = df.as_record_dict()
+    df.drop_table_from_database_and_remove_from_cache()
+    return {r["unique_id"] for r in rows}
+
+
+def test_different_seeds_select_different_records(fake_1000_df):
+    linker_a = _make_dedupe_linker(fake_1000_df)
+    linker_a.training.estimate_u_using_random_sampling(max_pairs=1e5)
+    session_a = _train_and_get_session(
+        linker_a, max_pairs=500, probe_proportion=0.2, seed=1
+    )
+    linker_b = _make_dedupe_linker(fake_1000_df)
+    linker_b.training.estimate_u_using_random_sampling(max_pairs=1e5)
+    session_b = _train_and_get_session(
+        linker_b, max_pairs=500, probe_proportion=0.2, seed=2
+    )
+    sel_a = _selected_uids_for_session(session_a)
+    sel_b = _selected_uids_for_session(session_b)
+    # Both should be non-empty and substantially differ.
+    assert len(sel_a) > 0 and len(sel_b) > 0
+    assert sel_a != sel_b
+    overlap = sel_a & sel_b
+    union = sel_a | sel_b
+    # Independent hashes should overlap by roughly the sampling fraction —
+    # generously bounded here.
+    assert len(overlap) < 0.95 * len(union)
+
+
+# ---------------------------------------------------------------------------
+# max_probe_pairs cap
+# ---------------------------------------------------------------------------
+
+
+def test_max_probe_pairs_caps_probe_proportion(fake_1000_df, caplog):
+    """When max_probe_pairs is tiny, the requested probe_proportion is capped."""
+    linker = _make_dedupe_linker(fake_1000_df)
+    br = block_on("first_name").get_blocking_rule("duckdb")
+    with caplog.at_level(logging.INFO, logger="splink.internals.em_sampling"):
+        _, _, info = resolve_em_sample_threshold(
+            linker=linker,
+            blocking_rule=br,
+            max_pairs=500,
+            probe_proportion=1.0,
+            max_probe_pairs=100.0,  # force a heavy cap
+            min_probe_pairs_for_calibration=1,  # don't escalate
+        )
+    assert info["probe_proportion_used"] < 1.0
+    assert info["cartesian_upper_bound"] is not None

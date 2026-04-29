@@ -15,7 +15,10 @@ from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
-from splink.internals.em_sampling import resolve_em_sample_threshold
+from splink.internals.em_sampling import (
+    _DEFAULT_MAX_PROBE_PAIRS,
+    resolve_em_sample_threshold,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.internals.parse_sql import get_columns_used_from_sql
@@ -86,6 +89,7 @@ class EMTrainingSession:
         max_pairs: float | None = None,
         probe_proportion: float = 0.01,
         seed: int | None = None,
+        max_probe_pairs: float = _DEFAULT_MAX_PROBE_PAIRS,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -111,9 +115,10 @@ class EMTrainingSession:
         self._max_pairs = max_pairs
         self._probe_proportion = probe_proportion
         self._seed = seed
-        self._sample_salt = (
-            f"__em_sample_{seed}__" if seed is not None else "__em_sample__"
-        )
+        self._max_probe_pairs = max_probe_pairs
+        # Resolved by `resolve_em_sample_threshold` so probe and final sample
+        # use independent salts.  Holds a placeholder until that call runs.
+        self._sample_salt: str = ""
         self._sample_threshold: int | None = None
         self._sample_modulus: int | None = None
         self._sample_info: dict[str, Any] | None = None
@@ -221,11 +226,13 @@ class EMTrainingSession:
             blocking_rule=self._blocking_rule_for_training,
             max_pairs=self._max_pairs,
             probe_proportion=self._probe_proportion,
-            sample_salt=self._sample_salt,
+            seed=self._seed,
+            max_probe_pairs=self._max_probe_pairs,
         )
         self._sample_threshold = sample_threshold
         self._sample_modulus = sample_modulus
         self._sample_info = sample_info
+        self._sample_salt = sample_info["sample_salt"]
 
         pipeline = CTEPipeline()
         enqueue_df_concat(self._original_linker, pipeline)

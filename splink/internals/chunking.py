@@ -9,6 +9,25 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
+def _positive_mod_sql(expr: str, modulus: int) -> str:
+    """Return a SQL fragment that computes a non-negative remainder.
+
+    The standard `%` operator returns a value with the sign of the dividend
+    in the SQL dialects Splink supports, so for negative hash outputs
+    `expr % modulus` may itself be negative.  Using `((expr % m) + m) % m`
+    is reliably non-negative for any signed integer input, including
+    `INT_MIN` where `ABS()` would overflow.
+    """
+    if modulus <= 0:
+        raise ValueError("modulus must be positive")
+    return f"((({expr}) % {modulus}) + {modulus}) % {modulus}"
+
+
+def _sql_string_literal(value: str) -> str:
+    """Defensively quote a string for safe inclusion as a SQL literal."""
+    return "'" + value.replace("'", "''") + "'"
+
+
 def _chunk_assignment_sql(
     unique_id_cols: list[InputColumn],
     chunk_num: int,
@@ -38,8 +57,8 @@ def _chunk_assignment_sql(
 
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
     hash_expr = dialect.hash_function_expression(composite_id)
-    chunk_expr = f"(ABS({hash_expr}) % {num_chunks}) + 1"
-    return f" AND {chunk_expr} = {chunk_num}"
+    chunk_bucket = _positive_mod_sql(hash_expr, num_chunks)
+    return f" AND ({chunk_bucket}) + 1 = {chunk_num}"
 
 
 def _em_sample_filter_sql(
@@ -77,9 +96,10 @@ def _em_sample_filter_sql(
         return " AND 1=0"
 
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    salted_id = f"({composite_id}) || '{salt}'"
+    salted_id = f"({composite_id}) || {_sql_string_literal(salt)}"
     hash_expr = dialect.hash_function_expression(salted_id)
-    return f" AND (ABS({hash_expr}) % {sample_modulus}) < {sample_threshold}"
+    sample_bucket = _positive_mod_sql(hash_expr, sample_modulus)
+    return f" AND {sample_bucket} < {sample_threshold}"
 
 
 def _blocked_pairs_cache_key(
