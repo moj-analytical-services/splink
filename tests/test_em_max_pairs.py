@@ -559,6 +559,39 @@ def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
     assert "__splink_em_probe_default__" not in blocked_pairs_sql
 
 
+def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
+    fake_1000_df,
+):
+    from splink.internals.blocking import block_using_rules_sqls
+
+    linker = _make_link_only_linker(fake_1000_df)
+    settings = linker._settings_obj
+    br = block_on("first_name").get_blocking_rule("duckdb")
+
+    sqls = block_using_rules_sqls(
+        input_tablename_l="__splink__df_concat_left",
+        input_tablename_r="__splink__df_concat_right",
+        blocking_rules=[br],
+        link_type="two_dataset_link_only",
+        source_dataset_input_column=(
+            settings.column_info_settings.source_dataset_input_column
+        ),
+        unique_id_input_column=(
+            settings.column_info_settings.unique_id_input_column
+        ),
+        sample_threshold=100,
+        sample_modulus=10_000,
+        sample_salt="__splink_em_probe_default__",
+    )
+
+    assert sqls[0]["output_table_name"] == "__splink__df_concat_left_em_sample"
+    assert sqls[1]["output_table_name"] == "__splink__df_concat_right_em_sample"
+
+    blocked_pairs_sql = sqls[-1]["sql"]
+    assert "from __splink__df_concat_left_em_sample as l" in blocked_pairs_sql
+    assert "inner join __splink__df_concat_right_em_sample as r" in blocked_pairs_sql
+
+
 # ---------------------------------------------------------------------------
 # Independence of probe vs final sample salt
 # ---------------------------------------------------------------------------

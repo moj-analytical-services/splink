@@ -715,6 +715,46 @@ def _sql_gen_where_condition(
     return where_condition
 
 
+def _prepend_em_sample_input_sqls(
+    *,
+    input_tablename_l: str,
+    input_tablename_r: str,
+    unique_id_input_columns: List[InputColumn],
+    sample_threshold: int,
+    sample_modulus: int,
+    sample_salt: str,
+    sql_dialect: SplinkDialect,
+) -> tuple[list[dict[str, str]], str, str]:
+    sqls: list[dict[str, str]] = []
+    sampled_input_table_lookup: dict[str, str] = {}
+    input_tablenames = [input_tablename_l]
+    if input_tablename_r != input_tablename_l:
+        input_tablenames.append(input_tablename_r)
+
+    for input_tablename in input_tablenames:
+        sampled_input_tablename = _em_sampled_input_tablename(input_tablename)
+        sampled_input_table_lookup[input_tablename] = sampled_input_tablename
+        sqls.append(
+            {
+                "sql": _em_sample_table_sql(
+                    unique_id_input_columns,
+                    sample_threshold,
+                    sample_modulus,
+                    input_tablename,
+                    sql_dialect,
+                    salt=sample_salt,
+                ),
+                "output_table_name": sampled_input_tablename,
+            }
+        )
+
+    return (
+        sqls,
+        sampled_input_table_lookup[input_tablename_l],
+        sampled_input_table_lookup[input_tablename_r],
+    )
+
+
 def block_using_rules_sqls(
     *,
     input_tablename_l: str,
@@ -759,48 +799,18 @@ def block_using_rules_sqls(
     ):
         if sql_dialect is None:
             raise ValueError("EM sampling requires at least one blocking rule")
-
-        original_input_tablename_l = input_tablename_l
-        original_input_tablename_r = input_tablename_r
-
-        sampled_input_tablename_l = _em_sampled_input_tablename(
-            original_input_tablename_l
-        )
-        sqls.append(
-            {
-                "sql": _em_sample_table_sql(
-                    unique_id_input_columns,
-                    sample_threshold,
-                    sample_modulus,
-                    original_input_tablename_l,
-                    sql_dialect,
-                    salt=sample_salt,
-                ),
-                "output_table_name": sampled_input_tablename_l,
-            }
-        )
-        input_tablename_l = sampled_input_tablename_l
-
-        if original_input_tablename_r == original_input_tablename_l:
-            input_tablename_r = sampled_input_tablename_l
-        else:
-            sampled_input_tablename_r = _em_sampled_input_tablename(
-                original_input_tablename_r
+        sample_sqls, input_tablename_l, input_tablename_r = (
+            _prepend_em_sample_input_sqls(
+                input_tablename_l=input_tablename_l,
+                input_tablename_r=input_tablename_r,
+                unique_id_input_columns=unique_id_input_columns,
+                sample_threshold=sample_threshold,
+                sample_modulus=sample_modulus,
+                sample_salt=sample_salt,
+                sql_dialect=sql_dialect,
             )
-            sqls.append(
-                {
-                    "sql": _em_sample_table_sql(
-                        unique_id_input_columns,
-                        sample_threshold,
-                        sample_modulus,
-                        original_input_tablename_r,
-                        sql_dialect,
-                        salt=sample_salt,
-                    ),
-                    "output_table_name": sampled_input_tablename_r,
-                }
-            )
-            input_tablename_r = sampled_input_tablename_r
+        )
+        sqls.extend(sample_sqls)
 
     where_condition = _sql_gen_where_condition(
         link_type,
