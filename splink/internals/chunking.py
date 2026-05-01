@@ -9,9 +9,6 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
-EM_SAMPLE_BUCKET_COLUMN = "__splink_em_sample_bucket"
-
-
 def _sql_string_literal(value: str) -> str:
     """Defensively quote a string for safe inclusion as a SQL literal."""
     return "'" + value.replace("'", "''") + "'"
@@ -89,16 +86,11 @@ def _em_sample_table_sql(
 
     filter_condition = "1=0"
     if sample_threshold > 0:
-        filter_condition = f"{EM_SAMPLE_BUCKET_COLUMN} < {sample_threshold}"
+        filter_condition = f"{sample_bucket} < {sample_threshold}"
 
     return f"""
     select *
-    from (
-        select
-            *,
-            {sample_bucket} as {EM_SAMPLE_BUCKET_COLUMN}
-        from {input_tablename} as t
-    )
+    from {input_tablename} as t
     where {filter_condition}
     """.strip()
 

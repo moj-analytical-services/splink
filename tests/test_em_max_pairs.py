@@ -459,10 +459,9 @@ def test_em_sample_filter_uses_positive_modulo():
         dialect=DuckDBDialect(),
         salt="__em_sample__",
     )
-    assert "__splink_em_sample_bucket" in sql
     assert "ABS(" not in sql
     assert "hash((t.\"unique_id\") || '__em_sample__') % 10000" in sql
-    assert "where __splink_em_sample_bucket < 42" in sql
+    assert "where hash((t.\"unique_id\") || '__em_sample__') % 10000 < 42" in sql
 
 
 def test_chunk_assignment_uses_positive_modulo():
@@ -549,7 +548,6 @@ def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
     )
 
     assert sqls[0]["output_table_name"] == "__splink__df_concat_em_sample"
-    assert "__splink_em_sample_bucket" in sqls[0]["sql"]
     assert (
         "hash((t.\"unique_id\") || '__splink_em_probe_default__') % 10000"
         in sqls[0]["sql"]
@@ -559,7 +557,6 @@ def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
     assert "from __splink__df_concat_em_sample as l" in blocked_pairs_sql
     assert "inner join __splink__df_concat_em_sample as r" in blocked_pairs_sql
     assert "__splink_em_probe_default__" not in blocked_pairs_sql
-    assert "__splink_em_sample_bucket" not in blocked_pairs_sql
 
 
 # ---------------------------------------------------------------------------
