@@ -160,6 +160,13 @@ class SplinkDialect(ABC):
         """Return a SQL expression that hashes the given column expression."""
         return f"{self.hash_function_name}({col_expression})"
 
+    def hash_bucket_expression(self, col_expression: str, modulus: int) -> str:
+        """Return a deterministic hash bucket in the range [0, modulus - 1]."""
+        if modulus <= 0:
+            raise ValueError("modulus must be positive")
+        hash_expr = self.hash_function_expression(col_expression)
+        return f"((({hash_expr}) % {modulus}) + {modulus}) % {modulus}"
+
     def random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
@@ -281,6 +288,12 @@ class DuckDBDialect(SplinkDialect):
     @property
     def hash_function_name(self) -> str:
         return "hash"  # DuckDB's hash() returns int64
+
+    def hash_bucket_expression(self, col_expression: str, modulus: int) -> str:
+        if modulus <= 0:
+            raise ValueError("modulus must be positive")
+        hash_expr = self.hash_function_expression(col_expression)
+        return f"{hash_expr} % {modulus}"
 
     @property
     def default_date_format(self):
@@ -493,6 +506,12 @@ class SparkDialect(SplinkDialect):
     @property
     def hash_function_name(self) -> str:
         return "hash"  # Spark's hash() returns int
+
+    def hash_bucket_expression(self, col_expression: str, modulus: int) -> str:
+        if modulus <= 0:
+            raise ValueError("modulus must be positive")
+        hash_expr = self.hash_function_expression(col_expression)
+        return f"pmod({hash_expr}, {modulus})"
 
 
 class SQLiteDialect(SplinkDialect):

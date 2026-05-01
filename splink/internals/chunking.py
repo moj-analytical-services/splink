@@ -9,23 +9,16 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
-def _positive_mod_sql(expr: str, modulus: int) -> str:
-    """Return a SQL fragment that computes a non-negative remainder.
-
-    The standard `%` operator returns a value with the sign of the dividend
-    in the SQL dialects Splink supports, so for negative hash outputs
-    `expr % modulus` may itself be negative.  Using `((expr % m) + m) % m`
-    is reliably non-negative for any signed integer input, including
-    `INT_MIN` where `ABS()` would overflow.
-    """
-    if modulus <= 0:
-        raise ValueError("modulus must be positive")
-    return f"((({expr}) % {modulus}) + {modulus}) % {modulus}"
+EM_SAMPLE_BUCKET_COLUMN = "__splink_em_sample_bucket"
 
 
 def _sql_string_literal(value: str) -> str:
     """Defensively quote a string for safe inclusion as a SQL literal."""
     return "'" + value.replace("'", "''") + "'"
+
+
+def _em_sampled_input_tablename(input_tablename: str) -> str:
+    return f"{input_tablename}_em_sample"
 
 
 def _chunk_assignment_sql(
@@ -48,7 +41,7 @@ def _chunk_assignment_sql(
         dialect: SQL dialect for hash function
 
     Returns:
-        SQL WHERE clause condition like: " AND (ABS(hash(...)) % 3) + 1 = 2",
+        SQL WHERE clause condition like: " AND (hash(... ) % 3) + 1 = 2",
         or empty string if num_chunks == 1 (no filtering needed)
     """
 
@@ -56,50 +49,58 @@ def _chunk_assignment_sql(
         return ""
 
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    hash_expr = dialect.hash_function_expression(composite_id)
-    chunk_bucket = _positive_mod_sql(hash_expr, num_chunks)
+    chunk_bucket = dialect.hash_bucket_expression(composite_id, num_chunks)
     return f" AND ({chunk_bucket}) + 1 = {chunk_num}"
 
 
-def _em_sample_filter_sql(
+def _em_sample_table_sql(
     unique_id_cols: list[InputColumn],
     sample_threshold: int,
     sample_modulus: int,
-    table_prefix: str,
+    input_tablename: str,
     dialect: "SplinkDialect",
     salt: str = "__em_sample__",
 ) -> str:
-    """Generate a SQL WHERE clause condition that retains a deterministic
-    pseudo-random subset of input records, using a salted hash so that this
-    filter is statistically independent of the chunking filter produced by
-    `_chunk_assignment_sql`.
+    """Generate SQL for a sampled input table used upstream of blocking.
 
-    Returns SQL like:
-        " AND (ABS(hash(<composite_uid> || '__em_sample__')) % 10000) < 325"
+    The sample is deterministic and uses a salted hash so that it remains
+    statistically independent of the chunking filter produced by
+    `_chunk_assignment_sql`.
 
     Args:
         unique_id_cols: The columns that form the unique ID.
         sample_threshold: Integer in [0, sample_modulus]. A row is retained
-            iff (ABS(hash(...)) % sample_modulus) < sample_threshold.
+            iff hash_bucket(composite_uid || salt, sample_modulus)
+            < sample_threshold.
         sample_modulus: Integer giving the resolution of the sampling fraction.
-        table_prefix: Table alias prefix (e.g. 'l' or 'r').
+        input_tablename: Input table to sample upstream of blocking.
         dialect: SQL dialect for the hash function.
         salt: String concatenated to the composite uid before hashing.
 
     Returns:
-        SQL WHERE-clause fragment, or empty string if no filtering is needed.
+        SQL statement that materialises the sampled input relation.
     """
-    if sample_threshold >= sample_modulus:
-        return ""
-    if sample_threshold <= 0:
-        # All rows excluded — caller should normally avoid this case.
-        return " AND 1=0"
-
-    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
+    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, "t")
     salted_id = f"({composite_id}) || {_sql_string_literal(salt)}"
-    hash_expr = dialect.hash_function_expression(salted_id)
-    sample_bucket = _positive_mod_sql(hash_expr, sample_modulus)
-    return f" AND {sample_bucket} < {sample_threshold}"
+    sample_bucket = dialect.hash_bucket_expression(salted_id, sample_modulus)
+
+    if sample_threshold >= sample_modulus:
+        return f"select * from {input_tablename}"
+
+    filter_condition = "1=0"
+    if sample_threshold > 0:
+        filter_condition = f"{EM_SAMPLE_BUCKET_COLUMN} < {sample_threshold}"
+
+    return f"""
+    select *
+    from (
+        select
+            *,
+            {sample_bucket} as {EM_SAMPLE_BUCKET_COLUMN}
+        from {input_tablename} as t
+    )
+    where {filter_condition}
+    """.strip()
 
 
 def _blocked_pairs_cache_key(

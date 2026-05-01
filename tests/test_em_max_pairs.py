@@ -447,22 +447,22 @@ def test_em_training_max_pairs_rejected_positionally(fake_1000_df):
 
 
 def test_em_sample_filter_uses_positive_modulo():
-    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.chunking import _em_sample_table_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
 
-    sql = _em_sample_filter_sql(
+    sql = _em_sample_table_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=42,
         sample_modulus=10_000,
-        table_prefix="l",
+        input_tablename="__splink__df_concat",
         dialect=DuckDBDialect(),
         salt="__em_sample__",
     )
-    # Positive modulo form: ((expr % M) + M) % M  — must NOT use ABS.
+    assert "__splink_em_sample_bucket" in sql
     assert "ABS(" not in sql
-    assert "+ 10000) % 10000" in sql
-    assert "< 42" in sql
+    assert "hash((t.\"unique_id\") || '__em_sample__') % 10000" in sql
+    assert "where __splink_em_sample_bucket < 42" in sql
 
 
 def test_chunk_assignment_uses_positive_modulo():
@@ -478,7 +478,7 @@ def test_chunk_assignment_uses_positive_modulo():
         dialect=DuckDBDialect(),
     )
     assert "ABS(" not in sql
-    assert "+ 5) % 5" in sql
+    assert 'hash(l."unique_id") % 5' in sql
 
 
 # ---------------------------------------------------------------------------
@@ -487,15 +487,15 @@ def test_chunk_assignment_uses_positive_modulo():
 
 
 def test_em_sample_filter_escapes_salt_quote():
-    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.chunking import _em_sample_table_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
 
-    sql = _em_sample_filter_sql(
+    sql = _em_sample_table_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=42,
         sample_modulus=10_000,
-        table_prefix="l",
+        input_tablename="__splink__df_concat",
         dialect=DuckDBDialect(),
         salt="o'malley",
     )
@@ -508,25 +508,58 @@ def test_em_sample_filter_works_in_duckdb_with_quote_in_salt(fake_1000_df):
     """End-to-end: salt containing apostrophe should not break SQL."""
     import duckdb
 
-    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.chunking import _em_sample_table_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
 
-    sql_filter = _em_sample_filter_sql(
+    sql_filter = _em_sample_table_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=5_000,
         sample_modulus=10_000,
-        table_prefix="t",
+        input_tablename="t",
         dialect=DuckDBDialect(),
         salt="o'malley",
     )
-    # _em_sample_filter_sql returns a leading " AND ..."; strip the AND.
-    where_clause = sql_filter.replace(" AND ", "WHERE ", 1)
     con = duckdb.connect()
     con.register("t", fake_1000_df)
-    n = con.execute(f"select count(*) as c from t {where_clause}").fetchone()[0]
+    n = con.execute(f"select count(*) as c from ({sql_filter})").fetchone()[0]
     # Should retain ~half of 1000 rows.
     assert 350 < n < 650
+
+
+def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
+    from splink.internals.blocking import block_using_rules_sqls
+
+    linker = _make_dedupe_linker(fake_1000_df)
+    settings = linker._settings_obj
+    br = block_on("first_name").get_blocking_rule("duckdb")
+
+    sqls = block_using_rules_sqls(
+        input_tablename_l="__splink__df_concat",
+        input_tablename_r="__splink__df_concat",
+        blocking_rules=[br],
+        link_type=settings._link_type,
+        source_dataset_input_column=(
+            settings.column_info_settings.source_dataset_input_column
+        ),
+        unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
+        sample_threshold=100,
+        sample_modulus=10_000,
+        sample_salt="__splink_em_probe_default__",
+    )
+
+    assert sqls[0]["output_table_name"] == "__splink__df_concat_em_sample"
+    assert "__splink_em_sample_bucket" in sqls[0]["sql"]
+    assert (
+        "hash((t.\"unique_id\") || '__splink_em_probe_default__') % 10000"
+        in sqls[0]["sql"]
+    )
+
+    blocked_pairs_sql = sqls[-1]["sql"]
+    assert "from __splink__df_concat_em_sample as l" in blocked_pairs_sql
+    assert "inner join __splink__df_concat_em_sample as r" in blocked_pairs_sql
+    assert "__splink_em_probe_default__" not in blocked_pairs_sql
+    assert "__splink_em_sample_bucket" not in blocked_pairs_sql
 
 
 # ---------------------------------------------------------------------------
@@ -553,28 +586,27 @@ def test_probe_and_sample_salts_differ(fake_1000_df):
 
 def _selected_uids_for_session(session) -> set:
     """Return the set of unique_ids retained after sampling."""
-    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.chunking import _em_sample_table_sql
     from splink.internals.input_column import InputColumn
 
     linker = session._original_linker
     db_api = linker._db_api
 
-    sql_filter = _em_sample_filter_sql(
+    sample_sql = _em_sample_table_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=session._sample_threshold,
         sample_modulus=session._sample_modulus,
-        table_prefix="t",
+        input_tablename="__splink__df_concat",
         dialect=db_api.sql_dialect,
         salt=session._sample_salt,
     )
-    where_clause = sql_filter.replace(" AND ", "WHERE ", 1)
     from splink.internals.pipeline import CTEPipeline
     from splink.internals.vertically_concatenate import enqueue_df_concat
 
     pipe = CTEPipeline()
     enqueue_df_concat(linker, pipe)
     pipe.enqueue_sql(
-        f"select unique_id from __splink__df_concat t {where_clause}",
+        f"select unique_id from ({sample_sql})",
         "__splink__em_selected_uids",
     )
     df = db_api.sql_pipeline_to_splink_dataframe(pipe)

@@ -12,7 +12,8 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.chunking import (
     _chunk_assignment_sql,
-    _em_sample_filter_sql,
+    _em_sample_table_sql,
+    _em_sampled_input_tablename,
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
@@ -683,9 +684,6 @@ def _sql_gen_where_condition(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
-    sample_threshold: int | None = None,
-    sample_modulus: int | None = None,
-    sample_salt: str = "__em_sample__",
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -712,31 +710,6 @@ def _sql_gen_where_condition(
         chunk_num, total_chunks = right_chunk
         where_condition += _chunk_assignment_sql(
             unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
-        )
-
-    # Add EM sample filtering if specified.  Applied to both sides
-    # independently using a salted hash, so it is statistically
-    # independent of the chunking filter above.
-    if (
-        sample_threshold is not None
-        and sample_modulus is not None
-        and sql_dialect is not None
-    ):
-        where_condition += _em_sample_filter_sql(
-            unique_id_cols,
-            sample_threshold,
-            sample_modulus,
-            "l",
-            sql_dialect,
-            salt=sample_salt,
-        )
-        where_condition += _em_sample_filter_sql(
-            unique_id_cols,
-            sample_threshold,
-            sample_modulus,
-            "r",
-            sql_dialect,
-            salt=sample_salt,
         )
 
     return where_condition
@@ -779,15 +752,62 @@ def block_using_rules_sqls(
 
     sql_dialect = blocking_rules[0].sql_dialect if blocking_rules else None
 
+    if (
+        sample_threshold is not None
+        and sample_modulus is not None
+        and sample_threshold < sample_modulus
+    ):
+        if sql_dialect is None:
+            raise ValueError("EM sampling requires at least one blocking rule")
+
+        original_input_tablename_l = input_tablename_l
+        original_input_tablename_r = input_tablename_r
+
+        sampled_input_tablename_l = _em_sampled_input_tablename(
+            original_input_tablename_l
+        )
+        sqls.append(
+            {
+                "sql": _em_sample_table_sql(
+                    unique_id_input_columns,
+                    sample_threshold,
+                    sample_modulus,
+                    original_input_tablename_l,
+                    sql_dialect,
+                    salt=sample_salt,
+                ),
+                "output_table_name": sampled_input_tablename_l,
+            }
+        )
+        input_tablename_l = sampled_input_tablename_l
+
+        if original_input_tablename_r == original_input_tablename_l:
+            input_tablename_r = sampled_input_tablename_l
+        else:
+            sampled_input_tablename_r = _em_sampled_input_tablename(
+                original_input_tablename_r
+            )
+            sqls.append(
+                {
+                    "sql": _em_sample_table_sql(
+                        unique_id_input_columns,
+                        sample_threshold,
+                        sample_modulus,
+                        original_input_tablename_r,
+                        sql_dialect,
+                        salt=sample_salt,
+                    ),
+                    "output_table_name": sampled_input_tablename_r,
+                }
+            )
+            input_tablename_r = sampled_input_tablename_r
+
     where_condition = _sql_gen_where_condition(
         link_type,
         unique_id_input_columns,
         left_chunk=left_chunk,
         right_chunk=right_chunk,
         sql_dialect=sql_dialect,
-        sample_threshold=sample_threshold,
-        sample_modulus=sample_modulus,
-        sample_salt=sample_salt,
     )
 
     # Cover the case where there are no blocking rules
