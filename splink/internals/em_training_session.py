@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
@@ -15,6 +15,10 @@ from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
+from splink.internals.em_sampling import (
+    _DEFAULT_MAX_PROBE_PAIRS,
+    resolve_em_sample_threshold,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.internals.parse_sql import get_columns_used_from_sql
@@ -82,6 +86,10 @@ class EMTrainingSession:
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
         estimate_without_term_frequencies: bool = False,
+        max_pairs: float | None = None,
+        probe_proportion: float = 0.01,
+        seed: int | None = None,
+        max_probe_pairs: float = _DEFAULT_MAX_PROBE_PAIRS,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -100,6 +108,20 @@ class EMTrainingSession:
 
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies
+
+        # EM sampling configuration.  Resolved lazily in _comparison_vectors so
+        # that the probe runs in the same execution path as the main blocking,
+        # giving identical environment / cache state.
+        self._max_pairs = max_pairs
+        self._probe_proportion = probe_proportion
+        self._seed = seed
+        self._max_probe_pairs = max_probe_pairs
+        # Resolved by `resolve_em_sample_threshold` so probe and final sample
+        # use independent salts.  Holds a placeholder until that call runs.
+        self._sample_salt: str = ""
+        self._sample_threshold: int | None = None
+        self._sample_modulus: int | None = None
+        self._sample_info: dict[str, Any] | None = None
 
         self._comparison_levels_to_reverse_blocking_rule: list[
             ComparisonAndLevelDict
@@ -197,6 +219,21 @@ class EMTrainingSession:
     def _comparison_vectors(self) -> SplinkDataFrame:
         self._training_log_message()
 
+        # Resolve EM sampling threshold (runs a probe blocking pass if
+        # max_pairs was supplied).
+        sample_threshold, sample_modulus, sample_info = resolve_em_sample_threshold(
+            linker=self._original_linker,
+            blocking_rule=self._blocking_rule_for_training,
+            max_pairs=self._max_pairs,
+            probe_proportion=self._probe_proportion,
+            seed=self._seed,
+            max_probe_pairs=self._max_probe_pairs,
+        )
+        self._sample_threshold = sample_threshold
+        self._sample_modulus = sample_modulus
+        self._sample_info = sample_info
+        self._sample_salt = sample_info["sample_salt"]
+
         pipeline = CTEPipeline()
         enqueue_df_concat(self._original_linker, pipeline)
 
@@ -208,10 +245,32 @@ class EMTrainingSession:
             link_type=orig_settings._link_type,
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
+            sample_threshold=sample_threshold,
+            sample_modulus=sample_modulus,
+            sample_salt=self._sample_salt,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
         blocked_pairs = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+        if sample_threshold is not None:
+            count_pipeline = CTEPipeline()
+            count_pipeline.enqueue_sql(
+                f"select count(*) as row_count from {blocked_pairs.physical_name}",
+                "__splink__em_blocked_pair_count",
+            )
+            count_df = self.db_api.sql_pipeline_to_splink_dataframe(count_pipeline)
+            count_rows = count_df.as_record_dict()
+            count_df.drop_table_from_database_and_remove_from_cache()
+            actual = int(count_rows[0]["row_count"]) if count_rows else 0
+            expected = sample_info.get("expected_pairs_after_sampling")
+            logger.info(
+                "[EM sampling] Materialised blocked pair count after sampling: "
+                "%d (expected ~%s, target max_pairs=%s)",
+                actual,
+                f"{expected:.0f}" if expected is not None else "n/a",
+                f"{self._max_pairs:.0f}" if self._max_pairs is not None else "n/a",
+            )
 
         pipeline = CTEPipeline([blocked_pairs])
         enqueue_df_concat_with_tf(self._original_linker, pipeline)

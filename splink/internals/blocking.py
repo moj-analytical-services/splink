@@ -10,7 +10,11 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
 
-from splink.internals.chunking import _chunk_assignment_sql
+from splink.internals.chunking import (
+    _chunk_assignment_sql,
+    _em_sample_table_sql,
+    _em_sampled_input_tablename,
+)
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
 from splink.internals.input_column import InputColumn
@@ -711,6 +715,46 @@ def _sql_gen_where_condition(
     return where_condition
 
 
+def _prepend_em_sample_input_sqls(
+    *,
+    input_tablename_l: str,
+    input_tablename_r: str,
+    unique_id_input_columns: List[InputColumn],
+    sample_threshold: int,
+    sample_modulus: int,
+    sample_salt: str,
+    sql_dialect: SplinkDialect,
+) -> tuple[list[dict[str, str]], str, str]:
+    sqls: list[dict[str, str]] = []
+    sampled_input_table_lookup: dict[str, str] = {}
+    input_tablenames = [input_tablename_l]
+    if input_tablename_r != input_tablename_l:
+        input_tablenames.append(input_tablename_r)
+
+    for input_tablename in input_tablenames:
+        sampled_input_tablename = _em_sampled_input_tablename(input_tablename)
+        sampled_input_table_lookup[input_tablename] = sampled_input_tablename
+        sqls.append(
+            {
+                "sql": _em_sample_table_sql(
+                    unique_id_input_columns,
+                    sample_threshold,
+                    sample_modulus,
+                    input_tablename,
+                    sql_dialect,
+                    salt=sample_salt,
+                ),
+                "output_table_name": sampled_input_tablename,
+            }
+        )
+
+    return (
+        sqls,
+        sampled_input_table_lookup[input_tablename_l],
+        sampled_input_table_lookup[input_tablename_r],
+    )
+
+
 def block_using_rules_sqls(
     *,
     input_tablename_l: str,
@@ -721,6 +765,9 @@ def block_using_rules_sqls(
     unique_id_input_column: InputColumn,
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
+    sample_salt: str = "__em_sample__",
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -744,6 +791,26 @@ def block_using_rules_sqls(
     )
 
     sql_dialect = blocking_rules[0].sql_dialect if blocking_rules else None
+
+    if (
+        sample_threshold is not None
+        and sample_modulus is not None
+        and sample_threshold < sample_modulus
+    ):
+        if sql_dialect is None:
+            raise ValueError("EM sampling requires at least one blocking rule")
+        sample_sqls, input_tablename_l, input_tablename_r = (
+            _prepend_em_sample_input_sqls(
+                input_tablename_l=input_tablename_l,
+                input_tablename_r=input_tablename_r,
+                unique_id_input_columns=unique_id_input_columns,
+                sample_threshold=sample_threshold,
+                sample_modulus=sample_modulus,
+                sample_salt=sample_salt,
+                sql_dialect=sql_dialect,
+            )
+        )
+        sqls.extend(sample_sqls)
 
     where_condition = _sql_gen_where_condition(
         link_type,
