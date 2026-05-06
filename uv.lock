@@ -1408,18 +1408,19 @@ wheels = [
 
 [[package]]
 name = "mkdocs-rss-plugin"
-version = "1.17.9"
+version = "1.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachecontrol", extra = ["filecache"], marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "gitpython", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "properdocs", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
     { name = "tzdata", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/38/c18a11ff6f3141cbb8fb7c847fdf9deba05e05d658940a09f8f5b787c8fd/mkdocs_rss_plugin-1.17.9.tar.gz", hash = "sha256:1c30b192a73a46714c3c5f2f1fbc4b15850ed719106eb241de99891adb7e6258", size = 569625, upload-time = "2026-01-05T22:32:53.017Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/e8/70055ec6d7105c0f7c84918e0f98180443b5065469b2877aca43067a5709/mkdocs_rss_plugin-1.19.0.tar.gz", hash = "sha256:0b9b7f14688393e5bd7d26a6dc14dfd2b228a8cdfe5b598a6677589b2159d957", size = 573045, upload-time = "2026-04-17T09:35:34.115Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/c3/8315e728b5f91e5616451b4f4662fbcf33b316a1bbfbf6981a966ab982b8/mkdocs_rss_plugin-1.17.9-py3-none-any.whl", hash = "sha256:7aaa607d0a19f03343e83f4ee1b193e1d6f5af19b853546878c4b57fe406e0c4", size = 31354, upload-time = "2026-01-05T22:32:51.623Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/00/1f2144fad080706c1ebebef83b7b5c0f8d80f9a2a06b33baabb94e33c84e/mkdocs_rss_plugin-1.19.0-py3-none-any.whl", hash = "sha256:5fdaffdee96745011c7c7786ed52b42a2d751f3aad84c188ffbedeb5a6e2994a", size = 33252, upload-time = "2026-04-17T09:35:32.372Z" },
 ]
 
 [[package]]
@@ -2093,6 +2094,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1db213e061a4602dd6032a8a97ef6c1a862537732421/prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855", size = 434198, upload-time = "2025-08-27T15:24:02.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/84/03/0d3ce49e2505ae70cf43bc5bb3033955d2fc9f932163e84dc0779cc47f48/prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955", size = 391431, upload-time = "2025-08-27T15:23:59.498Z" },
+]
+
+[[package]]
+name = "properdocs"
+version = "1.6.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core') or (sys_platform != 'win32' and extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "ghp-import", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pathspec", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "platformdirs", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "pyyaml-env-tag", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+    { name = "watchdog", marker = "python_full_version >= '3.13' or (extra == 'extra-6-splink-athena' and extra == 'group-6-splink-core')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/29/f27a4e1eddf72ed3db6e47818fbafe6debbf09fd7051f9c1a007239b46ef/properdocs-1.6.7.tar.gz", hash = "sha256:adc7b16e562890af0e098a7e5b02e3a81c20894a87d6a28d345c9300de73c26e", size = 276141, upload-time = "2026-03-20T20:07:48.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/4d/fc923f5c85318ee8cc903566dc4e0ebe41b2dfc1d2ecf5546db232397ed6/properdocs-1.6.7-py3-none-any.whl", hash = "sha256:6fa0cfa2e01bf338f684892c8a506cf70ea88ae7f3479c933b6fa20168101cbd", size = 225406, upload-time = "2026-03-20T20:07:46.875Z" },
 ]
 
 [[package]]
