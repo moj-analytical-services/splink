@@ -19,3 +19,5 @@ typecheck-dev:
 
 check: format-check lint typecheck
 
+test:
+	uv run python -m pytest -vm "duckdb" tests/
