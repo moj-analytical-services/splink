@@ -4,32 +4,30 @@ from collections import UserDict
 
 import duckdb
 
+from splink.internals.database_api import DatabaseAPI
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
 from splink.internals.sqlite.database_api import SQLiteAPI
 
 
 class TestHelper(ABC):
-    @property
-    def Linker(self) -> Linker:
-        return Linker
 
     @property
     @abstractmethod
-    def DatabaseAPI(self):
+    def DatabaseAPI(self) -> type[DatabaseAPI]:
         pass
 
     def db_api_args(self):
         return {}
 
     @property
-    def date_format(self):
+    def date_format(self) -> str:
         return "yyyy-mm-dd"
 
-    def db_api(self):
+    def db_api(self) -> DatabaseAPI:
         return self.DatabaseAPI(**self.db_api_args())
 
-    def load_frame_from_csv(self, path):
+    def load_frame_from_csv(self, path: str):
         import pyarrow.csv as pv
 
         return pv.read_csv(
@@ -48,7 +46,7 @@ class TestHelper(ABC):
 
     def linker_with_registration(
         self, data, settings, input_table_aliases=None, **kwargs
-    ):
+    ) -> Linker:
         db_api = self.db_api()
 
         data_list = list(data) if isinstance(data, (list, tuple)) else [data]
