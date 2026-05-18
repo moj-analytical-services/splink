@@ -1,16 +1,18 @@
-import pandas as pd
-from pytest import mark
+import pyarrow as pa
+from pytest import fixture, mark
 
 import splink.comparison_library as cl
 from splink import SettingsCreator, block_on
 
 from .decorator import mark_with_dialects_excluding
 
-df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-# we don't need full data to check this logic - a smallish subset will do
-# as long as it's large enough to contain missed intra-cluster edges
-# when predicted with default parameters
-df_pd = df_pd[0:200]
+
+@fixture(scope="module")
+def fake_200(fake_1000):
+    # we don't need full data to check this logic - a smallish subset will do
+    # as long as it's large enough to contain missed intra-cluster edges
+    # when predicted with default parameters
+    yield fake_1000[0:200]
 
 
 @mark_with_dialects_excluding()
@@ -18,7 +20,7 @@ df_pd = df_pd[0:200]
     ["link_type", "copies_of_df"],
     [["dedupe_only", 1], ["link_only", 2], ["link_and_dedupe", 2], ["link_only", 3]],
 )
-def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
+def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df, fake_200):
     helper = test_helpers[dialect]
 
     settings = SettingsCreator(
@@ -36,7 +38,7 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
         retain_intermediate_calculation_columns=True,
     )
 
-    linker_input = df_pd if copies_of_df == 1 else [df_pd for _ in range(copies_of_df)]
+    linker_input = [fake_200 for _ in range(copies_of_df)]
     linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
@@ -44,14 +46,14 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference._score_missing_cluster_edges(
+    missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
-    ).as_pandas_dataframe()
+    ).as_record_dict()
 
-    assert not df_missing_edges.empty, "No missing edges found"
-    assert not any(df_missing_edges["surname_l"] == df_missing_edges["surname_r"])
-    assert not any(df_missing_edges["dob_l"] == df_missing_edges["dob_r"])
+    assert len(missing_edges) > 0, "No missing edges found"
+    assert not any(edge["surname_l"] == edge["surname_r"] for edge in missing_edges)
+    assert not any(edge["dob_l"] == edge["dob_r"] for edge in missing_edges)
 
 
 @mark_with_dialects_excluding()
@@ -59,7 +61,9 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df):
     ["link_type", "copies_of_df"],
     [["dedupe_only", 1], ["link_only", 2]],
 )
-def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_of_df):
+def test_score_missing_edges_all_edges(
+    test_helpers, dialect, link_type, copies_of_df, fake_200
+):
     helper = test_helpers[dialect]
 
     settings = SettingsCreator(
@@ -77,7 +81,7 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
         retain_intermediate_calculation_columns=True,
     )
 
-    linker_input = df_pd if copies_of_df == 1 else [df_pd for _ in range(copies_of_df)]
+    linker_input = [fake_200 for _ in range(copies_of_df)]
     linker = helper.linker_with_registration(linker_input, settings)
 
     df_predict = linker.inference.predict()
@@ -85,14 +89,14 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference._score_missing_cluster_edges(
+    missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
-    ).as_pandas_dataframe()
+    ).as_record_dict()
 
-    assert not df_missing_edges.empty, "No missing edges found"
+    assert len(missing_edges) > 0, "No missing edges found"
     # some of these should be present now, as we are scoring all intracluster edges
-    assert any(df_missing_edges["surname_l"] == df_missing_edges["surname_r"])
-    assert any(df_missing_edges["dob_l"] == df_missing_edges["dob_r"])
+    assert any(edge["surname_l"] == edge["surname_r"] for edge in missing_edges)
+    assert any(edge["dob_l"] == edge["dob_r"] for edge in missing_edges)
 
 
 @mark_with_dialects_excluding()
@@ -100,13 +104,13 @@ def test_score_missing_edges_all_edges(test_helpers, dialect, link_type, copies_
     ["link_type"],
     [["dedupe_only"], ["link_only"]],
 )
-def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_type):
+def test_score_missing_edges_changed_column_names(
+    test_helpers, dialect, link_type, fake_200
+):
     helper = test_helpers[dialect]
 
-    df = df_pd.copy()
-    df["record_id"] = df["unique_id"]
-    del df["unique_id"]
-    df["sds"] = "frame_1"
+    df = fake_200.rename_columns({"unique_id": "record_id"})
+    df = df.append_column("sds", pa.array(200 * ["frame_1"]))
     settings = SettingsCreator(
         link_type=link_type,
         comparisons=[
@@ -124,10 +128,10 @@ def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_ty
         source_dataset_column_name="sds",
     )
     if link_type == "dedupe_only":
-        linker_input = df
+        linker_input = [df]
     else:
-        df_2 = df.copy()
-        df_2["sds"] = "frame_2"
+        df_2 = df.drop_columns("sds")
+        df_2 = df_2.append_column("sds", pa.array(200 * ["frame_2"]))
         linker_input = [df, df_2]
     linker = helper.linker_with_registration(linker_input, settings)
 
@@ -136,11 +140,11 @@ def test_score_missing_edges_changed_column_names(test_helpers, dialect, link_ty
         df_predict, 0.95
     )
 
-    df_missing_edges = linker.inference._score_missing_cluster_edges(
+    missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
-    ).as_pandas_dataframe()
+    ).as_record_dict()
 
-    assert not df_missing_edges.empty, "No missing edges found"
-    assert not any(df_missing_edges["surname_l"] == df_missing_edges["surname_r"])
-    assert not any(df_missing_edges["dob_l"] == df_missing_edges["dob_r"])
+    assert len(missing_edges) > 0, "No missing edges found"
+    assert not any(edge["surname_l"] == edge["surname_r"] for edge in missing_edges)
+    assert not any(edge["dob_l"] == edge["dob_r"] for edge in missing_edges)
