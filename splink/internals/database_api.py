@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
+    Literal,
     Optional,
     TypeVar,
     Union,
@@ -175,6 +176,33 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         splink_dataframe.sql_used_to_create = sql
 
         return splink_dataframe
+
+    def query_sql(
+        self,
+        sql: str,
+        output_type: Literal["splink_df", "splinkdf", "pandas"] = "splink_df",
+    ) -> SplinkDataFrame | PandasDataFrame:
+        """
+        Execute a supplied SQL query against backend directly.
+        """
+        output_tablename_templated = "__splink__df_sql_query"
+
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, output_tablename_templated)
+        splink_dataframe = self.sql_pipeline_to_splink_dataframe(pipeline)
+
+        if output_type in ("splink_df", "splinkdf"):
+            return splink_dataframe
+        elif output_type == "pandas":
+            out = splink_dataframe.as_pandas_dataframe()
+            # If pandas, drop the table to cleanup the db
+            splink_dataframe.drop_table_from_database_and_remove_from_cache()
+            return out
+        else:
+            raise ValueError(
+                f"output_type '{output_type}' is not supported.",
+                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
+            )
 
     def sql_pipeline_to_splink_dataframe(
         self,
