@@ -4,8 +4,6 @@ import json
 import os
 from typing import TYPE_CHECKING, Any
 
-from splink.internals.pipeline import CTEPipeline
-
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
@@ -68,24 +66,4 @@ class LinkerMisc:
             output_type (str): One of splink_df/splinkdf or pandas.
                 This determines the type of table that your results are output in.
         """
-
-        output_tablename_templated = "__splink__df_sql_query"
-
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(sql, output_tablename_templated)
-        splink_dataframe = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline
-        )
-
-        if output_type in ("splink_df", "splinkdf"):
-            return splink_dataframe
-        elif output_type == "pandas":
-            out = splink_dataframe.as_pandas_dataframe()
-            # If pandas, drop the table to cleanup the db
-            splink_dataframe.drop_table_from_database_and_remove_from_cache()
-            return out
-        else:
-            raise ValueError(
-                f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
-            )
+        return self._linker._db_api.query_sql(sql, output_type)
