@@ -111,6 +111,34 @@ class SplinkDataFrame(ABC):
         self.db_api.remove_splinkdataframe_from_cache(self)
         self.db_api._created_tables.discard(self.physical_name)
 
+    def query_sql(self, sql: str) -> "SplinkDataFrame":
+        """
+        Query this frame in the backend in which this table lives.
+        You can refer to the table represented by this SplinkDataFrame as {this}.
+        If using an f-string to construct SQL you may escape the braces as {{this}}
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            df_predict.query_sql("SELECT * FROM {this} WHERE match_weight > 10")
+
+            # need to escape the braces if using an f-string
+            low_mw = -5
+            df_predict.query_sql(
+                f'''
+                SELECT unique_id_l, unique_id_r
+                FROM {{this}}
+                WHERE match_weight > {low_ml}
+                '''
+            )
+            ```
+        Args:
+            sql (string): The SQL to query against the backend. This table can be
+                referred to as {{this}}
+        """
+        sql = sql.format(this=self.physical_name)
+        return self.db_api.query_sql(sql)
+
     def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
 
