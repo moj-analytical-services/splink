@@ -7,13 +7,12 @@ def assert_number_of_rows_with_gamma_value(
     gamma_value: int,
     expected_number_of_rows: int,
 ):
-    db_api = df_pred.db_api
-    num_gamma_values_sdf = db_api.query_sql(
+    num_gamma_values_sdf = df_pred.query_sql(
         f"""
         SELECT
             COUNT(*) AS count
         FROM
-            {df_pred.physical_name}
+            {{this}}
         WHERE
             {gamma_col_name} = {gamma_value}
         """
@@ -32,13 +31,12 @@ def assert_id_pair_has_gamma_value(
     expected_gamma_level: int,
     id_pair: tuple[int, int],
 ):
-    db_api = df_pred.db_api
-    num_gamma_values_sdf = db_api.query_sql(
+    num_gamma_values_sdf = df_pred.query_sql(
         f"""
         SELECT
             {gamma_col_name} AS gamma_level
         FROM
-            {df_pred.physical_name}
+            {{this}}
         WHERE
             unique_id_l = {id_pair[0]}
         AND
