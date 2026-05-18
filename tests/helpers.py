@@ -11,7 +11,6 @@ from splink.internals.sqlite.database_api import SQLiteAPI
 
 
 class TestHelper(ABC):
-
     @property
     @abstractmethod
     def DatabaseAPI(self) -> type[DatabaseAPI]:
