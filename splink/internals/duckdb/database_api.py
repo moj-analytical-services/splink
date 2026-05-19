@@ -79,6 +79,11 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     ) -> DuckDBDataFrame:
         return DuckDBDataFrame(templated_name, physical_name, self)
 
+    def _load_from_csv(self, path: str) -> str:
+        tn = self._new_input_table_name()
+        self._con.execute(f"CREATE TABLE {tn} AS FROM read_csv_auto('{path}')")
+        return tn
+
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
         from duckdb import CatalogException
