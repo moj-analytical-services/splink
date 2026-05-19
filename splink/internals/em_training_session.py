@@ -64,6 +64,9 @@ class ModelParameterIterationDetailedRecord(ModelParameterDetailedRecord):
             iteration=iteration,
         )
 
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 
 class EMTrainingSession:
     """Manages training models using the Expectation Maximisation algorithm, and
