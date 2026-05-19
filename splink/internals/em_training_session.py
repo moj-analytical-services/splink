@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 
 from splink.internals.blocking import BlockingRule, block_using_rules_sqls
 from splink.internals.charts import (
@@ -62,6 +62,9 @@ class ModelParameterIterationDetailedRecord(ModelParameterDetailedRecord):
             **asdict(cl_rec),
             iteration=iteration,
         )
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 class EMTrainingSession:
