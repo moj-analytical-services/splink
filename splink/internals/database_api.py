@@ -364,6 +364,19 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     ) -> SplinkDataFrame:
         pass
 
+    def _load_from_csv(self, path: str) -> AcceptableInputTableType:
+        # sensible fallback for backends that don't specialise
+        import pyarrow.csv as pv
+
+        return pv.read_csv(
+            path,
+            convert_options=pv.ConvertOptions(strings_can_be_null=True),
+        )
+
+    @final
+    def register_from_csv(self, path: str) -> SplinkDataFrame:
+        return self.register(self._load_from_csv(path))
+
     @abstractmethod
     def table_exists_in_database(self, table_name: str) -> bool:
         """
