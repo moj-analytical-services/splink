@@ -85,6 +85,11 @@ class SparkAPI(DatabaseAPI[spark_df]):
     ) -> SparkDataFrame:
         return SparkDataFrame(templated_name, physical_name, self)
 
+    def _load_from_csv(self, path: str) -> spark_df:
+        df = self.spark.read.csv(path, header=True)
+        df.persist()
+        return df
+
     def table_exists_in_database(self, table_name):
         query_result = self._execute_sql_against_backend(
             f"show tables from {self.splink_data_store} like '{table_name}'"
