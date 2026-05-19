@@ -1,10 +1,10 @@
-import pandas as pd
 import pytest
 
 import splink.internals.comparison_level_library as cll
 from splink.internals.input_column import _get_dialect_quotes
 
 from .decorator import mark_with_dialects_excluding
+from .utils import assert_id_pair_has_gamma_value
 
 
 def binary_composition_internals(clause, c_fun, dialect, q):
@@ -157,15 +157,13 @@ def test_composition_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
 
     # Check our compositions give expected outputs
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "forename": "Tom", "surname": "Tim"},
-            {"unique_id": 2, "forename": "Tom", "surname": "Tim"},
-            {"unique_id": 3, "forename": "Tom", "surname": "Timothee"},
-            {"unique_id": 4, "forename": "Sam", "surname": "Tarly"},
-            {"unique_id": 5, "forename": "Sam", "surname": "Tim"},
-        ]
-    )
+    data = [
+        {"unique_id": 1, "forename": "Tom", "surname": "Tim"},
+        {"unique_id": 2, "forename": "Tom", "surname": "Tim"},
+        {"unique_id": 3, "forename": "Tom", "surname": "Timothee"},
+        {"unique_id": 4, "forename": "Sam", "surname": "Tarly"},
+        {"unique_id": 5, "forename": "Sam", "surname": "Tim"},
+    ]
 
     # For testing the cll version
     dbl_null = cll.Or(cll.NullLevel("forename"), cll.NullLevel("surname"))
@@ -188,20 +186,18 @@ def test_composition_outputs(test_helpers, dialect):
         "comparisons": [full_name],
     }
 
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration([data], settings)
 
     pred = linker.inference.predict()
-    out = pred.as_pandas_dataframe().sort_values(by=["unique_id_l", "unique_id_r"])
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
-    size_gamma_lookup = {
+    gamma_value_id_pairs = {
         3: [(1, 2)],
         2: [(1, 3), (1, 5), (2, 3), (2, 5), (4, 5)],
         1: [(1, 4), (2, 4), (3, 4), (3, 5)],
     }
 
-    for gamma, id_pairs in size_gamma_lookup.items():
-        for left, right in id_pairs:
-            row = out.loc[(out.unique_id_l == left) & (out.unique_id_r == right)]
-            assert row["gamma_full_name"].values[0] == gamma
+    for gamma, id_pairs in gamma_value_id_pairs.items():
+        for id_pair in id_pairs:
+            assert_id_pair_has_gamma_value(pred, "gamma_full_name", gamma, id_pair)
