@@ -1,5 +1,5 @@
-import numpy as np
-import pandas as pd
+import random
+
 import pytest
 
 from splink.internals.clustering import (
@@ -26,7 +26,9 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
     G = generate_random_graph(graph_size)
     combined_nodes, combined_edges = nodes_and_edges_from_graph(G)
 
-    combined_edges["match_probability"] = np.random.uniform(0, 1, len(combined_edges))
+    combined_edges = [
+        {**edge, "match_probability": random.uniform(0, 1)} for edge in combined_edges
+    ]
 
     thresholds = [0.5, 0.7]
 
@@ -38,9 +40,7 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
         match_probability_thresholds=thresholds,
     )
 
-    all_clusters_pd = all_clusters.as_pandas_dataframe()
-
-    cluster_cols = [c for c in all_clusters_pd.columns if "cluster" in c]
+    cluster_cols = [c.name for c in all_clusters.columns if "cluster" in c.name]
 
     for threshold, cluster_col in zip(thresholds, cluster_cols):
         single_threshold_clusters = cluster_pairwise_predictions_at_threshold(
@@ -51,24 +51,30 @@ def test_cluster_at_multiple_thresholds(test_helpers, dialect, graph_size):
             threshold_match_probability=threshold,
         )
 
-        single_threshold_clusters_pd = single_threshold_clusters.as_pandas_dataframe()
+        multi_threshold_result = all_clusters.query_sql(
+            f"""
+            SELECT
+                unique_id,
+                {cluster_col} AS cluster_id
+            FROM
+                {{this}}
+            ORDER BY
+                unique_id
+            """
+        )
+        single_threshold_result = single_threshold_clusters.query_sql(
+            """
+            SELECT
+                unique_id,
+                cluster_id
+            FROM
+                {this}
+            ORDER BY
+                unique_id
+            """
+        )
 
-        multi_threshold_result = all_clusters_pd[["unique_id", cluster_col]]
-
-        single_threshold_result = single_threshold_clusters_pd[
-            ["unique_id", "cluster_id"]
-        ]
-
-        multi_threshold_result = multi_threshold_result.sort_values(
-            "unique_id"
-        ).reset_index(drop=True)
-        single_threshold_result = single_threshold_result.sort_values(
-            "unique_id"
-        ).reset_index(drop=True)
-
-        multi_threshold_result.columns = ["unique_id", "cluster_id"]
-
-        pd.testing.assert_frame_equal(multi_threshold_result, single_threshold_result)
+        assert multi_threshold_result.as_dict() == single_threshold_result.as_dict()
 
 
 # This is slow in Spark, and so long as this passes in duckdb, there's no reason it
@@ -105,8 +111,7 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
         output_cluster_summary_stats=False,
     )
 
-    cc_prob_pd = cc_prob.as_pandas_dataframe()
-    cc_prob_pd = cc_prob_pd.sort_values("my_id")
+    cc_prob_sorted = cc_prob.query_sql("SELECT * FROM {this} ORDER BY my_id")
 
     cc_weight = cluster_pairwise_predictions_at_multiple_thresholds(
         nodes,
@@ -116,19 +121,22 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
         match_weight_thresholds=thresholds_weights,
         output_cluster_summary_stats=False,
     )
+    cc_weight_cols = list(map(lambda col: col.unquote().name, cc_weight.columns))
+    cc_weight_sorted = cc_weight.query_sql("SELECT * FROM {this} ORDER BY my_id")
 
-    cc_weight_pd = cc_weight.as_pandas_dataframe()
-    cc_weight_pd = cc_weight_pd.sort_values("my_id")
+    assert "cluster_mw_0" in cc_weight_cols
+    assert "cluster_mw_1_22" in cc_weight_cols
+    assert "cluster_mw_4_25" in cc_weight_cols
 
-    assert "cluster_mw_0" in cc_weight_pd.columns
-    assert "cluster_mw_1_22" in cc_weight_pd.columns
-    assert "cluster_mw_4_25" in cc_weight_pd.columns
-
-    cc_prob_pd = cc_prob_pd.reset_index(drop=True)
-    cc_weight_pd = cc_weight_pd.reset_index(drop=True)
-    cc_weight_pd.columns = cc_prob_pd.columns
-
-    pd.testing.assert_frame_equal(cc_prob_pd, cc_weight_pd)
+    cc_w_dict = cc_weight_sorted.as_dict()
+    cc_p_dict = cc_prob_sorted.as_dict()
+    assert cc_w_dict["my_id"] == cc_p_dict["my_id"]
+    for weight, prob in zip(thresholds_weights, threshold_probabilities):
+        weight_str = "0" if not weight else str(weight).replace(".", "_")
+        prob_str = str(prob).replace(".", "_")
+        assert (
+            cc_w_dict[f"cluster_mw_{weight_str}"] == cc_p_dict[f"cluster_p_{prob_str}"]
+        )
 
     cc_prob_summary = cluster_pairwise_predictions_at_multiple_thresholds(
         nodes,
@@ -139,7 +147,7 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
         output_cluster_summary_stats=True,
     )
 
-    cc_prob_summary_pd = cc_prob_summary.as_pandas_dataframe()
+    cc_prob_summary_pd = cc_prob_summary.as_dict()
 
     cc_weight_summary = cluster_pairwise_predictions_at_multiple_thresholds(
         nodes,
@@ -150,15 +158,15 @@ def test_cluster_at_multiple_thresholds_mw_prob_equivalence(test_helpers, dialec
         output_cluster_summary_stats=True,
     )
 
-    cc_weight_summary_pd = cc_weight_summary.as_pandas_dataframe()
+    cc_weight_summary_pd = cc_weight_summary.as_dict()
 
     # Check that num_clusters max_cluster_size avg_cluster_size contain same values
-    pd.testing.assert_series_equal(
-        cc_prob_summary_pd["num_clusters"], cc_weight_summary_pd["num_clusters"]
+    assert cc_prob_summary_pd["num_clusters"] == cc_weight_summary_pd["num_clusters"]
+    assert (
+        cc_prob_summary_pd["max_cluster_size"]
+        == cc_weight_summary_pd["max_cluster_size"]
     )
-    pd.testing.assert_series_equal(
-        cc_prob_summary_pd["max_cluster_size"], cc_weight_summary_pd["max_cluster_size"]
-    )
-    pd.testing.assert_series_equal(
-        cc_prob_summary_pd["avg_cluster_size"], cc_weight_summary_pd["avg_cluster_size"]
+    assert (
+        cc_prob_summary_pd["avg_cluster_size"]
+        == cc_weight_summary_pd["avg_cluster_size"]
     )
