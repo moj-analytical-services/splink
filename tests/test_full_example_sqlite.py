@@ -64,6 +64,8 @@ def test_full_example_sqlite(tmp_path, fake_1000):
             first_10 l
         JOIN
             first_10 r
+        WHERE
+            unique_id_l < unique_id_r
         """
     )
 
