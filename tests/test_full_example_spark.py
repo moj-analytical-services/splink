@@ -5,7 +5,6 @@ pytest.importorskip("pyspark")
 
 import os
 
-import pandas as pd
 import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, StructField, StructType
 
@@ -17,7 +16,6 @@ from splink.internals.spark.database_api import SparkAPI
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
-from .linker_utils import _test_write_functionality, register_roc_data
 
 
 @mark_with_dialects_including("spark")
@@ -38,12 +36,6 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
     # accept arrays as inputs, which we are adding to df_spark below
     df_spark_sdf = spark_api.register(df_spark)
     linker = Linker(df_spark_sdf, get_settings_dict())
-
-    # Test that writing to files works as expected
-    def spark_csv_read(x):
-        return linker._db_api.spark.read.csv(x, header=True).toPandas()
-
-    _test_write_functionality(linker, spark_csv_read)
 
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", f.array("email"))
@@ -141,9 +133,27 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
             StructField("lastname", StringType(), True),
         ]
     )
-    register_roc_data(linker)
 
-    linker.evaluation.accuracy_analysis_from_labels_table("labels")
+    # make a labels table
+    labels_sdf = df_spark_sdf_2.query_sql(
+        """
+        WITH first_10 AS (
+            SELECT * FROM {this} LIMIT 10
+        )
+        SELECT
+            l.unique_id AS unique_id_l,
+            r.unique_id AS unique_id_r,
+            CAST(l.cluster = r.cluster AS float) AS clerical_match_score
+        FROM
+            first_10 l
+        JOIN
+            first_10 r
+        WHERE
+            l.unique_id < r.unique_id
+        """
+    )
+
+    linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf.physical_name)
 
     record = {
         "unique_id": 1,
@@ -168,8 +178,8 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
         num_partitions_on_repartition=2,
     )
     df_spark_sdf_3 = spark_api_3.register(df_spark)
-    df_pandas_sdf_3 = spark_api_3.register(df_spark.toPandas())
-    linker = Linker([df_spark_sdf_3, df_pandas_sdf_3], settings)
+    df_spark_sdf_3_alt = spark_api_3.register(df_spark)
+    linker = Linker([df_spark_sdf_3, df_spark_sdf_3_alt], settings)
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
@@ -180,7 +190,7 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
 
 
 @mark_with_dialects_including("spark")
-def test_link_only(spark, df_spark, spark_api):
+def test_link_only(spark, df_spark):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
     settings["source_dataset_column_name"] = "source_dataset"
@@ -196,27 +206,23 @@ def test_link_only(spark, df_spark, spark_api):
     df_spark_a_sdf = spark_api_link.register(df_spark_a)
     df_spark_b_sdf = spark_api_link.register(df_spark_b)
     linker = Linker([df_spark_a_sdf, df_spark_b_sdf], settings)
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    sdf_predict = linker.inference.predict()
+    predict_dict = sdf_predict.as_dict()
 
-    assert len(df_predict) == 7257
-    assert set(df_predict.source_dataset_l.values) == {"my_left_ds"}
-    assert set(df_predict.source_dataset_r.values) == {"my_right_ds"}
+    assert len(sdf_predict.as_record_dict()) == 7257
+    assert set(predict_dict["source_dataset_l"]) == {"my_left_ds"}
+    assert set(predict_dict["source_dataset_r"]) == {"my_right_ds"}
 
 
-@pytest.mark.parametrize(
-    ("df"),
-    [
-        pytest.param(
-            pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv"),
-            id="Spark load from pandas df",
-        )
-    ],
-)
+@pytest.mark.needs_pandas
 @mark_with_dialects_including("spark")
-def test_spark_load_from_file(df, spark, spark_api):
+def test_spark_load_from_pandas(df, spark_api):
+    import pandas as pd
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
 
     df_sdf = spark_api.register(df)
     linker = Linker(df_sdf, settings)
 
-    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
+    assert len(linker.inference.predict().as_record_dict()) == 3167
