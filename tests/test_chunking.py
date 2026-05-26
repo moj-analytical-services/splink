@@ -9,7 +9,6 @@ Tests that:
 
 from unittest.mock import patch
 
-import pandas as pd
 import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
@@ -20,30 +19,29 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
-def _get_comparison_count(linker, result):
+def _get_comparison_count(result):
     """Get the number of comparisons in a prediction result."""
-    return result.as_pandas_dataframe().shape[0]
+    return len(result.as_record_dict())
 
 
-def _sort_predictions(df):
+def _sort_predictions(sdf):
     """Sort predictions DataFrame for comparison."""
-    id_cols = ["unique_id_l", "unique_id_r"]
-    return df.sort_values(id_cols).reset_index(drop=True)
+    return sdf.query_sql(
+        "SELECT * FROM {this} ORDER BY unique_id_l, unique_id_r"
+    ).as_dict()
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
+def test_chunked_predict_matches_non_chunked(test_helpers, dialect, fake_1000):
     """Test that chunked predictions produce identical results to non-chunked."""
     helper = test_helpers[dialect]
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
     settings = get_settings_dict()
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration(fake_1000, settings)
 
     # Get non-chunked predictions
     predictions_no_chunk = linker.inference.predict(threshold_match_weight=-10)
-    df_no_chunk = _sort_predictions(predictions_no_chunk.as_pandas_dataframe())
+    df_no_chunk = _sort_predictions(predictions_no_chunk)
 
     # Invalidate cache to ensure fresh computation
     linker.table_management.invalidate_cache()
@@ -54,34 +52,32 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect):
         num_chunks_left=2,
         num_chunks_right=2,
     )
-    df_chunked = _sort_predictions(predictions_chunked.as_pandas_dataframe())
+    df_chunked = _sort_predictions(predictions_chunked)
 
     # Results should be identical
-    assert len(df_no_chunk) == len(
-        df_chunked
-    ), f"Row count mismatch: {len(df_no_chunk)} vs {len(df_chunked)}"
+    no_chunked_count = len(df_no_chunk["unique_id_l"])
+    chunked_count = len(df_no_chunk["unique_id_l"])
+    assert (
+        no_chunked_count == chunked_count
+    ), f"Row count mismatch: {no_chunked_count} vs {chunked_count}"
 
-    # Compare the actual data (ignoring floating point precision issues)
-    pd.testing.assert_frame_equal(
-        df_no_chunk[["unique_id_l", "unique_id_r"]],
-        df_chunked[["unique_id_l", "unique_id_r"]],
-    )
+    # Compare the actual data
+    assert df_no_chunk["unique_id_l"] == df_chunked["unique_id_l"]
+    assert df_no_chunk["unique_id_r"] == df_chunked["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
+def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect, fake_1000):
     """Test various chunk size combinations produce consistent results."""
     helper = test_helpers[dialect]
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
     settings = get_settings_dict()
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration(fake_1000, settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
-    baseline_count = _get_comparison_count(linker, predictions_baseline)
-    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+    baseline_count = _get_comparison_count(predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline)
 
     # Test different chunk combinations
     chunk_configs = [
@@ -100,67 +96,59 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect):
         )
 
         assert (
-            _get_comparison_count(linker, predictions) == baseline_count
+            _get_comparison_count(predictions) == baseline_count
         ), f"Chunk config ({num_left}, {num_right}) produced different count"
 
-        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
-        pd.testing.assert_frame_equal(
-            df_baseline[["unique_id_l", "unique_id_r"]],
-            df_chunked[["unique_id_l", "unique_id_r"]],
-        )
+        df_chunked = _sort_predictions(predictions)
+        assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
+        assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_precached_blocked_pairs_same_result(test_helpers, dialect):
+def test_precached_blocked_pairs_same_result(test_helpers, dialect, fake_1000):
     """Test that pre-caching blocked pairs produces same result as no pre-caching."""
     helper = test_helpers[dialect]
-
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
 
     # First: run without pre-caching
-    linker1 = helper.linker_with_registration(df, settings)
+    linker1 = helper.linker_with_registration(fake_1000, settings)
     predictions_no_cache = linker1.inference.predict(threshold_match_weight=-10)
-    df_no_cache = _sort_predictions(predictions_no_cache.as_pandas_dataframe())
+    df_no_cache = _sort_predictions(predictions_no_cache)
 
     # Second: run with pre-caching
-    linker2 = helper.linker_with_registration(df, settings)
+    linker2 = helper.linker_with_registration(fake_1000, settings)
     linker2.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
     )
     predictions_with_cache = linker2.inference.predict(threshold_match_weight=-10)
-    df_with_cache = _sort_predictions(predictions_with_cache.as_pandas_dataframe())
+    df_with_cache = _sort_predictions(predictions_with_cache)
 
     # Results should be identical
-    assert len(df_no_cache) == len(df_with_cache)
-    pd.testing.assert_frame_equal(
-        df_no_cache[["unique_id_l", "unique_id_r"]],
-        df_with_cache[["unique_id_l", "unique_id_r"]],
-    )
+    assert len(df_no_cache["unique_id_l"]) == len(df_with_cache["unique_id_l"])
+    assert df_no_cache["unique_id_l"] == df_with_cache["unique_id_l"]
+    assert df_no_cache["unique_id_r"] == df_with_cache["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
+def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect, fake_1000):
     """Test that pre-caching chunked blocked pairs produces same result."""
     helper = test_helpers[dialect]
-
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = get_settings_dict()
 
     # First: run chunked without pre-caching
-    linker1 = helper.linker_with_registration(df, settings)
+    linker1 = helper.linker_with_registration(fake_1000, settings)
     predictions_no_cache = linker1.inference.predict(
         threshold_match_weight=-10,
         num_chunks_left=2,
         num_chunks_right=2,
     )
-    df_no_cache = _sort_predictions(predictions_no_cache.as_pandas_dataframe())
+    df_no_cache = _sort_predictions(predictions_no_cache)
 
     # Second: run chunked with pre-caching of all chunks
-    linker2 = helper.linker_with_registration(df, settings)
+    linker2 = helper.linker_with_registration(fake_1000, settings)
 
     # Pre-compute all 4 chunk combinations (2x2)
     for left_chunk_num in [1, 2]:
@@ -175,27 +163,24 @@ def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect):
         num_chunks_left=2,
         num_chunks_right=2,
     )
-    df_with_cache = _sort_predictions(predictions_with_cache.as_pandas_dataframe())
+    df_with_cache = _sort_predictions(predictions_with_cache)
 
     # Results should be identical
-    assert len(df_no_cache) == len(df_with_cache)
-    pd.testing.assert_frame_equal(
-        df_no_cache[["unique_id_l", "unique_id_r"]],
-        df_with_cache[["unique_id_l", "unique_id_r"]],
-    )
+    assert len(df_no_cache["unique_id_l"]) == len(df_with_cache["unique_id_l"])
+    assert df_no_cache["unique_id_l"] == df_with_cache["unique_id_l"]
+    assert df_no_cache["unique_id_r"] == df_with_cache["unique_id_r"]
 
 
-def test_cache_is_hit_for_blocked_pairs():
+def test_cache_is_hit_for_blocked_pairs(fake_1000):
     """Test that cache is actually hit when blocked pairs are pre-computed.
 
     This test verifies the cache is used by checking that
     compute_blocked_pairs_from_concat_with_tf is NOT called when
     blocked pairs are already in cache.
     """
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -219,14 +204,13 @@ def test_cache_is_hit_for_blocked_pairs():
         mock_compute.assert_not_called()
 
 
-def test_registered_chunked_blocked_pairs_match_from_scratch():
+def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
     """Test chunked predict matches when blocked pairs are loaded from precompute."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
 
     # Baseline: run chunked predict from scratch.
     db_api_baseline = DuckDBAPI()
-    df_sdf_baseline = db_api_baseline.register(df)
+    df_sdf_baseline = db_api_baseline.register(fake_1000)
     linker_baseline = Linker(df_sdf_baseline, settings)
     baseline_predictions = linker_baseline.inference.predict_chunk(
         threshold_match_weight=-10, left_chunk=(1, 2), right_chunk=(1, 2)
@@ -238,16 +222,16 @@ def test_registered_chunked_blocked_pairs_match_from_scratch():
 
     # Build blocked pairs externally.
     db_api_source = DuckDBAPI()
-    df_sdf_source = db_api_source.register(df)
+    df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
 
     blocked_pairs = linker_source.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 2), right_chunk=(1, 2)
-    ).as_pandas_dataframe()
+    ).as_pyarrow_table()
 
     # Load blocked pairs into a fresh linker and run the same chunked predict.
     db_api_target = DuckDBAPI()
-    df_sdf_target = db_api_target.register(df)
+    df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
 
     linker_target.table_management.register_blocked_pairs_for_predict(
@@ -258,9 +242,9 @@ def test_registered_chunked_blocked_pairs_match_from_scratch():
         threshold_match_weight=-10,
         left_chunk=(1, 2),
         right_chunk=(1, 2),
-    ).as_pandas_dataframe()
-    loaded_count = len(loaded_predictions)
-    loaded_match_weight_sum = loaded_predictions["match_weight"].sum()
+    ).as_dict()
+    loaded_count = len(loaded_predictions["match_weight"])
+    loaded_match_weight_sum = sum(loaded_predictions["match_weight"])
 
     assert loaded_count == baseline_count
     assert loaded_match_weight_sum == pytest.approx(
@@ -268,12 +252,11 @@ def test_registered_chunked_blocked_pairs_match_from_scratch():
     )
 
 
-def test_cache_is_hit_for_chunked_blocked_pairs():
+def test_cache_is_hit_for_chunked_blocked_pairs(fake_1000):
     """Test that cache is hit for pre-computed chunked blocked pairs."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -301,12 +284,11 @@ def test_cache_is_hit_for_chunked_blocked_pairs():
         mock_compute.assert_not_called()
 
 
-def test_cache_key_normalization_1_1():
+def test_cache_key_normalization_1_1(fake_1000):
     """Test that (1,1) chunk normalizes to base cache key."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -322,12 +304,11 @@ def test_cache_key_normalization_1_1():
     )
 
 
-def test_blocked_pairs_not_deleted_when_from_cache():
+def test_blocked_pairs_not_deleted_when_from_cache(fake_1000):
     """Test that cached blocked pairs are not deleted after predict."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -344,19 +325,18 @@ def test_blocked_pairs_not_deleted_when_from_cache():
     assert "__splink__blocked_id_pairs" in linker._intermediate_table_cache
 
 
-def test_register_blocked_pairs_requires_chunk_identifiers():
+def test_register_blocked_pairs_requires_chunk_identifiers(fake_1000):
     """Test blocked-pairs registration requires explicit chunk identifiers."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
     blocked_pairs = linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
-    ).as_pandas_dataframe()
+    ).as_pyarrow_table()
 
     with pytest.raises(
         SplinkException,
@@ -365,21 +345,20 @@ def test_register_blocked_pairs_requires_chunk_identifiers():
         linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
 
 
-def test_predict_errors_when_blocked_pairs_manually_registered():
+def test_predict_errors_when_blocked_pairs_manually_registered(fake_1000):
     """Test predict() is not allowed after manual blocked-pairs registration."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
 
     db_api_source = DuckDBAPI()
-    df_sdf_source = db_api_source.register(df)
+    df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
     blocked_pairs = linker_source.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
-    ).as_pandas_dataframe()
+    ).as_pyarrow_table()
 
     db_api_target = DuckDBAPI()
-    df_sdf_target = db_api_target.register(df)
+    df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
     linker_target.table_management.register_blocked_pairs_for_predict(
         blocked_pairs,
@@ -391,12 +370,11 @@ def test_predict_errors_when_blocked_pairs_manually_registered():
         linker_target.inference.predict(threshold_match_weight=-10)
 
 
-def test_blocked_pairs_deleted_when_not_from_cache():
+def test_blocked_pairs_deleted_when_not_from_cache(fake_1000):
     """Test that non-cached blocked pairs are deleted after predict_chunk."""
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 
@@ -415,7 +393,7 @@ def test_blocked_pairs_deleted_when_not_from_cache():
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_only(test_helpers, dialect):
+def test_chunked_predict_link_only(test_helpers, dialect, fake_1000):
     """Test chunked predictions work correctly with link_only (two datasets)."""
     helper = test_helpers[dialect]
 
@@ -423,16 +401,15 @@ def test_chunked_predict_link_only(test_helpers, dialect):
     settings["link_type"] = "link_only"
 
     # Split into two datasets using modulo arithmetic
-    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
-    df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
+    df_1 = fake_1000.take(list(range(0, 1000, 2)))
+    df_2 = fake_1000.take(list(range(1, 1000, 2)))
 
-    linker = helper.linker_with_registration([df1_pd, df2_pd], settings)
+    linker = helper.linker_with_registration([df_1, df_2], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
-    baseline_count = _get_comparison_count(linker, predictions_baseline)
-    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+    baseline_count = _get_comparison_count(predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline)
 
     # Test different chunk combinations
     chunk_configs = [
@@ -451,18 +428,16 @@ def test_chunked_predict_link_only(test_helpers, dialect):
         )
 
         assert (
-            _get_comparison_count(linker, predictions) == baseline_count
+            _get_comparison_count(predictions) == baseline_count
         ), f"Chunk config ({num_left}, {num_right}) produced different count"
 
-        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
-        pd.testing.assert_frame_equal(
-            df_baseline[["unique_id_l", "unique_id_r"]],
-            df_chunked[["unique_id_l", "unique_id_r"]],
-        )
+        df_chunked = _sort_predictions(predictions)
+        assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
+        assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
+def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, fake_1000):
     """Test chunked predictions work correctly with link_only (three datasets).
 
     Two datasets is a special case, so we test with three datasets as well.
@@ -473,17 +448,16 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
     settings["link_type"] = "link_only"
 
     # Split into three datasets using modulo arithmetic
-    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 3 == 0].copy().reset_index(drop=True)
-    df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
-    df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
+    df_1 = fake_1000.take(list(range(0, 1000, 3)))
+    df_2 = fake_1000.take(list(range(1, 1000, 3)))
+    df_3 = fake_1000.take(list(range(2, 1000, 3)))
 
-    linker = helper.linker_with_registration([df1_pd, df2_pd, df3_pd], settings)
+    linker = helper.linker_with_registration([df_1, df_2, df_3], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
-    baseline_count = _get_comparison_count(linker, predictions_baseline)
-    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+    baseline_count = _get_comparison_count(predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline)
 
     # Test different chunk combinations
     chunk_configs = [
@@ -502,18 +476,16 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect):
         )
 
         assert (
-            _get_comparison_count(linker, predictions) == baseline_count
+            _get_comparison_count(predictions) == baseline_count
         ), f"Chunk config ({num_left}, {num_right}) produced different count"
 
-        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
-        pd.testing.assert_frame_equal(
-            df_baseline[["unique_id_l", "unique_id_r"]],
-            df_chunked[["unique_id_l", "unique_id_r"]],
-        )
+        df_chunked = _sort_predictions(predictions)
+        assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
+        assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
+def test_chunked_predict_link_and_dedupe(test_helpers, dialect, fake_1000):
     """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
     helper = test_helpers[dialect]
 
@@ -521,16 +493,15 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
     settings["link_type"] = "link_and_dedupe"
 
     # Split into two datasets using modulo arithmetic
-    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 2 == 0].copy().reset_index(drop=True)
-    df2_pd = df_pd[df_pd.index % 2 == 1].copy().reset_index(drop=True)
+    df_1 = fake_1000.take(list(range(0, 1000, 2)))
+    df_2 = fake_1000.take(list(range(1, 1000, 2)))
 
-    linker = helper.linker_with_registration([df1_pd, df2_pd], settings)
+    linker = helper.linker_with_registration([df_1, df_2], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
-    baseline_count = _get_comparison_count(linker, predictions_baseline)
-    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+    baseline_count = _get_comparison_count(predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline)
 
     # Test different chunk combinations
     chunk_configs = [
@@ -549,18 +520,18 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect):
         )
 
         assert (
-            _get_comparison_count(linker, predictions) == baseline_count
+            _get_comparison_count(predictions) == baseline_count
         ), f"Chunk config ({num_left}, {num_right}) produced different count"
 
-        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
-        pd.testing.assert_frame_equal(
-            df_baseline[["unique_id_l", "unique_id_r"]],
-            df_chunked[["unique_id_l", "unique_id_r"]],
-        )
+        df_chunked = _sort_predictions(predictions)
+        assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
+        assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
+def test_chunked_predict_link_and_dedupe_three_datasets(
+    test_helpers, dialect, fake_1000
+):
     """Test chunked predictions work correctly with link_and_dedupe (three datasets).
 
     Two datasets is a special case, so we test with three datasets as well.
@@ -571,17 +542,16 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
     settings["link_type"] = "link_and_dedupe"
 
     # Split into three datasets using modulo arithmetic
-    df_pd = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df1_pd = df_pd[df_pd.index % 3 == 0].copy().reset_index(drop=True)
-    df2_pd = df_pd[df_pd.index % 3 == 1].copy().reset_index(drop=True)
-    df3_pd = df_pd[df_pd.index % 3 == 2].copy().reset_index(drop=True)
+    df_1 = fake_1000.take(list(range(0, 1000, 3)))
+    df_2 = fake_1000.take(list(range(1, 1000, 3)))
+    df_3 = fake_1000.take(list(range(2, 1000, 3)))
 
-    linker = helper.linker_with_registration([df1_pd, df2_pd, df3_pd], settings)
+    linker = helper.linker_with_registration([df_1, df_2, df_3], settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
-    baseline_count = _get_comparison_count(linker, predictions_baseline)
-    df_baseline = _sort_predictions(predictions_baseline.as_pandas_dataframe())
+    baseline_count = _get_comparison_count(predictions_baseline)
+    df_baseline = _sort_predictions(predictions_baseline)
 
     # Test different chunk combinations
     chunk_configs = [
@@ -600,11 +570,9 @@ def test_chunked_predict_link_and_dedupe_three_datasets(test_helpers, dialect):
         )
 
         assert (
-            _get_comparison_count(linker, predictions) == baseline_count
+            _get_comparison_count(predictions) == baseline_count
         ), f"Chunk config ({num_left}, {num_right}) produced different count"
 
-        df_chunked = _sort_predictions(predictions.as_pandas_dataframe())
-        pd.testing.assert_frame_equal(
-            df_baseline[["unique_id_l", "unique_id_r"]],
-            df_chunked[["unique_id_l", "unique_id_r"]],
-        )
+        df_chunked = _sort_predictions(predictions)
+        assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
+        assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
