@@ -5,6 +5,7 @@ import splink.internals.comparison_level_library as cll
 from splink.internals.column_expression import ColumnExpression
 
 from .decorator import mark_with_dialects_excluding
+from .utils import assert_id_pair_has_gamma_value
 
 df_pandas = pa.Table.from_pylist(
     [
@@ -130,16 +131,12 @@ def test_regex(dialect, test_helpers, level_set, record_pairs_gamma):
 
     linker = helper.linker_with_registration(df_pandas, settings)
 
-    linker_output = linker.inference.predict().as_pandas_dataframe()
+    linker_output = linker.inference.predict()
 
     for gamma, id_pairs in record_pairs_gamma.items():
-        for left, right in id_pairs:
-            assert (
-                linker_output.loc[
-                    (linker_output.unique_id_l == left)
-                    & (linker_output.unique_id_r == right)
-                ][f"gamma_{comparison_name}"].values[0]
-                == gamma
+        for id_pair in id_pairs:
+            assert_id_pair_has_gamma_value(
+                linker_output, f"gamma_{comparison_name}", gamma, id_pair
             )
 
 
