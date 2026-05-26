@@ -1,3 +1,5 @@
+from statistics import mean
+
 import pytest
 
 from .basic_settings import get_settings_dict
@@ -31,8 +33,8 @@ def test_train_vs_predict(test_helpers, dialect):
     expected = training_session.core_model_settings.probability_two_random_records_match
 
     # We expect the probability_two_random_records_match to be the same as for a predict
-    df = linker.inference.predict().as_pandas_dataframe()
-    actual = df["match_probability"].mean()
+    df = linker.inference.predict().as_dict()
+    actual = mean(df["match_probability"])
 
     # Will not be exactly equal because expected represents the
     # probability_two_random_records_match
