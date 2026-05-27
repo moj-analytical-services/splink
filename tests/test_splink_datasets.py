@@ -1,8 +1,11 @@
+from pytest import mark
+
 import splink.internals.comparison_library as cl
 from splink import SettingsCreator, block_on
 from splink.internals.datasets import splink_datasets
 
 
+@mark.skip(reason="splink datasets temporarily unavailable")
 def test_datasets_basic_link(test_helpers):
     # use duckdb as a backend just to check data is roughly as expected
     # don't need to check other backends as that's not what we're testing
