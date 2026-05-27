@@ -118,14 +118,25 @@ def compute_igraph_metrics(
     # we will need to manually register a table, so we use the hash from this table
     igraph_edges_hash = edges_for_igraph.physical_name[-9:]
     # NB: for large data we may have to revise this and process in chunks
-    df_edges_for_igraph = edges_for_igraph.as_pandas_dataframe()
+    edges_dict_for_igraph = edges_for_igraph.as_dict()
     # feed our edges to igraph, get the edges which are bridges as a pandas frame,
     # and register this table with our backend
-    igraph_df = ig.Graph.DataFrame(df_edges_for_igraph, directed=False)
-    bridges_indices = igraph_df.bridges()
-    df_bridges_pd = df_edges_for_igraph.iloc[bridges_indices, :]
+    nodes_left = edges_dict_for_igraph["node_l"]
+    nodes_right = edges_dict_for_igraph["node_r"]
+    igraph_df = ig.Graph.TupleList(
+        zip(nodes_left, nodes_right),
+        directed=False,
+    )
+    bridges_indices: list[int] = igraph_df.bridges()
+    if bridges_indices:
+        bridges_data = {
+            "node_l": [nodes_left[ind] for ind in bridges_indices],
+            "node_r": [nodes_right[ind] for ind in bridges_indices],
+        }
+    else:
+        bridges_data = {"node_l": [], "node_r": []}
     df_bridges = linker.table_management.register_table(
-        df_bridges_pd, f"__splink__bridges_{igraph_edges_hash}"
+        bridges_data, f"__splink__bridges_{igraph_edges_hash}"
     )
     # map our bridge edges back to the original node labelling
     pipeline = CTEPipeline()
