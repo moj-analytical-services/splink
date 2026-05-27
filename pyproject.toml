@@ -88,8 +88,6 @@ testing-core = [
     "pytest-cov>=5.0.0",
     { "include-group" = "postgres" },
     { "include-group" = "sqlite" },
-    # TODO: temporary measure until we can depanda tests
-    { "include-group" = "pandas" },
 ]
 testing = [
     { "include-group" = "testing-core" },
