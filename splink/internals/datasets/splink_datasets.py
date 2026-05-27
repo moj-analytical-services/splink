@@ -59,8 +59,7 @@ def dataset_property(metadata_method):
             )
         df = read_function(data_source)
         self._in_memory_data[dataset_name] = df
-        # TODO: temporary compat to keep as pandas until we can update notebooks
-        return df.to_pandas()
+        return df
 
     return lazyload_data
 
