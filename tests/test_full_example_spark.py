@@ -216,7 +216,7 @@ def test_link_only(spark, df_spark):
 
 @pytest.mark.needs_pandas
 @mark_with_dialects_including("spark")
-def test_spark_load_from_pandas(df, spark_api):
+def test_spark_load_from_pandas(spark_api):
     import pandas as pd
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
