@@ -1026,3 +1026,131 @@ def test_blocking_rule_parentheses_equivalence():
     for result in [result_brl, result_with_parens, result_without_parens]:
         assert result["number_of_comparisons_generated_pre_filter_conditions"] == 6
         assert result["number_of_comparisons_to_be_scored_post_filter_conditions"] == 1
+
+
+def _wide_block_df(n_per_group=120):
+    # A dataset with a small number of distinct values in `grp` so that blocking
+    # on `grp` generates a large number of comparisons.  This makes the sampling
+    # based estimate stable enough to test.
+    rows = []
+    uid = 0
+    for grp in ["A", "B", "C"]:
+        for _ in range(n_per_group):
+            uid += 1
+            rows.append({"unique_id": uid, "grp": grp})
+    return pd.DataFrame(rows)
+
+
+def test_count_comparisons_estimate_mode():
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(_wide_block_df())
+
+    exact = count_comparisons_from_blocking_rule(
+        df_sdf,
+        blocking_rule=block_on("grp"),
+        link_type="dedupe_only",
+    )
+    estimate = count_comparisons_from_blocking_rule(
+        df_sdf,
+        blocking_rule=block_on("grp"),
+        link_type="dedupe_only",
+        count_method="estimate",
+        probe_proportion=0.3,
+    )
+
+    # Pre-filter count is always exact
+    assert (
+        estimate["number_of_comparisons_generated_pre_filter_conditions"]
+        == exact["number_of_comparisons_generated_pre_filter_conditions"]
+    )
+
+    # Metadata signalling the approximation
+    assert exact["count_method"] == "exact"
+    assert exact["probe_proportion"] is None
+    assert exact["actual_probe_fraction"] is None
+    assert estimate["count_method"] == "estimate"
+    assert estimate["probe_proportion"] == 0.3
+    assert 0 < estimate["actual_probe_fraction"] <= 1
+
+    # The estimated post-filter count is numeric and in the right ballpark
+    exact_post = exact["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    est_post = estimate["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    assert isinstance(est_post, (int, float))
+    assert 0.5 * exact_post <= est_post <= 2.0 * exact_post
+
+
+def test_cumulative_data_estimate_mode():
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(_wide_block_df())
+
+    blocking_rules = [block_on("grp")]
+
+    exact = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+        df_sdf,
+        blocking_rules=blocking_rules,
+        link_type="dedupe_only",
+    )
+    estimate = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+        df_sdf,
+        blocking_rules=blocking_rules,
+        link_type="dedupe_only",
+        count_method="estimate",
+        probe_proportion=0.3,
+    )
+
+    assert exact[0]["count_method"] == "exact"
+    assert estimate[0]["count_method"] == "estimate"
+    # cartesian is unaffected by sampling
+    assert estimate[0]["cartesian"] == exact[0]["cartesian"]
+
+    exact_rows = exact[0]["row_count"]
+    est_rows = estimate[0]["row_count"]
+    assert 0.5 * exact_rows <= est_rows <= 2.0 * exact_rows
+    # cumulative_rows for a single rule equals row_count
+    assert estimate[0]["cumulative_rows"] == est_rows
+
+
+def test_linker_blocking_analysis_uses_settings_defaults():
+    from splink.internals.linker import Linker
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(df)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            block_on("first_name"),
+            block_on("surname"),
+        ],
+        "comparisons": [],
+    }
+    linker = Linker(df_sdf, settings)
+
+    # count_comparisons_from_blocking_rule via the linker
+    res = linker.blocking_analysis.count_comparisons_from_blocking_rule(
+        block_on("first_name")
+    )
+    assert res["count_method"] == "exact"
+    assert res["number_of_comparisons_generated_pre_filter_conditions"] > 0
+
+    # Cumulative data, defaulting blocking_rules to those in the settings
+    records = linker.blocking_analysis.cumulative_comparisons_to_be_scored_from_blocking_rules_data()
+    assert len(records) == 2
+
+    # Chart, defaulting blocking_rules to those in the settings
+    linker.blocking_analysis.cumulative_comparisons_to_be_scored_from_blocking_rules_chart()
+
+    # Estimate mode is reachable via the linker too
+    est = linker.blocking_analysis.count_comparisons_from_blocking_rule(
+        block_on("first_name"),
+        count_method="estimate",
+        probe_proportion=0.5,
+    )
+    assert est["count_method"] == "estimate"
+
+    # n_largest_blocks via the linker
+    n_largest = linker.blocking_analysis.n_largest_blocks(
+        block_on("first_name"), n_largest=3
+    ).as_pandas_dataframe()
+    assert len(n_largest) <= 3
