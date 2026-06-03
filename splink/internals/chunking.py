@@ -9,10 +9,6 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
-def _em_sampled_input_tablename(input_tablename: str) -> str:
-    return f"{input_tablename}_em_sample"
-
-
 def _chunk_assignment_sql(
     unique_id_cols: list[InputColumn],
     chunk_num: int,
@@ -45,14 +41,14 @@ def _chunk_assignment_sql(
     return f" AND ({chunk_bucket}) + 1 = {chunk_num}"
 
 
-def _em_sample_table_sql(
+def _em_sample_filter_sql(
     unique_id_cols: list[InputColumn],
     sample_threshold: int,
     sample_modulus: int,
-    input_tablename: str,
+    table_prefix: str,
     dialect: "SplinkDialect",
 ) -> str:
-    """Generate SQL for a sampled input table used upstream of blocking.
+    """Generate a SQL WHERE clause condition for EM record sampling.
 
     The sample is deterministic and uses a hash of the composite unique ID.
 
@@ -61,27 +57,21 @@ def _em_sample_table_sql(
         sample_threshold: Integer in [0, sample_modulus]. A row is retained
             iff hash_bucket(composite_uid, sample_modulus) < sample_threshold.
         sample_modulus: Integer giving the resolution of the sampling fraction.
-        input_tablename: Input table to sample upstream of blocking.
+        table_prefix: Table alias prefix (e.g. 'l' or 'r').
         dialect: SQL dialect for the hash function.
 
     Returns:
-        SQL statement that materialises the sampled input relation.
+        SQL WHERE clause condition like: " AND hash(... ) % 100 < 10".
     """
-    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, "t")
-    sample_bucket = dialect.hash_bucket_expression(composite_id, sample_modulus)
-
     if sample_threshold >= sample_modulus:
-        return f"select * from {input_tablename}"
+        return ""
 
-    filter_condition = "1=0"
-    if sample_threshold > 0:
-        filter_condition = f"{sample_bucket} < {sample_threshold}"
+    if sample_threshold <= 0:
+        return " AND 1=0"
 
-    return f"""
-    select *
-    from {input_tablename} as t
-    where {filter_condition}
-    """.strip()
+    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
+    sample_bucket = dialect.hash_bucket_expression(composite_id, sample_modulus)
+    return f" AND {sample_bucket} < {sample_threshold}"
 
 
 def _blocked_pairs_cache_key(

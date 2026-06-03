@@ -12,8 +12,7 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.chunking import (
     _chunk_assignment_sql,
-    _em_sample_table_sql,
-    _em_sampled_input_tablename,
+    _em_sample_filter_sql,
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
@@ -684,6 +683,8 @@ def _sql_gen_where_condition(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -712,45 +713,17 @@ def _sql_gen_where_condition(
             unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
         )
 
-    return where_condition
-
-
-def _prepend_em_sample_input_sqls(
-    *,
-    input_tablename_l: str,
-    input_tablename_r: str,
-    unique_id_input_columns: List[InputColumn],
-    sample_threshold: int,
-    sample_modulus: int,
-    sql_dialect: SplinkDialect,
-) -> tuple[list[dict[str, str]], str, str]:
-    sqls: list[dict[str, str]] = []
-    sampled_input_table_lookup: dict[str, str] = {}
-    input_tablenames = [input_tablename_l]
-    if input_tablename_r != input_tablename_l:
-        input_tablenames.append(input_tablename_r)
-
-    for input_tablename in input_tablenames:
-        sampled_input_tablename = _em_sampled_input_tablename(input_tablename)
-        sampled_input_table_lookup[input_tablename] = sampled_input_tablename
-        sqls.append(
-            {
-                "sql": _em_sample_table_sql(
-                    unique_id_input_columns,
-                    sample_threshold,
-                    sample_modulus,
-                    input_tablename,
-                    sql_dialect,
-                ),
-                "output_table_name": sampled_input_tablename,
-            }
+    if sample_threshold is not None and sample_modulus is not None:
+        if sql_dialect is None:
+            raise ValueError("EM sampling requires a SQL dialect")
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols, sample_threshold, sample_modulus, "l", sql_dialect
+        )
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols, sample_threshold, sample_modulus, "r", sql_dialect
         )
 
-    return (
-        sqls,
-        sampled_input_table_lookup[input_tablename_l],
-        sampled_input_table_lookup[input_tablename_r],
-    )
+    return where_condition
 
 
 def block_using_rules_sqls(
@@ -793,20 +766,9 @@ def block_using_rules_sqls(
         sample_threshold is not None
         and sample_modulus is not None
         and sample_threshold < sample_modulus
+        and sql_dialect is None
     ):
-        if sql_dialect is None:
-            raise ValueError("EM sampling requires at least one blocking rule")
-        sample_sqls, input_tablename_l, input_tablename_r = (
-            _prepend_em_sample_input_sqls(
-                input_tablename_l=input_tablename_l,
-                input_tablename_r=input_tablename_r,
-                unique_id_input_columns=unique_id_input_columns,
-                sample_threshold=sample_threshold,
-                sample_modulus=sample_modulus,
-                sql_dialect=sql_dialect,
-            )
-        )
-        sqls.extend(sample_sqls)
+        raise ValueError("EM sampling requires at least one blocking rule")
 
     where_condition = _sql_gen_where_condition(
         link_type,
@@ -814,6 +776,8 @@ def block_using_rules_sqls(
         left_chunk=left_chunk,
         right_chunk=right_chunk,
         sql_dialect=sql_dialect,
+        sample_threshold=sample_threshold,
+        sample_modulus=sample_modulus,
     )
 
     # Cover the case where there are no blocking rules

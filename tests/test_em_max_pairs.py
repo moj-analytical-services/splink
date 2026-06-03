@@ -414,20 +414,20 @@ def test_em_training_max_pairs_rejected_positionally(fake_1000_df):
 
 
 def test_em_sample_filter_uses_positive_modulo():
-    from splink.internals.chunking import _em_sample_table_sql
+    from splink.internals.chunking import _em_sample_filter_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
 
-    sql = _em_sample_table_sql(
+    sql = _em_sample_filter_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=42,
         sample_modulus=10_000,
-        input_tablename="__splink__df_concat",
+        table_prefix="l",
         dialect=DuckDBDialect(),
     )
     assert "ABS(" not in sql
-    assert 'hash(t."unique_id") % 10000' in sql
-    assert 'where hash(t."unique_id") % 10000 < 42' in sql
+    assert 'hash(l."unique_id") % 10000' in sql
+    assert 'AND hash(l."unique_id") % 10000 < 42' in sql
 
 
 def test_chunk_assignment_uses_positive_modulo():
@@ -449,25 +449,25 @@ def test_chunk_assignment_uses_positive_modulo():
 def test_em_sample_filter_works_in_duckdb(fake_1000_df):
     import duckdb
 
-    from splink.internals.chunking import _em_sample_table_sql
+    from splink.internals.chunking import _em_sample_filter_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
 
-    sql_filter = _em_sample_table_sql(
+    sql_filter = _em_sample_filter_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=5_000,
         sample_modulus=10_000,
-        input_tablename="t",
+        table_prefix="t",
         dialect=DuckDBDialect(),
     )
     con = duckdb.connect()
     con.register("t", fake_1000_df)
-    n = con.execute(f"select count(*) as c from ({sql_filter})").fetchone()[0]
+    n = con.execute(f"select count(*) as c from t where 1=1 {sql_filter}").fetchone()[0]
     # Should retain ~half of 1000 rows.
     assert 350 < n < 650
 
 
-def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
+def test_block_using_rules_sqls_adds_em_sample_filter(fake_1000_df):
     from splink.internals.blocking import block_using_rules_sqls
 
     linker = _make_dedupe_linker(fake_1000_df)
@@ -487,15 +487,16 @@ def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
         sample_modulus=10_000,
     )
 
-    assert sqls[0]["output_table_name"] == "__splink__df_concat_em_sample"
-    assert 'hash(t."unique_id") % 10000' in sqls[0]["sql"]
+    assert len(sqls) == 1
 
     blocked_pairs_sql = sqls[-1]["sql"]
-    assert "from __splink__df_concat_em_sample as l" in blocked_pairs_sql
-    assert "inner join __splink__df_concat_em_sample as r" in blocked_pairs_sql
+    assert "from __splink__df_concat as l" in blocked_pairs_sql
+    assert "inner join __splink__df_concat as r" in blocked_pairs_sql
+    assert 'hash(l."unique_id") % 10000 < 100' in blocked_pairs_sql
+    assert 'hash(r."unique_id") % 10000 < 100' in blocked_pairs_sql
 
 
-def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
+def test_block_using_rules_sqls_adds_filters_for_distinct_left_and_right_tables(
     fake_1000_df,
 ):
     from splink.internals.blocking import block_using_rules_sqls
@@ -517,27 +518,29 @@ def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
         sample_modulus=10_000,
     )
 
-    assert sqls[0]["output_table_name"] == "__splink__df_concat_left_em_sample"
-    assert sqls[1]["output_table_name"] == "__splink__df_concat_right_em_sample"
+    assert len(sqls) == 1
 
     blocked_pairs_sql = sqls[-1]["sql"]
-    assert "from __splink__df_concat_left_em_sample as l" in blocked_pairs_sql
-    assert "inner join __splink__df_concat_right_em_sample as r" in blocked_pairs_sql
+    assert "from __splink__df_concat_left as l" in blocked_pairs_sql
+    assert "inner join __splink__df_concat_right as r" in blocked_pairs_sql
+    assert 'hash(l."source_dataset"' in blocked_pairs_sql
+    assert 'hash(r."source_dataset"' in blocked_pairs_sql
+    assert "% 10000 < 100" in blocked_pairs_sql
 
 
 def _selected_uids_for_session(session) -> set:
     """Return the set of unique_ids retained after sampling."""
-    from splink.internals.chunking import _em_sample_table_sql
+    from splink.internals.chunking import _em_sample_filter_sql
     from splink.internals.input_column import InputColumn
 
     linker = session._original_linker
     db_api = linker._db_api
 
-    sample_sql = _em_sample_table_sql(
+    sample_sql = _em_sample_filter_sql(
         unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
         sample_threshold=session._sample_threshold,
         sample_modulus=session._sample_modulus,
-        input_tablename="__splink__df_concat",
+        table_prefix="t",
         dialect=db_api.sql_dialect,
     )
     from splink.internals.pipeline import CTEPipeline
@@ -546,7 +549,7 @@ def _selected_uids_for_session(session) -> set:
     pipe = CTEPipeline()
     enqueue_df_concat(linker, pipe)
     pipe.enqueue_sql(
-        f"select unique_id from ({sample_sql})",
+        f"select unique_id from __splink__df_concat as t where 1=1 {sample_sql}",
         "__splink__em_selected_uids",
     )
     df = db_api.sql_pipeline_to_splink_dataframe(pipe)
