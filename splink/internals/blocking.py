@@ -10,9 +10,12 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
 
-from splink.internals.chunking import _chunk_assignment_sql
+from splink.internals.chunking import (
+    _chunk_assignment_sql,
+)
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
+from splink.internals.em_sampling import _em_sample_filter_sql
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -680,6 +683,8 @@ def _sql_gen_where_condition(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
     sql_dialect: "SplinkDialect | None" = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
 ) -> str:
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
@@ -708,6 +713,16 @@ def _sql_gen_where_condition(
             unique_id_cols, chunk_num, total_chunks, "r", sql_dialect
         )
 
+    if sample_threshold is not None and sample_modulus is not None:
+        if sql_dialect is None:
+            raise ValueError("EM sampling requires a SQL dialect")
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols, sample_threshold, sample_modulus, "l", sql_dialect
+        )
+        where_condition += _em_sample_filter_sql(
+            unique_id_cols, sample_threshold, sample_modulus, "r", sql_dialect
+        )
+
     return where_condition
 
 
@@ -721,6 +736,8 @@ def block_using_rules_sqls(
     unique_id_input_column: InputColumn,
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -751,6 +768,8 @@ def block_using_rules_sqls(
         left_chunk=left_chunk,
         right_chunk=right_chunk,
         sql_dialect=sql_dialect,
+        sample_threshold=sample_threshold,
+        sample_modulus=sample_modulus,
     )
 
     # Cover the case where there are no blocking rules
