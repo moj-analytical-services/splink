@@ -15,10 +15,7 @@ from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.constants import LEVEL_NOT_OBSERVED_TEXT
-from splink.internals.em_sampling import (
-    _DEFAULT_MAX_PROBE_PAIRS,
-    resolve_em_sample_threshold,
-)
+from splink.internals.em_sampling import resolve_em_sample_threshold
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.internals.parse_sql import get_columns_used_from_sql
@@ -87,9 +84,8 @@ class EMTrainingSession:
         fix_probability_two_random_records_match: bool = False,
         estimate_without_term_frequencies: bool = False,
         max_pairs: float | None = None,
-        probe_proportion: float = 0.01,
+        probe_proportion: float = 0.001,
         seed: int | None = None,
-        max_probe_pairs: float = _DEFAULT_MAX_PROBE_PAIRS,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -115,7 +111,6 @@ class EMTrainingSession:
         self._max_pairs = max_pairs
         self._probe_proportion = probe_proportion
         self._seed = seed
-        self._max_probe_pairs = max_probe_pairs
         # Resolved by `resolve_em_sample_threshold` so probe and final sample
         # use independent salts.  Holds a placeholder until that call runs.
         self._sample_salt: str = ""
@@ -227,7 +222,6 @@ class EMTrainingSession:
             max_pairs=self._max_pairs,
             probe_proportion=self._probe_proportion,
             seed=self._seed,
-            max_probe_pairs=self._max_probe_pairs,
         )
         self._sample_threshold = sample_threshold
         self._sample_modulus = sample_modulus

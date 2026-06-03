@@ -328,7 +328,7 @@ def test_em_max_pairs_link_only_reduces_pair_count(fake_1000_df):
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
     session = _train_and_get_session(
-        linker, max_pairs=500, probe_proportion=0.3, seed=7
+        linker, max_pairs=100, probe_proportion=0.3, seed=7
     )
 
     assert session._sample_info["sampling_applied"] is True
@@ -576,9 +576,7 @@ def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
         source_dataset_input_column=(
             settings.column_info_settings.source_dataset_input_column
         ),
-        unique_id_input_column=(
-            settings.column_info_settings.unique_id_input_column
-        ),
+        unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
         sample_threshold=100,
         sample_modulus=10_000,
         sample_salt="__splink_em_probe_default__",
@@ -669,22 +667,20 @@ def test_different_seeds_select_different_records(fake_1000_df):
 
 
 # ---------------------------------------------------------------------------
-# max_probe_pairs cap
+# Adaptive probe escalation
 # ---------------------------------------------------------------------------
 
 
-def test_max_probe_pairs_caps_probe_proportion(fake_1000_df, caplog):
-    """When max_probe_pairs is tiny, the requested probe_proportion is capped."""
+def test_probe_proportion_escalates_when_probe_has_too_few_pairs(fake_1000_df):
     linker = _make_dedupe_linker(fake_1000_df)
     br = block_on("first_name").get_blocking_rule("duckdb")
-    with caplog.at_level(logging.INFO, logger="splink.internals.em_sampling"):
-        _, _, info = resolve_em_sample_threshold(
-            linker=linker,
-            blocking_rule=br,
-            max_pairs=500,
-            probe_proportion=1.0,
-            max_probe_pairs=100.0,  # force a heavy cap
-            min_probe_pairs_for_calibration=1,  # don't escalate
-        )
-    assert info["probe_proportion_used"] < 1.0
-    assert info["cartesian_upper_bound"] is not None
+    _, _, info = resolve_em_sample_threshold(
+        linker=linker,
+        blocking_rule=br,
+        max_pairs=500,
+        probe_proportion=0.001,
+        min_probe_pairs_for_calibration=1_000_000,
+    )
+
+    assert [a["probe_proportion"] for a in info["probe_attempts"]] == [0.001, 0.01]
+    assert info["probe_proportion_used"] == 0.01
