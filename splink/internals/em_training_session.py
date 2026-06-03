@@ -105,9 +105,8 @@ class EMTrainingSession:
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies
 
-        # EM sampling configuration.  Resolved lazily in _comparison_vectors so
-        # that the probe runs in the same execution path as the main blocking,
-        # giving identical environment / cache state.
+        # EM sampling configuration.  Resolved when training needs to generate
+        # comparison vectors.
         self._max_pairs = max_pairs
         self._probe_proportion = probe_proportion
         self._seed = seed
@@ -211,11 +210,10 @@ class EMTrainingSession:
             f" since they are used in the blocking rules: {not_estimated_str}"
         )
 
-    def _comparison_vectors(self) -> SplinkDataFrame:
-        self._training_log_message()
+    def _ensure_em_sampling_settings(self) -> None:
+        if self._sample_info is not None:
+            return
 
-        # Resolve EM sampling threshold (runs a probe blocking pass if
-        # max_pairs was supplied).
         sample_threshold, sample_modulus, sample_info = resolve_em_sample_threshold(
             linker=self._original_linker,
             blocking_rule=self._blocking_rule_for_training,
@@ -228,6 +226,10 @@ class EMTrainingSession:
         self._sample_info = sample_info
         self._sample_salt = sample_info["sample_salt"]
 
+    def _comparison_vectors(self) -> SplinkDataFrame:
+        self._training_log_message()
+        self._ensure_em_sampling_settings()
+
         pipeline = CTEPipeline()
         enqueue_df_concat(self._original_linker, pipeline)
 
@@ -239,15 +241,15 @@ class EMTrainingSession:
             link_type=orig_settings._link_type,
             source_dataset_input_column=orig_settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
-            sample_threshold=sample_threshold,
-            sample_modulus=sample_modulus,
+            sample_threshold=self._sample_threshold,
+            sample_modulus=self._sample_modulus,
             sample_salt=self._sample_salt,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
         blocked_pairs = self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        if sample_threshold is not None:
+        if self._sample_threshold is not None:
             count_pipeline = CTEPipeline()
             count_pipeline.enqueue_sql(
                 f"select count(*) as row_count from {blocked_pairs.physical_name}",
@@ -257,6 +259,8 @@ class EMTrainingSession:
             count_rows = count_df.as_record_dict()
             count_df.drop_table_from_database_and_remove_from_cache()
             actual = int(count_rows[0]["row_count"]) if count_rows else 0
+            sample_info = self._sample_info
+            assert sample_info is not None
             expected = sample_info.get("expected_pairs_after_sampling")
             logger.info(
                 "[EM sampling] Materialised blocked pair count after sampling: "
@@ -283,6 +287,7 @@ class EMTrainingSession:
 
     def _train(self, cvv: SplinkDataFrame = None) -> CoreModelSettings:
         if cvv is None:
+            self._ensure_em_sampling_settings()
             cvv = self._comparison_vectors()
 
         # check that the blocking rule actually generates _some_ record pairs,
