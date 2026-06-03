@@ -430,7 +430,7 @@ def test_em_sample_filter_uses_positive_modulo():
     assert 'AND hash(l."unique_id") % 10000 < 42' in sql
 
 
-def test_chunk_assignment_uses_positive_modulo():
+def test_chunk_assignment_uses_legacy_abs_modulo():
     from splink.internals.chunking import _chunk_assignment_sql
     from splink.internals.dialects import DuckDBDialect
     from splink.internals.input_column import InputColumn
@@ -442,8 +442,7 @@ def test_chunk_assignment_uses_positive_modulo():
         table_prefix="l",
         dialect=DuckDBDialect(),
     )
-    assert "ABS(" not in sql
-    assert 'hash(l."unique_id") % 5' in sql
+    assert 'ABS(hash(l."unique_id")) % 5' in sql
 
 
 def test_em_sample_filter_works_in_duckdb(fake_1000_df):

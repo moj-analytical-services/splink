@@ -29,7 +29,7 @@ def _chunk_assignment_sql(
         dialect: SQL dialect for hash function
 
     Returns:
-        SQL WHERE clause condition like: " AND (hash(... ) % 3) + 1 = 2",
+        SQL WHERE clause condition like: " AND (ABS(hash(...)) % 3) + 1 = 2",
         or empty string if num_chunks == 1 (no filtering needed)
     """
 
@@ -37,8 +37,9 @@ def _chunk_assignment_sql(
         return ""
 
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    chunk_bucket = dialect.hash_bucket_expression(composite_id, num_chunks)
-    return f" AND ({chunk_bucket}) + 1 = {chunk_num}"
+    hash_expr = dialect.hash_function_expression(composite_id)
+    chunk_expr = f"(ABS({hash_expr}) % {num_chunks}) + 1"
+    return f" AND {chunk_expr} = {chunk_num}"
 
 
 def _blocked_pairs_cache_key(
