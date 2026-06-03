@@ -126,12 +126,12 @@ def _count_blocked_pairs_for_probe(
 
     logger.info(
         "[EM sampling] Probe at proportion %.6f (actual fraction %.6f, "
-        "sample_threshold=%d / sample_modulus=%d) -> %d blocked pairs",
+        "sample_threshold=%s / sample_modulus=%s) -> %s blocked pairs",
         probe_proportion,
         actual_fraction,
-        sample_threshold,
-        _PROBE_SAMPLE_MODULUS,
-        count,
+        f"{sample_threshold:,}",
+        f"{_PROBE_SAMPLE_MODULUS:,}",
+        f"{count:,}",
     )
     return count, actual_fraction
 
@@ -195,16 +195,16 @@ def resolve_em_sample_threshold(
     info["estimated_total_pairs"] = p_hat
     logger.info(
         "[EM sampling] Estimated total blocked pairs (no sampling) = "
-        "%.0f (from %d probe pairs at actual fraction %.6f)",
-        p_hat,
-        probe_count,
+        "%s (from %s probe pairs at actual fraction %.6f)",
+        f"{p_hat:,.0f}",
+        f"{probe_count:,}",
         actual_fraction,
     )
 
     if p_hat <= max_pairs:
         info["reason"] = (
-            f"Estimated total pairs ({p_hat:.0f}) is already <= max_pairs "
-            f"({max_pairs:.0f}); no sampling applied"
+            f"Estimated total pairs ({p_hat:,.0f}) is already <= max_pairs "
+            f"({max_pairs:,.0f}); no sampling applied"
         )
         logger.info("[EM sampling] %s", info["reason"])
         return None, _SAMPLE_MODULUS, info
@@ -223,14 +223,14 @@ def resolve_em_sample_threshold(
 
     logger.info(
         "[EM sampling] Chose sampling fraction p*=%.6f -> "
-        "sample_threshold=%d / sample_modulus=%d "
+        "sample_threshold=%s / sample_modulus=%s "
         "(actual fraction %.6f, expected blocked pairs after sampling: "
-        "%.0f, target max_pairs: %.0f)",
+        "%s, target max_pairs: %s)",
         p_star,
-        sample_threshold,
-        _SAMPLE_MODULUS,
+        f"{sample_threshold:,}",
+        f"{_SAMPLE_MODULUS:,}",
         actual_p,
-        expected_pairs,
-        max_pairs,
+        f"{expected_pairs:,.0f}",
+        f"{max_pairs:,.0f}",
     )
     return sample_threshold, _SAMPLE_MODULUS, info
