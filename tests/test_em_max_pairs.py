@@ -10,13 +10,12 @@ from __future__ import annotations
 import pytest
 
 import splink.internals.comparison_library as cl
-from splink import DuckDBAPI, SettingsCreator, block_on
+from splink import SettingsCreator, block_on
 from splink.internals.blocking import block_using_rules_sqls
 from splink.internals.linker import Linker
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.vertically_concatenate import enqueue_df_concat
-
-pytestmark = pytest.mark.duckdb
+from tests.decorator import mark_with_dialects_excluding
 
 TRAINING_RULE = "l.surname = r.surname"
 
@@ -32,17 +31,13 @@ def _settings(link_type: str) -> SettingsCreator:
     )
 
 
-def _make_linker(df, link_type: str) -> Linker:
-    db_api = DuckDBAPI()
+def _make_linker(helper, df, link_type: str) -> Linker:
     if link_type == "dedupe_only":
-        sdf = db_api.register(df, "df")
-        return Linker(sdf, _settings("dedupe_only"))
+        return helper.linker_with_registration(df, _settings("dedupe_only"))
 
     df_a = df.take(list(range(0, df.num_rows, 2)))
     df_b = df.take(list(range(1, df.num_rows, 2)))
-    sdf_a = db_api.register(df_a, "df_a")
-    sdf_b = db_api.register(df_b, "df_b")
-    return Linker([sdf_a, sdf_b], _settings(link_type))
+    return helper.linker_with_registration([df_a, df_b], _settings(link_type))
 
 
 def _count_blocked_pairs(linker: Linker, sample_threshold=None, sample_modulus=None):
@@ -53,7 +48,7 @@ def _count_blocked_pairs(linker: Linker, sample_threshold=None, sample_modulus=N
     sqls = block_using_rules_sqls(
         input_tablename_l="__splink__df_concat",
         input_tablename_r="__splink__df_concat",
-        blocking_rules=[block_on("surname").get_blocking_rule("duckdb")],
+        blocking_rules=[block_on("surname").get_blocking_rule(linker._sql_dialect_str)],
         link_type=settings._link_type,
         source_dataset_input_column=(
             settings.column_info_settings.source_dataset_input_column
@@ -70,9 +65,11 @@ def _count_blocked_pairs(linker: Linker, sample_threshold=None, sample_modulus=N
     return n
 
 
+@mark_with_dialects_excluding()
 @pytest.mark.parametrize("link_type", ["dedupe_only", "link_only", "link_and_dedupe"])
-def test_em_max_pairs_reduces_pair_count(fake_1000, link_type):
-    linker = _make_linker(fake_1000, link_type)
+def test_em_max_pairs_reduces_pair_count(test_helpers, dialect, fake_1000, link_type):
+    helper = test_helpers[dialect]
+    linker = _make_linker(helper, fake_1000, link_type)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
     # How many pairs the training rule generates with no sampling
@@ -101,8 +98,10 @@ def test_em_max_pairs_reduces_pair_count(fake_1000, link_type):
     ), f"{link_type}: sampled {sampled}, target {target_max_pairs}"
 
 
-def test_em_max_pairs_no_op_when_already_below(fake_1000):
-    linker = _make_linker(fake_1000, "dedupe_only")
+@mark_with_dialects_excluding()
+def test_em_max_pairs_no_op_when_already_below(test_helpers, dialect, fake_1000):
+    helper = test_helpers[dialect]
+    linker = _make_linker(helper, fake_1000, "dedupe_only")
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
     session = linker.training.estimate_parameters_using_expectation_maximisation(
