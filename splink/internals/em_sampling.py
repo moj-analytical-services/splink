@@ -3,18 +3,14 @@
 We want to limit the number of pairwise comparisons used by an EM training
 session to a user-specified `max_pairs`.  The strategy is:
 
-1. Compute a cheap Cartesian upper bound on the full pair count from the row
-   counts of the input table(s).  This bounds how aggressive the probe can
-   be without itself blowing up.
-2. Take a hash-based probe sample of records, sized so the worst-case probe
-   pair count stays under `max_probe_pairs`.  Run blocking on the probe.
-3. Count the resulting blocked pairs `C0`.  Estimate the full pair count as
+1. Take a small hash-based probe sample of records and run blocking on the probe.
+2. Count the resulting blocked pairs `C0`.  Estimate the full pair count as
    `P_hat = C0 / actual_probe_fraction**2`.  This holds because pair count
    scales as the product of left- and right-side record counts, both of
    which scale linearly with the sample fraction (for any link type).
-4. If the probe pair count is too small to give a stable estimate, escalate
-   the probe proportion (subject to the same cap) and retry.
-5. Solve `p* = sqrt(max_pairs / P_hat)` and return `(sample_threshold,
+3. If the probe pair count is too small to give a stable estimate, escalate
+    from the default 0.001 probe fraction to 0.01 and retry.
+4. Solve `p* = sqrt(max_pairs / P_hat)` and return `(sample_threshold,
    sample_modulus)` describing a hash predicate that retains approximately
    fraction `p*` of input records.
 
@@ -56,10 +52,9 @@ _SAMPLE_MODULUS = 1_000_000
 # extrapolation reliable.  Below this we escalate the probe proportion.
 _DEFAULT_MIN_PROBE_PAIRS = 1_000
 
-# Default maximum pair count we are willing to materialise during the probe
-# itself.  Without this, a 1% probe of a dataset whose blocking rule would
-# produce ~1e12 pairs would still produce ~1e8 pairs.
-_DEFAULT_MAX_PROBE_PAIRS = 1_000_000.0
+# Default second-stage probe fraction.  The first probe defaults to 0.001;
+# if that produces too few blocked pairs for a stable estimate, retry at 0.01.
+_DEFAULT_ESCALATED_PROBE_PROPORTION = 0.01
 
 
 def _em_hash_salt(seed: int | None, purpose: str) -> str:
@@ -89,76 +84,15 @@ def _probe_actual_fraction(sample_threshold: int) -> float:
     return sample_threshold / _PROBE_SAMPLE_MODULUS
 
 
-def _cartesian_upper_bound_for_link_type(
-    *,
-    linker: Linker,
-) -> int:
-    """Upper bound on the number of pairs the unsampled blocking rule could
-    possibly produce, ignoring the rule's selectivity.
-
-    Used to size the probe safely; it is *not* used as the pair-count
-    estimate (which always comes from the probe).
-    """
-    settings = linker._settings_obj
-    db_api = linker._db_api
-    link_type = settings._link_type
-    sds_col = settings.column_info_settings.source_dataset_input_column
-
-    pipeline = CTEPipeline()
-    enqueue_df_concat(linker, pipeline)
-
-    if link_type == "link_only" and sds_col is not None:
-        pipeline.enqueue_sql(
-            f"select {sds_col.name} as sds, count(*) as c "
-            "from __splink__df_concat group by 1",
-            "__splink__em_row_counts",
-        )
-        df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        rows = df.as_record_dict()
-        df.drop_table_from_database_and_remove_from_cache()
-        sizes = [int(r["c"]) for r in rows]
-        total = sum(sizes)
-        sum_sq = sum(s * s for s in sizes)
-        # Cross-source pairs only:  (T^2 - sum_i n_i^2) / 2
-        upper = max(0, (total * total - sum_sq) // 2)
-    else:
-        pipeline.enqueue_sql(
-            "select count(*) as c from __splink__df_concat",
-            "__splink__em_row_count",
-        )
-        df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        rows = df.as_record_dict()
-        df.drop_table_from_database_and_remove_from_cache()
-        n = int(rows[0]["c"]) if rows else 0
-        upper = (n * (n - 1)) // 2
-
-    logger.info(
-        "[EM sampling] Cartesian pair-count upper bound for link_type=%s: %d",
-        link_type,
-        upper,
-    )
-    return upper
+def _probe_proportion_candidates(probe_proportion: float) -> list[float]:
+    candidates = [probe_proportion]
+    if probe_proportion < _DEFAULT_ESCALATED_PROBE_PROPORTION:
+        candidates.append(_DEFAULT_ESCALATED_PROBE_PROPORTION)
+    return candidates
 
 
-def _safe_probe_proportion(
-    *,
-    requested: float,
-    cartesian_upper_bound: int,
-    max_probe_pairs: float,
-) -> float:
-    """Cap `requested` so the worst-case probe pair count stays under
-    `max_probe_pairs`.
-
-    Worst-case probe pairs ~= cartesian_upper_bound * p^2, so we need
-    p <= sqrt(max_probe_pairs / cartesian_upper_bound).
-    """
-    if cartesian_upper_bound <= 0:
-        return requested
-    p_cap = math.sqrt(max_probe_pairs / cartesian_upper_bound)
-    p_cap = min(1.0, p_cap)
-    capped = min(requested, p_cap)
-    # We always need at least one row; never reduce below 1/PROBE_MODULUS.
-    return max(capped, 1.0 / _PROBE_SAMPLE_MODULUS)
+def _estimate_total_pairs(probe_count: int, actual_fraction: float) -> float:
+    return probe_count / (actual_fraction**2)
 
 
 def _count_blocked_pairs_for_probe(
@@ -224,7 +158,6 @@ def resolve_em_sample_threshold(
     max_pairs: float | None,
     probe_proportion: float,
     seed: int | None = None,
-    max_probe_pairs: float = _DEFAULT_MAX_PROBE_PAIRS,
     min_probe_pairs_for_calibration: int = _DEFAULT_MIN_PROBE_PAIRS,
 ) -> tuple[int | None, int, dict[str, Any]]:
     """Decide whether (and how) to downsample input records for EM training.
@@ -239,8 +172,6 @@ def resolve_em_sample_threshold(
         raise ValueError(
             f"probe_proportion must be in (0, 1]; got {probe_proportion!r}"
         )
-    if max_probe_pairs <= 0:
-        raise ValueError(f"max_probe_pairs must be positive; got {max_probe_pairs!r}")
     if min_probe_pairs_for_calibration <= 0:
         raise ValueError(
             "min_probe_pairs_for_calibration must be positive; "
@@ -252,13 +183,12 @@ def resolve_em_sample_threshold(
 
     info: dict[str, Any] = {
         "max_pairs": max_pairs,
-        "max_probe_pairs": max_probe_pairs,
         "min_probe_pairs_for_calibration": min_probe_pairs_for_calibration,
-        "cartesian_upper_bound": None,
         "requested_probe_proportion": probe_proportion,
         "probe_proportion_used": None,
         "actual_probe_fraction": None,
         "probe_pair_count": None,
+        "probe_attempts": [],
         "estimated_total_pairs": None,
         "p_star": None,
         "sample_threshold": None,
@@ -275,44 +205,12 @@ def resolve_em_sample_threshold(
         logger.info("[EM sampling] max_pairs is None — no sampling will be applied")
         return None, _SAMPLE_MODULUS, info
 
-    cartesian = _cartesian_upper_bound_for_link_type(linker=linker)
-    info["cartesian_upper_bound"] = cartesian
-
-    capped_probe = _safe_probe_proportion(
-        requested=probe_proportion,
-        cartesian_upper_bound=cartesian,
-        max_probe_pairs=max_probe_pairs,
-    )
-    if capped_probe < probe_proportion:
-        logger.info(
-            "[EM sampling] Capping requested probe_proportion %.6f -> %.6f "
-            "to keep worst-case probe pair count below max_probe_pairs=%.0f "
-            "(cartesian upper bound = %d)",
-            probe_proportion,
-            capped_probe,
-            max_probe_pairs,
-            cartesian,
-        )
-
-    # Probe escalation ladder: start at the (capped) requested proportion;
-    # if probe pair count is below `min_probe_pairs_for_calibration`,
-    # escalate up to 1.0 — but never above the safety cap.
-    cap = _safe_probe_proportion(
-        requested=1.0,
-        cartesian_upper_bound=cartesian,
-        max_probe_pairs=max_probe_pairs,
-    )
-    candidates = [capped_probe]
-    for escalation in (capped_probe * 10, capped_probe * 100, cap):
-        next_p = min(escalation, cap)
-        if next_p > candidates[-1] + 1e-9:
-            candidates.append(next_p)
-
     probe_count = 0
     actual_fraction = 0.0
-    used_probe_proportion = capped_probe
+    used_probe_proportion = probe_proportion
+    attempts: list[dict[str, float | int]] = []
 
-    for p in candidates:
+    for p in _probe_proportion_candidates(probe_proportion):
         used_probe_proportion = p
         probe_count, actual_fraction = _count_blocked_pairs_for_probe(
             linker=linker,
@@ -320,32 +218,42 @@ def resolve_em_sample_threshold(
             probe_proportion=p,
             sample_salt=probe_salt,
         )
+        attempts.append(
+            {
+                "probe_proportion": p,
+                "actual_fraction": actual_fraction,
+                "probe_pair_count": probe_count,
+                "estimated_total_pairs": _estimate_total_pairs(
+                    probe_count, actual_fraction
+                ),
+            }
+        )
         if probe_count >= min_probe_pairs_for_calibration:
             break
-        if probe_count > 0 and p >= cap - 1e-9:
-            logger.warning(
-                "[EM sampling] Probe at maximum safe proportion %.6f only "
-                "returned %d pairs (< min_probe_pairs_for_calibration=%d); "
-                "proceeding with a noisy estimate.",
-                p,
-                probe_count,
-                min_probe_pairs_for_calibration,
-            )
-            break
+
+    if 0 < probe_count < min_probe_pairs_for_calibration:
+        logger.warning(
+            "[EM sampling] Probe at proportion %.6f only returned %d pairs "
+            "(< min_probe_pairs_for_calibration=%d); proceeding with a noisy "
+            "estimate.",
+            used_probe_proportion,
+            probe_count,
+            min_probe_pairs_for_calibration,
+        )
 
     info["probe_proportion_used"] = used_probe_proportion
     info["probe_pair_count"] = probe_count
     info["actual_probe_fraction"] = actual_fraction
+    info["probe_attempts"] = attempts
 
     if probe_count == 0:
         info["reason"] = (
-            "Probe returned zero blocked pairs even at the maximum safe "
-            "probe proportion; skipping sampling"
+            "Probe returned zero blocked pairs even after escalation; skipping sampling"
         )
         logger.warning("[EM sampling] %s", info["reason"])
         return None, _SAMPLE_MODULUS, info
 
-    p_hat = probe_count / (actual_fraction**2)
+    p_hat = _estimate_total_pairs(probe_count, actual_fraction)
     info["estimated_total_pairs"] = p_hat
     logger.info(
         "[EM sampling] Estimated total blocked pairs (no sampling) = "
