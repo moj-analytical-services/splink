@@ -414,8 +414,8 @@ def test_em_training_max_pairs_rejected_positionally(fake_1000_df):
 
 
 def test_em_sample_filter_uses_positive_modulo():
-    from splink.internals.chunking import _em_sample_filter_sql
     from splink.internals.dialects import DuckDBDialect
+    from splink.internals.em_sampling import _em_sample_filter_sql
     from splink.internals.input_column import InputColumn
 
     sql = _em_sample_filter_sql(
@@ -449,8 +449,8 @@ def test_chunk_assignment_uses_positive_modulo():
 def test_em_sample_filter_works_in_duckdb(fake_1000_df):
     import duckdb
 
-    from splink.internals.chunking import _em_sample_filter_sql
     from splink.internals.dialects import DuckDBDialect
+    from splink.internals.em_sampling import _em_sample_filter_sql
     from splink.internals.input_column import InputColumn
 
     sql_filter = _em_sample_filter_sql(
@@ -530,7 +530,7 @@ def test_block_using_rules_sqls_adds_filters_for_distinct_left_and_right_tables(
 
 def _selected_uids_for_session(session) -> set:
     """Return the set of unique_ids retained after sampling."""
-    from splink.internals.chunking import _em_sample_filter_sql
+    from splink.internals.em_sampling import _em_sample_filter_sql
     from splink.internals.input_column import InputColumn
 
     linker = session._original_linker

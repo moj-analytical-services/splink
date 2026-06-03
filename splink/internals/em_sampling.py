@@ -23,12 +23,14 @@ import logging
 import math
 from typing import TYPE_CHECKING, Any
 
-from splink.internals.blocking import block_using_rules_sqls
+from splink.internals.input_column import InputColumn
 from splink.internals.pipeline import CTEPipeline
+from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 from splink.internals.vertically_concatenate import enqueue_df_concat
 
 if TYPE_CHECKING:
     from splink.internals.blocking import BlockingRule
+    from splink.internals.dialects import SplinkDialect
     from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,39 @@ _PROBE_SAMPLE_MODULUS = 10_000
 # Modulus used for the final sampling hash filter.  We want enough resolution
 # that the integer threshold can closely approximate any p* in (0, 1].
 _SAMPLE_MODULUS = 1_000_000
+
+
+def _em_sample_filter_sql(
+    unique_id_cols: list[InputColumn],
+    sample_threshold: int,
+    sample_modulus: int,
+    table_prefix: str,
+    dialect: "SplinkDialect",
+) -> str:
+    """Generate a SQL WHERE clause condition for EM record sampling.
+
+    The sample is deterministic and uses a hash of the composite unique ID.
+
+    Args:
+        unique_id_cols: The columns that form the unique ID.
+        sample_threshold: Integer in [0, sample_modulus]. A row is retained
+            iff hash_bucket(composite_uid, sample_modulus) < sample_threshold.
+        sample_modulus: Integer giving the resolution of the sampling fraction.
+        table_prefix: Table alias prefix (e.g. 'l' or 'r').
+        dialect: SQL dialect for the hash function.
+
+    Returns:
+        SQL WHERE clause condition like: " AND hash(... ) % 100 < 10".
+    """
+    if sample_threshold >= sample_modulus:
+        return ""
+
+    if sample_threshold <= 0:
+        return " AND 1=0"
+
+    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
+    sample_bucket = dialect.hash_bucket_expression(composite_id, sample_modulus)
+    return f" AND {sample_bucket} < {sample_threshold}"
 
 
 def _probe_sample_threshold(probe_proportion: float) -> int:
@@ -74,6 +109,8 @@ def _count_blocked_pairs_for_probe(
 
     Returns `(blocked_pair_count, actual_probe_fraction)`.
     """
+    from splink.internals.blocking import block_using_rules_sqls
+
     settings = linker._settings_obj
     db_api = linker._db_api
 

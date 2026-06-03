@@ -41,39 +41,6 @@ def _chunk_assignment_sql(
     return f" AND ({chunk_bucket}) + 1 = {chunk_num}"
 
 
-def _em_sample_filter_sql(
-    unique_id_cols: list[InputColumn],
-    sample_threshold: int,
-    sample_modulus: int,
-    table_prefix: str,
-    dialect: "SplinkDialect",
-) -> str:
-    """Generate a SQL WHERE clause condition for EM record sampling.
-
-    The sample is deterministic and uses a hash of the composite unique ID.
-
-    Args:
-        unique_id_cols: The columns that form the unique ID.
-        sample_threshold: Integer in [0, sample_modulus]. A row is retained
-            iff hash_bucket(composite_uid, sample_modulus) < sample_threshold.
-        sample_modulus: Integer giving the resolution of the sampling fraction.
-        table_prefix: Table alias prefix (e.g. 'l' or 'r').
-        dialect: SQL dialect for the hash function.
-
-    Returns:
-        SQL WHERE clause condition like: " AND hash(... ) % 100 < 10".
-    """
-    if sample_threshold >= sample_modulus:
-        return ""
-
-    if sample_threshold <= 0:
-        return " AND 1=0"
-
-    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    sample_bucket = dialect.hash_bucket_expression(composite_id, sample_modulus)
-    return f" AND {sample_bucket} < {sample_threshold}"
-
-
 def _blocked_pairs_cache_key(
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,

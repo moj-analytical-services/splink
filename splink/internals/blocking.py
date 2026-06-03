@@ -12,10 +12,10 @@ from sqlglot.optimizer.simplify import flatten
 
 from splink.internals.chunking import (
     _chunk_assignment_sql,
-    _em_sample_filter_sql,
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.dialects import SplinkDialect
+from splink.internals.em_sampling import _em_sample_filter_sql
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     dedupe_preserving_order,
@@ -761,14 +761,6 @@ def block_using_rules_sqls(
     )
 
     sql_dialect = blocking_rules[0].sql_dialect if blocking_rules else None
-
-    if (
-        sample_threshold is not None
-        and sample_modulus is not None
-        and sample_threshold < sample_modulus
-        and sql_dialect is None
-    ):
-        raise ValueError("EM sampling requires at least one blocking rule")
 
     where_condition = _sql_gen_where_condition(
         link_type,
