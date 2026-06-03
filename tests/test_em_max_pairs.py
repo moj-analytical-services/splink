@@ -239,7 +239,6 @@ def _count_cvv_rows(session) -> int:
         unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
         sample_threshold=session._sample_threshold,
         sample_modulus=session._sample_modulus,
-        sample_salt=session._sample_salt,
     )
     pipeline.enqueue_list_of_sqls(sqls)
     pipeline.enqueue_sql("select count(*) as c from __splink__blocked_id_pairs", "__c")
@@ -259,7 +258,6 @@ def test_em_max_pairs_dedupe_only_reduces_pair_count(fake_1000_df, caplog):
             linker,
             max_pairs=target_max_pairs,
             probe_proportion=0.2,  # high-ish probe for noise control
-            seed=42,
         )
 
     assert session._sample_threshold is not None
@@ -295,41 +293,24 @@ def test_em_max_pairs_no_op_when_pairs_already_below(fake_1000_df):
     assert session._sample_info["sampling_applied"] is False
 
 
-def test_em_max_pairs_seed_reproducible(fake_1000_df):
+def test_em_max_pairs_deterministic(fake_1000_df):
     linker_a = _make_dedupe_linker(fake_1000_df)
     linker_a.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session_a = _train_and_get_session(
-        linker_a, max_pairs=500, probe_proportion=0.2, seed=1234
-    )
+    session_a = _train_and_get_session(linker_a, max_pairs=500, probe_proportion=0.2)
 
     linker_b = _make_dedupe_linker(fake_1000_df)
     linker_b.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session_b = _train_and_get_session(
-        linker_b, max_pairs=500, probe_proportion=0.2, seed=1234
-    )
+    session_b = _train_and_get_session(linker_b, max_pairs=500, probe_proportion=0.2)
 
-    # The salt depends on the seed, so the chosen sample_threshold should be
-    # determined by the same probe count, hence identical.
     assert session_a._sample_threshold == session_b._sample_threshold
     assert _count_cvv_rows(session_a) == _count_cvv_rows(session_b)
-
-    # A different seed gives a different salt, and we expect at least the
-    # selection of records to differ even if the count happens to coincide.
-    linker_c = _make_dedupe_linker(fake_1000_df)
-    linker_c.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session_c = _train_and_get_session(
-        linker_c, max_pairs=500, probe_proportion=0.2, seed=9999
-    )
-    assert session_c._sample_salt != session_a._sample_salt
 
 
 def test_em_max_pairs_link_only_reduces_pair_count(fake_1000_df):
     linker = _make_link_only_linker(fake_1000_df)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
-    session = _train_and_get_session(
-        linker, max_pairs=100, probe_proportion=0.3, seed=7
-    )
+    session = _train_and_get_session(linker, max_pairs=100, probe_proportion=0.3)
 
     assert session._sample_info["sampling_applied"] is True
     actual = _count_cvv_rows(session)
@@ -343,9 +324,7 @@ def test_em_max_pairs_link_and_dedupe_reduces_pair_count(fake_1000_df):
     linker = _make_link_and_dedupe_linker(fake_1000_df)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
-    session = _train_and_get_session(
-        linker, max_pairs=500, probe_proportion=0.3, seed=7
-    )
+    session = _train_and_get_session(linker, max_pairs=500, probe_proportion=0.3)
 
     assert session._sample_info["sampling_applied"] is True
     actual = _count_cvv_rows(session)
@@ -361,7 +340,7 @@ def test_em_max_pairs_logs_calculations(fake_1000_df, caplog):
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
     with caplog.at_level(logging.INFO, logger="splink.internals.em_sampling"):
-        _train_and_get_session(linker, max_pairs=500, probe_proportion=0.2, seed=42)
+        _train_and_get_session(linker, max_pairs=500, probe_proportion=0.2)
 
     msgs = [r.getMessage() for r in caplog.records]
     assert any("Probe at proportion" in m for m in msgs), msgs
@@ -374,30 +353,18 @@ def test_em_training_still_converges_with_max_pairs(fake_1000_df):
     linker = _make_dedupe_linker(fake_1000_df)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
-    session = _train_and_get_session(
-        linker, max_pairs=2000, probe_proportion=0.2, seed=42
-    )
+    session = _train_and_get_session(linker, max_pairs=2000, probe_proportion=0.2)
     # Should have run at least one EM iteration with non-empty history.
     assert len(session._core_model_settings_history) >= 1
 
 
-def test_em_max_pairs_independent_of_chunking_hash(fake_1000_df):
-    """Sample salt must produce a different hash to the chunking expression
-    so that the two filters remain statistically independent."""
+def test_em_max_pairs_records_sample_metadata(fake_1000_df):
     linker = _make_dedupe_linker(fake_1000_df)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
 
-    session = _train_and_get_session(
-        linker, max_pairs=500, probe_proportion=0.2, seed=None
-    )
-    assert session._sample_salt == "__splink_em_sample_default__"
-    # And with a seed it should differ
-    linker2 = _make_dedupe_linker(fake_1000_df)
-    linker2.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session2 = _train_and_get_session(
-        linker2, max_pairs=500, probe_proportion=0.2, seed=99
-    )
-    assert "99" in session2._sample_salt
+    session = _train_and_get_session(linker, max_pairs=500, probe_proportion=0.2)
+    assert session._sample_info["probe_pair_count"] is not None
+    assert session._sample_info["actual_probe_fraction"] is not None
 
 
 # ---------------------------------------------------------------------------
@@ -457,11 +424,10 @@ def test_em_sample_filter_uses_positive_modulo():
         sample_modulus=10_000,
         input_tablename="__splink__df_concat",
         dialect=DuckDBDialect(),
-        salt="__em_sample__",
     )
     assert "ABS(" not in sql
-    assert "hash((t.\"unique_id\") || '__em_sample__') % 10000" in sql
-    assert "where hash((t.\"unique_id\") || '__em_sample__') % 10000 < 42" in sql
+    assert 'hash(t."unique_id") % 10000' in sql
+    assert 'where hash(t."unique_id") % 10000 < 42' in sql
 
 
 def test_chunk_assignment_uses_positive_modulo():
@@ -480,31 +446,7 @@ def test_chunk_assignment_uses_positive_modulo():
     assert 'hash(l."unique_id") % 5' in sql
 
 
-# ---------------------------------------------------------------------------
-# Salt escaping
-# ---------------------------------------------------------------------------
-
-
-def test_em_sample_filter_escapes_salt_quote():
-    from splink.internals.chunking import _em_sample_table_sql
-    from splink.internals.dialects import DuckDBDialect
-    from splink.internals.input_column import InputColumn
-
-    sql = _em_sample_table_sql(
-        unique_id_cols=[InputColumn("unique_id", sqlglot_dialect_str="duckdb")],
-        sample_threshold=42,
-        sample_modulus=10_000,
-        input_tablename="__splink__df_concat",
-        dialect=DuckDBDialect(),
-        salt="o'malley",
-    )
-    # The single quote must be doubled, never appear as a bare single quote
-    # that would terminate the SQL string literal.
-    assert "'o''malley'" in sql
-
-
-def test_em_sample_filter_works_in_duckdb_with_quote_in_salt(fake_1000_df):
-    """End-to-end: salt containing apostrophe should not break SQL."""
+def test_em_sample_filter_works_in_duckdb(fake_1000_df):
     import duckdb
 
     from splink.internals.chunking import _em_sample_table_sql
@@ -517,7 +459,6 @@ def test_em_sample_filter_works_in_duckdb_with_quote_in_salt(fake_1000_df):
         sample_modulus=10_000,
         input_tablename="t",
         dialect=DuckDBDialect(),
-        salt="o'malley",
     )
     con = duckdb.connect()
     con.register("t", fake_1000_df)
@@ -544,19 +485,14 @@ def test_block_using_rules_sqls_materialises_em_sample_upstream(fake_1000_df):
         unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
         sample_threshold=100,
         sample_modulus=10_000,
-        sample_salt="__splink_em_probe_default__",
     )
 
     assert sqls[0]["output_table_name"] == "__splink__df_concat_em_sample"
-    assert (
-        "hash((t.\"unique_id\") || '__splink_em_probe_default__') % 10000"
-        in sqls[0]["sql"]
-    )
+    assert 'hash(t."unique_id") % 10000' in sqls[0]["sql"]
 
     blocked_pairs_sql = sqls[-1]["sql"]
     assert "from __splink__df_concat_em_sample as l" in blocked_pairs_sql
     assert "inner join __splink__df_concat_em_sample as r" in blocked_pairs_sql
-    assert "__splink_em_probe_default__" not in blocked_pairs_sql
 
 
 def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
@@ -579,7 +515,6 @@ def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
         unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
         sample_threshold=100,
         sample_modulus=10_000,
-        sample_salt="__splink_em_probe_default__",
     )
 
     assert sqls[0]["output_table_name"] == "__splink__df_concat_left_em_sample"
@@ -588,28 +523,6 @@ def test_block_using_rules_sqls_materialises_distinct_left_and_right_samples(
     blocked_pairs_sql = sqls[-1]["sql"]
     assert "from __splink__df_concat_left_em_sample as l" in blocked_pairs_sql
     assert "inner join __splink__df_concat_right_em_sample as r" in blocked_pairs_sql
-
-
-# ---------------------------------------------------------------------------
-# Independence of probe vs final sample salt
-# ---------------------------------------------------------------------------
-
-
-def test_probe_and_sample_salts_differ(fake_1000_df):
-    linker = _make_dedupe_linker(fake_1000_df)
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session = _train_and_get_session(
-        linker, max_pairs=500, probe_proportion=0.2, seed=42
-    )
-    info = session._sample_info
-    assert info["probe_salt"] != info["sample_salt"]
-    assert "probe" in info["probe_salt"]
-    assert "sample" in info["sample_salt"]
-
-
-# ---------------------------------------------------------------------------
-# Different seeds select different records
-# ---------------------------------------------------------------------------
 
 
 def _selected_uids_for_session(session) -> set:
@@ -626,7 +539,6 @@ def _selected_uids_for_session(session) -> set:
         sample_modulus=session._sample_modulus,
         input_tablename="__splink__df_concat",
         dialect=db_api.sql_dialect,
-        salt=session._sample_salt,
     )
     from splink.internals.pipeline import CTEPipeline
     from splink.internals.vertically_concatenate import enqueue_df_concat
@@ -643,24 +555,14 @@ def _selected_uids_for_session(session) -> set:
     return {r["unique_id"] for r in rows}
 
 
-def test_different_seeds_select_different_records(fake_1000_df):
+def test_em_sample_selects_same_records_across_runs(fake_1000_df):
     linker_a = _make_dedupe_linker(fake_1000_df)
     linker_a.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session_a = _train_and_get_session(
-        linker_a, max_pairs=500, probe_proportion=0.2, seed=1
-    )
+    session_a = _train_and_get_session(linker_a, max_pairs=500, probe_proportion=0.2)
     linker_b = _make_dedupe_linker(fake_1000_df)
     linker_b.training.estimate_u_using_random_sampling(max_pairs=1e5)
-    session_b = _train_and_get_session(
-        linker_b, max_pairs=500, probe_proportion=0.2, seed=2
-    )
+    session_b = _train_and_get_session(linker_b, max_pairs=500, probe_proportion=0.2)
     sel_a = _selected_uids_for_session(session_a)
     sel_b = _selected_uids_for_session(session_b)
-    # Both should be non-empty and substantially differ.
     assert len(sel_a) > 0 and len(sel_b) > 0
-    assert sel_a != sel_b
-    overlap = sel_a & sel_b
-    union = sel_a | sel_b
-    # Independent hashes should overlap by roughly the sampling fraction —
-    # generously bounded here.
-    assert len(overlap) < 0.95 * len(union)
+    assert sel_a == sel_b

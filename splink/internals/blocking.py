@@ -722,7 +722,6 @@ def _prepend_em_sample_input_sqls(
     unique_id_input_columns: List[InputColumn],
     sample_threshold: int,
     sample_modulus: int,
-    sample_salt: str,
     sql_dialect: SplinkDialect,
 ) -> tuple[list[dict[str, str]], str, str]:
     sqls: list[dict[str, str]] = []
@@ -742,7 +741,6 @@ def _prepend_em_sample_input_sqls(
                     sample_modulus,
                     input_tablename,
                     sql_dialect,
-                    salt=sample_salt,
                 ),
                 "output_table_name": sampled_input_tablename,
             }
@@ -767,7 +765,6 @@ def block_using_rules_sqls(
     right_chunk: tuple[int, int] | None = None,
     sample_threshold: int | None = None,
     sample_modulus: int | None = None,
-    sample_salt: str = "__em_sample__",
 ) -> list[dict[str, str]]:
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -806,7 +803,6 @@ def block_using_rules_sqls(
                 unique_id_input_columns=unique_id_input_columns,
                 sample_threshold=sample_threshold,
                 sample_modulus=sample_modulus,
-                sample_salt=sample_salt,
                 sql_dialect=sql_dialect,
             )
         )

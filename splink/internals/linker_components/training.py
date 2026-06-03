@@ -236,7 +236,6 @@ class LinkerTraining:
         *,
         max_pairs: float | None = None,
         probe_proportion: float = 0.01,
-        seed: int | None = None,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -289,11 +288,6 @@ class LinkerTraining:
             probe_proportion (float, optional): Fraction of records used in the
                 probe blocking pass that drives the `max_pairs` calculation.
                 Only relevant when `max_pairs` is set.  Defaults to 0.01 (1%).
-            seed (int, optional): If provided alongside `max_pairs`, makes the
-                EM record sampling reproducible across runs *for a given
-                backend*.  Different backends may hash the same composite uid
-                differently, so reproducibility is not guaranteed across
-                backends.  Defaults to None.
 
         Examples:
             ```py
@@ -334,7 +328,6 @@ class LinkerTraining:
             estimate_without_term_frequencies=estimate_without_term_frequencies,
             max_pairs=max_pairs,
             probe_proportion=probe_proportion,
-            seed=seed,
         )
 
         core_model_settings = em_training_session._train()

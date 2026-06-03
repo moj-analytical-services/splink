@@ -12,10 +12,6 @@ session to a user-specified `max_pairs`.  The strategy is:
    sample_modulus)` describing a hash predicate that retains approximately
    fraction `p*` of input records.
 
-Two important details:
-
-- The probe and the final sample use *different* hash salts, so they are
-  statistically independent.
 - We always use the *actual* fraction implied by the integer threshold
   (threshold / modulus) when extrapolating the probe pair count, never the
   user-supplied float `probe_proportion`.
@@ -47,16 +43,6 @@ _PROBE_SAMPLE_MODULUS = 10_000
 _SAMPLE_MODULUS = 1_000_000
 
 
-def _em_hash_salt(seed: int | None, purpose: str) -> str:
-    """Compose the salt string used for the probe / final hash filters.
-
-    Using different `purpose` strings for "probe" and "sample" makes the two
-    filters statistically independent.
-    """
-    seed_part = "default" if seed is None else str(seed)
-    return f"__splink_em_{purpose}_{seed_part}__"
-
-
 def _probe_sample_threshold(probe_proportion: float) -> int:
     """Convert a probe proportion (e.g. 0.01) into an integer threshold to use
     against `_PROBE_SAMPLE_MODULUS`."""
@@ -83,7 +69,6 @@ def _count_blocked_pairs_for_probe(
     linker: Linker,
     blocking_rule: "BlockingRule",
     probe_proportion: float,
-    sample_salt: str,
 ) -> tuple[int, float]:
     """Run blocking on a probe-sampled record set.
 
@@ -109,7 +94,6 @@ def _count_blocked_pairs_for_probe(
         unique_id_input_column=(settings.column_info_settings.unique_id_input_column),
         sample_threshold=sample_threshold,
         sample_modulus=_PROBE_SAMPLE_MODULUS,
-        sample_salt=sample_salt,
     )
     pipeline.enqueue_list_of_sqls(sqls)
     pipeline.enqueue_sql(
@@ -140,7 +124,6 @@ def resolve_em_sample_threshold(
     blocking_rule: "BlockingRule",
     max_pairs: float | None,
     probe_proportion: float,
-    seed: int | None = None,
 ) -> tuple[int | None, int, dict[str, Any]]:
     """Decide whether (and how) to downsample input records for EM training.
 
@@ -155,9 +138,6 @@ def resolve_em_sample_threshold(
             f"probe_proportion must be in (0, 1]; got {probe_proportion!r}"
         )
 
-    probe_salt = _em_hash_salt(seed, "probe")
-    sample_salt = _em_hash_salt(seed, "sample")
-
     info: dict[str, Any] = {
         "max_pairs": max_pairs,
         "requested_probe_proportion": probe_proportion,
@@ -170,8 +150,6 @@ def resolve_em_sample_threshold(
         "sample_modulus": _SAMPLE_MODULUS,
         "expected_pairs_after_sampling": None,
         "sampling_applied": False,
-        "probe_salt": probe_salt,
-        "sample_salt": sample_salt,
         "reason": None,
     }
 
@@ -184,7 +162,6 @@ def resolve_em_sample_threshold(
         linker=linker,
         blocking_rule=blocking_rule,
         probe_proportion=probe_proportion,
-        sample_salt=probe_salt,
     )
 
     info["probe_proportion_used"] = probe_proportion

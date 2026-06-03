@@ -9,11 +9,6 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
-def _sql_string_literal(value: str) -> str:
-    """Defensively quote a string for safe inclusion as a SQL literal."""
-    return "'" + value.replace("'", "''") + "'"
-
-
 def _em_sampled_input_tablename(input_tablename: str) -> str:
     return f"{input_tablename}_em_sample"
 
@@ -56,30 +51,24 @@ def _em_sample_table_sql(
     sample_modulus: int,
     input_tablename: str,
     dialect: "SplinkDialect",
-    salt: str = "__em_sample__",
 ) -> str:
     """Generate SQL for a sampled input table used upstream of blocking.
 
-    The sample is deterministic and uses a salted hash so that it remains
-    statistically independent of the chunking filter produced by
-    `_chunk_assignment_sql`.
+    The sample is deterministic and uses a hash of the composite unique ID.
 
     Args:
         unique_id_cols: The columns that form the unique ID.
         sample_threshold: Integer in [0, sample_modulus]. A row is retained
-            iff hash_bucket(composite_uid || salt, sample_modulus)
-            < sample_threshold.
+            iff hash_bucket(composite_uid, sample_modulus) < sample_threshold.
         sample_modulus: Integer giving the resolution of the sampling fraction.
         input_tablename: Input table to sample upstream of blocking.
         dialect: SQL dialect for the hash function.
-        salt: String concatenated to the composite uid before hashing.
 
     Returns:
         SQL statement that materialises the sampled input relation.
     """
     composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, "t")
-    salted_id = f"({composite_id}) || {_sql_string_literal(salt)}"
-    sample_bucket = dialect.hash_bucket_expression(salted_id, sample_modulus)
+    sample_bucket = dialect.hash_bucket_expression(composite_id, sample_modulus)
 
     if sample_threshold >= sample_modulus:
         return f"select * from {input_tablename}"

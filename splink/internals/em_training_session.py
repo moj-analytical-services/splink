@@ -85,7 +85,6 @@ class EMTrainingSession:
         estimate_without_term_frequencies: bool = False,
         max_pairs: float | None = None,
         probe_proportion: float = 0.01,
-        seed: int | None = None,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -105,14 +104,9 @@ class EMTrainingSession:
         self._blocking_rule_for_training = blocking_rule_for_training
         self.estimate_without_term_frequencies = estimate_without_term_frequencies
 
-        # EM sampling configuration.  Resolved when training needs to generate
-        # comparison vectors.
+        # EM sampling configuration
         self._max_pairs = max_pairs
         self._probe_proportion = probe_proportion
-        self._seed = seed
-        # Resolved by `resolve_em_sample_threshold` so probe and final sample
-        # use independent salts.  Holds a placeholder until that call runs.
-        self._sample_salt: str = ""
         self._sample_threshold: int | None = None
         self._sample_modulus: int | None = None
         self._sample_info: dict[str, Any] | None = None
@@ -219,12 +213,10 @@ class EMTrainingSession:
             blocking_rule=self._blocking_rule_for_training,
             max_pairs=self._max_pairs,
             probe_proportion=self._probe_proportion,
-            seed=self._seed,
         )
         self._sample_threshold = sample_threshold
         self._sample_modulus = sample_modulus
         self._sample_info = sample_info
-        self._sample_salt = sample_info["sample_salt"]
 
     def _comparison_vectors(self) -> SplinkDataFrame:
         self._training_log_message()
@@ -243,7 +235,6 @@ class EMTrainingSession:
             unique_id_input_column=orig_settings.column_info_settings.unique_id_input_column,
             sample_threshold=self._sample_threshold,
             sample_modulus=self._sample_modulus,
-            sample_salt=self._sample_salt,
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
