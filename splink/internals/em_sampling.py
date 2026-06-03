@@ -1,22 +1,3 @@
-"""Helpers for downsampling input records prior to EM training.
-
-We want to limit the number of pairwise comparisons used by an EM training
-session to a user-specified `max_pairs`.  The strategy is:
-
-1. Take a small hash-based probe sample of records and run blocking on the probe.
-2. Count the resulting blocked pairs `C0`.  Estimate the full pair count as
-   `P_hat = C0 / actual_probe_fraction**2`.  This holds because pair count
-   scales as the product of left- and right-side record counts, both of
-   which scale linearly with the sample fraction (for any link type).
-3. Solve `p* = sqrt(max_pairs / P_hat)` and return `(sample_threshold,
-   sample_modulus)` describing a hash predicate that retains approximately
-   fraction `p*` of input records.
-
-- We always use the *actual* fraction implied by the integer threshold
-  (threshold / modulus) when extrapolating the probe pair count, never the
-  user-supplied float `probe_proportion`.
-"""
-
 from __future__ import annotations
 
 import logging
