@@ -4987,6 +4987,8 @@ demos = [
     { name = "ipywidgets" },
     { name = "jupytext" },
     { name = "nbmake" },
+    { name = "numpy" },
+    { name = "pandas" },
     { name = "pseudopeople" },
     { name = "pytest-xdist" },
 ]
@@ -5104,6 +5106,8 @@ demos = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupytext", specifier = ">=1.18.1" },
     { name = "nbmake", specifier = ">=1.5.5" },
+    { name = "numpy", specifier = ">=1.19.3" },
+    { name = "pandas", specifier = ">=1.3.5" },
     { name = "pseudopeople", specifier = ">=1.2.6" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
 ]
