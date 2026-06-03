@@ -664,23 +664,3 @@ def test_different_seeds_select_different_records(fake_1000_df):
     # Independent hashes should overlap by roughly the sampling fraction —
     # generously bounded here.
     assert len(overlap) < 0.95 * len(union)
-
-
-# ---------------------------------------------------------------------------
-# Adaptive probe escalation
-# ---------------------------------------------------------------------------
-
-
-def test_probe_proportion_escalates_when_probe_has_too_few_pairs(fake_1000_df):
-    linker = _make_dedupe_linker(fake_1000_df)
-    br = block_on("first_name").get_blocking_rule("duckdb")
-    _, _, info = resolve_em_sample_threshold(
-        linker=linker,
-        blocking_rule=br,
-        max_pairs=500,
-        probe_proportion=0.001,
-        min_probe_pairs_for_calibration=1_000_000,
-    )
-
-    assert [a["probe_proportion"] for a in info["probe_attempts"]] == [0.001, 0.01]
-    assert info["probe_proportion_used"] == 0.01

@@ -84,7 +84,7 @@ class EMTrainingSession:
         fix_probability_two_random_records_match: bool = False,
         estimate_without_term_frequencies: bool = False,
         max_pairs: float | None = None,
-        probe_proportion: float = 0.001,
+        probe_proportion: float = 0.01,
         seed: int | None = None,
     ):
         logger.info("\n----- Starting EM training session -----\n")

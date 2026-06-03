@@ -235,7 +235,7 @@ class LinkerTraining:
         populate_probability_two_random_records_match_from_trained_values: bool = False,
         *,
         max_pairs: float | None = None,
-        probe_proportion: float = 0.001,
+        probe_proportion: float = 0.01,
         seed: int | None = None,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
@@ -287,9 +287,8 @@ class LinkerTraining:
                 the resulting blocked pair count is approximately `max_pairs`.
                 Defaults to None (no sampling).
             probe_proportion (float, optional): Fraction of records used in the
-                first probe blocking pass that drives the `max_pairs` calculation.
-                If too few blocked pairs are observed, Splink retries at 0.01.
-                Only relevant when `max_pairs` is set.  Defaults to 0.001 (0.1%).
+                probe blocking pass that drives the `max_pairs` calculation.
+                Only relevant when `max_pairs` is set.  Defaults to 0.01 (1%).
             seed (int, optional): If provided alongside `max_pairs`, makes the
                 EM record sampling reproducible across runs *for a given
                 backend*.  Different backends may hash the same composite uid

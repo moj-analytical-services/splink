@@ -8,9 +8,7 @@ session to a user-specified `max_pairs`.  The strategy is:
    `P_hat = C0 / actual_probe_fraction**2`.  This holds because pair count
    scales as the product of left- and right-side record counts, both of
    which scale linearly with the sample fraction (for any link type).
-3. If the probe pair count is too small to give a stable estimate, escalate
-    from the default 0.001 probe fraction to 0.01 and retry.
-4. Solve `p* = sqrt(max_pairs / P_hat)` and return `(sample_threshold,
+3. Solve `p* = sqrt(max_pairs / P_hat)` and return `(sample_threshold,
    sample_modulus)` describing a hash predicate that retains approximately
    fraction `p*` of input records.
 
@@ -48,14 +46,6 @@ _PROBE_SAMPLE_MODULUS = 10_000
 # that the integer threshold can closely approximate any p* in (0, 1].
 _SAMPLE_MODULUS = 1_000_000
 
-# Default minimum probe blocked-pair count required to consider the
-# extrapolation reliable.  Below this we escalate the probe proportion.
-_DEFAULT_MIN_PROBE_PAIRS = 1_000
-
-# Default second-stage probe fraction.  The first probe defaults to 0.001;
-# if that produces too few blocked pairs for a stable estimate, retry at 0.01.
-_DEFAULT_ESCALATED_PROBE_PROPORTION = 0.01
-
 
 def _em_hash_salt(seed: int | None, purpose: str) -> str:
     """Compose the salt string used for the probe / final hash filters.
@@ -82,13 +72,6 @@ def _probe_sample_threshold(probe_proportion: float) -> int:
 
 def _probe_actual_fraction(sample_threshold: int) -> float:
     return sample_threshold / _PROBE_SAMPLE_MODULUS
-
-
-def _probe_proportion_candidates(probe_proportion: float) -> list[float]:
-    candidates = [probe_proportion]
-    if probe_proportion < _DEFAULT_ESCALATED_PROBE_PROPORTION:
-        candidates.append(_DEFAULT_ESCALATED_PROBE_PROPORTION)
-    return candidates
 
 
 def _estimate_total_pairs(probe_count: int, actual_fraction: float) -> float:
@@ -158,7 +141,6 @@ def resolve_em_sample_threshold(
     max_pairs: float | None,
     probe_proportion: float,
     seed: int | None = None,
-    min_probe_pairs_for_calibration: int = _DEFAULT_MIN_PROBE_PAIRS,
 ) -> tuple[int | None, int, dict[str, Any]]:
     """Decide whether (and how) to downsample input records for EM training.
 
@@ -172,23 +154,16 @@ def resolve_em_sample_threshold(
         raise ValueError(
             f"probe_proportion must be in (0, 1]; got {probe_proportion!r}"
         )
-    if min_probe_pairs_for_calibration <= 0:
-        raise ValueError(
-            "min_probe_pairs_for_calibration must be positive; "
-            f"got {min_probe_pairs_for_calibration!r}"
-        )
 
     probe_salt = _em_hash_salt(seed, "probe")
     sample_salt = _em_hash_salt(seed, "sample")
 
     info: dict[str, Any] = {
         "max_pairs": max_pairs,
-        "min_probe_pairs_for_calibration": min_probe_pairs_for_calibration,
         "requested_probe_proportion": probe_proportion,
         "probe_proportion_used": None,
         "actual_probe_fraction": None,
         "probe_pair_count": None,
-        "probe_attempts": [],
         "estimated_total_pairs": None,
         "p_star": None,
         "sample_threshold": None,
@@ -205,51 +180,19 @@ def resolve_em_sample_threshold(
         logger.info("[EM sampling] max_pairs is None — no sampling will be applied")
         return None, _SAMPLE_MODULUS, info
 
-    probe_count = 0
-    actual_fraction = 0.0
-    used_probe_proportion = probe_proportion
-    attempts: list[dict[str, float | int]] = []
+    probe_count, actual_fraction = _count_blocked_pairs_for_probe(
+        linker=linker,
+        blocking_rule=blocking_rule,
+        probe_proportion=probe_proportion,
+        sample_salt=probe_salt,
+    )
 
-    for p in _probe_proportion_candidates(probe_proportion):
-        used_probe_proportion = p
-        probe_count, actual_fraction = _count_blocked_pairs_for_probe(
-            linker=linker,
-            blocking_rule=blocking_rule,
-            probe_proportion=p,
-            sample_salt=probe_salt,
-        )
-        attempts.append(
-            {
-                "probe_proportion": p,
-                "actual_fraction": actual_fraction,
-                "probe_pair_count": probe_count,
-                "estimated_total_pairs": _estimate_total_pairs(
-                    probe_count, actual_fraction
-                ),
-            }
-        )
-        if probe_count >= min_probe_pairs_for_calibration:
-            break
-
-    if 0 < probe_count < min_probe_pairs_for_calibration:
-        logger.warning(
-            "[EM sampling] Probe at proportion %.6f only returned %d pairs "
-            "(< min_probe_pairs_for_calibration=%d); proceeding with a noisy "
-            "estimate.",
-            used_probe_proportion,
-            probe_count,
-            min_probe_pairs_for_calibration,
-        )
-
-    info["probe_proportion_used"] = used_probe_proportion
+    info["probe_proportion_used"] = probe_proportion
     info["probe_pair_count"] = probe_count
     info["actual_probe_fraction"] = actual_fraction
-    info["probe_attempts"] = attempts
 
     if probe_count == 0:
-        info["reason"] = (
-            "Probe returned zero blocked pairs even after escalation; skipping sampling"
-        )
+        info["reason"] = "Probe returned zero blocked pairs; skipping sampling"
         logger.warning("[EM sampling] %s", info["reason"])
         return None, _SAMPLE_MODULUS, info
 
