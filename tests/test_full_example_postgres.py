@@ -106,20 +106,6 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     _test_table_registration(linker)
 
-    record = {
-        "unique_id": 1,
-        "first_name": "John",
-        "surname": "Smith",
-        "dob": "1971-05-24",
-        "city": "London",
-        "email": "john@smith.net",
-        "cluster": 10000,
-    }
-
-    linker.inference.find_matches_to_new_records(
-        [record], blocking_rules=[], match_weight_threshold=-10000
-    )
-
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
     linker.misc.save_model_to_json(path)

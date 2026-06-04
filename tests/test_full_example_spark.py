@@ -145,20 +145,6 @@ def test_full_example_spark(spark, df_spark, tmp_path, spark_api, break_lineage_
 
     linker.evaluation.accuracy_analysis_from_labels_table("labels")
 
-    record = {
-        "unique_id": 1,
-        "first_name": "John",
-        "surname": "Smith",
-        "dob": "1971-05-24",
-        "city": "London",
-        "email": ["john@smith.net"],
-        "cluster": 10000,
-    }
-
-    linker.inference.find_matches_to_new_records(
-        [record], blocking_rules=[], match_weight_threshold=-10000
-    )
-
     # Test differing inputs are accepted
     settings["link_type"] = "link_only"
 

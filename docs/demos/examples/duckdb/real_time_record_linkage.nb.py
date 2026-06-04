@@ -19,8 +19,7 @@
 # %% [markdown]
 # In this notebook, we demonstrate splink's incremental and real time linkage capabilities - specifically:
 #
-# - the `linker.inference.compare_two_records` function, that allows you to interactively explore the results of a linkage model; and
-# - the `linker.find_matches_to_new_records` that allows you to incrementally find matches to a small number of new records
+# - the `linker.inference.compare_two_records` function, that allows you to interactively explore the results of a linkage model
 #
 
 # %% [markdown]
@@ -178,68 +177,6 @@ def myfn(**kwargs):
 out = widgets.interactive_output(myfn, inputs_to_interactive_output)
 
 display(ui, out)
-
-# %% [markdown]
-# ## Finding matching records interactively
-#
-# It is also possible to search the records in the input dataset rapidly using the `linker.find_matches_to_new_records()` function
-#
-
-# %%
-record = {
-    "unique_id": 123987,
-    "first_name": "Robert",
-    "surname": "Alan",
-    "dob": "1971-05-24",
-    "city": "London",
-    "email": "robert255@smith.net",
-}
-
-
-df_inc = linker.inference.find_matches_to_new_records(
-    [record], blocking_rules=[]
-).as_pandas_dataframe()
-df_inc.sort_values("match_weight", ascending=False)
-
-
-# %% [markdown]
-# ## Interactive interface for finding records
-#
-# Again, we can use `ipywidgets` to build an interactive interface for the `linker.find_matches_to_new_records` function
-#
-
-# %%
-@widgets.interact(
-    first_name="Robert",
-    surname="Alan",
-    dob="1971-05-24",
-    city="London",
-    email="robert255@smith.net",
-)
-def interactive_link(first_name, surname, dob, city, email):
-    record = {
-        "unique_id": 123987,
-        "first_name": first_name,
-        "surname": surname,
-        "dob": dob,
-        "city": city,
-        "email": email,
-        "group": 0,
-    }
-
-    for key in record.keys():
-        if type(record[key]) == str:
-            if record[key].strip() == "":
-                record[key] = None
-
-    df_inc = linker.inference.find_matches_to_new_records(
-        [record], blocking_rules=[f"(true)"]
-    ).as_pandas_dataframe()
-    df_inc = df_inc.sort_values("match_weight", ascending=False)
-    recs = df_inc.to_dict(orient="records")
-
-    display(linker.visualisations.waterfall_chart(recs, filter_nulls=False))
-
 
 # %%
 linker.visualisations.match_weights_chart()
