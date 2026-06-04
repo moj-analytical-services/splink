@@ -1,5 +1,3 @@
-import pandas as pd
-
 from splink.internals.comparison_library import LevenshteinAtThresholds
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -13,7 +11,6 @@ def test_m_train():
         {"unique_id": 4, "name": "James", "cluster": 2},
         {"unique_id": 5, "name": "David", "cluster": 2},
     ]
-    df = pd.DataFrame(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -24,7 +21,7 @@ def test_m_train():
     # Train from label column
     db_api = DuckDBAPI()
 
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
     linker = Linker(df_sdf, settings)
 
     linker.training.estimate_m_from_label_column("cluster")
@@ -38,28 +35,26 @@ def test_m_train():
     assert cl_no.m_probability == 1 / 4
 
     # Train from pairwise labels
-    df["source_dataset"] = "fake_data_1"
-    df_l = df[["unique_id", "source_dataset", "cluster"]].copy()
-    df_r = df_l.copy()
-
-    df_labels = df_l.merge(df_r, on="cluster", suffixes=("_l", "_r"))
-    f1 = df_labels["unique_id_l"] < df_labels["unique_id_r"]
-    df_labels = df_labels[f1].copy()
-
-    for r in df_labels.iterrows():
-        val = r[1]
-        uid_l = val["unique_id_l"]
-        uid_r = val["unique_id_r"]
-        if val["cluster"] == 2:
-            val["unique_id_l"] = uid_r
-            val["unique_id_r"] = uid_l
+    labels = [
+        {
+            "cluster": row_l["cluster"],  # equal so just pick one
+            "source_dataset_l": "fake_data_1",
+            "source_dataset_r": "fake_data_1",
+            "unique_id_l": row_l["unique_id"],
+            "unique_id_r": row_r["unique_id"],
+        }
+        for row_l in data
+        for row_r in data
+        if row_l["cluster"] == row_r["cluster"]
+        and row_l["unique_id"] < row_r["unique_id"]
+    ]
 
     db_api = DuckDBAPI()
 
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
     linker_pairwise = Linker(df_sdf, settings)
 
-    db_api.register(df_labels, "labels")
+    db_api.register(labels, "labels")
     linker_pairwise.training.estimate_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 

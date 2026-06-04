@@ -19,3 +19,11 @@ typecheck-dev:
 
 check: format-check lint typecheck
 
+test:
+	uv run python -m pytest -vm "duckdb and not needs_pandas" tests/
+
+pg-start:
+	./scripts/postgres_docker/setup.sh
+
+pg-stop:
+	./scripts/postgres_docker/teardown.sh

@@ -1,6 +1,5 @@
 import logging
 
-import pandas as pd
 import pytest
 
 from .decorator import mark_with_dialects_excluding
@@ -9,16 +8,14 @@ from .decorator import mark_with_dialects_excluding
 @mark_with_dialects_excluding()
 def test_prob_rr_match_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 3, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 5, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 6, "first_name": "Jane", "surname": "Taylor"},
-        ]
-    )
+    data = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 3, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 5, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 6, "first_name": "Jane", "surname": "Taylor"},
+    ]
 
     settings = {
         "link_type": "dedupe_only",
@@ -32,7 +29,7 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration([data], settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -55,21 +52,17 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_prob_rr_match_link_only(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
+    ]
 
     settings = {
         "link_type": "link_only",
@@ -83,7 +76,7 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.linker_with_registration([df_1, df_2], settings)
+    linker = helper.linker_with_registration([data_1, data_2], settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -96,21 +89,17 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Tailor"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Tailor"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+    ]
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -121,7 +110,7 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = helper.linker_with_registration([df_1, df_2], settings)
+    linker = helper.linker_with_registration([data_1, data_2], settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -134,49 +123,42 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Hannah", "surname": "Jones"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Hannah", "surname": "Jones"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
+    ]
 
-    df_3 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "Graham", "surname": "Roberts"},
-            {"unique_id": 2, "first_name": "Graham", "surname": "Robinson"},
-            {"unique_id": 3, "first_name": "Mary", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "Graham", "surname": "Roberts"},
-            {"unique_id": 5, "first_name": "Sarah", "surname": "Thompson"},
-        ]
-    )
+    data_3 = [
+        {"unique_id": 1, "first_name": "Graham", "surname": "Roberts"},
+        {"unique_id": 2, "first_name": "Graham", "surname": "Robinson"},
+        {"unique_id": 3, "first_name": "Mary", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "Graham", "surname": "Roberts"},
+        {"unique_id": 5, "first_name": "Sarah", "surname": "Thompson"},
+    ]
 
-    df_4 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "Johnny", "surname": "Brown"},
-            {"unique_id": 2, "first_name": "Ben", "surname": "Davies"},
-            {"unique_id": 3, "first_name": "Felicity", "surname": "Wright"},
-            {"unique_id": 4, "first_name": "Kelly", "surname": "Evans"},
-            {"unique_id": 5, "first_name": "David", "surname": "Thomas"},
-            {"unique_id": 6, "first_name": "Bryan", "surname": "Wilson"},
-            {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
-        ]
+    data_4 = [
+        {"unique_id": 1, "first_name": "Johnny", "surname": "Brown"},
+        {"unique_id": 2, "first_name": "Ben", "surname": "Davies"},
+        {"unique_id": 3, "first_name": "Felicity", "surname": "Wright"},
+        {"unique_id": 4, "first_name": "Kelly", "surname": "Evans"},
+        {"unique_id": 5, "first_name": "David", "surname": "Thomas"},
+        {"unique_id": 6, "first_name": "Bryan", "surname": "Wilson"},
+        {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
+    ]
+    datas = list(
+        map(
+            lambda data: list(map(lambda row: {**row, "city": "Brighton"}, data)),
+            (data_1, data_2, data_3, data_4),
+        )
     )
-    (df_1, df_2, df_3, df_4) = list(
-        map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
-    )
-
-    dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
         "link_type": "link_only",
@@ -186,7 +168,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    linker = helper.linker_with_registration(dfs, settings)
+    linker = helper.linker_with_registration(datas, settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -197,7 +179,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     assert pytest.approx(prob) == 6 / 131
 
     # if we define all record pairs to be a match, then the probability should be 1
-    linker = helper.linker_with_registration(dfs, settings)
+    linker = helper.linker_with_registration(datas, settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -208,49 +190,42 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
 @mark_with_dialects_excluding()
 def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Hannah", "surname": "Jones"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Hannah", "surname": "Jones"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
+    ]
 
-    df_3 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "Graham", "surname": "Roberts"},
-            {"unique_id": 2, "first_name": "Graham", "surname": "Robinson"},
-            {"unique_id": 3, "first_name": "Mary", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "Graham", "surname": "Roberts"},
-            {"unique_id": 5, "first_name": "Sarah", "surname": "Thompson"},
-        ]
-    )
+    data_3 = [
+        {"unique_id": 1, "first_name": "Graham", "surname": "Roberts"},
+        {"unique_id": 2, "first_name": "Graham", "surname": "Robinson"},
+        {"unique_id": 3, "first_name": "Mary", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "Graham", "surname": "Roberts"},
+        {"unique_id": 5, "first_name": "Sarah", "surname": "Thompson"},
+    ]
 
-    df_4 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "Johnny", "surname": "Brown"},
-            {"unique_id": 2, "first_name": "Ben", "surname": "Davies"},
-            {"unique_id": 3, "first_name": "Felicity", "surname": "Wright"},
-            {"unique_id": 4, "first_name": "Kelly", "surname": "Evans"},
-            {"unique_id": 5, "first_name": "David", "surname": "Thomas"},
-            {"unique_id": 6, "first_name": "Bryan", "surname": "Wilson"},
-            {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
-        ]
+    data_4 = [
+        {"unique_id": 1, "first_name": "Johnny", "surname": "Brown"},
+        {"unique_id": 2, "first_name": "Ben", "surname": "Davies"},
+        {"unique_id": 3, "first_name": "Felicity", "surname": "Wright"},
+        {"unique_id": 4, "first_name": "Kelly", "surname": "Evans"},
+        {"unique_id": 5, "first_name": "David", "surname": "Thomas"},
+        {"unique_id": 6, "first_name": "Bryan", "surname": "Wilson"},
+        {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
+    ]
+    datas = list(
+        map(
+            lambda data: list(map(lambda row: {**row, "city": "Brighton"}, data)),
+            (data_1, data_2, data_3, data_4),
+        )
     )
-    (df_1, df_2, df_3, df_4) = list(
-        map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
-    )
-
-    dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -260,7 +235,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    linker = helper.linker_with_registration(dfs, settings)
+    linker = helper.linker_with_registration(datas, settings)
     linker.training.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -271,7 +246,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     # (3 + 4 + 5 + 7)(3 + 4 + 5 + 7 - 1)/2 = 171 comparisons
     assert pytest.approx(prob) == 10 / 171
 
-    linker = helper.linker_with_registration(dfs, settings)
+    linker = helper.linker_with_registration(datas, settings)
     linker.training.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -287,46 +262,44 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
         assert p <= 1
         assert p >= 0
 
-    df = pd.DataFrame(
-        [
-            {
-                "unique_id": 1,
-                "first_name": "John",
-                "surname": "Smith",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 2,
-                "first_name": "John",
-                "surname": "Williams",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 3,
-                "first_name": "John",
-                "surname": "Jones",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 4,
-                "first_name": "John",
-                "surname": "Davis",
-                "city": "Swansea",
-            },
-            {
-                "unique_id": 5,
-                "first_name": "John",
-                "surname": "Evans",
-                "city": "Swansea",
-            },
-            {
-                "unique_id": 6,
-                "first_name": "John",
-                "surname": "Wright",
-                "city": "Swansea",
-            },
-        ]
-    )
+    data = [
+        {
+            "unique_id": 1,
+            "first_name": "John",
+            "surname": "Smith",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 2,
+            "first_name": "John",
+            "surname": "Williams",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 3,
+            "first_name": "John",
+            "surname": "Jones",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 4,
+            "first_name": "John",
+            "surname": "Davis",
+            "city": "Swansea",
+        },
+        {
+            "unique_id": 5,
+            "first_name": "John",
+            "surname": "Evans",
+            "city": "Swansea",
+        },
+        {
+            "unique_id": 6,
+            "first_name": "John",
+            "surname": "Wright",
+            "city": "Swansea",
+        },
+    ]
 
     settings = {
         "link_type": "dedupe_only",
@@ -334,7 +307,7 @@ def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     }
 
     # Test dedupe only
-    linker = helper.linker_with_registration(df, settings)
+    linker = helper.linker_with_registration([data], settings)
     with pytest.raises(ValueError):
         # all comparisons matches using this rule, so we must have perfect recall
         # using recall = 80% is inconsistent, so should get an error

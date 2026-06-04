@@ -1,15 +1,12 @@
 import os
 from unittest.mock import create_autospec, patch
 
-import pandas as pd
 import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.duckdb.dataframe import DuckDBDataFrame
 from splink.internals.linker import Linker, SplinkDataFrame
 from tests.basic_settings import get_settings_dict
-
-df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
 def make_mock_execute(db_api):
@@ -36,9 +33,9 @@ def make_mock_execute(db_api):
     )
 
 
-def test_cache_id(tmp_path):
+def test_cache_id(tmp_path, fake_1000):
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, get_settings_dict())
 
@@ -48,7 +45,7 @@ def test_cache_id(tmp_path):
     linker.misc.save_model_to_json(path, overwrite=True)
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker_2 = Linker(df_sdf, path)
 
@@ -58,18 +55,18 @@ def test_cache_id(tmp_path):
     settings = get_settings_dict()
     settings["linker_uid"] = random_uid
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker_uid = linker._cache_uid
     assert linker_uid == random_uid
 
 
-def test_cache_only_splink_dataframes():
+def test_cache_only_splink_dataframes(fake_1000):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker._intermediate_table_cache["new_table"] = DuckDBDataFrame(
@@ -84,11 +81,11 @@ def test_cache_only_splink_dataframes():
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_access_compute_tf_table(debug_mode):
+def test_cache_access_compute_tf_table(debug_mode, fake_1000):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker._debug_mode = debug_mode
@@ -104,11 +101,11 @@ def test_cache_access_compute_tf_table(debug_mode):
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_invalidate_tf_tables(debug_mode):
+def test_cache_invalidate_tf_tables(debug_mode, fake_1000):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker._debug_mode = debug_mode
@@ -130,11 +127,11 @@ def test_cache_invalidate_tf_tables(debug_mode):
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_invalidates_with_new_linker_for_tf_tables(debug_mode):
+def test_cache_invalidates_with_new_linker_for_tf_tables(debug_mode, fake_1000):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker._debug_mode = debug_mode
@@ -149,7 +146,7 @@ def test_cache_invalidates_with_new_linker_for_tf_tables(debug_mode):
         mockexecute_sql_pipeline.assert_not_called()
 
     db_api = DuckDBAPI()
-    df_sdf_new = db_api.register(df)
+    df_sdf_new = db_api.register(fake_1000)
 
     new_linker = Linker(df_sdf_new, settings)
     new_linker._debug_mode = debug_mode
@@ -171,11 +168,11 @@ def test_cache_invalidates_with_new_linker_for_tf_tables(debug_mode):
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
-def test_cache_register_compute_tf_table(debug_mode):
+def test_cache_register_compute_tf_table(debug_mode, fake_1000):
     settings = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
     linker._debug_mode = debug_mode
@@ -183,6 +180,6 @@ def test_cache_register_compute_tf_table(debug_mode):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-        linker.table_management.register_term_frequency_lookup(df, "first_name")
+        linker.table_management.register_term_frequency_lookup(fake_1000, "first_name")
         linker.table_management.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_not_called()

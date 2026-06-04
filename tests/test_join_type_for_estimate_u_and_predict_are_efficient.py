@@ -2,8 +2,6 @@ import logging
 import re
 from typing import List
 
-import pandas as pd
-
 import splink.internals.comparison_library as cl
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -109,8 +107,6 @@ def _assert_join_logged(log_output: str, left_table: str, right_table: str) -> N
 
 
 def test_dedupe_only():
-    df_one = pd.DataFrame(data_one)
-
     log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
@@ -131,7 +127,7 @@ def test_dedupe_only():
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(df_one)
+    df_one_sdf = db_api.register(data_one)
     linker = Linker(
         df_one_sdf,
         settings,
@@ -155,10 +151,7 @@ def test_dedupe_only():
     _assert_self_join_logged(all_log_messages, "__splink__df_concat")
 
 
-def test_link_and_dedupe():
-    df_one = pd.DataFrame(data_one)
-    df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_link_and_dedupe(fake_1000):
     log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
@@ -178,8 +171,8 @@ def test_link_and_dedupe():
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
+    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
@@ -204,10 +197,7 @@ def test_link_and_dedupe():
     _assert_self_join_logged(all_log_messages, "__splink__df_concat")
 
 
-def test_link_only_two():
-    df_one = pd.DataFrame(data_one)
-    df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_link_only_two(fake_1000):
     log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
@@ -228,8 +218,8 @@ def test_link_only_two():
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
+    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
@@ -282,11 +272,7 @@ def test_link_only_two():
     assert "select max(" not in all_log_messages
 
 
-def test_link_only_three():
-    df_one = pd.DataFrame(data_one)
-    df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
-    df_three = pd.DataFrame(data_three)
-
+def test_link_only_three(fake_1000):
     log_list: List[str] = []
     handler = ListHandler(log_list)
     logger.addHandler(handler)
@@ -307,9 +293,9 @@ def test_link_only_three():
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(df_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(df_two, source_dataset_name="df_two")
-    df_three_sdf = db_api.register(df_three, source_dataset_name="df_three")
+    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
+    df_three_sdf = db_api.register(data_three, source_dataset_name="df_three")
     linker = Linker(
         [df_one_sdf, df_two_sdf, df_three_sdf],
         settings,

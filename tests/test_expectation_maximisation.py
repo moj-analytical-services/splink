@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 
 import splink.comparison_level_library as cll
@@ -40,7 +39,6 @@ def test_clear_error_when_empty_block():
         {"unique_id": 5, "name": "Eve", "surname": "Pope"},
         {"unique_id": 6, "name": "Amanda", "surname": "Anderson"},
     ]
-    df = pd.DataFrame(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -52,7 +50,7 @@ def test_clear_error_when_empty_block():
     }
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     linker = Linker(df_sdf, settings)
     linker._debug_mode = True
@@ -67,9 +65,7 @@ def test_clear_error_when_empty_block():
         )
 
 
-def test_estimate_without_term_frequencies():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_estimate_without_term_frequencies(fake_1000):
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -80,12 +76,12 @@ def test_estimate_without_term_frequencies():
     }
 
     db_api_1 = DuckDBAPI()
-    df_sdf_1 = db_api_1.register(df)
+    df_sdf_1 = db_api_1.register(fake_1000)
 
     linker_0 = Linker(df_sdf_1, settings)
 
     db_api_2 = DuckDBAPI()
-    df_sdf_2 = db_api_2.register(df)
+    df_sdf_2 = db_api_2.register(fake_1000)
 
     linker_1 = Linker(df_sdf_2, settings)
 
@@ -98,45 +94,54 @@ def test_estimate_without_term_frequencies():
         estimate_without_term_frequencies=False,
     )
 
-    actual_prop_history = pd.DataFrame(session_fast._lambda_history_records)
-    expected_prop_history = pd.DataFrame(session_slow._lambda_history_records)
-
-    compare = expected_prop_history.merge(
-        actual_prop_history,
-        left_on="iteration",
-        right_on="iteration",
-        suffixes=["_e", "_a"],
+    actual_prop_history = db_api_1.register(session_fast._lambda_history_records)
+    expected_prop_history = db_api_1.register(session_slow._lambda_history_records)
+    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    expecteds = sorted(
+        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["probability_two_random_records_match_e"] == pytest.approx(
-            r["probability_two_random_records_match_a"]
+    for expected, actual in zip(expecteds, actuals):
+        assert expected["probability_two_random_records_match"] == pytest.approx(
+            actual["probability_two_random_records_match"]
         )
 
-    actual_m_u_history = pd.DataFrame(session_fast._iteration_history_records)
-    f1 = actual_m_u_history["comparison_name"] == "first_name"
-    f2 = actual_m_u_history["comparison_vector_value"] == 1
-    actual_first_name_level_1_m = actual_m_u_history[f1 & f2]
-
-    expected_m_u_history = pd.DataFrame(session_slow._iteration_history_records)
-    f1 = expected_m_u_history["comparison_name"] == "first_name"
-    f2 = expected_m_u_history["comparison_vector_value"] == 1
-    expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
-
-    compare = expected_first_name_level_1_m.merge(
-        actual_first_name_level_1_m,
-        left_on="iteration",
-        right_on="iteration",
-        suffixes=("_e", "_a"),
+    actual_m_u_history = db_api_2.register(
+        list(map(lambda r: r.as_dict(), session_fast._iteration_history_records))
+    )
+    actual_first_name_level_1_m = actual_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE comparison_name = 'first_name'
+            AND comparison_vector_value = 1
+        """
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["m_probability_e"] == pytest.approx(r["m_probability_a"])
+    expected_m_u_history = db_api_2.register(
+        list(map(lambda r: r.as_dict(), session_slow._iteration_history_records))
+    )
+    expected_first_name_level_1_m = expected_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE comparison_name = 'first_name'
+            AND comparison_vector_value = 1
+        """
+    )
+
+    actuals = sorted(
+        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+    expecteds = sorted(
+        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+
+    for expected, actual in zip(expecteds, actuals):
+        assert actual["m_probability"] == pytest.approx(expected["m_probability"])
 
 
-def test_fix_probabilities():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_fix_probabilities(fake_1000):
     first_name_comparison = cl.CustomComparison(
         comparison_levels=[
             cll.NullLevel("first_name"),
@@ -176,7 +181,7 @@ def test_fix_probabilities():
     )
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings)
 

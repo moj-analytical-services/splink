@@ -1,5 +1,3 @@
-import pandas as pd
-
 from splink.internals.cluster_studio import _get_lowest_density_clusters
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
@@ -8,14 +6,13 @@ from splink.internals.linker import Linker
 def test_density_sample():
     # Simple df and settings for linker
     person_ids = [i + 1 for i in range(5)]
-    df = pd.DataFrame({"person_id": person_ids})
 
     settings = {
         "link_type": "dedupe_only",
         "unique_id_column_name": "person_id",
     }
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register({"person_id": person_ids})
     linker = Linker(df_sdf, settings)
 
     # Dummy cluster metrics table
@@ -26,14 +23,12 @@ def test_density_sample():
         (n_edges * 2) / (n_nodes * (n_nodes - 1))
         for n_nodes, n_edges in zip(n_nodes, n_edges)
     ]
-    pd_metrics = pd.DataFrame(
-        {
-            "cluster_id": cluster,
-            "n_nodes": n_nodes,
-            "n_edges": n_edges,
-            "density": density,
-        }
-    )
+    pd_metrics = {
+        "cluster_id": cluster,
+        "n_nodes": n_nodes,
+        "n_edges": n_edges,
+        "density": density,
+    }
 
     # Convert to Splink dataframe
     df_cluster_metrics = linker.table_management.register_table(

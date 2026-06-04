@@ -48,4 +48,4 @@ jobs:
       - name: Run tests
         id: run_tests
         run: |
-          uv run python -m pytest -v --durations=0 -m "duckdb_only or core" tests/
+          uv run python -m pytest -v --durations=0 -m "duckdb and not needs_pandas" tests/
