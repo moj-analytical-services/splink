@@ -812,10 +812,11 @@ class LinkerInference:
         If your inputs contain multiple rows, scores for the cartesian product of
         the two inputs will be returned.
 
-        If your inputs contain hardcoded term frequency columns (e.g.
-        a tf_first_name column), then these values will be used instead of any
-        provided term frequency lookup tables. or term frequency values derived
-        from the input data.
+        The usual usage is to provide any required term frequency values directly
+        in the input records as hardcoded term frequency columns (e.g.
+        a tf_first_name column). If these values are not provided, Splink falls
+        back to any registered term frequency lookup tables, or term frequency values
+        derived from the input data.
 
         Args:
             record_1 (dict): dictionary representing the first record.  Columns names
@@ -831,8 +832,8 @@ class LinkerInference:
             ```py
             linker = Linker(df, "saved_settings.json", db_api=db_api)
 
-            # You should load or pre-compute tf tables for any tables with
-            # term frequency adjustments
+            # If you do not provide tf values in the records, you should load or
+            # pre-compute tf tables for any columns with term frequency adjustments
             linker.table_management.compute_tf_table("first_name")
             # OR
             linker.table_management.register_term_frequency_lookup(df, "first_name")
@@ -842,7 +843,8 @@ class LinkerInference:
                 'surname': "Smith",
                 'dob': "1971-05-24",
                 'city': "London",
-                'email': "john@smith.net"
+                'email': "john@smith.net",
+                'tf_first_name': 0.001,
                 }
 
             record_2 = {'unique_id': 1,
@@ -850,7 +852,8 @@ class LinkerInference:
                 'surname': "Smith",
                 'dob': "1971-05-23",
                 'city': "London",
-                'email': "john@smith.net"
+                'email': "john@smith.net",
+                'tf_first_name': 0.0005,
                 }
             df = linker.inference.compare_two_records(record_1, record_2)
 
