@@ -49,9 +49,11 @@ def generate_labelling_tool_comparisons(
     pipeline.enqueue_sql(sql, "__splink__df_labelling_tool_record")
     record = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    # Compare the record of interest against every input record (full block)
+    # Compare every input record against the record of interest (full block).
+    # The input records are passed first so they appear on the "_l" side of the
+    # comparison, which is the side the labelling tool renders as the source data.
     comparisons = linker.inference.compare_two_records(
-        record.physical_name, all_records.physical_name
+        all_records.physical_name, record.physical_name
     )
 
     # Keep only matches scoring above the threshold
