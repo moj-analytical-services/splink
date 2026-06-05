@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import (
     Any,
     Dict,
@@ -52,6 +53,8 @@ from splink.internals.vertically_concatenate import (
 )
 
 logger = logging.getLogger(__name__)
+
+_MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING = 1_000
 
 
 def _as_blocking_rule(
@@ -537,6 +540,22 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     counts_data = sorted(counts_data, key=lambda r: int(r["match_key"]))
     cumulative = 0
     for record in counts_data:
+        sampled_row_count = record["row_count"]
+        if (
+            probe_proportion < 1.0
+            and sampled_row_count < _MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING
+        ):
+            warnings.warn(
+                "The sampled blocking analysis estimate for blocking rule "
+                f"{record['blocking_rule']!r} is based on "
+                f"{sampled_row_count:,} sampled pairwise comparisons. "
+                "This is below the recommended minimum of "
+                f"{_MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING:,}, so the estimate "
+                "may be unstable. Increase probe_proportion for a more stable "
+                "estimate.",
+                UserWarning,
+                stacklevel=2,
+            )
         estimated = int(round(record["row_count"] * scale))
         record["row_count"] = estimated
         cumulative += estimated

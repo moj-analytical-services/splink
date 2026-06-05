@@ -1,5 +1,6 @@
 import pandas as pd
 import pyarrow as pa
+import pytest
 
 import splink.blocking_rule_library as brl
 from splink.blocking_analysis import (
@@ -871,6 +872,22 @@ def test_count_comparisons_estimate_mode():
     assert 0.5 * exact_post <= est_post <= 2.0 * exact_post
 
 
+def test_count_comparisons_warns_when_sampled_pairs_are_low():
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(_wide_block_df(n_per_group=40))
+
+    with pytest.warns(
+        UserWarning,
+        match="below the recommended minimum of 1,000",
+    ):
+        count_comparisons_from_blocking_rules(
+            df_sdf,
+            blocking_rules=block_on("grp"),
+            link_type="dedupe_only",
+            probe_proportion=0.1,
+        )
+
+
 def test_cumulative_data_estimate_mode():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(_wide_block_df())
@@ -933,10 +950,14 @@ def test_linker_blocking_analysis_uses_settings_defaults():
     linker.blocking_analysis.chart_comparisons_from_blocking_rules()
 
     # Estimate mode is reachable via the linker too
-    est = linker.blocking_analysis.count_comparisons_from_blocking_rules(
-        block_on("first_name"),
-        probe_proportion=0.5,
-    )
+    with pytest.warns(
+        UserWarning,
+        match="below the recommended minimum of 1,000",
+    ):
+        est = linker.blocking_analysis.count_comparisons_from_blocking_rules(
+            block_on("first_name"),
+            probe_proportion=0.5,
+        )
     assert est[0]["probe_proportion"] == 0.5
 
     # n_largest_blocks via the linker
