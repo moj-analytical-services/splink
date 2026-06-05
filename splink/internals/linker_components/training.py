@@ -101,7 +101,6 @@ class LinkerTraining:
             blocking_rules=blocking_rules,
             link_type=self._linker._settings_obj._link_type,
             db_api=self._linker._db_api,
-            max_rows_limit=max_rows_limit,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
         )

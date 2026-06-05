@@ -1,10 +1,10 @@
+import pandas as pd
 import pyarrow as pa
 
 import splink.blocking_rule_library as brl
 from splink.blocking_analysis import (
-    count_comparisons_from_blocking_rule,
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
-    cumulative_comparisons_to_be_scored_from_blocking_rules_data,
+    chart_comparisons_from_blocking_rules,
+    count_comparisons_from_blocking_rules,
     n_largest_blocks,
 )
 from splink.internals.blocking import BlockingRule
@@ -48,67 +48,56 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
         "unique_id_column_name": "unique_id",
     }
 
-    res_dict = count_comparisons_from_blocking_rule(
-        df1_sdf, blocking_rule="1=1", **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(df1_sdf, blocking_rules="1=1", **args)[
+        0
+    ]["row_count"]
     assert res == 4 * 3 / 2
 
-    res_dict = count_comparisons_from_blocking_rule(
-        df1_sdf, blocking_rule=block_on("first_name"), **args
-    )
-
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        df1_sdf, blocking_rules=block_on("first_name"), **args
+    )[0]["row_count"]
     assert res == 1
 
     args["link_type"] = "link_only"
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf], blocking_rule="1=1", **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
-
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf], blocking_rules="1=1", **args
+    )[0]["row_count"]
     assert res == 4 * 3
 
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf], blocking_rule=block_on("surname"), **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf], blocking_rules=block_on("surname"), **args
+    )[0]["row_count"]
     assert res == 1
 
-    res_dict = count_comparisons_from_blocking_rule(
+    res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf],
-        blocking_rule=block_on("first_name"),
+        blocking_rules=block_on("first_name"),
         **args,
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    )[0]["row_count"]
     assert res == 3
 
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf, df3_sdf], blocking_rule="1=1", **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf, df3_sdf], blocking_rules="1=1", **args
+    )[0]["row_count"]
     assert res == 4 * 3 + 4 * 2 + 2 * 3
 
     args["link_type"] = "link_and_dedupe"
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf], blocking_rule="1=1", **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf], blocking_rules="1=1", **args
+    )[0]["row_count"]
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
     assert res == expected
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf], blocking_rule=rule, **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf], blocking_rules=rule, **args
+    )[0]["row_count"]
     assert res == 1
 
     rule = block_on("first_name", "surname")
-    res_dict = count_comparisons_from_blocking_rule(
-        [df1_sdf, df2_sdf], blocking_rule=rule, **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df1_sdf, df2_sdf], blocking_rules=rule, **args
+    )[0]["row_count"]
     assert res == 1
 
 
@@ -139,10 +128,9 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
-    res_dict = count_comparisons_from_blocking_rule(
-        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
+    )[0]["row_count"]
     assert res == 6
 
     args = {
@@ -151,10 +139,9 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
-    res_dict = count_comparisons_from_blocking_rule(
-        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
-    )
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    res = count_comparisons_from_blocking_rules(
+        [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
+    )[0]["row_count"]
     assert res == 3 + 6 + 2
 
 
@@ -204,9 +191,9 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
         "arrays_to_explode": ["postcode", "age"],
     }
 
-    res_dict = count_comparisons_from_blocking_rule(
-        [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
-    )
+    res = count_comparisons_from_blocking_rules(
+        [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
+    )[0]["row_count"]
 
     sql = f"""
     select count(*) as count
@@ -221,15 +208,11 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
 
     c = db_api.duckdb_con.sql(sql).fetchone()[0]
 
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
-
     assert res == c
 
 
 def validate_blocking_output(comparison_count_args, expected_out):
-    records = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-        **comparison_count_args
-    )
+    records = count_comparisons_from_blocking_rules(**comparison_count_args)
 
     assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
 
@@ -265,7 +248,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
     df_1_sdf = db_api.register(data_1)
     df_2_sdf = db_api.register(data_2)
 
-    r1 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+    r1 = count_comparisons_from_blocking_rules(
         df_concat_sdf,
         blocking_rules=[block_on("first_name")],
         unique_id_column_name="unique_id",
@@ -273,14 +256,18 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         link_type="link_only",
     )
 
-    r2 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+    r2 = count_comparisons_from_blocking_rules(
         [df_1_sdf, df_2_sdf],
         blocking_rules=[block_on("first_name")],
         unique_id_column_name="unique_id",
         link_type="link_only",
         source_dataset_column_name="source_dataset",
     )
-    assert r1 == r2
+    # The descriptive fields reference the source dataset column name, which
+    # differs between the two calls, so compare the computed counts only.
+    assert [r["row_count"] for r in r1] == [r["row_count"] for r in r2]
+    assert [r["cumulative_rows"] for r in r1] == [r["cumulative_rows"] for r in r2]
+    assert r1[0]["cartesian"] == r2[0]["cartesian"]
 
     # split table into 3 with alternating rows
     df_1 = fake_1000.take(list(range(0, 1000, 3)))
@@ -308,62 +295,40 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
     df_concat_2_sdf = db_api.register(df_concat_2)
     df_concat_3_sdf = db_api.register(df_concat_3)
 
-    count_comparisons_from_blocking_rule(
+    r1 = count_comparisons_from_blocking_rules(
         df_concat_3_sdf,
-        blocking_rule=block_on("first_name"),
-        link_type="dedupe_only",
-        unique_id_column_name="unique_id",
-    )
-
-    r1 = count_comparisons_from_blocking_rule(
-        df_concat_3_sdf,
-        blocking_rule=block_on("first_name"),
+        blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
     )
 
-    r2 = count_comparisons_from_blocking_rule(
+    r2 = count_comparisons_from_blocking_rules(
         [df_1_no_sds_sdf, df_2_no_sds_sdf, df_3_no_sds_sdf],
-        blocking_rule=block_on("first_name"),
+        blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
     )
     # Both of the above use the vertical concat of the two datasets so should
     # be equivalent
-    keys_to_check = [
-        "number_of_comparisons_generated_pre_filter_conditions",
-        "number_of_comparisons_to_be_scored_post_filter_conditions",
-    ]
-    for k in keys_to_check:
-        assert r1[k] == r2[k]
+    assert r1[0]["row_count"] == r2[0]["row_count"]
 
-    r1 = count_comparisons_from_blocking_rule(
+    r1 = count_comparisons_from_blocking_rules(
         df_concat_2_sdf,
-        blocking_rule=block_on("first_name"),
+        blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
     )
 
-    r2 = count_comparisons_from_blocking_rule(
+    r2 = count_comparisons_from_blocking_rules(
         [df_1_no_sds_sdf, df_2_no_sds_sdf],
-        blocking_rule=block_on("first_name"),
+        blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
     )
-    # There's an optimisation in the case of two input dataframes only
-    # so these are not the same
-    assert (
-        r1["number_of_comparisons_generated_pre_filter_conditions"]
-        > r2["number_of_comparisons_generated_pre_filter_conditions"]
-    )
-
-    # But after filters, should be the same
-    assert (
-        r1["number_of_comparisons_to_be_scored_post_filter_conditions"]
-        == r2["number_of_comparisons_to_be_scored_post_filter_conditions"]
-    )
+    # After filters, the number of comparisons should be the same
+    assert r1[0]["row_count"] == r2[0]["row_count"]
 
 
 @mark_with_dialects_excluding()
@@ -549,164 +514,6 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
 
-def test_analyse_blocking_fast_methodology():
-    data_1 = [
-        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-        {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-        {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-        {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
-        {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
-    ]
-
-    data_2 = [
-        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-        {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-        {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-    ]
-
-    db_api = DuckDBAPI()
-    df_1_sdf = db_api.register(data_1)
-    df_2_sdf = db_api.register(data_2)
-
-    args = {
-        "splink_dataframe_or_dataframes": df_1_sdf,
-        "link_type": "dedupe_only",
-        "unique_id_column_name": "unique_id",
-        "compute_post_filter_count": False,
-    }
-
-    args["blocking_rule"] = "1=1"
-
-    res_dict = count_comparisons_from_blocking_rule(**args)
-
-    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-
-    assert res == 5 * 5
-
-    args["blocking_rule"] = "l.first_name = r.first_name OR l.surname = r.surname"
-    res_dict = count_comparisons_from_blocking_rule(**args)
-    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-    assert res == 5 * 5
-
-    #     res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
-    #         "l.first_name = r.first_name AND levenshtein(l.surname, r.surname) <2",
-    #     )
-    #     assert res == 3 * 3 + 1 * 1 + 1 * 1
-
-    args["blocking_rule"] = """l.first_name = r.first_name
-                                AND levenshtein(l.surname, r.surname) <2"""
-    res_dict = count_comparisons_from_blocking_rule(**args)
-    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-    assert res == 3 * 3 + 1 * 1 + 1 * 1
-
-    args["splink_dataframe_or_dataframes"] = [df_1_sdf, df_2_sdf]
-    args["link_type"] = "link_and_dedupe"
-    args["blocking_rule"] = block_on("first_name")
-
-    res_dict = count_comparisons_from_blocking_rule(**args)
-    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-
-    assert res == 6 * 6 + 1 * 1 + 1 * 1
-
-    args["link_type"] = "link_only"
-    args["blocking_rule"] = block_on("first_name")
-
-    res_dict = count_comparisons_from_blocking_rule(**args)
-    res = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-    assert res == 3 * 3
-
-
-@mark_with_dialects_including("duckdb")
-def test_analyse_blocking_fast_methodology_edge_cases(fake_1000):
-    # Test a series of blocking rules with different edge cases.
-    # Assert that the naive methodology gives the same result as the new methodlogy
-
-    blocking_rules = [
-        "l.first_name = r.first_name",
-        "l.first_name = r.first_name AND l.surname = r.surname",
-        "substr(l.first_name,2,3) = substr(r.first_name,3,4)",
-        "substr(l.first_name,1,1) = substr(r.surname,1,1) and l.dob = r.dob",
-        (
-            "l.first_name = r.first_name and "
-            "levenshtein(CAST(l.dob AS VARCHAR), CAST(r.dob AS VARCHAR)) > -1"
-        ),
-        "l.dob = r.dob and substr(l.first_name,2,3) = substr(r.first_name,3,4)",
-    ]
-
-    sql_template = """
-    select count(*)
-    from {{this}} as l
-    inner join {{this}} as r
-    on {blocking_rule}
-    """
-
-    db_api = DuckDBAPI()
-    df_sdf = db_api.register(fake_1000)
-
-    results = {}
-    for br in blocking_rules:
-        sql = sql_template.format(blocking_rule=br)
-        res = df_sdf.query_sql(sql).as_duckdbpyrelation().fetchall()[0][0]
-        results[br] = {"count_from_join_dedupe_only": res}
-
-    for br in blocking_rules:
-        res_dict = count_comparisons_from_blocking_rule(
-            df_sdf,
-            blocking_rule=br,
-            link_type="dedupe_only",
-            unique_id_column_name="unique_id",
-        )
-        c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-
-        results[br]["count_from_efficient_fn_dedupe_only"] = c
-
-    for br in blocking_rules:
-        assert (
-            results[br]["count_from_join_dedupe_only"]
-            == results[br]["count_from_efficient_fn_dedupe_only"]
-        )
-
-    # Link only
-
-    df_l = fake_1000.take(
-        list(range(0, 1000, 2))
-    )  # even-indexed rows (starting from 0)
-    df_r = fake_1000.take(list(range(1, 1000, 2)))  # odd-indexed rows (starting from 1)
-
-    df_l_sdf = db_api.register(df_l)
-    df_r_sdf = db_api.register(df_r)
-
-    sql_template = f"""
-    select count(*)
-    from {df_l_sdf.physical_name} as l
-    inner join {df_r_sdf.physical_name} as r
-    on {{blocking_rule}}
-    """
-
-    results = {}
-    for br in blocking_rules:
-        sql = sql_template.format(blocking_rule=br)
-        res = df_sdf.query_sql(sql).as_duckdbpyrelation().fetchall()[0][0]
-        results[br] = {"count_from_join_link_only": res}
-
-    for br in blocking_rules:
-        res_dict = count_comparisons_from_blocking_rule(
-            [df_l_sdf, df_r_sdf],
-            blocking_rule=br,
-            link_type="link_only",
-            unique_id_column_name="unique_id",
-        )
-        c = res_dict["number_of_comparisons_generated_pre_filter_conditions"]
-
-        results[br]["count_from_efficient_fn_link_only"] = c
-
-    for br in blocking_rules:
-        assert (
-            results[br]["count_from_join_link_only"]
-            == results[br]["count_from_efficient_fn_link_only"]
-        )
-
-
 def test_blocking_rule_accepts_different_dialects():
     br = "l.first_name = r.first_name"
     br = BlockingRule(br, sql_dialect_str="spark")
@@ -724,7 +531,7 @@ def test_chart(test_helpers, dialect, fake_1000):
     db_api = helper.db_api()
 
     df_sdf = db_api.register(fake_1000)
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    chart_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=[block_on("first_name"), "l.surname = r.surname"],
         link_type="dedupe_only",
@@ -999,28 +806,27 @@ def test_blocking_rule_parentheses_equivalence():
     """
 
     # Get results for each variation
-    result_brl = count_comparisons_from_blocking_rule(
+    result_brl = count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule=br_with_brl,
+        blocking_rules=br_with_brl,
         link_type="dedupe_only",
     )
 
-    result_with_parens = count_comparisons_from_blocking_rule(
+    result_with_parens = count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule=br_with_parens,
+        blocking_rules=br_with_parens,
         link_type="dedupe_only",
     )
 
-    result_without_parens = count_comparisons_from_blocking_rule(
+    result_without_parens = count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule=br_without_parens,
+        blocking_rules=br_without_parens,
         link_type="dedupe_only",
     )
 
     # Check specific values
     for result in [result_brl, result_with_parens, result_without_parens]:
-        assert result["number_of_comparisons_generated_pre_filter_conditions"] == 6
-        assert result["number_of_comparisons_to_be_scored_post_filter_conditions"] == 1
+        assert result[0]["row_count"] == 1
 
 
 def _wide_block_df(n_per_group=120):
@@ -1040,36 +846,27 @@ def test_count_comparisons_estimate_mode():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(_wide_block_df())
 
-    exact = count_comparisons_from_blocking_rule(
+    exact = count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule=block_on("grp"),
+        blocking_rules=block_on("grp"),
         link_type="dedupe_only",
-    )
-    estimate = count_comparisons_from_blocking_rule(
+    )[0]
+    estimate = count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule=block_on("grp"),
+        blocking_rules=block_on("grp"),
         link_type="dedupe_only",
-        count_method="estimate",
         probe_proportion=0.3,
-    )
-
-    # Pre-filter count is always exact
-    assert (
-        estimate["number_of_comparisons_generated_pre_filter_conditions"]
-        == exact["number_of_comparisons_generated_pre_filter_conditions"]
-    )
+    )[0]
 
     # Metadata signalling the approximation
-    assert exact["count_method"] == "exact"
-    assert exact["probe_proportion"] is None
-    assert exact["actual_probe_fraction"] is None
-    assert estimate["count_method"] == "estimate"
+    assert exact["probe_proportion"] == 1.0
+    assert exact["actual_probe_fraction"] == 1.0
     assert estimate["probe_proportion"] == 0.3
     assert 0 < estimate["actual_probe_fraction"] <= 1
 
-    # The estimated post-filter count is numeric and in the right ballpark
-    exact_post = exact["number_of_comparisons_to_be_scored_post_filter_conditions"]
-    est_post = estimate["number_of_comparisons_to_be_scored_post_filter_conditions"]
+    # The estimated count is numeric and in the right ballpark
+    exact_post = exact["row_count"]
+    est_post = estimate["row_count"]
     assert isinstance(est_post, (int, float))
     assert 0.5 * exact_post <= est_post <= 2.0 * exact_post
 
@@ -1080,21 +877,20 @@ def test_cumulative_data_estimate_mode():
 
     blocking_rules = [block_on("grp")]
 
-    exact = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+    exact = count_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=blocking_rules,
         link_type="dedupe_only",
     )
-    estimate = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
+    estimate = count_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=blocking_rules,
         link_type="dedupe_only",
-        count_method="estimate",
         probe_proportion=0.3,
     )
 
-    assert exact[0]["count_method"] == "exact"
-    assert estimate[0]["count_method"] == "estimate"
+    assert exact[0]["probe_proportion"] == 1.0
+    assert estimate[0]["probe_proportion"] == 0.3
     # cartesian is unaffected by sampling
     assert estimate[0]["cartesian"] == exact[0]["cartesian"]
 
@@ -1122,27 +918,26 @@ def test_linker_blocking_analysis_uses_settings_defaults():
     }
     linker = Linker(df_sdf, settings)
 
-    # count_comparisons_from_blocking_rule via the linker
-    res = linker.blocking_analysis.count_comparisons_from_blocking_rule(
+    # count_comparisons_from_blocking_rules via the linker
+    res = linker.blocking_analysis.count_comparisons_from_blocking_rules(
         block_on("first_name")
     )
-    assert res["count_method"] == "exact"
-    assert res["number_of_comparisons_generated_pre_filter_conditions"] > 0
+    assert res[0]["probe_proportion"] == 1.0
+    assert res[0]["row_count"] > 0
 
-    # Cumulative data, defaulting blocking_rules to those in the settings
-    records = linker.blocking_analysis.cumulative_comparisons_to_be_scored_from_blocking_rules_data()
+    # Defaulting blocking_rules to those in the settings
+    records = linker.blocking_analysis.count_comparisons_from_blocking_rules()
     assert len(records) == 2
 
     # Chart, defaulting blocking_rules to those in the settings
-    linker.blocking_analysis.cumulative_comparisons_to_be_scored_from_blocking_rules_chart()
+    linker.blocking_analysis.chart_comparisons_from_blocking_rules()
 
     # Estimate mode is reachable via the linker too
-    est = linker.blocking_analysis.count_comparisons_from_blocking_rule(
+    est = linker.blocking_analysis.count_comparisons_from_blocking_rules(
         block_on("first_name"),
-        count_method="estimate",
         probe_proportion=0.5,
     )
-    assert est["count_method"] == "estimate"
+    assert est[0]["probe_proportion"] == 0.5
 
     # n_largest_blocks via the linker
     n_largest = linker.blocking_analysis.n_largest_blocks(
