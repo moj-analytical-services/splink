@@ -1,7 +1,5 @@
 import os
 
-import pandas as pd
-
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker
 from splink.internals.comparison_vector_distribution import (
@@ -17,12 +15,11 @@ from .decorator import mark_with_dialects_including
 
 
 @mark_with_dialects_including("duckdb")
-def test_comparison_viewer_dashboard(tmp_path):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+def test_comparison_viewer_dashboard(tmp_path, fake_1000):
     settings_dict = get_settings_dict()
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(
         df_sdf,
@@ -44,19 +41,17 @@ def test_comparison_viewer_dashboard(tmp_path):
 def test_comparison_viewer_table():
     # contrived input data to get 10 name agreements
     # and 5 name disagreements.
-    df = pd.DataFrame(
-        {
-            "unique_id": [1, 2, 3, 4, 5, 6],
-            "first_name": [
-                "JOHN",
-                "JOHN",
-                "JOHN",
-                "JOHN",
-                "JOHN",
-                "HENRY",
-            ],
-        }
-    )
+    data = {
+        "unique_id": [1, 2, 3, 4, 5, 6],
+        "first_name": [
+            "JOHN",
+            "JOHN",
+            "JOHN",
+            "JOHN",
+            "JOHN",
+            "HENRY",
+        ],
+    }
 
     settings_dict = {
         "link_type": "dedupe_only",
@@ -71,7 +66,7 @@ def test_comparison_viewer_table():
     }
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     linker = Linker(
         df_sdf,
@@ -92,20 +87,28 @@ def test_comparison_viewer_table():
     pipeline.enqueue_list_of_sqls(sqls)
 
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    result = df.as_pandas_dataframe()[["gamma_first_name", "count"]]
-    result = result.value_counts().reset_index(name="value_count")
-    result.sort_values(by=["gamma_first_name"], inplace=True)
-    result.reset_index(drop=True, inplace=True)
+    result = df.query_sql(
+        """
+        SELECT
+            gamma_first_name,
+            count,
+            count(*) AS value_count
+        FROM
+            {this}
+        GROUP BY
+            gamma_first_name, count
+        ORDER BY
+            gamma_first_name
+        """
+    ).as_dict()
 
-    correct_result = pd.DataFrame(
-        {
-            "gamma_first_name": [0, 1],
-            "count": [5, 10],
-            "value_count": [4, 4],
-        }
-    )
+    correct_result = {
+        "gamma_first_name": [0, 1],
+        "count": [5, 10],
+        "value_count": [4, 4],
+    }
 
-    pd.testing.assert_frame_equal(result, correct_result, check_dtype=False)
+    assert result == correct_result
 
     # now test with a higher minimum
 
@@ -121,15 +124,25 @@ def test_comparison_viewer_table():
     pipeline.enqueue_list_of_sqls(sqls)
 
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    result = df.as_pandas_dataframe()[["gamma_first_name", "count"]]
-    result = result.value_counts().reset_index(name="value_count")
+    result = df.query_sql(
+        """
+        SELECT
+            gamma_first_name,
+            count,
+            count(*) AS value_count
+        FROM
+            {this}
+        GROUP BY
+            gamma_first_name, count
+        ORDER BY
+            gamma_first_name
+        """
+    ).as_dict()
 
-    correct_result = pd.DataFrame(
-        {
-            "gamma_first_name": [1],
-            "count": [10],
-            "value_count": [4],
-        }
-    )
+    correct_result = {
+        "gamma_first_name": [1],
+        "count": [10],
+        "value_count": [4],
+    }
 
-    pd.testing.assert_frame_equal(result, correct_result, check_dtype=False)
+    assert result == correct_result

@@ -1,5 +1,4 @@
-import duckdb
-import pandas as pd
+import pyarrow as pa
 
 import splink.blocking_rule_library as brl
 from splink.blocking_analysis import (
@@ -21,29 +20,23 @@ from .decorator import mark_with_dialects_excluding, mark_with_dialects_includin
 def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     helper = test_helpers[dialect]
 
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "John", "surname": "Brown"},
-        ]
-    )
+    df_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "John", "surname": "Brown"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
-        ]
-    )
+    df_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
+    ]
 
-    df_3 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-        ]
-    )
+    df_3 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+    ]
 
     db_api = helper.db_api()
     df1_sdf = db_api.register(df_1)
@@ -123,22 +116,19 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     helper = test_helpers[dialect]
 
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "postcode": [1001, 1002]},
-            {"unique_id": 2, "first_name": "Mary", "postcode": [1002, 1003]},
-            {"unique_id": 3, "first_name": "Jane", "postcode": [1003]},
-            {"unique_id": 4, "first_name": "John", "postcode": [1001]},
-        ]
-    )
+    df_1 = [
+        {"unique_id": 1, "first_name": "John", "postcode": [1001, 1002]},
+        {"unique_id": 2, "first_name": "Mary", "postcode": [1002, 1003]},
+        {"unique_id": 3, "first_name": "Jane", "postcode": [1003]},
+        {"unique_id": 4, "first_name": "John", "postcode": [1001]},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "postcode": [1001, 1004]},
-            {"unique_id": 2, "first_name": "Mary", "postcode": [1003, 1004]},
-            {"unique_id": 3, "first_name": "Jayne", "postcode": [1003]},
-        ]
-    )
+    df_2 = [
+        {"unique_id": 1, "first_name": "John", "postcode": [1001, 1004]},
+        {"unique_id": 2, "first_name": "Mary", "postcode": [1003, 1004]},
+        {"unique_id": 3, "first_name": "Jayne", "postcode": [1003]},
+    ]
+
     db_api = helper.db_api()
     df_1_sdf = db_api.register(df_1)
     df_2_sdf = db_api.register(df_2)
@@ -181,7 +171,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
         (1, "a", "John", [1, 2], [2, 3], 5),
         (2, "a", "Mary", [10, 11, 12, 13], [11, 12], 5),
     ]
-    df_1 = pd.DataFrame(rows_1, columns=cols)
+    df_1 = [{col: datum for col, datum in zip(cols, row)} for row in rows_1]
 
     rows_2 = [
         (1, "b", "John", [1, 4], [1, 2, 3], 5),
@@ -192,7 +182,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
         (6, "b", "Mary", [10], [11, 12], 1),
         (7, "b", "Mary", [10, 11, 12, 13], [11, 12], 1),
     ]
-    df_2 = pd.DataFrame(rows_2, columns=cols)
+    df_2 = [{col: datum for col, datum in zip(cols, row)} for row in rows_2]
 
     df_1_sdf = db_api.register(df_1)
     df_2_sdf = db_api.register(df_2)
@@ -218,10 +208,10 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
         [df_1_sdf, df_2_sdf], blocking_rule=rule, **args
     )
 
-    sql = """
+    sql = f"""
     select count(*) as count
-    from df_1 as l
-    cross join df_2 as r
+    from {df_1_sdf.physical_name} as l
+    cross join {df_2_sdf.physical_name} as r
     where
     l.first_name = r.first_name
     and len(array_intersect(l.postcode, r.postcode)) > 0
@@ -229,7 +219,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
     and r.amount > 2
     """
 
-    c = duckdb.sql(sql).fetchone()[0]
+    c = db_api.duckdb_con.sql(sql).fetchone()[0]
 
     res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
 
@@ -251,34 +241,29 @@ def validate_blocking_output(comparison_count_args, expected_out):
 
 
 @mark_with_dialects_excluding()
-def test_source_dataset_works_as_expected(test_helpers, dialect):
+def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "John", "surname": "Brown"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+        {"unique_id": 4, "first_name": "John", "surname": "Brown"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
-        ]
-    )
-    df_1["src_dataset"] = "df_1"
-    df_2["src_dataset"] = "df_2"
-    df_concat = pd.concat([df_1.copy(), df_2.copy()])
-    df_1.drop(columns=["src_dataset"], inplace=True)
-    df_2.drop(columns=["src_dataset"], inplace=True)
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+        {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
+    ]
+
+    data_concat = [{**row, "src_dataset": "df_1"} for row in data_1] + [
+        {**row, "src_dataset": "df_2"} for row in data_2
+    ]
 
     db_api = helper.db_api()
-    df_concat_sdf = db_api.register(df_concat)
-    df_1_sdf = db_api.register(df_1)
-    df_2_sdf = db_api.register(df_2)
+    df_concat_sdf = db_api.register(data_concat)
+    df_1_sdf = db_api.register(data_1)
+    df_2_sdf = db_api.register(data_2)
 
     r1 = cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         df_concat_sdf,
@@ -297,26 +282,31 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
     )
     assert r1 == r2
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df_1 = df[df["unique_id"] % 3 == 0].copy()
-    df_1["sds"] = "df_1_name"
-    df_2 = df[df["unique_id"] % 3 == 1].copy()
-    df_2["sds"] = "df_2_name"
-    df_3 = df[df["unique_id"] % 3 == 2].copy()
-    df_3["sds"] = "df_3_name"
+    # split table into 3 with alternating rows
+    df_1 = fake_1000.take(list(range(0, 1000, 3)))
+    df_2 = fake_1000.take(list(range(1, 1000, 3)))
+    df_3 = fake_1000.take(list(range(2, 1000, 3)))
 
-    df_concat_2 = pd.concat([df_1, df_2])
-    df_concat_3 = pd.concat([df_1, df_2, df_3])
+    df_1_no_sds_sdf = db_api.register(df_1)
+    df_2_no_sds_sdf = db_api.register(df_2)
+    df_3_no_sds_sdf = db_api.register(df_3)
 
-    df_1_no_sds = df[df["unique_id"] % 3 == 0].copy()
-    df_2_no_sds = df[df["unique_id"] % 3 == 1].copy()
-    df_3_no_sds = df[df["unique_id"] % 3 == 2].copy()
+    df_concat_2 = pa.concat_tables(
+        [
+            df_1.append_column("sds", pa.repeat("df_1_name", df_1.num_rows)),
+            df_2.append_column("sds", pa.repeat("df_2_name", df_2.num_rows)),
+        ]
+    )
+    df_concat_3 = pa.concat_tables(
+        [
+            df_1.append_column("sds", pa.repeat("df_1_name", df_1.num_rows)),
+            df_2.append_column("sds", pa.repeat("df_2_name", df_2.num_rows)),
+            df_3.append_column("sds", pa.repeat("df_3_name", df_3.num_rows)),
+        ]
+    )
 
     df_concat_2_sdf = db_api.register(df_concat_2)
     df_concat_3_sdf = db_api.register(df_concat_3)
-    df_1_no_sds_sdf = db_api.register(df_1_no_sds)
-    df_2_no_sds_sdf = db_api.register(df_2_no_sds)
-    df_3_no_sds_sdf = db_api.register(df_3_no_sds)
 
     count_comparisons_from_blocking_rule(
         df_concat_3_sdf,
@@ -378,21 +368,18 @@ def test_source_dataset_works_as_expected(test_helpers, dialect):
 
 @mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
-    from numpy import nan
-
     helper = test_helpers[dialect]
     db_api = helper.db_api()
 
     # resolve an issue w/ pyspark nulls
 
-    df = [
+    data = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
         {"unique_id": 3, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
         {"unique_id": 4, "first_name": "Kim", "surname": "Lee", "dob": None},
     ]
-    df = pd.DataFrame(df).fillna(nan).replace([nan], [None])
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     comparison_count_args = {
         "splink_dataframe_or_dataframes": df_sdf,
@@ -401,7 +388,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         "unique_id_column_name": "unique_id",
     }
 
-    n = len(df)
+    n = len(data)
     # dedupe only
     validate_blocking_output(
         comparison_count_args,
@@ -449,22 +436,18 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     # link and dedupe + link only
     comparison_count_args["source_dataset_column_name"] = "source_dataset"
 
-    df_l = [
+    data_l = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
     ]
 
-    df_l = pd.DataFrame(df_l)
-
-    df_r = [
+    data_r = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
         {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
     ]
 
-    df_r = pd.DataFrame(df_r).fillna(nan).replace([nan], [None])
-
-    df_l_sdf = db_api.register(df_l)
-    df_r_sdf = db_api.register(df_r)
+    df_l_sdf = db_api.register(data_l)
+    df_r_sdf = db_api.register(data_r)
 
     blocking_rules = [
         "l.surname = r.surname",  # 2l:2r,
@@ -513,29 +496,22 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     # link and dedupe
-    df_1 = [
+    data_1 = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Fox", "dob": "1980-01-01"},
         {"unique_id": 2, "first_name": "Amy", "surname": "Lee", "dob": "1980-01-01"},
     ]
 
-    df_1 = pd.DataFrame(df_l)
-
-    df_2 = [
+    data_2 = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
         {"unique_id": 2, "first_name": "Kim", "surname": "Lee", "dob": None},
     ]
-
-    df_2 = pd.DataFrame(df_2).fillna(nan).replace([nan], [None])
-
-    df_3 = [
+    data_3 = [
         {"unique_id": 1, "first_name": "Tom", "surname": "Ray", "dob": "1980-03-22"},
     ]
 
-    df_3 = pd.DataFrame(df_3)
-
-    df_1_sdf = db_api.register(df_1)
-    df_2_sdf = db_api.register(df_2)
-    df_3_sdf = db_api.register(df_3)
+    df_1_sdf = db_api.register(data_1)
+    df_2_sdf = db_api.register(data_2)
+    df_3_sdf = db_api.register(data_3)
 
     comparison_count_args = {
         "splink_dataframe_or_dataframes": [df_1_sdf, df_2_sdf, df_3_sdf],
@@ -574,27 +550,23 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
 
 def test_analyse_blocking_fast_methodology():
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-            {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+        {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
+        {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+        {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+    ]
 
     db_api = DuckDBAPI()
-    df_1_sdf = db_api.register(df_1)
-    df_2_sdf = db_api.register(df_2)
+    df_1_sdf = db_api.register(data_1)
+    df_2_sdf = db_api.register(data_2)
 
     args = {
         "splink_dataframe_or_dataframes": df_1_sdf,
@@ -645,36 +617,37 @@ def test_analyse_blocking_fast_methodology():
 
 
 @mark_with_dialects_including("duckdb")
-def test_analyse_blocking_fast_methodology_edge_cases():
+def test_analyse_blocking_fast_methodology_edge_cases(fake_1000):
     # Test a series of blocking rules with different edge cases.
     # Assert that the naive methodology gives the same result as the new methodlogy
-
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     blocking_rules = [
         "l.first_name = r.first_name",
         "l.first_name = r.first_name AND l.surname = r.surname",
         "substr(l.first_name,2,3) = substr(r.first_name,3,4)",
         "substr(l.first_name,1,1) = substr(r.surname,1,1) and l.dob = r.dob",
-        "l.first_name = r.first_name and levenshtein(l.dob, r.dob) > -1",
+        (
+            "l.first_name = r.first_name and "
+            "levenshtein(CAST(l.dob AS VARCHAR), CAST(r.dob AS VARCHAR)) > -1"
+        ),
         "l.dob = r.dob and substr(l.first_name,2,3) = substr(r.first_name,3,4)",
     ]
 
     sql_template = """
     select count(*)
-    from df as l
-    inner join df as r
+    from {{this}} as l
+    inner join {{this}} as r
     on {blocking_rule}
     """
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(fake_1000)
 
     results = {}
     for br in blocking_rules:
         sql = sql_template.format(blocking_rule=br)
-        res = duckdb.sql(sql).df()
-        results[br] = {"count_from_join_dedupe_only": res.iloc[0].iloc[0]}
-
-    db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+        res = df_sdf.query_sql(sql).as_duckdbpyrelation().fetchall()[0][0]
+        results[br] = {"count_from_join_dedupe_only": res}
 
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
@@ -694,24 +667,27 @@ def test_analyse_blocking_fast_methodology_edge_cases():
         )
 
     # Link only
-    df_l = df.iloc[::2].copy()  # even-indexed rows (starting from 0)
-    df_r = df.iloc[1::2].copy()  # odd-indexed rows (starting from 1)
+
+    df_l = fake_1000.take(
+        list(range(0, 1000, 2))
+    )  # even-indexed rows (starting from 0)
+    df_r = fake_1000.take(list(range(1, 1000, 2)))  # odd-indexed rows (starting from 1)
 
     df_l_sdf = db_api.register(df_l)
     df_r_sdf = db_api.register(df_r)
 
-    sql_template = """
+    sql_template = f"""
     select count(*)
-    from df_l as l
-    inner join df_r as r
-    on {blocking_rule}
+    from {df_l_sdf.physical_name} as l
+    inner join {df_r_sdf.physical_name} as r
+    on {{blocking_rule}}
     """
 
     results = {}
     for br in blocking_rules:
         sql = sql_template.format(blocking_rule=br)
-        res = duckdb.sql(sql).df()
-        results[br] = {"count_from_join_link_only": res.iloc[0].iloc[0]}
+        res = df_sdf.query_sql(sql).as_duckdbpyrelation().fetchall()[0][0]
+        results[br] = {"count_from_join_link_only": res}
 
     for br in blocking_rules:
         res_dict = count_comparisons_from_blocking_rule(
@@ -743,12 +719,11 @@ def test_blocking_rule_accepts_different_dialects():
 
 
 @mark_with_dialects_excluding()
-def test_chart(test_helpers, dialect):
+def test_chart(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     db_api = helper.db_api()
 
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
     cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
         df_sdf,
         blocking_rules=[block_on("first_name"), "l.surname = r.surname"],
@@ -762,54 +737,48 @@ def test_n_largest_blocks(test_helpers, dialect):
     helper = test_helpers[dialect]
     db_api = helper.db_api()
 
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
-            {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
-            {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
-            {"unique_id": 4, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
-            {"unique_id": 5, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
-            {"unique_id": 6, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
-        ]
-    )
+    data_1 = [
+        {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+        {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+        {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
+        {"unique_id": 4, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
+        {"unique_id": 5, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+        {"unique_id": 6, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+    ]
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
-            {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
-            {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
-            {"unique_id": 4, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
-            {"unique_id": 5, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
-        ]
-    )
+    data_2 = [
+        {"unique_id": 1, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+        {"unique_id": 2, "name1": "Mary", "name2": "Jones", "dob": "2024-07-02"},
+        {"unique_id": 3, "name1": "Mary", "name2": "Jones", "dob": "2024-11-28"},
+        {"unique_id": 4, "name1": "Jones", "name2": "Maurice", "dob": "2024-07-02"},
+        {"unique_id": 5, "name1": "Maurice", "name2": "Jones", "dob": "2024-07-02"},
+    ]
 
-    df_3 = pd.DataFrame(
-        [
-            {"unique_id": 1, "name1": "John", "name2": "Smith", "dob": "2019-01-03"},
-        ]
-    )
+    data_3 = [
+        {"unique_id": 1, "name1": "John", "name2": "Smith", "dob": "2019-01-03"},
+    ]
 
-    df_1_sdf = db_api.register(df_1)
-    df_2_sdf = db_api.register(df_2)
-    df_3_sdf = db_api.register(df_3)
+    df_1_sdf = db_api.register(data_1)
+    df_2_sdf = db_api.register(data_2)
+    df_3_sdf = db_api.register(data_3)
 
     n_largest_dedupe_only = n_largest_blocks(
         df_1_sdf,
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="dedupe_only",
-    ).as_pandas_dataframe()
+    )
 
-    sql = """
+    sql = f"""
     with
     a as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from df_1
+    from {df_1_sdf.physical_name}
     group by key_0, key_1
     ),
 
     b as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from df_1
+    from {df_1_sdf.physical_name}
     group by key_0, key_1)
 
     select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
@@ -817,27 +786,35 @@ def test_n_largest_blocks(test_helpers, dialect):
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
     order by block_count desc
     """
-    n_largest_manual_dedupe_only = duckdb.sql(sql).df()
+    n_largest_manual_dedupe_only = db_api.query_sql(sql)
 
-    pd.testing.assert_frame_equal(n_largest_dedupe_only, n_largest_manual_dedupe_only)
+    assert n_largest_dedupe_only.as_dict() == n_largest_manual_dedupe_only.as_dict()
 
     n_largest_link_and_dedupe = n_largest_blocks(
         [df_1_sdf, df_2_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_and_dedupe",
-    ).as_pandas_dataframe()
+    )
 
-    sql = """
+    sql = f"""
     with
     a as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+    )
     group by key_0, key_1
     ),
 
     b as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+    )
     group by key_0, key_1)
 
     select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
@@ -845,29 +822,30 @@ def test_n_largest_blocks(test_helpers, dialect):
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
     order by block_count desc
     """
-    n_largest_manual_link_and_dedupe = duckdb.sql(sql).df()
+    n_largest_manual_link_and_dedupe = db_api.query_sql(sql)
 
-    pd.testing.assert_frame_equal(
-        n_largest_link_and_dedupe, n_largest_manual_link_and_dedupe
+    assert (
+        n_largest_link_and_dedupe.as_dict()
+        == n_largest_manual_link_and_dedupe.as_dict()
     )
 
     n_largest_link_only = n_largest_blocks(
         [df_1_sdf, df_2_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_only",
-    ).as_pandas_dataframe()
+    )
 
-    sql = """
+    sql = f"""
     with
     a as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from df_1
+    from {df_1_sdf.physical_name}
     group by key_0, key_1
     ),
 
     b as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from df_2
+    from {df_2_sdf.physical_name}
     group by key_0, key_1)
 
     select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
@@ -875,27 +853,39 @@ def test_n_largest_blocks(test_helpers, dialect):
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
     order by block_count desc
     """
-    n_largest_manual_link_only = duckdb.sql(sql).df()
+    n_largest_manual_link_only = db_api.query_sql(sql)
 
-    pd.testing.assert_frame_equal(n_largest_link_only, n_largest_manual_link_only)
+    assert n_largest_link_only.as_dict() == n_largest_manual_link_only.as_dict()
 
     n_largest_link_only_3 = n_largest_blocks(
         [df_1_sdf, df_2_sdf, df_3_sdf],
         blocking_rule=block_on("name1", "substr(name2,1,1)"),
         link_type="link_only",
-    ).as_pandas_dataframe()
+    )
 
-    sql = """
+    sql = f"""
     with
     a as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2 union all select * from df_3)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+        union all
+        select * from {df_3_sdf.physical_name}
+    )
     group by key_0, key_1
     ),
 
     b as (
     select name1 as key_0, substr(name2,1,1) as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2 union all select * from df_3)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+        union all
+        select * from {df_3_sdf.physical_name}
+    )
     group by key_0, key_1)
 
     select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
@@ -903,27 +893,35 @@ def test_n_largest_blocks(test_helpers, dialect):
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
     order by block_count desc
     """
-    n_largest_manual_link_only_3 = duckdb.sql(sql).df()
+    n_largest_manual_link_only_3 = db_api.query_sql(sql)
 
-    pd.testing.assert_frame_equal(n_largest_link_only_3, n_largest_manual_link_only_3)
+    assert n_largest_link_only_3.as_dict() == n_largest_manual_link_only_3.as_dict()
 
     n_largest_link_and_dedupe_inverted = n_largest_blocks(
         [df_1_sdf, df_2_sdf],
         blocking_rule="l.name1 = r.name2 and l.name2 = r.name1",
         link_type="link_and_dedupe",
-    ).as_pandas_dataframe()
+    )
 
-    sql = """
+    sql = f"""
     with
     a as (
     select name1 as key_0, name2 as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+    )
     group by key_0, key_1
     ),
 
     b as (
     select name2 as key_0, name1 as key_1, count(*) as c
-    from (select * from df_1 union all select * from df_2)
+    from (
+        select * from {df_1_sdf.physical_name}
+        union all
+        select * from {df_2_sdf.physical_name}
+    )
     group by key_0, key_1)
 
     select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
@@ -931,15 +929,13 @@ def test_n_largest_blocks(test_helpers, dialect):
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
     order by block_count desc
     """
-    n_largest_manual_link_and_dedupe_inverted = duckdb.sql(sql).df()
+    n_largest_manual_link_and_dedupe_inverted = db_api.query_sql(sql)
 
-    pd.testing.assert_frame_equal(
-        n_largest_link_and_dedupe_inverted.sort_values(["key_0", "key_1"]).reset_index(
-            drop=True
-        ),
-        n_largest_manual_link_and_dedupe_inverted.sort_values(
-            ["key_0", "key_1"]
-        ).reset_index(drop=True),
+    # ordering irrelevant, but must be unambiguous and consistent
+    order_sql = "SELECT * FROM {this} ORDER BY key_0"
+    assert (
+        n_largest_link_and_dedupe_inverted.query_sql(order_sql).as_dict()
+        == n_largest_manual_link_and_dedupe_inverted.query_sql(order_sql).as_dict()
     )
 
 
@@ -978,10 +974,9 @@ def test_blocking_rule_parentheses_equivalence():
             "case_number": "A004",
         },
     ]
-    df = pd.DataFrame(data)
     db_api = DuckDBAPI()
 
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     # Test three variations of the same blocking rule
     br_with_brl = brl.And(

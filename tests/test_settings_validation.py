@@ -1,6 +1,5 @@
 import logging
 
-import pandas as pd
 import pytest
 
 from splink.internals.blocking_rule_library import block_on
@@ -21,9 +20,6 @@ from splink.internals.settings_validation.log_invalid_columns import (
 )
 
 from .basic_settings import get_settings_dict
-
-DF = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-VALID_INPUT_COLUMNS = DF.columns
 
 # TEST PARAMETERS
 # Simple Column checks -> evaluate whether a series of columns are missing
@@ -141,11 +137,11 @@ expected_city_comparison_errors = (
 @pytest.mark.parametrize(
     "input_name, expected_output", missing_settings_column_test_cases
 )
-def test_check_for_missing_settings_column(input_name, expected_output):
+def test_check_for_missing_settings_column(input_name, expected_output, fake_1000):
     missing_columns = check_for_missing_settings_column(
         settings_id=test_settings_id_name,
         settings_column_to_check=input_name,
-        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        valid_input_dataframe_columns=fake_1000.column_names,
     )
     if expected_output is None:
         assert missing_columns is None
@@ -156,11 +152,13 @@ def test_check_for_missing_settings_column(input_name, expected_output):
 @pytest.mark.parametrize(
     "blocking_rule_sql_string, expected", blocking_rule_test_cases.items()
 )
-def test_blocking_rule_sql_string_validation(blocking_rule_sql_string, expected):
+def test_blocking_rule_sql_string_validation(
+    blocking_rule_sql_string, expected, fake_1000
+):
     result = check_for_missing_or_invalid_columns_in_sql_strings(
         sqlglot_dialect="duckdb",
         sql_strings=[blocking_rule_sql_string],
-        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        valid_input_dataframe_columns=fake_1000.column_names,
         additional_validation_checks=[validate_table_names],
     )
 
@@ -170,21 +168,21 @@ def test_blocking_rule_sql_string_validation(blocking_rule_sql_string, expected)
         assert blocking_rule_sql_string not in result
 
 
-def test_collective_blocking_rules():
+def test_collective_blocking_rules(fake_1000):
     collective_rules = list(blocking_rule_test_cases.keys())
     expected_output_len = sum(bool(exp) for exp in blocking_rule_test_cases.values())
 
     result = check_for_missing_or_invalid_columns_in_sql_strings(
         sqlglot_dialect="duckdb",
         sql_strings=collective_rules,
-        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        valid_input_dataframe_columns=fake_1000.column_names,
         additional_validation_checks=[validate_table_names],
     )
 
     assert len(result) == expected_output_len
 
 
-def test_identical_blocking_rules_ignored():
+def test_identical_blocking_rules_ignored(fake_1000):
     """
     Test to ensure the expected number of errors are raised for collective rules.
 
@@ -201,7 +199,7 @@ def test_identical_blocking_rules_ignored():
     result = check_for_missing_or_invalid_columns_in_sql_strings(
         sqlglot_dialect="duckdb",
         sql_strings=test_identical_rules,
-        valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+        valid_input_dataframe_columns=fake_1000.column_names,
         additional_validation_checks=[validate_table_names],
     )
 
@@ -209,7 +207,7 @@ def test_identical_blocking_rules_ignored():
     assert len(result) == 1
 
 
-def test_check_for_missing_or_invalid_columns_in_sql_strings():
+def test_check_for_missing_or_invalid_columns_in_sql_strings(fake_1000):
     invalid_comparisons_identified = (
         check_comparison_for_missing_or_invalid_sql_strings(
             sqlglot_dialect="duckdb",
@@ -218,7 +216,7 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
                 CustomComparison(**city_comparison_to_check).get_comparison("duckdb"),
                 LevenshteinAtThresholds("first_name").get_comparison("duckdb"),
             ],
-            valid_input_dataframe_columns=VALID_INPUT_COLUMNS,
+            valid_input_dataframe_columns=fake_1000.column_names,
         )
     )
 
@@ -232,7 +230,7 @@ def test_check_for_missing_or_invalid_columns_in_sql_strings():
 
 
 # Integration test to assess if the logs are working as expected
-def test_settings_validation_logs(caplog):
+def test_settings_validation_logs(caplog, fake_1000):
     settings = get_settings_dict()
     # Inject some basic errors
     settings["unique_id_column_name"] = "abcde"
@@ -243,7 +241,7 @@ def test_settings_validation_logs(caplog):
     # Execute the DuckDBLinker to generate logs
     with caplog.at_level(logging.WARNING):
         db_api = DuckDBAPI()
-        df_sdf = db_api.register(DF)
+        df_sdf = db_api.register(fake_1000)
 
         Linker(df_sdf, settings, validate_settings=True)
 

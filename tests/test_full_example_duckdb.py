@@ -1,25 +1,19 @@
 import os
 
 import duckdb
-import pandas as pd
 import pyarrow as pa
-import pyarrow.csv as pa_csv
+import pyarrow.csv as pv
 import pyarrow.parquet as pq
 import pytest
 
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
-from splink import DuckDBAPI, Linker, SettingsCreator, block_on
+from splink import ColumnExpression, DuckDBAPI, Linker, SettingsCreator, block_on
 from splink.blocking_analysis import count_comparisons_from_blocking_rule
 from splink.exploratory import completeness_chart, profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
-from .linker_utils import (
-    _test_table_registration,
-    _test_write_functionality,
-    register_roc_data,
-)
 
 simple_settings = {
     "link_type": "dedupe_only",
@@ -27,9 +21,8 @@ simple_settings = {
 
 
 @mark_with_dialects_including("duckdb")
-def test_full_example_duckdb(tmp_path):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df = df.rename(columns={"surname": "SUR name"})
+def test_full_example_duckdb(tmp_path, fake_1000):
+    df = fake_1000.rename_columns({"surname": "SUR name"})
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
@@ -87,13 +80,27 @@ def test_full_example_duckdb(tmp_path):
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
-    df_e = df_predict.as_pandas_dataframe(limit=5)
-    records = df_e.to_dict(orient="records")
+    records = df_predict.as_record_dict(limit=5)
     linker.visualisations.waterfall_chart(records)
 
-    register_roc_data(linker)
-
-    linker.evaluation.accuracy_analysis_from_labels_table("labels")
+    labels_sdf = df_sdf.query_sql(
+        """
+        WITH first_10 AS (
+            SELECT * FROM {this} LIMIT 10
+        )
+        SELECT
+            l.unique_id AS unique_id_l,
+            r.unique_id AS unique_id_r,
+            CAST(l.cluster = r.cluster AS float) AS clerical_match_score
+        FROM
+            first_10 l
+        CROSS JOIN
+            first_10 r
+        WHERE
+            unique_id_l < unique_id_r
+        """
+    )
+    linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf.physical_name)
 
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
         df_predict, 0.1
@@ -108,7 +115,17 @@ def test_full_example_duckdb(tmp_path):
 
     linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
-    _test_table_registration(linker)
+    record = {
+        "unique_id": 1,
+        "first_name": "John",
+        "SUR name": "Smith",
+        "dob": "1971-05-24",
+        "city": "London",
+        "email": "john@smith.net",
+        "cluster": 10000,
+    }
+
+    linker.inference.compare_two_records(record, record)
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
@@ -116,21 +133,19 @@ def test_full_example_duckdb(tmp_path):
 
     db_api = DuckDBAPI()
     df_sdf2 = db_api.register(df)
-    linker_2 = Linker(df_sdf2, settings=simple_settings)
+    Linker(df_sdf2, settings=simple_settings)
 
-    linker_2 = Linker(df_sdf2, settings=path)
-
-    # Test that writing to files works as expected
-    _test_write_functionality(linker_2, pd.read_csv)
+    Linker(df_sdf2, settings=path)
 
 
 # Create some dummy dataframes for the link only test
-df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-df_l = df.copy()
-df_r = df.copy()
-df_l["source_dataset"] = "my_left_ds"
-df_r["source_dataset"] = "my_right_ds"
-df_final = pd.concat([df_l, df_r])
+df = pv.read_csv(
+    "./tests/datasets/fake_1000_from_splink_demos.csv",
+    convert_options=pv.ConvertOptions(strings_can_be_null=True),
+)
+df_l = df.append_column("source_dataset", pa.array(1000 * ["my_left_ds"]))
+df_r = df.append_column("source_dataset", pa.array(1000 * ["my_right_ds"]))
+df_final = pa.concat_tables([df_l, df_r])
 
 
 # Tests link only jobs under different inputs:
@@ -173,61 +188,12 @@ def test_link_only(input, source_l, source_r):
         input_sdf = db_api.register(input)
 
     linker = Linker(input_sdf, settings)
-    df_predict = linker.inference.predict().as_pandas_dataframe()
+    sdf_predict = linker.inference.predict()
+    predict_dict = sdf_predict.as_dict()
 
-    assert len(df_predict) == 7257
-    assert set(df_predict.source_dataset_l.values) == source_l
-    assert set(df_predict.source_dataset_r.values) == source_r
-
-
-@pytest.mark.parametrize(
-    ("df"),
-    [
-        pytest.param(
-            pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv"),
-            id="DuckDB link from pandas df",
-        ),
-        pytest.param(
-            pa.Table.from_pandas(
-                pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-            ),
-            id="DuckDB link - convert pandas to pyarrow df",
-        ),
-        pytest.param(
-            pa_csv.read_csv(
-                "./tests/datasets/fake_1000_from_splink_demos.csv",
-                convert_options=pa_csv.ConvertOptions(
-                    strings_can_be_null=True, null_values=["", "", "NULL"]
-                ),
-            ),
-            id="DuckDB link - read directly from filepath with pyarrow",
-        ),
-    ],
-)
-@mark_with_dialects_including("duckdb")
-def test_duckdb_load_different_tablish_types(df):
-    settings = get_settings_dict()
-
-    db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
-    linker = Linker(
-        df_sdf,
-        settings,
-    )
-
-    assert len(linker.inference.predict().as_pandas_dataframe()) == 3167
-
-    settings["link_type"] = "link_only"
-
-    db_api = DuckDBAPI()
-    df_sdf1 = db_api.register(df, source_dataset_name="testing1")
-    df_sdf2 = db_api.register(df, source_dataset_name="testing2")
-    linker = Linker(
-        [df_sdf1, df_sdf2],
-        settings,
-    )
-
-    assert len(linker.inference.predict().as_pandas_dataframe()) == 7257
+    assert len(sdf_predict.as_record_dict()) == 7257
+    assert set(predict_dict["source_dataset_l"]) == source_l
+    assert set(predict_dict["source_dataset_r"]) == source_r
 
 
 @mark_with_dialects_including("duckdb")
@@ -257,14 +223,21 @@ def test_duckdb_arrow_array():
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
     )
-    df = linker.inference.deterministic_link().as_pandas_dataframe()
+    df = linker.inference.deterministic_link().as_record_dict()
     assert len(df) == 2
 
 
 @mark_with_dialects_including("duckdb")
-def test_small_example_duckdb(tmp_path):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df["full_name"] = df["first_name"] + df["surname"]
+def test_small_example_duckdb(fake_1000):
+    df = fake_1000.append_column(
+        "full_name",
+        pa.array(
+            [
+                f"{fn}_{sn}"
+                for fn, sn in zip(fake_1000["first_name"], fake_1000["surname"])
+            ]
+        ),
+    )
 
     settings_dict = {
         "link_type": "dedupe_only",
@@ -285,9 +258,9 @@ def test_small_example_duckdb(tmp_path):
                     cll.ElseLevel(),
                 ],
             },
-            cl.DamerauLevenshteinAtThresholds("dob", 2).configure(
-                term_frequency_adjustments=True
-            ),
+            cl.DamerauLevenshteinAtThresholds(
+                ColumnExpression("dob").cast_to_string(), 2
+            ).configure(term_frequency_adjustments=True),
             cl.JaroAtThresholds("email", 0.9).configure(
                 term_frequency_adjustments=True
             ),
@@ -314,9 +287,8 @@ def test_small_example_duckdb(tmp_path):
 
 
 @mark_with_dialects_including("duckdb")
-def test_duckdb_input_is_duckdbpyrelation():
+def test_duckdb_input_is_duckdbpyrelation(fake_1000):
     df1 = duckdb.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df2 = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = SettingsCreator(
         link_type="link_and_dedupe",
@@ -325,6 +297,6 @@ def test_duckdb_input_is_duckdbpyrelation():
     )
     db_api = DuckDBAPI(connection=":default:")
     df1_sdf = db_api.register(df1)
-    df2_sdf = db_api.register(df2)
+    df2_sdf = db_api.register(fake_1000)
     linker = Linker([df1_sdf, df2_sdf], settings)
     linker.inference.predict()

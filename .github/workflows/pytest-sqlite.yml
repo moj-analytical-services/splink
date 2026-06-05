@@ -45,4 +45,4 @@ jobs:
   
       - name: Run tests
         id: run_tests
-        run: uv run python -m pytest -v --durations=0 -m "sqlite_only" tests/
+        run: uv run python -m pytest -v --durations=0 -m "sqlite_only and not needs_pandas" tests/
