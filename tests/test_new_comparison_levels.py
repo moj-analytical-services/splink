@@ -1,6 +1,5 @@
 import gc
 
-import pandas as pd
 import pytest
 
 import splink.internals.comparison_level_library as cll
@@ -181,12 +180,10 @@ def test_cl_creators_run_predict(dialect, test_helpers):
 @mark_with_dialects_excluding("sqlite")
 def test_regex_fall_through(dialect, test_helpers):
     helper = test_helpers[dialect]
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "name": "groat"},
-            {"unique_id": 2, "name": "float"},
-        ]
-    )
+    data = [
+        {"unique_id": 1, "name": "groat"},
+        {"unique_id": 2, "name": "float"},
+    ]
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -203,22 +200,20 @@ def test_regex_fall_through(dialect, test_helpers):
         ],
     }
 
-    linker = helper.linker_with_registration(df, settings)
-    df_e = linker.inference.predict().as_pandas_dataframe()
+    linker = helper.linker_with_registration([data], settings)
+    prediction_dict = linker.inference.predict().as_dict()
 
     # only entry should be in Else level
-    assert df_e["gamma_name"][0] == 0
+    assert prediction_dict["gamma_name"][0] == 0
 
 
 @mark_with_dialects_excluding("sqlite")
 def test_null_pattern_match(dialect, test_helpers):
     helper = test_helpers[dialect]
-    df = pd.DataFrame(
-        [
-            {"unique_id": 1, "name": "groat"},
-            {"unique_id": 2, "name": "float"},
-        ]
-    )
+    data = [
+        {"unique_id": 1, "name": "groat"},
+        {"unique_id": 2, "name": "float"},
+    ]
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
@@ -233,11 +228,11 @@ def test_null_pattern_match(dialect, test_helpers):
         ],
     }
 
-    linker = helper.linker_with_registration(df, settings)
-    df_e = linker.inference.predict().as_pandas_dataframe()
+    linker = helper.linker_with_registration([data], settings)
+    prediction_dict = linker.inference.predict().as_dict()
 
     # only entry should be in Null level
-    assert df_e["gamma_name"][0] == -1
+    assert prediction_dict["gamma_name"][0] == -1
 
 
 comparison_email_cl = cl.EmailComparison(

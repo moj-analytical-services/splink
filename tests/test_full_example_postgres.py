@@ -4,8 +4,7 @@ pytest.importorskip("sqlalchemy")
 # ruff: noqa: E402 (module level import not at top of file)
 
 import os
-
-import pandas as pd
+from datetime import datetime
 
 from splink.blocking_analysis import (
     count_comparisons_from_blocking_rule,
@@ -17,16 +16,14 @@ from splink.internals.postgres.database_api import PostgresAPI
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
-from .linker_utils import _test_table_registration, register_roc_data
 
 
 @mark_with_dialects_including("postgres")
-def test_full_example_postgres(tmp_path, pg_engine):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
     settings_dict = get_settings_dict()
 
     db_api = PostgresAPI(engine=pg_engine)
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(
         df_sdf,
@@ -83,13 +80,30 @@ def test_full_example_postgres(tmp_path, pg_engine):
         df_predict, os.path.join(tmp_path, "test_scv_postgres.html"), True, 2
     )
 
-    df_e = df_predict.as_pandas_dataframe(limit=5)
-    records = df_e.to_dict(orient="records")
+    records = df_predict.as_record_dict()
     linker.visualisations.waterfall_chart(records)
 
-    register_roc_data(linker)
-
-    linker.evaluation.accuracy_analysis_from_labels_table("labels")
+    labels_sdf = df_sdf.query_sql(
+        """
+        WITH first_10 AS (
+            SELECT * FROM {this} LIMIT 10
+        )
+        SELECT
+            l.unique_id AS unique_id_l,
+            r.unique_id AS unique_id_r,
+            CASE
+                WHEN l.cluster = r.cluster THEN 1.0
+                ELSE 0.0
+            END AS clerical_match_score
+        FROM
+            first_10 AS l
+        CROSS JOIN
+            first_10 AS r
+        WHERE
+            l.unique_id < r.unique_id
+        """
+    )
+    linker.evaluation.accuracy_analysis_from_labels_table(labels_sdf.physical_name)
 
     df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
         df_predict, 0.1
@@ -104,13 +118,11 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     linker.evaluation.unlinkables_chart(name_of_data_in_title="Testing")
 
-    _test_table_registration(linker)
-
     record = {
         "unique_id": 1,
         "first_name": "John",
         "surname": "Smith",
-        "dob": "1971-05-24",
+        "dob": datetime(1971, 5, 24),
         "city": "London",
         "email": "john@smith.net",
         "cluster": 10000,
@@ -128,11 +140,10 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
 
 @mark_with_dialects_including("postgres")
-def test_postgres_use_existing_table(tmp_path, pg_engine):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+def test_postgres_use_existing_table(fake_1000, pg_engine):
+    db_api = PostgresAPI(engine=pg_engine)
     table_name = "input_table_test"
-    df.to_sql(table_name, pg_engine)
+    db_api.register(fake_1000, table_name)
 
     settings_dict = get_settings_dict()
 

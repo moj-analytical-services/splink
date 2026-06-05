@@ -2,15 +2,13 @@
 
 import os
 
-import pandas as pd
-
 import splink.internals.comparison_level_library as cll
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
 
 
-def test_regression(tmp_path):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
+def test_regression(tmp_path, fake_1000):
+    df = fake_1000[0:20]
 
     # Overwrite the surname comparison to include duck-db specific syntax
     for rmc in [True, False]:
@@ -61,22 +59,21 @@ def test_regression(tmp_path):
                 connection=os.path.join(tmp_path, "duckdb.db"),
                 output_schema="splink_in_duckdb",
             )
-            df_copy = df.copy()
-            df_sdf = db_api.register(df_copy)
+            df_sdf = db_api.register(df)
 
             linker = Linker(df_sdf, settings_dict)
 
             linker.inference.predict()
 
 
-def test_discussion_example(tmp_path):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
+def test_discussion_example(tmp_path, fake_1000):
+    df = fake_1000[0:20]
 
     # Overwrite the surname comparison to include duck-db specific syntax
 
-    df = df.rename(columns={"first_name": "fname"})
-    df["canonicals_fname"] = df["fname"]
-    df["metaphone_fname"] = df["fname"]
+    df = df.rename_columns({"first_name": "fname"})
+    df = df.append_column("canonicals_fname", df["fname"])
+    df = df.append_column("metaphone_fname", df["fname"])
 
     for rmc in [True, False]:
         for ricc in [True, False]:
@@ -124,8 +121,7 @@ def test_discussion_example(tmp_path):
             }
 
             db_api = DuckDBAPI()
-            df_copy = df.copy()
-            df_sdf = db_api.register(df_copy)
+            df_sdf = db_api.register(df)
 
             linker = Linker(df_sdf, settings_dict)
 

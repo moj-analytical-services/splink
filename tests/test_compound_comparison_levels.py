@@ -1,5 +1,3 @@
-import pandas as pd
-
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
 from splink.internals.duckdb.database_api import DuckDBAPI
@@ -7,66 +5,64 @@ from splink.internals.linker import Linker
 
 
 def test_compound_comparison_level():
-    df = pd.DataFrame(
-        [
-            {
-                "unique_id": 1,
-                "first_name": "John",
-                "middle_name": "James",
-                "surname": "Smith",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 2,
-                "first_name": "Mary",
-                "middle_name": "Harriet",
-                "surname": "Jones",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 3,
-                "first_name": "Jane",
-                "middle_name": "Joan",
-                "surname": "Taylor",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 4,
-                "first_name": "John",
-                "middle_name": "Blake",
-                "surname": "Jones",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 5,
-                "first_name": "Jane",
-                "middle_name": "Joan",
-                "surname": "Taylor",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 6,
-                "first_name": "Gill",
-                "middle_name": "Harriet",
-                "surname": "Greene",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 7,
-                "first_name": "Owen",
-                "middle_name": "James",
-                "surname": "Smith",
-                "city": "Brighton",
-            },
-            {
-                "unique_id": 8,
-                "first_name": "Sarah",
-                "middle_name": "Simone",
-                "surname": "Williams",
-                "city": "Brighton",
-            },
-        ]
-    )
+    data = [
+        {
+            "unique_id": 1,
+            "first_name": "John",
+            "middle_name": "James",
+            "surname": "Smith",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 2,
+            "first_name": "Mary",
+            "middle_name": "Harriet",
+            "surname": "Jones",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 3,
+            "first_name": "Jane",
+            "middle_name": "Joan",
+            "surname": "Taylor",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 4,
+            "first_name": "John",
+            "middle_name": "Blake",
+            "surname": "Jones",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 5,
+            "first_name": "Jane",
+            "middle_name": "Joan",
+            "surname": "Taylor",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 6,
+            "first_name": "Gill",
+            "middle_name": "Harriet",
+            "surname": "Greene",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 7,
+            "first_name": "Owen",
+            "middle_name": "James",
+            "surname": "Smith",
+            "city": "Brighton",
+        },
+        {
+            "unique_id": 8,
+            "first_name": "Sarah",
+            "middle_name": "Simone",
+            "surname": "Williams",
+            "city": "Brighton",
+        },
+    ]
 
     def col_is_match(col):
         return f"({col}_l = {col}_r)"
@@ -119,7 +115,7 @@ def test_compound_comparison_level():
     }
 
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     linker = Linker(df_sdf, settings)
     all_cols_match_level = linker._settings_obj.comparisons[1].comparison_levels[1]
@@ -137,50 +133,48 @@ def test_compound_comparison_level():
 
 def test_complex_compound_comparison_level():
     # non-realistic example
-    df = pd.DataFrame(
-        [
-            {
-                "unique_id": 1,
-                "col_1": "a",
-                "col_2": "b",
-                "col_3": "c",
-                "col_4": "d",
-                "col_5": "e",
-                "col_6": "f",
-                "col_7": "g",
-            },
-            {
-                "unique_id": 2,
-                "col_1": "aa",
-                "col_2": "b",
-                "col_3": "cc",
-                "col_4": "d",
-                "col_5": "ee",
-                "col_6": "f",
-                "col_7": "gg",
-            },
-            {
-                "unique_id": 3,
-                "col_1": "a",
-                "col_2": "bb",
-                "col_3": "c",
-                "col_4": "dd",
-                "col_5": "e",
-                "col_6": "ff",
-                "col_7": "g",
-            },
-            {
-                "unique_id": 4,
-                "col_1": "aa",
-                "col_2": "bb",
-                "col_3": "cc",
-                "col_4": "d",
-                "col_5": "ee",
-                "col_6": "ff",
-                "col_7": "gg",
-            },
-        ]
-    )
+    data = [
+        {
+            "unique_id": 1,
+            "col_1": "a",
+            "col_2": "b",
+            "col_3": "c",
+            "col_4": "d",
+            "col_5": "e",
+            "col_6": "f",
+            "col_7": "g",
+        },
+        {
+            "unique_id": 2,
+            "col_1": "aa",
+            "col_2": "b",
+            "col_3": "cc",
+            "col_4": "d",
+            "col_5": "ee",
+            "col_6": "f",
+            "col_7": "gg",
+        },
+        {
+            "unique_id": 3,
+            "col_1": "a",
+            "col_2": "bb",
+            "col_3": "c",
+            "col_4": "dd",
+            "col_5": "e",
+            "col_6": "ff",
+            "col_7": "g",
+        },
+        {
+            "unique_id": 4,
+            "col_1": "aa",
+            "col_2": "bb",
+            "col_3": "cc",
+            "col_4": "d",
+            "col_5": "ee",
+            "col_6": "ff",
+            "col_7": "gg",
+        },
+    ]
     A, B, C, D, E, F, G = (
         "col_1_l = col_1_r",
         "col_2_l = col_2_r",
@@ -218,7 +212,7 @@ def test_complex_compound_comparison_level():
         ],
     }
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     linker = Linker(df_sdf, settings)
 

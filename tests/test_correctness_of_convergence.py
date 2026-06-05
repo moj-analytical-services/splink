@@ -33,9 +33,7 @@
 
 import re
 
-import pandas as pd
 import pytest
-from pandas.testing import assert_series_equal
 
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator
@@ -47,7 +45,6 @@ from splink.internals.predict import predict_from_comparison_vectors_sqls_using_
 
 
 def test_splink_converges_to_known_params():
-    df = pd.read_csv("./tests/datasets/known_params_comparison_vectors.csv")
     rec = [
         {
             "unique_id": 1,
@@ -57,8 +54,6 @@ def test_splink_converges_to_known_params():
             "true_match": 1,
         },
     ]
-    in_df = pd.DataFrame(rec)
-
     settings = SettingsCreator(
         link_type="dedupe_only",
         comparisons=[
@@ -75,7 +70,7 @@ def test_splink_converges_to_known_params():
     )
 
     db_api = DuckDBAPI()
-    in_df_sdf = db_api.register(in_df)
+    in_df_sdf = db_api.register(rec)
 
     linker = Linker(in_df_sdf, settings)
 
@@ -106,8 +101,19 @@ def test_splink_converges_to_known_params():
 
         cvv_hashed_tablename = re.search(pattern, str(e)).group()
 
-    cvv_table = db_api._create_backend_table(df, cvv_hashed_tablename)
-    cvv_table.templated_name = "__splink__df_comparison_vectors"
+    cvv_raw_table = db_api.register_from_csv(
+        "./tests/datasets/known_params_comparison_vectors.csv"
+    )
+    # need to create a backend-level alias
+    db_api._con.execute(
+        f"""
+            CREATE VIEW {cvv_hashed_tablename} AS
+            SELECT * FROM {cvv_raw_table.physical_name}
+        """
+    )
+    cvv_table = db_api.table_to_splink_dataframe(
+        "__splink__df_comparison_vectors", cvv_hashed_tablename
+    )
 
     core_model_settings = em_training_session._train(cvv_table)
     linker._settings_obj.core_model_settings = core_model_settings
@@ -130,18 +136,14 @@ def test_splink_converges_to_known_params():
     pipeline.enqueue_list_of_sqls(sqls)
 
     predictions = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    predictions_df = predictions.as_pandas_dataframe()
+    predictions_df = predictions.as_dict()
 
-    assert_series_equal(
-        predictions_df["match_probability"],
-        predictions_df["true_match_probability_l"],
-        check_exact=False,
-        rtol=0.01,
-        check_names=False,
+    assert predictions_df["match_probability"] == pytest.approx(
+        predictions_df["true_match_probability_l"], rel=0.01
     )
 
     s_obj = linker._settings_obj
-    assert s_obj._probability_two_random_records_match == pytest.approx(0.5, 0.01)
+    assert s_obj._probability_two_random_records_match == pytest.approx(0.5, rel=0.01)
 
     param_dict = s_obj.comparisons[0].as_dict()
     cls = param_dict["comparison_levels"]

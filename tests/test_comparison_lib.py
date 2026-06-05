@@ -1,11 +1,10 @@
-import pandas as pd
-
 import splink.internals.comparison_library as cl
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
 from tests.decorator import mark_with_dialects_excluding
 from tests.literal_utils import run_comparison_vector_value_tests
+from tests.utils import assert_number_of_rows_with_gamma_value
 
 
 def test_distance_function_comparison():
@@ -17,8 +16,6 @@ def test_distance_function_comparison():
         {"unique_id": 5, "forename": "Cally", "surname": "Bones"},
         {"unique_id": 6, "forename": "Sally", "surname": "Jonas"},
     ]
-
-    df = pd.DataFrame(data)
 
     settings = {
         "link_type": "dedupe_only",
@@ -32,11 +29,11 @@ def test_distance_function_comparison():
         ],
     }
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(data)
 
     linker = Linker(df_sdf, settings)
 
-    df_pred = linker.inference.predict().as_pandas_dataframe()
+    predictions = linker.inference.predict()
 
     expected_gamma_counts = {
         "forename": {
@@ -63,7 +60,9 @@ def test_distance_function_comparison():
 
     for col, expected_counts in expected_gamma_counts.items():
         for gamma_val, expected_count in expected_counts.items():
-            assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
+            assert_number_of_rows_with_gamma_value(
+                predictions, f"gamma_{col}", gamma_val, expected_count
+            )
 
 
 @mark_with_dialects_excluding("sqlite", "postgres")

@@ -1,97 +1,45 @@
-import pandas as pd
 import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.linker import Linker
 from splink.internals.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.internals.sqlite.database_api import SQLiteAPI
 
 from .basic_settings import get_settings_dict
-from .decorator import mark_with_dialects_including
+from .decorator import mark_with_dialects_excluding
 
 
-def test_splink_2_predict():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+@mark_with_dialects_excluding()
+def test_splink_2_predict(fake_1000, dialect, test_helpers):
+    helper = test_helpers[dialect]
+    settings_dict = get_settings_dict()
+    db_api = helper.db_api()
+    df_sdf = db_api.register(fake_1000)
+
+    linker = Linker(df_sdf, settings_dict)
+
+    expected_sdf = db_api.register_from_csv("tests/datasets/splink2_479_vs_481.csv")
+
+    df_e = linker.inference.predict()
+
+    actual_record = df_e.query_sql(
+        "SELECT * FROM {this} WHERE unique_id_l = 479 AND unique_id_r = 481"
+    )
+
+    expected_match_weight = float(expected_sdf.as_dict()["match_weight"][0])
+    actual_match_weight = actual_record.as_dict()["match_weight"][0]
+
+    assert actual_match_weight == pytest.approx(expected_match_weight)
+
+
+def test_splink_2_em_fixed_u(fake_1000, test_helpers):
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
-
-    linker = Linker(df_sdf, settings_dict)
-
-    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
-
-    df_e = linker.inference.predict().as_pandas_dataframe()
-
-    f1 = df_e["unique_id_l"] == 479
-    f2 = df_e["unique_id_r"] == 481
-    actual_record = df_e[f1 & f2]
-
-    expected_match_weight = expected_record["match_weight"].iloc[0]
-    actual_match_weight = actual_record["match_weight"].iloc[0]
-
-    assert expected_match_weight == pytest.approx(actual_match_weight)
-
-
-# @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
-@mark_with_dialects_including("spark")
-def test_splink_2_predict_spark(df_spark, spark_api):
-    settings_dict = get_settings_dict()
-    df_sdf = spark_api.register(df_spark)
-    linker = Linker(df_sdf, settings_dict)
-
-    df_e = linker.inference.predict().as_pandas_dataframe()
-    f1 = df_e["unique_id_l"] == "479"
-    f2 = df_e["unique_id_r"] == "481"
-    actual_record = df_e[f1 & f2]
-    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
-
-    expected_match_weight = expected_record["match_weight"].iloc[0]
-    actual_match_weight = actual_record["match_weight"].iloc[0]
-
-    assert expected_match_weight == pytest.approx(actual_match_weight)
-
-
-@mark_with_dialects_including("sqlite")
-def test_splink_2_predict_sqlite():
-    import sqlite3
-
-    from rapidfuzz.distance.Levenshtein import distance
-
-    con = sqlite3.connect(":memory:")
-    con.create_function("levenshtein", 2, distance)
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df.to_sql("fake_data_1", con, if_exists="replace")
-    settings_dict = get_settings_dict()
-
-    db_api = SQLiteAPI(con)
-    df_sdf = db_api.register("fake_data_1")
-    linker = Linker(df_sdf, settings_dict)
-
-    df_e = linker.inference.predict().as_pandas_dataframe()
-
-    f1 = df_e["unique_id_l"] == 479
-    f2 = df_e["unique_id_r"] == 481
-    actual_record = df_e[f1 & f2]
-    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
-
-    expected_match_weight = expected_record["match_weight"].iloc[0]
-    actual_match_weight = actual_record["match_weight"].iloc[0]
-
-    assert expected_match_weight == pytest.approx(actual_match_weight)
-
-    linker.training.estimate_parameters_using_expectation_maximisation("l.dob=r.dob")
-
-
-def test_splink_2_em_fixed_u():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    settings_dict = get_settings_dict()
-    db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     linker = Linker(df_sdf, settings_dict)
 
     # Check lambda history is the same
-    expected_prop_history = pd.read_csv(
+    expected_prop_history = db_api.register_from_csv(
         "tests/datasets/splink2_proportion_of_matches_history_fixed_u.csv"
     )
 
@@ -100,47 +48,64 @@ def test_splink_2_em_fixed_u():
             "l.surname = r.surname"
         )
     )
-    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
-
-    compare = expected_prop_history.merge(
-        actual_prop_history, left_on="iteration", right_on="iteration"
+    actual_prop_history = db_api.register(training_session._lambda_history_records)
+    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    expecteds = sorted(
+        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["probability_two_random_records_match"] == pytest.approx(r["λ"])
+    for expected, actual in zip(expecteds, actuals):
+        assert expected["λ"] == pytest.approx(
+            actual["probability_two_random_records_match"]
+        )
 
     # Check history of m probabilities is the same for a column
-    expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_fixed_u.csv")
-    f1 = expected_m_u_history["gamma_column_name"] == "gamma_first_name"
-    f2 = expected_m_u_history["comparison_vector_value"] == "1"
-    expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
-
-    actual_m_u_history = pd.DataFrame(training_session._iteration_history_records)
-    f1 = actual_m_u_history["comparison_name"] == "first_name"
-    f2 = actual_m_u_history["comparison_vector_value"] == 1
-    actual_first_name_level_1_m = actual_m_u_history[f1 & f2]
-
-    compare = expected_first_name_level_1_m.merge(
-        actual_first_name_level_1_m,
-        left_on="iteration",
-        right_on="iteration",
-        suffixes=("_e", "_a"),
+    expected_m_u_history = db_api.register_from_csv(
+        "tests/datasets/splink2_m_u_history_fixed_u.csv"
+    )
+    expected_first_name_level_1_m = expected_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE gamma_column_name = 'gamma_first_name'
+            AND comparison_vector_value = 1
+        """
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["m_probability_e"] == pytest.approx(r["m_probability_a"])
+    actual_m_u_history = db_api.register(
+        list(map(lambda r: r.as_dict(), training_session._iteration_history_records))
+    )
+    actual_first_name_level_1_m = actual_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE comparison_name = 'first_name'
+            AND comparison_vector_value = 1
+        """
+    )
+
+    actuals = sorted(
+        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+    expecteds = sorted(
+        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+
+    for expected, actual in zip(expecteds, actuals):
+        assert actual["m_probability"] == pytest.approx(expected["m_probability"])
 
 
 def test_splink_2_em_no_fix():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register_from_csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv"
+    )
 
     linker = Linker(df_sdf, settings_dict)
 
     # Check lambda history is the same
-    expected_prop_history = pd.read_csv(
+    expected_prop_history = db_api.register_from_csv(
         "tests/datasets/splink2_proportion_of_matches_history_no_fix.csv"
     )
 
@@ -149,35 +114,51 @@ def test_splink_2_em_no_fix():
             "l.surname = r.surname", fix_u_probabilities=False
         )
     )
-    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
-
-    compare = expected_prop_history.merge(
-        actual_prop_history, left_on="iteration", right_on="iteration"
+    actual_prop_history = db_api.register(training_session._lambda_history_records)
+    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    expecteds = sorted(
+        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["probability_two_random_records_match"] == pytest.approx(r["λ"])
+    for expected, actual in zip(expecteds, actuals):
+        assert expected["λ"] == pytest.approx(
+            actual["probability_two_random_records_match"]
+        )
 
     # Check history of m probabilities is the same for a column
-    expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_no_fix.csv")
-    f1 = expected_m_u_history["gamma_column_name"] == "gamma_first_name"
-    f2 = expected_m_u_history["comparison_vector_value"] == "1"
-    expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
-
-    actual_m_u_history = pd.DataFrame(training_session._iteration_history_records)
-    f1 = actual_m_u_history["comparison_name"] == "first_name"
-    f2 = actual_m_u_history["comparison_vector_value"] == 1
-    actual_first_name_level_1_m = actual_m_u_history[f1 & f2]
-
-    compare = expected_first_name_level_1_m.merge(
-        actual_first_name_level_1_m,
-        left_on="iteration",
-        right_on="iteration",
-        suffixes=("_e", "_a"),
+    expected_m_u_history = db_api.register_from_csv(
+        "tests/datasets/splink2_m_u_history_no_fix.csv"
+    )
+    expected_first_name_level_1_m = expected_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE gamma_column_name = 'gamma_first_name'
+            AND comparison_vector_value = 1
+        """
     )
 
-    for r in compare.to_dict(orient="records"):
-        assert r["m_probability_e"] == pytest.approx(r["m_probability_a"])
+    actual_m_u_history = db_api.register(
+        list(map(lambda r: r.as_dict(), training_session._iteration_history_records))
+    )
+    actual_first_name_level_1_m = actual_m_u_history.query_sql(
+        """
+            SELECT *
+            FROM {this}
+            WHERE comparison_name = 'first_name'
+            AND comparison_vector_value = 1
+        """
+    )
+
+    actuals = sorted(
+        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+    expecteds = sorted(
+        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+    )
+
+    for expected, actual in zip(expecteds, actuals):
+        assert actual["m_probability"] == pytest.approx(expected["m_probability"])
 
 
 def test_lambda():
@@ -191,29 +172,19 @@ def test_lambda():
 
     settings_dict["probability_two_random_records_match"] = glo
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register_from_csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv"
+    )
 
     linker = Linker(df_sdf, settings_dict)
 
-    ma = linker.inference.predict().as_pandas_dataframe()
-    f1 = ma["unique_id_l"] == 924
-    f2 = ma["unique_id_r"] == 925
-    ma[f1 & f2]
-    # actual_record
-    ma["match_probability"].mean()
-    training_session = (
+    _ma = linker.inference.predict()
+    _training_session = (
         linker.training.estimate_parameters_using_expectation_maximisation(
             "l.dob = r.dob", fix_u_probabilities=False
         )
     )
-    pd.DataFrame(training_session._lambda_history_records)
-
-    # linker._settings_obj.match_weights_chart()
-    # actual_prop_history
-
     #########
 
     bf_for_first_name = (
@@ -241,7 +212,7 @@ def test_lambda():
 
     linker._settings_obj._probability_two_random_records_match = glo
 
-    training_session = (
+    _training_session = (
         linker.training.estimate_parameters_using_expectation_maximisation(
             "l.first_name = r.first_name and l.surname = r.surname",
             fix_u_probabilities=False,
