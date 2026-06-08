@@ -8,7 +8,7 @@ from functools import reduce
 from operator import and_
 from typing import TYPE_CHECKING, Iterable, List, Literal, overload
 
-from sqlglot.expressions import Expression
+import sqlglot
 
 from splink.internals.input_column import InputColumn
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -45,7 +45,7 @@ def find_columns_not_in_input_dfs(
 
 def clean_and_find_columns_not_in_input_dfs(
     valid_input_dataframe_columns: Iterable[InputColumn] | Iterable[str],
-    sqlglot_tree_columns_to_check: Sequence[Expression],
+    sqlglot_tree_columns_to_check: Sequence[sqlglot.exp.Expr],
     sql_dialect: str,
 ) -> set[str]:
     """Clean a list of sqlglot column names to remove the prefix (l.)
@@ -69,7 +69,7 @@ def clean_and_find_columns_not_in_input_dfs(
 
 
 def remove_prefix_and_suffix_from_column(
-    col_syntax_tree: Expression,
+    col_syntax_tree: sqlglot.exp.Expr,
     sql_dialect: str,
 ) -> str:
     """Remove the prefix and suffix from a given sqlglot syntax tree
