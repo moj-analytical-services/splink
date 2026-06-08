@@ -84,7 +84,7 @@ def _exact_match_colname(sql_syntax_tree):
     return cols[0]
 
 
-def _get_and_subclauses(expr: Expression) -> list[Expression]:
+def _get_and_subclauses(expr: sqlglot.exp.Expr) -> list[sqlglot.exp.Expr]:
     # get list of subclauses joined together by 'AND' at top-level
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     # or if no AND, return expression as a list, e.g. 'A' -> ['A']

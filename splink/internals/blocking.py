@@ -5,7 +5,7 @@ import time
 from typing import TYPE_CHECKING, Any, List, Literal, Optional, TypedDict
 
 from sqlglot import parse_one
-from sqlglot.expressions import Column, Expression, Identifier, Join
+from sqlglot.expressions import Column, Identifier, Join
 from sqlglot.optimizer.eliminate_joins import join_condition
 from sqlglot.optimizer.optimizer import optimize
 from sqlglot.optimizer.simplify import flatten
@@ -35,6 +35,9 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
+    # Expr only exists in sqlglot >= 30.0.0
+    from sqlglot import Expr
+
     from splink.internals.settings import LinkTypeLiteralType
 
 user_input_link_type_options = Literal["link_only", "link_and_dedupe", "dedupe_only"]
@@ -250,7 +253,7 @@ class BlockingRule:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
         """
 
-        def remove_table_prefix(tree: Expression) -> Expression:
+        def remove_table_prefix(tree: Expr) -> Expr:
             for c in tree.find_all(Column):
                 del c.args["table"]
             return tree
@@ -263,7 +266,7 @@ class BlockingRule:
 
         rmtp = remove_table_prefix
 
-        keys_de_prefixed: list[tuple[Expression, Expression]] = [
+        keys_de_prefixed: list[tuple[Expr, Expr]] = [
             (rmtp(i), rmtp(j)) for (i, j) in keys_zipped
         ]
 
