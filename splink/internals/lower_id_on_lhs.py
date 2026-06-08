@@ -1,9 +1,4 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pandas import DataFrame as pd_DataFrame
-else:
-    pd_DataFrame = ...
+from .splink_dataframe import SplinkDataFrame
 
 
 def _sql_expr_move_left_to_right(
@@ -50,7 +45,7 @@ def _sql_expr_move_left_to_right(
 
 
 def lower_id_to_left_hand_side(
-    df: pd_DataFrame,
+    df: SplinkDataFrame,
     source_dataset_col: str = "source_dataset",
     unique_id_col: str = "unique_id",
 ) -> str:
@@ -74,11 +69,11 @@ def lower_id_to_left_hand_side(
     """  # noqa
 
     cols = df.columns
-    cols = [c.unquote().name for c in cols]
+    cols_unquoted = [c.unquote().name for c in cols]
 
-    l_cols = [c for c in cols if c.endswith("_l")]
-    r_cols = [c for c in cols if c.endswith("_r")]
-    other_cols = [c for c in cols if c not in (l_cols + r_cols)]
+    l_cols = [c for c in cols_unquoted if c.endswith("_l")]
+    r_cols = [c for c in cols_unquoted if c.endswith("_r")]
+    other_cols = [c for c in cols_unquoted if c not in (l_cols + r_cols)]
 
     case_exprs = []
     for col in l_cols:

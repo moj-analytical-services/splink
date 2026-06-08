@@ -137,7 +137,7 @@ class SplinkDataFrame(ABC):
                 referred to as {{this}}
         """
         sql = sql.format(this=self.physical_name)
-        return self.db_api.query_sql(sql)
+        return self.db_api.query_sql(sql)  # type: ignore[return-value] #(changing this soon)
 
     def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
