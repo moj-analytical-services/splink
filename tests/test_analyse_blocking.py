@@ -46,6 +46,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     args = {
         "link_type": "dedupe_only",
         "unique_id_column_name": "unique_id",
+        "record_sample_proportion": 1.0,
     }
 
     res = count_comparisons_from_blocking_rules(df1_sdf, blocking_rules="1=1", **args)[
@@ -125,6 +126,7 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     args = {
         "link_type": "link_only",
         "unique_id_column_name": "unique_id",
+        "record_sample_proportion": 1.0,
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
@@ -136,6 +138,7 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     args = {
         "link_type": "link_and_dedupe",
         "unique_id_column_name": "unique_id",
+        "record_sample_proportion": 1.0,
     }
 
     rule = block_on("postcode", arrays_to_explode=["postcode"])
@@ -178,6 +181,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
         "link_type": "link_only",
         "unique_id_column_name": "unique_id",
         "source_dataset_column_name": "sds",
+        "record_sample_proportion": 1.0,
     }
 
     rule = {
@@ -212,6 +216,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
 
 
 def validate_blocking_output(comparison_count_args, expected_out):
+    comparison_count_args["record_sample_proportion"] = 1.0
     records = count_comparisons_from_blocking_rules(**comparison_count_args)
 
     assert expected_out["marginal_comparison_count"] == [
@@ -259,6 +264,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         unique_id_column_name="unique_id",
         source_dataset_column_name="src_dataset",
         link_type="link_only",
+        record_sample_proportion=1.0,
     )
 
     r2 = count_comparisons_from_blocking_rules(
@@ -267,6 +273,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         unique_id_column_name="unique_id",
         link_type="link_only",
         source_dataset_column_name="source_dataset",
+        record_sample_proportion=1.0,
     )
     # The descriptive fields reference the source dataset column name, which
     # differs between the two calls, so compare the computed counts only.
@@ -313,6 +320,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         link_type="link_only",
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
+        record_sample_proportion=1.0,
     )
 
     r2 = count_comparisons_from_blocking_rules(
@@ -320,6 +328,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
+        record_sample_proportion=1.0,
     )
     # Both of the above use the vertical concat of the two datasets so should
     # be equivalent
@@ -331,6 +340,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         link_type="link_only",
         unique_id_column_name="unique_id",
         source_dataset_column_name="sds",
+        record_sample_proportion=1.0,
     )
 
     r2 = count_comparisons_from_blocking_rules(
@@ -338,6 +348,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         blocking_rules=block_on("first_name"),
         link_type="link_only",
         unique_id_column_name="unique_id",
+        record_sample_proportion=1.0,
     )
     # After filters, the number of comparisons should be the same
     assert r1[0]["marginal_comparison_count"] == r2[0]["marginal_comparison_count"]
@@ -822,18 +833,21 @@ def test_blocking_rule_parentheses_equivalence():
         df_sdf,
         blocking_rules=br_with_brl,
         link_type="dedupe_only",
+        record_sample_proportion=1.0,
     )
 
     result_with_parens = count_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=br_with_parens,
         link_type="dedupe_only",
+        record_sample_proportion=1.0,
     )
 
     result_without_parens = count_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=br_without_parens,
         link_type="dedupe_only",
+        record_sample_proportion=1.0,
     )
 
     # Check specific values

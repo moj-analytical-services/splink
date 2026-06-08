@@ -92,6 +92,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
         blocking_rules="1=1",
         link_type=link_type,
         unique_id_column_name="unique_id",
+        record_sample_proportion=1.0,
     )[0]["marginal_comparison_count"]
 
     # compare with count from each frame
