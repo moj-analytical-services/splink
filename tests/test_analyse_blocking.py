@@ -952,7 +952,7 @@ def test_linker_blocking_analysis_uses_settings_defaults(fake_1000):
 
     # count_comparisons_from_blocking_rules via the linker
     res = linker.blocking_analysis.count_comparisons_from_blocking_rules(
-        block_on("first_name")
+        [block_on("first_name")]
     )
     assert res[0]["record_sample_proportion"] == 1.0
     assert res[0]["is_estimate"] is False
@@ -971,7 +971,7 @@ def test_linker_blocking_analysis_uses_settings_defaults(fake_1000):
         match="below the recommended minimum of 1,000",
     ):
         est = linker.blocking_analysis.count_comparisons_from_blocking_rules(
-            block_on("first_name"),
+            [block_on("first_name")],
             record_sample_proportion=0.5,
         )
     assert est[0]["record_sample_proportion"] == 0.5
