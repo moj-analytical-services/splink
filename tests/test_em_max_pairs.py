@@ -86,7 +86,6 @@ def test_em_max_pairs_reduces_pair_count(test_helpers, dialect, fake_1000, link_
     assert info["sampling_applied"] is True, f"{link_type}: expected sampling to apply"
     assert info["requested_record_sample_proportion"] == 0.5
     assert info["record_sample_proportion_used"] == 0.5
-    assert 0 < info["actual_record_sample_proportion"] <= 1
 
     sampled = _count_blocked_pairs(
         linker,

@@ -615,6 +615,18 @@ class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
     def chart_spec_file(self) -> str:
         return "blocking_rule_generated_comparisons.json"
 
+    @staticmethod
+    def alter_data(records):
+        chart_records = []
+        for record in list_items_as_dicts(records):
+            chart_record = dict(record)
+            chart_record["chart_start"] = (
+                chart_record["cumulative_comparison_count"]
+                - chart_record["marginal_comparison_count"]
+            )
+            chart_records.append(chart_record)
+        return chart_records
+
 
 class TFAdjustmentChart(SplinkChart[ChartRecord]):
     def __init__(

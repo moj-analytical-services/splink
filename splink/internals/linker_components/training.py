@@ -110,8 +110,8 @@ class LinkerTraining:
         )
 
         summary_record = records[-1]
-        num_observed_matches = summary_record["cumulative_rows"]
-        num_total_comparisons = summary_record["cartesian"]
+        num_observed_matches = summary_record["cumulative_comparison_count"]
+        num_total_comparisons = summary_record["total_possible_comparison_count"]
 
         if num_observed_matches > num_total_comparisons * recall:
             raise ValueError(

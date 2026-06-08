@@ -92,7 +92,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
         blocking_rules="1=1",
         link_type=link_type,
         unique_id_column_name="unique_id",
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
 
     # compare with count from each frame
     pipeline = CTEPipeline()

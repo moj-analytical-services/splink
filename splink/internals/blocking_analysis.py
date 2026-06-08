@@ -283,16 +283,23 @@ def _process_unique_id_columns(
 
 class CumulativeComparisonRecord(TypedDict):
     blocking_rule: str
-    equi_join_conditions_identified: str
-    filter_conditions_identified: str
+    equi_join_conditions: str
+    filter_conditions: str
     link_type_join_condition: str
-    row_count: int
-    cumulative_rows: int
-    cartesian: int
+    marginal_comparison_count: int
+    cumulative_comparison_count: int
+    total_possible_comparison_count: int
     match_key: str
-    start: int
     record_sample_proportion: float
-    actual_record_sample_proportion: float
+    is_estimate: bool
+
+
+class _InternalCumulativeComparisonRecord(TypedDict):
+    blocking_rule: str
+    marginal_comparison_count: int
+    cumulative_comparison_count: int
+    total_possible_comparison_count: int
+    match_key: str
 
 
 def _describe_blocking_rule(
@@ -333,8 +340,8 @@ def _describe_blocking_rule(
     link_type_join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
 
     return {
-        "equi_join_conditions_identified": equi_join_conditions_joined,
-        "filter_conditions_identified": filter_conditions,
+        "equi_join_conditions": equi_join_conditions_joined,
+        "filter_conditions": filter_conditions,
         "link_type_join_condition": link_type_join_condition_sql,
     }
 
@@ -462,16 +469,17 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     all_rules_table_name = "__splink__df_blocking_rule_counts"
     con.execute(
         f"CREATE OR REPLACE TABLE {all_rules_table_name} "
-        "(match_key BIGINT, blocking_rule VARCHAR, cartesian BIGINT);"
+        "(match_key BIGINT, blocking_rule VARCHAR, "
+        "total_possible_comparison_count BIGINT);"
     )
     con.executemany(
         f"INSERT INTO {all_rules_table_name} VALUES "
-        "($match_key, $blocking_rule, $cartesian);",
+        "($match_key, $blocking_rule, $total_possible_comparison_count);",
         [
             {
                 "match_key": str(i),
                 "blocking_rule": br.blocking_rule_sql,
-                "cartesian": cartesian_count,
+                "total_possible_comparison_count": cartesian_count,
             }
             for i, br in enumerate(blocking_rules)
         ],
@@ -484,9 +492,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             WITH simple_counts AS (
                 SELECT
                     rules.blocking_rule,
-                    coalesce(counts.row_count, 0) as row_count,
+                    coalesce(counts.row_count, 0) as marginal_comparison_count,
                     cast(rules.match_key as int) as match_key,
-                    rules.cartesian
+                    rules.total_possible_comparison_count
                 FROM
                     {all_rules_table_name} AS rules
                 LEFT JOIN
@@ -496,15 +504,14 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             )
             SELECT
                 blocking_rule,
-                row_count,
-                sum(row_count) over
+                marginal_comparison_count,
+                sum(marginal_comparison_count) over
                     (
                         order by match_key
                         rows between unbounded preceding and current row
-                    ) as cumulative_rows,
-                cartesian,
+                    ) as cumulative_comparison_count,
+                total_possible_comparison_count,
                 match_key,
-                cumulative_rows - row_count as start,
             FROM
                 simple_counts
         """
@@ -515,33 +522,37 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         sql = f"""
             select
                 blocking_rule,
-                0 as row_count,
-                0 as cumulative_rows,
-                cartesian,
+                0 as marginal_comparison_count,
+                0 as cumulative_comparison_count,
+                total_possible_comparison_count,
                 match_key,
-                0 as start,
             from
                 {all_rules_table_name}
         """
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
     complete_df = con.sql(sql)
-    counts_data = cast(
-        list[CumulativeComparisonRecord], record_dicts_from_relation(complete_df)
+    internal_counts_data = cast(
+        list[_InternalCumulativeComparisonRecord],
+        record_dicts_from_relation(complete_df),
     )
     # clean up temporary tables
     con.execute(f"DROP VIEW IF EXISTS {table_name}")
     con.execute(f"DROP TABLE {all_rules_table_name}")
 
-    # The row_count values above are counts of *sampled* pairs.  Scale them back up
+    # The marginal counts above are counts of *sampled* pairs.  Scale them back up
     # to estimate the true counts, and recompute the cumulative columns.  When
-    # record_sample_proportion=1.0 the scale is 1.0 (exact).  cartesian is exact
-    # (it does not depend on sampling) so it is left untouched.
+    # record_sample_proportion=1.0 the scale is 1.0 (exact).  The total possible
+    # comparison count is exact (it does not depend on sampling) so it is left
+    # untouched.
     scale = 1.0 / (actual_fraction**2)
-    counts_data = sorted(counts_data, key=lambda r: int(r["match_key"]))
+    internal_counts_data = sorted(
+        internal_counts_data,
+        key=lambda r: int(r["match_key"]),
+    )
     cumulative = 0
-    for record in counts_data:
-        sampled_row_count = record["row_count"]
+    for record in internal_counts_data:
+        sampled_row_count = record["marginal_comparison_count"]
         if (
             record_sample_proportion < 1.0
             and sampled_row_count < _MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING
@@ -557,22 +568,29 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
                 UserWarning,
                 stacklevel=2,
             )
-        estimated = int(round(record["row_count"] * scale))
-        record["row_count"] = estimated
+        estimated = int(round(record["marginal_comparison_count"] * scale))
+        record["marginal_comparison_count"] = estimated
         cumulative += estimated
-        record["cumulative_rows"] = cumulative
-        record["start"] = cumulative - estimated
+        record["cumulative_comparison_count"] = cumulative
 
-    for record, description in zip(counts_data, rule_descriptions):
-        record["equi_join_conditions_identified"] = description[
-            "equi_join_conditions_identified"
-        ]
-        record["filter_conditions_identified"] = description[
-            "filter_conditions_identified"
-        ]
-        record["link_type_join_condition"] = description["link_type_join_condition"]
-        record["record_sample_proportion"] = record_sample_proportion
-        record["actual_record_sample_proportion"] = actual_fraction
+    counts_data: list[CumulativeComparisonRecord] = []
+    for record, description in zip(internal_counts_data, rule_descriptions):
+        counts_data.append(
+            {
+                "blocking_rule": record["blocking_rule"],
+                "equi_join_conditions": description["equi_join_conditions"],
+                "filter_conditions": description["filter_conditions"],
+                "link_type_join_condition": description["link_type_join_condition"],
+                "marginal_comparison_count": record["marginal_comparison_count"],
+                "cumulative_comparison_count": record["cumulative_comparison_count"],
+                "total_possible_comparison_count": record[
+                    "total_possible_comparison_count"
+                ],
+                "match_key": record["match_key"],
+                "record_sample_proportion": record_sample_proportion,
+                "is_estimate": record_sample_proportion < 1.0,
+            }
+        )
 
     return counts_data
 
@@ -601,9 +619,10 @@ def count_comparisons_from_blocking_rules(
     rule.
 
     A single record is returned per blocking rule (so a single rule yields a
-    one-element list).  When multiple rules are provided, ``row_count`` is the
-    marginal number of comparisons generated by that rule (excluding pairs already
-    generated by preceding rules) and ``cumulative_rows`` is the running total.
+    one-element list).  When multiple rules are provided,
+    ``marginal_comparison_count`` is the marginal number of comparisons generated by
+    that rule (excluding pairs already generated by preceding rules) and
+    ``cumulative_comparison_count`` is the running total.
 
     For large datasets, set ``record_sample_proportion`` below 1.0 to sample both
     sides of the blocking join and scale the result back up.  This is much faster at

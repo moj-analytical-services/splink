@@ -51,54 +51,54 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     res = count_comparisons_from_blocking_rules(df1_sdf, blocking_rules="1=1", **args)[
         0
-    ]["row_count"]
+    ]["marginal_comparison_count"]
     assert res == 4 * 3 / 2
 
     res = count_comparisons_from_blocking_rules(
         df1_sdf, blocking_rules=block_on("first_name"), **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 1
 
     args["link_type"] = "link_only"
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf], blocking_rules="1=1", **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 4 * 3
 
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf], blocking_rules=block_on("surname"), **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 1
 
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf],
         blocking_rules=block_on("first_name"),
         **args,
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 3
 
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf, df3_sdf], blocking_rules="1=1", **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 4 * 3 + 4 * 2 + 2 * 3
 
     args["link_type"] = "link_and_dedupe"
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf], blocking_rules="1=1", **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
     assert res == expected
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf], blocking_rules=rule, **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 1
 
     rule = block_on("first_name", "surname")
     res = count_comparisons_from_blocking_rules(
         [df1_sdf, df2_sdf], blocking_rules=rule, **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 1
 
 
@@ -131,7 +131,7 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     rule = block_on("postcode", arrays_to_explode=["postcode"])
     res = count_comparisons_from_blocking_rules(
         [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 6
 
     args = {
@@ -142,7 +142,7 @@ def test_blocking_analysis_slow_methodology_exploding(test_helpers, dialect):
     rule = block_on("postcode", arrays_to_explode=["postcode"])
     res = count_comparisons_from_blocking_rules(
         [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
     assert res == 3 + 6 + 2
 
 
@@ -194,7 +194,7 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
 
     res = count_comparisons_from_blocking_rules(
         [df_1_sdf, df_2_sdf], blocking_rules=rule, **args
-    )[0]["row_count"]
+    )[0]["marginal_comparison_count"]
 
     sql = f"""
     select count(*) as count
@@ -215,13 +215,18 @@ def test_blocking_analysis_slow_methodology_exploding_2(test_helpers, dialect):
 def validate_blocking_output(comparison_count_args, expected_out):
     records = count_comparisons_from_blocking_rules(**comparison_count_args)
 
-    assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
+    assert expected_out["marginal_comparison_count"] == [
+        r["marginal_comparison_count"] for r in records
+    ]
 
-    assert expected_out["cumulative_rows"] == list(
-        map(lambda x: x["cumulative_rows"], records)
+    assert expected_out["cumulative_comparison_count"] == list(
+        map(lambda x: x["cumulative_comparison_count"], records)
     )
 
-    assert expected_out["cartesian"] == records[0]["cartesian"]
+    assert (
+        expected_out["total_possible_comparison_count"]
+        == records[0]["total_possible_comparison_count"]
+    )
 
 
 @mark_with_dialects_excluding()
@@ -266,9 +271,16 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
     )
     # The descriptive fields reference the source dataset column name, which
     # differs between the two calls, so compare the computed counts only.
-    assert [r["row_count"] for r in r1] == [r["row_count"] for r in r2]
-    assert [r["cumulative_rows"] for r in r1] == [r["cumulative_rows"] for r in r2]
-    assert r1[0]["cartesian"] == r2[0]["cartesian"]
+    assert [r["marginal_comparison_count"] for r in r1] == [
+        r["marginal_comparison_count"] for r in r2
+    ]
+    assert [r["cumulative_comparison_count"] for r in r1] == [
+        r["cumulative_comparison_count"] for r in r2
+    ]
+    assert (
+        r1[0]["total_possible_comparison_count"]
+        == r2[0]["total_possible_comparison_count"]
+    )
 
     # split table into 3 with alternating rows
     df_1 = fake_1000.take(list(range(0, 1000, 3)))
@@ -312,7 +324,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
     )
     # Both of the above use the vertical concat of the two datasets so should
     # be equivalent
-    assert r1[0]["row_count"] == r2[0]["row_count"]
+    assert r1[0]["marginal_comparison_count"] == r2[0]["marginal_comparison_count"]
 
     r1 = count_comparisons_from_blocking_rules(
         df_concat_2_sdf,
@@ -329,7 +341,7 @@ def test_source_dataset_works_as_expected(test_helpers, dialect, fake_1000):
         unique_id_column_name="unique_id",
     )
     # After filters, the number of comparisons should be the same
-    assert r1[0]["row_count"] == r2[0]["row_count"]
+    assert r1[0]["marginal_comparison_count"] == r2[0]["marginal_comparison_count"]
 
 
 @mark_with_dialects_excluding()
@@ -359,9 +371,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [1],
-            "cumulative_rows": [1],
-            "cartesian": n * (n - 1) / 2,
+            "marginal_comparison_count": [1],
+            "cumulative_comparison_count": [1],
+            "total_possible_comparison_count": n * (n - 1) / 2,
         },
     )
 
@@ -376,9 +388,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [1, 1],
-            "cumulative_rows": [1, 2],
-            "cartesian": n * (n - 1) / 2,
+            "marginal_comparison_count": [1, 1],
+            "cumulative_comparison_count": [1, 2],
+            "total_possible_comparison_count": n * (n - 1) / 2,
         },
     )
 
@@ -393,9 +405,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [1, 0, 1],
-            "cumulative_rows": [1, 1, 2],
-            "cartesian": n * (n - 1) / 2,
+            "marginal_comparison_count": [1, 0, 1],
+            "cumulative_comparison_count": [1, 1, 2],
+            "total_possible_comparison_count": n * (n - 1) / 2,
         },
     )
 
@@ -434,9 +446,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [1, 3, 0],
-            "cumulative_rows": [1, 4, 4],
-            "cartesian": 1 + 1 + 4,  # within, within, between
+            "marginal_comparison_count": [1, 3, 0],
+            "cumulative_comparison_count": [1, 4, 4],
+            "total_possible_comparison_count": 1 + 1 + 4,  # within, within, between
         },
     )
 
@@ -455,9 +467,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [1, 2, 0],
-            "cumulative_rows": [1, 3, 3],
-            "cartesian": 4,
+            "marginal_comparison_count": [1, 2, 0],
+            "cumulative_comparison_count": [1, 3, 3],
+            "total_possible_comparison_count": 4,
         },
     )
 
@@ -493,9 +505,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [2, 2],
-            "cumulative_rows": [2, 4],
-            "cartesian": 5 * 4 / 2,
+            "marginal_comparison_count": [2, 2],
+            "cumulative_comparison_count": [2, 4],
+            "total_possible_comparison_count": 5 * 4 / 2,
         },
     )
 
@@ -508,9 +520,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     validate_blocking_output(
         comparison_count_args,
         expected_out={
-            "row_count": [2, 2],
-            "cumulative_rows": [2, 4],
-            "cartesian": 8,
+            "marginal_comparison_count": [2, 2],
+            "cumulative_comparison_count": [2, 4],
+            "total_possible_comparison_count": 8,
         },
     )
 
@@ -827,7 +839,7 @@ def test_blocking_rule_parentheses_equivalence():
 
     # Check specific values
     for result in [result_brl, result_with_parens, result_without_parens]:
-        assert result[0]["row_count"] == 1
+        assert result[0]["marginal_comparison_count"] == 1
 
 
 def _wide_block_df(n_per_group=120):
@@ -861,13 +873,13 @@ def test_count_comparisons_estimate_mode():
 
     # Metadata signalling the approximation
     assert exact["record_sample_proportion"] == 1.0
-    assert exact["actual_record_sample_proportion"] == 1.0
+    assert exact["is_estimate"] is False
     assert estimate["record_sample_proportion"] == 0.3
-    assert 0 < estimate["actual_record_sample_proportion"] <= 1
+    assert estimate["is_estimate"] is True
 
     # The estimated count is numeric and in the right ballpark
-    exact_post = exact["row_count"]
-    est_post = estimate["row_count"]
+    exact_post = exact["marginal_comparison_count"]
+    est_post = estimate["marginal_comparison_count"]
     assert isinstance(est_post, (int, float))
     assert 0.5 * exact_post <= est_post <= 2.0 * exact_post
 
@@ -907,15 +919,20 @@ def test_cumulative_data_estimate_mode():
     )
 
     assert exact[0]["record_sample_proportion"] == 1.0
+    assert exact[0]["is_estimate"] is False
     assert estimate[0]["record_sample_proportion"] == 0.3
-    # cartesian is unaffected by sampling
-    assert estimate[0]["cartesian"] == exact[0]["cartesian"]
+    assert estimate[0]["is_estimate"] is True
+    # The total possible comparison count is unaffected by sampling.
+    assert (
+        estimate[0]["total_possible_comparison_count"]
+        == exact[0]["total_possible_comparison_count"]
+    )
 
-    exact_rows = exact[0]["row_count"]
-    est_rows = estimate[0]["row_count"]
+    exact_rows = exact[0]["marginal_comparison_count"]
+    est_rows = estimate[0]["marginal_comparison_count"]
     assert 0.5 * exact_rows <= est_rows <= 2.0 * exact_rows
-    # cumulative_rows for a single rule equals row_count
-    assert estimate[0]["cumulative_rows"] == est_rows
+    # Cumulative count for a single rule equals the marginal count.
+    assert estimate[0]["cumulative_comparison_count"] == est_rows
 
 
 def test_linker_blocking_analysis_uses_settings_defaults():
@@ -940,7 +957,8 @@ def test_linker_blocking_analysis_uses_settings_defaults():
         block_on("first_name")
     )
     assert res[0]["record_sample_proportion"] == 1.0
-    assert res[0]["row_count"] > 0
+    assert res[0]["is_estimate"] is False
+    assert res[0]["marginal_comparison_count"] > 0
 
     # Defaulting blocking_rules to those in the settings
     records = linker.blocking_analysis.count_comparisons_from_blocking_rules()
@@ -959,6 +977,7 @@ def test_linker_blocking_analysis_uses_settings_defaults():
             record_sample_proportion=0.5,
         )
     assert est[0]["record_sample_proportion"] == 0.5
+    assert est[0]["is_estimate"] is True
 
     # n_largest_blocks via the linker
     n_largest = linker.blocking_analysis.n_largest_blocks(
