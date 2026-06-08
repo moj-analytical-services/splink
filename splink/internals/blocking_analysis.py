@@ -76,7 +76,6 @@ def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     input_data_dict: dict[str, "SplinkDataFrame"],
     blocking_rule: "BlockingRule",
     link_type: str,
-    db_api: DatabaseAPISubClass,
 ) -> list[dict[str, str]]:
     input_dataframes = list(input_data_dict.values())
 
@@ -771,7 +770,7 @@ def n_largest_blocks(
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
 
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        splink_df_dict, blocking_rule_as_br, link_type, db_api
+        splink_df_dict, blocking_rule_as_br, link_type
     )
     pipeline = CTEPipeline()
     pipeline.enqueue_list_of_sqls(sqls)
