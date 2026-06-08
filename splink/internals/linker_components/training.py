@@ -36,7 +36,7 @@ class LinkerTraining:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
-        max_rows_limit: int = int(1e9),
+        probe_proportion: float = 1.0,
     ) -> None:
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -60,8 +60,11 @@ class LinkerTraining:
             recall (float): An estimate of the recall the deterministic matching
                 rules will achieve, i.e., the proportion of all true matches these
                 rules will recover.
-            max_rows_limit (int): Maximum number of rows to consider during estimation.
-                Defaults to 1e9.
+            probe_proportion (float): The sampling proportion applied to each side
+                of the blocking join when counting deterministic matches. Values
+                below 1.0 estimate the number of observed matches from a sample;
+                1.0 computes exact counts. Useful when working with very large
+                data. Defaults to 1.0.
 
         Examples:
             ```py
@@ -103,6 +106,7 @@ class LinkerTraining:
             db_api=self._linker._db_api,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            probe_proportion=probe_proportion,
         )
 
         summary_record = records[-1]

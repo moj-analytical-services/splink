@@ -2,7 +2,46 @@ import logging
 
 import pytest
 
+from splink import block_on
+from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.linker import Linker
+
 from .decorator import mark_with_dialects_excluding
+
+
+def test_prob_rr_match_sampled_probe_is_similar_to_exact(fake_1000):
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": ["l.first_name = r.first_name"],
+        "comparisons": [],
+    }
+    deterministic_rules = [block_on("first_name")]
+
+    exact_db_api = DuckDBAPI()
+    exact_sdf = exact_db_api.register(fake_1000)
+    exact_linker = Linker(exact_sdf, settings)
+    exact_linker.training.estimate_probability_two_random_records_match(
+        deterministic_rules,
+        recall=1.0,
+        probe_proportion=1.0,
+    )
+    exact_prob = exact_linker._settings_obj._probability_two_random_records_match
+
+    sampled_db_api = DuckDBAPI()
+    sampled_sdf = sampled_db_api.register(fake_1000)
+    sampled_linker = Linker(sampled_sdf, settings)
+    with pytest.warns(
+        UserWarning,
+        match="below the recommended minimum of 1,000",
+    ):
+        sampled_linker.training.estimate_probability_two_random_records_match(
+            deterministic_rules,
+            recall=1.0,
+            probe_proportion=0.5,
+        )
+    sampled_prob = sampled_linker._settings_obj._probability_two_random_records_match
+
+    assert sampled_prob == pytest.approx(exact_prob, rel=0.2)
 
 
 @mark_with_dialects_excluding()
