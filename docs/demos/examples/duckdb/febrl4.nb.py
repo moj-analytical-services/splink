@@ -111,7 +111,7 @@ profile_columns(dfs_sdf, column_expressions=["given_name", "surname"])
 # %%
 from splink import DuckDBAPI, block_on
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 blocking_rules = [
@@ -128,7 +128,7 @@ blocking_rules = [
 
 db_api = DuckDBAPI()
 dfs_sdf = [db_api.register(df) for df in dfs]
-cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+chart_comparisons_from_blocking_rules(
     dfs_sdf,
     blocking_rules=blocking_rules,
     link_type="link_only",

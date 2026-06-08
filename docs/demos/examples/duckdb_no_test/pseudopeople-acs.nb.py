@@ -152,7 +152,7 @@ dfs[0]  # Census
 dfs[1]  # ACS
 
 # %% [markdown]
-# Because we are using all years of ACS surveys, and only the 2020 Decennial Census, there will be respondents to ACS surveys which were not in the 2020 Census because they moved away from Anytown before the 2020 Census was conducted, moved to Anytown after the 2020 Census was conducted, or were not alive during the 2020 Census. Let's check how many of these there are and display some of them. 
+# Because we are using all years of ACS surveys, and only the 2020 Decennial Census, there will be respondents to ACS surveys which were not in the 2020 Census because they moved away from Anytown before the 2020 Census was conducted, moved to Anytown after the 2020 Census was conducted, or were not alive during the 2020 Census. Let's check how many of these there are and display some of them.
 #
 # Note that we cannot simply remove ACS respondents whose surveys indicated they were born after 2020, because their ``age`` response could be inaccurate. Also note that we are only able to count and display these simulants for the tutorial because we know the true identities of each simulant - in a real-record linkage scenario, we would not know this information.
 
@@ -224,7 +224,7 @@ acs.street_name.value_counts()
 # %%
 from splink import DuckDBAPI, block_on
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 blocking_rules = [
@@ -242,7 +242,7 @@ blocking_rules = [
 
 db_api = DuckDBAPI()
 dfs_sdf = [db_api.register(df) for df in dfs]
-cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+chart_comparisons_from_blocking_rules(
     dfs_sdf,
     blocking_rules=blocking_rules,
     link_type="link_only",

@@ -73,7 +73,7 @@ profile_columns(
 # %%
 from splink import DuckDBAPI, block_on
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 # Design blocking rules that allow for differences in transaction date and amounts
@@ -117,7 +117,7 @@ db_api = DuckDBAPI()
 df_origin_sdf = db_api.register(df_origin)
 df_destination_sdf = db_api.register(df_destination)
 
-cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+chart_comparisons_from_blocking_rules(
     [df_origin_sdf, df_destination_sdf],
     blocking_rules=brs,
     link_type="link_only"
