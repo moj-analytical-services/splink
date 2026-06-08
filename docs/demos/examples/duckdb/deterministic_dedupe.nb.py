@@ -67,6 +67,7 @@ chart_comparisons_from_blocking_rules(
         block_on("first_name", "dob", "occupation"),
     ],
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 # %%

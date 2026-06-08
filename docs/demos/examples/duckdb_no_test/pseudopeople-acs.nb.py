@@ -248,6 +248,7 @@ chart_comparisons_from_blocking_rules(
     link_type="link_only",
     unique_id_column_name="id",
     source_dataset_column_name="source_dataset",
+    record_sample_proportion=0.2,
 )
 
 # %% [markdown]

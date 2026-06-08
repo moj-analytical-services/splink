@@ -98,6 +98,7 @@ chart_comparisons_from_blocking_rules(
     blocking_rules=blocking_rules,
     link_type="dedupe_only",
     unique_id_column_name="rec_id",
+    record_sample_proportion=0.2,
 )
 
 # %%

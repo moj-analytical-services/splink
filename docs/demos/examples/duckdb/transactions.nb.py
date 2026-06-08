@@ -120,7 +120,8 @@ df_destination_sdf = db_api.register(df_destination)
 chart_comparisons_from_blocking_rules(
     [df_origin_sdf, df_destination_sdf],
     blocking_rules=brs,
-    link_type="link_only"
+    link_type="link_only",
+    record_sample_proportion=0.2,
 )
 
 # %%

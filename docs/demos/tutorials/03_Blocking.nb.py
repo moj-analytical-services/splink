@@ -151,6 +151,7 @@ counts = count_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=br,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 counts
@@ -162,6 +163,7 @@ counts = count_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=br,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 counts
 
@@ -176,7 +178,7 @@ counts
 #
 # Blocking rules can be affected by skew:  some values of a field may be much more common than others, and this can lead to a disproportionate number of comparisons being generated.
 #
-# It can be useful to identify whether your data is afflicted by this problem. 
+# It can be useful to identify whether your data is afflicted by this problem.
 
 # %%
 from splink.blocking_analysis import n_largest_blocks
@@ -221,6 +223,7 @@ chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules_for_analysis,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 # %% [markdown]

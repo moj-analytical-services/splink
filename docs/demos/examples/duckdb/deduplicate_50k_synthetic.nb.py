@@ -68,6 +68,7 @@ chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 # %%
