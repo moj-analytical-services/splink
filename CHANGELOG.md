@@ -13,8 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.0]
 
-## [4.0.16] - 2026-03-11
-
 ### Added
 
 - `estimate_u_using_random_sampling()` now estimates u probabilities using chunking and can stop early once each comparison level has enough u observations (controlled by `min_count_per_level`). This makes u estimation a lot faster and less memory intensive
@@ -39,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `materialise_blocked_pairs` argument from `predict` (blocked pairs are now always materialised) [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
 - Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
 - `pandas` and `numpy` are no longer required dependencies [#2883](https://github.com/moj-analytical-services/splink/pull/2883)
+
+## [4.0.16] - 2026-03-11
+
+### Fixed
+
+- Changed how SQL is pipelined to mitigate performance issues in duckdb 1.4.x and 1.5.x [#2962](https://github.com/moj-analytical-services/splink/pull/2962) [#2961](https://github.com/moj-analytical-services/splink/pull/2961) [#2963](https://github.com/moj-analytical-services/splink/pull/2963) [#2966](https://github.com/moj-analytical-services/splink/pull/2966) see [issue 2918](https://github.com/moj-analytical-services/splink/issues/2918)
 
 ## [4.0.15] - 2026-02-17
 
@@ -313,7 +317,10 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.16...HEAD
+[4.0.16]: https://github.com/moj-analytical-services/splink/compare/v4.0.15...v4.0.16
+[4.0.15]: https://github.com/moj-analytical-services/splink/compare/v4.0.14...v4.0.15
+[4.0.14]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...v4.0.14
 [4.0.13]: https://github.com/moj-analytical-services/splink/compare/v4.0.12...v4.0.13
 [4.0.12]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...v4.0.11
