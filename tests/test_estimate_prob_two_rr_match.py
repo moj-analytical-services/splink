@@ -23,7 +23,7 @@ def test_prob_rr_match_sampled_probe_is_similar_to_exact(fake_1000):
     exact_linker.training.estimate_probability_two_random_records_match(
         deterministic_rules,
         recall=1.0,
-        probe_proportion=1.0,
+        record_sample_proportion=1.0,
     )
     exact_prob = exact_linker._settings_obj._probability_two_random_records_match
 
@@ -37,7 +37,7 @@ def test_prob_rr_match_sampled_probe_is_similar_to_exact(fake_1000):
         sampled_linker.training.estimate_probability_two_random_records_match(
             deterministic_rules,
             recall=1.0,
-            probe_proportion=0.5,
+            record_sample_proportion=0.5,
         )
     sampled_prob = sampled_linker._settings_obj._probability_two_random_records_match
 

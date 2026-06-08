@@ -36,7 +36,7 @@ class LinkerTraining:
         self,
         deterministic_matching_rules: List[Union[str, BlockingRuleCreator]],
         recall: float,
-        probe_proportion: float = 1.0,
+        record_sample_proportion: float = 1.0,
     ) -> None:
         """Estimate the model parameter `probability_two_random_records_match` using
         a direct estimation approach.
@@ -60,11 +60,11 @@ class LinkerTraining:
             recall (float): An estimate of the recall the deterministic matching
                 rules will achieve, i.e., the proportion of all true matches these
                 rules will recover.
-            probe_proportion (float): The sampling proportion applied to each side
-                of the blocking join when counting deterministic matches. Values
-                below 1.0 estimate the number of observed matches from a sample;
-                1.0 computes exact counts. Useful when working with very large
-                data. Defaults to 1.0.
+            record_sample_proportion (float): The sampling proportion applied to
+                each side of the blocking join when counting deterministic matches.
+                Values below 1.0 estimate the number of observed matches from a
+                sample; 1.0 computes exact counts. Useful when working with very
+                large data. Defaults to 1.0.
 
         Examples:
             ```py
@@ -106,7 +106,7 @@ class LinkerTraining:
             db_api=self._linker._db_api,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            probe_proportion=probe_proportion,
+            record_sample_proportion=record_sample_proportion,
         )
 
         summary_record = records[-1]
@@ -238,7 +238,7 @@ class LinkerTraining:
         populate_probability_two_random_records_match_from_trained_values: bool = False,
         *,
         max_pairs: float | None = None,
-        probe_proportion: float = 0.01,
+        record_sample_proportion: float = 0.01,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -283,14 +283,17 @@ class LinkerTraining:
                 If True, derive this parameter from the blocked value. Defaults to False.
             max_pairs (float, optional): If set, limit the approximate number of
                 blocked pairwise comparisons used in EM training to this value.
-                A small probe blocking pass is run to estimate the full pair
-                count, and a deterministic hash-based filter is applied to the
-                input records (independently on left and right sides) so that
-                the resulting blocked pair count is approximately `max_pairs`.
-                Defaults to None (no sampling).
-            probe_proportion (float, optional): Fraction of records used in the
-                probe blocking pass that drives the `max_pairs` calculation.
-                Only relevant when `max_pairs` is set.  Defaults to 0.01 (1%).
+                A preliminary record-sampled blocking pass is run to estimate the
+                full blocked-pair count, and a deterministic hash-based filter is
+                applied to the input records (independently on left and right sides)
+                so that the resulting blocked pair count is approximately
+                `max_pairs`. Defaults to None (no sampling).
+            record_sample_proportion (float, optional): Fraction of input records
+                sampled on each side of the preliminary blocking pass used to
+                estimate the full blocked-pair count when `max_pairs` is set. It
+                does not directly specify the final number of EM training pairs;
+                `max_pairs` remains the primary control for limiting EM training
+                size. Defaults to 0.01 (1%).
 
         Examples:
             ```py
@@ -305,6 +308,12 @@ class LinkerTraining:
                 session such as how parameters changed during the iteration history
 
         """  # noqa: E501
+        if not 0 < record_sample_proportion <= 1:
+            raise ValueError(
+                "record_sample_proportion must be in (0, 1]; got "
+                f"{record_sample_proportion!r}"
+            )
+
         # Ensure TF lookups exist on the main linker so training linkers can reuse them.
         ensure_term_frequencies_for_linker(self._linker)
 
@@ -330,7 +339,7 @@ class LinkerTraining:
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,
             estimate_without_term_frequencies=estimate_without_term_frequencies,
             max_pairs=max_pairs,
-            probe_proportion=probe_proportion,
+            probe_proportion=record_sample_proportion,
         )
 
         core_model_settings = em_training_session._train()

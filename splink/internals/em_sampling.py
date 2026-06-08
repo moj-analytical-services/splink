@@ -88,7 +88,7 @@ def _count_blocked_pairs_for_probe(
 ) -> tuple[int, float]:
     """Run blocking on a probe-sampled record set.
 
-    Returns `(blocked_pair_count, actual_probe_fraction)`.
+    Returns `(blocked_pair_count, actual_record_sample_proportion)`.
     """
     from splink.internals.blocking import block_using_rules_sqls
 
@@ -153,14 +153,14 @@ def resolve_em_sample_threshold(
         raise ValueError(f"max_pairs must be positive, or None; got {max_pairs!r}")
     if not 0 < probe_proportion <= 1:
         raise ValueError(
-            f"probe_proportion must be in (0, 1]; got {probe_proportion!r}"
+            "record_sample_proportion must be in (0, 1]; got " f"{probe_proportion!r}"
         )
 
     info: dict[str, Any] = {
         "max_pairs": max_pairs,
-        "requested_probe_proportion": probe_proportion,
-        "probe_proportion_used": None,
-        "actual_probe_fraction": None,
+        "requested_record_sample_proportion": probe_proportion,
+        "record_sample_proportion_used": None,
+        "actual_record_sample_proportion": None,
         "probe_pair_count": None,
         "estimated_total_pairs": None,
         "p_star": None,
@@ -182,9 +182,9 @@ def resolve_em_sample_threshold(
         probe_proportion=probe_proportion,
     )
 
-    info["probe_proportion_used"] = probe_proportion
+    info["record_sample_proportion_used"] = probe_proportion
     info["probe_pair_count"] = probe_count
-    info["actual_probe_fraction"] = actual_fraction
+    info["actual_record_sample_proportion"] = actual_fraction
 
     if probe_count == 0:
         info["reason"] = "Probe returned zero blocked pairs; skipping sampling"

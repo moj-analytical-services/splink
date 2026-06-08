@@ -79,11 +79,14 @@ def test_em_max_pairs_reduces_pair_count(test_helpers, dialect, fake_1000, link_
     session = linker.training.estimate_parameters_using_expectation_maximisation(
         block_on("surname"),
         max_pairs=target_max_pairs,
-        probe_proportion=0.5,
+        record_sample_proportion=0.5,
     )
 
     info = session._sample_info
     assert info["sampling_applied"] is True, f"{link_type}: expected sampling to apply"
+    assert info["requested_record_sample_proportion"] == 0.5
+    assert info["record_sample_proportion_used"] == 0.5
+    assert 0 < info["actual_record_sample_proportion"] <= 1
 
     sampled = _count_blocked_pairs(
         linker,
@@ -107,7 +110,7 @@ def test_em_max_pairs_no_op_when_already_below(test_helpers, dialect, fake_1000)
     session = linker.training.estimate_parameters_using_expectation_maximisation(
         block_on("surname"),
         max_pairs=1e9,  # far above the true pair count
-        probe_proportion=0.5,
+        record_sample_proportion=0.5,
     )
     assert session._sample_threshold is None
     assert session._sample_info["sampling_applied"] is False

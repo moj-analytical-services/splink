@@ -856,14 +856,14 @@ def test_count_comparisons_estimate_mode():
         df_sdf,
         blocking_rules=block_on("grp"),
         link_type="dedupe_only",
-        probe_proportion=0.3,
+        record_sample_proportion=0.3,
     )[0]
 
     # Metadata signalling the approximation
-    assert exact["probe_proportion"] == 1.0
-    assert exact["actual_probe_fraction"] == 1.0
-    assert estimate["probe_proportion"] == 0.3
-    assert 0 < estimate["actual_probe_fraction"] <= 1
+    assert exact["record_sample_proportion"] == 1.0
+    assert exact["actual_record_sample_proportion"] == 1.0
+    assert estimate["record_sample_proportion"] == 0.3
+    assert 0 < estimate["actual_record_sample_proportion"] <= 1
 
     # The estimated count is numeric and in the right ballpark
     exact_post = exact["row_count"]
@@ -884,7 +884,7 @@ def test_count_comparisons_warns_when_sampled_pairs_are_low():
             df_sdf,
             blocking_rules=block_on("grp"),
             link_type="dedupe_only",
-            probe_proportion=0.1,
+            record_sample_proportion=0.1,
         )
 
 
@@ -903,11 +903,11 @@ def test_cumulative_data_estimate_mode():
         df_sdf,
         blocking_rules=blocking_rules,
         link_type="dedupe_only",
-        probe_proportion=0.3,
+        record_sample_proportion=0.3,
     )
 
-    assert exact[0]["probe_proportion"] == 1.0
-    assert estimate[0]["probe_proportion"] == 0.3
+    assert exact[0]["record_sample_proportion"] == 1.0
+    assert estimate[0]["record_sample_proportion"] == 0.3
     # cartesian is unaffected by sampling
     assert estimate[0]["cartesian"] == exact[0]["cartesian"]
 
@@ -939,7 +939,7 @@ def test_linker_blocking_analysis_uses_settings_defaults():
     res = linker.blocking_analysis.count_comparisons_from_blocking_rules(
         block_on("first_name")
     )
-    assert res[0]["probe_proportion"] == 1.0
+    assert res[0]["record_sample_proportion"] == 1.0
     assert res[0]["row_count"] > 0
 
     # Defaulting blocking_rules to those in the settings
@@ -956,9 +956,9 @@ def test_linker_blocking_analysis_uses_settings_defaults():
     ):
         est = linker.blocking_analysis.count_comparisons_from_blocking_rules(
             block_on("first_name"),
-            probe_proportion=0.5,
+            record_sample_proportion=0.5,
         )
-    assert est[0]["probe_proportion"] == 0.5
+    assert est[0]["record_sample_proportion"] == 0.5
 
     # n_largest_blocks via the linker
     n_largest = linker.blocking_analysis.n_largest_blocks(
