@@ -1,4 +1,3 @@
-import pandas as pd
 import pyarrow as pa
 import pytest
 
@@ -852,7 +851,7 @@ def _wide_block_df(n_per_group=120):
         for _ in range(n_per_group):
             uid += 1
             rows.append({"unique_id": uid, "grp": grp})
-    return pd.DataFrame(rows)
+    return rows
 
 
 def test_count_comparisons_estimate_mode():
@@ -935,12 +934,11 @@ def test_cumulative_data_estimate_mode():
     assert estimate[0]["cumulative_comparison_count"] == est_rows
 
 
-def test_linker_blocking_analysis_uses_settings_defaults():
+def test_linker_blocking_analysis_uses_settings_defaults(fake_1000):
     from splink.internals.linker import Linker
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     db_api = DuckDBAPI()
-    df_sdf = db_api.register(df)
+    df_sdf = db_api.register(fake_1000)
 
     settings = {
         "link_type": "dedupe_only",
@@ -982,5 +980,5 @@ def test_linker_blocking_analysis_uses_settings_defaults():
     # n_largest_blocks via the linker
     n_largest = linker.blocking_analysis.n_largest_blocks(
         block_on("first_name"), n_largest=3
-    ).as_pandas_dataframe()
+    ).as_record_dict()
     assert len(n_largest) <= 3
