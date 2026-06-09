@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import logging
 import time
+from copy import deepcopy
 from itertools import product
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Sequence
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
+    ExplodingBlockingRule,
     block_using_rules_sqls,
     compute_blocked_pairs_from_concat_with_tf,
 )
+from splink.internals.blocking_analysis import _as_blocking_rule
 from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
@@ -22,6 +25,7 @@ from splink.internals.find_matches_to_new_records import (
 )
 from splink.internals.misc import (
     ascii_uid,
+    indent_sql,
     join_sql_with_union_all,
 )
 from splink.internals.pipeline import CTEPipeline
@@ -29,22 +33,32 @@ from splink.internals.predict import (
     predict_from_comparison_vectors_sqls_using_settings,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splinkdataframe_utils import splink_dataframes_to_dict
 from splink.internals.term_frequencies import (
     _join_new_table_to_df_concat_with_tf_sql,
+    _join_tf_to_input_table_sql,
     append_term_frequencies_to_pipeline,
+    colname_to_tf_tablename,
 )
-from splink.internals.unique_id_concat import _composite_unique_id_from_edges_sql
+from splink.internals.unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
+)
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
+    vertically_concatenate_sql,
 )
 
 if TYPE_CHECKING:
+    from splink.internals.blocking_rule_creator import BlockingRuleCreator
     from splink.internals.linker import Linker
+    from splink.internals.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 PredictUntrainedWarningMode = Literal["auto", "always", "never"]
+LinkTypeLiteralType = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 
 
 class LinkerInference:
@@ -635,14 +649,18 @@ class LinkerInference:
         self._linker._predict_warning()
         return predictions
 
-    def compare_two_records(
+    def score_pairs(
         self,
-        record_1: dict[str, Any] | AcceptableInputTableType,
-        record_2: dict[str, Any] | AcceptableInputTableType,
+        records_left: dict[str, Any] | AcceptableInputTableType,
+        records_right: dict[str, Any] | AcceptableInputTableType,
         include_found_by_blocking_rules: bool = False,
     ) -> SplinkDataFrame:
-        """Use the linkage model to compare and score a pairwise record comparison
-        based on the two input records provided.
+        """Use the linkage model to score pairwise record comparisons formed from
+        the cartesian product of the two inputs provided.
+
+        No blocking rules are applied: every record in ``records_left`` is compared
+        against every record in ``records_right``. To generate candidate pairs using
+        blocking rules, use ``predict_within`` or ``predict_between`` instead.
 
         If your inputs contain multiple rows, scores for the cartesian product of
         the two inputs will be returned.
@@ -654,10 +672,12 @@ class LinkerInference:
         derived from the input data.
 
         Args:
-            record_1 (dict): dictionary representing the first record.  Columns names
-                and data types must be the same as the columns in the settings object
-            record_2 (dict): dictionary representing the second record.  Columns names
-                and data types must be the same as the columns in the settings object
+            records_left (dict): dictionary (or table) representing the left-hand
+                record(s).  Column names and data types must be the same as the
+                columns in the settings object
+            records_right (dict): dictionary (or table) representing the right-hand
+                record(s).  Column names and data types must be the same as the
+                columns in the settings object
             include_found_by_blocking_rules (bool, optional): If True, outputs a column
                 indicating whether the record pair would have been found by any of the
                 blocking rules specified in
@@ -690,7 +710,7 @@ class LinkerInference:
                 'email': "john@smith.net",
                 'tf_first_name': 0.0005,
                 }
-            df = linker.inference.compare_two_records(record_1, record_2)
+            df = linker.inference.score_pairs(record_1, record_2)
 
             ```
 
@@ -710,15 +730,15 @@ class LinkerInference:
         uid = ascii_uid(8)
 
         # Check if input is a DuckDB relation without importing DuckDB
-        if isinstance(record_1, dict):
-            to_register_left: AcceptableInputTableType = [record_1]
+        if isinstance(records_left, dict):
+            to_register_left: AcceptableInputTableType = [records_left]
         else:
-            to_register_left = record_1
+            to_register_left = records_left
 
-        if isinstance(record_2, dict):
-            to_register_right: AcceptableInputTableType = [record_2]
+        if isinstance(records_right, dict):
+            to_register_right: AcceptableInputTableType = [records_right]
         else:
-            to_register_right = record_2
+            to_register_right = records_right
 
         df_records_left = linker.table_management.register_table(
             to_register_left,
@@ -807,3 +827,438 @@ class LinkerInference:
         )
 
         return predictions
+
+    # ------------------------------------------------------------------
+    # Blocked prediction over supplied records (predict_within /
+    # predict_between) and their shared helpers
+    # ------------------------------------------------------------------
+
+    def _clone_settings_with_overrides(
+        self,
+        link_type: LinkTypeLiteralType | None,
+        blocking_rules_to_generate_predictions: (
+            list[BlockingRuleCreator | BlockingRule | str | dict[str, Any]] | None
+        ),
+    ) -> "Settings":
+        """Return a deep copy of the trained settings with optional overrides of
+        ``link_type`` and ``blocking_rules_to_generate_predictions`` applied.
+
+        The live settings object is never mutated.
+        """
+        settings = deepcopy(self._linker._settings_obj)
+        if link_type is not None:
+            settings._link_type = link_type
+        if blocking_rules_to_generate_predictions is not None:
+            brs = [
+                _as_blocking_rule(br, settings._sql_dialect_str)
+                for br in blocking_rules_to_generate_predictions
+            ]
+            settings._blocking_rules_to_generate_predictions = (
+                BlockingRule._add_preceding_rules_to_each_blocking_rule(brs)
+            )
+        return settings
+
+    def _require_registered_term_frequencies(
+        self, dfs: list[SplinkDataFrame]
+    ) -> list[SplinkDataFrame]:
+        """Return the registered term-frequency tables required to score the
+        supplied records.
+
+        Unlike ``predict()``, the ``predict_within`` / ``predict_between``
+        primitives do not derive term-frequency values from the supplied data. If a
+        term-frequency adjustment is required for a column and it is neither present
+        as a hardcoded ``tf_*`` column on the supplied records nor available as a
+        registered term-frequency table, a ``SplinkException`` is raised.
+        """
+        settings = self._linker._settings_obj
+        cache = self._linker._intermediate_table_cache
+
+        supplied_columns: list[Any] = []
+        for df in dfs:
+            supplied_columns.extend(df.columns)
+
+        tf_tables: list[SplinkDataFrame] = []
+        missing: list[str] = []
+        for tf_col in settings._term_frequency_columns:
+            tf_input_column = settings._input_column(tf_col.tf_name)
+            if tf_input_column in supplied_columns:
+                # tf value supplied directly as a hardcoded tf_* column
+                continue
+            tf_table_name = colname_to_tf_tablename(tf_col)
+            if tf_table_name in cache:
+                tf_tables.append(cache.get_with_logging(tf_table_name))
+            else:
+                missing.append(tf_col.name)
+
+        if missing:
+            raise SplinkException(
+                "predict_within / predict_between require term-frequency tables to "
+                "be registered (or tf_* columns to be present on the supplied "
+                f"records). Missing term-frequency information for column(s): "
+                f"{missing}. Register them with "
+                "linker.table_management.compute_tf_table(col) or "
+                "linker.table_management.register_term_frequency_lookup(...), or "
+                "include hardcoded tf_<col> columns on the supplied records."
+            )
+        return tf_tables
+
+    def _concat_sql_for_dict(
+        self,
+        splink_df_dict: dict[str, SplinkDataFrame],
+        force_source_dataset: bool,
+    ) -> str:
+        """Build the vertical-concatenation SQL for a supplied collection.
+
+        When ``force_source_dataset`` is True a ``source_dataset`` column is added
+        for every input table (even when only a single table is supplied). This is
+        needed by ``predict_between`` so that ``link_only`` source-dataset semantics
+        and composite unique ids are well defined on each side.
+        """
+        settings = self._linker._settings_obj
+        sds_input_column = settings.column_info_settings.source_dataset_input_column
+
+        if not force_source_dataset:
+            return vertically_concatenate_sql(splink_df_dict, sds_input_column)
+
+        df_first = next(iter(splink_df_dict.values()))
+        columns = df_first.columns_escaped
+        source_dataset_already_exists = (
+            sds_input_column is not None and sds_input_column in df_first.columns
+        )
+
+        sqls = []
+        for df_obj in splink_df_dict.values():
+            select_expressions = list(columns)
+            if not source_dataset_already_exists:
+                select_expressions.insert(
+                    0, f"'{df_obj.source_dataset_name}' as source_dataset"
+                )
+            select_cols_sql = ",\n".join(
+                indent_sql(expr) for expr in select_expressions
+            )
+            sqls.append(
+                f"""
+                select
+{select_cols_sql}
+                from {df_obj.physical_name}
+                """
+            )
+        return join_sql_with_union_all(sqls)
+
+    def _enqueue_concat_with_tf_cte(
+        self,
+        pipeline: CTEPipeline,
+        splink_df_dict: dict[str, SplinkDataFrame],
+        output_table_name: str,
+        force_source_dataset: bool,
+    ) -> None:
+        """Enqueue a concat-with-tf CTE over a supplied collection.
+
+        Term-frequency tables must already have been appended to the pipeline as
+        input dataframes (see ``_require_registered_term_frequencies``).
+        """
+        pre_tf_name = f"{output_table_name}__pre_tf"
+        pipeline.enqueue_sql(
+            self._concat_sql_for_dict(splink_df_dict, force_source_dataset),
+            pre_tf_name,
+        )
+        pipeline.enqueue_sql(
+            _join_tf_to_input_table_sql(self._linker, pre_tf_name),
+            output_table_name,
+        )
+
+    def predict_within(
+        self,
+        splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
+        *,
+        link_type: LinkTypeLiteralType | None = None,
+        blocking_rules_to_generate_predictions: (
+            list[BlockingRuleCreator | BlockingRule | str | dict[str, Any]] | None
+        ) = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
+        warning_mode: PredictUntrainedWarningMode = "auto",
+    ) -> SplinkDataFrame:
+        """Experimental. Generate blocked, scored pairwise predictions *within* a
+        supplied collection of records, using the trained model.
+
+        The input shape mirrors the ``Linker`` constructor: pass a single
+        ``SplinkDataFrame`` for dedupe-style semantics, or a list of
+        ``SplinkDataFrame``s for multi-dataset semantics. Candidate pairs are
+        generated using blocking rules (the trained rules by default), respecting
+        the model's ``link_type`` source-dataset semantics, and scored.
+
+        Unlike ``predict()`` this does not derive term-frequency values from the
+        supplied data: any required term-frequency tables must be registered (or
+        supplied as hardcoded ``tf_*`` columns), otherwise a ``SplinkException`` is
+        raised.
+
+        Args:
+            splink_dataframe_or_dataframes: A single ``SplinkDataFrame`` or a
+                sequence of them, registered against the same db_api.
+            link_type: Optionally override the trained ``link_type``.
+            blocking_rules_to_generate_predictions: Optionally override the blocking
+                rules used to generate candidate pairs.
+            threshold_match_probability: If specified, only return pairs with a
+                match probability above this threshold.
+            threshold_match_weight: If specified, only return pairs with a match
+                weight above this threshold.
+            warning_mode: Control emission of the untrained-model warning.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
+        """
+        self._validate_predict_warning_mode(warning_mode)
+        settings = self._clone_settings_with_overrides(
+            link_type, blocking_rules_to_generate_predictions
+        )
+        splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
+
+        source_dataset_input_column = (
+            settings.column_info_settings.source_dataset_input_column
+        )
+        unique_id_input_column = settings.column_info_settings.unique_id_input_column
+
+        # Stage 1: blocking. Blocking does not need term-frequency values, so use a
+        # plain concat (which also carries source_dataset for multi-table inputs).
+        blocking_pipeline = CTEPipeline()
+        blocking_pipeline.enqueue_sql(
+            self._concat_sql_for_dict(splink_df_dict, force_source_dataset=False),
+            "__splink__df_concat",
+        )
+        blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
+            pipeline=blocking_pipeline,
+            db_api=self._linker._db_api,
+            splink_df_dict=splink_df_dict,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type=settings._link_type,
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+            df_concat_with_tf_table_name="__splink__df_concat",
+        )
+
+        # Stage 2: build comparison vectors and score.
+        pipeline = CTEPipeline([blocked_pairs])
+        self._append_required_tf_to_pipeline(pipeline, list(splink_df_dict.values()))
+        self._enqueue_concat_with_tf_cte(
+            pipeline,
+            splink_df_dict,
+            "__splink__df_concat_with_tf",
+            force_source_dataset=False,
+        )
+
+        predictions = self._score_blocked_pairs(
+            pipeline=pipeline,
+            settings=settings,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=threshold_match_weight,
+        )
+
+        blocked_pairs.drop_table_from_database_and_remove_from_cache()
+
+        if warning_mode in {"auto", "always"}:
+            self._linker._predict_warning()
+
+        return predictions
+
+    def predict_between(
+        self,
+        left: SplinkDataFrame | Sequence[SplinkDataFrame],
+        right: SplinkDataFrame | Sequence[SplinkDataFrame],
+        *,
+        link_type: LinkTypeLiteralType | None = None,
+        blocking_rules_to_generate_predictions: (
+            list[BlockingRuleCreator | BlockingRule | str | dict[str, Any]] | None
+        ) = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
+        warning_mode: PredictUntrainedWarningMode = "auto",
+    ) -> SplinkDataFrame:
+        """Experimental. Generate blocked, scored pairwise predictions *between*
+        two supplied collections of records, using the trained model.
+
+        Candidate pairs are generated with the left-hand record drawn from ``left``
+        and the right-hand record drawn from ``right`` only (never within ``left``
+        and never within ``right``). The trained model's ``link_type`` source
+        condition is then applied on top: for ``link_only``, pairs are additionally
+        required to come from different source datasets
+        (``source_dataset_l != source_dataset_r``); for ``link_and_dedupe`` and
+        ``dedupe_only`` no source condition is applied.
+
+        ``left`` and ``right`` are *roles* (for example old vs new), not source
+        datasets: each is itself a constructor-shaped collection that preserves its
+        own ``source_dataset``. No ``id_l < id_r`` ordering is applied because the
+        asymmetric role split already prevents duplicate pairs.
+
+        Like ``predict_within``, term-frequency tables must be registered (or
+        supplied as hardcoded ``tf_*`` columns), otherwise a ``SplinkException`` is
+        raised.
+
+        Args:
+            left: The left-hand (role) collection: a single ``SplinkDataFrame`` or a
+                sequence of them.
+            right: The right-hand (role) collection: a single ``SplinkDataFrame`` or
+                a sequence of them.
+            link_type: Optionally override the trained ``link_type``.
+            blocking_rules_to_generate_predictions: Optionally override the blocking
+                rules used to generate candidate pairs.
+            threshold_match_probability: If specified, only return pairs with a
+                match probability above this threshold.
+            threshold_match_weight: If specified, only return pairs with a match
+                weight above this threshold.
+            warning_mode: Control emission of the untrained-model warning.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons.
+        """
+        self._validate_predict_warning_mode(warning_mode)
+        settings = self._clone_settings_with_overrides(
+            link_type, blocking_rules_to_generate_predictions
+        )
+
+        if any(
+            isinstance(br, ExplodingBlockingRule)
+            for br in settings._blocking_rules_to_generate_predictions
+        ):
+            raise SplinkException(
+                "predict_between does not currently support exploding blocking "
+                "rules (e.g. blocking on arrays). Use standard blocking rules, or "
+                "predict_within."
+            )
+
+        left_dict = splink_dataframes_to_dict(left)
+        right_dict = splink_dataframes_to_dict(right)
+        all_dfs = list(left_dict.values()) + list(right_dict.values())
+
+        source_dataset_input_column = (
+            settings.column_info_settings.source_dataset_input_column
+        )
+        unique_id_input_column = settings.column_info_settings.unique_id_input_column
+        # link_only needs a source_dataset column on each side both for the source
+        # condition and for unambiguous composite unique ids.
+        force_source_dataset = source_dataset_input_column is not None
+
+        left_table_name = "__splink__df_concat_with_tf_left"
+        right_table_name = "__splink__df_concat_with_tf_right"
+
+        # Stage 1: build each side's concat-with-tf and block left x right.
+        blocking_pipeline = CTEPipeline()
+        self._append_required_tf_to_pipeline(blocking_pipeline, all_dfs)
+        self._enqueue_concat_with_tf_cte(
+            blocking_pipeline, left_dict, left_table_name, force_source_dataset
+        )
+        self._enqueue_concat_with_tf_cte(
+            blocking_pipeline, right_dict, right_table_name, force_source_dataset
+        )
+
+        # Role split: block left x right with no id ordering (two_dataset_link_only
+        # uses `where 1=1`).
+        block_sqls = block_using_rules_sqls(
+            input_tablename_l=left_table_name,
+            input_tablename_r=right_table_name,
+            blocking_rules=settings._blocking_rules_to_generate_predictions,
+            link_type="two_dataset_link_only",
+            source_dataset_input_column=source_dataset_input_column,
+            unique_id_input_column=unique_id_input_column,
+        )
+        # block_using_rules_sqls outputs __splink__blocked_id_pairs as its last step.
+        # For link_only, additionally require the pair to come from different source
+        # datasets. dedupe_only / link_and_dedupe keep all left x right pairs.
+        apply_source_filter = (
+            settings._link_type == "link_only"
+            and source_dataset_input_column is not None
+        )
+        if apply_source_filter:
+            # Apply the link_only source condition as a post-blocking filter.
+            block_sqls[-1]["output_table_name"] = (
+                "__splink__blocked_id_pairs_unfiltered"
+            )
+            blocking_pipeline.enqueue_list_of_sqls(block_sqls)
+
+            unique_id_columns = [source_dataset_input_column, unique_id_input_column]
+            uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
+            uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+            sds_col = source_dataset_input_column.name
+            filter_sql = f"""
+            select b.match_key, b.join_key_l, b.join_key_r
+            from __splink__blocked_id_pairs_unfiltered as b
+            inner join {left_table_name} as l
+                on {uid_l_expr} = b.join_key_l
+            inner join {right_table_name} as r
+                on {uid_r_expr} = b.join_key_r
+            where l.{sds_col} != r.{sds_col}
+            """
+            blocking_pipeline.enqueue_sql(filter_sql, "__splink__blocked_id_pairs")
+        else:
+            blocking_pipeline.enqueue_list_of_sqls(block_sqls)
+
+        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+            blocking_pipeline
+        )
+
+        # Stage 2: rebuild each side's concat-with-tf and score.
+        pipeline = CTEPipeline([blocked_pairs])
+        self._append_required_tf_to_pipeline(pipeline, all_dfs)
+        self._enqueue_concat_with_tf_cte(
+            pipeline, left_dict, left_table_name, force_source_dataset
+        )
+        self._enqueue_concat_with_tf_cte(
+            pipeline, right_dict, right_table_name, force_source_dataset
+        )
+
+        predictions = self._score_blocked_pairs(
+            pipeline=pipeline,
+            settings=settings,
+            input_tablename_l=left_table_name,
+            input_tablename_r=right_table_name,
+            threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=threshold_match_weight,
+        )
+
+        blocked_pairs.drop_table_from_database_and_remove_from_cache()
+
+        if warning_mode in {"auto", "always"}:
+            self._linker._predict_warning()
+
+        return predictions
+
+    def _append_required_tf_to_pipeline(
+        self, pipeline: CTEPipeline, dfs: list[SplinkDataFrame]
+    ) -> None:
+        for tf_table in self._require_registered_term_frequencies(dfs):
+            pipeline.append_input_dataframe(tf_table)
+
+    def _score_blocked_pairs(
+        self,
+        *,
+        pipeline: CTEPipeline,
+        settings: "Settings",
+        input_tablename_l: str,
+        input_tablename_r: str,
+        threshold_match_probability: float | None,
+        threshold_match_weight: float | None,
+    ) -> SplinkDataFrame:
+        """Compute comparison vectors and scored predictions from a materialised
+        ``__splink__blocked_id_pairs`` table (already added to ``pipeline``)."""
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            settings._columns_to_select_for_blocking,
+            settings._columns_to_select_for_comparison_vector_values,
+            input_tablename_l=input_tablename_l,
+            input_tablename_r=input_tablename_r,
+            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
+            link_type=settings._link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
+            settings,
+            threshold_match_probability,
+            threshold_match_weight,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
+
+        return self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
