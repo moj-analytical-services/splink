@@ -18,6 +18,9 @@ from splink.internals.dialects import SplinkDialect
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import SplinkException
 from splink.internals.input_column import InputColumn
+from splink.internals.linker_components.blocking_analysis import (
+    LinkerBlockingAnalysis,
+)
 from splink.internals.linker_components.clustering import LinkerClustering
 from splink.internals.linker_components.evaluation import LinkerEvalution
 from splink.internals.linker_components.inference import LinkerInference
@@ -162,6 +165,7 @@ class Linker:
 
         self._debug_mode = False
 
+        self.blocking_analysis: "LinkerBlockingAnalysis" = LinkerBlockingAnalysis(self)
         self.clustering: "LinkerClustering" = LinkerClustering(self)
         self.evaluation: "LinkerEvalution" = LinkerEvalution(self)
         self.inference: "LinkerInference" = LinkerInference(self)

@@ -52,7 +52,7 @@ profile_columns(
 # %%
 from splink import block_on
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 blocking_rules =  [block_on("first_name", "surname"),
@@ -62,10 +62,11 @@ blocking_rules =  [block_on("first_name", "surname"),
 
 
 
-cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules,
-    link_type="dedupe_only"
+    link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 # %%

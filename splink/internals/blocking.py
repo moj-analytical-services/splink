@@ -356,6 +356,8 @@ class ExplodingBlockingRule(BlockingRule):
         input_tablename_r: str,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
+        sample_threshold: int | None = None,
+        sample_modulus: int | None = None,
     ) -> str:
         """generates a table of the marginal id pairs from the exploded blocking rule
         i.e. pairs are only created that match this blocking rule and NOT any of
@@ -366,6 +368,9 @@ class ExplodingBlockingRule(BlockingRule):
                 left side records.
             right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
                 right side records.
+            sample_threshold: Optional integer threshold for deterministic hash
+                sampling of both sides of the join (used by blocking analysis).
+            sample_modulus: Optional modulus for the deterministic hash sample.
         """
 
         unique_id_col = unique_id_input_column
@@ -379,6 +384,8 @@ class ExplodingBlockingRule(BlockingRule):
             left_chunk=left_chunk,
             right_chunk=right_chunk,
             sql_dialect=self.sql_dialect,
+            sample_threshold=sample_threshold,
+            sample_modulus=sample_modulus,
         )
 
         id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_input_columns, "l")
@@ -485,6 +492,8 @@ def materialise_exploded_id_tables(
     unique_id_input_column: InputColumn,
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
+    sample_threshold: int | None = None,
+    sample_modulus: int | None = None,
 ) -> list[ExplodingBlockingRule]:
     """Materialise exploded ID pair tables for exploding blocking rules.
 
@@ -493,6 +502,9 @@ def materialise_exploded_id_tables(
             left side records.
         right_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
             right side records.
+        sample_threshold: Optional integer threshold for deterministic hash
+            sampling of both sides of the join (used by blocking analysis).
+        sample_modulus: Optional modulus for the deterministic hash sample.
     """
     exploding_blocking_rules = [
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
@@ -574,6 +586,8 @@ def materialise_exploded_id_tables(
             input_tablename_r=input_tablename_r,
             left_chunk=left_chunk,
             right_chunk=right_chunk,
+            sample_threshold=sample_threshold,
+            sample_modulus=sample_modulus,
         )
 
         pipeline.enqueue_sql(sql, table_name)
