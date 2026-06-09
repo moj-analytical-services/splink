@@ -140,17 +140,18 @@ df = splink_datasets.fake_1000
 #
 
 # %%
-from splink.blocking_analysis import count_comparisons_from_blocking_rule
+from splink.blocking_analysis import count_comparisons_from_blocking_rules
 
 db_api = DuckDBAPI()
 df_sdf = db_api.register(df)
 
 br = block_on("substr(first_name, 1,1)", "surname")
 
-counts = count_comparisons_from_blocking_rule(
+counts = count_comparisons_from_blocking_rules(
     df_sdf,
-    blocking_rule=br,
+    blocking_rules=br,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 counts
@@ -158,10 +159,11 @@ counts
 # %%
 br = "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2"
 
-counts = count_comparisons_from_blocking_rule(
+counts = count_comparisons_from_blocking_rules(
     df_sdf,
-    blocking_rule=br,
+    blocking_rules=br,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 counts
 
@@ -176,7 +178,7 @@ counts
 #
 # Blocking rules can be affected by skew:  some values of a field may be much more common than others, and this can lead to a disproportionate number of comparisons being generated.
 #
-# It can be useful to identify whether your data is afflicted by this problem. 
+# It can be useful to identify whether your data is afflicted by this problem.
 
 # %%
 from splink.blocking_analysis import n_largest_blocks
@@ -205,7 +207,7 @@ result.as_pandas_dataframe()
 
 # %%
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 blocking_rules_for_analysis = [
@@ -217,10 +219,11 @@ blocking_rules_for_analysis = [
 ]
 
 
-cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules_for_analysis,
     link_type="dedupe_only",
+    record_sample_proportion=0.2,
 )
 
 # %% [markdown]

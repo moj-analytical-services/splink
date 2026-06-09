@@ -9,7 +9,7 @@ import pytest
 import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
 from splink import ColumnExpression, DuckDBAPI, Linker, SettingsCreator, block_on
-from splink.blocking_analysis import count_comparisons_from_blocking_rule
+from splink.blocking_analysis import count_comparisons_from_blocking_rules
 from splink.exploratory import completeness_chart, profile_columns
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -36,9 +36,9 @@ def test_full_example_duckdb(tmp_path, fake_1000):
     db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
     df_sdf = db_api.register(df)
 
-    count_comparisons_from_blocking_rule(
+    count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
+        blocking_rules='l.first_name = r.first_name and l."SUR name" = r."SUR name"',  # noqa: E501
         link_type="dedupe_only",
         unique_id_column_name="unique_id",
     )

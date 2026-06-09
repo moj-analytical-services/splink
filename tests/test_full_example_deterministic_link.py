@@ -1,7 +1,7 @@
 import os
 
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 
 from .decorator import mark_with_dialects_excluding
@@ -26,7 +26,7 @@ def test_deterministic_link_full_example(fake_1000, dialect, tmp_path, test_help
     helper_db_api = helper.db_api()
     df_sdf = helper_db_api.register(fake_1000)
 
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    chart_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=br_for_predict,
         link_type="dedupe_only",

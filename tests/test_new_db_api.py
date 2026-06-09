@@ -4,7 +4,7 @@ import splink.internals.comparison_level_library as cll
 import splink.internals.comparison_library as cl
 from splink import ColumnExpression, block_on
 from splink.blocking_analysis import (
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
 )
 from splink.exploratory import profile_columns
 from splink.internals.linker import Linker
@@ -108,7 +108,7 @@ def test_charts(dialect, test_helpers, fake_1000):
     db_api = helper.db_api()
     df_sdf = db_api.register(fake_1000)
 
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    chart_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=[block_on("dob"), block_on("first_name")],
         link_type="dedupe_only",

@@ -1,7 +1,7 @@
 import pyarrow as pa
 import pytest
 
-from splink.blocking_analysis import count_comparisons_from_blocking_rule
+from splink.blocking_analysis import count_comparisons_from_blocking_rules
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import calculate_cartesian
@@ -87,14 +87,13 @@ def test_calculate_cartesian_equals_total_number_of_links(
     db_api = DuckDBAPI()
     dfs_sdf = [db_api.register(df) for df in dfs]
 
-    res_dict = count_comparisons_from_blocking_rule(
+    res = count_comparisons_from_blocking_rules(
         dfs_sdf,
-        blocking_rule="1=1",
+        blocking_rules="1=1",
         link_type=link_type,
         unique_id_column_name="unique_id",
-    )
-
-    res = res_dict["number_of_comparisons_to_be_scored_post_filter_conditions"]
+        record_sample_proportion=1.0,
+    )[0]["marginal_comparison_count"]
 
     # compare with count from each frame
     pipeline = CTEPipeline()

@@ -7,8 +7,8 @@ import os
 from datetime import datetime
 
 from splink.blocking_analysis import (
-    count_comparisons_from_blocking_rule,
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart,
+    chart_comparisons_from_blocking_rules,
+    count_comparisons_from_blocking_rules,
 )
 from splink.exploratory import completeness_chart, profile_columns
 from splink.internals.linker import Linker
@@ -30,14 +30,14 @@ def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
         settings_dict,
     )
 
-    count_comparisons_from_blocking_rule(
+    count_comparisons_from_blocking_rules(
         df_sdf,
-        blocking_rule='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
+        blocking_rules='l.first_name = r.first_name and l."surname" = r."surname"',  # noqa: E501
         link_type="dedupe_only",
         unique_id_column_name="unique_id",
     )
 
-    cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+    chart_comparisons_from_blocking_rules(
         df_sdf,
         blocking_rules=[
             "l.first_name = r.first_name",

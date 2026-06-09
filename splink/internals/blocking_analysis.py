@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import math
+import warnings
 from typing import (
     Any,
     Dict,
@@ -32,10 +32,14 @@ from splink.internals.charts import (
 )
 from splink.internals.database_api import DatabaseAPISubClass
 from splink.internals.duckdb.duckdb_helpers import record_dicts_from_relation
+from splink.internals.em_sampling import (
+    _PROBE_SAMPLE_MODULUS,
+    _probe_actual_fraction,
+    _probe_sample_threshold,
+)
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     calculate_cartesian,
-    ensure_is_iterable,
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -50,12 +54,28 @@ from splink.internals.vertically_concatenate import (
 
 logger = logging.getLogger(__name__)
 
+_MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING = 1_000
+
+
+def _as_blocking_rule(
+    blocking_rule: Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]],
+    sql_dialect_str: str,
+) -> BlockingRule:
+    """Convert user input into a ``BlockingRule``.
+
+    Accepts the usual ``BlockingRuleCreator``/str/dict inputs, but also passes
+    through objects that are already ``BlockingRule`` instances (for example the
+    rules stored on a linker's settings).
+    """
+    if isinstance(blocking_rule, BlockingRule):
+        return blocking_rule
+    return to_blocking_rule_creator(blocking_rule).get_blocking_rule(sql_dialect_str)
+
 
 def _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     input_data_dict: dict[str, "SplinkDataFrame"],
     blocking_rule: "BlockingRule",
     link_type: str,
-    db_api: DatabaseAPISubClass,
 ) -> list[dict[str, str]]:
     input_dataframes = list(input_data_dict.values())
 
@@ -262,11 +282,67 @@ def _process_unique_id_columns(
 
 class CumulativeComparisonRecord(TypedDict):
     blocking_rule: str
-    row_count: int
-    cumulative_rows: int
-    cartesian: int
+    equi_join_conditions: str
+    filter_conditions: str
+    link_type_join_condition: str
+    marginal_comparison_count: int
+    cumulative_comparison_count: int
+    total_possible_comparison_count: int
     match_key: str
-    start: int
+    record_sample_proportion: float
+    is_estimate: bool
+
+
+class _InternalCumulativeComparisonRecord(TypedDict):
+    blocking_rule: str
+    marginal_comparison_count: int
+    cumulative_comparison_count: int
+    total_possible_comparison_count: int
+    match_key: str
+
+
+def _describe_blocking_rule(
+    blocking_rule: BlockingRule,
+    link_type: backend_link_type_options,
+    unique_id_input_column: InputColumn,
+    source_dataset_input_column: Optional[InputColumn],
+    db_api: DatabaseAPISubClass,
+) -> dict[str, str]:
+    """Produce human-readable descriptions of the equi-join conditions, filter
+    conditions and link-type join condition identified for a blocking rule.
+
+    These are descriptive strings only (no computation against the data); they are
+    attached to each record so they can be surfaced in chart tooltips.
+    """
+
+    def add_l_r(sql: str, table_name: str) -> str:
+        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_dialect)
+        for node in tree.find_all(sqlglot.expressions.Column):
+            node.set("table", table_name)
+        return tree.sql(dialect=db_api.sql_dialect.sqlglot_dialect)
+
+    equi_join_conditions = [
+        add_l_r(i, "l") + " = " + add_l_r(j, "r")
+        for i, j in blocking_rule._equi_join_conditions
+    ]
+    equi_join_conditions_joined = " AND ".join(equi_join_conditions)
+
+    filter_conditions = blocking_rule._filter_conditions
+    if filter_conditions == "TRUE":
+        filter_conditions = ""
+
+    if source_dataset_input_column:
+        uid_for_where = [source_dataset_input_column, unique_id_input_column]
+    else:
+        uid_for_where = [unique_id_input_column]
+
+    link_type_join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
+
+    return {
+        "equi_join_conditions": equi_join_conditions_joined,
+        "filter_conditions": filter_conditions,
+        "link_type_join_condition": link_type_join_condition_sql,
+    }
 
 
 def _cumulative_comparisons_to_be_scored_from_blocking_rules(
@@ -275,39 +351,26 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     blocking_rules: List[BlockingRule],
     link_type: backend_link_type_options,
     db_api: DatabaseAPISubClass,
-    max_rows_limit: int = int(1e9),
     unique_id_input_column: InputColumn,
     source_dataset_input_column: Optional[InputColumn],
-    check_max_rows_limit: bool = True,
+    record_sample_proportion: float = 1.0,
 ) -> list[CumulativeComparisonRecord]:
-    # Check none of the blocking rules will create a vast/computationally
-    # intractable number of comparisons
-    if check_max_rows_limit:
-        for br in blocking_rules:
-            # TODO: Deal properly with exlpoding rules
-            count = _count_comparisons_generated_from_blocking_rule(
-                splink_df_dict=splink_df_dict,
-                blocking_rule=br,
-                link_type=link_type,
-                db_api=db_api,
-                max_rows_limit=max_rows_limit,
-                compute_post_filter_count=False,
-                unique_id_input_column=unique_id_input_column,
-                source_dataset_input_column=source_dataset_input_column,
-            )
-            count_pre_filter = count[
-                "number_of_comparisons_generated_pre_filter_conditions"
-            ]
+    # We always create the actual blocked pairs and count them (this handles
+    # exploding rules and marginal/cumulative counts).  To make this tractable on
+    # large data we apply a deterministic hash-based sample to both sides of the
+    # join, count the (much smaller) number of sampled pairs, then scale the result
+    # back up by 1 / fraction**2.  record_sample_proportion=1.0 disables sampling
+    # (the threshold equals the modulus, so the sample filter is a no-op) and gives
+    # exact counts.
+    if not 0 < record_sample_proportion <= 1:
+        raise ValueError(
+            "record_sample_proportion must be in (0, 1]; got "
+            f"{record_sample_proportion!r}"
+        )
 
-            if float(count_pre_filter) > max_rows_limit:
-                # TODO: Use a SplinkException?  Want this to give a sensible message
-                # when ocoming from estimate_probability_two_random_records_match
-                raise ValueError(
-                    f"Blocking rule {br.blocking_rule_sql} would create "
-                    f"{count_pre_filter} comparisonns.\nThis exceeds the "
-                    f"max_rows_limit of {max_rows_limit}.\nPlease tighten the "
-                    "blocking rule or increase the max_rows_limit."
-                )
+    sample_threshold = _probe_sample_threshold(record_sample_proportion)
+    sample_modulus = _PROBE_SAMPLE_MODULUS
+    actual_fraction = _probe_actual_fraction(sample_threshold)
 
     rc = _row_counts_per_input_table(
         splink_df_dict=splink_df_dict,
@@ -317,6 +380,19 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     ).as_record_dict()
 
     cartesian_count = calculate_cartesian(rc, link_type)
+
+    # Descriptive strings per rule (computed before add_preceding_rules mutates
+    # state; they don't depend on preceding rules).
+    rule_descriptions = [
+        _describe_blocking_rule(
+            br,
+            link_type,
+            unique_id_input_column,
+            source_dataset_input_column,
+            db_api,
+        )
+        for br in blocking_rules
+    ]
 
     for n, br in enumerate(blocking_rules):
         br.add_preceding_rules(blocking_rules[:n])
@@ -328,6 +404,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         splink_df_dict,
         source_dataset_input_column=source_dataset_input_column,
         unique_id_input_column=unique_id_input_column,
+        sample_threshold=sample_threshold,
+        sample_modulus=sample_modulus,
     )
 
     pipeline = CTEPipeline()
@@ -366,6 +444,8 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         link_type=link_type,
         unique_id_input_column=unique_id_input_column,
         source_dataset_input_column=source_dataset_input_column,
+        sample_threshold=sample_threshold,
+        sample_modulus=sample_modulus,
     )
 
     pipeline.enqueue_list_of_sqls(sqls)
@@ -388,16 +468,17 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     all_rules_table_name = "__splink__df_blocking_rule_counts"
     con.execute(
         f"CREATE OR REPLACE TABLE {all_rules_table_name} "
-        "(match_key BIGINT, blocking_rule VARCHAR, cartesian BIGINT);"
+        "(match_key BIGINT, blocking_rule VARCHAR, "
+        "total_possible_comparison_count BIGINT);"
     )
     con.executemany(
         f"INSERT INTO {all_rules_table_name} VALUES "
-        "($match_key, $blocking_rule, $cartesian);",
+        "($match_key, $blocking_rule, $total_possible_comparison_count);",
         [
             {
                 "match_key": str(i),
                 "blocking_rule": br.blocking_rule_sql,
-                "cartesian": cartesian_count,
+                "total_possible_comparison_count": cartesian_count,
             }
             for i, br in enumerate(blocking_rules)
         ],
@@ -410,9 +491,9 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             WITH simple_counts AS (
                 SELECT
                     rules.blocking_rule,
-                    coalesce(counts.row_count, 0) as row_count,
+                    coalesce(counts.row_count, 0) as marginal_comparison_count,
                     cast(rules.match_key as int) as match_key,
-                    rules.cartesian
+                    rules.total_possible_comparison_count
                 FROM
                     {all_rules_table_name} AS rules
                 LEFT JOIN
@@ -422,15 +503,14 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
             )
             SELECT
                 blocking_rule,
-                row_count,
-                sum(row_count) over
+                marginal_comparison_count,
+                sum(marginal_comparison_count) over
                     (
                         order by match_key
                         rows between unbounded preceding and current row
-                    ) as cumulative_rows,
-                cartesian,
+                    ) as cumulative_comparison_count,
+                total_possible_comparison_count,
                 match_key,
-                cumulative_rows - row_count as start,
             FROM
                 simple_counts
         """
@@ -441,223 +521,147 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         sql = f"""
             select
                 blocking_rule,
-                0 as row_count,
-                0 as cumulative_rows,
-                cartesian,
+                0 as marginal_comparison_count,
+                0 as cumulative_comparison_count,
+                total_possible_comparison_count,
                 match_key,
-                0 as start,
             from
                 {all_rules_table_name}
         """
 
     [b.drop_materialised_id_pairs_dataframe() for b in exploding_br_with_id_tables]
     complete_df = con.sql(sql)
-    counts_data = cast(
-        list[CumulativeComparisonRecord], record_dicts_from_relation(complete_df)
+    internal_counts_data = cast(
+        list[_InternalCumulativeComparisonRecord],
+        record_dicts_from_relation(complete_df),
     )
     # clean up temporary tables
     con.execute(f"DROP VIEW IF EXISTS {table_name}")
     con.execute(f"DROP TABLE {all_rules_table_name}")
+
+    # The marginal counts above are counts of *sampled* pairs.  Scale them back up
+    # to estimate the true counts, and recompute the cumulative columns.  When
+    # record_sample_proportion=1.0 the scale is 1.0 (exact).  The total possible
+    # comparison count is exact (it does not depend on sampling) so it is left
+    # untouched.
+    scale = 1.0 / (actual_fraction**2)
+    internal_counts_data = sorted(
+        internal_counts_data,
+        key=lambda r: int(r["match_key"]),
+    )
+    cumulative = 0
+    for record in internal_counts_data:
+        sampled_row_count = record["marginal_comparison_count"]
+        if (
+            record_sample_proportion < 1.0
+            and sampled_row_count < _MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING
+        ):
+            warnings.warn(
+                "The sampled blocking analysis estimate for blocking rule "
+                f"{record['blocking_rule']!r} is based on "
+                f"{sampled_row_count:,} sampled pairwise comparisons. "
+                "This is below the recommended minimum of "
+                f"{_MIN_SAMPLE_PAIRS_FOR_ESTIMATE_WARNING:,}, so the estimate "
+                "may be unstable. Increase record_sample_proportion for a more "
+                "stable estimate.",
+                UserWarning,
+                stacklevel=2,
+            )
+        estimated = int(round(record["marginal_comparison_count"] * scale))
+        record["marginal_comparison_count"] = estimated
+        cumulative += estimated
+        record["cumulative_comparison_count"] = cumulative
+
+    counts_data: list[CumulativeComparisonRecord] = []
+    for record, description in zip(internal_counts_data, rule_descriptions):
+        counts_data.append(
+            {
+                "blocking_rule": record["blocking_rule"],
+                "equi_join_conditions": description["equi_join_conditions"],
+                "filter_conditions": description["filter_conditions"],
+                "link_type_join_condition": description["link_type_join_condition"],
+                "marginal_comparison_count": record["marginal_comparison_count"],
+                "cumulative_comparison_count": record["cumulative_comparison_count"],
+                "total_possible_comparison_count": record[
+                    "total_possible_comparison_count"
+                ],
+                "match_key": record["match_key"],
+                "record_sample_proportion": record_sample_proportion,
+                "is_estimate": record_sample_proportion < 1.0,
+            }
+        )
+
     return counts_data
 
 
-def _count_comparisons_generated_from_blocking_rule(
-    *,
-    splink_df_dict: dict[str, "SplinkDataFrame"],
-    blocking_rule: BlockingRule,
-    link_type: backend_link_type_options,
-    db_api: DatabaseAPISubClass,
-    compute_post_filter_count: bool,
-    max_rows_limit: int = int(1e9),
-    unique_id_input_column: InputColumn,
-    source_dataset_input_column: Optional[InputColumn],
-) -> dict[str, Union[int, str]]:
-    pipeline = CTEPipeline()
-    sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        splink_df_dict, blocking_rule, link_type, db_api
-    )
-    pipeline.enqueue_list_of_sqls(sqls)
-
-    sql = """
-    select cast(sum(block_count) as bigint) as count_of_pairwise_comparisons_generated
-    from __splink__block_counts
-    """
-
-    pipeline.enqueue_sql(sql=sql, output_table_name="__splink__total_of_block_counts")
-
-    pre_filter_total_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    pre_filter_total = pre_filter_total_df.as_record_dict()[0][
-        "count_of_pairwise_comparisons_generated"
-    ]
-    pre_filter_total_df.drop_table_from_database_and_remove_from_cache()
-
-    # This is sometimes the sum() over zero rows, with returns as a nan (flaot)
-    # or None.  This result implies a count of zero.
-    if pre_filter_total is None or (
-        isinstance(pre_filter_total, float) and math.isnan(pre_filter_total)
-    ):
-        pre_filter_total = 0
-
-    def add_l_r(sql, table_name):
-        tree = sqlglot.parse_one(sql, dialect=db_api.sql_dialect.sqlglot_dialect)
-        for node in tree.find_all(sqlglot.expressions.Column):
-            node.set("table", table_name)
-        return tree.sql(dialect=db_api.sql_dialect.sqlglot_dialect)
-
-    equi_join_conditions = [
-        add_l_r(i, "l") + " = " + add_l_r(j, "r")
-        for i, j in blocking_rule._equi_join_conditions
-    ]
-
-    equi_join_conditions_joined = " AND ".join(equi_join_conditions)
-
-    filter_conditions = blocking_rule._filter_conditions
-    if filter_conditions == "TRUE":
-        filter_conditions = ""
-
-    if source_dataset_input_column:
-        uid_for_where = [source_dataset_input_column, unique_id_input_column]
-    else:
-        uid_for_where = [unique_id_input_column]
-
-    link_type_join_condition_sql = _sql_gen_where_condition(link_type, uid_for_where)
-
-    if not compute_post_filter_count:
-        return {
-            "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
-            "number_of_comparisons_to_be_scored_post_filter_conditions": "not computed",
-            "filter_conditions_identified": filter_conditions,
-            "equi_join_conditions_identified": equi_join_conditions_joined,
-            "link_type_join_condition": link_type_join_condition_sql,
-        }
-
-    if pre_filter_total < max_rows_limit:
-        post_filter_total_records = (
-            _cumulative_comparisons_to_be_scored_from_blocking_rules(
-                splink_df_dict=splink_df_dict,
-                blocking_rules=[blocking_rule],
-                link_type=link_type,
-                db_api=db_api,
-                max_rows_limit=max_rows_limit,
-                unique_id_input_column=unique_id_input_column,
-                source_dataset_input_column=source_dataset_input_column,
-                check_max_rows_limit=False,
-            )
-        )
-
-        # post_filter_total = post_filter_total_df.loc[0, "row_count"].item()
-        # TODO: is this the right element?
-        # TODO: typing for this...
-        post_filter_total: int | str = post_filter_total_records[0]["row_count"]
-    else:
-        post_filter_total = "exceeded max_rows_limit, see warning"
-
-        logger.warning(
-            "WARNING:\nComputation of number of comparisons post-filter conditions was "
-            "skipped because the number of comparisons generated by your "
-            f"blocking rule exceeded max_rows_limit={max_rows_limit:.2e}."
-            "\nIt would be likely to be slow to compute.\nIf you still want to go ahead"
-            " increase the value of max_rows_limit argument to above "
-            f"{pre_filter_total:.3e}.\nRead more about the definitions here:\n"
-            "https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions"
-        )
-
-    return {
-        "number_of_comparisons_generated_pre_filter_conditions": pre_filter_total,
-        "number_of_comparisons_to_be_scored_post_filter_conditions": post_filter_total,
-        "filter_conditions_identified": filter_conditions,
-        "equi_join_conditions_identified": equi_join_conditions_joined,
-        "link_type_join_condition": link_type_join_condition_sql,
-    }
-
-
-def count_comparisons_from_blocking_rule(
+def count_comparisons_from_blocking_rules(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     *,
-    blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
+    blocking_rules: Union[
+        BlockingRuleCreator,
+        BlockingRule,
+        str,
+        Dict[str, Any],
+        Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]],
+    ],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
     source_dataset_column_name: Optional[str] = None,
-    compute_post_filter_count: bool = True,
-    max_rows_limit: int = int(1e9),
-) -> dict[str, Union[int, str]]:
-    """Analyse a blocking rule to understand the number of comparisons it will generate.
+    record_sample_proportion: float = 0.05,
+) -> list[CumulativeComparisonRecord]:
+    """Analyse one or more blocking rules to understand how many comparisons they
+    will generate.
 
-    Read more about the definition of pre and post filter conditions
-    [here]("https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html?h=filter+cond#filter-conditions")
+    The comparisons are counted by actually creating the blocked pairs (post filter
+    conditions), so this correctly handles exploding blocking rules and computes the
+    marginal (additional) and cumulative number of comparisons generated by each
+    rule.
+
+    A single record is returned per blocking rule (so a single rule yields a
+    one-element list).  When multiple rules are provided,
+    ``marginal_comparison_count`` is the marginal number of comparisons generated by
+    that rule (excluding pairs already generated by preceding rules) and
+    ``cumulative_comparison_count`` is the running total.
+
+    Defaults to ``0.05``, meaning Splink estimates the count from a deterministic
+    5% sample of input records on each side of the blocking join. Set
+    ``record_sample_proportion=1.0`` to compute exact counts.
 
     Args:
         splink_dataframe_or_dataframes (SplinkDataFrame | Sequence[SplinkDataFrame]):
             Input data
-        blocking_rule (Union[BlockingRuleCreator, str, Dict[str, Any]]): The blocking
-            rule to analyse
+        blocking_rules: A single blocking rule or an iterable of blocking rules to
+            analyse.
         link_type (user_input_link_type_options): The link type - "link_only",
             "dedupe_only" or "link_and_dedupe"
         unique_id_column_name (str, optional):  Defaults to "unique_id".
         source_dataset_column_name (Optional[str], optional):  Defaults to None.
-        compute_post_filter_count (bool, optional): Whether to use a slower methodology
-            to calculate how many comparisons will be generated post filter conditions.
-            Defaults to True.
-        max_rows_limit (int, optional): Calculation of post filter counts will only
-            proceed if the fast method returns a value below this limit. Defaults
-            to int(1e9).
+        record_sample_proportion (float, optional): The sampling proportion applied
+            to each side of the blocking join. Defaults to ``0.05``, meaning Splink
+            estimates the count from a deterministic 5% sample of input records on
+            each side of the blocking join. Set ``record_sample_proportion=1.0`` to
+            compute exact counts.
 
     Returns:
-        dict[str, Union[int, str]]: A dictionary containing the results
+        list[CumulativeComparisonRecord]: One record per blocking rule.
     """
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
-
-    # Ensure what's been passed in is a BlockingRuleCreator
-    blocking_rule_creator = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-        db_api.sql_dialect.sql_dialect_str
-    )
-
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
 
-    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
-        unique_id_column_name,
-        source_dataset_column_name,
-        splink_df_dict,
-        link_type,
-        db_api.sql_dialect.sql_dialect_str,
-    )
-
-    return _count_comparisons_generated_from_blocking_rule(
-        splink_df_dict=splink_df_dict,
-        blocking_rule=blocking_rule_creator,
-        link_type=link_type,
-        db_api=db_api,
-        compute_post_filter_count=compute_post_filter_count,
-        max_rows_limit=max_rows_limit,
-        unique_id_input_column=unique_id_input_column,
-        source_dataset_input_column=source_dataset_input_column,
-    )
-
-
-def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
-    splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
-    *,
-    blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
-    link_type: user_input_link_type_options,
-    unique_id_column_name: str = "unique_id",
-    max_rows_limit: int = int(1e9),
-    source_dataset_column_name: Optional[str] = None,
-) -> list[CumulativeComparisonRecord]:
-    """TODO: Add docstring here"""
-    db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
-    splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
-
-    # whilst they're named blocking_rules, this is actually a list of
-    # BlockingRuleCreators. The following code turns them into BlockingRule objects
-    blocking_rules = ensure_is_iterable(blocking_rules)
+    # Allow either a single blocking rule or an iterable of them.  A single rule
+    # may be a dict, which is itself iterable, so we must detect the single-rule
+    # types explicitly rather than relying on iterability.
+    if isinstance(blocking_rules, (str, dict, BlockingRuleCreator, BlockingRule)):
+        blocking_rules_iterable: Iterable[
+            Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]
+        ] = [blocking_rules]
+    else:
+        blocking_rules_iterable = list(blocking_rules)
 
     blocking_rules_as_br: List[BlockingRule] = []
-    for br in blocking_rules:
+    for br_input in blocking_rules_iterable:
         blocking_rules_as_br.append(
-            to_blocking_rule_creator(br).get_blocking_rule(
-                db_api.sql_dialect.sql_dialect_str
-            )
+            _as_blocking_rule(br_input, db_api.sql_dialect.sql_dialect_str)
         )
 
     source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
@@ -673,55 +677,57 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_data(
         blocking_rules=blocking_rules_as_br,
         link_type=link_type,
         db_api=db_api,
-        max_rows_limit=max_rows_limit,
         unique_id_input_column=unique_id_input_column,
         source_dataset_input_column=source_dataset_input_column,
+        record_sample_proportion=record_sample_proportion,
     )
 
 
-def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
+def chart_comparisons_from_blocking_rules(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     *,
-    blocking_rules: Iterable[Union[BlockingRuleCreator, str, Dict[str, Any]]],
+    blocking_rules: Union[
+        BlockingRuleCreator,
+        BlockingRule,
+        str,
+        Dict[str, Any],
+        Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]],
+    ],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
-    max_rows_limit: int = int(1e9),
     source_dataset_column_name: Optional[str] = None,
+    record_sample_proportion: float = 0.05,
 ) -> CumulativeBlockingRuleComparisonsGeneratedChart:
-    """TODO: Add docstring here"""
-    db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
-    splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
+    """Produce a chart of the cumulative number of comparisons generated by one or
+    more blocking rules.
 
-    # whilst they're named blocking_rules, this is actually a list of
-    # BlockingRuleCreators. The followign code turns them into BlockingRule objects
-    blocking_rules = ensure_is_iterable(blocking_rules)
+    See ``count_comparisons_from_blocking_rules`` for details of the underlying
+    computation and the meaning of ``record_sample_proportion``.
 
-    blocking_rules_as_br: List[BlockingRule] = []
-    for br in blocking_rules:
-        blocking_rules_as_br.append(
-            to_blocking_rule_creator(br).get_blocking_rule(
-                db_api.sql_dialect.sql_dialect_str
-            )
-        )
+    Args:
+        splink_dataframe_or_dataframes (SplinkDataFrame | Sequence[SplinkDataFrame]):
+            Input data
+        blocking_rules: A single blocking rule or an iterable of blocking rules to
+            analyse.
+        link_type (user_input_link_type_options): The link type - "link_only",
+            "dedupe_only" or "link_and_dedupe"
+        unique_id_column_name (str, optional):  Defaults to "unique_id".
+        source_dataset_column_name (Optional[str], optional):  Defaults to None.
+        record_sample_proportion (float, optional): Defaults to ``0.05``, meaning
+            Splink estimates the count from a deterministic 5% sample of input
+            records on each side of the blocking join. Set
+            ``record_sample_proportion=1.0`` to compute exact counts.
 
-    source_dataset_input_column, unique_id_input_column = _process_unique_id_columns(
-        unique_id_column_name,
-        source_dataset_column_name,
-        splink_df_dict,
-        link_type,
-        db_api.sql_dialect.sql_dialect_str,
-    )
-
-    cumulative_comparison_records = (
-        _cumulative_comparisons_to_be_scored_from_blocking_rules(
-            splink_df_dict=splink_df_dict,
-            blocking_rules=blocking_rules_as_br,
-            link_type=link_type,
-            db_api=db_api,
-            max_rows_limit=max_rows_limit,
-            unique_id_input_column=unique_id_input_column,
-            source_dataset_input_column=source_dataset_input_column,
-        )
+    Returns:
+        CumulativeBlockingRuleComparisonsGeneratedChart: The chart.
+    """
+    cumulative_comparison_records = count_comparisons_from_blocking_rules(
+        splink_dataframe_or_dataframes,
+        blocking_rules=blocking_rules,
+        link_type=link_type,
+        unique_id_column_name=unique_id_column_name,
+        source_dataset_column_name=source_dataset_column_name,
+        record_sample_proportion=record_sample_proportion,
     )
 
     return CumulativeBlockingRuleComparisonsGeneratedChart(
@@ -732,7 +738,7 @@ def cumulative_comparisons_to_be_scored_from_blocking_rules_chart(
 def n_largest_blocks(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     *,
-    blocking_rule: Union[BlockingRuleCreator, str, Dict[str, Any]],
+    blocking_rule: Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]],
     link_type: user_input_link_type_options,
     n_largest: int = 5,
 ) -> "SplinkDataFrame":
@@ -760,14 +766,14 @@ def n_largest_blocks(
     """
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
 
-    blocking_rule_as_br = to_blocking_rule_creator(blocking_rule).get_blocking_rule(
-        db_api.sql_dialect.sql_dialect_str
+    blocking_rule_as_br = _as_blocking_rule(
+        blocking_rule, db_api.sql_dialect.sql_dialect_str
     )
 
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
 
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
-        splink_df_dict, blocking_rule_as_br, link_type, db_api
+        splink_df_dict, blocking_rule_as_br, link_type
     )
     pipeline = CTEPipeline()
     pipeline.enqueue_list_of_sqls(sqls)
