@@ -23,32 +23,51 @@ def generate_labelling_tool_comparisons(
     source_dataset: str,
     match_weight_threshold: float = -4,
 ) -> SplinkDataFrame:
-    # ensure the tf table exists
-    pipeline = CTEPipeline()
-    enqueue_df_concat_with_tf(linker, pipeline)
     settings = linker._settings_obj
 
-    source_dataset_condition = ""
+    # Materialise all input records (with term frequency columns) so that the
+    # record of interest can be compared against them using a full block.
+    pipeline = CTEPipeline()
+    enqueue_df_concat_with_tf(linker, pipeline)
+    all_records = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+    # Extract the single record of interest
+    source_dataset_condition = ""
     if source_dataset is not None:
         sds_col = settings.column_info_settings.source_dataset_column_name
         source_dataset_condition = f"""
           and {sds_col} = '{source_dataset}'
         """
 
+    pipeline = CTEPipeline()
     sql = f"""
     select *
-    from __splink__df_concat_with_tf
+    from {all_records.physical_name}
     where {settings.column_info_settings.unique_id_column_name} = '{unique_id}'
     {source_dataset_condition}
     """
-
     pipeline.enqueue_sql(sql, "__splink__df_labelling_tool_record")
-    splink_df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+    record = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    matches = linker.inference.find_matches_to_new_records(
-        splink_df.physical_name, match_weight_threshold=match_weight_threshold
+    # Compare every input record against the record of interest (full block).
+    # The input records are passed first so they appear on the "_l" side of the
+    # comparison, which is the side the labelling tool renders as the source data.
+    comparisons = linker.inference.compare_two_records(
+        all_records.physical_name, record.physical_name
     )
+
+    # Keep only matches scoring above the threshold
+    pipeline = CTEPipeline()
+    sql = f"""
+    select *
+    from {comparisons.physical_name}
+    where match_weight > {match_weight_threshold}
+    """
+    pipeline.enqueue_sql(sql, "__splink__df_labelling_tool_comparisons")
+    matches = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+
+    record.drop_table_from_database_and_remove_from_cache()
+    comparisons.drop_table_from_database_and_remove_from_cache()
 
     return matches
 

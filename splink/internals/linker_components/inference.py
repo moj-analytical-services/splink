@@ -11,8 +11,6 @@ from splink.internals.blocking import (
     block_using_rules_sqls,
     compute_blocked_pairs_from_concat_with_tf,
 )
-from splink.internals.blocking_rule_creator import BlockingRuleCreator
-from splink.internals.blocking_rule_creator_utils import to_blocking_rule_creator
 from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
@@ -24,7 +22,6 @@ from splink.internals.find_matches_to_new_records import (
 )
 from splink.internals.misc import (
     ascii_uid,
-    ensure_is_list,
     join_sql_with_union_all,
 )
 from splink.internals.pipeline import CTEPipeline
@@ -638,168 +635,6 @@ class LinkerInference:
         self._linker._predict_warning()
         return predictions
 
-    def find_matches_to_new_records(
-        self,
-        records_or_tablename: AcceptableInputTableType | str,
-        blocking_rules: list[BlockingRuleCreator | dict[str, Any] | str]
-        | BlockingRuleCreator
-        | dict[str, Any]
-        | str = [],
-        match_weight_threshold: float = -4,
-    ) -> SplinkDataFrame:
-        """Given one or more records, find records in the input dataset(s) which match
-        and return in order of the Splink prediction score.
-
-        This effectively provides a way of searching the input datasets
-        for given record(s)
-
-        Args:
-            records_or_tablename (List[dict]): Input search record(s) as list of dict,
-                or a table registered to the database.
-            blocking_rules (list, optional): Blocking rules to select
-                which records to find and score. If [], do not use a blocking
-                rule - meaning the input records will be compared to all records
-                provided to the linker when it was instantiated. Defaults to [].
-            match_weight_threshold (int, optional): Return matches with a match weight
-                above this threshold. Defaults to -4.
-
-        Examples:
-            ```py
-            linker = Linker(df, "saved_settings.json", db_api=db_api)
-
-            # You should load or pre-compute tf tables for any tables with
-            # term frequency adjustments
-            linker.table_management.compute_tf_table("first_name")
-            # OR
-            linker.table_management.register_term_frequency_lookup(df, "first_name")
-
-            record = {'unique_id': 1,
-                'first_name': "John",
-                'surname': "Smith",
-                'dob': "1971-05-24",
-                'city': "London",
-                'email': "john@smith.net"
-                }
-            df = linker.inference.find_matches_to_new_records(
-                [record], blocking_rules=[]
-            )
-            ```
-
-        Returns:
-            SplinkDataFrame: The pairwise comparisons.
-        """
-
-        original_blocking_rules = (
-            self._linker._settings_obj._blocking_rules_to_generate_predictions
-        )
-        original_link_type = self._linker._settings_obj._link_type
-
-        blocking_rule_list: list[BlockingRuleCreator | dict[str, Any] | str] = (
-            ensure_is_list(blocking_rules)
-        )
-
-        if not isinstance(records_or_tablename, str):
-            uid = ascii_uid(8)
-            new_records_tablename = f"__splink__df_new_records_{uid}"
-            self._linker.table_management.register_table(
-                records_or_tablename, new_records_tablename, overwrite=True
-            )
-
-        else:
-            new_records_tablename = records_or_tablename
-
-        new_records_df = self._linker._db_api.table_to_splink_dataframe(
-            "__splink__df_new_records", new_records_tablename
-        )
-
-        pipeline = CTEPipeline([new_records_df])
-        enqueue_df_concat(self._linker, pipeline)
-        if len(blocking_rule_list) == 0:
-            blocking_rule_list = ["1=1"]
-
-        blocking_rules_dialected = [
-            to_blocking_rule_creator(br).get_blocking_rule(
-                self._linker._db_api.sql_dialect.sql_dialect_str
-            )
-            for br in blocking_rule_list
-        ]
-        for n, br in enumerate(blocking_rules_dialected):
-            br.add_preceding_rules(blocking_rules_dialected[:n])
-
-        self._linker._settings_obj._blocking_rules_to_generate_predictions = (
-            blocking_rules_dialected
-        )
-
-        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
-            self._linker,
-            new_records_df,
-            pipeline,
-            in_tablename="__splink__df_new_records",
-            out_tablename="__splink__df_new_records_uid_fix",
-        )
-        settings = self._linker._settings_obj
-        sqls = block_using_rules_sqls(
-            input_tablename_l="__splink__df_concat",
-            input_tablename_r="__splink__df_new_records_uid_fix",
-            blocking_rules=blocking_rules_dialected,
-            link_type="two_dataset_link_only",
-            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        blocked_pairs = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        pipeline = CTEPipeline([blocked_pairs, new_records_df])
-        enqueue_df_concat_with_tf(self._linker, pipeline)
-
-        sql = _join_new_table_to_df_concat_with_tf_sql(
-            self._linker, "__splink__df_new_records"
-        )
-        pipeline.enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
-
-        pipeline = add_unique_id_and_source_dataset_cols_if_needed(
-            self._linker,
-            new_records_df,
-            pipeline,
-            in_tablename="__splink__df_new_records_with_tf_before_uid_fix",
-            out_tablename="__splink__df_new_records_with_tf",
-        )
-
-        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-            self._linker._settings_obj._columns_to_select_for_blocking,
-            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_new_records_with_tf",
-            source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=settings.column_info_settings.unique_id_input_column,
-        )
-
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        sqls = predict_from_comparison_vectors_sqls_using_settings(
-            self._linker._settings_obj
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        sql = f"""
-        select * from __splink__df_predict
-        where match_weight > {match_weight_threshold}
-        """
-
-        pipeline.enqueue_sql(sql, "__splink__find_matches_predictions")
-
-        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        self._linker._settings_obj._blocking_rules_to_generate_predictions = (
-            original_blocking_rules
-        )
-        self._linker._settings_obj._link_type = original_link_type
-
-        blocked_pairs.drop_table_from_database_and_remove_from_cache()
-
-        return predictions
-
     def compare_two_records(
         self,
         record_1: dict[str, Any] | AcceptableInputTableType,
@@ -812,10 +647,11 @@ class LinkerInference:
         If your inputs contain multiple rows, scores for the cartesian product of
         the two inputs will be returned.
 
-        If your inputs contain hardcoded term frequency columns (e.g.
-        a tf_first_name column), then these values will be used instead of any
-        provided term frequency lookup tables. or term frequency values derived
-        from the input data.
+        The usual usage is to provide any required term frequency values directly
+        in the input records as hardcoded term frequency columns (e.g.
+        a tf_first_name column). If these values are not provided, Splink falls
+        back to any registered term frequency lookup tables, or term frequency values
+        derived from the input data.
 
         Args:
             record_1 (dict): dictionary representing the first record.  Columns names
@@ -831,8 +667,8 @@ class LinkerInference:
             ```py
             linker = Linker(df, "saved_settings.json", db_api=db_api)
 
-            # You should load or pre-compute tf tables for any tables with
-            # term frequency adjustments
+            # If you do not provide tf values in the records, you should load or
+            # pre-compute tf tables for any columns with term frequency adjustments
             linker.table_management.compute_tf_table("first_name")
             # OR
             linker.table_management.register_term_frequency_lookup(df, "first_name")
@@ -842,7 +678,8 @@ class LinkerInference:
                 'surname': "Smith",
                 'dob': "1971-05-24",
                 'city': "London",
-                'email': "john@smith.net"
+                'email': "john@smith.net",
+                'tf_first_name': 0.001,
                 }
 
             record_2 = {'unique_id': 1,
@@ -850,7 +687,8 @@ class LinkerInference:
                 'surname': "Smith",
                 'dob': "1971-05-23",
                 'city': "London",
-                'email': "john@smith.net"
+                'email': "john@smith.net",
+                'tf_first_name': 0.0005,
                 }
             df = linker.inference.compare_two_records(record_1, record_2)
 

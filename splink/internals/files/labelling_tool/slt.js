@@ -8371,8 +8371,8 @@ ${slt.d3.csvFormat(output_data)}
 
   function _is_self_match(has_source_dataset_column,source_dataset_column_name,unique_id_column_name){return(
   function (record) {
-    // Since splink uses `linker.find_matches_to_new_records` under the hood, and this method
-    // assumes it's a new, not an existing record, we need to filter out the 'self match'
+    // Since splink compares the record against every input record under the hood, the
+    // record of interest is also compared against itself, so we filter out the 'self match'
 
     if (has_source_dataset_column) {
       // Filter out records with both source_dataset_column_name and unique_id_column_name equal to those in the example_row

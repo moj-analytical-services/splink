@@ -128,9 +128,7 @@ def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
         "cluster": 10000,
     }
 
-    linker.inference.find_matches_to_new_records(
-        [record], blocking_rules=[], match_weight_threshold=-10000
-    )
+    linker.inference.compare_two_records(record, record)
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
