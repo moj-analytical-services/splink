@@ -74,7 +74,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self._id: str = ascii_uid(8)
         self._created_tables: set[str] = set()
         self._input_table_counter: int = 0
-        self._registered_source_dataset_names: set[str] = set()
+        self._registered_table_names: set[str] = set()
         self._ddb_con = duckdb.connect(":memory:")
 
     @property
@@ -270,32 +270,37 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         self,
         table: AcceptableInputTableType | str,
         source_dataset_name: Optional[str] = None,
+        *,
+        table_name: Optional[str] = None,
     ) -> SplinkDataFrame:
-        if source_dataset_name is not None:
-            if source_dataset_name in self._registered_source_dataset_names:
-                raise ValueError(
-                    f"A table has already been registered with "
-                    f"source_dataset_name='{source_dataset_name}'. "
-                    f"Each registered table must have a unique source_dataset_name."
-                )
-            self._registered_source_dataset_names.add(source_dataset_name)
+        table_name_is_generated = table_name is None and source_dataset_name is None
+        table_name = table_name or source_dataset_name or self._new_input_table_name()
+        source_dataset_name = source_dataset_name or table_name
 
-        templated_name = source_dataset_name or self._new_input_table_name()
+        if table_name in self._registered_table_names:
+            raise ValueError(
+                f"A table has already been registered with table_name='{table_name}'. "
+                "Each registered table must have a unique table_name."
+            )
+        self._registered_table_names.add(table_name)
 
         # String inputs represent already-registered physical tables.
-        # If `source_dataset_name` is not provided, we still generate a fresh internal
+        # If `table_name` is not provided, we still generate a fresh internal
         # templated name so that the same physical table can be used multiple times as
         # distinct inputs (e.g. linking a table to itself).
         if isinstance(table, str):
             physical_name = table
-            sdf = self.table_to_splink_dataframe(templated_name, physical_name)
+            sdf = self.table_to_splink_dataframe(table_name, physical_name)
         else:
             # Allow overwrite of table only if Splink is assigning the name
             # i.e. allow overwrites of tables of the form __splink__input_table_n
-            overwrite = source_dataset_name is None
-            sdf = self._create_backend_table(table, templated_name, overwrite=overwrite)
+            sdf = self._create_backend_table(
+                table,
+                table_name,
+                overwrite=table_name_is_generated,
+            )
 
-        sdf.source_dataset_name = templated_name
+        sdf.source_dataset_name = source_dataset_name
         return sdf
 
     @final

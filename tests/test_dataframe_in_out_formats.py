@@ -76,6 +76,36 @@ def test_splink_dataframe_from_pyarrow(
 
 
 @mark_with_dialects_excluding()
+def test_register_table_name_distinct_from_source_dataset_name(
+    dialect, test_helpers, unique_per_test_table_name
+):
+    helper = test_helpers[dialect]
+
+    db_api = helper.db_api()
+    table_name_1 = f"{unique_per_test_table_name}_1"
+    table_name_2 = f"{unique_per_test_table_name}_2"
+
+    sdf_1 = db_api.register(
+        input_data_dict,
+        source_dataset_name="source_1",
+        table_name=table_name_1,
+    )
+    sdf_2 = db_api.register(
+        input_data_dict,
+        source_dataset_name="source_1",
+        table_name=table_name_2,
+    )
+
+    assert sdf_1.templated_name == table_name_1
+    assert sdf_2.templated_name == table_name_2
+    assert sdf_1.source_dataset_name == "source_1"
+    assert sdf_2.source_dataset_name == "source_1"
+
+    db_api.delete_table_from_database(table_name_1)
+    db_api.delete_table_from_database(table_name_2)
+
+
+@mark_with_dialects_excluding()
 @mark.needs_pandas
 def test_splink_dataframe_to_pandas(dialect, test_helpers, unique_per_test_table_name):
     helper = test_helpers[dialect]
