@@ -23,7 +23,7 @@ def similarity_jar_location() -> str:
     if spark_major_version >= 4:
         path = (
             splink.__file__[0:-11]
-            + "internals/files/spark_jars/scala-udf-similarity-0.2.0_spark4.x.jar"
+            + "internals/files/spark_jars/scala-udf-similarity-0.2.1_spark4.x.jar"
         )
     elif spark_major_version == 3:
         path = (
