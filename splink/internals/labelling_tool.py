@@ -52,9 +52,7 @@ def generate_labelling_tool_comparisons(
     # Compare every input record against the record of interest (full block).
     # The input records are passed first so they appear on the "_l" side of the
     # comparison, which is the side the labelling tool renders as the source data.
-    comparisons = linker.inference.score_pairs(
-        all_records, record
-    )
+    comparisons = linker.inference.score_pairs(all_records, record)
 
     # Keep only matches scoring above the threshold
     pipeline = CTEPipeline()

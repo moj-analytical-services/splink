@@ -183,4 +183,3 @@ def test_score_pairs_rejects_dict_input(test_helpers, dialect, fake_1000):
     r1, r2 = _records()
     with pytest.raises(TypeError):
         linker.inference.score_pairs(r1, r2)
-
