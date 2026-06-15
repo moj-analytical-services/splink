@@ -26,12 +26,12 @@ def _dedupe_settings(tf=False, blocking_rules=None):
     )
 
 
-def _train(linker):
+def _train(linker, dialect):
     linker.training.estimate_probability_two_random_records_match(
         [block_on("first_name"), block_on("surname")], recall=0.7
     )
     estimate_u_kwargs = {"max_pairs": 1e5}
-    if linker._sql_dialect_str != "postgres":
+    if dialect != "postgres":
         estimate_u_kwargs["seed"] = 1
     linker.training.estimate_u_using_random_sampling(**estimate_u_kwargs)
 
@@ -47,7 +47,7 @@ def _pairs_with_weight(sdf):
 def test_predict_within_matches_predict(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings())
-    _train(linker)
+    _train(linker, dialect)
 
     df_predict = linker.inference.predict()
     df_within = linker.inference.predict_within(
@@ -61,7 +61,7 @@ def test_predict_within_matches_predict(test_helpers, dialect, fake_1000):
 def test_predict_within_blocking_rule_override(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings())
-    _train(linker)
+    _train(linker, dialect)
 
     df_within = linker.inference.predict_within(
         list(linker._input_tables_dict.values()),
@@ -98,7 +98,7 @@ def test_predict_within_link_only_cross_pairs_only(test_helpers, dialect, fake_1
     linker = helper.linker_with_registration(
         parts, settings, input_table_aliases=["a", "b", "c"]
     )
-    _train(linker)
+    _train(linker, dialect)
 
     sdfs = list(linker._input_tables_dict.values())
     df_within = linker.inference.predict_within(sdfs)
@@ -113,7 +113,7 @@ def test_predict_within_link_only_cross_pairs_only(test_helpers, dialect, fake_1
 def test_predict_within_missing_tf_raises(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings(tf=True))
-    _train(linker)
+    _train(linker, dialect)
     # Term-frequency tables are computed and cached during training; clear them so
     # that predict_within has no registered tf information to use.
     linker.table_management.invalidate_cache()
@@ -126,7 +126,7 @@ def test_predict_within_missing_tf_raises(test_helpers, dialect, fake_1000):
 def test_predict_within_registered_tf_succeeds(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings(tf=True))
-    _train(linker)
+    _train(linker, dialect)
     # Ensure the required tf table is registered
     linker.table_management.compute_tf_table("first_name")
 

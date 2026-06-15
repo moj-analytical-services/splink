@@ -24,11 +24,14 @@ def _dedupe_settings(tf=False):
     )
 
 
-def _train(linker):
+def _train(linker, dialect):
     linker.training.estimate_probability_two_random_records_match(
         [block_on("first_name"), block_on("surname")], recall=0.7
     )
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e5, seed=1)
+    estimate_u_kwargs = {"max_pairs": 1e5}
+    if dialect != "postgres":
+        estimate_u_kwargs["seed"] = 1
+    linker.training.estimate_u_using_random_sampling(**estimate_u_kwargs)
 
 
 def _pairs(sdf):
@@ -39,7 +42,7 @@ def _pairs(sdf):
 def test_predict_between_role_split(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings())
-    _train(linker)
+    _train(linker, dialect)
 
     records = fake_1000.to_pylist()
     half = len(records) // 2
@@ -86,7 +89,7 @@ def test_predict_between_link_only_source_filter(test_helpers, dialect, fake_100
 
     combined = pa.Table.from_pylist(records)
     linker = helper.linker_with_registration(combined, settings)
-    _train(linker)
+    _train(linker, dialect)
 
     # Use the same record collection as both roles so that same-source candidate
     # pairs are guaranteed to exist (and so can be shown to be filtered out).
@@ -115,7 +118,7 @@ def test_predict_between_link_only_source_filter(test_helpers, dialect, fake_100
 def test_predict_between_missing_tf_raises(test_helpers, dialect, fake_1000):
     helper = test_helpers[dialect]
     linker = helper.linker_with_registration(fake_1000, _dedupe_settings(tf=True))
-    _train(linker)
+    _train(linker, dialect)
     linker.table_management.invalidate_cache()
 
     records = fake_1000.to_pylist()
