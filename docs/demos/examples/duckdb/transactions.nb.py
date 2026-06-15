@@ -194,8 +194,8 @@ settings = SettingsCreator(
 
 # %%
 db_api = DuckDBAPI()
-df_origin_sdf = db_api.register(df_origin, source_dataset_name="__ori")
-df_destination_sdf = db_api.register(df_destination, source_dataset_name="_dest")
+df_origin_sdf = db_api.register(df_origin, dataset_display_name="__ori")
+df_destination_sdf = db_api.register(df_destination, dataset_display_name="_dest")
 linker = Linker([df_origin_sdf, df_destination_sdf], settings)
 
 # %%

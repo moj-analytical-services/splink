@@ -289,8 +289,8 @@ settings = SettingsCreator(
 )
 
 db_api = DuckDBAPI()
-dfs_sdf_0 = db_api.register(dfs[0], source_dataset_name="census")
-dfs_sdf_1 = db_api.register(dfs[1], source_dataset_name="acs")
+dfs_sdf_0 = db_api.register(dfs[0], dataset_display_name="census")
+dfs_sdf_1 = db_api.register(dfs[1], dataset_display_name="acs")
 linker = Linker([dfs_sdf_0, dfs_sdf_1], settings)
 
 # %% [markdown]
