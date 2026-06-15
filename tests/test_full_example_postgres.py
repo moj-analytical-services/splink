@@ -128,7 +128,7 @@ def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
         "cluster": 10000,
     }
 
-    linker.inference.score_pairs(record, record)
+    linker.inference.score_pair(record, record)
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")

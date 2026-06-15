@@ -117,7 +117,7 @@ def compare_records(base_records, comparison_records, linker):
     results = []
     for record_1 in base_records:
         results.extend(
-            linker.inference.score_pairs(record_1, record_2).as_pandas_dataframe()
+            linker.inference.score_pair(record_1, record_2).as_pandas_dataframe()
             for record_2 in comparison_records
         )
     all_comparisons_df = pd.concat(results, ignore_index=True)

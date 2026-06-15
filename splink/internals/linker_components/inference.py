@@ -19,7 +19,6 @@ from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
-from splink.internals.database_api import AcceptableInputTableType
 from splink.internals.exceptions import SplinkException
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
@@ -651,21 +650,22 @@ class LinkerInference:
         self._linker._predict_warning()
         return predictions
 
-    def score_pairs(
+    def score_pair(
         self,
-        records_left: dict[str, Any] | AcceptableInputTableType,
-        records_right: dict[str, Any] | AcceptableInputTableType,
+        record_left: dict[str, Any] | SplinkDataFrame,
+        record_right: dict[str, Any] | SplinkDataFrame,
         include_found_by_blocking_rules: bool = False,
     ) -> SplinkDataFrame:
-        """Use the linkage model to score pairwise record comparisons formed from
-        the cartesian product of the two inputs provided.
+        """Use the linkage model to score a single pairwise record comparison.
 
-        No blocking rules are applied: every record in ``records_left`` is compared
-        against every record in ``records_right``. To generate candidate pairs using
-        blocking rules, use ``predict_within`` or ``predict_between`` instead.
+        This is the realtime/low-latency scoring path: the caller already knows the
+        pair to score and supplies it directly. No blocking rules are applied. To
+        score many pairs at once (the cartesian product of two collections) use
+        ``score_pairs``; to generate candidate pairs using blocking rules use
+        ``predict_within`` or ``predict_between``.
 
-        If your inputs contain multiple rows, scores for the cartesian product of
-        the two inputs will be returned.
+        Each input may be a Python ``dict`` representing a single record, or a
+        ``SplinkDataFrame``.
 
         The usual usage is to provide any required term frequency values directly
         in the input records as hardcoded term frequency columns (e.g.
@@ -674,12 +674,11 @@ class LinkerInference:
         derived from the input data.
 
         Args:
-            records_left (dict): dictionary (or table) representing the left-hand
-                record(s).  Column names and data types must be the same as the
-                columns in the settings object
-            records_right (dict): dictionary (or table) representing the right-hand
-                record(s).  Column names and data types must be the same as the
-                columns in the settings object
+            record_left (dict | SplinkDataFrame): the left-hand record.  Column names
+                and data types must be the same as the columns in the settings object
+            record_right (dict | SplinkDataFrame): the right-hand record.  Column
+                names and data types must be the same as the columns in the settings
+                object
             include_found_by_blocking_rules (bool, optional): If True, outputs a column
                 indicating whether the record pair would have been found by any of the
                 blocking rules specified in
@@ -712,14 +711,129 @@ class LinkerInference:
                 'email': "john@smith.net",
                 'tf_first_name': 0.0005,
                 }
-            df = linker.inference.score_pairs(record_1, record_2)
+            df = linker.inference.score_pair(record_1, record_2)
 
             ```
 
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
         """
+        return self._score_pairs_core(
+            self._normalise_score_pair_input(record_left, "record_left"),
+            self._normalise_score_pair_input(record_right, "record_right"),
+            include_found_by_blocking_rules,
+        )
 
+    def score_pairs(
+        self,
+        records_left: list[dict[str, Any]] | SplinkDataFrame,
+        records_right: list[dict[str, Any]] | SplinkDataFrame,
+        include_found_by_blocking_rules: bool = False,
+    ) -> SplinkDataFrame:
+        """Use the linkage model to score pairwise record comparisons formed from
+        the cartesian product of the two inputs provided.
+
+        No blocking rules are applied: every record in ``records_left`` is compared
+        against every record in ``records_right``. To score a single known pair use
+        ``score_pair``; to generate candidate pairs using blocking rules, use
+        ``predict_within`` or ``predict_between`` instead.
+
+        Each input may be a list of Python ``dict``s representing records, or a
+        ``SplinkDataFrame``.
+
+        The usual usage is to provide any required term frequency values directly
+        in the input records as hardcoded term frequency columns (e.g.
+        a tf_first_name column). If these values are not provided, Splink falls
+        back to any registered term frequency lookup tables, or term frequency values
+        derived from the input data.
+
+        Args:
+            records_left (list[dict] | SplinkDataFrame): the left-hand records.
+                Column names and data types must be the same as the columns in the
+                settings object
+            records_right (list[dict] | SplinkDataFrame): the right-hand records.
+                Column names and data types must be the same as the columns in the
+                settings object
+            include_found_by_blocking_rules (bool, optional): If True, outputs a column
+                indicating whether the record pair would have been found by any of the
+                blocking rules specified in
+                settings.blocking_rules_to_generate_predictions. Defaults to False.
+
+        Examples:
+            ```py
+            linker = Linker(df, "saved_settings.json", db_api=db_api)
+
+            linker.table_management.compute_tf_table("first_name")
+
+            df = linker.inference.score_pairs(records_left, records_right)
+            ```
+
+        Returns:
+            SplinkDataFrame: Pairwise comparisons with scored predictions
+        """
+        return self._score_pairs_core(
+            self._normalise_score_pairs_input(records_left, "records_left"),
+            self._normalise_score_pairs_input(records_right, "records_right"),
+            include_found_by_blocking_rules,
+        )
+
+    @staticmethod
+    def _normalise_score_pair_input(
+        record: dict[str, Any] | SplinkDataFrame, arg_name: str
+    ) -> list[dict[str, Any]] | SplinkDataFrame:
+        if isinstance(record, SplinkDataFrame):
+            return record
+        if isinstance(record, dict):
+            return [record]
+        raise TypeError(
+            f"{arg_name} must be a dict or a SplinkDataFrame, "
+            f"got {type(record).__name__}."
+        )
+
+    @staticmethod
+    def _normalise_score_pairs_input(
+        records: list[dict[str, Any]] | SplinkDataFrame, arg_name: str
+    ) -> list[dict[str, Any]] | SplinkDataFrame:
+        if isinstance(records, SplinkDataFrame):
+            return records
+        if isinstance(records, list):
+            return records
+        raise TypeError(
+            f"{arg_name} must be a list of dicts or a SplinkDataFrame, "
+            f"got {type(records).__name__}."
+        )
+
+    def _prepare_score_input(
+        self,
+        records: list[dict[str, Any]] | SplinkDataFrame,
+        templated_name: str,
+        uid: str,
+    ) -> SplinkDataFrame:
+        """Normalise a ``score_pair`` / ``score_pairs`` input into a SplinkDataFrame
+        with a fixed templated name expected by the scoring pipeline.
+
+        A user-supplied ``SplinkDataFrame`` is never mutated: a fresh reference to
+        the same physical table is returned instead.
+        """
+        linker = self._linker
+        if isinstance(records, SplinkDataFrame):
+            return linker._db_api.table_to_splink_dataframe(
+                templated_name, records.physical_name
+            )
+        df = linker.table_management.register_table(
+            records,
+            f"{templated_name}_{uid}",
+            overwrite=True,
+        )
+        df.templated_name = templated_name
+        return df
+
+    def _score_pairs_core(
+        self,
+        records_left: list[dict[str, Any]] | SplinkDataFrame,
+        records_right: list[dict[str, Any]] | SplinkDataFrame,
+        include_found_by_blocking_rules: bool,
+    ) -> SplinkDataFrame:
         linker = self._linker
 
         retain_matching_columns = linker._settings_obj._retain_matching_columns
@@ -731,31 +845,12 @@ class LinkerInference:
 
         uid = ascii_uid(8)
 
-        # Check if input is a DuckDB relation without importing DuckDB
-        if isinstance(records_left, dict):
-            to_register_left: AcceptableInputTableType = [records_left]
-        else:
-            to_register_left = records_left
-
-        if isinstance(records_right, dict):
-            to_register_right: AcceptableInputTableType = [records_right]
-        else:
-            to_register_right = records_right
-
-        df_records_left = linker.table_management.register_table(
-            to_register_left,
-            f"__splink__compare_two_records_left_{uid}",
-            overwrite=True,
+        df_records_left = self._prepare_score_input(
+            records_left, "__splink__compare_two_records_left", uid
         )
-
-        df_records_left.templated_name = "__splink__compare_two_records_left"
-
-        df_records_right = linker.table_management.register_table(
-            to_register_right,
-            f"__splink__compare_two_records_right_{uid}",
-            overwrite=True,
+        df_records_right = self._prepare_score_input(
+            records_right, "__splink__compare_two_records_right", uid
         )
-        df_records_right.templated_name = "__splink__compare_two_records_right"
 
         pipeline = CTEPipeline([df_records_left, df_records_right])
         append_term_frequencies_to_pipeline(linker, pipeline)

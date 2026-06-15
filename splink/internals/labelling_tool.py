@@ -53,7 +53,7 @@ def generate_labelling_tool_comparisons(
     # The input records are passed first so they appear on the "_l" side of the
     # comparison, which is the side the labelling tool renders as the source data.
     comparisons = linker.inference.score_pairs(
-        all_records.physical_name, record.physical_name
+        all_records, record
     )
 
     # Keep only matches scoring above the threshold
