@@ -256,8 +256,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 created_physicals,
                 pipeline_completed,
             )
-            # don't want to cache anything in debug mode
-            self._intermediate_table_cache.invalidate_cache()
 
         if splink_dataframe is None:
             raise SplinkException("Debug pipeline execution produced no output tables.")
