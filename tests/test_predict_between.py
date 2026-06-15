@@ -1,18 +1,3 @@
-"""Behavioural tests for ``linker.inference.predict_between``.
-
-These tests use tiny, hand-constructed datasets and assert the *exact* set of
-pairs returned. They deliberately do not train a model: the only thing being
-verified is *which* pairs are generated, in particular the two guarantees that
-make ``predict_between`` distinct from ``predict_within``:
-
-  1. A pair always has its left record drawn from ``left`` and its right record
-     drawn from ``right`` (never within a single role), and
-  2. for ``link_only``, pairs are additionally required to come from different
-     source datasets, whereas ``link_and_dedupe`` keeps same-source pairs.
-
-``warning_mode="never"`` suppresses the untrained-model warning.
-"""
-
 import pytest
 
 import splink.internals.comparison_library as cl

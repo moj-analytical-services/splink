@@ -1,12 +1,3 @@
-"""Behavioural tests for ``linker.inference.predict_within``.
-
-These tests use tiny, hand-constructed datasets and assert the *exact* set of
-pairs returned. They deliberately do not train a model: ``predict_within`` is a
-blocking/linking operation, so the only thing that matters here is *which* pairs
-are generated, not their match weights. ``warning_mode="never"`` suppresses the
-untrained-model warning.
-"""
-
 import pytest
 
 import splink.internals.comparison_library as cl
