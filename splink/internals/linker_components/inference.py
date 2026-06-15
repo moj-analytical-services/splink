@@ -1149,24 +1149,29 @@ class LinkerInference:
                 force_source_dataset=force_source_dataset,
             )
 
+        blocking_left_table_name = "__splink__df_concat_left"
+        blocking_right_table_name = "__splink__df_concat_right"
         left_table_name = "__splink__df_concat_with_tf_left"
         right_table_name = "__splink__df_concat_with_tf_right"
 
-        # Stage 1: build each side's concat-with-tf and block left x right.
+        # Stage 1: build each side's plain concat and block left x right.
         blocking_pipeline = CTEPipeline()
-        self._append_required_tf_to_pipeline(blocking_pipeline, all_dfs)
-        self._enqueue_concat_with_tf_cte(
-            blocking_pipeline, left_dict, left_table_name, force_source_dataset
+        blocking_pipeline.enqueue_sql(
+            self._concat_sql_for_dict(left_dict, force_source_dataset),
+            blocking_left_table_name,
         )
-        self._enqueue_concat_with_tf_cte(
-            blocking_pipeline, right_dict, right_table_name, force_source_dataset
+        blocking_pipeline.enqueue_sql(
+            self._concat_sql_for_dict(right_dict, force_source_dataset),
+            blocking_right_table_name,
         )
 
-        # Role split: block left x right with no id ordering (two_dataset_link_only
-        # uses `where 1=1`).
+        # the correctly blocking is achieve using a nice trick:
+        # `two_dataset_link_only`` ensures only between-dataset links.
+        # because it `inner join` between the left and right tables
+        # rather than concat and self join.
         block_sqls = block_using_rules_sqls(
-            input_tablename_l=left_table_name,
-            input_tablename_r=right_table_name,
+            input_tablename_l=blocking_left_table_name,
+            input_tablename_r=blocking_right_table_name,
             blocking_rules=settings._blocking_rules_to_generate_predictions,
             link_type="two_dataset_link_only",
             source_dataset_input_column=source_dataset_input_column,
@@ -1193,9 +1198,9 @@ class LinkerInference:
             filter_sql = f"""
             select b.match_key, b.join_key_l, b.join_key_r
             from __splink__blocked_id_pairs_unfiltered as b
-            inner join {left_table_name} as l
+            inner join {blocking_left_table_name} as l
                 on {uid_l_expr} = b.join_key_l
-            inner join {right_table_name} as r
+            inner join {blocking_right_table_name} as r
                 on {uid_r_expr} = b.join_key_r
             where l.{sds_col} != r.{sds_col}
             """

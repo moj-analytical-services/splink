@@ -130,6 +130,56 @@ def test_predict_between_missing_tf_raises(test_helpers, dialect, fake_1000):
         linker.inference.predict_between(left_sdf, right_sdf)
 
 
+@mark_with_dialects_excluding("sqlite")
+def test_predict_between_blocks_before_tf_join(
+    test_helpers, monkeypatch, dialect, fake_1000
+):
+    helper = test_helpers[dialect]
+    linker = helper.linker_with_registration(fake_1000, _dedupe_settings(tf=True))
+    linker.table_management.compute_tf_table("first_name")
+
+    records = fake_1000.to_pylist()
+    half = len(records) // 2
+    left_sdf = linker._db_api.register(records[:half], "between_left_tf_block")
+    right_sdf = linker._db_api.register(records[half:], "between_right_tf_block")
+
+    executed_pipelines = []
+    original_sql_pipeline_to_splink_dataframe = (
+        linker._db_api.sql_pipeline_to_splink_dataframe
+    )
+
+    def capture_pipeline(pipeline):
+        executed_pipelines.append(pipeline)
+        return original_sql_pipeline_to_splink_dataframe(pipeline)
+
+    monkeypatch.setattr(
+        linker._db_api, "sql_pipeline_to_splink_dataframe", capture_pipeline
+    )
+
+    linker.inference.predict_between(left_sdf, right_sdf, warning_mode="never")
+
+    blocking_pipeline = next(
+        p
+        for p in executed_pipelines
+        if p.queue[-1].output_table_name == "__splink__blocked_id_pairs"
+    )
+    blocking_sql = "\n".join(cte.sql for cte in blocking_pipeline.queue)
+    assert "__splink__df_concat_left" in blocking_sql
+    assert "__splink__df_concat_right" in blocking_sql
+    assert "__splink__df_concat_with_tf" not in blocking_sql
+    assert "__splink__df_tf_" not in blocking_sql
+
+    scoring_pipeline = next(
+        p
+        for p in executed_pipelines
+        if p.queue[-1].output_table_name == "__splink__df_predict"
+    )
+    scoring_sql = "\n".join(cte.sql for cte in scoring_pipeline.queue)
+    assert "__splink__df_concat_with_tf_left" in scoring_sql
+    assert "__splink__df_concat_with_tf_right" in scoring_sql
+    assert "__splink__df_tf_first_name" in scoring_sql
+
+
 @mark_with_dialects_excluding("sqlite", "postgres")
 def test_predict_between_exploding_blocking_rule(test_helpers, dialect):
     import pyarrow as pa
