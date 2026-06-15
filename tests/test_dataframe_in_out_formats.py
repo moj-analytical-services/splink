@@ -82,8 +82,9 @@ def test_register_table_name_distinct_from_source_dataset_name(
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    table_name_1 = f"{unique_per_test_table_name}_1"
-    table_name_2 = f"{unique_per_test_table_name}_2"
+    base_table_name = unique_per_test_table_name[:-2]
+    table_name_1 = f"{base_table_name}_1"
+    table_name_2 = f"{base_table_name}_2"
 
     sdf_1 = db_api.register(
         input_data_dict,

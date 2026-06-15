@@ -30,7 +30,10 @@ def _train(linker):
     linker.training.estimate_probability_two_random_records_match(
         [block_on("first_name"), block_on("surname")], recall=0.7
     )
-    linker.training.estimate_u_using_random_sampling(max_pairs=1e5, seed=1)
+    estimate_u_kwargs = {"max_pairs": 1e5}
+    if linker._sql_dialect_str != "postgres":
+        estimate_u_kwargs["seed"] = 1
+    linker.training.estimate_u_using_random_sampling(**estimate_u_kwargs)
 
 
 def _pairs_with_weight(sdf):
