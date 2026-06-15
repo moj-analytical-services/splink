@@ -59,7 +59,7 @@ synthetic_base_df
 synthetic_comparison_df
 
 # %% [markdown]
-# The first row is the base individual, with each subsequent row representing a different comparison related to the hypothesis. The first comparison is a self-link to serve as a baseline. Next, rows represent isolated surname changes and postcode changes, and finally a combination of both.
+# The first row is the base individual, with each subsequent row representing a different comparison related to the hypothesis. The first comparison is a self-link to serve as a baseline. Next, rows represent isolated surname changes and postcode changes, and finally a combination of both. 
 #
 # Since this hypothesis relates to the linkage of records that _look different but are for the same person_, it’s helpful to include a record that _looks similar but is for a different person_ (like a sibling or partner). This will help account for the downstream effects of any mitigation option (Step 4).
 #
@@ -68,8 +68,8 @@ synthetic_comparison_df
 # %% [markdown]
 # ### **2. Train and investigate model**
 #
-# Train the model on the real production data (this Splink model is trained in 'model_create_h50k.ipynb' and saved as a json file).
-# You can refer to the [Splink tutorial](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html) if you need any further explanation on how to prepare the data and define the model settings.
+# Train the model on the real production data (this Splink model is trained in 'model_create_h50k.ipynb' and saved as a json file).  
+# You can refer to the [Splink tutorial](https://moj-analytical-services.github.io/splink/demos/tutorials/00_Tutorial_Introduction.html) if you need any further explanation on how to prepare the data and define the model settings. 
 
 # %%
 from splink import DuckDBAPI
@@ -110,7 +110,7 @@ linker.visualisations.match_weights_chart()
 # %% [markdown]
 # ### **3. Perform and evaluate linkage**
 #
-# In a standard linkage with Splink, all records which meet the criteria of the blocking rules would be compared against each other. However, in bias detection we may not be interested in a lot of the comparisons this process will generate match probabilities for. It can be easier to manually generate the comparisons that are relevant to the hypothesis.
+# In a standard linkage with Splink, all records which meet the criteria of the blocking rules would be compared against each other. However, in bias detection we may not be interested in a lot of the comparisons this process will generate match probabilities for. It can be easier to manually generate the comparisons that are relevant to the hypothesis. 
 
 # %%
 def compare_records(base_records, comparison_records, linker):
@@ -129,7 +129,7 @@ comparisons = compare_records(synthetic_base_raw, synthetic_comparison_raw, link
 
 
 # %% [markdown]
-# Look at the resulting match probabilities in terms of the threshold of your pipeline.
+# Look at the resulting match probabilities in terms of the threshold of your pipeline.  
 # This pipeline has a high match threshold of 0.999, medium of 0.99, and low of 0.95.
 
 # %%
@@ -150,10 +150,10 @@ columns_of_interest = ['match_weight', 'match_probability', 'unique_id_l', 'uniq
 comparisons[columns_of_interest].style.map(highlight_cells, subset=['match_probability'])
 
 # %% [markdown]
-# The first three comparisons show high match probabilities. A surname change or postcode change alone allow for a linkage at a high match threshold.
-# However, when combined they lower the match probability to 0.9781 - which could only be linked at a low threshold in the example pipeline.
+# The first three comparisons show high match probabilities. A surname change or postcode change alone allow for a linkage at a high match threshold.  
+# However, when combined they lower the match probability to 0.9781 - which could only be linked at a low threshold in the example pipeline. 
 #
-# Additionally, it is useful to note that the sibling scenario has a a higher match probability than the surname and postcode change scenario, and it can be matched at a medium threshold.
+# Additionally, it is useful to note that the sibling scenario has a a higher match probability than the surname and postcode change scenario, and it can be matched at a medium threshold. 
 #
 # It’s helpful to break these results down further to understand how the individual model parameters are combining to result in these final probabilities. This can be done in Splink using the waterfall chart:
 
@@ -164,11 +164,11 @@ linker.visualisations.waterfall_chart(records_to_plot)
 # %% [markdown]
 # Taking a closer look at each comparison helps reveal which features have the most impact in terms of the hypothesis. Some key takeaways are:
 #
-# - Matching on postcode and surname are the strongest indicators of a link. Therefore, when both surname and postcode change, you lose that strong link advantage. It's not that a non-match on surname or postcode is overly detrimental to the records being linked, but without the boost from a surname or postcode match, they only meet the low linkage threshold.
+# - Matching on postcode and surname are the strongest indicators of a link. Therefore, when both surname and postcode change, you lose that strong link advantage. It's not that a non-match on surname or postcode is overly detrimental to the records being linked, but without the boost from a surname or postcode match, they only meet the low linkage threshold. 
 #
-# - In the sibling scenario, you can see the impact of one or two strong predictors in a model can have. Even with three non-matches (first name, DOB, and occupation), matching on both postcode and surname links the records at a medium threshold.
+# - In the sibling scenario, you can see the impact of one or two strong predictors in a model can have. Even with three non-matches (first name, DOB, and occupation), matching on both postcode and surname links the records at a medium threshold. 
 #
-# - As first name matches are less predictive than surname matches the sibling scenario has a more predictive name match than the same person changing their information.
+# - As first name matches are less predictive than surname matches the sibling scenario has a more predictive name match than the same person changing their information. 
 #
 # - Due to the way individual factors are weighted, the combination of non-matches in this scenario means that people who change both their postcode and surname won't be linked at higher thresholds. Given this affects women more than men in our data, it leads to a **gender bias** in the pipeline.
 #
@@ -183,10 +183,10 @@ linker.visualisations.waterfall_chart(records_to_plot)
 #
 # In our example, a change in surname and postcode allows records to be linked at a low threshold. We should consider what can be done in the pipeline to ensure these comparisons are linked.
 #
-# Any technical solution should align with the hypothesis, as opposed to just pushing comparisons randomly over/under a threshold. Different elements of the pipeline can be altered to address the bias.
+# Any technical solution should align with the hypothesis, as opposed to just pushing comparisons randomly over/under a threshold. Different elements of the pipeline can be altered to address the bias. 
 #
-# - Altering the _input data_ - there's likely no potential solution here, as the bias stems from legitimate data qualities, not errors.
-# - Updating the _model design_ - a TF adjustment might alter results, but this would be random so wouldn't address the hypothesis. However, **adjusting comparison levels** might help.
+# - Altering the _input data_ - there's likely no potential solution here, as the bias stems from legitimate data qualities, not errors. 
+# - Updating the _model design_ - a TF adjustment might alter results, but this would be random so wouldn't address the hypothesis. However, **adjusting comparison levels** might help. 
 # - Adjusting the _output data_ - since the records link at a low threshold, **lowering the threshold** across the model would result in a link.
 #
 # <u>Could they negatively impact overall performance?</u>
@@ -197,22 +197,22 @@ linker.visualisations.waterfall_chart(records_to_plot)
 #
 # **Adjusting comparison levels**
 #
-# We'd need to decide that a factor’s predictive power doesn't fit our hypothesis - but also make sure this applies across the whole model. There are lots of options, like making surname or postcode less predictive, or boosting factors like occupation, first name, DOB, or birthplace. We'll focus on one example to demonstrate the necessary considerations.
+# We'd need to decide that a factor’s predictive power doesn't fit our hypothesis - but also make sure this applies across the whole model. There are lots of options, like making surname or postcode less predictive, or boosting factors like occupation, first name, DOB, or birthplace. We'll focus on one example to demonstrate the necessary considerations. 
 #
 # Say we decide to manually make first name as predictive as surname, and we find that this change won’t impact overall performance. Therefore, we can take this technical solution to the next consideration.
 #
 # <u>Could they introduce further bias?</u>
 #
-# It's important to think about other groups that this decision could impact.
+# It's important to think about other groups that this decision could impact. 
 #
-# In this dataset, there's records relating to a community of Vietnamese people. They share similar postcodes and often list the same birthplace (because the dataset defaults to the country of birth if they were born outside the UK). Many families in this community have the same surname, as do many unrelated individuals (due to less variation in Vietnamese surnames). Additionally, because Vietnamese naming conventions differ from Western ones, surnames are often incorrectly recorded as first names in this dataset.
+# In this dataset, there's records relating to a community of Vietnamese people. They share similar postcodes and often list the same birthplace (because the dataset defaults to the country of birth if they were born outside the UK). Many families in this community have the same surname, as do many unrelated individuals (due to less variation in Vietnamese surnames). Additionally, because Vietnamese naming conventions differ from Western ones, surnames are often incorrectly recorded as first names in this dataset. 
 #
 # Therefore, increasing the predictive power of first name matches will likely lead to more false positives for this community, introducing bias against the Vietnamese population in the dataset. The decision is made to not attempt bias mitigation.
 #
 # ---
 
 # %% [markdown]
-# ### **5. Make a statement about bias**
+# ### **5. Make a statement about bias** 
 #
 # When a bias is detected but not mitigated, it’s crucial to explore it further to gain more insight. This helps refine the understanding of the bias and lays the groundwork for impact assessment.
 #
@@ -230,7 +230,7 @@ synthetic_comparison_partial_df = pd.DataFrame(synthetic_comparison_partial_raw)
 # %% [markdown]
 # In this scenario, we generate new records to be compared to the base. These represent a partial surname change (double-barrel) and a full postcode change, a partial postcode change (same area, different district) with a full surname change, and a combination of partial postcode and partial surname changes.
 #
-# We can then use the same model to link these records and examine the resulting match probabilities.
+# We can then use the same model to link these records and examine the resulting match probabilities. 
 
 # %%
 comparisons_partial = compare_records(synthetic_base_raw, synthetic_comparison_partial_raw, linker)
@@ -242,6 +242,6 @@ comparisons_partial[columns_of_interest].style.map(highlight_cells, subset=['mat
 #
 # _Given how the model weighs the different parameters to produce match probabilities, a full change in both surname and postcode will lead to a non-link. As women are more likely than men to make these changes in the input data, this will introduce a gender bias in the pipeline._
 #
-# Now that this bias has been detected, it's important to note that we can't yet determine its exact impact on the linked data. This is because the final results are influenced by many other factors in the pipeline, which were intentionally excluded from this process to isolate the bias.
+# Now that this bias has been detected, it's important to note that we can't yet determine its exact impact on the linked data. This is because the final results are influenced by many other factors in the pipeline, which were intentionally excluded from this process to isolate the bias. 
 #
-# Further investigation is needed to understand impact — such as understanding how many records in the input data undergo these changes, or how many records with a full surname and postcode change end up linked or not linked in the final data.
+# Further investigation is needed to understand impact — such as understanding how many records in the input data undergo these changes, or how many records with a full surname and postcode change end up linked or not linked in the final data. 
