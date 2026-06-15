@@ -53,7 +53,7 @@ def vertically_concatenate_sql(
         select_expressions = list(columns)
         if len(input_tables) > 1 and not source_dataset_column_already_exists:
             select_expressions.insert(
-                0, f"'{df_obj.source_dataset_name}' as source_dataset"
+                0, f"'{df_obj.dataset_display_name}' as source_dataset"
             )
 
         select_columns_sql = ",\n".join(indent_sql(expr) for expr in select_expressions)
@@ -252,7 +252,7 @@ def _two_dataset_link_only_select_input_columns_sql(
             col == source_dataset_input_column
             and not source_dataset_column_already_exists
         ):
-            select_cols.append(f"'{df_obj.source_dataset_name}' as {col.name}")
+            select_cols.append(f"'{df_obj.dataset_display_name}' as {col.name}")
         else:
             select_cols.append(col.name)
 

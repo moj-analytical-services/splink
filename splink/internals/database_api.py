@@ -267,13 +267,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def register(
         self,
         table: AcceptableInputTableType | str,
-        source_dataset_name: Optional[str] = None,
         *,
+        dataset_display_name: Optional[str] = None,
         table_name: Optional[str] = None,
     ) -> SplinkDataFrame:
-        table_name_is_generated = table_name is None and source_dataset_name is None
-        table_name = table_name or source_dataset_name or self._new_input_table_name()
-        source_dataset_name = source_dataset_name or table_name
+        table_name_is_generated = table_name is None and dataset_display_name is None
+        table_name = table_name or dataset_display_name or self._new_input_table_name()
+        dataset_display_name = dataset_display_name or table_name
 
         if table_name in self._registered_table_names:
             raise ValueError(
@@ -298,7 +298,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
                 overwrite=table_name_is_generated,
             )
 
-        sdf.source_dataset_name = source_dataset_name
+        sdf.dataset_display_name = dataset_display_name
         return sdf
 
     @final

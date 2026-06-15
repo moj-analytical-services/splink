@@ -141,7 +141,7 @@ def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
 def test_postgres_use_existing_table(fake_1000, pg_engine):
     db_api = PostgresAPI(engine=pg_engine)
     table_name = "input_table_test"
-    db_api.register(fake_1000, table_name)
+    db_api.register(fake_1000, table_name=table_name)
 
     settings_dict = get_settings_dict()
 

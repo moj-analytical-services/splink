@@ -1028,7 +1028,7 @@ class LinkerInference:
             select_expressions = list(columns)
             if not source_dataset_already_exists:
                 select_expressions.insert(
-                    0, f"'{df_obj.source_dataset_name}' as source_dataset"
+                    0, f"'{df_obj.dataset_display_name}' as source_dataset"
                 )
             select_cols_sql = ",\n".join(
                 indent_sql(expr) for expr in select_expressions

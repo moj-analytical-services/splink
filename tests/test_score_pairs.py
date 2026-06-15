@@ -155,8 +155,8 @@ def test_score_pairs_accepts_splink_dataframe(test_helpers, dialect, fake_1000):
 
     r1, r2 = _records()
 
-    sdf_left = linker._db_api.register([r1, r2], "score_pairs_left")
-    sdf_right = linker._db_api.register([r1], "score_pairs_right")
+    sdf_left = linker._db_api.register([r1, r2], table_name="score_pairs_left")
+    sdf_right = linker._db_api.register([r1], table_name="score_pairs_right")
 
     res = linker.inference.score_pairs(sdf_left, sdf_right)
     assert len(res.as_record_dict()) == 2

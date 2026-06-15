@@ -104,8 +104,8 @@ def test_size_density_link():
         ],
     }
     db_api = DuckDBAPI()
-    df_1_sdf = db_api.register(data_1, source_dataset_name="df_left")
-    df_2_sdf = db_api.register(data_2, source_dataset_name="df_right")
+    df_1_sdf = db_api.register(data_1, dataset_display_name="df_left")
+    df_2_sdf = db_api.register(data_2, dataset_display_name="df_right")
 
     linker = Linker(
         [df_1_sdf, df_2_sdf],

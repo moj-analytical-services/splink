@@ -26,7 +26,7 @@ def test_splink_dataframe_from_list(dialect, test_helpers, unique_per_test_table
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    db_api.register(input_data_list, unique_per_test_table_name)
+    db_api.register(input_data_list, table_name=unique_per_test_table_name)
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 
@@ -35,7 +35,7 @@ def test_splink_dataframe_from_tuple(dialect, test_helpers, unique_per_test_tabl
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    db_api.register(tuple(input_data_list), unique_per_test_table_name)
+    db_api.register(tuple(input_data_list), table_name=unique_per_test_table_name)
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 
@@ -44,7 +44,7 @@ def test_splink_dataframe_from_dict(dialect, test_helpers, unique_per_test_table
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    db_api.register(input_data_dict, unique_per_test_table_name)
+    db_api.register(input_data_dict, table_name=unique_per_test_table_name)
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 
@@ -58,7 +58,9 @@ def test_splink_dataframe_from_pandas(
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    db_api.register(pd.DataFrame(input_data_dict), unique_per_test_table_name)
+    db_api.register(
+        pd.DataFrame(input_data_dict), table_name=unique_per_test_table_name
+    )
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 
@@ -71,7 +73,9 @@ def test_splink_dataframe_from_pyarrow(
     helper = test_helpers[dialect]
 
     db_api = helper.db_api()
-    db_api.register(pa.Table.from_pydict(input_data_dict), unique_per_test_table_name)
+    db_api.register(
+        pa.Table.from_pydict(input_data_dict), table_name=unique_per_test_table_name
+    )
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 
@@ -88,19 +92,19 @@ def test_register_table_name_distinct_from_source_dataset_name(
 
     sdf_1 = db_api.register(
         input_data_dict,
-        source_dataset_name="source_1",
+        dataset_display_name="source_1",
         table_name=table_name_1,
     )
     sdf_2 = db_api.register(
         input_data_dict,
-        source_dataset_name="source_1",
+        dataset_display_name="source_1",
         table_name=table_name_2,
     )
 
     assert sdf_1.templated_name == table_name_1
     assert sdf_2.templated_name == table_name_2
-    assert sdf_1.source_dataset_name == "source_1"
-    assert sdf_2.source_dataset_name == "source_1"
+    assert sdf_1.dataset_display_name == "source_1"
+    assert sdf_2.dataset_display_name == "source_1"
 
     db_api.delete_table_from_database(table_name_1)
     db_api.delete_table_from_database(table_name_2)

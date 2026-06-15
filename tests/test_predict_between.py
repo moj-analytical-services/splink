@@ -52,7 +52,9 @@ def test_predict_between_link_only_source_filter(test_helpers, dialect):
 
     def _reg(uid, sds, table_name):
         return db_api.register(
-            [{"unique_id": uid, "first_name": "alice"}], sds, table_name=table_name
+            [{"unique_id": uid, "first_name": "alice"}],
+            dataset_display_name=sds,
+            table_name=table_name,
         )
 
     left = [_reg(1, "a", "la"), _reg(2, "b", "lb"), _reg(3, "c", "lc")]
@@ -126,8 +128,12 @@ def test_predict_between_exploding_blocking_rule(test_helpers, dialect):
         ],
         "comparisons": [cl.ArrayIntersectAtSizes("postcode", [1])],
     }
-    left_sdf = db_api.register(data_l, "left_role", table_name="between_left_arr")
-    right_sdf = db_api.register(data_r, "right_role", table_name="between_right_arr")
+    left_sdf = db_api.register(
+        data_l, dataset_display_name="left_role", table_name="between_left_arr"
+    )
+    right_sdf = db_api.register(
+        data_r, dataset_display_name="right_role", table_name="between_right_arr"
+    )
     linker = Linker([left_sdf, right_sdf], settings)
 
     df_between = linker.inference.predict_between(
