@@ -185,7 +185,8 @@ class LinkerInference:
                 ],
             )
 
-            linker = Linker(df, settings, db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, settings)
             splink_df = linker.inference.deterministic_link()
             ```
         """
@@ -269,7 +270,8 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = linker(df, "saved_settings.json", db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, "saved_settings.json")
             splink_df = linker.inference.predict(threshold_match_probability=0.95)
             splink_df.as_pandas_dataframe(limit=5)
 
@@ -413,7 +415,8 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = linker(df, "saved_settings.json", db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, "saved_settings.json")
             # Process chunk 1 of 3 on left, chunk 2 of 4 on right
             splink_df = linker.inference.predict_chunk(
                 left_chunk=(1, 3),
@@ -514,7 +517,8 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = linker(df, "saved_settings.json", db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, "saved_settings.json")
             df_edges = linker.inference.predict()
             df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
                 df_edges,
@@ -658,12 +662,6 @@ class LinkerInference:
     ) -> SplinkDataFrame:
         """Use the linkage model to score a single pairwise record comparison.
 
-        This is the realtime/low-latency scoring path: the caller already knows the
-        pair to score and supplies it directly. No blocking rules are applied. To
-        score many pairs at once (the cartesian product of two collections) use
-        ``score_pairs``; to generate candidate pairs using blocking rules use
-        ``predict_within`` or ``predict_between``.
-
         Each input may be a Python ``dict`` representing a single record, or a
         ``SplinkDataFrame``.
 
@@ -686,13 +684,14 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = Linker(df, "saved_settings.json", db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, "saved_settings.json")
 
             # If you do not provide tf values in the records, you should load or
             # pre-compute tf tables for any columns with term frequency adjustments
             linker.table_management.compute_tf_table("first_name")
             # OR
-            linker.table_management.register_term_frequency_lookup(df, "first_name")
+            linker.table_management.register_term_frequency_lookup(tf, "first_name")
 
             record_1 = {'unique_id': 1,
                 'first_name': "John",
@@ -761,7 +760,8 @@ class LinkerInference:
 
         Examples:
             ```py
-            linker = Linker(df, "saved_settings.json", db_api=db_api)
+            df = db_api.register(df, "input_table")
+            linker = Linker(df, "saved_settings.json")
 
             linker.table_management.compute_tf_table("first_name")
 
@@ -1076,14 +1076,14 @@ class LinkerInference:
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
-        """Generate blocked, scored pairwise predictions *within* a
+        """Generate blocked, scored pairwise predictions within a
         supplied collection of records, using the trained model.
 
         The input shape mirrors the ``Linker`` constructor: pass a single
-        ``SplinkDataFrame`` for dedupe-style semantics, or a list of
-        ``SplinkDataFrame``s for multi-dataset semantics. Candidate pairs are
-        generated using blocking rules (the trained rules by default), respecting
-        the model's ``link_type`` source-dataset semantics, and scored.
+        ``SplinkDataFrame`` for ``dedupe_only``, or a list of
+        ``SplinkDataFrame``s for ``link_only`` and ``link_and_dedupe``. Candidate pairs
+        are generated using blocking rules (the trained rules by default), respecting
+        the model's ``link_type``, and scored.
 
         Unlike ``predict()`` this does not derive term-frequency values from the
         supplied data: any required term-frequency tables must be registered (or
@@ -1092,7 +1092,7 @@ class LinkerInference:
 
         Args:
             splink_dataframe_or_dataframes: A single ``SplinkDataFrame`` or a
-                sequence of them, registered against the same db_api.
+                list of them, registered against the same db_api.
             link_type: Optionally override the trained ``link_type``.
             blocking_rules_to_generate_predictions: Optionally override the blocking
                 rules used to generate candidate pairs.
@@ -1176,20 +1176,23 @@ class LinkerInference:
         """Generate blocked, scored pairwise predictions *between*
         two supplied collections of records, using the trained model.
 
-        Candidate pairs are generated with the left-hand record drawn from ``left``
-        and the right-hand record drawn from ``right`` only (never within ``left``
-        and never within ``right``). The trained model's ``link_type`` source
-        condition is then applied on top: for ``link_only``, pairs are additionally
+        Candidate pairs are generated between records in the left dataset(s)
+        and right dataset(s) respectively, never within them.
+        The trained model's ``link_type`` source
+        condition is then also applied, e.g. for ``link_only``, pairs are additionally
         required to come from different source datasets
-        (``source_dataset_l != source_dataset_r``); for ``link_and_dedupe`` and
-        ``dedupe_only`` no source condition is applied.
 
-        ``left`` and ``right`` are *roles* (for example old vs new), not source
-        datasets: each is itself a constructor-shaped collection that preserves its
-        own ``source_dataset``. No ``id_l < id_r`` ordering is applied because the
-        asymmetric role split already prevents duplicate pairs.
+        One key use case is incremental record linkage, in which we want
+        to find links between the existing and new records, but not within
+        the existing records.
 
-        Like ``predict_within``, term-frequency tables must be registered (or
+        Often, in addition, you'd want to find links within the new records,
+        for which you'd need to also use predict_within().
+
+        Note that ``left`` and ``right`` are *roles* (for example existing vs new),
+        not source datasets
+
+        Term-frequency tables must be registered (or
         supplied as hardcoded ``tf_*`` columns), otherwise a ``SplinkException`` is
         raised.
 
