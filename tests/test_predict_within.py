@@ -131,3 +131,52 @@ def test_predict_within_registered_tf_succeeds(test_helpers, dialect, fake_1000)
         list(linker._input_tables_dict.values())
     )
     assert len(df_within.as_record_dict()) > 0
+
+
+@mark_with_dialects_excluding("sqlite", "postgres")
+def test_predict_within_exploding_blocking_rule(test_helpers, dialect):
+    import pyarrow as pa
+
+    helper = test_helpers[dialect]
+    data_l = pa.Table.from_pylist(
+        [
+            {"unique_id": 1, "gender": "m", "postcode": ["2612", "2000"]},
+            {"unique_id": 2, "gender": "m", "postcode": ["2612", "2617"]},
+            {"unique_id": 3, "gender": "f", "postcode": ["2617"]},
+        ]
+    )
+    data_r = pa.Table.from_pylist(
+        [
+            {"unique_id": 4, "gender": "m", "postcode": ["2617", "2600"]},
+            {"unique_id": 5, "gender": "f", "postcode": ["2000"]},
+            {"unique_id": 6, "gender": "m", "postcode": ["2617", "2612", "2000"]},
+        ]
+    )
+    settings = {
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": [
+            {
+                "blocking_rule": "l.gender = r.gender and l.postcode = r.postcode",
+                "arrays_to_explode": ["postcode"],
+            },
+            "l.gender = r.gender",
+        ],
+        "comparisons": [cl.ArrayIntersectAtSizes("postcode", [1])],
+    }
+    linker = helper.linker_with_registration([data_l, data_r], settings)
+
+    # predict_within with an exploding blocking rule must match predict()
+    df_predict = linker.inference.predict()
+    df_within = linker.inference.predict_within(
+        list(linker._input_tables_dict.values())
+    )
+
+    def _triples(sdf):
+        return {
+            (r["unique_id_l"], r["unique_id_r"], r["match_key"])
+            for r in sdf.as_record_dict()
+        }
+
+    expected = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
+    assert _triples(df_predict) == expected
+    assert _triples(df_within) == expected

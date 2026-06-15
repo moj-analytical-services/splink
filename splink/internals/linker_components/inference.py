@@ -10,6 +10,7 @@ from splink.internals.accuracy import _select_found_by_blocking_rules
 from splink.internals.blocking import (
     BlockingRule,
     ExplodingBlockingRule,
+    _columns_needed_for_blocking,
     block_using_rules_sqls,
     compute_blocked_pairs_from_concat_with_tf,
 )
@@ -52,6 +53,7 @@ from splink.internals.vertically_concatenate import (
 
 if TYPE_CHECKING:
     from splink.internals.blocking_rule_creator import BlockingRuleCreator
+    from splink.internals.input_column import InputColumn
     from splink.internals.linker import Linker
     from splink.internals.settings import Settings
 
@@ -979,7 +981,7 @@ class LinkerInference:
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
-        """Experimental. Generate blocked, scored pairwise predictions *within* a
+        """Generate blocked, scored pairwise predictions *within* a
         supplied collection of records, using the trained model.
 
         The input shape mirrors the ``Linker`` constructor: pass a single
@@ -1076,7 +1078,7 @@ class LinkerInference:
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
-        """Experimental. Generate blocked, scored pairwise predictions *between*
+        """Generate blocked, scored pairwise predictions *between*
         two supplied collections of records, using the trained model.
 
         Candidate pairs are generated with the left-hand record drawn from ``left``
@@ -1118,16 +1120,6 @@ class LinkerInference:
             link_type, blocking_rules_to_generate_predictions
         )
 
-        if any(
-            isinstance(br, ExplodingBlockingRule)
-            for br in settings._blocking_rules_to_generate_predictions
-        ):
-            raise SplinkException(
-                "predict_between does not currently support exploding blocking "
-                "rules (e.g. blocking on arrays). Use standard blocking rules, or "
-                "predict_within."
-            )
-
         left_dict = splink_dataframes_to_dict(left)
         right_dict = splink_dataframes_to_dict(right)
         all_dfs = list(left_dict.values()) + list(right_dict.values())
@@ -1139,6 +1131,23 @@ class LinkerInference:
         # link_only needs a source_dataset column on each side both for the source
         # condition and for unambiguous composite unique ids.
         force_source_dataset = source_dataset_input_column is not None
+
+        # Exploding blocking rules require their marginal exploded id-pair tables to
+        # be materialised before blocking (block_using_rules_sqls reads from them).
+        exploding_blocking_rules = [
+            br
+            for br in settings._blocking_rules_to_generate_predictions
+            if isinstance(br, ExplodingBlockingRule)
+        ]
+        if exploding_blocking_rules:
+            self._materialise_exploded_id_tables_for_predict_between(
+                exploding_blocking_rules=exploding_blocking_rules,
+                left_dict=left_dict,
+                right_dict=right_dict,
+                source_dataset_input_column=source_dataset_input_column,
+                unique_id_input_column=unique_id_input_column,
+                force_source_dataset=force_source_dataset,
+            )
 
         left_table_name = "__splink__df_concat_with_tf_left"
         right_table_name = "__splink__df_concat_with_tf_right"
@@ -1198,6 +1207,10 @@ class LinkerInference:
             blocking_pipeline
         )
 
+        # The materialised exploded id-pair tables have now been consumed by blocking.
+        for br in exploding_blocking_rules:
+            br.drop_materialised_id_pairs_dataframe()
+
         # Stage 2: rebuild each side's concat-with-tf and score.
         pipeline = CTEPipeline([blocked_pairs])
         self._append_required_tf_to_pipeline(pipeline, all_dfs)
@@ -1223,6 +1236,87 @@ class LinkerInference:
             self._linker._predict_warning()
 
         return predictions
+
+    def _materialise_exploded_id_tables_for_predict_between(
+        self,
+        *,
+        exploding_blocking_rules: list[ExplodingBlockingRule],
+        left_dict: dict[str, SplinkDataFrame],
+        right_dict: dict[str, SplinkDataFrame],
+        source_dataset_input_column: "InputColumn | None",
+        unique_id_input_column: "InputColumn",
+        force_source_dataset: bool,
+    ) -> None:
+        """Materialise the marginal exploded id-pair tables for the role-split
+        (left x right) blocking used by ``predict_between``.
+
+        Unlike ``materialise_exploded_id_tables`` (which derives its two sides from a
+        single concat split on ``source_dataset``), ``predict_between`` blocks two
+        independent role collections, so each side is exploded from its own concat.
+        Pairs are generated with ``where 1=1`` semantics; the ``link_only`` source
+        condition is applied later as a post-blocking filter.
+        """
+        db_api = self._linker._db_api
+        for br in exploding_blocking_rules:
+            pipeline = CTEPipeline()
+
+            left_concat = "__splink__predict_between_explode_concat_left"
+            right_concat = "__splink__predict_between_explode_concat_right"
+            pipeline.enqueue_sql(
+                self._concat_sql_for_dict(left_dict, force_source_dataset),
+                left_concat,
+            )
+            pipeline.enqueue_sql(
+                self._concat_sql_for_dict(right_dict, force_source_dataset),
+                right_concat,
+            )
+
+            input_columns = _columns_needed_for_blocking(
+                [*br.preceding_rules, br],
+                source_dataset_input_column=source_dataset_input_column,
+                unique_id_input_column=unique_id_input_column,
+            )
+            arrays_to_explode_cols = [
+                br._input_column(colname) for colname in br.array_columns_to_explode
+            ]
+            other_cols = [
+                col for col in input_columns if col not in arrays_to_explode_cols
+            ]
+
+            left_unnested = "__splink__predict_between_left_unnested"
+            right_unnested = "__splink__predict_between_right_unnested"
+            pipeline.enqueue_sql(
+                db_api.sql_dialect.explode_arrays_sql(
+                    left_concat,
+                    br.array_columns_to_explode,
+                    [col.name for col in other_cols],
+                ),
+                left_unnested,
+            )
+            pipeline.enqueue_sql(
+                db_api.sql_dialect.explode_arrays_sql(
+                    right_concat,
+                    br.array_columns_to_explode,
+                    [col.name for col in other_cols],
+                ),
+                right_unnested,
+            )
+
+            marginal_sql = br.marginal_exploded_id_pairs_table_sql(
+                source_dataset_input_column=source_dataset_input_column,
+                unique_id_input_column=unique_id_input_column,
+                br=br,
+                link_type="two_dataset_link_only",
+                input_tablename_l=left_unnested,
+                input_tablename_r=right_unnested,
+            )
+            table_name = (
+                "__splink__predict_between_marginal_exploded_ids_mk_" f"{br.match_key}"
+            )
+            pipeline.enqueue_sql(marginal_sql, table_name)
+            br.exploded_id_pair_table = db_api.sql_pipeline_to_splink_dataframe(
+                pipeline
+            )
 
     def _append_required_tf_to_pipeline(
         self, pipeline: CTEPipeline, dfs: list[SplinkDataFrame]
