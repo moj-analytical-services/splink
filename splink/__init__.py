@@ -7,6 +7,7 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.datasets import splink_datasets
 from splink.internals.linker import Linker
 from splink.internals.settings_creator import SettingsCreator
+from splink.internals.splink_logging import disable_logging, enable_logging
 
 # The following is a workaround for the fact that dependencies of particular backends
 # may not be installed, but we don't want this to prevent import
@@ -62,7 +63,9 @@ __version__ = "5.0.0.dev3"
 __all__ = [
     "block_on",
     "ColumnExpression",
+    "disable_logging",
     "DuckDBAPI",
+    "enable_logging",
     "Linker",
     "SettingsCreator",
     "SparkAPI",
