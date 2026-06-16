@@ -3,10 +3,10 @@ name: Documentation
 on:
   push:
     branches:
-      - master
+      - splink4_maintenance
   pull_request:
     branches:
-      - master
+      - splink4_maintenance
     paths:
       # files that affect the docs build:
       - docs/**
@@ -57,7 +57,7 @@ jobs:
           path: site
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/splink4_maintenance'
     needs: build
     name: Deploy Documentation to GitHub Pages
     runs-on: ubuntu-latest
