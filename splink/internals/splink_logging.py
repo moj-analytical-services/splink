@@ -47,6 +47,9 @@ def disable() -> None:
             splink_logger.removeHandler(handler)
             handler.close()
 
+    if not splink_logger.handlers:
+        splink_logger.propagate = True
+
 
 logging.addLevelName(VERBOSE, "VERBOSE")
 logging.addLevelName(PIPELINE, "PIPELINE")
