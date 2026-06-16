@@ -73,7 +73,7 @@ from splink import Linker, DuckDBAPI
 
 db_api = DuckDBAPI()
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 deterministic_rules = [
     "l.full_name = r.full_name",
     "l.postcode_fake = r.postcode_fake and l.dob = r.dob",
