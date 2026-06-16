@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from collections.abc import Sequence as AbcSequence
+from typing import TYPE_CHECKING, Any, List, Sequence
 
 from splink.internals.exceptions import SplinkException
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -10,14 +11,63 @@ if TYPE_CHECKING:
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 
+def _fully_qualified_type_name(obj: Any) -> str:
+    """Returns e.g. pandas.core.frame.DataFrame rather than just DataFrame"""
+    cls = type(obj)
+    qualname = getattr(cls, "__qualname__", getattr(cls, "__name__", repr(cls)))
+    module = getattr(cls, "__module__", None)
+
+    if not isinstance(module, str) or module in {"builtins", ""}:
+        return qualname
+
+    return f"{module}.{qualname}"
+
+
+def _raise_not_a_splink_dataframe(obj: Any) -> None:
+    """Raise a clear, actionable error when a non-SplinkDataFrame is passed where a
+    SplinkDataFrame is required."""
+    got = _fully_qualified_type_name(obj)
+    raise TypeError(
+        f"Expected a SplinkDataFrame but received a {got}.\n"
+        "From Splink 5 onwards, input data must be registered with the database API "
+        "before it is passed  to Splink. Registering a table returns a "
+        "SplinkDataFrame:\n\n"
+        '    df = db_api.register(my_data, dataset_display_name="my_dataset")\n'
+        "    linker = Linker(df, settings)\n\n"
+        "db_api.register() accepts a pandas DataFrame, a pyarrow Table, a "
+        "dict[str, list], a list[dict], a backend-native object (such as a duckdb "
+        "relation or Spark DataFrame), or a string naming a table that already "
+        "exists in the backend."
+    )
+
+
+def _ensure_splink_dataframes(
+    table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
+) -> List[SplinkDataFrame]:
+    """Normalise the input into a list of SplinkDataFrames, raising a clear error if
+    any input is not a SplinkDataFrame."""
+    if isinstance(table_or_tables, SplinkDataFrame):
+        tables = [table_or_tables]
+    elif isinstance(table_or_tables, AbcSequence) and not isinstance(
+        table_or_tables, (str, bytes)
+    ):
+        tables = list(table_or_tables)
+    else:
+        # Any other type (e.g. a pandas DataFrame, pyarrow Table, dict) is a single
+        # invalid input. Report it directly rather than trying to iterate it.
+        _raise_not_a_splink_dataframe(table_or_tables)
+
+    for table in tables:
+        if not isinstance(table, SplinkDataFrame):
+            _raise_not_a_splink_dataframe(table)
+
+    return tables
+
+
 def get_db_api_from_inputs(
     table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
 ) -> DatabaseAPI[Any]:
-    tables: Iterable[SplinkDataFrame]
-    if isinstance(table_or_tables, SplinkDataFrame):
-        tables = [table_or_tables]
-    else:
-        tables = list(table_or_tables)
+    tables = _ensure_splink_dataframes(table_or_tables)
 
     if not tables:
         raise SplinkException("At least one SplinkDataFrame must be provided.")
@@ -44,10 +94,6 @@ def get_db_api_from_inputs(
 def splink_dataframes_to_dict(
     table_or_tables: SplinkDataFrame | Sequence[SplinkDataFrame],
 ) -> dict[str, SplinkDataFrame]:
-    tables: Iterable[SplinkDataFrame]
-    if isinstance(table_or_tables, SplinkDataFrame):
-        tables = [table_or_tables]
-    else:
-        tables = table_or_tables
+    tables = _ensure_splink_dataframes(table_or_tables)
 
     return {sdf.templated_name: sdf for sdf in tables}
