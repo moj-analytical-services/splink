@@ -46,7 +46,7 @@ from splink.internals.settings_validation.valid_types import (
     _validate_dialect,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
-from splink.internals.splink_logging import enable_logging
+from splink.internals.splink_logging import enable as enable_logging
 from splink.internals.splinkdataframe_utils import (
     get_db_api_from_inputs,
     splink_dataframes_to_dict,
