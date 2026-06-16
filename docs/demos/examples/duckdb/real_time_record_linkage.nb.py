@@ -80,7 +80,7 @@ linker.visualisations.waterfall_chart(
 # %% [markdown]
 # ### Step Comparing two records
 #
-# It's now possible to compute a match weight for any two records using `linker.inference.compare_two_records()`
+# It's now possible to compute a match weight for any two records using `linker.inference.score_pair()`
 #
 
 # %%
@@ -105,7 +105,7 @@ record_2 = {
 linker._settings_obj._retain_intermediate_calculation_columns = True
 
 
-# To `compare_two_records` the linker needs to compute term frequency tables
+# To `score_pair` the linker needs to compute term frequency tables
 # If you have precomputed tables, you can linker.table_management.register_term_frequency_lookup()
 linker.table_management.compute_tf_table("first_name")
 linker.table_management.compute_tf_table("surname")
@@ -114,13 +114,13 @@ linker.table_management.compute_tf_table("city")
 linker.table_management.compute_tf_table("email")
 
 
-df_two = linker.inference.compare_two_records(record_1, record_2)
+df_two = linker.inference.score_pair(record_1, record_2)
 df_two.as_pandas_dataframe()
 
 # %% [markdown]
 # ### Step 3: Interactive comparisons
 #
-# One interesting applicatin of `compare_two_records` is to create a simple interface that allows the user to input two records interactively, and get real time feedback.
+# One interesting application of `score_pair` is to create a simple interface that allows the user to input two records interactively, and get real time feedback.
 #
 # In the following cell we use `ipywidets` for this purpose. ✨✨ Change the values in the text boxes to see the waterfall chart update in real time. ✨✨
 #
@@ -167,7 +167,7 @@ def myfn(**kwargs):
     # Assuming 'linker' is defined earlier in your code
     linker._settings_obj._retain_intermediate_calculation_columns = True
 
-    df_two = linker.inference.compare_two_records(record_left, record_right)
+    df_two = linker.inference.score_pair(record_left, record_right)
 
     recs = df_two.as_pandas_dataframe().to_dict(orient="records")
 

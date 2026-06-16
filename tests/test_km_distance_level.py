@@ -199,7 +199,7 @@ def test_haversine_level():
 
     db_api = DuckDBAPI()
 
-    df_sdf = db_api.register(data, source_dataset_name="test")
+    df_sdf = db_api.register(data, dataset_display_name="test")
     linker = Linker(df_sdf, settings)
     df_e = linker.inference.predict()
 

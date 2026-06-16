@@ -171,8 +171,8 @@ def test_link_and_dedupe(fake_1000):
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
+    df_one_sdf = db_api.register(data_one, dataset_display_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, dataset_display_name="df_two")
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
@@ -218,8 +218,8 @@ def test_link_only_two(fake_1000):
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
+    df_one_sdf = db_api.register(data_one, dataset_display_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, dataset_display_name="df_two")
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
@@ -293,9 +293,9 @@ def test_link_only_three(fake_1000):
         ],
     }
     db_api = DuckDBAPI()
-    df_one_sdf = db_api.register(data_one, source_dataset_name="df_one")
-    df_two_sdf = db_api.register(fake_1000, source_dataset_name="df_two")
-    df_three_sdf = db_api.register(data_three, source_dataset_name="df_three")
+    df_one_sdf = db_api.register(data_one, dataset_display_name="df_one")
+    df_two_sdf = db_api.register(fake_1000, dataset_display_name="df_two")
+    df_three_sdf = db_api.register(data_three, dataset_display_name="df_three")
     linker = Linker(
         [df_one_sdf, df_two_sdf, df_three_sdf],
         settings,

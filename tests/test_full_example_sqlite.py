@@ -17,7 +17,7 @@ def test_full_example_sqlite(tmp_path, fake_1000):
 
     settings_dict = get_settings_dict()
     db_api = SQLiteAPI(con)
-    df_sdf = db_api.register(fake_1000, source_dataset_name="fake_data_1")
+    df_sdf = db_api.register(fake_1000, dataset_display_name="fake_data_1")
     linker = Linker(
         df_sdf,
         settings_dict,
@@ -81,8 +81,8 @@ def test_small_link_example_sqlite(fake_1000):
     settings_dict["link_type"] = "link_only"
 
     db_api = SQLiteAPI(con)
-    df_1_sdf = db_api.register(fake_1000, source_dataset_name="fake_data_1")
-    df_2_sdf = db_api.register(fake_1000, source_dataset_name="fake_data_2")
+    df_1_sdf = db_api.register(fake_1000, dataset_display_name="fake_data_1")
+    df_2_sdf = db_api.register(fake_1000, dataset_display_name="fake_data_2")
     linker = Linker(
         [df_1_sdf, df_2_sdf],
         settings_dict,

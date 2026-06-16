@@ -57,7 +57,10 @@ class TestHelper(ABC):
         else:
             aliases = list(input_table_aliases)
 
-        sdfs = [db_api.register(d, alias) for d, alias in zip(data_list, aliases)]
+        sdfs = [
+            db_api.register(d, dataset_display_name=alias)
+            for d, alias in zip(data_list, aliases)
+        ]
 
         input_frames = sdfs[0] if len(sdfs) == 1 else sdfs
         return Linker(input_frames, settings, **kwargs)

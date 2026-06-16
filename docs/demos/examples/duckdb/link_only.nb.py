@@ -67,8 +67,8 @@ settings = SettingsCreator(
 )
 
 db_api = DuckDBAPI()
-df_l_sdf = db_api.register(df_l, source_dataset_name="df_left")
-df_r_sdf = db_api.register(df_r, source_dataset_name="df_right")
+df_l_sdf = db_api.register(df_l, dataset_display_name="df_left")
+df_r_sdf = db_api.register(df_r, dataset_display_name="df_right")
 linker = Linker([df_l_sdf, df_r_sdf], settings)
 
 # %%

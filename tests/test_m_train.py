@@ -54,7 +54,7 @@ def test_m_train():
     df_sdf = db_api.register(data)
     linker_pairwise = Linker(df_sdf, settings)
 
-    db_api.register(labels, "labels")
+    db_api.register(labels, table_name="labels")
     linker_pairwise.training.estimate_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 

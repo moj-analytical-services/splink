@@ -121,7 +121,7 @@ def _join_new_table_to_df_concat_with_tf_sql(
     """
     Joins any required tf columns onto input_tablename
 
-    This is needed e.g. when using linker.inference.compare_two_records
+    This is needed e.g. when using linker.inference.score_pairs
     in which the user provides new records which need tf adjustments computed
     """
     return _join_tf_to_input_table_sql(linker, input_tablename, input_table)

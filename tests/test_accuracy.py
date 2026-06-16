@@ -269,7 +269,7 @@ def test_roc_chart_link_and_dedupe(duckdb_with_fake_1000):
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
     db_api = DuckDBAPI(connection=con)
-    df_sdf = db_api.register(df, source_dataset_name="fake_data_1")
+    df_sdf = db_api.register(df, dataset_display_name="fake_data_1")
 
     linker = Linker(df_sdf, settings_dict)
 

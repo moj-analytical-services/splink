@@ -524,7 +524,8 @@ def estimate_u_values(
 
         aggregated_counts_df = counts_accumulator.to_record_list()
         aggregated_counts_sdf = db_api.register(
-            aggregated_counts_df, f"__splink__aggregated_m_u_counts_{ascii_uid(8)}"
+            aggregated_counts_df,
+            table_name=f"__splink__aggregated_m_u_counts_{ascii_uid(8)}",
         )
 
         # Convert aggregated counts to proportions (u probabilities)

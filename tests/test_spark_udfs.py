@@ -84,7 +84,7 @@ def test_damerau_levenshtein(spark_api):
     )
     df_spark_dam_lev = spark.createDataFrame(df)
 
-    df_sdf = spark_api.register(df_spark_dam_lev, source_dataset_name="test_dl_df")
+    df_sdf = spark_api.register(df_spark_dam_lev, dataset_display_name="test_dl_df")
     linker = Linker(df_sdf, settings)
 
     sql = """
@@ -171,7 +171,7 @@ def test_jaro(spark_api):
     )
     df_spark_jaro = spark.createDataFrame(df)
 
-    df_sdf = spark_api.register(df_spark_jaro, source_dataset_name="test_jaro_df")
+    df_sdf = spark_api.register(df_spark_jaro, dataset_display_name="test_jaro_df")
     linker = Linker(df_sdf, settings)
 
     sql = """
@@ -255,7 +255,9 @@ def test_jaro_winkler(spark_api):
     )
     df_spark_jaro_winkler = spark.createDataFrame(df)
 
-    df_sdf = spark_api.register(df_spark_jaro_winkler, source_dataset_name="test_jw_df")
+    df_sdf = spark_api.register(
+        df_spark_jaro_winkler, dataset_display_name="test_jw_df"
+    )
     linker = Linker(df_sdf, settings)
 
     sql = """
