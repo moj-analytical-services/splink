@@ -26,40 +26,59 @@ Unlike debug mode, logging doesn't affect the performance of Splink.
 
 ### Logging levels
 
-You can set the logging level with code like `logging.getLogger("splink").setLevel(desired_level)` although **see notes below about gotchas**.
+You can set the logging level when creating a linker, or by calling
+`splink.logging.enable(desired_level)`.
 
 The logging levels in Splink are:
 
 - `logging.INFO` (`20`): This outputs user facing messages about the training status of Splink models
 - `15`: Outputs additional information about time taken and parameter estimation
 - `logging.DEBUG` (`10`): Outputs information about the names of the SQL statements executed
-- `logging.DEBUG` (`7`): Outputs information about the names of the components of the SQL pipelines
-- `logging.DEBUG` (`5`): Outputs the SQL statements themselves
+- `7`: Outputs information about the names of the components of the SQL pipelines
+- `5`: Outputs the SQL statements themselves
 
 ### How to control logging
 
-Note that by default Splink sets the [logging level to `INFO` on initialisation](https://github.com/moj-analytical-services/splink/blob/44304126acf3a3292810f1bc209f644e3691ee3a/splink/linker.py#L135)
+By default Splink configures its own `splink` logger at `logging.INFO`, without
+calling `logging.basicConfig()` or changing the root logger for the Python process.
+This means normal users see useful progress messages, while applications can still
+control their own logging setup.
 
-#### With basic logging
+#### Configure when creating a linker
 
 ```python
 import logging
-linker = Linker(df, settings, db_api, set_up_basic_logging=False)
 
-# This must come AFTER the linker is intialised, because the logging level
-# will be set to INFO
-logging.getLogger("splink").setLevel(logging.DEBUG)
+linker = Linker(df, settings, log_level=logging.DEBUG)
 ```
 
-#### Without basic logging
+Pass `log_level=None` if you do not want Splink to configure logging:
 
 ```python
+linker = Linker(df, settings, log_level=None)
+```
 
-# This code can be anywhere since set_up_basic_logging is False
+#### Configure outside linker construction
+
+```python
 import logging
-logging.basicConfig(format="%(message)s")
-splink_logger = logging.getLogger("splink")
-splink_logger.setLevel(logging.INFO)
+import splink.logging
 
-linker = Linker(df, settings, db_api, set_up_basic_logging=False)
+splink.logging.enable(logging.INFO)
+
+linker = Linker(df, settings)
+```
+
+#### Use application logging
+
+If your application has already configured logging, Splink will use that existing
+configuration instead of adding its own handler:
+
+```python
+import logging
+
+logging.basicConfig(format="%(message)s")
+logging.getLogger("splink").setLevel(logging.INFO)
+
+linker = Linker(df, settings)
 ```

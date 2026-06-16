@@ -46,6 +46,7 @@ from splink.internals.settings_validation.valid_types import (
     _validate_dialect,
 )
 from splink.internals.splink_dataframe import SplinkDataFrame
+from splink.internals.splink_logging import enable as enable_logging
 from splink.internals.splinkdataframe_utils import (
     get_db_api_from_inputs,
     splink_dataframes_to_dict,
@@ -77,7 +78,7 @@ class Linker:
         self,
         splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
         settings: SettingsCreator | dict[str, Any] | Path | str,
-        set_up_basic_logging: bool = True,
+        log_level: int | str | None = logging.INFO,
         validate_settings: bool = True,
     ):
         """
@@ -114,18 +115,14 @@ class Linker:
             settings_dict (dict | Path | str): A Splink settings dictionary,
                 or a path (either as a pathlib.Path object, or a string) to a json file
                 defining a settings dictionary or pre-trained model.
-            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
-                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            log_level (int | str | None, optional): Logging level for Splink messages.
+                Defaults to logging.INFO. If None, Splink logging is not configured.
             validate_settings (bool, optional): When True, check your settings
                 dictionary for any potential errors that may cause splink to fail.
         """  # noqa: E501
         self._db_schema = "splink"
-        if set_up_basic_logging:
-            logging.basicConfig(
-                format="%(message)s",
-            )
-            splink_logger = logging.getLogger("splink")
-            splink_logger.setLevel(logging.INFO)
+        if log_level is not None:
+            enable_logging(log_level)
 
         self._db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
 

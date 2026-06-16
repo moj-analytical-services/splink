@@ -86,7 +86,7 @@ settings = SettingsCreator(
 # %%
 db_api = DuckDBAPI()
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 deterministic_rules = [
     "l.first_name = r.first_name and levenshtein(r.dob::VARCHAR, l.dob::VARCHAR) <= 1",
     "l.surname = r.surname and levenshtein(r.dob::VARCHAR, l.dob::VARCHAR) <= 1",

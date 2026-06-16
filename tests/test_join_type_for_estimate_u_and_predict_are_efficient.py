@@ -131,7 +131,7 @@ def test_dedupe_only():
     linker = Linker(
         df_one_sdf,
         settings,
-        set_up_basic_logging=False,
+        log_level=None,
     )
     logging.getLogger("splink").setLevel(1)
 
@@ -176,7 +176,7 @@ def test_link_and_dedupe(fake_1000):
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
-        set_up_basic_logging=False,
+        log_level=None,
     )
 
     handler.log_list.clear()
@@ -223,7 +223,7 @@ def test_link_only_two(fake_1000):
     linker = Linker(
         [df_one_sdf, df_two_sdf],
         settings,
-        set_up_basic_logging=False,
+        log_level=None,
     )
 
     log_list.clear()
@@ -299,7 +299,7 @@ def test_link_only_three(fake_1000):
     linker = Linker(
         [df_one_sdf, df_two_sdf, df_three_sdf],
         settings,
-        set_up_basic_logging=False,
+        log_level=None,
     )
 
     log_list.clear()
