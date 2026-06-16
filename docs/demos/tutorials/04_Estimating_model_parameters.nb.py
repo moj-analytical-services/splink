@@ -117,7 +117,7 @@ df = splink_datasets.fake_1000
 #
 # Splink includes a library of comparison functions at `splink.comparison_library` to make it simple to get started. These are split into two categories:
 #
-# 1. Generic `Comparison` functions which apply a particular fuzzy matching function. For example, levenshtein distance.
+# **Category 1: Generic `Comparison` functions which apply a particular fuzzy matching function. For example, levenshtein distance.
 #
 
 # %%
@@ -127,7 +127,7 @@ city_comparison = cl.LevenshteinAtThresholds("city", 2)
 print(city_comparison.get_comparison("duckdb").human_readable_description)
 
 # %% [markdown]
-# 2. `Comparison` functions tailored for specific data types. For example, email.
+# **Category 2: `Comparison` functions tailored for specific data types. For example, email.
 
 # %%
 email_comparison = cl.EmailComparison("email")
