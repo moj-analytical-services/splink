@@ -27,7 +27,7 @@ Unlike debug mode, logging doesn't affect the performance of Splink.
 ### Logging levels
 
 You can set the logging level when creating a linker, or by calling
-`splink.enable_logging(desired_level)`.
+`splink.logging.enable(desired_level)`.
 
 The logging levels in Splink are:
 
@@ -62,9 +62,9 @@ linker = Linker(df, settings, log_level=None)
 
 ```python
 import logging
-import splink
+import splink.logging
 
-splink.enable_logging(logging.INFO)
+splink.logging.enable(logging.INFO)
 
 linker = Linker(df, settings)
 ```
