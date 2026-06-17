@@ -47,20 +47,21 @@ def dataset_property(metadata_method):
         else:
             data_source = file_loc
 
-        read_function = {
-            "csv": pa_csv.read_csv,
-            "parquet": pq.read_table,
-        }.get(data_format, None)
-
-        # just in case we have an invalid format
-        if read_function is None:
+        if data_format == "csv":
+            df = pa_csv.read_csv(
+                data_source,
+                convert_options=pa_csv.ConvertOptions(strings_can_be_null=True),
+            )
+        elif data_format == "parquet":
+            df = pq.read_table(data_source)
+        else:
             raise ValueError(
                 f"Error retrieving dataset {dataset_name} - invalid format!"
             )
-        df = read_function(data_source)
+
         self._in_memory_data[dataset_name] = df
-        # TODO: temporary compat to keep as pandas until we can update notebooks
-        return df.to_pandas()
+
+        return df
 
     return lazyload_data
 
