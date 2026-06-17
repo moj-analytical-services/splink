@@ -102,8 +102,6 @@ To get a basic Splink model up and running, use the following code. It demonstra
     cluster_records = clusters.as_duckdbpyrelation().show(max_width=10000)
     ```
 
-If you're using an LLM to suggest Splink code, see [here](./topic_guides/llms/prompting_llms.md) for suggested prompts and context.
-
 ## Tutorials
 
 You can learn more about Splink in the step-by-step [tutorial](./demos/tutorials/00_Tutorial_Introduction.ipynb). Each has a corresponding Google Colab link to run the notebook in your browser.
