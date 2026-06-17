@@ -87,23 +87,26 @@ plugins:
           - api_docs/api_docs_index.md: Map of the API reference.
         Getting started:
           - getting_started.md: Installation and the first end-to-end Splink workflow.
-          - topic_guides/splink_fundamentals/querying_splink_results.md: How to inspect and query Splink outputs after running a model.
-        Core concepts:
-          - topic_guides/theory/record_linkage.md: Record linkage fundamentals and terminology.
-          - topic_guides/theory/fellegi_sunter.md: The probabilistic model underlying Splink.
-          - topic_guides/splink_fundamentals/settings.md: How Splink models are defined.
-          - topic_guides/splink_fundamentals/link_type.md: When to use linking versus deduplication.
-          - topic_guides/blocking/blocking_rules.md: Blocking rules and why they control scale.
-          - topic_guides/comparisons/comparisons_and_comparison_levels.md: Comparison structure and match logic.
         Tutorials and examples:
           - demos/examples/examples_index.md: Index of runnable examples by backend and problem type.
-        How-to guides:
-          - topic_guides/data_preparation/feature_engineering.md: Preparing columns and engineered features.
-          - topic_guides/blocking/model_training.md: Choosing blocking rules for model training.
-          - topic_guides/comparisons/term-frequency.md: Term-frequency adjustments for skewed data.
-          - topic_guides/training/training_rationale.md: Choosing and sequencing training methods.
-          - topic_guides/evaluation/overview.md: Evaluating models, links, and clusters.
-          - topic_guides/performance/drivers_of_performance.md: Main performance levers when jobs are slow.
+        "User guide: record linkage theory":
+          - topic_guides/theory/*.md
+        "User guide: Splink fundamentals":
+          - topic_guides/splink_fundamentals/*.md
+          - topic_guides/splink_fundamentals/backends/*.md
+        "User guide: data preparation":
+          - topic_guides/data_preparation/*.md
+        "User guide: blocking":
+          - topic_guides/blocking/*.md
+        "User guide: comparisons":
+          - topic_guides/comparisons/*.md
+        "User guide: training":
+          - topic_guides/training/*.md
+        "User guide: evaluation":
+          - topic_guides/evaluation/*.md
+          - topic_guides/evaluation/clusters/*.md
+        "User guide: performance":
+          - topic_guides/performance/*.md
         API reference:
           - api_docs/training.md: Training methods on the Linker.
           - api_docs/inference.md: Inference and prediction methods.
@@ -113,11 +116,7 @@ plugins:
           - api_docs/comparison_level_library.md: Built-in comparison level helpers.
           - api_docs/blocking.md: Blocking API reference.
           - api_docs/datasets.md: Built-in datasets for demos and tests.
-        Backends and troubleshooting:
-          - topic_guides/splink_fundamentals/backends/backends.md: Backend selection and backend-specific behavior.
-          - topic_guides/splink_fundamentals/backends/postgres.md: PostgreSQL-specific guidance.
-          - topic_guides/performance/optimising_duckdb.md: DuckDB performance tuning.
-          - topic_guides/performance/optimising_spark.md: Spark performance tuning.
+        Contributor and debugging guides:
           - dev_guides/changing_splink/development_quickstart.md: Contributor setup when the task involves changing Splink itself.
           - dev_guides/debug_modes.md: Debugging and inspection modes when behavior is unclear.
 hooks:
@@ -159,8 +158,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  # footnotes see e.g. docs/topic_guides/theory/fellegi_sunter.md
-  # mkdocs-material
+        # footnotes see e.g. docs/topic_guides/theory/fellegi_sunter.md
+        # mkdocs-material
+
   - footnotes
   # ::cards:: - see e.g. docs/charts/index.md
   # neoteroi-mkdocs
