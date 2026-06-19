@@ -407,6 +407,9 @@ class PrecisionRecallChart(SplinkChart[ChartRecord]):
 
     def alter_spec_from_data(self, chart_spec):
         records = self.chart_data
+        chart_spec["encoding"]["y"]["scale"] = {
+            "domain": [min(r["precision"] for r in records), 1.0]
+        }
         # If 'curve_label' not in records, remove colour coding
         # This is for if you want to compare roc curves
         r = records[0]

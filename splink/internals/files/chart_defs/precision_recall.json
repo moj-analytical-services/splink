@@ -21,13 +21,15 @@
       "type": "quantitative",
       "field": "recall",
       "sort": ["-recall"],
-      "title": "Recall"
+      "title": "Recall",
+      "axis": { "format": ".2%" }
     },
     "y": {
       "type": "quantitative",
       "field": "precision",
       "sort": ["-precision"],
-      "title": "Precision"
+      "title": "Precision",
+      "axis": { "format": ".2%" }
     },
     "color": {
       "type": "nominal",
