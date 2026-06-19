@@ -154,6 +154,7 @@ settings = SettingsCreator(
     blocking_rules_to_generate_predictions=[
         block_on("first_name", "city"),
         block_on("surname"),
+        block_on("dob"),
 
     ],
     retain_intermediate_calculation_columns=True,
@@ -168,7 +169,7 @@ linker = Linker(df_sdf, settings)
 #
 # - We are performing a `dedupe_only` (the other options are `link_only`, or `link_and_dedupe`, which may be used if there are multiple input datasets).
 # - When comparing records, we will use information from the `first_name`, `surname`, `dob`, `city` and `email` columns to compute a match score.
-# - The `blocking_rules_to_generate_predictions` states that we will only check for duplicates amongst records where either the `first_name AND city` or `surname` is identical.
+# - The `blocking_rules_to_generate_predictions` states that we will only check for duplicates amongst records where either the `first_name AND city` or `surname` or `dob`is identical.
 # - We have enabled [term frequency adjustments](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/term-frequency.html) for the 'city' column, because some values (e.g. `London`) appear much more frequently than others.
 # - We have set `retain_intermediate_calculation_columns` to `True` so that Splink outputs additional information that helps the user understand the calculations. If it were `False`, the computations would run faster.
 #
