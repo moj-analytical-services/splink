@@ -329,11 +329,19 @@ class DuckDBDialect(SplinkDialect):
     ):
         if proportion == 1.0:
             return ""
-        percent = proportion * 100
-        if seed:
-            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        if unique_id is None:
+            percent = proportion * 100
+            if seed:
+                return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+            else:
+                return f"USING SAMPLE {percent}% (bernoulli)"
         else:
-            return f"USING SAMPLE {percent}% (bernoulli)"
+            if seed:
+                hash_expr = f"hash({unique_id}, {seed})"
+            else:
+                hash_expr = f"hash({unique_id})"
+            return f"ORDER BY {hash_expr} LIMIT {sample_size}"
+
 
     def access_extreme_array_element(
         self, name: str, first_or_last: Literal["first", "last"]

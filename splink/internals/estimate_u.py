@@ -404,23 +404,15 @@ def estimate_u_values(
         sample_size = total_nodes
 
     table_to_sample_from = "__splink__df_concat"
-    # if we are provided a seed, we want to order the table before we sample from it
-    # this ensures that the resulting table will be consistent across runs
-    # (which is what we want when we are supplying a seed)
-    # don't bother when we aren't using a seed as it is needless computation
-    if seed is not None:
-        uid_colname = settings_obj.column_info_settings.unique_id_input_column.name
-        table_to_sample_from = (
-            f"(select * from {table_to_sample_from} order by {uid_colname})"
-        )
 
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(training_linker, pipeline)
 
+    uid_colname = settings_obj.column_info_settings.unique_id_input_column.name
     sql = f"""
     select *
     from {table_to_sample_from}
-    {training_linker._random_sample_sql(proportion, sample_size, seed)}
+    {training_linker._random_sample_sql(proportion, sample_size, seed, unique_id=uid_colname)}
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
