@@ -236,9 +236,9 @@ chart_comparisons_from_blocking_rules(
 #
 # Finally, we can use the `profile_columns` function we saw in the previous tutorial to understand a specific blocking rule in more depth.
 #
-# Suppose we're interested in blocking on city and first initial.
+# Suppose we're interested in blocking on birth_place and first initial.
 #
-# Within each distinct value of `(city, first initial)`, all possible pairwise comparisons will be generated.
+# Within each distinct value of `(birth_place, first initial)`, all possible pairwise comparisons will be generated.
 #
 # So for instance, if there are 15 distinct records with `London,J` then these records will result in `n(n-1)/2 = 105` pairwise comparisons being generated.
 #
@@ -250,7 +250,7 @@ chart_comparisons_from_blocking_rules(
 # %%
 from splink.exploratory import profile_columns
 
-profile_columns(df_sdf, column_expressions=["city || left(first_name,1)"])
+profile_columns(df_sdf, column_expressions=["birth_place || left(first_name,1)"])
 
 # %% [markdown]
 # !!! note "Further Reading"
@@ -266,3 +266,5 @@ profile_columns(df_sdf, column_expressions=["city || left(first_name,1)"])
 #
 # Now we have chosen which records to compare, we can use those records to train a linkage model.
 #
+
+# %%

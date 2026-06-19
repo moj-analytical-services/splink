@@ -24,6 +24,10 @@
     "y": {
       "field": "blocking_rule",
       "title": "SQL Blocking Rule",
+      "axis": {
+        "labelLimit": 370,
+        "maxExtent": 400
+      },
       "sort": [
         "-x2"
       ]
