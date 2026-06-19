@@ -114,7 +114,9 @@
             "title": "Prior (starting) match weight",
             "titleAngle": 0,
             "titleAlign": "right",
-            "titleFontWeight": "normal"
+            "titleFontWeight": "normal",
+            "labelLimit": 270,
+            "maxExtent": 300
           },
           "sort": { "field": "comparison_vector_value", "order": "descending" }
         }
@@ -240,7 +242,11 @@
         "y": {
           "type": "nominal",
           "field": "label_for_charts",
-          "axis": { "title": null },
+          "axis": {
+            "title": null,
+            "labelLimit": 270,
+            "maxExtent": 300
+          },
           "sort": { "field": "comparison_vector_value", "order": "descending" }
         }
       },

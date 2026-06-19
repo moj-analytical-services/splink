@@ -12,7 +12,7 @@
 #     name: python3
 # ---
 
-# %% [raw]
+# %% [markdown]
 # # Specifying and estimating a linkage model
 #
 # <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/04_Estimating_model_parameters.ipynb">
@@ -27,7 +27,7 @@
 #
 # For example, a match on date of birth is a much stronger indicator that two records refer to the same entity than a match on gender. A mismatch on gender may be a stronger indicate against two records referring than a mismatch on name, since names are more likely to be entered differently.
 #
-# The relative importance of different information is captured in the (partial) 'match weights', which can be learned from your data. These match weights are then added up to compute the overall match score.
+# The relative importance of different information is captured in the (partial) 'match weights', which can be learned from your data. These match weights are then added up to compute the overall match score. For a more detailed explanations, see [here](https://www.robinlinacre.com/partial_match_weights/).
 #
 # The match weights are are derived from the `m` and `u` parameters of the underlying Fellegi Sunter model. Splink uses various statistical routines to estimate these parameters. Further details of the underlying theory can be found [here](https://www.robinlinacre.com/intro_to_probabilistic_linkage/), which will help you understand this part of the tutorial.
 #
@@ -35,13 +35,13 @@
 # %% [markdown]
 # ## Specifying a linkage model
 #
-# To build a linkage model, the user defines the partial match weights that `splink` needs to estimate. This is done by defining how the information in the input records should be compared.
+# To build a linkage model, the user defines which partial match weights that `splink` needs to estimate. This is done by defining how the information in the input records should be compared.
 #
 # To be concrete, here is an example comparison:
 #
 # | first_name_l | first_name_r | surname_l | surname_r | dob_l      | dob_r      | city_l | city_r | email_l             | email_r             |
 # | ------------ | ------------ | --------- | --------- | ---------- | ---------- | ------ | ------ | ------------------- | ------------------- |
-# | Robert       | Rob          | Allen     | Allen     | 1971-05-24 | 1971-06-24 | nan    | London | roberta25@smith.net | roberta25@smith.net |
+# | Robert       | Rob          | Allen     | Allen     | 1971-05-24 | 1971-06-24 | NULL   | London | roberta25@smith.net | roberta25@smith.net |
 #
 # What functions should we use to assess the similarity of `Rob` vs. `Robert` in the the `first_name` field?
 #
@@ -65,7 +65,7 @@
 #
 # A model is composed of many `Comparison`s, which between them assess the similarity of all of the columns being used for data linking.
 #
-# Each `Comparison` contains two or more `ComparisonLevels` which define _n_ discrete gradations of similarity between the input columns within the Comparison.
+# Each `Comparison` contains two or more `ComparisonLevels` which define _n_ discrete gradations (categories) of similarity between the input columns within the Comparison.
 #
 # As such `ComparisonLevels`are nested within `Comparisons` as follows:
 #
@@ -95,7 +95,7 @@
 # | --------- | --------- | ---------------- | ----------------------------------------------------- |
 # | Rob       | Rob       | Exact match      | great match                                           |
 # | Rob       | Jane      | All other        | bad match                                             |
-# | Rob       | Robert    | All other        | bad match, this comparison has no notion of nicknames |
+# | Rob       | Robert    | All other        | bad match, this simple comparison has no notion of nicknames |
 #
 # More information about specifying comparisons can be found [here](../../topic_guides/comparisons/customising_comparisons.ipynb) and [here](../../topic_guides/comparisons/comparisons_and_comparison_levels.md).
 #
@@ -117,7 +117,7 @@ df = splink_datasets.fake_1000
 #
 # Splink includes a library of comparison functions at `splink.comparison_library` to make it simple to get started. These are split into two categories:
 #
-# **Category 1: Generic `Comparison` functions which apply a particular fuzzy matching function. For example, levenshtein distance.
+# **Category 1**: Generic `Comparison` functions which apply a particular fuzzy matching function. For example, levenshtein distance.
 #
 
 # %%
@@ -127,7 +127,7 @@ city_comparison = cl.LevenshteinAtThresholds("city", 2)
 print(city_comparison.get_comparison("duckdb").human_readable_description)
 
 # %% [markdown]
-# **Category 2: `Comparison` functions tailored for specific data types. For example, email.
+# **Category 2**: `Comparison` functions tailored for specific data types. For example, email.
 
 # %%
 email_comparison = cl.EmailComparison("email")
@@ -170,7 +170,7 @@ linker = Linker(df_sdf, settings)
 # - When comparing records, we will use information from the `first_name`, `surname`, `dob`, `city` and `email` columns to compute a match score.
 # - The `blocking_rules_to_generate_predictions` states that we will only check for duplicates amongst records where either the `first_name AND city` or `surname` is identical.
 # - We have enabled [term frequency adjustments](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/term-frequency.html) for the 'city' column, because some values (e.g. `London`) appear much more frequently than others.
-# - We have set `retain_intermediate_calculation_columns` and `additional_columns_to_retain` to `True` so that Splink outputs additional information that helps the user understand the calculations. If they were `False`, the computations would run faster.
+# - We have set `retain_intermediate_calculation_columns` to `True` so that Splink outputs additional information that helps the user understand the calculations. If it were `False`, the computations would run faster.
 #
 
 # %% [markdown]
@@ -229,16 +229,16 @@ linker.training.estimate_probability_two_random_records_match(deterministic_rule
 #
 
 # %%
-linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+linker.training.estimate_u_using_random_sampling(max_pairs=2e6)
 
 # %% [markdown]
 # ### Estimation of `m` probabilities
 #
-# `m` is the trickiest of the parameters to estimate, because we have to have some idea of what the true matches are.
+# `m` is the trickiest of the parameters to estimate because we have to have some idea of what the true matches are.
 #
 # If we have labels, we can directly estimate it.
 #
-# If we do not have labelled data, the `m` parameters can be estimated using an iterative maximum likelihood approach called Expectation Maximisation.
+# If we do not have labelled data, the `m` parameters can be estimated using an iterative maximum likelihood approach called [Expectation Maximisation](https://www.robinlinacre.com/em_intuition/).
 #
 # #### Estimating directly
 #
