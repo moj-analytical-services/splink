@@ -177,15 +177,3 @@ linker.evaluation.unlinkables_chart()
 #     :material-thumbs-up-down: For more on the Evaluation Metrics used in this tutorial, please refer to the [Edge Metrics guide.](../../topic_guides/evaluation/edge_metrics.md)
 #
 
-# %% [markdown]
-# ## :material-flag-checkered: That's it!
-#
-# That wraps up the Splink tutorial! Don't worry, there are still plenty of resources to help on the next steps of your Splink journey:
-#
-# :octicons-link-16: For some end-to-end notebooks of Splink pipelines, check out our [Examples](../examples/examples_index.md)
-#
-# :simple-readme: For more deepdives into the different aspects of Splink, and record linkage more generally, check out our [Topic Guides](../../topic_guides/topic_guides_index.md)
-#
-# :material-tools: For a reference on all the functionality avalable in Splink, see our [Documentation](../../api_docs/api_docs_index.md)
-#
-
