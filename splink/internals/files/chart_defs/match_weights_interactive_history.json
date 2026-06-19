@@ -274,7 +274,7 @@
     }
   },
   "title": {
-    "text": "Model parameters (components of final match weight)",
+    "text": "Partial match weights (components of final match weight)",
     "subtitle": "Use mousewheel to zoom"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
