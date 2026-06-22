@@ -43,12 +43,18 @@
 
 # %%
 from splink.datasets import splink_dataset_labels
+from splink.internals.misc import show
+import duckdb
 
-pairwise_labels = splink_dataset_labels.fake_1000_labels
+all_pairwise_labels = splink_dataset_labels.fake_1000_labels
 
 # Choose labels indicating a match
-pairwise_labels = pairwise_labels[pairwise_labels["clerical_match_score"] == 1]
-pairwise_labels
+pairwise_labels = (
+    duckdb.sql("select * from all_pairwise_labels where clerical_match_score = 1")
+    .arrow()
+    .read_all()
+)
+show(pairwise_labels)
 
 # %% [markdown]
 # We now proceed to estimate the Fellegi Sunter model:
@@ -58,7 +64,7 @@ pairwise_labels
 from splink import splink_datasets
 
 df = splink_datasets.fake_1000
-df.head(2)
+show(df, rows=2)
 
 # %%
 import splink.comparison_library as cl
