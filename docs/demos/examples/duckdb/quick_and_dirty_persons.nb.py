@@ -29,12 +29,14 @@
 # %% tags=["hide_input"]
 # Uncomment and run this cell if you're running in Google Colab.
 # # !pip install splink
+#
 
 # %%
 from splink.datasets import splink_datasets
+from splink.internals.misc import show
 
 df = splink_datasets.historical_50k
-df.head(5)
+show(df, rows=5)
 
 # %%
 from splink import block_on, SettingsCreator
@@ -90,4 +92,5 @@ linker.training.estimate_u_using_random_sampling(max_pairs=2e6)
 results = linker.inference.predict(threshold_match_probability=0.9)
 
 # %%
-results.as_pandas_dataframe(limit=5)
+results.as_duckdbpyrelation().limit(5).show(max_width=10000)
+
