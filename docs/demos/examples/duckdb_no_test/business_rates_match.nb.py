@@ -19,7 +19,7 @@
 # %% [markdown]
 # <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-# </a> 
+# </a>
 
 # %% [markdown]
 # ### Matching businesses
@@ -61,13 +61,13 @@ df_stockport_business_rates.sort("company_name").show(max_rows=5)
 
 
 # %% [markdown]
-# ## Feature engineering 
+# ## Feature engineering
 #
 # We will do some feature engineering to make this data more amenable to matching:
 #
 # - To match companies, we will tokenise the company name and compute the term frequencies of each token.  This will allow us to more accurately quantify how closely two business names match
 # - We will also pick out a subset of tokens to give us access to new blocking strategies
-# - To match addresses, we will use the first number in the address and the postcode only.  This is simplistic - for a more advanced approach to address matching in Splink see [here](https://github.com/RobinL/uk_address_matcher/) 
+# - To match addresses, we will use the first number in the address and the postcode only.  This is simplistic - for a more advanced approach to address matching in Splink see [here](https://github.com/RobinL/uk_address_matcher/)
 #
 # We'll perform this featuring on both datasets simultaneously to ensure the token frequencies are representative of all the data
 
@@ -264,7 +264,7 @@ import splink.comparison_library as cl
 con = duckdb.connect(":default:")
 db_api = DuckDBAPI(connection=con)
 
-
+# Note NULL level definition is surprising due to https://github.com/moj-analytical-services/splink/issues/2929
 settings = SettingsCreator(
     link_type="link_only",
     unique_id_column_name="unique_id",
@@ -274,15 +274,11 @@ settings = SettingsCreator(
             "output_column_name": "name_tokens_with_freq",
             "comparison_levels": [
                 {
-                    "sql_condition": '"name_tokens_with_freq_l" IS NULL OR "name_tokens_with_freq_r" IS NULL',
+                    "sql_condition": f"""
+                    {calculate_tf_product_array_sql("name_tokens_with_freq")} > 2
+                    or "name_tokens_with_freq_l" IS NULL OR "name_tokens_with_freq_r" IS NULL""",
                     "label_for_charts": "name_tokens_with_freq is NULL",
                     "is_null_level": True,
-                },
-                {
-                    "sql_condition": f"""
-                    {calculate_tf_product_array_sql("name_tokens_with_freq")} < 1e-12
-                    """,
-                    "label_for_charts": "Array product is less than 1e-10",
                 },
                 {
                     "sql_condition": f"""
@@ -391,7 +387,7 @@ FROM comparison;
 """
 duckdb.sql(sql).show(max_rows=10, max_width=200)
 
-recs = duckdb.table("comparison").df().to_dict(orient="records")
+recs = duckdb.table("comparison").arrow().read_all().to_pylist()
 linker.visualisations.waterfall_chart(recs)
 
 
@@ -457,3 +453,5 @@ chart
 # - Blocking could be improved in various ways, e.g. by blocking on address tokens, using more 'rare' tokens, using partial postcodes better and so on
 # - Allowing fuzzy matching on tokens in the company name, not just full token matching
 #
+
+
