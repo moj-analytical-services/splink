@@ -87,7 +87,7 @@ production_df = splink_datasets.historical_50k
 db_api = DuckDBAPI()
 production_df_sdf = db_api.register(production_df)
 # TODO: Update path to model settings json file as needed
-linker = Linker(production_df_sdf, settings='/Users/robin.linacre/Documents/data_linking/splink/docs/demos/demo_settings/model_h50k.json')
+linker = Linker(production_df_sdf, settings='docs/demos/demo_settings/model_h50k.json')
 
 # %% [markdown]
 # It's useful to visualise the model parameters to learn the relative importance of different parts of your data for linking.
