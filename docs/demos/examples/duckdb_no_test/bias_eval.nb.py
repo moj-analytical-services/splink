@@ -129,18 +129,6 @@ comparisons = sorted(
 # This pipeline has a high match threshold of 0.999, medium of 0.99, and low of 0.95.
 
 # %%
-def highlight_cells(val):
-    if val >= 0.999:
-        color = '#c4f5bf'  # High threshold, green
-    elif val >= 0.99:
-        color = '#faf9c0'  # Medium threshold, yellow
-    elif val >= 0.95:
-        color = '#f5e1bf'  # Low threshold, orange
-    else:
-        color = '#f5c8bf'  # Below threshold, red
-    return f'background-color: {color}'
-
-
 def show_comparisons(records, columns):
     comparisons_table = pa.Table.from_pylist(records)
     columns_sql = ", ".join(columns)
