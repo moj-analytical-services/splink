@@ -63,9 +63,9 @@ def get_settings_text() -> str:
 # %%
 import json
 
-# settings = json.loads(get_settings_text())
+settings = json.loads(get_settings_text())
 
-linker = Linker(df_sdf, "/Users/robin.linacre/Documents/data_linking/splink/docs/demos/demo_settings/saved_model_from_demo.json")
+linker = Linker(df_sdf, settings)
 
 # %% [markdown]
 # # Predicting match weights using the trained model
