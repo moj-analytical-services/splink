@@ -32,14 +32,18 @@
 
 # %%
 from splink import splink_datasets
+from splink.internals.misc import show
+import duckdb
 
 df = splink_datasets.fake_1000
 
 # Split a simple dataset into two, separate datasets which can be linked together.
-df_l = df.sample(frac=0.5)
-df_r = df.drop(df_l.index)
+rel = duckdb.sql("select * from df")
+df_l = rel.filter("hash(unique_id) % 2 = 0").arrow().read_all()
+df_r = rel.filter("hash(unique_id) % 2 = 1").arrow().read_all()
 
-df_l.head(2)
+show(df_r, rows=2)
+show(df_l, rows=2)
 
 # %%
 import splink.comparison_library as cl
@@ -75,8 +79,8 @@ linker = Linker([df_l_sdf, df_r_sdf], settings)
 from splink.exploratory import completeness_chart
 
 db_api = DuckDBAPI()
-df_l_sdf = db_api.register(df_l)
-df_r_sdf = db_api.register(df_r)
+df_l_sdf = db_api.register(df_l, dataset_display_name="df_left")
+df_r_sdf = db_api.register(df_r, dataset_display_name="df_right")
 completeness_chart(
     [df_l_sdf, df_r_sdf],
     cols=["first_name", "surname", "dob", "city", "email"],
@@ -111,4 +115,6 @@ session_first_name = linker.training.estimate_parameters_using_expectation_maxim
 results = linker.inference.predict(threshold_match_probability=0.9)
 
 # %%
-results.as_pandas_dataframe(limit=5)
+results.as_duckdbpyrelation().limit(5).show(max_width=10000)
+
+
