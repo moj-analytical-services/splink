@@ -34,8 +34,6 @@ logging.getLogger("splink").setLevel(logging.ERROR)
 
 
 # %%
-import pandas as pd
-
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 
@@ -48,7 +46,7 @@ data = [
     {"unique_id": 5, "first_name": "John", "postcode": ["C"]},
 ]
 
-df = pd.DataFrame(data)
+df = data
 
 settings = SettingsCreator(
     link_type="dedupe_only",
@@ -64,9 +62,9 @@ settings = SettingsCreator(
 
 db_api = DuckDBAPI()
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
-linker.inference.predict().as_pandas_dataframe()
+linker.inference.predict().as_duckdbpyrelation().show(max_width=10000)
 
 # %% [markdown]
 # ### Blocking on array columns
@@ -74,8 +72,6 @@ linker.inference.predict().as_pandas_dataframe()
 # This example shows how we can use `block_on` to block on the individual elements of an array column - that is, pairwise comaprisons are created for pairs or records where any of the elements in the array columns match.
 
 # %%
-import pandas as pd
-
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 
@@ -87,7 +83,7 @@ data = [
 
 ]
 
-df = pd.DataFrame(data)
+df = data
 
 settings = SettingsCreator(
     link_type="dedupe_only",
@@ -103,9 +99,9 @@ settings = SettingsCreator(
 
 db_api = DuckDBAPI()
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
-linker.inference.predict().as_pandas_dataframe()
+linker.inference.predict().as_duckdbpyrelation().show(max_width=10000)
 
 # %% [markdown]
 # ## Other
@@ -121,6 +117,7 @@ linker.inference.predict().as_pandas_dataframe()
 import duckdb
 import tempfile
 import os
+import pyarrow.parquet as pq
 
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
@@ -129,13 +126,13 @@ from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 df = splink_datasets.fake_1000
 temp_file = tempfile.NamedTemporaryFile(delete=True, suffix=".parquet")
 temp_file_path = temp_file.name
-df.to_parquet(temp_file_path)
+pq.write_table(df, temp_file_path)
 
 # Example would start here if you already had a parquet file
 duckdb_df = duckdb.read_parquet(temp_file_path)
 
 db_api = DuckDBAPI(":default:")
-df_sdf = db_api.register(df)
+df_sdf = db_api.register(duckdb_df)
 settings = SettingsCreator(
     link_type="dedupe_only",
     comparisons=[
@@ -148,7 +145,7 @@ settings = SettingsCreator(
     ],
 )
 
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
 result = linker.inference.predict().as_duckdbpyrelation()
 
@@ -200,7 +197,7 @@ settings = SettingsCreator(
 
 df = splink_datasets.fake_1000
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
@@ -238,7 +235,7 @@ settings = SettingsCreator(
 )
 df = splink_datasets.fake_1000
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
 linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
@@ -283,7 +280,7 @@ settings = SettingsCreator(
 )
 
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings, set_up_basic_logging=False)
+linker = Linker(df_sdf, settings, log_level=None)
 
 linker.training.estimate_probability_two_random_records_match(
     [block_on("first_name", "surname")], recall=0.7
@@ -430,8 +427,8 @@ pairwise_predictions = linker.inference.predict(threshold_match_weight=-10)
 
 # %%
 import duckdb
-import pandas as pd
 import os
+import pyarrow as pa
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 from splink.clustering import cluster_pairwise_predictions_at_threshold
@@ -495,7 +492,7 @@ company_person_records_list = [
         "person_surname": "Taylor",
     },
 ]
-company_person_records = pd.DataFrame(company_person_records_list)
+company_person_records = pa.Table.from_pylist(company_person_records_list)
 company_person_records
 print("========== NESTED COMPANY-PERSON LINKAGE EXAMPLE ==========")
 print("This example demonstrates a two-phase linkage process:")
@@ -604,13 +601,7 @@ print("\n--- PHASE 2: PERSON LINKAGE WITHIN COMPANIES ---")
 print("Now linking persons, but only within their company clusters")
 
 # STEP 2: Link persons within company clusters
-# Create a new connection to isolate this step
-con2 = duckdb.connect()
-con2.sql("attach 'nested_linkage.ddb' as linkage_db")
-con2.execute(
-    "create table records_with_company_cluster as select * from linkage_db.records_with_company_cluster"
-)
-db_api2 = DuckDBAPI(connection=con2)
+db_api2 = DuckDBAPI(connection=con)
 
 # Configure person linkage within company clusters
 # Simple linking model just distinguishes between people within a client_id
@@ -755,3 +746,4 @@ linker = Linker(
 df_predict = linker.inference.predict()
 
 df_predict.as_duckdbpyrelation()
+
