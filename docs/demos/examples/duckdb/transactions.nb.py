@@ -37,15 +37,14 @@
 # # !pip install splink
 
 # %%
-from IPython.display import display
-
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
+from splink.internals.misc import show
 
 df_origin = splink_datasets.transactions_origin
 df_destination = splink_datasets.transactions_destination
 
-display(df_origin.head(2))
-display(df_destination.head(2))
+show(df_origin, rows=2)
+show(df_destination, rows=2)
 
 # %% [markdown]
 # In the following chart, we can see this is a challenging dataset to link:
@@ -175,7 +174,7 @@ comparison_date = {
 
 settings = SettingsCreator(
     link_type="link_only",
-    probability_two_random_records_match=1 / len(df_origin),
+    probability_two_random_records_match=1 / df_origin.num_rows,
     blocking_rules_to_generate_predictions=[
         blocking_rule_date_1,
         blocking_rule_date_2,
@@ -234,3 +233,4 @@ pred_errors = linker.evaluation.prediction_errors_from_labels_column(
     "ground_truth", include_false_positives=False, include_false_negatives=True
 )
 linker.visualisations.waterfall_chart(pred_errors.as_record_dict(limit=5))
+
