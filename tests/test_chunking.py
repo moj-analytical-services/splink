@@ -205,43 +205,39 @@ def test_cache_is_hit_for_blocked_pairs(fake_1000):
 
 
 def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
-    """Test chunked predict matches when blocked pairs are loaded from precompute."""
+    """Test predict() matches when blocked pairs are loaded from precompute."""
     settings = get_settings_dict()
 
-    # Baseline: run chunked predict from scratch.
+    # Baseline: run predict from scratch (Splink computes blocking internally).
     db_api_baseline = DuckDBAPI()
     df_sdf_baseline = db_api_baseline.register(fake_1000)
     linker_baseline = Linker(df_sdf_baseline, settings)
-    baseline_predictions = linker_baseline.inference.predict_chunk(
-        threshold_match_weight=-10, left_chunk=(1, 2), right_chunk=(1, 2)
+    baseline_predictions = linker_baseline.inference.predict(
+        threshold_match_weight=-10
     ).as_duckdbpyrelation()
     baseline_count = baseline_predictions.count("*").fetchone()[0]
     baseline_match_weight_sum = baseline_predictions.aggregate(
         "sum(match_weight)"
     ).fetchone()[0]
 
-    # Build blocked pairs externally.
+    # Build the full blocked pairs table externally.
     db_api_source = DuckDBAPI()
     df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
 
     blocked_pairs = linker_source.inference.compute_blocked_pairs_for_predict_chunk(
-        left_chunk=(1, 2), right_chunk=(1, 2)
+        left_chunk=(1, 1), right_chunk=(1, 1)
     ).as_pyarrow_table()
 
-    # Load blocked pairs into a fresh linker and run the same chunked predict.
+    # Register the full table into a fresh linker and run predict.
     db_api_target = DuckDBAPI()
     df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
 
-    linker_target.table_management.register_blocked_pairs_for_predict(
-        blocked_pairs, left_chunk=(1, 2), right_chunk=(1, 2)
-    )
+    linker_target.table_management.register_blocked_pairs_for_predict(blocked_pairs)
 
-    loaded_predictions = linker_target.inference.predict_chunk(
+    loaded_predictions = linker_target.inference.predict(
         threshold_match_weight=-10,
-        left_chunk=(1, 2),
-        right_chunk=(1, 2),
     ).as_dict()
     loaded_count = len(loaded_predictions["match_weight"])
     loaded_match_weight_sum = sum(loaded_predictions["match_weight"])
@@ -325,28 +321,8 @@ def test_blocked_pairs_not_deleted_when_from_cache(fake_1000):
     assert "__splink__blocked_id_pairs" in linker._intermediate_table_cache
 
 
-def test_register_blocked_pairs_requires_chunk_identifiers(fake_1000):
-    """Test blocked-pairs registration requires explicit chunk identifiers."""
-    settings = get_settings_dict()
-    db_api = DuckDBAPI()
-    df_sdf = db_api.register(fake_1000)
-
-    linker = Linker(df_sdf, settings)
-
-    blocked_pairs = linker.inference.compute_blocked_pairs_for_predict_chunk(
-        left_chunk=(1, 1),
-        right_chunk=(1, 1),
-    ).as_pyarrow_table()
-
-    with pytest.raises(
-        SplinkException,
-        match="requires both left_chunk and right_chunk",
-    ):
-        linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
-
-
-def test_predict_errors_when_blocked_pairs_manually_registered(fake_1000):
-    """Test predict() is not allowed after manual blocked-pairs registration."""
+def test_register_blocked_pairs_then_predict_chunk_errors(fake_1000):
+    """Test predict_chunk() and chunked predict() error after registration."""
     settings = get_settings_dict()
 
     db_api_source = DuckDBAPI()
@@ -360,14 +336,27 @@ def test_predict_errors_when_blocked_pairs_manually_registered(fake_1000):
     db_api_target = DuckDBAPI()
     df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
-    linker_target.table_management.register_blocked_pairs_for_predict(
-        blocked_pairs,
-        left_chunk=(1, 1),
-        right_chunk=(1, 1),
-    )
+    linker_target.table_management.register_blocked_pairs_for_predict(blocked_pairs)
 
-    with pytest.raises(SplinkException, match="predict_chunk"):
-        linker_target.inference.predict(threshold_match_weight=-10)
+    # predict() with no chunk arguments must succeed and score the registered table.
+    predictions = linker_target.inference.predict(threshold_match_weight=-10)
+    assert len(predictions.as_dict()["match_weight"]) > 0
+
+    # predict_chunk() is not allowed once a table is registered.
+    with pytest.raises(SplinkException, match="predict\\(\\)"):
+        linker_target.inference.predict_chunk(
+            left_chunk=(1, 1),
+            right_chunk=(1, 1),
+            threshold_match_weight=-10,
+        )
+
+    # Chunked predict() is not allowed once a table is registered.
+    with pytest.raises(SplinkException, match="predict"):
+        linker_target.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=2,
+            num_chunks_right=2,
+        )
 
 
 def test_blocked_pairs_deleted_when_not_from_cache(fake_1000):
