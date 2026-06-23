@@ -98,10 +98,11 @@ class LinkerTableManagement:
         """Register a pre-computed blocked pairs table to be scored by `predict()`
         rather than Splink computing blocking from the model's blocking rules.
 
-        Registration is table-oriented: you register the table you want
-        scored, then call `linker.inference.predict()`. A subsequent registration
-        replaces the previous one. The chunk-based prediction methods
-        (`predict_chunk()` and `predict(num_chunks_left=..., num_chunks_right=...)`)
+        Once registered, you can then `linker.inference.predict()` to
+        produce predictions based on the registered blocked pairs.
+        A subsequent registration replaces the previous one.
+        The chunk-based prediction methods (`predict_chunk()` and
+        `predict(num_chunks_left=..., num_chunks_right=...)`)
         are not supported once a table has been registered.  If you want chunked
         predictions, use ``compute_blocked_pairs_for_predict_chunk``, then register
         its output.
@@ -119,7 +120,7 @@ class LinkerTableManagement:
 
         Examples:
             ```py
-            blocked_pairs_df = pd.read_parquet("path/to/blocked_pairs.parquet")
+            blocked_pairs_df = duckdb.read_parquet("path/to/blocked_pairs.parquet")
             linker.table_management.register_blocked_pairs_for_predict(blocked_pairs_df)
             predictions = linker.inference.predict()
             ```

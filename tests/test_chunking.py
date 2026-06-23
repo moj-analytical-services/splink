@@ -321,16 +321,13 @@ def test_blocked_pairs_not_deleted_when_from_cache(fake_1000):
 
     linker = Linker(df_sdf, settings)
 
-    # Pre-compute blocked pairs
     linker.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
     )
 
-    # Run predict
     linker.inference.predict(threshold_match_weight=-10)
 
-    # Blocked pairs should still be in cache
     assert "__splink__blocked_id_pairs" in linker._intermediate_table_cache
 
 
