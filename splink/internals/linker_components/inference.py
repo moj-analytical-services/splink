@@ -121,15 +121,76 @@ class LinkerInference:
         cache[cache_key] = blocked_pairs
         return blocked_pairs, False
 
+    def compute_blocked_pairs_for_predict(self) -> SplinkDataFrame:
+        """Compute blocked pairs for prediction.
+
+        Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` key of the settings to generate
+        the candidate pairs that `predict()` would score.
+
+        This is useful when you want to materialise blocked pairs separately from
+        scoring, for example to write them out and re-register them in a different
+        job or on a different machine:
+
+        ```py
+
+        blocked_pairs = linker.inference.compute_blocked_pairs_for_predict()
+        # Write the blocked pairs out to parquet (DuckDB example)
+        blocked_pairs.as_duckdbpyrelation().to_parquet("blocked_pairs.parquet")
+
+        # Then in a different session e.g. on a different machine
+        blocked_pairs = db_api.register("blocked_pairs.parquet")
+        linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
+        predictions = linker.inference.predict()
+        ```
+
+        To compute blocked pairs for a single chunk instead, use
+        `compute_blocked_pairs_for_predict_chunk()`.
+
+        Returns:
+            SplinkDataFrame: The blocked pairs table, also stored in cache.
+
+        Examples:
+            ```py
+            blocked_pairs = linker.inference.compute_blocked_pairs_for_predict()
+            ```
+        """
+        blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk()
+        return blocked_pairs
+
     def compute_blocked_pairs_for_predict_chunk(
         self,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
     ) -> SplinkDataFrame:
-        """Compute and cache blocked pairs for a specific prediction chunk.
+        """Compute blocked pairs for a single chunk of the prediction.
 
-        Use `(1, 1)` for both `left_chunk` and `right_chunk` to compute the
-        full blocked-pairs table without effective chunking.
+        Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` key of the settings to generate
+        the candidate pairs for one slice of the data that `predict_chunk()` would
+        score.
+
+        This is useful when you want to materialise blocked pairs for a single
+        chunk separately from scoring, for example to distribute the work across
+        many machines:
+
+        ```py
+
+        blocked_pairs = linker.inference.compute_blocked_pairs_for_predict_chunk(
+            left_chunk=(1, 3),
+            right_chunk=(2, 4),
+        )
+        # Write the blocked pairs out to parquet (DuckDB example)
+        blocked_pairs.as_duckdbpyrelation().to_parquet("blocked_pairs.parquet")
+
+        # Then in a different session e.g. on a different machine
+        blocked_pairs = db_api.register("blocked_pairs.parquet")
+        linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
+        predictions = linker.inference.predict()
+        ```
+
+        To compute the full blocked-pairs table in one go instead, use
+        `compute_blocked_pairs_for_predict()`.
 
         Args:
             left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
@@ -245,11 +306,12 @@ class LinkerInference:
         `blocking_rules_to_generate_predictions` key of the settings to
         generate the pairwise comparisons.
 
-        This method is not supported when blocked pairs have been manually
-        registered using
-        `linker.table_management.register_blocked_pairs_for_predict()`. In that
-        workflow, call `linker.inference.predict_chunk()` with the
-        corresponding chunk instead.
+        If blocked pairs have been manually registered using
+        `linker.table_management.register_blocked_pairs_for_predict()`, this
+        method scores exactly that registered table. In that workflow the
+        chunking arguments (`num_chunks_left` / `num_chunks_right`) are not
+        supported, because Splink cannot own chunking of a table you have
+        already materialised.
 
         Args:
             threshold_match_probability (float, optional): If specified,
@@ -290,24 +352,25 @@ class LinkerInference:
         )
         self._validate_predict_warning_mode(warning_mode)
 
-        if registered_blocked_pairs_cache_keys:
-            registered_keys = ", ".join(sorted(registered_blocked_pairs_cache_keys))
+        if registered_blocked_pairs_cache_keys and (
+            num_chunks_left is not None or num_chunks_right is not None
+        ):
             raise SplinkException(
-                "linker.inference.predict() cannot be used when blocked pairs "
-                "have been manually registered using "
+                "predict(num_chunks_left=..., num_chunks_right=...) cannot be used "
+                "when blocked pairs have been manually registered using "
                 "linker.table_management.register_blocked_pairs_for_predict(). "
-                "Use linker.inference.predict_chunk() with the corresponding "
-                "chunk instead. Registered blocked-pairs cache keys: "
-                f"{registered_keys}"
+                "Splink cannot own chunking of a table you have already "
+                "materialised. Call linker.inference.predict() with no chunk "
+                "arguments to score the registered table."
             )
 
         # Default to (1, 1) chunking if not specified
         n_left = num_chunks_left if num_chunks_left is not None else 1
         n_right = num_chunks_right if num_chunks_right is not None else 1
 
-        # If just one chunk on each side, call predict_chunk directly
+        # If just one chunk on each side, score directly
         if n_left == 1 and n_right == 1:
-            predictions = self.predict_chunk(
+            predictions = self._predict_chunk(
                 left_chunk=(1, 1),
                 right_chunk=(1, 1),
                 threshold_match_probability=threshold_match_probability,
@@ -334,7 +397,7 @@ class LinkerInference:
                 f"[{chunk_count}/{total_chunks}]"
             )
 
-            chunk_result = self.predict_chunk(
+            chunk_result = self._predict_chunk(
                 left_chunk=(left_idx, n_left),
                 right_chunk=(right_idx, n_right),
                 threshold_match_probability=threshold_match_probability,
@@ -391,9 +454,11 @@ class LinkerInference:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
         of the data.
 
-        This is the supported prediction entry point when blocked pairs have been
-        manually registered using
-        `linker.table_management.register_blocked_pairs_for_predict()`.
+        This method lets Splink compute and score blocking for a single slice of
+        the data, for example one worker per slice in a distributed run. It is not
+        supported when blocked pairs have been manually registered using
+        `linker.table_management.register_blocked_pairs_for_predict()`; in that
+        workflow call `linker.inference.predict()` to score the registered table.
 
         Args:
             left_chunk (tuple[int, int], optional): Tuple of
@@ -434,6 +499,30 @@ class LinkerInference:
             SplinkDataFrame: A SplinkDataFrame of the scored pairwise comparisons
                 for the specified chunk.
         """
+        if self._registered_blocked_pairs_cache_keys():
+            raise SplinkException(
+                "Blocked pairs have been manually registered; call "
+                "linker.inference.predict() to score them. "
+                "linker.inference.predict_chunk() is only for letting Splink "
+                "compute blocking for a specific chunk."
+            )
+
+        return self._predict_chunk(
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
+            threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=threshold_match_weight,
+            warning_mode=warning_mode,
+        )
+
+    def _predict_chunk(
+        self,
+        left_chunk: tuple[int, int] | None = None,
+        right_chunk: tuple[int, int] | None = None,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
+        warning_mode: PredictUntrainedWarningMode = "auto",
+    ) -> SplinkDataFrame:
         self._validate_predict_warning_mode(warning_mode)
 
         blocked_pairs, blocked_pairs_from_cache = (
