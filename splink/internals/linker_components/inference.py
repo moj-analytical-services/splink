@@ -122,7 +122,7 @@ class LinkerInference:
         return blocked_pairs, False
 
     def compute_blocked_pairs_for_predict(self) -> SplinkDataFrame:
-        """Compute and cache the full blocked-pairs table for prediction.
+        """Compute blocked pairs for prediction.
 
         Uses the blocking rules specified in the
         `blocking_rules_to_generate_predictions` key of the settings to generate
@@ -133,13 +133,18 @@ class LinkerInference:
         job or on a different machine:
 
         ```py
+
         blocked_pairs = linker.inference.compute_blocked_pairs_for_predict()
-        # ... persist, move, then in another linker ...
+        # Write the blocked pairs out to parquet (DuckDB example)
+        blocked_pairs.as_duckdbpyrelation().to_parquet("blocked_pairs.parquet")
+
+        # Then in a different session e.g. on a different machine
+        blocked_pairs = db_api.register("blocked_pairs.parquet")
         linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
         predictions = linker.inference.predict()
         ```
 
-        To compute blocked pairs for a single slice instead, use
+        To compute blocked pairs for a single chunk instead, use
         `compute_blocked_pairs_for_predict_chunk()`.
 
         Returns:
@@ -158,10 +163,34 @@ class LinkerInference:
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
     ) -> SplinkDataFrame:
-        """Compute and cache blocked pairs for a specific prediction chunk.
+        """Compute blocked pairs for a single chunk of the prediction.
 
-        Use `(1, 1)` for both `left_chunk` and `right_chunk` to compute the
-        full blocked-pairs table without effective chunking.
+        Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` key of the settings to generate
+        the candidate pairs for one slice of the data that `predict_chunk()` would
+        score.
+
+        This is useful when you want to materialise blocked pairs for a single
+        chunk separately from scoring, for example to distribute the work across
+        many machines:
+
+        ```py
+
+        blocked_pairs = linker.inference.compute_blocked_pairs_for_predict_chunk(
+            left_chunk=(1, 3),
+            right_chunk=(2, 4),
+        )
+        # Write the blocked pairs out to parquet (DuckDB example)
+        blocked_pairs.as_duckdbpyrelation().to_parquet("blocked_pairs.parquet")
+
+        # Then in a different session e.g. on a different machine
+        blocked_pairs = db_api.register("blocked_pairs.parquet")
+        linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
+        predictions = linker.inference.predict()
+        ```
+
+        To compute the full blocked-pairs table in one go instead, use
+        `compute_blocked_pairs_for_predict()`.
 
         Args:
             left_chunk: Optional tuple of (chunk_number, total_chunks) for filtering
