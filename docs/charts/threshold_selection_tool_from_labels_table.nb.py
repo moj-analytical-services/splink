@@ -48,9 +48,9 @@
 #
 # **Precision** can be maximised by **increasing** the match threshold (reducing false positives).
 #
-# **Recall** can be maximised by **decreasing** the match threshold (reducing false negatives). 
+# **Recall** can be maximised by **decreasing** the match threshold (reducing false negatives).
 #
-# Additional metrics can be used to find the optimal compromise between these two, looking for the threshold at which peak accuracy is achieved. 
+# Additional metrics can be used to find the optimal compromise between these two, looking for the threshold at which peak accuracy is achieved.
 
 # %% [markdown]
 # ### Actions to take as a result of the chart
@@ -109,7 +109,8 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 )
 
 df_labels = splink_dataset_labels.fake_1000_labels
-labels_table = linker.table_management.register_labels_table(df_labels)
+df_labels_sdf = db_api.register(df_labels)
+labels_table = linker.table_management.register_labels_table(df_labels_sdf)
 
 chart = linker.evaluation.accuracy_analysis_from_labels_table(
     labels_table, output_type="threshold_selection", add_metrics=["f1"]

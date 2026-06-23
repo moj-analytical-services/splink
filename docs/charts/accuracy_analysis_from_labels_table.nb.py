@@ -106,7 +106,8 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 
 
 df_labels = splink_dataset_labels.fake_1000_labels
-labels_table = linker.table_management.register_labels_table(df_labels)
+df_labels_sdf = db_api.register(df_labels)
+labels_table = linker.table_management.register_labels_table(df_labels_sdf)
 
 chart = linker.evaluation.accuracy_analysis_from_labels_table(
     labels_table, output_type="accuracy", add_metrics=["f1"]
