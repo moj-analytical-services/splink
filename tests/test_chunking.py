@@ -225,7 +225,7 @@ def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
     df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
 
-    blocked_pairs = (
+    blocked_pairs_arrow = (
         linker_source.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
     )
 
@@ -234,6 +234,7 @@ def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
     df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
 
+    blocked_pairs = db_api_target.register(blocked_pairs_arrow)
     linker_target.table_management.register_blocked_pairs_for_predict(blocked_pairs)
 
     loaded_predictions = linker_target.inference.predict(
@@ -338,13 +339,14 @@ def test_register_blocked_pairs_then_predict_chunk_errors(fake_1000):
     db_api_source = DuckDBAPI()
     df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
-    blocked_pairs = (
+    blocked_pairs_arrow = (
         linker_source.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
     )
 
     db_api_target = DuckDBAPI()
     df_sdf_target = db_api_target.register(fake_1000)
     linker_target = Linker(df_sdf_target, settings)
+    blocked_pairs = db_api_target.register(blocked_pairs_arrow)
     linker_target.table_management.register_blocked_pairs_for_predict(blocked_pairs)
 
     # predict() with no chunk arguments must succeed and score the registered table.

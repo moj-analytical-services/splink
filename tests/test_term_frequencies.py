@@ -258,7 +258,8 @@ def test_tf_missing_values_in_lookup():
         },
     ]
 
-    linker.table_management.register_term_frequency_lookup(tf_data, "city")
+    tf_data_sdf = db_api.register(tf_data)
+    linker.table_management.register_term_frequency_lookup(tf_data_sdf, "city")
 
     df_predict = linker.inference.predict()
 

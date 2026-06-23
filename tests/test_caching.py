@@ -180,6 +180,6 @@ def test_cache_register_compute_tf_table(debug_mode, fake_1000):
     with patch.object(
         db_api, "_sql_to_splink_dataframe", new=make_mock_execute(db_api)
     ) as mockexecute_sql_pipeline:
-        linker.table_management.register_term_frequency_lookup(fake_1000, "first_name")
+        linker.table_management.register_term_frequency_lookup(df_sdf, "first_name")
         linker.table_management.compute_tf_table("first_name")
         mockexecute_sql_pipeline.assert_not_called()
