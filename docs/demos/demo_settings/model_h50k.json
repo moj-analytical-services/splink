@@ -68,9 +68,7 @@
                     "sql_condition": "\"first_name_l\" = \"first_name_r\"",
                     "label_for_charts": "Exact match on first_name",
                     "m_probability": 0.5457057743059716,
-                    "u_probability": 0.011951030823329812,
-                    "tf_adjustment_column": "first_name",
-                    "tf_adjustment_weight": 1.0
+                    "u_probability": 0.011951030823329812
                 },
                 {
                     "sql_condition": "jaro_winkler_similarity(\"first_name_l\", \"first_name_r\") >= 0.92",
@@ -111,9 +109,7 @@
                     "sql_condition": "\"surname_l\" = \"surname_r\"",
                     "label_for_charts": "Exact match on surname",
                     "m_probability": 0.7714400787402513,
-                    "u_probability": 0.0006788109515158729,
-                    "tf_adjustment_column": "surname",
-                    "tf_adjustment_weight": 1.0
+                    "u_probability": 0.0006788109515158729
                 },
                 {
                     "sql_condition": "jaro_winkler_similarity(\"surname_l\", \"surname_r\") >= 0.92",

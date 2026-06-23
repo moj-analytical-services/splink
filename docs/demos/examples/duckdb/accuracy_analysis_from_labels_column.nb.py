@@ -30,9 +30,10 @@
 
 # %%
 from splink import splink_datasets
+from splink.internals.misc import show
 
 df = splink_datasets.fake_1000
-df.head(2)
+show(df, rows=5)
 
 # %%
 from splink import SettingsCreator, Linker, block_on, DuckDBAPI
@@ -91,10 +92,10 @@ session_dob = linker.training.estimate_parameters_using_expectation_maximisation
 # %%
 linker.evaluation.accuracy_analysis_from_labels_column(
     "cluster", output_type="table"
-).as_pandas_dataframe(limit=5)
+).as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %%
-linker.evaluation.accuracy_analysis_from_labels_column("cluster", output_type="roc")
+linker.evaluation.accuracy_analysis_from_labels_column("cluster", output_type="precision_recall")
 
 # %%
 linker.evaluation.accuracy_analysis_from_labels_column(
@@ -108,7 +109,7 @@ linker.evaluation.accuracy_analysis_from_labels_column(
 # Plot some false positives
 linker.evaluation.prediction_errors_from_labels_column(
     "cluster", include_false_negatives=True, include_false_positives=True
-).as_pandas_dataframe(limit=5)
+).as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %%
 records = linker.evaluation.prediction_errors_from_labels_column(
@@ -116,3 +117,4 @@ records = linker.evaluation.prediction_errors_from_labels_column(
 ).as_record_dict(limit=5)
 
 linker.visualisations.waterfall_chart(records)
+

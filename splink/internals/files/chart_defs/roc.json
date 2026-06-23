@@ -23,13 +23,15 @@
       "type": "quantitative",
       "field": "fp_rate",
       "sort": ["truth_threshold"],
-      "title": "False Positive Rate amongst clerically reviewed records"
+      "title": "False Positive Rate amongst clerically reviewed records",
+      "axis": { "format": ".2%" }
     },
     "y": {
       "type": "quantitative",
       "field": "tp_rate",
       "sort": ["truth_threshold"],
-      "title": "True Positive Rate amongst clerically reviewed records"
+      "title": "True Positive Rate amongst clerically reviewed records",
+      "axis": { "format": ".2%" }
     },
     "color": {
       "type": "nominal",

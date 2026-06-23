@@ -40,10 +40,11 @@
 
 # %%
 from splink import  splink_datasets
+from splink.internals.misc import show
 
 df = splink_datasets.fake_1000
 df = df.drop(columns=["cluster"])
-df.head(5)
+show(df, rows=5)
 
 # %% [markdown]
 # ## Analyse missingness
@@ -108,3 +109,5 @@ profile_columns(df_sdf, top_n=10, bottom_n=5)
 #
 # At this point, we have begun to develop a strong understanding of our data. It's time to move on to estimating a linkage model
 #
+
+# %%

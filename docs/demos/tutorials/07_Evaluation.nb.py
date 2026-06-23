@@ -33,16 +33,12 @@
 
 # %%
 # Rerun our predictions to we're ready to view the charts
-import pandas as pd
-
 from splink import DuckDBAPI, Linker, splink_datasets
-
-pd.options.display.max_columns = 1000
 
 db_api = DuckDBAPI()
 df = splink_datasets.fake_1000
 df_sdf = db_api.register(df)
-
+df_sdf.as_duckdbpyrelation().limit(5).show()
 # %%
 
 import urllib.request
@@ -94,10 +90,11 @@ df_predictions = linker.inference.predict(threshold_match_probability=0.01)
 
 # %%
 from splink.datasets import splink_dataset_labels
+from splink.internals.misc import show
 
 df_labels = splink_dataset_labels.fake_1000_labels
 labels_table = linker.table_management.register_labels_table(df_labels)
-df_labels.head(5)
+show(df_labels, rows=5)
 
 # %% [markdown]
 # ## View examples of false positives and false negatives
@@ -133,25 +130,25 @@ linker.evaluation.accuracy_analysis_from_labels_table(
 )
 
 # %% [markdown]
-# ## Receiver operating characteristic curve
+# ## Precision recall chart
 #
-# A [ROC chart](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) shows how the number of false positives and false negatives varies depending on the match threshold chosen. The match threshold is the match weight chosen as a cutoff for which pairwise comparisons to accept as matches.
+# A [Precision-Recall chart](https://en.wikipedia.org/wiki/Precision_and_recall) shows how the number of false positives and false negatives varies depending on the match threshold chosen. The match threshold is the match weight chosen as a cutoff for which pairwise comparisons to accept as matches.
 #
 
 # %%
-linker.evaluation.accuracy_analysis_from_labels_table(labels_table, output_type="roc")
+linker.evaluation.accuracy_analysis_from_labels_table(labels_table, output_type="precision_recall")
 
 # %% [markdown]
 # ## Truth table
 #
-# Finally, Splink can also report the underlying table used to construct the ROC and precision recall curves.
+# Finally, Splink can also report the underlying table used to construct the precision-recall curves.
 #
 
 # %%
 roc_table = linker.evaluation.accuracy_analysis_from_labels_table(
     labels_table, output_type="table"
 )
-roc_table.as_pandas_dataframe(limit=5)
+roc_table.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # ## Unlinkables chart
@@ -180,14 +177,3 @@ linker.evaluation.unlinkables_chart()
 #     :material-thumbs-up-down: For more on the Evaluation Metrics used in this tutorial, please refer to the [Edge Metrics guide.](../../topic_guides/evaluation/edge_metrics.md)
 #
 
-# %% [markdown]
-# ## :material-flag-checkered: That's it!
-#
-# That wraps up the Splink tutorial! Don't worry, there are still plenty of resources to help on the next steps of your Splink journey:
-#
-# :octicons-link-16: For some end-to-end notebooks of Splink pipelines, check out our [Examples](../examples/examples_index.md)
-#
-# :simple-readme: For more deepdives into the different aspects of Splink, and record linkage more generally, check out our [Topic Guides](../../topic_guides/topic_guides_index.md)
-#
-# :material-tools: For a reference on all the functionality avalable in Splink, see our [Documentation](../../api_docs/api_docs_index.md)
-#

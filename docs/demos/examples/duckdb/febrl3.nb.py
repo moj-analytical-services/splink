@@ -30,39 +30,32 @@
 
 # %% tags=["hide_output"]
 from splink.datasets import splink_datasets
+from splink.internals.misc import show
+from splink import DuckDBAPI
+import duckdb
 
 df = splink_datasets.febrl3
 
 # %%
-df = df.rename(columns=lambda x: x.strip())
 
-df["cluster"] = df["rec_id"].apply(lambda x: "-".join(x.split("-")[:2]))
+df = df.rename_columns([column.strip() for column in df.column_names])
+con = duckdb.connect()
+df = con.from_arrow(df)
 
-df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
-df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
-
-df.head(2)
-
-# %%
-df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
-df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
-
-# %%
-df["date_of_birth"] = df["date_of_birth"].astype(str).str.strip()
-df["soc_sec_id"] = df["soc_sec_id"].astype(str).str.strip()
-
-# %%
-from splink import DuckDBAPI, Linker, SettingsCreator
-
-# TODO:  Allow missingness to be analysed without a linker
-settings = SettingsCreator(
-    unique_id_column_name="rec_id",
-    link_type="dedupe_only",
-)
-
-db_api = DuckDBAPI()
+df = con.sql(
+        """
+        select
+            * replace (
+                trim(cast(date_of_birth as varchar)) as date_of_birth,
+                trim(cast(soc_sec_id as varchar)) as soc_sec_id
+            ),
+            regexp_extract(rec_id, '^([^-]+-[^-]+)', 1) as cluster
+        from df
+        """
+    )
+db_api = DuckDBAPI(connection=con)
 df_sdf = db_api.register(df)
-linker = Linker(df_sdf, settings)
+
 
 # %% [markdown]
 # It's usually a good idea to perform exploratory analysis on your data so you understand what's in each column and how often it's missing:
@@ -104,7 +97,7 @@ chart_comparisons_from_blocking_rules(
 # %%
 import splink.comparison_library as cl
 
-from splink import Linker
+from splink import Linker, SettingsCreator
 
 settings = SettingsCreator(
     unique_id_column_name="rec_id",
@@ -125,7 +118,7 @@ settings = SettingsCreator(
     retain_intermediate_calculation_columns=True,
 )
 
-db_api = DuckDBAPI()
+db_api = DuckDBAPI(connection=con)
 df_sdf = db_api.register(df)
 linker = Linker(df_sdf, settings)
 
@@ -143,7 +136,7 @@ linker.training.estimate_probability_two_random_records_match(
 )
 
 # %%
-linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+linker.training.estimate_u_using_random_sampling(max_pairs=1e6, seed=2)
 
 # %%
 em_blocking_rule_1 = block_on("date_of_birth")
@@ -171,9 +164,9 @@ linker.evaluation.accuracy_analysis_from_labels_column(
 # %%
 pred_errors_df = linker.evaluation.prediction_errors_from_labels_column(
     "cluster"
-).as_pandas_dataframe()
-len(pred_errors_df)
-pred_errors_df.head()
+)
+print(len(pred_errors_df.as_record_dict()))
+pred_errors_df.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # The following chart seems to suggest that, where the model is making errors, it's because the data is corrupted beyond recognition and no reasonable linkage model could find these matches

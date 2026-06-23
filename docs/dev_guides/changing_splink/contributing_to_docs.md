@@ -29,6 +29,15 @@ exclude_docs: |
   blog/**
 ```
 
+## Agent-readable docs exports
+
+The docs build also generates a `llms.txt` file at the site root for coding
+agents and other LLM-based tools.
+
+Agents should fetch `llms.txt` first, treat it as a compact map of the docs, and
+then fetch only the linked Markdown pages that are relevant to the task at hand.
+
+
 
 ## Spellchecking docs
 

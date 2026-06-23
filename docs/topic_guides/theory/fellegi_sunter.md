@@ -217,6 +217,8 @@ So, the impact of any additional _match weight_ on _match probability_ gets smal
 
 Similarly, if you already have a lot of negative evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
 
+An interactive visualisation of the relationship between match weights, bayes factors and proabilities can be found [here](https://www.robinlinacre.com/prob_bf_mw/).
+
 ### Deriving Match Probability from m and u
 
 Given the definitions for _match probability_ and _match weight_ above, we can rewrite the probability in terms of $m$ and $u$.
