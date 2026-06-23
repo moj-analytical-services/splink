@@ -33,9 +33,8 @@ def test_single_best_links_correctness_example_1(test_helpers, dialect):
 
     linker = helper.linker_with_registration(data, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
@@ -91,9 +90,8 @@ def test_single_best_links_example_2(test_helpers, dialect):
 
     linker = helper.linker_with_registration(df, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
@@ -147,9 +145,8 @@ def test_single_best_links_example_3(test_helpers, dialect):
 
     linker = helper.linker_with_registration(df, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
@@ -201,9 +198,8 @@ def test_single_best_links_ties(test_helpers, dialect):
 
     linker = helper.linker_with_registration(df, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
@@ -250,9 +246,8 @@ def test_single_best_links_ties_method(test_helpers, dialect):
 
     linker = helper.linker_with_registration(df, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,
@@ -328,9 +323,8 @@ def test_single_best_links_one_to_many(test_helpers, dialect):
 
     linker = helper.linker_with_registration(df, settings)
 
-    df_predict = linker.table_management.register_table_predict(
-        predictions, overwrite=True
-    )
+    predictions_sdf = linker._db_api.register(predictions)
+    df_predict = linker.table_management.register_table_predict(predictions_sdf)
 
     df_clusters = linker.clustering.cluster_using_single_best_links(
         df_predict,

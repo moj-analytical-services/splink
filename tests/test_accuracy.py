@@ -845,8 +845,9 @@ def test_truth_space_table_from_table_vs_pandas_cartesian(fake_1000):
     db_api_answer = DuckDBAPI(con)
     df_sdf_answer = db_api_answer.register(fake_1000)
     linker_for_splink_answer = Linker(df_sdf_answer, settings)
+    labels_table_sdf = db_api_answer.register(labels_table)
     labels_input = linker_for_splink_answer.table_management.register_labels_table(
-        labels_table
+        labels_table_sdf
     )
     splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(
@@ -933,8 +934,9 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking(fake_1000):
     df_1_sdf_answer = db_api_answer.register(df_1)
     df_2_sdf_answer = db_api_answer.register(df_2)
     linker_for_splink_answer = Linker([df_1_sdf_answer, df_2_sdf_answer], settings)
+    labels_table_sdf = db_api_answer.register(labels_table)
     labels_input = linker_for_splink_answer.table_management.register_labels_table(
-        labels_table
+        labels_table_sdf
     )
     splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(

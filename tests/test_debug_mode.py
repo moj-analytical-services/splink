@@ -34,7 +34,8 @@ def test_pre_registered_tf_tables(dialect, test_helpers, debug_mode):
         {"city": "Liverpool", "tf_city": 0.8},
     ]
 
-    linker.table_management.register_term_frequency_lookup(city_tf, "city")
+    city_tf_sdf = linker._db_api.register(city_tf)
+    linker.table_management.register_term_frequency_lookup(city_tf_sdf, "city")
     sdf_pred = linker.inference.predict()
 
     assert set(sdf_pred.as_dict()["tf_city_l"]) == {0.2, 0.8}

@@ -165,7 +165,8 @@ def test_with_predict_calculation(fake_1000):
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
+    tf_lookup_sdf = linker._db_api.register(tf_lookup)
+    linker.table_management.register_term_frequency_lookup(tf_lookup_sdf, "surname")
 
     df_predict = linker.inference.predict()
 
@@ -209,7 +210,8 @@ def test_with_predict_calculation(fake_1000):
         {"surname": "Taylor", "tf_surname": 0.4},
         {"surname": "Kirk", "tf_surname": 0.2},
     ]
-    linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
+    tf_lookup_sdf = linker._db_api.register(tf_lookup)
+    linker.table_management.register_term_frequency_lookup(tf_lookup_sdf, "surname")
 
     df_predict = linker.inference.predict()
 
@@ -266,7 +268,8 @@ def test_with_predict_calculation(fake_1000):
             {"surname": "Taylor", "tf_surname": 0.001},
             {"surname": "Kirk", "tf_surname": 0.2},
         ]
-        linker.table_management.register_term_frequency_lookup(tf_lookup, "surname")
+        tf_lookup_sdf = linker._db_api.register(tf_lookup)
+        linker.table_management.register_term_frequency_lookup(tf_lookup_sdf, "surname")
 
         df_predict = linker.inference.predict()
 
