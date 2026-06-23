@@ -121,6 +121,38 @@ class LinkerInference:
         cache[cache_key] = blocked_pairs
         return blocked_pairs, False
 
+    def compute_blocked_pairs_for_predict(self) -> SplinkDataFrame:
+        """Compute and cache the full blocked-pairs table for prediction.
+
+        Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` key of the settings to generate
+        the candidate pairs that `predict()` would score.
+
+        This is useful when you want to materialise blocked pairs separately from
+        scoring, for example to write them out and re-register them in a different
+        job or on a different machine:
+
+        ```py
+        blocked_pairs = linker.inference.compute_blocked_pairs_for_predict()
+        # ... persist, move, then in another linker ...
+        linker.table_management.register_blocked_pairs_for_predict(blocked_pairs)
+        predictions = linker.inference.predict()
+        ```
+
+        To compute blocked pairs for a single slice instead, use
+        `compute_blocked_pairs_for_predict_chunk()`.
+
+        Returns:
+            SplinkDataFrame: The blocked pairs table, also stored in cache.
+
+        Examples:
+            ```py
+            blocked_pairs = linker.inference.compute_blocked_pairs_for_predict()
+            ```
+        """
+        blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk()
+        return blocked_pairs
+
     def compute_blocked_pairs_for_predict_chunk(
         self,
         left_chunk: tuple[int, int] | None = None,

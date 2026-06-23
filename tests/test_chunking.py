@@ -225,9 +225,9 @@ def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
     df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
 
-    blocked_pairs = linker_source.inference.compute_blocked_pairs_for_predict_chunk(
-        left_chunk=(1, 1), right_chunk=(1, 1)
-    ).as_pyarrow_table()
+    blocked_pairs = (
+        linker_source.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
+    )
 
     # Register the full table into a fresh linker and run predict.
     db_api_target = DuckDBAPI()
@@ -300,6 +300,19 @@ def test_cache_key_normalization_1_1(fake_1000):
     )
 
 
+def test_compute_blocked_pairs_for_predict_uses_base_key(fake_1000):
+    """Test compute_blocked_pairs_for_predict() caches under the base key."""
+    settings = get_settings_dict()
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(fake_1000)
+
+    linker = Linker(df_sdf, settings)
+
+    linker.inference.compute_blocked_pairs_for_predict()
+
+    assert "__splink__blocked_id_pairs" in linker._intermediate_table_cache
+
+
 def test_blocked_pairs_not_deleted_when_from_cache(fake_1000):
     """Test that cached blocked pairs are not deleted after predict."""
     settings = get_settings_dict()
@@ -328,10 +341,9 @@ def test_register_blocked_pairs_then_predict_chunk_errors(fake_1000):
     db_api_source = DuckDBAPI()
     df_sdf_source = db_api_source.register(fake_1000)
     linker_source = Linker(df_sdf_source, settings)
-    blocked_pairs = linker_source.inference.compute_blocked_pairs_for_predict_chunk(
-        left_chunk=(1, 1),
-        right_chunk=(1, 1),
-    ).as_pyarrow_table()
+    blocked_pairs = (
+        linker_source.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
+    )
 
     db_api_target = DuckDBAPI()
     df_sdf_target = db_api_target.register(fake_1000)
