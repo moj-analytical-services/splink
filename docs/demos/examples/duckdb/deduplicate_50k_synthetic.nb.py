@@ -30,18 +30,17 @@
 
 # %% tags=["hide_output"]
 from splink import splink_datasets
-
-df = splink_datasets.historical_50k
-
-# %%
-df.head()
-
-# %%
 from splink import DuckDBAPI
-from splink.exploratory import profile_columns
 
 db_api = DuckDBAPI()
+df = splink_datasets.historical_50k
 df_sdf = db_api.register(df)
+df_sdf.as_duckdbpyrelation().limit(5).show(max_width=10000)
+
+
+# %%
+
+from splink.exploratory import profile_columns
 profile_columns(df_sdf, column_expressions=["first_name", "substr(surname,1,2)"])
 
 # %%
@@ -68,7 +67,7 @@ chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules,
     link_type="dedupe_only",
-    record_sample_proportion=0.2,
+    record_sample_proportion=0.5,
 )
 
 # %%
@@ -95,7 +94,10 @@ settings = SettingsCreator(
     retain_intermediate_calculation_columns=True,
 )
 # Needed to apply term frequencies to first+surname comparison
-df["first_name_surname_concat"] = df["first_name"] + " " + df["surname"]
+df = (
+    db_api.duckdb_con.from_arrow(df)
+    .project("*, first_name || ' ' || surname as first_name_surname_concat")
+)
 
 df_sdf = db_api.register(df)
 linker = Linker(df_sdf, settings)
@@ -111,7 +113,7 @@ linker.training.estimate_probability_two_random_records_match(
 )
 
 # %%
-linker.training.estimate_u_using_random_sampling(max_pairs=5e6)
+linker.training.estimate_u_using_random_sampling(max_pairs=1e7)
 
 # %%
 training_blocking_rule = block_on("first_name", "surname")
@@ -141,15 +143,14 @@ linker.evaluation.unlinkables_chart()
 
 # %%
 df_predict = linker.inference.predict()
-df_e = df_predict.as_pandas_dataframe(limit=5)
-df_e
+df_predict.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # You can also view rows in this dataset as a waterfall chart as follows:
 #
 
 # %%
-records_to_plot = df_e.to_dict(orient="records")
+records_to_plot = df_predict.as_record_dict(limit=5)
 linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
 
 # %%
@@ -195,3 +196,5 @@ records = linker.evaluation.prediction_errors_from_labels_column(
 ).as_record_dict(limit=50)
 
 linker.visualisations.waterfall_chart(records)
+
+

@@ -60,9 +60,9 @@ warnings.simplefilter("ignore", UserWarning)
 # %%
 from splink import splink_datasets
 
-pandas_df = splink_datasets.fake_1000
+records = splink_datasets.fake_1000.to_pylist()
 
-df = spark.createDataFrame(pandas_df)
+df = spark.createDataFrame(records)
 
 # %%
 import splink.comparison_library as cl

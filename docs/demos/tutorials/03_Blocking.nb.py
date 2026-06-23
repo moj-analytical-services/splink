@@ -79,7 +79,12 @@
 # from splink import block_on
 # block_on("substr(first_name, 1, 2)", "surname")
 # ```
-#
+# You can also specify them as arbitrary SQL expressions:
+# ```python
+# from splink.blocking_rule_library import CustomRule
+# rule_1 = CustomRule("l.first_name = r.first_name and len(l.first_name) > 2")
+# ```
+# although this can have performance implications, see [here](../../topic_guides/blocking/performance.md#equi-join-conditions)
 
 # %% [markdown]
 # ## Devising effective blocking rules for prediction
@@ -111,7 +116,7 @@
 #
 # This is not completely implausible, but it is significantly less likely than if we'd used a single rule.
 #
-# More generally, we can often specify multiple blocking rules such that it becomes highly implausible that a true match would not meet at least one of these blocking criteria. This is the recommended approach in Splink. Generally we would recommend between about 3 and 10, though even more is possible.
+# More generally, we can often specify multiple blocking rules such that it becomes implausible that a true match would not meet at least one of these blocking criteria. This is the recommended approach in Splink. Generally we would recommend between about 3 and 10, though even more is possible.
 #
 # The question then becomes how to choose what to put in this list.
 #
@@ -119,7 +124,7 @@
 # %% [markdown]
 # ## Splink tools to help choose your blocking rules
 #
-# Splink contains a number of tools to help you choose effective blocking rules. Let's try them out, using our small test dataset:
+# Splink contains a number of tools to help you choose effective blocking rules. Let's try them out, using a test dataset:
 #
 
 # %% tags=["hide_input"]
@@ -129,7 +134,7 @@
 # %%
 from splink import DuckDBAPI, block_on, splink_datasets
 
-df = splink_datasets.fake_1000
+df = splink_datasets.historical_50k
 
 # %% [markdown]
 # ### Counting the number of comparisons created by a single blocking rule
@@ -150,27 +155,29 @@ br = block_on("substr(first_name, 1,1)", "surname")
 counts = count_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=br,
-    link_type="dedupe_only",
-    record_sample_proportion=0.2,
+    link_type="dedupe_only"
 )
 
-counts
+comparison_count = counts[0]["marginal_comparison_count"]
+print(f"Blocking rule generates {comparison_count:,} comparisons")
 
 # %%
-br = "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2"
+from splink.blocking_rule_library import CustomRule
+br = CustomRule("l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2")
 
 counts = count_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=br,
     link_type="dedupe_only",
-    record_sample_proportion=0.2,
+    record_sample_proportion=0.2
 )
-counts
+comparison_count = counts[0]["marginal_comparison_count"]
+print(f"Blocking rule generates {comparison_count:,} comparisons")
 
 # %% [markdown]
 # The maximum number of comparisons that you can compute will be affected by your choice of SQL backend, and how powerful your computer is.
 #
-# For linkages in DuckDB on a standard laptop, we suggest using blocking rules that create no more than about 20 million comparisons. For Spark and Athena, try starting with fewer than 100 million comparisons, before scaling up.
+# For linkages in DuckDB on a modest laptop, we suggest using blocking rules that create no more than about 20 million comparisons, but Splink can handle a billion or more comparisons on more powerful machines.
 #
 
 # %% [markdown]
@@ -185,15 +192,15 @@ from splink.blocking_analysis import n_largest_blocks
 
 result = n_largest_blocks(
     df_sdf,
-    blocking_rule=block_on("city", "first_name"),
+    blocking_rule=block_on("birth_place", "first_name"),
     link_type="dedupe_only",
     n_largest=3
 )
 
-result.as_pandas_dataframe()
+result.as_duckdbpyrelation().show()
 
 # %% [markdown]
-# In this case, we can see that `Oliver`s in `London` will result in 49 comparisons being generated.  This is acceptable on this small dataset, but on a larger dataset, `Oliver`s in `London` could be responsible for many million comparisons.
+# In this case, we can see that `william`s in `london` will result in 19,321 comparisons being generated.  This may be acceptable on this small dataset, but on a larger dataset, `williams`s in `london` could be responsible for many million comparisons.
 
 # %% [markdown]
 # ### Counting the number of comparisons created by a list of blocking rules
@@ -212,10 +219,8 @@ from splink.blocking_analysis import (
 
 blocking_rules_for_analysis = [
     block_on("substr(first_name, 1,1)", "surname"),
-    block_on("surname"),
-    block_on("email"),
-    block_on("city", "first_name"),
-    "l.first_name = r.first_name and levenshtein(l.surname, r.surname) < 2",
+    block_on("surname", "birth_place"),
+    block_on( "dob", "substr(surname, 1,1)"),
 ]
 
 
@@ -223,7 +228,7 @@ chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=blocking_rules_for_analysis,
     link_type="dedupe_only",
-    record_sample_proportion=0.2,
+    record_sample_proportion=0.3,
 )
 
 # %% [markdown]
@@ -231,9 +236,9 @@ chart_comparisons_from_blocking_rules(
 #
 # Finally, we can use the `profile_columns` function we saw in the previous tutorial to understand a specific blocking rule in more depth.
 #
-# Suppose we're interested in blocking on city and first initial.
+# Suppose we're interested in blocking on birth_place and first initial.
 #
-# Within each distinct value of `(city, first initial)`, all possible pairwise comparisons will be generated.
+# Within each distinct value of `(birth_place, first initial)`, all possible pairwise comparisons will be generated.
 #
 # So for instance, if there are 15 distinct records with `London,J` then these records will result in `n(n-1)/2 = 105` pairwise comparisons being generated.
 #
@@ -245,7 +250,7 @@ chart_comparisons_from_blocking_rules(
 # %%
 from splink.exploratory import profile_columns
 
-profile_columns(df_sdf, column_expressions=["city || left(first_name,1)"])
+profile_columns(df_sdf, column_expressions=["birth_place || left(first_name,1)"])
 
 # %% [markdown]
 # !!! note "Further Reading"
@@ -261,3 +266,5 @@ profile_columns(df_sdf, column_expressions=["city || left(first_name,1)"])
 #
 # Now we have chosen which records to compare, we can use those records to train a linkage model.
 #
+
+# %%

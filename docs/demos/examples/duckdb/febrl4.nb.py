@@ -41,27 +41,38 @@
 #
 
 # %%
-from IPython.display import display
-
 from splink import splink_datasets
+from splink.internals.misc import show
+import duckdb
 
 df_a = splink_datasets.febrl4a
 df_b = splink_datasets.febrl4b
 
 
 def prepare_data(data):
-    data = data.rename(columns=lambda x: x.strip())
-    data["cluster"] = data["rec_id"].apply(lambda x: "-".join(x.split("-")[:2]))
-    data["date_of_birth"] = data["date_of_birth"].astype(str).str.strip()
-    data["soc_sec_id"] = data["soc_sec_id"].astype(str).str.strip()
-    data["postcode"] = data["postcode"].astype(str).str.strip()
-    return data
+    data = data.rename_columns([column.strip() for column in data.column_names])
+    return (
+        duckdb.sql(
+            """
+            select
+                * replace (
+                    trim(cast(date_of_birth as varchar)) as date_of_birth,
+                    trim(cast(soc_sec_id as varchar)) as soc_sec_id,
+                    trim(cast(postcode as varchar)) as postcode
+                ),
+                regexp_extract(rec_id, '^([^-]+-[^-]+)', 1) as cluster
+            from data
+            """
+        )
+        .arrow()
+        .read_all()
+    )
 
 
 dfs = [prepare_data(dataset) for dataset in [df_a, df_b]]
 
-display(dfs[0].head(2))
-display(dfs[1].head(2))
+show(dfs[0], rows=2)
+show(dfs[1], rows=2)
 
 # %% [markdown]
 # Next, to better understand which variables will prove useful in linking, we have a look at how populated each column is, as well as the distribution of unique values within each
@@ -134,7 +145,7 @@ chart_comparisons_from_blocking_rules(
     link_type="link_only",
     unique_id_column_name="rec_id",
     source_dataset_column_name="source_dataset",
-    record_sample_proportion=0.2,
+    record_sample_proportion=1.0,
 )
 
 # %% [markdown]
@@ -341,8 +352,7 @@ linker_detailed.evaluation.unlinkables_chart()
 
 # %%
 predictions = linker_detailed.inference.predict(threshold_match_probability=0.2)
-df_predictions = predictions.as_pandas_dataframe()
-df_predictions.head(5)
+predictions.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # We can see how our model performs at different probability thresholds, with a couple of options depending on the space we wish to view things
@@ -361,8 +371,19 @@ linker_detailed.evaluation.accuracy_analysis_from_labels_column(
 clusters = linker_detailed.clustering.cluster_pairwise_predictions_at_threshold(
     predictions, threshold_match_probability=0.99
 )
-df_clusters = clusters.as_pandas_dataframe().sort_values("cluster_id")
-df_clusters.groupby("cluster_id").size().value_counts()
+cluster_size_distribution = clusters.query_sql(
+    """
+    select cluster_size, count(*) as cluster_count
+    from (
+        select cluster_id, count(*) as cluster_size
+        from {this}
+        group by cluster_id
+    )
+    group by cluster_size
+    order by cluster_size
+    """
+)
+cluster_size_distribution.as_duckdbpyrelation().show()
 
 # %% [markdown]
 # In this case, we happen to know what the true links are, so we can manually inspect the ones that are doing worst to see what our model is not capturing - i.e. where we have false negatives.
@@ -373,28 +394,41 @@ df_clusters.groupby("cluster_id").size().value_counts()
 #
 
 # %%
-df_predictions["cluster_l"] = df_predictions["rec_id_l"].apply(
-    lambda x: "-".join(x.split("-")[:2])
+df_predictions_with_clusters = predictions.query_sql(
+    """
+    select
+        *,
+        regexp_extract(rec_id_l, '^([^-]+-[^-]+)', 1) as cluster_l,
+        regexp_extract(rec_id_r, '^([^-]+-[^-]+)', 1) as cluster_r
+    from {this}
+    """
 )
-df_predictions["cluster_r"] = df_predictions["rec_id_r"].apply(
-    lambda x: "-".join(x.split("-")[:2])
+df_true_links = df_predictions_with_clusters.query_sql(
+    """
+    select *
+    from {this}
+    where cluster_l = cluster_r
+    order by match_probability
+    """
 )
-df_true_links = df_predictions[
-    df_predictions["cluster_l"] == df_predictions["cluster_r"]
-].sort_values("match_probability")
 
 # %%
 records_to_view = 3
 linker_detailed.visualisations.waterfall_chart(
-    df_true_links.head(records_to_view).to_dict(orient="records")
+    df_true_links.as_record_dict(limit=records_to_view)
 )
 
 # %%
-df_non_links = df_predictions[
-    df_predictions["cluster_l"] != df_predictions["cluster_r"]
-].sort_values("match_probability", ascending=False)
+df_non_links = df_predictions_with_clusters.query_sql(
+    """
+    select *
+    from {this}
+    where cluster_l != cluster_r
+    order by match_probability desc
+    """
+)
 linker_detailed.visualisations.waterfall_chart(
-    df_non_links.head(records_to_view).to_dict(orient="records")
+    df_non_links.as_record_dict(limit=records_to_view)
 )
 
 # %% [markdown]
@@ -414,8 +448,12 @@ linker_detailed.visualisations.waterfall_chart(
 # %%
 # we need to append a full name column to our source data frames
 # so that we can use it for term frequency adjustments
-dfs[0]["full_name"] = dfs[0]["given_name"] + "_" + dfs[0]["surname"]
-dfs[1]["full_name"] = dfs[1]["given_name"] + "_" + dfs[1]["surname"]
+dfs = [
+    duckdb.sql("select *, given_name || '_' || surname as full_name from dataset")
+    .arrow()
+    .read_all()
+    for dataset in dfs
+]
 
 
 extended_model_settings = {
@@ -537,15 +575,27 @@ linker_advanced.visualisations.match_weights_chart()
 
 # %%
 predictions_adv = linker_advanced.inference.predict()
-df_predictions_adv = predictions_adv.as_pandas_dataframe()
 clusters_adv = linker_advanced.clustering.cluster_pairwise_predictions_at_threshold(
     predictions_adv, threshold_match_probability=0.99
 )
-df_clusters_adv = clusters_adv.as_pandas_dataframe().sort_values("cluster_id")
-df_clusters_adv.groupby("cluster_id").size().value_counts()
+cluster_size_distribution_adv = clusters_adv.query_sql(
+    """
+    select cluster_size, count(*) as cluster_count
+    from (
+        select cluster_id, count(*) as cluster_size
+        from {this}
+        group by cluster_id
+    )
+    group by cluster_size
+    order by cluster_size
+    """
+)
+cluster_size_distribution_adv.as_duckdbpyrelation().show()
 
 # %% [markdown]
 # This is a pretty modest improvement on our previous model - however it is worth re-iterating that we should not necessarily expect to recover _all_ matches, as in several cases it may be unreasonable for a model to have reasonable confidence that two records refer to the same entity.
 #
 # If we wished to improve matters we could iterate on this process - investigating where our model is not performing as we would hope, and seeing how we can adjust these areas to address these shortcomings.
 #
+
+# %%

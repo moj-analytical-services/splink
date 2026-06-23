@@ -32,13 +32,11 @@
 # Rerun our predictions to we're ready to view the charts
 from splink import Linker, DuckDBAPI, splink_datasets
 
-import pandas as pd
-
-pd.options.display.max_columns = 1000
 
 db_api = DuckDBAPI()
 df = splink_datasets.fake_1000
 df_sdf = db_api.register(df)
+df_sdf.as_duckdbpyrelation().limit(5).show()
 
 # %%
 import urllib.request
@@ -137,3 +135,5 @@ IFrame(src="./cluster_studio.html", width="100%", height=1000)
 #
 # Now we have visualised the results of a model, we can move on to some more formal Quality Assurance procedures using labelled data.
 #
+
+# %%

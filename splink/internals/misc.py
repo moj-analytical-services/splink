@@ -10,6 +10,8 @@ from math import ceil, inf, log2
 from textwrap import dedent, indent
 from typing import TYPE_CHECKING, Iterable, TypeVar, overload
 
+import duckdb
+
 if TYPE_CHECKING:
     import pyarrow as pa
 
@@ -341,3 +343,14 @@ def is_pandas_frame(obj: object) -> bool:
     except ModuleNotFoundError:
         return False
     return isinstance(obj, pd.DataFrame)
+
+
+def show(table: pa.Table, rows: int = 10, max_width: int = 1000) -> None:
+    con = duckdb.connect()
+
+    con.from_arrow(table).limit(rows).show(
+        max_rows=rows,
+        max_width=max_width,
+        max_col_width=40,
+        null_value="NULL",
+    )

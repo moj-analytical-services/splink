@@ -66,6 +66,59 @@ plugins:
       match_path: blog/posts/.*
       date_from_meta:
         as_creation: date
+  - llmstxt:
+      markdown_description: |
+        Splink is a Python library for probabilistic record linkage, deduplication,
+        and entity resolution across backends such as DuckDB, Spark, SQLite, and
+        PostgreSQL. It is aimed at data scientists, analysts, researchers, and
+        engineers building or maintaining linkage pipelines.
+
+        Agents should fetch /llms.txt first as a compact map of the documentation,
+        then fetch only the linked Markdown pages that match the task. Start with
+        the overview and getting started pages for orientation, the core concepts
+        pages to understand settings, blocking, comparisons, and theory, the
+        tutorials and examples for end-to-end workflows, and the API reference for
+        method-level detail.
+      full_output: llms-full.txt
+      sections:
+        Overview:
+          - index.md: Product overview, capabilities, and high-level positioning.
+          - topic_guides/topic_guides_index.md: Map of the conceptual user guide.
+          - api_docs/api_docs_index.md: Map of the API reference.
+        Getting started:
+          - getting_started.md: Installation and the first end-to-end Splink workflow.
+        Tutorials and examples:
+          - demos/examples/examples_index.md: Index of runnable examples by backend and problem type.
+        "User guide: record linkage theory":
+          - topic_guides/theory/*.md
+        "User guide: Splink fundamentals":
+          - topic_guides/splink_fundamentals/*.md
+          - topic_guides/splink_fundamentals/backends/*.md
+        "User guide: data preparation":
+          - topic_guides/data_preparation/*.md
+        "User guide: blocking":
+          - topic_guides/blocking/*.md
+        "User guide: comparisons":
+          - topic_guides/comparisons/*.md
+        "User guide: training":
+          - topic_guides/training/*.md
+        "User guide: evaluation":
+          - topic_guides/evaluation/*.md
+          - topic_guides/evaluation/clusters/*.md
+        "User guide: performance":
+          - topic_guides/performance/*.md
+        API reference:
+          - api_docs/training.md: Training methods on the Linker.
+          - api_docs/inference.md: Inference and prediction methods.
+          - api_docs/linker_clustering.md: Clustering APIs.
+          - api_docs/evaluation.md: Evaluation APIs.
+          - api_docs/comparison_library.md: Built-in comparison helpers.
+          - api_docs/comparison_level_library.md: Built-in comparison level helpers.
+          - api_docs/blocking.md: Blocking API reference.
+          - api_docs/datasets.md: Built-in datasets for demos and tests.
+        Contributor and debugging guides:
+          - dev_guides/changing_splink/development_quickstart.md: Contributor setup when the task involves changing Splink itself.
+          - dev_guides/debug_modes.md: Debugging and inspection modes when behavior is unclear.
 hooks:
   - docs/hooks/__init__.py
 
@@ -105,8 +158,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  # footnotes see e.g. docs/topic_guides/theory/fellegi_sunter.md
-  # mkdocs-material
+        # footnotes see e.g. docs/topic_guides/theory/fellegi_sunter.md
+        # mkdocs-material
+
   - footnotes
   # ::cards:: - see e.g. docs/charts/index.md
   # neoteroi-mkdocs
@@ -246,7 +300,6 @@ nav:
       - Model Evaluation:
         - accuracy chart from labels table: "charts/accuracy_analysis_from_labels_table.ipynb"
         - threshold selection tool: charts/threshold_selection_tool_from_labels_table.ipynb
-    - LLM prompts: "topic_guides/llms/prompting_llms.md"
   - Contributing:
       - "dev_guides/index.md"
       - Contributing to Splink:

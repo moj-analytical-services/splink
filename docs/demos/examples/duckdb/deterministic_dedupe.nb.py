@@ -33,13 +33,14 @@
 # # !pip install splink
 
 # %%
-import pandas as pd
-
 from splink import splink_datasets
+from splink import DuckDBAPI
 
-pd.options.display.max_rows = 1000
 df = splink_datasets.historical_50k
-df.head()
+db_api = DuckDBAPI()
+df_sdf = db_api.register(df)
+df_sdf.as_duckdbpyrelation().limit(5).show(max_width=10000)
+
 
 # %% [markdown]
 # When defining the settings object, specity your deterministic rules in the `blocking_rules_to_generate_predictions` key.
@@ -57,8 +58,7 @@ from splink.blocking_analysis import (
     chart_comparisons_from_blocking_rules,
 )
 
-db_api = DuckDBAPI()
-df_sdf = db_api.register(df)
+
 chart_comparisons_from_blocking_rules(
     df_sdf,
     blocking_rules=[
@@ -91,7 +91,7 @@ linker = Linker(df_sdf, settings)
 
 # %%
 df_predict = linker.inference.deterministic_link()
-df_predict.as_pandas_dataframe().head()
+df_predict.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # Which can be used to generate clusters.
@@ -105,7 +105,7 @@ clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
 )
 
 # %%
-clusters.as_pandas_dataframe(limit=5)
+clusters.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # These results can then be passed into the `Cluster Studio Dashboard`.
@@ -123,3 +123,4 @@ linker.visualisations.cluster_studio_dashboard(
 from IPython.display import IFrame
 
 IFrame(src="./dashboards/50k_deterministic_cluster.html", width="100%", height=1200)
+

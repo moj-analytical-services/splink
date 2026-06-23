@@ -21,6 +21,8 @@ In a nutshell, we recommend beginning with a small sample and a basic model, the
 
     Instead, we recommend starting with with a simple, rough and ready model where most comparisons have 2-3 levels (exact match, possibly a fuzzy level, and everything else).  The idea is to get to the point of looking at prediction results as quickly as possible using e.g. the comparison viewer.  You can then start to look for where your simple model is getting it wrong, and use that as the basis for improving your model, and iterating until you're seeing good results.
 
+- **Use the comparison viewer to gain a qualitative understanding of model performance**.  The comparison viewer gives you real-world examples of each of the comparison vectors that your model produces.  These amount [to different matching scenarios](https://www.robinlinacre.com/measuring_data_linking_accuracy/#annex-implementing-a-scenario-based-labelling-strategy-in-splink).  Reviewing each of these scearios - at least the ones that happen frequently - will give you a very good qualitative understanding of whether the model is performing well, and where it is going wrong.   Use this understanding to iterate your model.
+
 ## Blocking rules for prediction
 
 - **Analyse the number of comparisons before running predict**.  Use the tools in `splink.blocking_analysis` to validate that your rules aren't going to create a vast number of comparisons before asking Splink to create those comparisons.
@@ -46,4 +48,12 @@ To optimise memory usage and performance:
 
 - **Turn off intermediate columns when calling `predict()`**.  Whilst during the model development phase, it is useful to set `retain_intermediate_calculation_columns=True` and
     `retain_intermediate_calculation_columns_for_prediction=True` in your settings, you should generally turn these off when calling `predict()`.  This will result in a much smaller table as your result set.  If you want waterfall charts for individual pairs, you can use [`linker.inference.compare_two_records`](../../api_docs/inference.md)
+
+## :material-flag-checkered: That's it!
+
+That wraps up the Splink tutorial. There are still plenty of resources to help with the next steps of your Splink journey:
+
+- :octicons-link-16: For some end-to-end notebooks of Splink pipelines, check out our [Examples](../examples/examples_index.md)
+- :simple-readme: For more deep dives into different aspects of Splink, and record linkage more generally, check out our [Topic Guides](../../topic_guides/topic_guides_index.md)
+- :material-tools: For a reference on all the functionality available in Splink, see our [Documentation](../../api_docs/api_docs_index.md)
 

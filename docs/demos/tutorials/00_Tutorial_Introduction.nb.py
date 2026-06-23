@@ -47,10 +47,10 @@
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [8. Building your own model](./08_building_your_own_model.md) 
+# - [8. Building your own model](./08_building_your_own_model.md)
 #
 #
-# Throughout the tutorial, we use the duckdb backend, which is the recommended option for smaller datasets of up to around 1 million records on a normal laptop.
+# Throughout the tutorial, we use the DuckDB backend, which is the [recommended option](../../topic_guides/splink_fundamentals/backends/backends.html?h=recommende#duckdb) for most users.
 #
 # You can find these tutorial notebooks in the `docs/demos/tutorials/` folder of the  [splink repo](https://github.com/moj-analytical-services/splink/tree/master/docs/demos/tutorials), or click the Colab links to run in your browser.
 
@@ -63,7 +63,3 @@
 #
 # If you'd like to learn more about record linkage theory, an interactive introduction is available [here](https://www.robinlinacre.com/intro_to_probabilistic_linkage/).
 
-# %% [markdown] vscode={"languageId": "plaintext"}
-# ## LLM prompts
-#
-# If you're using an LLM to suggest Splink code, see [here](../../topic_guides/llms/prompting_llms.md) for suggested prompts and context.

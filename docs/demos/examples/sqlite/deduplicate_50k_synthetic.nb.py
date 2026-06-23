@@ -31,13 +31,10 @@
 # # !pip install rapidfuzz
 
 # %%
-import pandas as pd
-
 from splink import splink_datasets
 
-pd.options.display.max_rows = 1000
 # reduce size of dataset to make things run faster
-df = splink_datasets.historical_50k.sample(5000)
+df = splink_datasets.historical_50k.slice(0, 5000)
 
 # %%
 from splink.backends.sqlite import SQLiteAPI
@@ -139,8 +136,7 @@ linker.evaluation.unlinkables_chart()
 
 # %%
 df_predict = linker.inference.predict()
-df_e = df_predict.as_pandas_dataframe(limit=5)
-df_e
+df_predict.as_record_dict(limit=5)
 
 # %% [markdown]
 # You can also view rows in this dataset as a waterfall chart as follows:
@@ -148,7 +144,7 @@ df_e
 
 # %%
 
-records_to_plot = df_e.to_dict(orient="records")
+records_to_plot = df_predict.as_record_dict(limit=5)
 linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
 
 # %%

@@ -31,13 +31,10 @@
 # %%
 from splink import Linker, DuckDBAPI, splink_datasets
 
-import pandas as pd
-
-pd.options.display.max_columns = 1000
-
 db_api = DuckDBAPI()
 df = splink_datasets.fake_1000
 df_sdf = db_api.register(df)
+df_sdf.as_duckdbpyrelation().limit(5).show()
 
 # %% [markdown]
 # ## Load estimated model from previous tutorial
@@ -87,8 +84,8 @@ linker = Linker(df_sdf, settings)
 #
 
 # %%
-df_predictions = linker.inference.predict(threshold_match_probability=0.2)
-df_predictions.as_pandas_dataframe(limit=5)
+df_predictions = linker.inference.predict(threshold_match_probability=0.1)
+df_predictions.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
 # ## Clustering
@@ -120,17 +117,16 @@ df_predictions.as_pandas_dataframe(limit=5)
 
 # %%
 clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
-    df_predictions, threshold_match_probability=0.5
+    df_predictions, threshold_match_probability=0.2
 )
-clusters.as_pandas_dataframe(limit=10)
+clusters.as_duckdbpyrelation().sort("cluster").limit(10).show(max_width=10000)
 
-# %%
-sql = f"""
-select *
-from {df_predictions.physical_name}
-limit 2
-"""
-linker.misc.query_sql(sql)
+# %% [markdown]
+# The estimated cluster id is the `cluster_id` column, the true cluster id (which we only know because this data is labelled) is the `cluster` column.
+#
+# Note that the _value_ in the column isn't meaninful, all that matters is that it creates the right _grouping_.  For instance, the three Evie Dean records are all assigned to estimated `cluster_id` 7, correctly grouping them together.  It does not matter that the value used to group them together in the `cluster` column (the true label) is `3`.
+#
+# We can see the model has done a reasonable but imperfect job of estimating the true `cluster`. This is a simple model trained on a small and very messy dataset, so it is not surprising that accuracy is not better..
 
 # %% [markdown]
 # !!! note "Further Reading"
@@ -142,3 +138,5 @@ linker.misc.query_sql(sql)
 #
 # Now we have made predictions with a model, we can move on to visualising it to understand how it is working.
 #
+
+# %%
