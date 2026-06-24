@@ -183,7 +183,9 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 # %% [markdown]
 # ## Section 2: Scaling inference with chunking
 #
-# `predict()` generates every blocked pair and scores it in a single pass. On large datasets the blocked pairs table can become too big to materialise comfortably in memory. Splink provides a family of chunking tools that split this work into smaller pieces.
+# `predict()` generates every blocked pair and scores it in a single pass. On very large datasets, this may be time consuming, or you may even run into out of memory or out of disk errors. Splink provides a family of chunking tools that split this work into smaller pieces.
+# By 'chunking' we mean that Splink allows you to compute a precisely-defined part of the result.  This allows you to complete your linkage in `n` smaller pieces, which, when combined represent the full result.
+
 #
 # The pieces are defined by a grid: the left side of each comparison is split into `num_chunks_left` slices and the right side into `num_chunks_right` slices, giving `num_chunks_left × num_chunks_right` chunks in total. Every blocked pair falls into exactly one chunk, so processing all chunks produces **exactly the same result** as a single `predict()` call.
 
@@ -235,7 +237,7 @@ single_chunk = linker.inference.predict_chunk(
 single_chunk.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
-# This is a good way to de-risk a large job: **if a single chunk runs successfully, you know the whole pipeline works**, and you can simply iterate over every `(left_chunk, right_chunk)` combination to produce the complete result set.
+# This is a good way to de-risk a large job: if a single chunk runs successfully, you know the whole pipeline works, and you can simply iterate over every `(left_chunk, right_chunk)` combination to produce the complete result set.
 #
 # Running that loop yourself and concatenating the outputs is exactly what `predict(num_chunks_left=..., num_chunks_right=...)` does for you — so for a job that runs on a single machine, prefer the chunked `predict()` shown above. The value of `predict_chunk()` is that each chunk is fully independent, which is what makes the distributed workflow in the next section possible.
 
@@ -244,7 +246,7 @@ single_chunk.as_duckdbpyrelation().limit(5).show(max_width=10000)
 #
 # For the very largest jobs, you can separate *blocking* from *scoring*. `compute_blocked_pairs_for_predict_chunk()` materialises only the blocked pairs (the candidate record-id pairs) for a single chunk, without scoring them. You can persist these pairs, then later register them and score them independently.
 #
-# This unlocks a powerful pattern: **you can split the work across multiple computers, even with DuckDB**, which is ostensibly a single-node engine. Because each chunk is fully self-contained, you can send chunk 1 to machine 1, chunk 2 to machine 2, and so on. The only catch is that there is no automatic scheduler — **you have to trigger and combine the jobs yourself**.
+# This unlocks a powerful pattern: you can split the work across multiple computers, even with DuckDB, which is a single-node engine. Because each chunk is fully self-contained, you can send chunk 1 to machine 1, chunk 2 to machine 2, and so on. The only catch is that there is no automatic scheduler — **you have to trigger and combine the jobs yourself**.
 #
 # A typical distributed workflow looks like this:
 #
