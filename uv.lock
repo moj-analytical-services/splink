@@ -3686,6 +3686,7 @@ dev = [
     { name = "pyarrow" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-xdist" },
     { name = "rapidfuzz" },
     { name = "ruff" },
     { name = "sqlalchemy" },
@@ -3734,6 +3735,7 @@ testing = [
     { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" } },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-xdist" },
     { name = "rapidfuzz" },
     { name = "sqlalchemy" },
 ]
@@ -3744,6 +3746,7 @@ testing-core = [
     { name = "pyarrow" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-xdist" },
     { name = "rapidfuzz" },
     { name = "sqlalchemy" },
 ]
@@ -3791,6 +3794,7 @@ dev = [
     { name = "pyarrow", specifier = ">=15.0.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "ruff", specifier = ">=0.4.2,<0.5" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
@@ -3828,6 +3832,7 @@ testing = [
     { name = "pyspark", specifier = ">=4.0.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
@@ -3837,6 +3842,7 @@ testing-core = [
     { name = "pyarrow", specifier = ">=15.0.0" },
     { name = "pytest", specifier = ">=7.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
