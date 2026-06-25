@@ -31,7 +31,8 @@ jobs:
         id: setup_uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
-          enable-cache: false
+          enable-cache: true
+          cache-suffix: ${{ matrix.python-version }}
 
       - name: Install Python ${{ matrix.python-version }}
         id: install_python
@@ -40,8 +41,8 @@ jobs:
       - name: Install dependencies
         id: install_dependencies
         run: uv sync --python ${{ matrix.python-version }}
-  
+
       - name: Run tests
         id: run_tests
         run: |
-          uv run python -m pytest -v --durations=0 -n auto -m "spark_only and not needs_pandas" tests/
+          uv run python -m pytest -v --durations=0 -n 2 -m "spark_only and not needs_pandas" tests/
