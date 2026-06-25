@@ -40,9 +40,7 @@ def pytest_collection_modifyitems(items, config):
                 item.add_marker(mark)
 
 
-def _make_spark():
-    import os
-
+def _make_spark(scratch_dir, driver_memory):
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
@@ -50,6 +48,7 @@ def _make_spark():
 
     conf = SparkConf()
 
+    conf.set("spark.driver.memory", driver_memory)
     conf.set("spark.sql.shuffle.partitions", "1")
     conf.set("spark.default.parallelism", "1")
     # Disable the Spark UI: it isn't useful in CI, shaves a little off start-up,
@@ -65,69 +64,49 @@ def _make_spark():
     path = similarity_jar_location()
     conf.set("spark.jars", path)
 
-    # When running under pytest-xdist each worker is a separate process, but they
-    # share a working directory. Give every worker its own warehouse / metastore /
-    # checkpoint location so that concurrent SparkSessions don't collide (e.g. on
-    # the embedded Derby metastore lock used by saveAsTable), and cap the driver
-    # heap so that several JVMs fit within the runner's memory.
-    worker = os.environ.get("PYTEST_XDIST_WORKER")
-    if worker:
-        scratch = os.path.abspath(os.path.join("tmp_spark_scratch", worker))
-        os.makedirs(scratch, exist_ok=True)
-        conf.set("spark.driver.memory", "2g")
-        conf.set("spark.sql.warehouse.dir", os.path.join(scratch, "warehouse"))
-        conf.set(
-            "spark.driver.extraJavaOptions",
-            f"-Dderby.system.home={os.path.join(scratch, 'derby')}",
-        )
-        checkpoint_dir = os.path.join(scratch, "checkpoints")
-    else:
-        conf.set("spark.driver.memory", "6g")
-        checkpoint_dir = "./tmp_checkpoints"
+    # Keep the warehouse, Derby metastore and checkpoints inside a scratch
+    # directory that pytest makes unique per worker (see `_spark_session`), so
+    # parallel SparkSessions never collide on e.g. the Derby lock used by
+    # saveAsTable.
+    conf.set("spark.sql.warehouse.dir", str(scratch_dir / "warehouse"))
+    conf.set(
+        "spark.driver.extraJavaOptions",
+        f"-Dderby.system.home={scratch_dir / 'derby'}",
+    )
 
     sc = SparkContext.getOrCreate(conf=conf)
 
     spark = SparkSession(sc)
-    spark.sparkContext.setCheckpointDir(checkpoint_dir)
+    spark.sparkContext.setCheckpointDir(str(scratch_dir / "checkpoints"))
 
     return spark
 
 
 def _reset_spark_session_state(spark):
-    # The Spark session is shared across the whole test session (for speed), so
-    # per-test catalog mutations must be undone explicitly. Previously this
-    # happened as a (very expensive) side effect of calling spark.stop() after
-    # every test. Here we just clear the cache, reset the current database and
-    # drop temporary views, which is cheap but preserves per-test isolation.
-    try:
-        spark.catalog.clearCache()
-    except Exception:
-        pass
-    try:
-        spark.catalog.setCurrentDatabase("default")
-    except Exception:
-        pass
-    try:
-        for table in spark.catalog.listTables():
-            if table.isTemporary:
-                spark.catalog.dropTempView(table.name)
-    except Exception:
-        pass
-
-
-def _cleanup_spark(spark):
+    # The Spark session is shared across the whole run for speed, so per-test
+    # catalog mutations must be undone explicitly (this used to happen as an
+    # expensive side effect of stopping Spark after every test). Clearing the
+    # cache, resetting the current database and dropping temp views is cheap and
+    # keeps each test isolated. Resetting the database before listing tables means
+    # we can still clean up even if a test left a now-dropped database selected.
     spark.catalog.clearCache()
-    spark.stop()
+    spark.catalog.setCurrentDatabase("default")
+    for table in spark.catalog.listTables():
+        if table.isTemporary:
+            spark.catalog.dropTempView(table.name)
 
 
 @pytest.fixture(scope="session")
-def _spark_session():
-    # Owns the lifecycle of the single, shared Spark session. It is created lazily
-    # on first use (so non-Spark runs never start a JVM) and stopped once at the
-    # end of the test session.
-    spark = _make_spark()
+def _spark_session(tmp_path_factory, worker_id):
+    # Owns the lifecycle of the single, shared Spark session: created lazily on
+    # first use (so non-Spark runs never start a JVM) and stopped once at the end.
+    # `tmp_path_factory` gives each pytest-xdist worker its own scratch directory;
+    # cap the driver heap when running in parallel so several JVMs fit in memory.
+    scratch_dir = tmp_path_factory.mktemp("spark")
+    driver_memory = "6g" if worker_id == "master" else "2g"
+    spark = _make_spark(scratch_dir, driver_memory)
     yield spark
-    _cleanup_spark(spark)
+    spark.stop()
 
 
 @pytest.fixture
