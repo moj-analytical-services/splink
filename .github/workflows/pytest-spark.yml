@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         id: install_dependencies
         run: uv sync --python ${{ matrix.python-version }}
-  
+
       - name: Run tests
         id: run_tests
         run: |

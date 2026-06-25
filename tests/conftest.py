@@ -23,12 +23,6 @@ from tests.helpers import (
 
 logger = logging.getLogger(__name__)
 
-# Holds the single, session-scoped Spark session once it has been created, so we
-# can cheaply reset its transient catalog state between tests. It stays None
-# until the first test that actually needs Spark, so non-Spark runs never start a
-# JVM.
-_active_spark_session = None
-
 
 def pytest_collection_modifyitems(items, config):
     # any tests without backend-group markers will always run
@@ -96,8 +90,6 @@ def _make_spark():
     spark = SparkSession(sc)
     spark.sparkContext.setCheckpointDir(checkpoint_dir)
 
-    global _active_spark_session
-    _active_spark_session = spark
     return spark
 
 
@@ -124,28 +116,28 @@ def _reset_spark_session_state(spark):
 
 
 def _cleanup_spark(spark):
-    global _active_spark_session
     spark.catalog.clearCache()
     spark.stop()
-    _active_spark_session = None
-    return
-
-
-@pytest.fixture(autouse=True)
-def _reset_spark_state_between_tests():
-    # Restore the per-test isolation that the old (slow) "stop Spark after every
-    # test" approach gave us, without paying the cost of stopping Spark. Only does
-    # anything once a Spark session has actually been started.
-    yield
-    if _active_spark_session is not None:
-        _reset_spark_session_state(_active_spark_session)
 
 
 @pytest.fixture(scope="session")
-def spark():
+def _spark_session():
+    # Owns the lifecycle of the single, shared Spark session. It is created lazily
+    # on first use (so non-Spark runs never start a JVM) and stopped once at the
+    # end of the test session.
     spark = _make_spark()
     yield spark
     _cleanup_spark(spark)
+
+
+@pytest.fixture
+def spark(_spark_session):
+    # Function-scoped view onto the shared session. Reusing one SparkSession for
+    # the whole run avoids the (very expensive) per-test SparkContext stop/start,
+    # while resetting the transient catalog state on teardown preserves the
+    # per-test isolation that stopping Spark after every test used to provide.
+    yield _spark_session
+    _reset_spark_session_state(_spark_session)
 
 
 # TODO: align this with test_helper
@@ -157,8 +149,10 @@ def spark_api(spark):
 
 
 @pytest.fixture(scope="module")
-def df_spark(spark):
-    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
+def df_spark(_spark_session):
+    df = _spark_session.read.csv(
+        "./tests/datasets/fake_1000_from_splink_demos.csv", header=True
+    )
     df.persist()
     yield df
 
@@ -207,10 +201,10 @@ def test_helpers(pg_engine, request):
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
     #
-    # For Spark we reuse the single, session-scoped `spark` fixture rather than
-    # creating (and, expensively, stopping) a SparkContext for every test. The
-    # session is resolved lazily via request.getfixturevalue, so non-Spark
-    # dialects still never pay to start Spark.
+    # For Spark we reuse the single, shared Spark session rather than creating
+    # (and, expensively, stopping) a SparkContext for every test. It is resolved
+    # lazily via request.getfixturevalue, so non-Spark dialects still never pay to
+    # start Spark.
     def _shared_spark():
         return request.getfixturevalue("spark")
 
@@ -221,6 +215,6 @@ def test_helpers(pg_engine, request):
         postgres=(PostgresTestHelper, [pg_engine]),
     )
     yield helper_dict
-    # The session-scoped `spark` fixture owns the Spark lifecycle, and the autouse
-    # `_reset_spark_state_between_tests` fixture handles per-test catalog cleanup,
-    # so nothing Spark-specific is needed here.
+    # The session-scoped `_spark_session` fixture owns the Spark lifecycle, and the
+    # function-scoped `spark` fixture handles per-test catalog cleanup, so nothing
+    # Spark-specific is needed here.
