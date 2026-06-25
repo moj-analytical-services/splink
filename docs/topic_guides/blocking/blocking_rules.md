@@ -131,6 +131,19 @@ count_comparisons_from_blocking_rules(
     )
 ```
 
+!!! note "Analysing blocking rules on a `linker`"
+    If you have already created a `linker`, you can run the same analysis using `linker.blocking_analysis` without needing to re-specify the data, `link_type` or unique id column - these are taken from the linker's data and settings:
+
+    ```py
+    from splink import block_on
+
+    linker.blocking_analysis.count_comparisons_from_blocking_rules(
+        blocking_rules=block_on("substr(first_name, 1,1)", "surname"),
+    )
+    ```
+
+    If you omit the `blocking_rules` argument, the `blocking_rules_to_generate_predictions` from the linker's settings are analysed instead. The same module also provides `linker.blocking_analysis.chart_comparisons_from_blocking_rules(...)` to visualise the cumulative number of comparisons, and `linker.blocking_analysis.n_largest_blocks(...)` to find the values producing the largest blocks.
+
 ### More complex blocking rules
 
 It is possible to use more complex blocking rules that use non-equijoin conditions.  For example, you could use a blocking rule that uses a fuzzy matching function:
