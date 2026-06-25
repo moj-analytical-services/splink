@@ -36,6 +36,23 @@ Reducing the number of pairwise comparisons that need to be returned will make S
 
 Model training with Term Frequency adjustments can be made more performant by setting `estimate_without_term_frequencies` parameter to `True` in `estimate_parameters_using_expectation_maximisation`.
 
+## Sampling to speed up model training and blocking analysis
+
+On large datasets, several of the model-training and blocking-analysis steps can be slow to run exactly. Each accepts an argument that trades a little accuracy for a faster run time:
+
+- `count_comparisons_from_blocking_rules` and `chart_comparisons_from_blocking_rules` accept `record_sample_proportion` to estimate comparison counts from a sample of input records rather than scanning the whole dataset.
+- `estimate_u_using_random_sampling` uses `max_pairs` to control how many random pairs are sampled when estimating the `u` probabilities.
+- `estimate_parameters_using_expectation_maximisation` accepts `max_pairs` to cap the number of blocked pairs used in each EM training session, without having to tighten your blocking rule.
+- `estimate_probability_two_random_records_match` accepts `record_sample_proportion` to estimate the deterministic match count from a sample.
+
+## Chunking `predict()` to control memory and distribute work
+
+`predict()` generates and scores every blocked pair in a single pass. On very large jobs this can use a lot of memory, or run out of memory or disk entirely. You can split the work into deterministic chunks by passing `num_chunks_left` and `num_chunks_right` to `predict()`: Splink processes the chunks one at a time and unions the results, lowering peak memory and logging progress as it goes. The return value is identical to an unchunked `predict()`.
+
+Because each chunk is self-contained, you can also score chunks independently — even on different machines — using `predict_chunk()`, and combine the per-chunk outputs yourself.
+
+See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for worked examples of both sampling and chunking.
+
 
 
 

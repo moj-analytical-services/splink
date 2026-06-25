@@ -81,6 +81,10 @@ In general, increasing parallelism will make Spark 'chunk' your job into a large
 
 For some jobs, setting `repartition_after_blocking=True` when you initialise the `SparkAPI` may improve performance.
 
+## Chunking large prediction jobs
+
+For very large linkages, you can split `predict()` into smaller pieces using the `num_chunks_left` and `num_chunks_right` arguments. Splink processes the chunks one at a time and unions the results, which lowers the peak memory required for any single chunk and logs progress as the job runs. Individual chunks can also be computed independently with `predict_chunk()`. See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.
+
 ## General Spark config
 
 Splink generates large numbers of record comparisons from relatively small input datasets. This is an unusual type of workload, and so default Spark parameters are not always appropriate. Some of the issues encountered are similar to performance issues encountered with Cartesian joins - so some of the tips in [relevant articles](https://www.google.com/search?q=optimising+cartesian+join+spark) may help.
