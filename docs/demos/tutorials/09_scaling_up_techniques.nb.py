@@ -158,7 +158,7 @@ linker.training.estimate_u_using_random_sampling(max_pairs=2e6)
 # - **`record_sample_proportion`** (default `0.01`): the fraction of input records sampled on each side of that preliminary pass used to *estimate* the full blocked-pair count. It does not directly set the final number of training pairs — `max_pairs` remains the primary control.
 #
 # In other words, set `max_pairs` to cap how much data each EM training session uses. Here we pass a deliberately high `max_pairs` so the small `fake_1000` model is not actually downsampled.
-# An important caveat is that for EM training to work, your pairs must contain a reasonble number of matches.  If you choose a very loose blocking rule like `block_on("gender")` on a large dataset, even a large `max_pairs` value may result in very few true matches, and the training is unlikely to succeed.
+# An important caveat is that for EM training to work, your pairs must contain a reasonable number of matches.  If you choose a very loose blocking rule like `block_on("gender")` on a large dataset, even a large `max_pairs` value may result in very few true matches, and the training is unlikely to succeed.
 
 
 # %%
