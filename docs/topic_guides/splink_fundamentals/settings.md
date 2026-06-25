@@ -39,7 +39,7 @@ settings = SettingsCreator(
         cl.NameComparison("surname"),
         cl.DateOfBirthComparison(
             "dob",
-            input_is_string=True,
+            input_is_string=False,
             datetime_metrics=["month", "year"],
             datetime_thresholds=[
                 1,
@@ -88,7 +88,7 @@ The `"comparisons"` define the features to be compared between records: `"first_
         cl.NameComparison("surname"),
         cl.DateOfBirthComparison(
             "dob",
-            input_is_string=True,
+            input_is_string=False,
             datetime_metrics=["month", "year"],
             datetime_thresholds=[
                 1,
@@ -120,7 +120,7 @@ With our finalised settings object, we can train a Splink model using the follow
     from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 
     db_api = DuckDBAPI()
-    df = splink_datasets.fake_1000
+    df = db_api.register(splink_datasets.fake_1000, dataset_display_name="fake_1000")
 
     settings = SettingsCreator(
         link_type="dedupe_only",
@@ -133,7 +133,7 @@ With our finalised settings object, we can train a Splink model using the follow
             cl.NameComparison("surname"),
             cl.DateOfBirthComparison(
                 "dob",
-                input_is_string=True,
+                input_is_string=False,
                 datetime_metrics=["month", "year"],
                 datetime_thresholds=[
                     1,
@@ -145,7 +145,7 @@ With our finalised settings object, we can train a Splink model using the follow
         ],
     )
 
-    linker = Linker(df, settings, db_api=db_api)
+    linker = Linker(df, settings)
     linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
     blocking_rule_for_training = block_on("first_name", "surname")
