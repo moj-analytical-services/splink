@@ -16,19 +16,20 @@ df = splink_datasets.fake_1000
 ```
 which you can then use to set up a linker:
 ```py
-from splink splink_datasets, Linker, DuckDBAPI, SettingsCreator
+import splink.comparison_library as cl
+from splink import DuckDBAPI, Linker, SettingsCreator, splink_datasets
 
-df = splink_datasets.fake_1000
+db_api = DuckDBAPI()
+df = db_api.register(splink_datasets.fake_1000, dataset_display_name="fake_1000")
 linker = Linker(
     df,
     SettingsCreator(
         link_type="dedupe_only",
         comparisons=[
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
         ],
     ),
-    db_api=DuckDBAPI()
 )
 ```
 
@@ -40,7 +41,7 @@ linker = Linker(
 
 ## `splink_datasets`
 
-Each attribute of `splink_datasets` is a dataset available for use, which exists as a pandas `DataFrame`.
+Each attribute of `splink_datasets` is a dataset available for use, which exists as a PyArrow `Table`.
 These datasets are not packaged directly with Splink, but instead are downloaded only when they are requested.
 Once requested they are cached for future use.
 The cache can be cleared using `splink_dataset_utils` (see below),

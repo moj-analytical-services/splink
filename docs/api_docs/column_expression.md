@@ -54,10 +54,10 @@ entry_date_comparison = cl.AbsoluteTimeDifferenceAtThresholds(
 name_comparison = cl.CustomComparison(
     comparison_levels=[
         cll.NullLevel(full_name_lowercase),
-        cll.ExactMatch(full_name_lowercase),
-        cll.ExactMatch("surname")
-        cll.ExactMatch("first_name"),
-        cll.ExactMatch(surname_initial_lowercase),
+        cll.ExactMatchLevel(full_name_lowercase),
+        cll.ExactMatchLevel("surname"),
+        cll.ExactMatchLevel("first_name"),
+        cll.ExactMatchLevel(surname_initial_lowercase),
         cll.ElseLevel()
     ],
     output_column_name="name",
