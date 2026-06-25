@@ -109,7 +109,7 @@ name_comparison = cl.CustomComparison(
         cll.ColumnsReversedLevel("first_name", "surname").configure(
             tf_adjustment_column="surname"
         ),
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 )
 
