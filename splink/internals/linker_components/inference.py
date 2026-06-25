@@ -246,7 +246,7 @@ class LinkerInference:
                 ],
             )
 
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, settings)
             splink_df = linker.inference.deterministic_link()
             ```
@@ -332,7 +332,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, "saved_settings.json")
             splink_df = linker.inference.predict(threshold_match_probability=0.95)
             splink_df.as_pandas_dataframe(limit=5)
@@ -480,7 +480,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, "saved_settings.json")
             # Process chunk 1 of 3 on left, chunk 2 of 4 on right
             splink_df = linker.inference.predict_chunk(
@@ -606,7 +606,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, "saved_settings.json")
             df_edges = linker.inference.predict()
             df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
@@ -773,7 +773,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, "saved_settings.json")
 
             # If you do not provide tf values in the records, you should load or
@@ -849,7 +849,7 @@ class LinkerInference:
 
         Examples:
             ```py
-            df = db_api.register(df, "input_table")
+            df = db_api.register(df, dataset_display_name="input_table")
             linker = Linker(df, "saved_settings.json")
 
             linker.table_management.compute_tf_table("first_name")

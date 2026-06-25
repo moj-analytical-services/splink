@@ -45,18 +45,19 @@ class LinkerTableManagement:
 
             Real time linkage
             ```py
-            linker = Linker(df, settings="saved_settings.json", db_api=db_api)
+            linker = Linker(df, settings="saved_settings.json")
             linker.table_management.compute_tf_table("surname")
             linker.inference.score_pair(record_left, record_right)
             ```
             Pre-computed term frequency tables
             ```py
-            linker = Linker(df, db_api)
+            linker = Linker(df, settings="saved_settings.json")
             df_first_name_tf = linker.table_management.compute_tf_table("first_name")
-            df_first_name_tf.write.parquet("folder/first_name_tf")
-            >>>
+            df_first_name_tf.to_parquet("folder/first_name_tf.parquet")
             # On subsequent data linking job, read this table rather than recompute
-            df_first_name_tf = db_api.register(pd.read_parquet("folder/first_name_tf"))
+            df_first_name_tf = db_api.register(
+                pd.read_parquet("folder/first_name_tf.parquet")
+            )
             linker.table_management.register_term_frequency_lookup(
                 df_first_name_tf, "first_name"
             )
