@@ -29,7 +29,7 @@ class ColumnExpression:
 
     For example:
         ```py
-        from splink.column_expression import ColumnExpression
+        from splink import ColumnExpression
         col = (
             ColumnExpression("first_name")
             .lower()

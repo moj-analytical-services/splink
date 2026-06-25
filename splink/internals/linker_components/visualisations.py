@@ -406,12 +406,12 @@ class LinkerVisualisations:
         Examples:
             ```py
             df_p = linker.inference.predict()
-            df_c = linker.visualisations.cluster_pairwise_predictions_at_threshold(
+            df_c = linker.clustering.cluster_pairwise_predictions_at_threshold(
                 df_p, 0.5
             )
 
             linker.visualisations.cluster_studio_dashboard(
-                df_p, df_c, [0, 4, 7], "cluster_studio.html"
+                df_p, df_c, "cluster_studio.html", cluster_ids=[0, 4, 7]
             )
             ```
 
