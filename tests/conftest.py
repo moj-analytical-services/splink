@@ -23,6 +23,12 @@ from tests.helpers import (
 
 logger = logging.getLogger(__name__)
 
+# Holds the single, session-scoped Spark session once it has been created, so we
+# can cheaply reset its transient catalog state between tests. It stays None
+# until the first test that actually needs Spark, so non-Spark runs never start a
+# JVM.
+_active_spark_session = None
+
 
 def pytest_collection_modifyitems(items, config):
     # any tests without backend-group markers will always run
@@ -41,6 +47,8 @@ def pytest_collection_modifyitems(items, config):
 
 
 def _make_spark():
+    import os
+
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
@@ -48,28 +56,92 @@ def _make_spark():
 
     conf = SparkConf()
 
-    conf.set("spark.driver.memory", "6g")
     conf.set("spark.sql.shuffle.partitions", "1")
     conf.set("spark.default.parallelism", "1")
+    # Disable the Spark UI: it isn't useful in CI, shaves a little off start-up,
+    # and (importantly when running tests in parallel with pytest-xdist) avoids
+    # several JVMs fighting over the UI port.
+    conf.set("spark.ui.enabled", "false")
+    conf.set("spark.ui.showConsoleProgress", "false")
+    # Adaptive query execution adds planning overhead that is pure cost on the
+    # tiny datasets used in the test suite.
+    conf.set("spark.sql.adaptive.enabled", "false")
     # Add custom similarity functions, which are bundled with Splink
     # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
     path = similarity_jar_location()
     conf.set("spark.jars", path)
 
+    # When running under pytest-xdist each worker is a separate process, but they
+    # share a working directory. Give every worker its own warehouse / metastore /
+    # checkpoint location so that concurrent SparkSessions don't collide (e.g. on
+    # the embedded Derby metastore lock used by saveAsTable), and cap the driver
+    # heap so that several JVMs fit within the runner's memory.
+    worker = os.environ.get("PYTEST_XDIST_WORKER")
+    if worker:
+        scratch = os.path.abspath(os.path.join("tmp_spark_scratch", worker))
+        os.makedirs(scratch, exist_ok=True)
+        conf.set("spark.driver.memory", "2g")
+        conf.set("spark.sql.warehouse.dir", os.path.join(scratch, "warehouse"))
+        conf.set(
+            "spark.driver.extraJavaOptions",
+            f"-Dderby.system.home={os.path.join(scratch, 'derby')}",
+        )
+        checkpoint_dir = os.path.join(scratch, "checkpoints")
+    else:
+        conf.set("spark.driver.memory", "6g")
+        checkpoint_dir = "./tmp_checkpoints"
+
     sc = SparkContext.getOrCreate(conf=conf)
 
     spark = SparkSession(sc)
-    spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
+    spark.sparkContext.setCheckpointDir(checkpoint_dir)
+
+    global _active_spark_session
+    _active_spark_session = spark
     return spark
 
 
+def _reset_spark_session_state(spark):
+    # The Spark session is shared across the whole test session (for speed), so
+    # per-test catalog mutations must be undone explicitly. Previously this
+    # happened as a (very expensive) side effect of calling spark.stop() after
+    # every test. Here we just clear the cache, reset the current database and
+    # drop temporary views, which is cheap but preserves per-test isolation.
+    try:
+        spark.catalog.clearCache()
+    except Exception:
+        pass
+    try:
+        spark.catalog.setCurrentDatabase("default")
+    except Exception:
+        pass
+    try:
+        for table in spark.catalog.listTables():
+            if table.isTemporary:
+                spark.catalog.dropTempView(table.name)
+    except Exception:
+        pass
+
+
 def _cleanup_spark(spark):
+    global _active_spark_session
     spark.catalog.clearCache()
     spark.stop()
+    _active_spark_session = None
     return
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
+def _reset_spark_state_between_tests():
+    # Restore the per-test isolation that the old (slow) "stop Spark after every
+    # test" approach gave us, without paying the cost of stopping Spark. Only does
+    # anything once a Spark session has actually been started.
+    yield
+    if _active_spark_session is not None:
+        _reset_spark_session_state(_active_spark_session)
+
+
+@pytest.fixture(scope="session")
 def spark():
     spark = _make_spark()
     yield spark
@@ -129,18 +201,26 @@ def unique_per_test_table_name(request):
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
 @pytest.fixture
-def test_helpers(pg_engine):
+def test_helpers(pg_engine, request):
     # LazyDict to lazy-load helpers
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
+    #
+    # For Spark we reuse the single, session-scoped `spark` fixture rather than
+    # creating (and, expensively, stopping) a SparkContext for every test. The
+    # session is resolved lazily via request.getfixturevalue, so non-Spark
+    # dialects still never pay to start Spark.
+    def _shared_spark():
+        return request.getfixturevalue("spark")
+
     helper_dict = LazyDict(
         duckdb=(DuckDBTestHelper, []),
-        spark=(SparkTestHelper, [_make_spark]),
+        spark=(SparkTestHelper, [_shared_spark]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )
     yield helper_dict
-    # if someone accessed spark, cleanup!
-    if "spark" in helper_dict.accessed:
-        _cleanup_spark(helper_dict["spark"].spark)
+    # The session-scoped `spark` fixture owns the Spark lifecycle, and the autouse
+    # `_reset_spark_state_between_tests` fixture handles per-test catalog cleanup,
+    # so nothing Spark-specific is needed here.
