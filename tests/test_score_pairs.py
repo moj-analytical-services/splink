@@ -41,7 +41,8 @@ def test_score_pair_tf_table_and_derived(test_helpers, dialect, fake_1000):
         {"city": "London", "tf_city": 0.2},
         {"city": "Liverpool", "tf_city": 0.8},
     ]
-    linker.table_management.register_term_frequency_lookup(city_tf, "city")
+    city_tf_sdf = linker._db_api.register(city_tf)
+    linker.table_management.register_term_frequency_lookup(city_tf_sdf, "city")
 
     r1 = {
         "first_name": "Julia ",
@@ -79,13 +80,17 @@ def test_score_pair_input_values_take_precedence(test_helpers, dialect, fake_100
         {"city": "London", "tf_city": 0.2},
         {"city": "Liverpool", "tf_city": 0.8},
     ]
-    linker.table_management.register_term_frequency_lookup(city_tf, "city")
+    city_tf_sdf = linker._db_api.register(city_tf)
+    linker.table_management.register_term_frequency_lookup(city_tf_sdf, "city")
 
     first_name_tf = [
         {"first_name": "Julia", "tf_first_name": 0.3},
         {"first_name": "Robert", "tf_first_name": 0.8},
     ]
-    linker.table_management.register_term_frequency_lookup(first_name_tf, "first_name")
+    first_name_tf_sdf = linker._db_api.register(first_name_tf)
+    linker.table_management.register_term_frequency_lookup(
+        first_name_tf_sdf, "first_name"
+    )
 
     r1 = {
         "first_name": "Julia",

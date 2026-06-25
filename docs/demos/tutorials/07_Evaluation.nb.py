@@ -93,7 +93,8 @@ from splink.datasets import splink_dataset_labels
 from splink.internals.misc import show
 
 df_labels = splink_dataset_labels.fake_1000_labels
-labels_table = linker.table_management.register_labels_table(df_labels)
+df_labels_sdf = db_api.register(df_labels)
+labels_table = linker.table_management.register_labels_table(df_labels_sdf)
 show(df_labels, rows=5)
 
 # %% [markdown]

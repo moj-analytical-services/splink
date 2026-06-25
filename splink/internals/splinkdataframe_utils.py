@@ -32,7 +32,7 @@ def _raise_not_a_splink_dataframe(obj: Any) -> None:
         "From Splink 5 onwards, input data must be registered with the database API "
         "before it is passed  to Splink. Registering a table returns a "
         "SplinkDataFrame:\n\n"
-        '    df = db_api.register(my_data, dataset_display_name="my_dataset")\n'
+        "    df = db_api.register(my_data)\n"
         "    linker = Linker(df, settings)\n\n"
         "db_api.register() accepts a pandas DataFrame, a pyarrow Table, a "
         "dict[str, list], a list[dict], a backend-native object (such as a duckdb "

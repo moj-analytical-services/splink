@@ -107,7 +107,8 @@ linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
 
 # %%
 # Register the pairwise labels table with the database, and then use it to estimate the m values
-labels_df = linker.table_management.register_labels_table(pairwise_labels, overwrite=True)
+pairwise_labels_sdf = db_api.register(pairwise_labels)
+labels_df = linker.table_management.register_labels_table(pairwise_labels_sdf)
 linker.training.estimate_m_from_pairwise_labels(labels_df)
 
 
