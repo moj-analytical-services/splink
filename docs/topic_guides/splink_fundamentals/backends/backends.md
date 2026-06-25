@@ -77,16 +77,18 @@ More details on using Postgres as a Splink backend can be found on the [Postgres
 
 ## Using your chosen backend
 
-Choose the relevant DBAPI:
+Choose the relevant DBAPI and use it to register your input data.
 
-Once you have initialised the `linker` object, there is no difference in the subsequent code between backends.
+Once you have registered your data and initialised the `linker` object, there is no difference in the subsequent code between backends.
 
 === ":simple-duckdb: DuckDB"
 
     ```python
     from splink import Linker, DuckDBAPI
 
-    linker = Linker(df, settings, db_api=DuckDBAPI(...))
+    db_api = DuckDBAPI(...)
+    df_sdf = db_api.register(df, dataset_display_name="my_data")
+    linker = Linker(df_sdf, settings)
     ```
 
 === ":simple-apachespark: Spark"
@@ -94,25 +96,31 @@ Once you have initialised the `linker` object, there is no difference in the sub
     ```python
     from splink import Linker, SparkAPI
 
-    linker = Linker(df, settings, db_api=SparkAPI(...))
+    db_api = SparkAPI(...)
+    df_sdf = db_api.register(df, dataset_display_name="my_data")
+    linker = Linker(df_sdf, settings)
     ```
 
 === ":simple-sqlite: SQLite"
 
     ```python
-    from splink import Linker, SQLiteAPI
+    from splink import Linker
+    from splink.backends.sqlite import SQLiteAPI
 
-    linker = Linker(df, settings, db_api=SQLiteAPI(...))
-
+    db_api = SQLiteAPI(...)
+    df_sdf = db_api.register(df, dataset_display_name="my_data")
+    linker = Linker(df_sdf, settings)
     ```
 
 === ":simple-postgresql: PostgreSQL"
 
     ```python
-    from splink import Linker, PostgresAPI
+    from splink import Linker
+    from splink.backends.postgres import PostgresAPI
 
-    linker = Linker(df, settings, db_api=PostgresAPI(...))
-
+    db_api = PostgresAPI(...)
+    df_sdf = db_api.register(df, dataset_display_name="my_data")
+    linker = Linker(df_sdf, settings)
     ```
 
 ## Additional Information for specific backends

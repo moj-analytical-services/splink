@@ -34,7 +34,7 @@ Code examples to use the comparison template:
 ```python
 import splink.comparison_library as cl
 
-pc_comparison = ctl.PostcodeComparison("postcode").get_comparison("duckdb")
+pc_comparison = cl.PostcodeComparison("postcode").get_comparison("duckdb")
 print(pc_comparison.human_readable_description)
 
 ```
@@ -194,39 +194,47 @@ For a more detailed explanation on phonetic transformation algorithms, see the [
 
 ### Example
 
-There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the `Linker`. For example, creating a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
+The [`splink_udfs`](https://github.com/moj-analytical-services/splink_udfs) DuckDB extension provides a `double_metaphone` function, so we can derive a [Double Metaphone](../comparisons/phonetic.md#double-metaphone) column directly in DuckDB without needing pandas or an additional python library.
+
+`splink_udfs` is a [DuckDB community extension](https://duckdb.org/community_extensions/), so we install and load it before use:
 
 ```python
-import pandas as pd
-import phonetics
+import duckdb
 
 from splink import splink_datasets
+
+con = duckdb.connect()
+con.execute("INSTALL splink_udfs FROM community;")
+con.execute("LOAD splink_udfs;")
+
 df = splink_datasets.fake_1000
 
-# Define a function to apply the dmetaphone phonetic algorithm to each name in the column
-def dmetaphone_name(name):
-    if name is None:
-        pass
-    else:
-        return phonetics.dmetaphone(name)
+# double_metaphone returns a list of phonetic codes for each name
+df_with_dm = con.sql("""
+    SELECT *,
+        double_metaphone(first_name) AS first_name_dm,
+        double_metaphone(surname) AS surname_dm
+    FROM df
+""")
 
-# Apply the function to the "first_name" and surname columns using the apply method
-df['first_name_dm'] = df['first_name'].apply(dmetaphone_name)
-df['surname_dm'] = df['surname'].apply(dmetaphone_name)
-
-df.head()
+df_with_dm.show(max_rows=5)
 ```
 ??? note "Output"
 
-    |    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | first_name_dm   | surname_dm       |
-    |---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:----------------|:-----------------|
-    |  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    |                  |
-    |  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    | ('TLR', '')      |
-    |  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    | ('TLR', '')      |
-    |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | ('JL', 'AL')    | ('TLR', '')      |
-    |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | ('AN', '')      | ('ATSN', 'FTSN') |
+    ```
+    ┌───────────┬────────────┬─────────┬────────────┬─────────┬─────────────────────┬─────────┬───────────────┬────────────┐
+    │ unique_id │ first_name │ surname │    dob     │  city   │        email        │ cluster │ first_name_dm │ surname_dm │
+    │   int64   │  varchar   │ varchar │    date    │ varchar │       varchar       │  int64  │   varchar[]   │ varchar[]  │
+    ├───────────┼────────────┼─────────┼────────────┼─────────┼─────────────────────┼─────────┼───────────────┼────────────┤
+    │         0 │ Robert     │ Alan    │ 1971-06-24 │ NULL    │ robert255@smith.net │       0 │ [RPRT]        │ [ALN]      │
+    │         1 │ Robert     │ Allen   │ 1971-05-24 │ NULL    │ roberta25@smith.net │       0 │ [RPRT]        │ [ALN]      │
+    │         2 │ Rob        │ Allen   │ 1971-06-24 │ London  │ roberta25@smith.net │       0 │ [RP]          │ [ALN]      │
+    │         3 │ Robert     │ Alen    │ 1971-06-24 │ Lonon   │ NULL                │       0 │ [RPRT]        │ [ALN]      │
+    │         4 │ Grace      │ NULL    │ 1997-04-26 │ Hull    │ grace.kelly52@jones.com │   1 │ [KRS]         │ NULL       │
+    └───────────┴────────────┴─────────┴────────────┴─────────┴─────────────────────┴─────────┴───────────────┴────────────┘
+    ```
 
-Note: [Soundex](../comparisons/phonetic.md#soundex) and [Metaphone](../comparisons/phonetic.md#metaphone) are also supported in [phonetics](https://pypi.org/project/phonetics/)
+The `splink_udfs` extension also provides [`soundex`](../comparisons/phonetic.md#soundex) and other string-matching functions. See the [extension documentation](https://github.com/moj-analytical-services/splink_udfs) for the full list.
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the `NameComparison` function from the [comparison library](../../api_docs/comparison_library.md).
 
@@ -272,15 +280,18 @@ For more on term frequency, see the dedicated [topic guide](../comparisons/term-
 Derive a full name column:
 
 ```python
-import pandas as pd
+import duckdb
 
 from splink import splink_datasets
 
 df = splink_datasets.fake_1000
 
-df['full_name'] = df['first_name'] + ' ' + df['surname']
+df_with_full_name = duckdb.sql("""
+    SELECT *, first_name || ' ' || surname AS full_name
+    FROM df
+""")
 
-df.head()
+df_with_full_name.show(max_rows=5)
 ```
 
 Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [ForenameSurnameComparison](../../api_docs/comparison_library.md#splink.comparison_library.ForenameSurnameComparison) function from the [comparison library](../../api_docs/comparison_library.md).

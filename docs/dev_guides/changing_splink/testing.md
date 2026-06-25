@@ -182,11 +182,7 @@ def test_feature_that_works_for_all_backends(test_helpers, dialect, some_other_t
             block_on("first_name"),
         ],
     )
-    linker = helper.Linker(
-        df,
-        settings,
-        **helper.extra_linker_args(),
-    )
+    linker = helper.linker_with_registration(df, settings)
 
 
     # and then some actual testing logic
@@ -235,9 +231,9 @@ Each helper has the same set of methods and properties, which encapsulate _all_ 
 
 Here we are now actually using a method of the test helper - in this case we are loading a table from a csv to the database and returning it in a form suitable for passing to a Splink linker.
 
-Finally we instantiate the linker, passing any default set of extra arguments provided by the helper, which some dialects require.
+Finally we instantiate the linker using the helper's `linker_with_registration` method, which registers the input data with the appropriate backend and returns a `Linker`.
 ```py linenums="18"
-    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
+    linker = helper.linker_with_registration(df, settings)
 ```
 
 
