@@ -49,6 +49,10 @@
 #
 # - [8. Building your own model](./08_building_your_own_model.md)
 #
+# - [9. Scaling up to large datasets](./09_scaling_up_techniques.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/09_scaling_up_techniques.ipynb">
+#   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+# </a>
+#
 #
 # Throughout the tutorial, we use the DuckDB backend, which is the [recommended option](../../topic_guides/splink_fundamentals/backends/backends.html?h=recommende#duckdb) for most users.
 #

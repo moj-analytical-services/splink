@@ -22,7 +22,7 @@ class LinkerMisc:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
         The model can later be loaded into a new linker using
-        `Linker(df, settings="path/to/model.json", db_api=db_api).
+        `Linker(df, settings="path/to/model.json")`.
 
         The settings dict is also returned in case you want to save it a different way.
 
@@ -56,7 +56,7 @@ class LinkerMisc:
 
         Examples:
             ```py
-            linker = Linker(df, settings, db_api)
+            linker = Linker(df, settings)
             df_predict = linker.inference.predict()
             linker.misc.query_sql(f"select * from {df_predict.physical_name} limit 10")
             ```
