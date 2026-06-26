@@ -102,7 +102,9 @@ class Linker:
             ```
             Dedupe with a pre-trained model read from a json file
             ```py
-            df = db_api.register(pd.read_csv("data_to_dedupe.csv"), "my_data")
+            df = db_api.register(
+                pd.read_csv("data_to_dedupe.csv"), dataset_display_name="my_data"
+            )
             linker = Linker(df, "model.json")
             ```
 

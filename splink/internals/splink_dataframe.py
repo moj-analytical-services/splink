@@ -128,7 +128,7 @@ class SplinkDataFrame(ABC):
                 f'''
                 SELECT unique_id_l, unique_id_r
                 FROM {{this}}
-                WHERE match_weight > {low_ml}
+                WHERE match_weight > {low_mw}
                 '''
             )
             ```

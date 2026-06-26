@@ -26,7 +26,7 @@ settings = SettingsCreator(
     link_type= "dedupe_only",
 )
 
-linker = Linker(df, settings, db_api=dbapi, )
+linker = Linker(df, settings)
 ```
 
 ## Link only
@@ -43,12 +43,10 @@ settings = SettingsCreator(
 linker = Linker(
     [df_1, df_2, df_n],
     settings,
-    db_api=dbapi,
-    input_table_aliases=["name1", "name2", "name3"],
 )
 ```
 
-The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
+Dataset labels used in the outputs (the `source_dataset` column) are set via the `dataset_display_name` argument when registering each table with the database API (e.g. `db_api.register(df_1, dataset_display_name="name1")`). If not provided at registration, defaults will be automatically chosen by Splink.
 
 ## Link and dedupe
 
@@ -64,9 +62,7 @@ settings = SettingsCreator(
 linker = Linker(
     [df_1, df_2, df_n],
     settings,
-    db_api=dbapi,
-    input_table_aliases=["name1", "name2", "name3"],
 )
 ```
 
-The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
+Dataset labels used in the outputs (the `source_dataset` column) are set via the `dataset_display_name` argument when registering each table with the database API (e.g. `db_api.register(df_1, dataset_display_name="name1")`). If not provided at registration, defaults will be automatically chosen by Splink.

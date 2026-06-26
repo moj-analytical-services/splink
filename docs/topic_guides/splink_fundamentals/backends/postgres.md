@@ -10,18 +10,19 @@ Splink is compatible with using [PostgreSQL](https://www.postgresql.org/) (or si
 
 ## Setup
 
-Splink makes use of [SQLAlchemy](https://www.sqlalchemy.org/) for connecting to Postgres, and the default database adapter is [`psycopg2`](https://www.psycopg.org/docs/index.html), but you should be able to use any other if you prefer. The `PostgresLinker` requires a valid [engine](https://docs.sqlalchemy.org/en/20/core/connections.html) upon creation to manage interactions with the database:
+Splink makes use of [SQLAlchemy](https://www.sqlalchemy.org/) for connecting to Postgres, and the default database adapter is [`psycopg2`](https://www.psycopg.org/docs/index.html), but you should be able to use any other if you prefer. The `PostgresAPI` requires a valid [engine](https://docs.sqlalchemy.org/en/20/core/connections.html) upon creation to manage interactions with the database:
 ```py
 from sqlalchemy import create_engine
 
-from splink.postgres.linker import PostgresLinker
-import splink.postgres.comparison_library as cl
+from splink import Linker, SettingsCreator
+from splink.backends.postgres import PostgresAPI
+import splink.comparison_library as cl
 
 # create a sqlalchemy engine to manage connecting to the database
 engine = create_engine("postgresql+psycopg2://USER:PASSWORD@HOST:PORT/DB_NAME")
 
 settings = SettingsCreator(
-    link_type= "dedupe_only",
+    link_type="dedupe_only",
 )
 ```
 
@@ -29,11 +30,11 @@ You can pass data to the linker in one of two ways:
 
 * use the name of a pre-existing table in your database
 ```py
-dbapi = PostgresAPI(engine=engine)
+db_api = PostgresAPI(engine=engine)
+df_sdf = db_api.register("my_data_table")
 linker = Linker(
-    "my_data_table,
-    settings_dict,
-    db_api=db_api,
+    df_sdf,
+    settings,
 )
 ```
 
@@ -45,11 +46,11 @@ import pandas as pd
 # create pandas frame from csv
 df = pd.read_csv("./my_data_table.csv")
 
-dbapi = PostgresAPI(engine=engine)
+db_api = PostgresAPI(engine=engine)
+df_sdf = db_api.register(df)
 linker = Linker(
-    df,
-    settings_dict,
-    db_api=db_api,
+    df_sdf,
+    settings,
 )
 ```
 
@@ -64,7 +65,7 @@ When you connect to Postgres, you must do so with a role that has sufficient pri
 
 ### Schemas
 
-When you create a `PostgresLinker`, Splink will create a new schema within the database you specify - by default this schema is called `splink`, but you can choose another name by passing the appropriate argument when creating the linker:
+When you create a `PostgresAPI`, Splink will create a new schema within the database you specify - by default this schema is called `splink`, but you can choose another name by passing the appropriate argument when creating it:
 ```py
 dbapi = PostgresAPI(engine=engine, schema="another_splink_schema")
 ```
