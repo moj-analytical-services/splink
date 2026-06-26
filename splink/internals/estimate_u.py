@@ -406,10 +406,6 @@ def estimate_u_values(
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(training_linker, pipeline)
 
-    # Sampling is deterministic: which rows are retained is a pure function of
-    # the composite unique id (and the optional seed).  This makes results
-    # reproducible across runs without relying on backend-specific random
-    # sampling or scan order, consistent with how chunking/EM sampling work.
     uid_cols = settings_obj.column_info_settings.unique_id_input_columns
     sample_filter = training_linker._proportion_sample_sql(
         proportion, uid_cols, seed=seed

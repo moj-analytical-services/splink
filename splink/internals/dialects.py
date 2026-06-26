@@ -18,8 +18,6 @@ Self = TypeVar("Self", bound="SplinkDialect")
 # Resolution of the deterministic proportion sampler.  A high modulus means the
 # integer threshold can closely approximate any requested proportion in (0, 1].
 # Kept below 2**31 so it remains safe for backends whose hash is only 32-bit
-# (Spark, Postgres); DuckDB's hash is 64-bit.  At 1e9 this comfortably resolves
-# the tiny proportions seen with very large inputs (e.g. billions of records).
 _DETERMINISTIC_SAMPLE_MODULUS = 1_000_000_000
 
 
@@ -187,17 +185,6 @@ class SplinkDialect(ABC):
 
         Which rows are selected is a pure function of the composite unique id
         (and the optional seed), so the same rows are returned on every run.
-        This matches the deterministic, hash-based approach used elsewhere in
-        Splink (e.g. chunking and EM record sampling) and avoids any reliance on
-        backend-specific random sampling or scan order.
-
-        Args:
-            proportion: Fraction of rows to retain, in (0, 1].  A value of 1.0
-                returns an empty clause (no filtering).
-            unique_id_cols: Columns forming the composite unique id (for
-                ``link_only`` this includes the source dataset column).
-            seed: Optional integer mixed into the hash so that different seeds
-                select different (but still deterministic) subsets of rows.
 
         Returns:
             A SQL ``WHERE`` clause condition such as
@@ -206,14 +193,11 @@ class SplinkDialect(ABC):
         """
         if proportion >= 1.0:
             return ""
-        if proportion <= 0.0:
-            return " AND 1=0"
 
         composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
         if seed is not None:
             # Mix the seed into the hashed value so different seeds select
-            # different subsets.  The seed is constant within a single sampling
-            # call, so appending it keeps the mapping injective across records.
+            # different subsets.
             composite_id = f"({composite_id}) || '_{seed}'"
 
         threshold = max(1, round(proportion * _DETERMINISTIC_SAMPLE_MODULUS))
