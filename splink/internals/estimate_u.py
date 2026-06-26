@@ -403,16 +403,22 @@ def estimate_u_values(
     if sample_size > total_nodes:
         sample_size = total_nodes
 
-    table_to_sample_from = "__splink__df_concat"
-
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(training_linker, pipeline)
 
-    uid_colname = settings_obj.column_info_settings.unique_id_input_column.name
+    # Sampling is deterministic: which rows are retained is a pure function of
+    # the composite unique id (and the optional seed).  This makes results
+    # reproducible across runs without relying on backend-specific random
+    # sampling or scan order, consistent with how chunking/EM sampling work.
+    uid_cols = settings_obj.column_info_settings.unique_id_input_columns
+    sample_filter = training_linker._proportion_sample_sql(
+        proportion, uid_cols, seed=seed
+    )
     sql = f"""
     select *
-    from {table_to_sample_from}
-    {training_linker._random_sample_sql(proportion, sample_size, seed, unique_id=uid_colname)}
+    from __splink__df_concat
+    where 1=1
+    {sample_filter}
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")

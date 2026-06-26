@@ -172,12 +172,15 @@ def _get_random_cluster_ids(
 
     proportion = sample_size / cluster_count
 
-    random_sample_sql = linker._random_sample_sql(
+    # Deterministic, hash-based sampling on cluster_id so the selected sample is
+    # reproducible across runs (and identical for a given seed).
+    cluster_id_col = linker._settings_obj.column_info_settings._input_column(
+        "cluster_id"
+    )
+    sample_filter = linker._proportion_sample_sql(
         proportion,
-        sample_size,
-        seed,
-        table=connected_components.physical_name,
-        unique_id="cluster_id",
+        [cluster_id_col],
+        seed=seed,
     )
 
     sql = f"""
@@ -186,7 +189,8 @@ def _get_random_cluster_ids(
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {random_sample_sql}
+    where 1=1
+    {sample_filter}
     """
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
