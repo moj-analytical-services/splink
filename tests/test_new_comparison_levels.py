@@ -119,6 +119,26 @@ def test_cll_creators_instantiate_levels_with_config(dialect):
     )
     assert lev_dict["label_for_charts"] == "city loose fuzzy match"
 
+    lev_dict = (
+        cll.ElseLevel()
+        .configure(fixed_match_weight=2)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["fixed_match_weight"] == 2
+    assert "m_probability" not in lev_dict
+    assert "u_probability" not in lev_dict
+
+    lev_dict = (
+        cll.ElseLevel()
+        .configure(fixed_match_weight=-4)
+        .get_comparison_level(dialect)
+        .as_dict()
+    )
+    assert lev_dict["fixed_match_weight"] == -4
+    assert "m_probability" not in lev_dict
+    assert "u_probability" not in lev_dict
+
 
 comparison_name = cl.CustomComparison(
     output_column_name="name",
