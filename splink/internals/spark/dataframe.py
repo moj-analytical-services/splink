@@ -50,13 +50,7 @@ class SparkDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         spark_df = self.db_api._execute_sql_against_backend(sql)
-        # Collect the whole result in a single Spark job. The previous
-        # implementation iterated one toLocalIterator() per column, and
-        # toLocalIterator fetches partitions to the driver serially (one job per
-        # partition), so the cost was ~(n_columns * n_partitions) serial driver
-        # round-trips. For the per-iteration __splink__m_u_counts pull in EM
-        # training this dominated runtime on Spark. A single collect() retrieves
-        # all columns and partitions in one parallel job.
+
         columns = spark_df.columns
         rows = spark_df.collect()
         return {col: [row[col] for row in rows] for col in columns}
