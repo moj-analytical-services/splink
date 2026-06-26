@@ -84,8 +84,7 @@ def _make_spark(scratch_dir, driver_memory):
 
 def _reset_spark_session_state(spark):
     # The Spark session is shared across the whole run for speed, so per-test
-    # catalog mutations must be undone explicitly (this used to happen as an
-    # expensive side effect of stopping Spark after every test). Clearing the
+    # catalog mutations must be undone explicitly. Clearing the
     # cache, resetting the current database and dropping temp views is cheap and
     # keeps each test isolated. Resetting the database before listing tables means
     # we can still clean up even if a test left a now-dropped database selected.
@@ -111,10 +110,6 @@ def _spark_session(tmp_path_factory, worker_id):
 
 @pytest.fixture
 def spark(_spark_session):
-    # Function-scoped view onto the shared session. Reusing one SparkSession for
-    # the whole run avoids the (very expensive) per-test SparkContext stop/start,
-    # while resetting the transient catalog state on teardown preserves the
-    # per-test isolation that stopping Spark after every test used to provide.
     yield _spark_session
     _reset_spark_session_state(_spark_session)
 
