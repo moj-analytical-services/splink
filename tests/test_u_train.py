@@ -339,9 +339,6 @@ def test_u_train_multilink(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 10) / denom
 
 
-# Deterministic hash-based sampling means seeded results are reproducible on
-# every backend (including SQLite and Postgres, which previously had no seed
-# support).
 @mark_with_dialects_excluding()
 def test_seed_u_outputs(fake_1000, test_helpers, dialect):
     helper = test_helpers[dialect]
@@ -368,9 +365,6 @@ def test_seed_u_outputs(fake_1000, test_helpers, dialect):
     )
 
 
-# Deterministic hash-based sampling means seeded results are reproducible on
-# every backend (including SQLite and Postgres, which previously had no seed
-# support).
 @mark_with_dialects_excluding()
 def test_seed_u_outputs_different_order(test_helpers, dialect):
     # Sampling is a pure function of the unique id, so the (unordered) physical
