@@ -23,7 +23,9 @@ _PROBE_SAMPLE_MODULUS = 10_000
 
 # Modulus used for the final sampling hash filter.  We want enough resolution
 # that the integer threshold can closely approximate any p* in (0, 1].
-_SAMPLE_MODULUS = 1_000_000
+# Kept below 2**31 so it remains safe for backends whose hash is only 32-bit
+# (Spark, Postgres); DuckDB's hash is 64-bit.
+_SAMPLE_MODULUS = 1_000_000_000
 
 
 def _em_sample_filter_sql(

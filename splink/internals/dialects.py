@@ -17,7 +17,10 @@ Self = TypeVar("Self", bound="SplinkDialect")
 
 # Resolution of the deterministic proportion sampler.  A high modulus means the
 # integer threshold can closely approximate any requested proportion in (0, 1].
-_DETERMINISTIC_SAMPLE_MODULUS = 1_000_000
+# Kept below 2**31 so it remains safe for backends whose hash is only 32-bit
+# (Spark, Postgres); DuckDB's hash is 64-bit.  At 1e9 this comfortably resolves
+# the tiny proportions seen with very large inputs (e.g. billions of records).
+_DETERMINISTIC_SAMPLE_MODULUS = 1_000_000_000
 
 
 class SplinkDialect(ABC):
@@ -198,8 +201,8 @@ class SplinkDialect(ABC):
 
         Returns:
             A SQL ``WHERE`` clause condition such as
-            ``" AND ((hash(...) % 1000000) + 1000000) % 1000000 < 250000"``, or
-            an empty string when ``proportion >= 1.0``.
+            ``" AND ((hash(...) % 1000000000) + 1000000000) % 1000000000 < 250000000"``,
+            or an empty string when ``proportion >= 1.0``.
         """
         if proportion >= 1.0:
             return ""
