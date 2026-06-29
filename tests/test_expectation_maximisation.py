@@ -96,9 +96,9 @@ def test_estimate_without_term_frequencies(fake_1000):
 
     actual_prop_history = db_api_1.register(session_fast._lambda_history_records)
     expected_prop_history = db_api_1.register(session_slow._lambda_history_records)
-    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    actuals = sorted(actual_prop_history.as_record_list(), key=lambda r: r["iteration"])
     expecteds = sorted(
-        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
+        expected_prop_history.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -131,10 +131,10 @@ def test_estimate_without_term_frequencies(fake_1000):
     )
 
     actuals = sorted(
-        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        actual_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
     expecteds = sorted(
-        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        expected_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):

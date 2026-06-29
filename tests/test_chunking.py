@@ -21,7 +21,7 @@ from .decorator import mark_with_dialects_excluding
 
 def _get_comparison_count(result):
     """Get the number of comparisons in a prediction result."""
-    return len(result.as_record_dict())
+    return len(result.as_record_list())
 
 
 def _sort_predictions(sdf):

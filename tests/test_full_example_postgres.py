@@ -80,7 +80,7 @@ def test_full_example_postgres(tmp_path, pg_engine, fake_1000):
         df_predict, os.path.join(tmp_path, "test_scv_postgres.html"), True, 2
     )
 
-    records = df_predict.as_record_dict()
+    records = df_predict.as_record_list()
     linker.visualisations.waterfall_chart(records)
 
     labels_sdf = df_sdf.query_sql(

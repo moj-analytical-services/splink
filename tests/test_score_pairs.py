@@ -149,7 +149,7 @@ def test_score_pairs_cartesian_product_from_lists(test_helpers, dialect, fake_10
     r1, r2 = _records()
 
     res = linker.inference.score_pairs([r1, r2], [r1, r2])
-    assert len(res.as_record_dict()) == 4
+    assert len(res.as_record_list()) == 4
 
 
 @mark_with_dialects_excluding("sqlite")
@@ -164,7 +164,7 @@ def test_score_pairs_accepts_splink_dataframe(test_helpers, dialect, fake_1000):
     sdf_right = linker._db_api.register([r1], table_name="score_pairs_right")
 
     res = linker.inference.score_pairs(sdf_left, sdf_right)
-    assert len(res.as_record_dict()) == 2
+    assert len(res.as_record_list()) == 2
 
     # The user-supplied SplinkDataFrame must not have been mutated
     assert sdf_left.templated_name == "score_pairs_left"

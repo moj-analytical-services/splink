@@ -17,7 +17,7 @@ def test_small_erdos_renyi_graph(execution_number):
     cc_df = run_cc_implementation(df_nodes, df_edges)
     nx_df = networkx_solve(g)
 
-    assert cc_df.as_record_dict() == nx_df
+    assert cc_df.as_record_list() == nx_df
 
 
 @pytest.mark.skip(reason="Slow")
@@ -28,7 +28,7 @@ def test_medium_erdos_renyi_graph(execution_number):
 
     cc_df = run_cc_implementation(df_nodes, df_edges)
     nx_df = networkx_solve(g)
-    assert cc_df.as_record_dict() == nx_df
+    assert cc_df.as_record_list() == nx_df
 
 
 @pytest.mark.skip(reason="Slow")
@@ -39,4 +39,4 @@ def test_large_erdos_renyi_graph(execution_number):
 
     cc_df = run_cc_implementation(df_nodes, df_edges)
     nx_df = networkx_solve(g)
-    assert cc_df.as_record_dict() == nx_df
+    assert cc_df.as_record_list() == nx_df

@@ -51,13 +51,13 @@ def filter_results(df_predict):
     return {
         "London": df_predict.query_sql(
             "SELECT * FROM {this} WHERE city_l = 'London'"
-        ).as_record_dict()[0],
+        ).as_record_list()[0],
         "Birmingham": df_predict.query_sql(
             "SELECT * FROM {this} WHERE city_l = 'Birmingham'"
-        ).as_record_dict()[0],
+        ).as_record_list()[0],
         "Truro": df_predict.query_sql(
             "SELECT * FROM {this} WHERE city_l = 'Truro'"
-        ).as_record_dict()[0],
+        ).as_record_list()[0],
     }
 
 
@@ -266,10 +266,10 @@ def test_tf_missing_values_in_lookup():
     # Get results for each city
     london_result = df_predict.query_sql(
         "SELECT * FROM {this} WHERE city_l = 'London' AND city_r = 'London'"
-    ).as_record_dict()[0]
+    ).as_record_list()[0]
     paris_result = df_predict.query_sql(
         "SELECT * FROM {this} WHERE city_l = 'Paris' AND city_r = 'Paris'"
-    ).as_record_dict()[0]
+    ).as_record_list()[0]
 
     # London should have TF adjustment of 1.0 (log2(0.2/0.1) = log2(2) = 1.0)
     assert pytest.approx(london_result["mw_tf_adj_city"]) == 1.0

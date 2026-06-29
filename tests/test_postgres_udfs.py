@@ -23,7 +23,7 @@ def test_log2(pg_engine):
     sql = "SELECT log2(x) AS actual_log2_value, expected_log2_value FROM {this}"
     result = log_values.query_sql(sql)
 
-    for result_row in result.as_record_dict():
+    for result_row in result.as_record_list():
         assert result_row["actual_log2_value"] == result_row["expected_log2_value"]
 
 
@@ -50,7 +50,7 @@ def test_array_intersect(pg_engine):
     """
     result = data_sdf.query_sql(sql)
 
-    for result_row in result.as_record_dict():
+    for result_row in result.as_record_list():
         # don't care about order
         assert set(result_row["actual_intersection"]) == set(
             result_row["expected_intersection"]

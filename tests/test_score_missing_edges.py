@@ -49,7 +49,7 @@ def test_score_missing_edges(test_helpers, dialect, link_type, copies_of_df, fak
     missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
-    ).as_record_dict()
+    ).as_record_list()
 
     assert len(missing_edges) > 0, "No missing edges found"
     assert not any(edge["surname_l"] == edge["surname_r"] for edge in missing_edges)
@@ -91,7 +91,7 @@ def test_score_missing_edges_all_edges(
 
     missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
-    ).as_record_dict()
+    ).as_record_list()
 
     assert len(missing_edges) > 0, "No missing edges found"
     # some of these should be present now, as we are scoring all intracluster edges
@@ -143,7 +143,7 @@ def test_score_missing_edges_changed_column_names(
     missing_edges = linker.inference._score_missing_cluster_edges(
         df_clusters,
         df_predict,
-    ).as_record_dict()
+    ).as_record_list()
 
     assert len(missing_edges) > 0, "No missing edges found"
     assert not any(edge["surname_l"] == edge["surname_r"] for edge in missing_edges)

@@ -82,7 +82,7 @@ def test_size_density_dedupe():
             ORDER BY cluster_id
             """
         )
-        .as_record_dict()
+        .as_record_list()
     )
 
     data_expected = [
@@ -128,7 +128,7 @@ def test_size_density_link():
             ORDER BY cluster_id
             """
         )
-        .as_record_dict()
+        .as_record_list()
     )
 
     data_expected = [
@@ -272,7 +272,7 @@ def test_metrics(dialect, test_helpers):
     cm = linker.clustering.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
     )
-    df_cm = cm.clusters.as_record_dict()
+    df_cm = cm.clusters.as_record_list()
 
     expected = [
         {"cluster_id": 1, "n_nodes": 4, "n_edges": 4, "cluster_centralisation": 4 / 6},
@@ -311,7 +311,7 @@ def test_metrics(dialect, test_helpers):
                 expected_row_details["cluster_centralisation"]
             )
 
-    df_nm = cm.nodes.as_record_dict()
+    df_nm = cm.nodes.as_record_list()
 
     for unique_id, expected_degree, expected_centrality in expected_node_metrics:
         relevant_row = list(
@@ -395,7 +395,7 @@ def test_is_bridge(dialect, test_helpers):
     cm = linker.clustering.compute_graph_metrics(
         df_predict, df_clustered, threshold_match_probability=0.95
     )
-    df_em = cm.edges.as_record_dict()
+    df_em = cm.edges.as_record_list()
 
     for row in df_e:
         node_l, node_r = (
@@ -533,10 +533,10 @@ def test_override_metadata_threshold():
     ]
 
     assert_approx_equal(
-        gm_results_95.clusters.as_record_dict(),
+        gm_results_95.clusters.as_record_list(),
         df_expected_95,
     )
     assert_approx_equal(
-        gm_results_9.clusters.as_record_dict(),
+        gm_results_9.clusters.as_record_list(),
         df_expected_9,
     )

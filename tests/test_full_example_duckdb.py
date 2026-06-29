@@ -80,7 +80,7 @@ def test_full_example_duckdb(tmp_path, fake_1000):
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
-    records = df_predict.as_record_dict(limit=5)
+    records = df_predict.as_record_list(limit=5)
     linker.visualisations.waterfall_chart(records)
 
     labels_sdf = df_sdf.query_sql(
@@ -191,7 +191,7 @@ def test_link_only(input, source_l, source_r):
     sdf_predict = linker.inference.predict()
     predict_dict = sdf_predict.as_dict()
 
-    assert len(sdf_predict.as_record_dict()) == 7257
+    assert len(sdf_predict.as_record_list()) == 7257
     assert set(predict_dict["source_dataset_l"]) == source_l
     assert set(predict_dict["source_dataset_r"]) == source_r
 
@@ -223,7 +223,7 @@ def test_duckdb_arrow_array():
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
     )
-    df = linker.inference.deterministic_link().as_record_dict()
+    df = linker.inference.deterministic_link().as_record_list()
     assert len(df) == 2
 
 

@@ -60,7 +60,7 @@ def _count_blocked_pairs(linker: Linker, sample_threshold=None, sample_modulus=N
     pipeline.enqueue_list_of_sqls(sqls)
     pipeline.enqueue_sql("select count(*) as c from __splink__blocked_id_pairs", "__c")
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    n = int(df.as_record_dict()[0]["c"])
+    n = int(df.as_record_list()[0]["c"])
     df.drop_table_from_database_and_remove_from_cache()
     return n
 

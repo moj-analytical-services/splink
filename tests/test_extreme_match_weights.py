@@ -49,7 +49,7 @@ def test_extreme_match_weights_high_similarity():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(df)
     linker = Linker(df_sdf, settings)
-    predictions = linker.inference.predict().as_record_dict()
+    predictions = linker.inference.predict().as_record_list()
 
     # Should get exactly one prediction (comparing record 1 with record 2)
     assert len(predictions) == 1
@@ -88,7 +88,7 @@ def test_extreme_match_weights_low_similarity():
     db_api = DuckDBAPI()
     df_sdf = db_api.register(df)
     linker = Linker(df_sdf, settings)
-    predictions = linker.inference.predict().as_record_dict()
+    predictions = linker.inference.predict().as_record_list()
 
     match_prob = predictions[0]["match_probability"]
     assert match_prob < 1e-300, f"Expected very low match probability, got {match_prob}"
