@@ -339,8 +339,7 @@ def test_u_train_multilink(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 10) / denom
 
 
-# No SQLite or Postgres - don't support random seed
-@mark_with_dialects_excluding("sqlite", "postgres")
+@mark_with_dialects_excluding()
 def test_seed_u_outputs(fake_1000, test_helpers, dialect):
     helper = test_helpers[dialect]
     settings = {
@@ -366,12 +365,11 @@ def test_seed_u_outputs(fake_1000, test_helpers, dialect):
     )
 
 
-# No SQLite or Postgres - don't support random seed
-@mark_with_dialects_excluding("sqlite", "postgres")
+@mark_with_dialects_excluding()
 def test_seed_u_outputs_different_order(test_helpers, dialect):
-    # seed was producing different results due to lack of table ordering
-    # df_concat not guaranteed order, so sampling from it, even with seed
-    # can lead to different results
+    # Sampling is a pure function of the unique id, so the (unordered) physical
+    # order of df_concat does not affect which rows are sampled.  Shuffling the
+    # input must therefore always give the same u value for a given seed.
 
     helper = test_helpers[dialect]
 

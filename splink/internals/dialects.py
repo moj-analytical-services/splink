@@ -3,6 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING, Literal, Type, TypeVar, final
 
+from splink.internals.input_column import InputColumn
+from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
+
 if TYPE_CHECKING:
     from splink.internals.comparison_level_library import (
         AbsoluteTimeDifferenceLevel,
@@ -11,6 +14,11 @@ if TYPE_CHECKING:
 
 # equivalent to typing.Self in python >= 3.11
 Self = TypeVar("Self", bound="SplinkDialect")
+
+# Resolution of the deterministic proportion sampler.  A high modulus means the
+# integer threshold can closely approximate any requested proportion in (0, 1].
+# Kept below 2**31 so it remains safe for backends whose hash is only 32-bit
+_DETERMINISTIC_SAMPLE_MODULUS = 1_000_000_000
 
 
 class SplinkDialect(ABC):
@@ -167,13 +175,36 @@ class SplinkDialect(ABC):
         hash_expr = self.hash_function_expression(col_expression)
         return f"((({hash_expr}) % {modulus}) + {modulus}) % {modulus}"
 
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' needs a random_sample_sql "
-            "added to its dialect"
+    def proportion_sample_sql(
+        self,
+        proportion: float,
+        unique_id_cols: list[InputColumn],
+        seed: int | None = None,
+    ) -> str:
+        """Return a SQL clause that deterministically samples a proportion of rows.
+
+        Which rows are selected is a pure function of the composite unique id
+        (and the optional seed), so the same rows are returned on every run.
+
+        Returns:
+            A SQL ``WHERE`` clause condition such as
+            ``" AND ((hash(...) % 1000000000) + 1000000000) % 1000000000 < 250000000"``,
+            or an empty string when ``proportion >= 1.0``.
+        """
+        if proportion >= 1.0:
+            return ""
+
+        composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
+        if seed is not None:
+            # Mix the seed into the hashed value so different seeds select
+            # different subsets.
+            composite_id = f"({composite_id}) || '_{seed}'"
+
+        threshold = max(1, round(proportion * _DETERMINISTIC_SAMPLE_MODULUS))
+        sample_bucket = self.hash_bucket_expression(
+            composite_id, _DETERMINISTIC_SAMPLE_MODULUS
         )
+        return f" AND {sample_bucket} < {threshold}"
 
     @staticmethod
     def _wrap_in_nullif(func):
@@ -324,17 +355,6 @@ class DuckDBDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        percent = proportion * 100
-        if seed:
-            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
-        else:
-            return f"USING SAMPLE {percent}% (bernoulli)"
-
     def access_extreme_array_element(
         self, name: str, first_or_last: Literal["first", "last"]
     ) -> str:
@@ -459,17 +479,6 @@ class SparkDialect(SplinkDialect):
     ) -> str:
         return f"regexp_extract({name}, '{pattern}', {capture_group})"
 
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        percent = proportion * 100
-        if seed:
-            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
-        else:
-            return f" TABLESAMPLE ({percent} PERCENT) "
-
     def access_extreme_array_element(
         self, name: str, first_or_last: Literal["first", "last"]
     ) -> str:
@@ -547,23 +556,6 @@ class SQLiteDialect(SplinkDialect):
     @property
     def least_function_name(self):
         return "min"
-
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        if seed:
-            raise NotImplementedError(
-                "SQLite does not support seeds in random ",
-                "samples. Please remove the `seed` parameter.",
-            )
-
-        sample_size = int(sample_size)
-
-        return f"""ORDER BY RANDOM()
-            LIMIT {sample_size}
-            """
 
     @property
     def hash_function_name(self) -> str:
@@ -646,25 +638,6 @@ class PostgresDialect(SplinkDialect):
         return f"""
         CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
         """.strip()
-
-    def random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        if proportion == 1.0:
-            return ""
-        if seed:
-            # TODO: we could maybe do seeds by handling it in calling function
-            # need to execute setseed() in surrounding session
-            raise NotImplementedError(
-                "Postgres does not support seeds in random "
-                "samples. Please remove the `seed` parameter."
-            )
-
-        sample_size = int(sample_size)
-
-        return f"""ORDER BY RANDOM()
-            LIMIT {sample_size}
-            """
 
     @property
     def array_first_index(self):

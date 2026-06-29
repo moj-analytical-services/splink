@@ -281,11 +281,14 @@ class Linker:
     def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
 
-    def _random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        return self._sql_dialect.random_sample_sql(
-            proportion, sample_size, seed=seed, table=table, unique_id=unique_id
+    def _proportion_sample_sql(
+        self,
+        proportion: float,
+        unique_id_cols: list[InputColumn],
+        seed: int | None = None,
+    ) -> str:
+        return self._sql_dialect.proportion_sample_sql(
+            proportion, unique_id_cols, seed=seed
         )
 
     def _check_for_valid_settings(self):
