@@ -50,10 +50,10 @@ class SparkDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         spark_df = self.db_api._execute_sql_against_backend(sql)
-        return {
-            col: [row[col] for row in spark_df.select(col).toLocalIterator()]
-            for col in spark_df.columns
-        }
+
+        columns = spark_df.columns
+        rows = spark_df.collect()
+        return {col: [row[col] for row in rows] for col in columns}
 
     def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
         # spark 3 doesn't have native arrow support, so use our fallback method instead
