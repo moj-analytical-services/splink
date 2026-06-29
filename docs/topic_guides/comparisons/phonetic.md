@@ -22,7 +22,7 @@ import splink.comparison_library as cl
 
 first_name_comparison = cl.NameComparison(
                         "first_name",
-                        dmeta_col_name= "first_name_dm")
+                        dmeta_col_name= "first_name_dm").get_comparison("duckdb")
 print(first_name_comparison.human_readable_description)
 ```
 
@@ -68,59 +68,22 @@ Soundex is a phonetic algorithm that assigns a code to words based on their soun
 
 ???+ example
 
-    You can test out the Soundex transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+    You can compute the Soundex code of a string using the [`splink_udfs`](https://github.com/moj-analytical-services/splink_udfs) [DuckDB community extension](https://duckdb.org/community_extensions/).
 
     ```python
-    import phonetics
-    print(phonetics.soundex("Smith"), phonetics.soundex("Smyth"))
+    import duckdb
+
+    con = duckdb.connect()
+    con.execute("INSTALL splink_udfs FROM community;")
+    con.execute("LOAD splink_udfs;")
+
+    print(con.sql("SELECT soundex('Smith'), soundex('Smyth')").fetchone())
     ```
-    > S5030 S5030
+    > ('S530', 'S530')
 
 
 <hr>
 
-### Metaphone
-Metaphone is an improved version of the Soundex algorithm that was developed to handle a wider range of words and languages. The Metaphone algorithm assigns a code to a word based on its phonetic pronunciation, but it takes into account the sound of the entire word, rather than just its first letter and consonants.
-The Metaphone algorithm works by applying a set of rules to the word's pronunciation, such as converting the "TH" sound to a "T" sound, or removing silent letters. The resulting code is a variable-length string of letters that represents the word's pronunciation.
-
-??? info "Algorithm Steps"
-
-    The Metaphone algorithm works by following these steps:
-
-    1. Convert the word to uppercase and remove all non-alphabetic characters.
-
-    2. Apply a set of pronunciation rules to the word, such as:
-        1. Convert the letters "C" and "K" to "K"
-        2. Convert the letters "PH" to "F"
-        3. Convert the letters "W" and "H" to nothing if they are not at the beginning of the word
-
-    3. Apply a set of replacement rules to the resulting word, such as:
-        1. Replace the letter "G" with "J" if it is followed by an "E", "I", or "Y"
-        2. Replace the letter "C" with "S" if it is followed by an "E", "I", or "Y"
-        3. Replace the letter "X" with "KS"
-
-    4. If the resulting word ends with "S", remove it.
-
-    5. If the resulting word ends with "ED", "ING", or "ES", remove it.
-
-    6. If the resulting word starts with "KN", "GN", "PN", "AE", "WR", or "WH", remove the first letter.
-
-    7. If the resulting word starts with a vowel, retain the first letter.
-
-    8. Retain the first four characters of the resulting word, or pad it with zeros if it has fewer than four characters.
-
-???+ example
-
-    You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
-
-    ```python
-    import phonetics
-    print(phonetics.metaphone("Smith"), phonetics.metaphone("Smyth"))
-    ```
-    > SM0 SM0
-
-
-<hr>
 
 ### Double Metaphone
 Double Metaphone is an extension of the Metaphone algorithm that generates two codes for each word, one for the primary pronunciation and one for an alternate pronunciation. The Double Metaphone algorithm is designed to handle a wide range of languages and dialects, and it is more accurate than the original Metaphone algorithm.
@@ -180,12 +143,17 @@ The Double Metaphone algorithm works by applying a set of rules to the word's pr
 
 ???+ example
 
-    You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+    You can compute the Double Metaphone codes of a string using the [`splink_udfs`](https://github.com/moj-analytical-services/splink_udfs) [DuckDB community extension](https://duckdb.org/community_extensions/). The function returns a list of phonetic codes for each input.
 
     ```python
-    import phonetics
-    print(phonetics.dmetaphone("Smith"), phonetics.dmetaphone("Smyth"))
+    import duckdb
+
+    con = duckdb.connect()
+    con.execute("INSTALL splink_udfs FROM community;")
+    con.execute("LOAD splink_udfs;")
+
+    print(con.sql("SELECT double_metaphone('Smith'), double_metaphone('Smyth')").fetchone())
     ```
-    > ('SM0', 'XMT') ('SM0', 'XMT')
+    > (['SM0', 'XMT'], ['SM0', 'XMT'])
 
 <hr>
