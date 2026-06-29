@@ -113,7 +113,7 @@ linker._settings_obj._retain_intermediate_calculation_columns = True
 df_two = linker.inference.score_pair(record_1, record_2)
 df_two.as_duckdbpyrelation().show(max_width=10000)
 
-linker.visualisations.waterfall_chart(df_two.as_record_dict())
+linker.visualisations.waterfall_chart(df_two.as_record_list())
 
 
 # %%

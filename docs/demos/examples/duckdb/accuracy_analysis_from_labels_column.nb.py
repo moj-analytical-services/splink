@@ -114,7 +114,7 @@ linker.evaluation.prediction_errors_from_labels_column(
 # %%
 records = linker.evaluation.prediction_errors_from_labels_column(
     "cluster", include_false_negatives=True, include_false_positives=True
-).as_record_dict(limit=5)
+).as_record_list(limit=5)
 
 linker.visualisations.waterfall_chart(records)
 

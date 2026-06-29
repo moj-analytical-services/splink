@@ -171,7 +171,7 @@ class LinkerEvalution:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
             positives_not_captured_by_blocking_rules_scored_as_zero=positives_not_captured_by_blocking_rules_scored_as_zero,
         )
-        recs = df_truth_space.as_record_dict()
+        recs = df_truth_space.as_record_list()
 
         if output_type == "threshold_selection":
             return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)
@@ -292,7 +292,7 @@ class LinkerEvalution:
             threshold_actual=threshold_match_probability,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
-        recs = df_truth_space.as_record_dict()
+        recs = df_truth_space.as_record_list()
 
         if output_type == "threshold_selection":
             return ThresholdSelectionToolChart(recs, add_metrics=add_metrics)

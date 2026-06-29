@@ -250,7 +250,7 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
 
     df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     try:
-        chunk_counts = df_params.as_record_dict()
+        chunk_counts = df_params.as_record_list()
     finally:
         df_params.drop_table_from_database_and_remove_from_cache()
 
@@ -370,7 +370,7 @@ def estimate_u_values(
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         count_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        result = count_dataframe.as_record_dict()
+        result = count_dataframe.as_record_list()
         count_dataframe.drop_table_from_database_and_remove_from_cache()
         total_nodes = result[0]["count"]
         sample_size = _rows_needed_for_n_pairs(max_pairs)
@@ -387,7 +387,7 @@ def estimate_u_values(
         """
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         counts_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        result = counts_dataframe.as_record_dict()
+        result = counts_dataframe.as_record_list()
         counts_dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
 

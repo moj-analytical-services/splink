@@ -119,7 +119,7 @@ linker.visualisations.match_weights_chart()
 comparisons = sorted(
     linker.inference.score_pairs(
         synthetic_base_raw, synthetic_comparison_raw
-    ).as_record_dict(),
+    ).as_record_list(),
     key=lambda record: record["unique_id_r"],
 )
 
@@ -226,7 +226,7 @@ show(synthetic_comparison_partial_table)
 comparisons_partial = sorted(
     linker.inference.score_pairs(
         synthetic_base_raw, synthetic_comparison_partial_raw
-    ).as_record_dict(),
+    ).as_record_list(),
     key=lambda record: record["unique_id_r"],
 )
 

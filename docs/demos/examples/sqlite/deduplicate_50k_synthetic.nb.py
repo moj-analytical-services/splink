@@ -136,7 +136,7 @@ linker.evaluation.unlinkables_chart()
 
 # %%
 df_predict = linker.inference.predict()
-df_predict.as_record_dict(limit=5)
+df_predict.as_record_list(limit=5)
 
 # %% [markdown]
 # You can also view rows in this dataset as a waterfall chart as follows:
@@ -144,7 +144,7 @@ df_predict.as_record_dict(limit=5)
 
 # %%
 
-records_to_plot = df_predict.as_record_dict(limit=5)
+records_to_plot = df_predict.as_record_list(limit=5)
 linker.visualisations.waterfall_chart(records_to_plot, filter_nulls=False)
 
 # %%
@@ -176,7 +176,7 @@ records = linker.evaluation.prediction_errors_from_labels_column(
     threshold_match_probability=0.999,
     include_false_negatives=False,
     include_false_positives=True,
-).as_record_dict()
+).as_record_list()
 linker.visualisations.waterfall_chart(records)
 
 # %%
@@ -186,6 +186,6 @@ records = linker.evaluation.prediction_errors_from_labels_column(
     threshold_match_probability=0.5,
     include_false_negatives=True,
     include_false_positives=False,
-).as_record_dict(limit=50)
+).as_record_list(limit=50)
 
 linker.visualisations.waterfall_chart(records)

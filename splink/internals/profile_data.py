@@ -291,19 +291,19 @@ def profile_columns(
     pipeline.enqueue_list_of_sqls(sqls)
 
     df_percentiles = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    percentile_rows_all = df_percentiles.as_record_dict()
+    percentile_rows_all = df_percentiles.as_record_list()
 
     pipeline = CTEPipeline(input_dataframes=[df_raw])
     sql = _get_df_top_bottom_n(column_expressions_as_sql, top_n, "desc")
     pipeline.enqueue_sql(sql, "__splink__df_top_n")
     df_top_n = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    top_n_rows_all = df_top_n.as_record_dict()
+    top_n_rows_all = df_top_n.as_record_list()
 
     pipeline = CTEPipeline(input_dataframes=[df_raw])
     sql = _get_df_top_bottom_n(column_expressions_as_sql, bottom_n, "asc")
     pipeline.enqueue_sql(sql, "__splink__df_bottom_n")
     df_bottom_n = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    bottom_n_rows_all = df_bottom_n.as_record_dict()
+    bottom_n_rows_all = df_bottom_n.as_record_list()
 
     inner_charts = []
 

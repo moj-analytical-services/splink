@@ -104,7 +104,7 @@ show(df_labels, rows=5)
 splink_df = linker.evaluation.prediction_errors_from_labels_table(
     labels_table, include_false_negatives=True, include_false_positives=False
 )
-false_negatives = splink_df.as_record_dict(limit=5)
+false_negatives = splink_df.as_record_list(limit=5)
 linker.visualisations.waterfall_chart(false_negatives)
 
 # %% [markdown]
@@ -116,7 +116,7 @@ linker.visualisations.waterfall_chart(false_negatives)
 splink_df = linker.evaluation.prediction_errors_from_labels_table(
     labels_table, include_false_negatives=False, include_false_positives=True, threshold_match_probability=0.01
 )
-false_postives = splink_df.as_record_dict(limit=5)
+false_postives = splink_df.as_record_list(limit=5)
 linker.visualisations.waterfall_chart(false_postives)
 
 # %% [markdown]

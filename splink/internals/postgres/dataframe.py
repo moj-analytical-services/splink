@@ -69,7 +69,7 @@ class PostgresDataFrame(SplinkDataFrame):
         sql += ";"
         return self.db_api._execute_sql_against_backend(sql)
 
-    def as_record_dict(self, limit=None):
+    def as_record_list(self, limit=None):
         res = self._limit_table_as_result(limit).mappings().all()
         return [dict(r) for r in res]
 

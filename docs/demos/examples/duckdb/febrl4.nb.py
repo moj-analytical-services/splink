@@ -415,7 +415,7 @@ df_true_links = df_predictions_with_clusters.query_sql(
 # %%
 records_to_view = 3
 linker_detailed.visualisations.waterfall_chart(
-    df_true_links.as_record_dict(limit=records_to_view)
+    df_true_links.as_record_list(limit=records_to_view)
 )
 
 # %%
@@ -428,7 +428,7 @@ df_non_links = df_predictions_with_clusters.query_sql(
     """
 )
 linker_detailed.visualisations.waterfall_chart(
-    df_non_links.as_record_dict(limit=records_to_view)
+    df_non_links.as_record_list(limit=records_to_view)
 )
 
 # %% [markdown]

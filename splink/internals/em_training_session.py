@@ -250,7 +250,7 @@ class EMTrainingSession:
                 "__splink__em_blocked_pair_count",
             )
             count_df = self.db_api.sql_pipeline_to_splink_dataframe(count_pipeline)
-            count_rows = count_df.as_record_dict()
+            count_rows = count_df.as_record_list()
             count_df.drop_table_from_database_and_remove_from_cache()
             actual = int(count_rows[0]["row_count"]) if count_rows else 0
             sample_info = self._sample_info
@@ -286,7 +286,7 @@ class EMTrainingSession:
 
         # check that the blocking rule actually generates _some_ record pairs,
         # if not give the user a helpful message
-        if not cvv.as_record_dict(limit=1):
+        if not cvv.as_record_list(limit=1):
             br_sql = f"`{self._blocking_rule_for_training.blocking_rule_sql}`"
             raise EMTrainingException(
                 f"Training rule {br_sql} resulted in no record pairs.  "
