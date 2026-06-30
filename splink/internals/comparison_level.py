@@ -5,6 +5,7 @@ import math
 import re
 from copy import copy
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from statistics import median
 from textwrap import dedent
 from typing import Any, Optional, Union, cast
@@ -98,6 +99,27 @@ def _default_m_values(num_levels: int) -> list[float]:
     remainder = 1 - proportion_exact_match
     split_remainder = remainder / (num_levels - 1)
     return [split_remainder] * (num_levels - 1) + [proportion_exact_match]
+
+
+@lru_cache(maxsize=None)
+def _input_columns_used_by_sql_condition_cached(
+    sql_condition: str, sqlglot_dialect: str
+) -> tuple[InputColumn, ...]:
+    """Parse ``sql_condition`` and return the ``InputColumn``s it references.
+
+    This is deterministic in ``(sql_condition, sqlglot_dialect)`` but is on several
+    hot paths (it is recomputed on every access of the corresponding property,
+    including on every EM iteration). Parsing the SQL and building the columns via
+    sqlglot is comparatively expensive, so the result is cached.
+    """
+    cols = get_columns_used_from_sql(sql_condition, sqlglot_dialect=sqlglot_dialect)
+    # Parsed order seems to be roughly in reverse order of apearance
+    cols = cols[::-1]
+    cols = [re.sub(r"_L$|_R$", "", c, flags=re.IGNORECASE) for c in cols]
+    cols = dedupe_preserving_order(cols)
+    return tuple(
+        InputColumn(c, sqlglot_dialect_str=sqlglot_dialect) for c in cols
+    )
 
 
 def _default_u_values(num_levels: int) -> list[float]:
@@ -533,24 +555,16 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(
-            self.sql_condition, sqlglot_dialect=self.sqlglot_dialect
+        # We could have tf adjustments for surname on a dmeta_surname column
+        # If so, we want to set the tf adjustments against the surname col,
+        # not the dmeta_surname one.
+        # The underlying computation is cached (deterministic in sql_condition and
+        # dialect); return a fresh list so callers can never mutate the cache.
+        return list(
+            _input_columns_used_by_sql_condition_cached(
+                self.sql_condition, self.sqlglot_dialect
+            )
         )
-        # Parsed order seems to be roughly in reverse order of apearance
-        cols = cols[::-1]
-
-        cols = [re.sub(r"_L$|_R$", "", c, flags=re.IGNORECASE) for c in cols]
-        cols = dedupe_preserving_order(cols)
-
-        input_cols = []
-        for c in cols:
-            # We could have tf adjustments for surname on a dmeta_surname column
-            # If so, we want to set the tf adjustments against the surname col,
-            # not the dmeta_surname one
-
-            input_cols.append(InputColumn(c, sqlglot_dialect_str=self.sqlglot_dialect))
-
-        return input_cols
 
     @property
     def _columns_to_select_for_blocking(self):

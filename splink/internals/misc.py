@@ -8,7 +8,7 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from math import ceil, inf, log2
 from textwrap import dedent, indent
-from typing import TYPE_CHECKING, Iterable, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Iterable, TypeVar, overload
 
 import duckdb
 
@@ -17,6 +17,24 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 U = TypeVar("U")
+
+# Cache the result of attempting to import the optional numpy dependency. Without
+# this, EverythingEncoder.default attempts the import on every object it is asked
+# to encode, and when numpy is not installed each attempt pays the full (failing)
+# import-system lookup cost.
+_numpy_module: Any = False  # False = import not yet attempted
+
+
+def _get_numpy() -> Any:
+    global _numpy_module
+    if _numpy_module is False:
+        try:
+            import numpy as np
+        except ModuleNotFoundError:
+            _numpy_module = None
+        else:
+            _numpy_module = np
+    return _numpy_module
 
 
 def dedupe_preserving_order(list_of_items: list[T]) -> list[T]:
@@ -164,11 +182,8 @@ class EverythingEncoder(json.JSONEncoder):
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
     def default(self, obj):
-        try:
-            import numpy as np
-        except ModuleNotFoundError:
-            pass
-        else:
+        np = _get_numpy()
+        if np is not None:
             if isinstance(obj, np.integer):
                 return int(obj)
             elif isinstance(obj, np.floating):

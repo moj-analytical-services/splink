@@ -13,6 +13,30 @@ if TYPE_CHECKING:
     from splink.internals.settings import ColumnInfoSettings
 
 
+_VALID_COLUMN_SIGNATURES: Optional[set[str]] = None
+
+
+def _valid_column_signatures() -> set[str]:
+    """The set of sqlglot tree signatures that correspond to a bare column name
+    or a column name with a single bracket key/index.
+
+    These are constant, but computing them requires parsing four literal strings
+    with sqlglot. That is comparatively expensive and was previously repeated on
+    every ``InputColumn`` construction, so we compute it once and cache it.
+    """
+    global _VALID_COLUMN_SIGNATURES
+    if _VALID_COLUMN_SIGNATURES is None:
+        _VALID_COLUMN_SIGNATURES = {
+            sqlglot_tree_signature(sqlglot.parse_one("col_name")),
+            # negative indices are valid in certain contexts (postgres custom indexing,
+            # duckdb), and are treated separately in newer sqlglot versions (28.7.0+)
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[-1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name['lat']")),
+        }
+    return _VALID_COLUMN_SIGNATURES
+
+
 @dataclass(frozen=True)
 class SqlglotColumnTreeBuilder:
     """
@@ -101,14 +125,7 @@ class SqlglotColumnTreeBuilder:
             else:
                 return f"{q_s}{input_str}{q_e}"
 
-        valid_signatures = {
-            sqlglot_tree_signature(sqlglot.parse_one("col_name")),
-            # negative indices are valid in certain contexts (postgres custom indexing,
-            # duckdb), and are treated separately in newer sqlglot versions (28.7.0+)
-            sqlglot_tree_signature(sqlglot.parse_one("col_name[-1]")),
-            sqlglot_tree_signature(sqlglot.parse_one("col_name[1]")),
-            sqlglot_tree_signature(sqlglot.parse_one("col_name['lat']")),
-        }
+        valid_signatures = _valid_column_signatures()
 
         # If the raw string parses to a valid signature, use it
         try:
