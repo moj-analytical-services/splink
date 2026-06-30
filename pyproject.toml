@@ -205,3 +205,6 @@ disallow_any_generics = true
 # disallow_untyped_calls = true
 disallow_incomplete_defs = true
 # disallow_untyped_defs = true
+
+[tool.ty.rules]
+unresolved-import = "warn"
