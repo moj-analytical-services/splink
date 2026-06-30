@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Set
 from functools import partial
 from typing import List, NamedTuple, Tuple
+
+from splink.internals.input_column import InputColumn
 
 
 def indent_error_message(message: str) -> str:
@@ -23,7 +26,7 @@ class InvalidColumnsLogGenerator(NamedTuple):
     """
 
     invalid_type: str
-    invalid_columns: set[object]
+    invalid_columns: Set[str | InputColumn]
 
     @property
     def log_string_prefix(self):
