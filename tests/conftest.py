@@ -59,6 +59,11 @@ def _make_spark(scratch_dir, driver_memory):
     # Adaptive query execution adds planning overhead that is pure cost on the
     # tiny datasets used in the test suite.
     conf.set("spark.sql.adaptive.enabled", "false")
+    # Constraint propagation across Union nodes is buggy when combined with
+    # checkpoint break-lineage (NoSuchElementException rewriting constraints);
+    # it is a planner-only optimisation with no benefit on tiny test data, so
+    # disabling it lets us use the faster checkpoint method safely.
+    conf.set("spark.sql.constraintPropagation.enabled", "false")
     # Add custom similarity functions, which are bundled with Splink
     # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
     path = similarity_jar_location()
