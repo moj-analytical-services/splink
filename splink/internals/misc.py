@@ -163,25 +163,25 @@ class EverythingEncoder(json.JSONEncoder):
     # Note that the default method is only called for data types that are
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
-    def default(self, obj):
+    def default(self, o):
         try:
             import numpy as np
         except ModuleNotFoundError:
             pass
         else:
-            if isinstance(obj, np.integer):
-                return int(obj)
-            elif isinstance(obj, np.floating):
-                return float(obj)
-            elif isinstance(obj, np.bool_):
-                return bool(obj)
-            elif isinstance(obj, np.ndarray):
-                return obj.tolist()
+            if isinstance(o, np.integer):
+                return int(o)
+            elif isinstance(o, np.floating):
+                return float(o)
+            elif isinstance(o, np.bool_):
+                return bool(o)
+            elif isinstance(o, np.ndarray):
+                return o.tolist()
 
         try:
-            return json.JSONEncoder.default(self, obj)
+            return json.JSONEncoder.default(self, o)
         except TypeError:
-            return obj.__str__()
+            return o.__str__()
 
 
 def calculate_cartesian(df_rows, link_type):
