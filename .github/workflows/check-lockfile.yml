@@ -1,0 +1,32 @@
+name: Check lockfile
+
+on:
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions: {}
+
+jobs:
+  lockfile-check:
+    name: Check lockfile is up to date
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Setup uv (without cache)
+        id: setup_uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Check uv.lock is up to date
+        id: check_lockfile
+        run: uv lock --check
