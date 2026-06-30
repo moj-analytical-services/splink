@@ -59,7 +59,7 @@ def enable_splink(spark):
                 ManagedLibraryId.defaultOrganization(),
                 NoVersionModule.simpleString(),
             )
-    except Exception as e:
+    except Exception:
         logger.warning("failed to enable similarity jar functions for Databricks")
 
     libSeq = converters.asScalaBufferConverter((lib,)).asScala().toSeq()
