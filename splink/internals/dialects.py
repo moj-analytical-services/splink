@@ -80,8 +80,7 @@ class SplinkDialect(ABC):
     @property
     def levenshtein_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have a "
-            "'Levenshtein' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Levenshtein' function"
         )
 
     @property
@@ -94,8 +93,7 @@ class SplinkDialect(ABC):
     @property
     def jaro_winkler_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have a "
-            "'Jaro-Winkler' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Jaro-Winkler' function"
         )
 
     @property
@@ -146,13 +144,13 @@ class SplinkDialect(ABC):
     @property
     def greatest_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have a " "'Greatest' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Greatest' function"
         )
 
     @property
     def least_function_name(self):
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have a " "'Least' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'Least' function"
         )
 
     @property
@@ -242,8 +240,7 @@ class SplinkDialect(ABC):
         self, name: str, pattern: str, capture_group: int = 0
     ) -> str:
         raise NotImplementedError(
-            f"Backend '{self.sql_dialect_str}' does not have a "
-            "'regex_extract' function"
+            f"Backend '{self.sql_dialect_str}' does not have a 'regex_extract' function"
         )
 
     def access_extreme_array_element(
@@ -387,8 +384,8 @@ class DuckDBDialect(SplinkDialect):
                 + columns_to_explode
             )
             other_columns_to_retain.append(column_to_explode)
-            return f"""select {','.join(cols_to_select)}
-                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501
+            return f"""select {",".join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name, columns_to_explode, other_columns_to_retain)})"""  # noqa: E501
 
     @property
     def cosine_similarity_function_name(self):
@@ -509,8 +506,8 @@ class SparkDialect(SplinkDialect):
                 + other_columns_to_retain
                 + columns_to_explode
             )
-        return f"""select {','.join(cols_to_select)}
-                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
+        return f"""select {",".join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name, columns_to_explode, other_columns_to_retain + [column_to_explode])})"""  # noqa: E501
 
     @property
     def hash_function_name(self) -> str:

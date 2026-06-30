@@ -95,9 +95,9 @@ def test_em_max_pairs_reduces_pair_count(test_helpers, dialect, fake_1000, link_
 
     # Sampling should bring the pair count down, roughly to the target.
     assert sampled < unsampled, f"{link_type}: sampling did not reduce pairs"
-    assert (
-        0.4 * target_max_pairs <= sampled <= 1.8 * target_max_pairs
-    ), f"{link_type}: sampled {sampled}, target {target_max_pairs}"
+    assert 0.4 * target_max_pairs <= sampled <= 1.8 * target_max_pairs, (
+        f"{link_type}: sampled {sampled}, target {target_max_pairs}"
+    )
 
 
 @mark_with_dialects_excluding()

@@ -22,9 +22,9 @@ def run_is_in_level_tests(test_cases: List[Dict[str, Any]], db_api: Any) -> None
                 expected.append(input_data["expected"])
 
         results = is_in_level(case["level"], inputs, db_api)
-        assert (
-            results == expected
-        ), f"Expected {expected}, but got {results} for case: {case}"
+        assert results == expected, (
+            f"Expected {expected}, but got {results} for case: {case}"
+        )
 
 
 def run_comparison_vector_value_tests(

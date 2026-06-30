@@ -57,9 +57,9 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect, fake_1000):
     # Results should be identical
     no_chunked_count = len(df_no_chunk["unique_id_l"])
     chunked_count = len(df_no_chunk["unique_id_l"])
-    assert (
-        no_chunked_count == chunked_count
-    ), f"Row count mismatch: {no_chunked_count} vs {chunked_count}"
+    assert no_chunked_count == chunked_count, (
+        f"Row count mismatch: {no_chunked_count} vs {chunked_count}"
+    )
 
     # Compare the actual data
     assert df_no_chunk["unique_id_l"] == df_chunked["unique_id_l"]
@@ -95,9 +95,9 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect, fake_
             num_chunks_right=num_right,
         )
 
-        assert (
-            _get_comparison_count(predictions) == baseline_count
-        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+        assert _get_comparison_count(predictions) == baseline_count, (
+            f"Chunk config ({num_left}, {num_right}) produced different count"
+        )
 
         df_chunked = _sort_predictions(predictions)
         assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
@@ -427,9 +427,9 @@ def test_chunked_predict_link_only(test_helpers, dialect, fake_1000):
             num_chunks_right=num_right,
         )
 
-        assert (
-            _get_comparison_count(predictions) == baseline_count
-        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+        assert _get_comparison_count(predictions) == baseline_count, (
+            f"Chunk config ({num_left}, {num_right}) produced different count"
+        )
 
         df_chunked = _sort_predictions(predictions)
         assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
@@ -475,9 +475,9 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, fake_10
             num_chunks_right=num_right,
         )
 
-        assert (
-            _get_comparison_count(predictions) == baseline_count
-        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+        assert _get_comparison_count(predictions) == baseline_count, (
+            f"Chunk config ({num_left}, {num_right}) produced different count"
+        )
 
         df_chunked = _sort_predictions(predictions)
         assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
@@ -519,9 +519,9 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect, fake_1000):
             num_chunks_right=num_right,
         )
 
-        assert (
-            _get_comparison_count(predictions) == baseline_count
-        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+        assert _get_comparison_count(predictions) == baseline_count, (
+            f"Chunk config ({num_left}, {num_right}) produced different count"
+        )
 
         df_chunked = _sort_predictions(predictions)
         assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]
@@ -569,9 +569,9 @@ def test_chunked_predict_link_and_dedupe_three_datasets(
             num_chunks_right=num_right,
         )
 
-        assert (
-            _get_comparison_count(predictions) == baseline_count
-        ), f"Chunk config ({num_left}, {num_right}) produced different count"
+        assert _get_comparison_count(predictions) == baseline_count, (
+            f"Chunk config ({num_left}, {num_right}) produced different count"
+        )
 
         df_chunked = _sort_predictions(predictions)
         assert df_baseline["unique_id_l"] == df_chunked["unique_id_l"]

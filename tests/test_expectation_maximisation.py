@@ -195,22 +195,22 @@ def test_fix_probabilities(fake_1000):
     exact_match_level = first_name_comparison["comparison_levels"][1]
     levenshtein_level = first_name_comparison["comparison_levels"][2]
 
-    assert (
-        exact_match_level["m_probability"] == 0.9999
-    ), "Exact match m_probability is not as expected"
-    assert (
-        exact_match_level["u_probability"] == 0.001
-    ), "Exact match u_probability is not as expected"
-    assert (
-        levenshtein_level["m_probability"] == 0.88
-    ), "Levenshtein m_probability is not as expected"
+    assert exact_match_level["m_probability"] == 0.9999, (
+        "Exact match m_probability is not as expected"
+    )
+    assert exact_match_level["u_probability"] == 0.001, (
+        "Exact match u_probability is not as expected"
+    )
+    assert levenshtein_level["m_probability"] == 0.88, (
+        "Levenshtein m_probability is not as expected"
+    )
 
     # Check that non-fixed probabilities on the else level have changed
     else_level = first_name_comparison["comparison_levels"][3]
 
-    assert (
-        else_level["m_probability"] != 0.001
-    ), "Else level m_probability should have changed"
-    assert (
-        else_level["u_probability"] != 0.9
-    ), "Else level u_probability should have changed"
+    assert else_level["m_probability"] != 0.001, (
+        "Else level m_probability should have changed"
+    )
+    assert else_level["u_probability"] != 0.9, (
+        "Else level u_probability should have changed"
+    )

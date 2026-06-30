@@ -193,7 +193,7 @@ def calculate_cartesian(df_rows, link_type):
     if link_type == "link_only":
         if len(n) <= 1:
             raise ValueError(
-                "if 'link_type 'is 'link_only' should have " "at least two input frames"
+                "if 'link_type 'is 'link_only' should have at least two input frames"
             )
         # sum of pairwise product can be found as
         # half of [(sum)-squared - (sum of squares)]
@@ -204,8 +204,7 @@ def calculate_cartesian(df_rows, link_type):
     if link_type == "dedupe_only":
         if len(n) > 1:
             raise ValueError(
-                "if 'link_type' is 'dedupe_only' should have only "
-                "a single input frame"
+                "if 'link_type' is 'dedupe_only' should have only a single input frame"
             )
         return n[0]["count"] * (n[0]["count"] - 1) / 2
 
@@ -214,8 +213,7 @@ def calculate_cartesian(df_rows, link_type):
         return total_rows * (total_rows - 1) / 2
 
     raise ValueError(
-        "'link_type' should be either 'link_only', 'dedupe_only', "
-        "or 'link_and_dedupe'"
+        "'link_type' should be either 'link_only', 'dedupe_only', or 'link_and_dedupe'"
     )
 
 

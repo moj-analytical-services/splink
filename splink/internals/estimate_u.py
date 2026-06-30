@@ -451,7 +451,7 @@ def estimate_u_values(
     for i, comparison in enumerate(settings_obj.comparisons):
         logger.info(
             f"\nEstimating u for: {comparison.output_column_name} "
-            f"(Comparison {i+1} of {len(settings_obj.comparisons)})"
+            f"(Comparison {i + 1} of {len(settings_obj.comparisons)})"
         )
         original_comparison = original_settings_obj.comparisons[i]
 

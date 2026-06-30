@@ -161,7 +161,7 @@ class LinkerEvalution:
 
         if not all(metric in allowed for metric in add_metrics):
             raise ValueError(
-                "Invalid metric. " f"Allowed metrics are: {', '.join(allowed)}."
+                f"Invalid metric. Allowed metrics are: {', '.join(allowed)}."
             )
 
         df_truth_space = truth_space_table_from_labels_column(

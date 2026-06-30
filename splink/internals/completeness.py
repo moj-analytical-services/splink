@@ -83,7 +83,7 @@ def completeness_data(
     # Replace table names with something user-friendly
     if table_names_for_chart is None:
         table_names_for_chart = [
-            f"input_data_{i+1}" for i in range(len(splink_df_dict))
+            f"input_data_{i + 1}" for i in range(len(splink_df_dict))
         ]
     physical_names = [df.physical_name for df in splink_df_dict.values()]
     whens = " ".join(

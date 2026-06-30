@@ -81,7 +81,7 @@ def validate_categorical_parameter(
     else:
         comma_quote_separated_options = "', '".join(allowed_values)
         raise ValueError(
-            f"'{parameter_name}' must be one of: " f"'{comma_quote_separated_options}'"
+            f"'{parameter_name}' must be one of: '{comma_quote_separated_options}'"
         )
 
 
@@ -350,7 +350,7 @@ class LiteralMatchLevel(ComparisonLevelCreator):
         elif self.side_of_comparison == "right":
             return f"{col.name_r} = {dialected}"
         elif self.side_of_comparison == "both":
-            return f"{col.name_l} = {dialected}" f" AND {col.name_r} = {dialected}"
+            return f"{col.name_l} = {dialected} AND {col.name_r} = {dialected}"
         raise ValueError(f"Invalid `side_of_comparison`: {self.side_of_comparison}.")
 
     def create_label_for_charts(self) -> str:

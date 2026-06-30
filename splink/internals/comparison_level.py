@@ -472,8 +472,7 @@ class ComparisonLevel:
         else:
             mult = 1 / self._bayes_factor
             return (
-                f"{text} {self._num_fmt_dp_or_sf(mult)} times "
-                "less likely to be a match"
+                f"{text} {self._num_fmt_dp_or_sf(mult)} times less likely to be a match"
             )
 
     @property
