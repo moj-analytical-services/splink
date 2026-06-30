@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, Type, TypeVar, final
 
 from splink.internals.input_column import InputColumn
@@ -37,7 +37,8 @@ class SplinkDialect(ABC):
             cls._dialect_instances[cls] = instance
         return cls._dialect_instances[cls]
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def sql_dialect_str(self):
         pass
 
