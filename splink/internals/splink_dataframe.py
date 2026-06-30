@@ -28,7 +28,7 @@ class SplinkDataFrame(ABC):
         templated_name: str,
         physical_name: str,
         db_api: DatabaseAPI[Any],
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         self.templated_name = templated_name
         self.physical_name = physical_name

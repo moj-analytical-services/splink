@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 def predict_from_comparison_vectors_sqls_using_settings(
     settings_obj: Settings,
-    threshold_match_probability: float = None,
-    threshold_match_weight: float = None,
+    threshold_match_probability: float | None = None,
+    threshold_match_weight: float | None = None,
     include_clerical_match_score: bool = False,
 ) -> list[dict[str, str]]:
     return predict_from_comparison_vectors_sqls(
@@ -43,8 +43,8 @@ def predict_from_comparison_vectors_sqls(
     unique_id_input_columns: List[InputColumn],
     core_model_settings: CoreModelSettings,
     sql_dialect: SplinkDialect,
-    threshold_match_probability: float = None,
-    threshold_match_weight: float = None,
+    threshold_match_probability: float | None = None,
+    threshold_match_weight: float | None = None,
     # by default we keep off everything we don't necessarily need
     retain_matching_columns: bool = False,
     retain_intermediate_calculation_columns: bool = False,

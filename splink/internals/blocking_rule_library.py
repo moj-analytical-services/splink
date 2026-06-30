@@ -12,7 +12,7 @@ from splink.internals.dialects import SplinkDialect
 def _translate_sql_string(
     sqlglot_base_dialect_sql: str,
     to_sqlglot_dialect: str,
-    from_sqlglot_dialect: str = None,
+    from_sqlglot_dialect: str | None = None,
 ) -> str:
     tree = parse_one(sqlglot_base_dialect_sql, read=from_sqlglot_dialect)
 
@@ -38,7 +38,7 @@ class CustomRule(BlockingRuleCreator):
     def __init__(
         self,
         blocking_rule: str,
-        sql_dialect: str = None,
+        sql_dialect: str | None = None,
         arrays_to_explode: list[str] | None = None,
     ):
         """

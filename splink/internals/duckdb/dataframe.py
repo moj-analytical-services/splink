@@ -62,21 +62,21 @@ class DuckDBDataFrame(SplinkDataFrame):
         duckdb_table = self.db_api._execute_sql_against_backend(sql)
         return dict_from_relation(duckdb_table)
 
-    def as_pandas_dataframe(self, limit: int = None) -> pd_DataFrame:
+    def as_pandas_dataframe(self, limit: int | None = None) -> pd_DataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
         return self.db_api._execute_sql_against_backend(sql).to_df()
 
-    def as_duckdbpyrelation(self, limit: int = None) -> DuckDBPyRelation:
+    def as_duckdbpyrelation(self, limit: int | None = None) -> DuckDBPyRelation:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
         return self.db_api._execute_sql_against_backend(sql)
 
-    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+    def as_pyarrow_table(self, limit: int | None = None) -> PyArrowTable:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

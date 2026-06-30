@@ -182,13 +182,13 @@ class ComparisonLevel:
         sql_condition: str,
         sql_dialect: SplinkDialect,
         *,
-        label_for_charts: str = None,
+        label_for_charts: str | None = None,
         is_null_level: bool = False,
-        tf_adjustment_column: str = None,
+        tf_adjustment_column: str | None = None,
         tf_adjustment_weight: float = 1.0,
         tf_minimum_u_value: float = 0.0,
-        m_probability: float = None,
-        u_probability: float = None,
+        m_probability: float | None = None,
+        u_probability: float | None = None,
         disable_tf_exact_match_detection: bool = False,
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
@@ -279,7 +279,7 @@ class ComparisonLevel:
         return m_probability
 
     @m_probability.setter
-    def m_probability(self, value: float) -> None:
+    def m_probability(self, value: float | str | None) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         _validate_m_u_probability(value, "m_probability", LEVEL_NOT_OBSERVED_TEXT)
@@ -297,7 +297,7 @@ class ComparisonLevel:
         return u_probability
 
     @u_probability.setter
-    def u_probability(self, value: float) -> None:
+    def u_probability(self, value: float | str | None) -> None:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         _validate_m_u_probability(value, "u_probability", LEVEL_NOT_OBSERVED_TEXT)
@@ -480,7 +480,7 @@ class ComparisonLevel:
         return self._label_for_charts or str(self.comparison_vector_value)
 
     def _label_for_charts_no_duplicates(
-        self, comparison_levels: list[ComparisonLevel] = None
+        self, comparison_levels: list[ComparisonLevel] | None = None
     ) -> str:
         if comparison_levels is not None:
             labels = []

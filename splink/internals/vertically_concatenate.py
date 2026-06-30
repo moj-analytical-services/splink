@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def vertically_concatenate_sql(
     input_tables: Dict[str, SplinkDataFrame],
-    source_dataset_input_column: InputColumn = None,
+    source_dataset_input_column: InputColumn | None = None,
 ) -> str:
     """
     Using `input_tables`, create a single table with the columns and

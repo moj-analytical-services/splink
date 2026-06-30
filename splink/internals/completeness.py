@@ -20,8 +20,8 @@ from splink.internals.vertically_concatenate import vertically_concatenate_sql
 def completeness_data(
     splink_df_dict: dict[str, SplinkDataFrame],
     db_api: DatabaseAPISubClass,
-    cols: List[str] = None,
-    table_names_for_chart: List[str] = None,
+    cols: List[str] | None = None,
+    table_names_for_chart: List[str] | None = None,
 ) -> list[dict[str, Any]]:
     pipeline = CTEPipeline()
 
@@ -111,8 +111,8 @@ def completeness_data(
 
 def completeness_chart(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
-    cols: List[str] = None,
-    table_names_for_chart: List[str] = None,
+    cols: List[str] | None = None,
+    table_names_for_chart: List[str] | None = None,
 ) -> CompletenessChart:
     """Generate a summary chart of data completeness (proportion of non-nulls) of
     columns in each of the input table or tables. By default, completeness is assessed

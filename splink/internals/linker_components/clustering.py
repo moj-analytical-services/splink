@@ -489,7 +489,7 @@ class LinkerClustering:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         *,
-        threshold_match_probability: float = None,
+        threshold_match_probability: float | None = None,
     ) -> GraphMetricsResults:
         """
         Generates tables containing graph metrics (for nodes, edges and clusters),

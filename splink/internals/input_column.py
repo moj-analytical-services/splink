@@ -174,7 +174,7 @@ class InputColumn:
         self,
         raw_column_name_or_column_reference: str,
         *,
-        column_info_settings: ColumnInfoSettings = None,
+        column_info_settings: ColumnInfoSettings | None = None,
         sqlglot_dialect_str: str,
     ):
         # TODO: the sql_dialect is the sqlglot name.
