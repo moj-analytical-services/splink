@@ -51,6 +51,15 @@ def _validate_m_u_probability(
         )
 
 
+def _validate_fixed_match_weight(value: float | None) -> None:
+    if value is None:
+        return
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ValueError("fixed_match_weight must be a number")
+    if not math.isfinite(value):
+        raise ValueError("fixed_match_weight must be a finite number")
+
+
 def _is_exact_match(sql_syntax_tree):
     signature = sqlglot_tree_signature(sql_syntax_tree)
 
@@ -192,6 +201,7 @@ class ComparisonLevel:
         disable_tf_exact_match_detection: bool = False,
         fix_m_probability: bool = False,
         fix_u_probability: bool = False,
+        fixed_match_weight: float | None = None,
     ):
         self.sql_dialect = sql_dialect
 
@@ -211,8 +221,10 @@ class ComparisonLevel:
         _validate_m_u_probability(
             u_probability, "u_probability", LEVEL_NOT_OBSERVED_TEXT
         )
+        _validate_fixed_match_weight(fixed_match_weight)
         self._m_probability: float | None | str = m_probability
         self._u_probability: float | None | str = u_probability
+        self._fixed_match_weight: float | None = fixed_match_weight
         self.default_m_probability: float | None = None
         self.default_u_probability: float | None = None
 
@@ -268,9 +280,50 @@ class ComparisonLevel:
             return input_column.unquote().name
 
     @property
+    def fixed_match_weight(self) -> float | None:
+        """The match weight fixed for this level, or None if not fixed.
+
+        When set, this level contributes exactly this match weight
+        (log2(m / u)) and its m and u probabilities are derived from it and
+        held constant throughout training.
+        """
+        return self._fixed_match_weight
+
+    @property
+    def _has_fixed_match_weight(self) -> bool:
+        return self._fixed_match_weight is not None
+
+    @property
+    def _fix_m_probability_effective(self) -> bool:
+        return self._fix_m_probability or self._has_fixed_match_weight
+
+    @property
+    def _fix_u_probability_effective(self) -> bool:
+        return self._fix_u_probability or self._has_fixed_match_weight
+
+    @property
+    def _m_probability_from_fixed_match_weight(self) -> float:
+        # A fixed match weight only pins log2(m / u); it does not pin m and u
+        # individually.  We choose the representation that pins one side to 1.0
+        # and encodes the whole weight in the other side.
+        fixed_match_weight = cast(float, self._fixed_match_weight)
+        if fixed_match_weight >= 0:
+            return 1.0
+        return max(match_weight_to_bayes_factor(fixed_match_weight), M_U_CLAMP_MIN)
+
+    @property
+    def _u_probability_from_fixed_match_weight(self) -> float:
+        fixed_match_weight = cast(float, self._fixed_match_weight)
+        if fixed_match_weight < 0:
+            return 1.0
+        return max(match_weight_to_bayes_factor(-fixed_match_weight), M_U_CLAMP_MIN)
+
+    @property
     def m_probability(self) -> float | None:
         if self.is_null_level:
             raise ValueError("Null levels have no m-probability")
+        if self._has_fixed_match_weight:
+            return self._m_probability_from_fixed_match_weight
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         m_probability = cast(Union[float, None], self._m_probability)
@@ -289,6 +342,8 @@ class ComparisonLevel:
     def u_probability(self) -> float | None:
         if self.is_null_level:
             raise ValueError("Null levels have no u-probability")
+        if self._has_fixed_match_weight:
+            return self._u_probability_from_fixed_match_weight
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         u_probability = cast(Union[float, None], self._u_probability)
@@ -389,6 +444,8 @@ class ComparisonLevel:
     def _m_is_trained(self):
         if self.is_null_level:
             return True
+        if self._has_fixed_match_weight:
+            return True
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
         if self._m_probability is None:
@@ -398,6 +455,8 @@ class ComparisonLevel:
     @property
     def _u_is_trained(self):
         if self.is_null_level:
+            return True
+        if self._has_fixed_match_weight:
             return True
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
@@ -413,6 +472,9 @@ class ComparisonLevel:
     def _match_weight(self):
         if self.is_null_level:
             return 0.0
+
+        if self._has_fixed_match_weight:
+            return cast(float, self._fixed_match_weight)
 
         m = self.m_probability
         u = self.u_probability
@@ -431,6 +493,8 @@ class ComparisonLevel:
     def _bayes_factor(self):
         if self.is_null_level:
             return 1.0
+        if self._has_fixed_match_weight:
+            return match_weight_to_bayes_factor(cast(float, self._fixed_match_weight))
         if self.m_probability is None or self.u_probability is None:
             return None
         elif self.u_probability == 0:
@@ -442,6 +506,8 @@ class ComparisonLevel:
     def _log2_bayes_factor(self):
         if self.is_null_level:
             return 0.0
+        if self._has_fixed_match_weight:
+            return cast(float, self._fixed_match_weight)
         else:
             return math.log2(self._bayes_factor)
 
@@ -736,11 +802,14 @@ class ComparisonLevel:
         if self.label_for_charts:
             output["label_for_charts"] = self.label_for_charts
 
-        if self._m_probability is not None and self._m_is_trained:
-            output["m_probability"] = self.m_probability
+        if self._has_fixed_match_weight:
+            output["fixed_match_weight"] = self._fixed_match_weight
+        else:
+            if self._m_probability is not None and self._m_is_trained:
+                output["m_probability"] = self.m_probability
 
-        if self._u_probability is not None and self._u_is_trained:
-            output["u_probability"] = self.u_probability
+            if self._u_probability is not None and self._u_is_trained:
+                output["u_probability"] = self.u_probability
 
         output["fix_m_probability"] = self._fix_m_probability
         output["fix_u_probability"] = self._fix_u_probability
@@ -818,6 +887,17 @@ class ComparisonLevel:
         return output_records
 
     def _validate(self):
+        if self._has_fixed_match_weight:
+            if self.is_null_level:
+                raise ValueError(
+                    "Cannot set fixed_match_weight on a comparison level where "
+                    "is_null_level is True"
+                )
+            if self._m_probability is not None or self._u_probability is not None:
+                raise ValueError(
+                    "Cannot provide fixed_match_weight together with "
+                    "m_probability or u_probability"
+                )
         self._validate_sql()
 
     def _abbreviated_sql(self, cutoff=75):

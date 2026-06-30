@@ -416,3 +416,47 @@ def test_seed_u_outputs_different_order(test_helpers, dialect):
     # should have got the same u-value each time, as we supply a seed
     # input data is same, just shuffled - should get ordered when we sample
     assert len(u_vals) == 1
+
+
+@mark_with_dialects_excluding()
+def test_u_train_respects_fixed_match_weight(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    data = [
+        {"unique_id": 1, "name": "Amanda"},
+        {"unique_id": 2, "name": "Robin"},
+        {"unique_id": 3, "name": "Robyn"},
+        {"unique_id": 4, "name": "David"},
+        {"unique_id": 5, "name": "Eve"},
+        {"unique_id": 6, "name": "Amanda"},
+    ]
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "output_column_name": "name",
+                "comparison_levels": [
+                    {
+                        "sql_condition": '"name_l" = "name_r"',
+                        "label_for_charts": "Exact match",
+                        "fixed_match_weight": 3,
+                    },
+                    {
+                        "sql_condition": "ELSE",
+                        "label_for_charts": "All other comparisons",
+                    },
+                ],
+            }
+        ],
+        "blocking_rules_to_generate_predictions": ["l.name = r.name"],
+    }
+    linker = helper.linker_with_registration([data], settings)
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    exact_level = linker._settings_obj.comparisons[
+        0
+    ]._get_comparison_level_by_comparison_vector_value(1)
+    # u must remain derived from the fixed match weight, not estimated
+    assert exact_level.fixed_match_weight == 3
+    assert exact_level.m_probability == 1.0
+    assert exact_level.u_probability == 2**-3

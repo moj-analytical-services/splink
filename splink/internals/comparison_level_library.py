@@ -203,6 +203,7 @@ class CustomLevel(ComparisonLevelCreator):
                 "is_null_level",
                 "m_probability",
                 "u_probability",
+                "fixed_match_weight",
                 "tf_adjustment_column",
                 "tf_adjustment_weight",
                 "tf_minimum_u_value",

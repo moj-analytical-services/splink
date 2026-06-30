@@ -94,9 +94,10 @@ def estimate_m_values_from_label_column(linker: "Linker", label_colname: str) ->
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in original_settings_object.comparisons:
         for cl in cc._comparison_levels_excluding_null:
-            append_m_probability_to_comparison_level_trained_probabilities(
-                cl,
-                m_u_records_lookup,
-                cc.output_column_name,
-                "estimate m from label column",
-            )
+            if not cl._fix_m_probability_effective:
+                append_m_probability_to_comparison_level_trained_probabilities(
+                    cl,
+                    m_u_records_lookup,
+                    cc.output_column_name,
+                    "estimate m from label column",
+                )

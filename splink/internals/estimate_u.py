@@ -548,12 +548,13 @@ def estimate_u_values(
 
         # Apply estimated u values to the original settings object
         for cl in original_comparison._comparison_levels_excluding_null:
-            append_u_probability_to_comparison_level_trained_probabilities(
-                cl,
-                m_u_records_lookup,
-                original_comparison.output_column_name,
-                "estimate u by random sampling",
-            )
+            if not cl._fix_u_probability_effective:
+                append_u_probability_to_comparison_level_trained_probabilities(
+                    cl,
+                    m_u_records_lookup,
+                    original_comparison.output_column_name,
+                    "estimate u by random sampling",
+                )
 
     df_sample.drop_table_from_database_and_remove_from_cache()
 

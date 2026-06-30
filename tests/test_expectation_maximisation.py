@@ -214,3 +214,60 @@ def test_fix_probabilities(fake_1000):
     assert (
         else_level["u_probability"] != 0.9
     ), "Else level u_probability should have changed"
+
+
+def test_fixed_match_weight_is_preserved_through_em_training(fake_1000):
+    first_name_comparison = cl.CustomComparison(
+        output_column_name="first_name",
+        comparison_levels=[
+            cll.NullLevel("first_name"),
+            cll.ExactMatchLevel("first_name").configure(fixed_match_weight=3),
+            cll.ElseLevel().configure(fixed_match_weight=-4),
+        ],
+    )
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            first_name_comparison,
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("dob"),
+        ],
+        blocking_rules_to_generate_predictions=[
+            block_on("first_name"),
+            block_on("dob"),
+        ],
+        additional_columns_to_retain=["cluster"],
+    )
+
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(fake_1000)
+    linker = Linker(df_sdf, settings)
+
+    linker.training.estimate_u_using_random_sampling(max_pairs=1e4)
+    linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
+
+    # The in-memory model derives m/u from the fixed weight and never updates them
+    first_name_levels = linker._settings_obj.comparisons[0].comparison_levels
+    exact_obj = first_name_levels[1]
+    assert exact_obj.fixed_match_weight == 3
+    assert exact_obj.m_probability == 1.0
+    assert exact_obj.u_probability == 2**-3
+
+    else_obj = first_name_levels[2]
+    assert else_obj.fixed_match_weight == -4
+    assert else_obj.m_probability == 2**-4
+    assert else_obj.u_probability == 1.0
+
+    # The saved model serialises only the fixed match weight (no derived m/u)
+    model = linker.misc.save_model_to_json()
+    first_name_dicts = model["comparisons"][0]["comparison_levels"]
+
+    exact_match_level = first_name_dicts[1]
+    assert exact_match_level["fixed_match_weight"] == 3
+    assert "m_probability" not in exact_match_level
+    assert "u_probability" not in exact_match_level
+
+    else_level = first_name_dicts[2]
+    assert else_level["fixed_match_weight"] == -4
+    assert "m_probability" not in else_level
+    assert "u_probability" not in else_level
