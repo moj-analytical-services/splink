@@ -14,8 +14,7 @@ def test_deterministic_link_full_example(fake_1000, dialect, tmp_path, test_help
     br_for_predict = [
         "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",
         "l.surname = r.surname and l.dob = r.dob and l.email = r.email",
-        "l.first_name = r.first_name and l.surname = r.surname "
-        "and l.email = r.email",
+        "l.first_name = r.first_name and l.surname = r.surname and l.email = r.email",
     ]
     settings = {
         "link_type": "dedupe_only",

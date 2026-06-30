@@ -1503,7 +1503,7 @@ class LinkerInference:
                 input_tablename_r=right_unnested,
             )
             table_name = (
-                "__splink__predict_between_marginal_exploded_ids_mk_" f"{br.match_key}"
+                f"__splink__predict_between_marginal_exploded_ids_mk_{br.match_key}"
             )
             pipeline.enqueue_sql(marginal_sql, table_name)
             br.exploded_id_pair_table = db_api.sql_pipeline_to_splink_dataframe(

@@ -155,7 +155,7 @@ def resolve_em_sample_threshold(
         raise ValueError(f"max_pairs must be positive, or None; got {max_pairs!r}")
     if not 0 < probe_proportion <= 1:
         raise ValueError(
-            "record_sample_proportion must be in (0, 1]; got " f"{probe_proportion!r}"
+            f"record_sample_proportion must be in (0, 1]; got {probe_proportion!r}"
         )
 
     info: dict[str, Any] = {

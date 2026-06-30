@@ -438,7 +438,7 @@ class Linker:
                     (
                         "This estimate of probability two random records match now: "
                         f" {as_prob:,.3f} "
-                        f"with reciprocal {(1/as_prob):,.3f}"
+                        f"with reciprocal {(1 / as_prob):,.3f}"
                     ),
                 )
             logger.log(15, "\n---------")
@@ -453,7 +453,7 @@ class Linker:
             "\nMedian of prop of matches estimates: "
             f"{self._settings_obj._probability_two_random_records_match:,.3f} "
             "reciprocal "
-            f"{1/self._settings_obj._probability_two_random_records_match:,.3f}",
+            f"{1 / self._settings_obj._probability_two_random_records_match:,.3f}",
         )
 
     def _populate_m_u_from_trained_values(self):

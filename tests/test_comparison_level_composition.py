@@ -59,7 +59,7 @@ def binary_composition_internals(clause, c_fun, dialect, q):
     )
     # Default label
     assert level.label_for_charts == (
-        "(Exact match on first_name) " f"{clause} " "(first_name is NULL)"
+        f"(Exact match on first_name) {clause} (first_name is NULL)"
     )
     # should default to False
     assert level.is_null_level is False

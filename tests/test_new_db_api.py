@@ -23,12 +23,7 @@ comparison_name = cl.CustomComparison(
             "label_for_charts": "both names matching",
         },
         cll.CustomLevel(
-            (
-                "levenshtein("
-                "first_name_l || surname_l, "
-                "first_name_r || surname_r"
-                ") <= 3"
-            ),
+            ("levenshtein(first_name_l || surname_l, first_name_r || surname_r) <= 3"),
             "both names fuzzy matching",
         ),
         cll.ExactMatchLevel("first_name"),

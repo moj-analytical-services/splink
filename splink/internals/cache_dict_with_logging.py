@@ -33,7 +33,7 @@ class CacheDictWithLogging(TypedUserDict):
         super().__setitem__(key, value)
 
         logger.log(
-            1, f"Setting cache for {key}" f" with physical name {value.physical_name}"
+            1, f"Setting cache for {key} with physical name {value.physical_name}"
         )
 
     def invalidate_cache(self):
@@ -43,7 +43,7 @@ class CacheDictWithLogging(TypedUserDict):
         df = self[key]
         phy_name = df.physical_name
         logger.debug(
-            f"Using cache for template name {key}" f" with physical name {phy_name}"
+            f"Using cache for template name {key} with physical name {phy_name}"
         )
         self.queries_retrieved_from_cache.append(df)
 

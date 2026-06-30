@@ -333,8 +333,8 @@ def _get_cluster_ids(
         if len(cluster_id_infos) > sample_size:
             cluster_id_infos = random.sample(cluster_id_infos, k=sample_size)
         cluster_names = [
-            f"""Cluster ID: {c['cluster_id']}, density (4dp): {c['density_4dp']},
-            size: {c['cluster_size']}"""
+            f"""Cluster ID: {c["cluster_id"]}, density (4dp): {c["density_4dp"]},
+            size: {c["cluster_size"]}"""
             for c in cluster_id_infos
         ]
         cluster_ids = [c["cluster_id"] for c in cluster_id_infos]

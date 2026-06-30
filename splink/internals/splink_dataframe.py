@@ -83,7 +83,7 @@ class SplinkDataFrame(ABC):
 
     def _drop_table_from_database(self, force_non_splink_table=False):
         raise NotImplementedError(
-            "_drop_table_from_database from database not " "implemented for this linker"
+            "_drop_table_from_database from database not implemented for this linker"
         )
 
     def drop_table_from_database_and_remove_from_cache(
