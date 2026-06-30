@@ -359,7 +359,7 @@ def truth_space_table_from_labels_column(
 
     pipeline.enqueue_sql(sql, "__splink__cartesian_product")
     cartesian_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    row_count_df = cartesian_count.as_record_dict()
+    row_count_df = cartesian_count.as_record_list()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
 
     total_labels = calculate_cartesian(row_count_df, link_type)

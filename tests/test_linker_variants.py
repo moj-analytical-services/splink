@@ -69,7 +69,7 @@ def test_dedupe_only_join_condition():
     db_api = DuckDBAPI()
     df_sdf = db_api.register([{**row, **dummy_demo_data} for row in data])
     linker = Linker(df_sdf, settings)
-    predict_rows = linker.inference.predict().as_record_dict()
+    predict_rows = linker.inference.predict().as_record_list()
 
     assert len(predict_rows) == (6 * 5) / 2
 
@@ -85,7 +85,7 @@ def test_link_only_two_join_condition():
     sds_d_sdf = db_api.register(sds_d_only)
     sds_b_sdf = db_api.register(sds_b_only)
     linker = Linker([sds_d_sdf, sds_b_sdf], settings)
-    predict_rows = linker.inference.predict().as_record_dict()
+    predict_rows = linker.inference.predict().as_record_list()
 
     assert len(predict_rows) == 4
 
@@ -110,7 +110,7 @@ def test_link_only_three_join_condition():
     sds_b_sdf = db_api.register(sds_b_only)
     sds_c_sdf = db_api.register(sds_c_only)
     linker = Linker([sds_d_sdf, sds_b_sdf, sds_c_sdf], settings)
-    predict_rows = linker.inference.predict().as_record_dict()
+    predict_rows = linker.inference.predict().as_record_list()
 
     assert len(predict_rows) == 12
 
@@ -134,7 +134,7 @@ def test_link_and_dedupe_two_join_condition():
     sds_d_sdf = db_api.register(sds_d_only)
     sds_b_sdf = db_api.register(sds_b_only)
     linker = Linker([sds_d_sdf, sds_b_sdf], settings)
-    predict_rows = linker.inference.predict().as_record_dict()
+    predict_rows = linker.inference.predict().as_record_list()
 
     assert len(predict_rows) == (4 * 3) / 2
 
@@ -159,7 +159,7 @@ def test_link_and_dedupe_three_join_condition():
     sds_b_sdf = db_api.register(sds_b_only)
     sds_c_sdf = db_api.register(sds_c_only)
     linker = Linker([sds_d_sdf, sds_b_sdf, sds_c_sdf], settings)
-    predict_rows = linker.inference.predict().as_record_dict()
+    predict_rows = linker.inference.predict().as_record_list()
 
     assert len(predict_rows) == (6 * 5) / 2
 

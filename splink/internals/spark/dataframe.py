@@ -35,7 +35,7 @@ class SparkDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def as_record_dict(self, limit=None):
+    def as_record_list(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

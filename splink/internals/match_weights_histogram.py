@@ -75,7 +75,7 @@ def histogram_data(
 
     df_min_max = linker._db_api.sql_pipeline_to_splink_dataframe(
         pipeline
-    ).as_record_dict()
+    ).as_record_list()
 
     min_weight = df_min_max[0]["min_weight"]
     max_weight = df_min_max[0]["max_weight"]

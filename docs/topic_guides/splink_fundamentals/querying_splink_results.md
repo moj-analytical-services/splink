@@ -25,7 +25,7 @@ You can also convert a `SplinkDataFrame` into other types, including:
 
 - a [PyArrow](https://arrow.apache.org/docs/python/) Table, using `splink_df.as_pyarrow_table()`
 - a Pandas dataframe, using `splink_df.as_pandas_dataframe()`
-- a list of record dictionaries, using `splink_df.as_record_dict()`
+- a list of record dictionaries, using `splink_df.as_record_list()`
 
 
 For large linkages, it is not recommended to convert the whole `SplinkDataFrame` into an in-memory type because Splink results can be very large, so doing so can be slow and result in out of memory errors. Usually it will be better to use [SQL to query the tables directly](#querying-tables).

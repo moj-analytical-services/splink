@@ -75,7 +75,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         cur = self.db_api.con.cursor()
         return cur.execute(sql)
 
-    def as_record_dict(self, limit=None):
+    def as_record_list(self, limit=None):
         return self._limit_table_as_result(limit).fetchall()
 
     def as_dict(self, limit=None):

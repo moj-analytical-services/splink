@@ -106,7 +106,7 @@ def completeness_data(
     pipeline.enqueue_sql(sql, "__splink__df_all_column_completeness_renames")
     df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    return df.as_record_dict()
+    return df.as_record_list()
 
 
 def completeness_chart(

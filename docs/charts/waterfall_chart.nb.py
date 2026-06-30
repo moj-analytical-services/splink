@@ -128,7 +128,7 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 )
 
 df_predictions = linker.inference.predict(threshold_match_probability=0.2)
-records_to_view = df_predictions.as_record_dict(limit=5)
+records_to_view = df_predictions.as_record_list(limit=5)
 
 chart = linker.visualisations.waterfall_chart(records_to_view, filter_nulls=False)
 chart

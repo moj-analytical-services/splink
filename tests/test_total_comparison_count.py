@@ -115,7 +115,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
 
     pipeline.enqueue_sql(sql, "__splink__cartesian_product")
     cartesian_count = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    row_count_df = cartesian_count.as_record_dict()
+    row_count_df = cartesian_count.as_record_list()
     cartesian_count.drop_table_from_database_and_remove_from_cache()
     # check this is what we expect from input
     assert frame_sizes == [frame["count"] for frame in row_count_df]

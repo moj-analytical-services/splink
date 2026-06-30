@@ -1014,5 +1014,5 @@ def test_linker_blocking_analysis_uses_settings_defaults(fake_1000):
     # n_largest_blocks via the linker
     n_largest = linker.blocking_analysis.n_largest_blocks(
         block_on("first_name"), n_largest=3
-    ).as_record_dict()
+    ).as_record_list()
     assert len(n_largest) <= 3

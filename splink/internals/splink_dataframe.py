@@ -20,7 +20,7 @@ class SplinkDataFrame(ABC):
     """Abstraction over dataframe to handle basic operations like retrieving data and
     retrieving column names, which need different implementations depending on whether
     it's a spark dataframe, sqlite table etc.
-    Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
+    Uses methods like `as_pandas_dataframe()` and `as_record_list()` to retrieve data
     """
 
     def __init__(
@@ -139,7 +139,7 @@ class SplinkDataFrame(ABC):
         sql = sql.format(this=self.physical_name)
         return self.db_api.query_sql(sql)
 
-    def as_record_dict(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    def as_record_list(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Return the dataframe as a list of record dictionaries.
 
         This can be computationally expensive if the dataframe is large.
@@ -147,7 +147,7 @@ class SplinkDataFrame(ABC):
         Examples:
             ```py
             df_predict = linker.inference.predict()
-            ten_edges = df_predict.as_record_dict(10)
+            ten_edges = df_predict.as_record_list(10)
             ```
         Args:
             limit (int, optional): If provided, return this number of rows (equivalent
@@ -156,7 +156,7 @@ class SplinkDataFrame(ABC):
         Returns:
             list: a list of records, each of which is a dictionary
         """
-        raise NotImplementedError("as_record_dict not implemented for this backend")
+        raise NotImplementedError("as_record_list not implemented for this backend")
 
     def as_dict(self, limit: Optional[int] = None) -> dict[str, list[Any]]:
         """Return the dataframe as a dictionary of columns to lists of values.
@@ -219,7 +219,7 @@ class SplinkDataFrame(ABC):
         """
         import pandas as pd
 
-        return pd.DataFrame(self.as_record_dict(limit=limit))
+        return pd.DataFrame(self.as_record_list(limit=limit))
 
     def as_duckdbpyrelation(self, limit: Optional[int] = None) -> DuckDBPyRelation:
         """Return the dataframe as a duckdbpyrelation.  Only available when using the

@@ -377,7 +377,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
         link_type=link_type,
         source_dataset_input_column=source_dataset_input_column,
         db_api=db_api,
-    ).as_record_dict()
+    ).as_record_list()
 
     cartesian_count = calculate_cartesian(rc, link_type)
 

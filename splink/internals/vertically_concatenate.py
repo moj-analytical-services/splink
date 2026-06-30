@@ -187,7 +187,7 @@ def _two_dataset_link_only_first_source_dataset_value(
     df_obj: SplinkDataFrame,
     source_dataset_input_column: InputColumn,
 ) -> Any | None:
-    records = df_obj.as_record_dict(limit=1)
+    records = df_obj.as_record_list(limit=1)
     source_dataset_column_key = source_dataset_input_column.unquote().name
     return None if not records else records[0][source_dataset_column_key]
 

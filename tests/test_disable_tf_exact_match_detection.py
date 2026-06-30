@@ -175,7 +175,7 @@ def test_with_predict_calculation(fake_1000):
     where unique_id_l = 835
     and unique_id_r = 836
     """
-    res = linker.misc.query_sql(sql).as_record_dict()[0]
+    res = linker.misc.query_sql(sql).as_record_list()[0]
 
     # Exact match, normal tf adjustement, Kirk
     assert res["mw_surname"] == pytest.approx(math.log2(8.0))
@@ -188,7 +188,7 @@ def test_with_predict_calculation(fake_1000):
     where unique_id_l = 147
     and unique_id_r = 975
     """
-    res = linker.misc.query_sql(sql).as_record_dict()[0]
+    res = linker.misc.query_sql(sql).as_record_list()[0]
     # Levenshtein match, normal tf adustments, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
@@ -220,7 +220,7 @@ def test_with_predict_calculation(fake_1000):
     where unique_id_l = 835
     and unique_id_r = 836
     """
-    res = linker.misc.query_sql(sql).as_record_dict()[0]
+    res = linker.misc.query_sql(sql).as_record_list()[0]
     # Exact match, normal tf adjustement, Kirk
     assert res["mw_surname"] == pytest.approx(math.log2(8.0))
     # Overall BF should be m/u = 0.8/0.2 = 4
@@ -231,7 +231,7 @@ def test_with_predict_calculation(fake_1000):
     where unique_id_l = 147
     and unique_id_r = 975
     """
-    res = linker.misc.query_sql(sql).as_record_dict()[0]
+    res = linker.misc.query_sql(sql).as_record_list()[0]
     # Levenshtein match, tf exact match detection disabled, Taylor
     # Splink makes the tf adjustment based on on the exact match level
     # Lev match level has bf of 0.9/0.3
@@ -278,7 +278,7 @@ def test_with_predict_calculation(fake_1000):
         where unique_id_l = 835
         and unique_id_r = 836
         """
-        res = linker.misc.query_sql(sql).as_record_dict()[0]
+        res = linker.misc.query_sql(sql).as_record_list()[0]
         # Exact match, normal tf adjustement, Kirk
         assert res["mw_surname"] == pytest.approx(math.log2(8.0))
         # Overall BF should be m/u = 0.8/0.2 = 4
@@ -291,7 +291,7 @@ def test_with_predict_calculation(fake_1000):
         where unique_id_l = 147
         and unique_id_r = 975
         """
-        res = linker.misc.query_sql(sql).as_record_dict()[0]
+        res = linker.misc.query_sql(sql).as_record_list()[0]
         # Levenshtein match, tf exact match detection disabled, Taylor
         # Splink makes the tf adjustment based on on the exact match level
         # Lev match level has bf of 0.9/0.3

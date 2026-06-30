@@ -63,7 +63,7 @@ def df_clusters_as_records(
     pipeline.enqueue_sql(sql, "__splink__scs_clusters")
     df_clusters = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    return df_clusters.as_record_dict()
+    return df_clusters.as_record_list()
 
 
 def _nodes_sql(df_clustered_nodes: SplinkDataFrame, cluster_ids: list[str]) -> str:
@@ -151,7 +151,7 @@ def df_edges_as_records(
     pipeline.enqueue_sql(sql, "__splink__scs_edges")
     df_edges = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    return df_edges.as_record_dict()
+    return df_edges.as_record_list()
 
 
 def _get_random_cluster_ids(
@@ -167,7 +167,7 @@ def _get_random_cluster_ids(
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, "__splink__cluster_count")
     df_cluster_count = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    cluster_count = df_cluster_count.as_record_dict()[0]["count"]
+    cluster_count = df_cluster_count.as_record_list()[0]["count"]
     df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
     proportion = sample_size / cluster_count
@@ -196,7 +196,7 @@ def _get_random_cluster_ids(
     pipeline.enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    return [r["cluster_id"] for r in df_sample.as_record_dict()]
+    return [r["cluster_id"] for r in df_sample.as_record_list()]
 
 
 def _get_cluster_id_of_each_size(
@@ -240,7 +240,7 @@ def _get_cluster_id_of_each_size(
         pipeline
     )
 
-    return df_cluster_sample_with_size.as_record_dict()
+    return df_cluster_sample_with_size.as_record_list()
 
 
 def _get_lowest_density_clusters(
@@ -291,7 +291,7 @@ def _get_lowest_density_clusters(
         pipeline
     )
 
-    return df_lowest_density_clusters.as_record_dict()
+    return df_lowest_density_clusters.as_record_list()
 
 
 def _get_cluster_ids(
@@ -376,7 +376,7 @@ def render_splink_cluster_studio_html(
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
-    nodes_recs = df_nodes.as_record_dict()
+    nodes_recs = df_nodes.as_record_list()
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges

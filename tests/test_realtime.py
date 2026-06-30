@@ -75,28 +75,28 @@ def test_realtime_cache_two_records(test_helpers, dialect):
 
     res1_2_first = compare_records(
         data_1, data_2, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     res1_2_not_from_cache = compare_records(
         data_1, data_2, settings, db_api, sql_cache_key=None
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     res1_2_from_cache = compare_records(
         data_1, data_2, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     assert res1_2_first == pytest.approx(res1_2_not_from_cache)
     assert res1_2_first == pytest.approx(res1_2_from_cache)
 
     res1_3_first = compare_records(
         data_1, data_3, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
     res1_3_not_from_cache = compare_records(
         data_1, data_3, settings, db_api, sql_cache_key=None
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
     res1_3_from_cache = compare_records(
         data_1, data_3, settings, db_api, sql_cache_key=f"model_c2r_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     assert res1_3_first == pytest.approx(res1_3_not_from_cache)
     assert res1_3_first == pytest.approx(res1_3_from_cache)
@@ -310,17 +310,17 @@ def test_realtime_cache_different_settings(test_helpers, dialect):
 
     res1 = compare_records(
         data1, data2, settings_1, db_api, sql_cache_key=f"first_model_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     res2 = compare_records(
         data1, data2, settings_2, db_api, sql_cache_key=f"second_model_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
 
     assert res1 != pytest.approx(res2)
 
     res1_again = compare_records(
         data1, data2, settings_1, db_api, sql_cache_key=f"first_model_{dialect}"
-    ).as_record_dict()[0]["match_weight"]
+    ).as_record_list()[0]["match_weight"]
     assert res1 == pytest.approx(res1_again)
 
 
@@ -372,12 +372,12 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     res1 = compare_records(
         data1, data2, settings_1, db_api, sql_cache_key=f"first_model_dict_{dialect}"
     )
-    res1 = res1.as_record_dict()[0]["match_weight"]
+    res1 = res1.as_record_list()[0]["match_weight"]
 
     res2 = compare_records(
         data1, data2, settings_2, db_api, sql_cache_key=f"second_model_dict_{dialect}"
     )
-    res2 = res2.as_record_dict()[0]["match_weight"]
+    res2 = res2.as_record_list()[0]["match_weight"]
 
     # should be different results as different model
     assert res1 != pytest.approx(res2)
@@ -385,7 +385,7 @@ def test_realtime_cache_different_settings_dict(test_helpers, dialect):
     res1_again = compare_records(
         data1, data2, settings_1, db_api, sql_cache_key=f"first_model_dict_{dialect}"
     )
-    res1_again = res1_again.as_record_dict()[0]["match_weight"]
+    res1_again = res1_again.as_record_list()[0]["match_weight"]
     # using cache
     assert res1 == pytest.approx(res1_again)
 
@@ -424,7 +424,7 @@ def test_realtime_custom_join(test_helpers, dialect):
         sql_cache_key=None,
     )
     # count of comparisons = 5 * 5
-    assert len(res.as_record_dict()) == 25
+    assert len(res.as_record_list()) == 25
 
     res = compare_records(
         data,
@@ -435,4 +435,4 @@ def test_realtime_custom_join(test_helpers, dialect):
         join_condition="l.unique_id < r.unique_id",
     )
     # count of comparisons = 5 * 4 / 2
-    assert len(res.as_record_dict()) == 10
+    assert len(res.as_record_list()) == 10

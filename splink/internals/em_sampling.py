@@ -122,7 +122,7 @@ def _count_blocked_pairs_for_probe(
     )
 
     df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    rows = df.as_record_dict()
+    rows = df.as_record_list()
     df.drop_table_from_database_and_remove_from_cache()
     count = int(rows[0]["row_count"]) if rows else 0
 

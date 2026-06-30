@@ -165,7 +165,7 @@ linker.evaluation.accuracy_analysis_from_labels_column(
 pred_errors_df = linker.evaluation.prediction_errors_from_labels_column(
     "cluster"
 )
-print(len(pred_errors_df.as_record_dict()))
+print(len(pred_errors_df.as_record_list()))
 pred_errors_df.as_duckdbpyrelation().limit(5).show(max_width=10000)
 
 # %% [markdown]
@@ -174,5 +174,5 @@ pred_errors_df.as_duckdbpyrelation().limit(5).show(max_width=10000)
 # %%
 records = linker.evaluation.prediction_errors_from_labels_column(
     "cluster"
-).as_record_dict(limit=10)
+).as_record_list(limit=10)
 linker.visualisations.waterfall_chart(records)
