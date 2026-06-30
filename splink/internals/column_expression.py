@@ -17,7 +17,7 @@ from splink.internals.sql_transform import (
 
 
 class ColumnExpressionOperation(Protocol):
-    def __call__(self, name: str, sql_dialect: SplinkDialect) -> str: ...
+    def __call__(self, name: str, *, sql_dialect: SplinkDialect) -> str: ...
 
 
 class ColumnExpression:
