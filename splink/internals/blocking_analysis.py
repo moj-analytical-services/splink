@@ -40,6 +40,7 @@ from splink.internals.em_sampling import (
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     calculate_cartesian,
+    ensure_is_list,
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -651,12 +652,7 @@ def count_comparisons_from_blocking_rules(
     # Allow either a single blocking rule or an iterable of them.  A single rule
     # may be a dict, which is itself iterable, so we must detect the single-rule
     # types explicitly rather than relying on iterability.
-    if isinstance(blocking_rules, (str, dict, BlockingRuleCreator, BlockingRule)):
-        blocking_rules_iterable: Iterable[
-            Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]
-        ] = [blocking_rules]
-    else:
-        blocking_rules_iterable = list(blocking_rules)
+    blocking_rules_iterable = ensure_is_list(blocking_rules)
 
     blocking_rules_as_br: List[BlockingRule] = []
     for br_input in blocking_rules_iterable:
