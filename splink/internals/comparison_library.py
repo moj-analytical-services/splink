@@ -685,7 +685,7 @@ class CustomComparison(ComparisonCreator):
     def _convert_to_creator(
         comparison_creator: dict[str, Any] | ComparisonCreator,
     ) -> ComparisonCreator:
-        if isinstance(comparison_creator, dict):
+        if not isinstance(comparison_creator, ComparisonCreator):
             return CustomComparison(**comparison_creator)
         return comparison_creator
 

@@ -12,11 +12,12 @@ from .blocking_rule_library import CustomRule
 def to_blocking_rule_creator(
     blocking_rule_creator: Union[dict[str, Any], str, BlockingRuleCreator],
 ) -> BlockingRuleCreator:
+    if isinstance(blocking_rule_creator, BlockingRuleCreator):
+        return blocking_rule_creator
     if isinstance(blocking_rule_creator, dict):
         return CustomRule(**blocking_rule_creator)
-    if isinstance(blocking_rule_creator, str):
-        return CustomRule(blocking_rule_creator)
-    return blocking_rule_creator
+    # assume it is a string
+    return CustomRule(blocking_rule_creator)
 
 
 def blocking_rule_args_to_list_of_blocking_rules(

@@ -78,7 +78,7 @@ class Comparison:
         sql_dialect = SplinkDialect.from_string(sqlglot_dialect)
         comparison_levels_as_objs: list[ComparisonLevel] = [
             ComparisonLevel(**cl, sql_dialect=sql_dialect)
-            if isinstance(cl, dict)
+            if not isinstance(cl, ComparisonLevel)
             else cl
             for cl in comparison_levels
         ]
