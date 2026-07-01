@@ -110,9 +110,7 @@ def _input_columns_used_by_sql_condition_cached(
     cols = cols[::-1]
     cols = [re.sub(r"_L$|_R$", "", c, flags=re.IGNORECASE) for c in cols]
     cols = dedupe_preserving_order(cols)
-    return tuple(
-        InputColumn(c, sqlglot_dialect_str=sqlglot_dialect) for c in cols
-    )
+    return tuple(InputColumn(c, sqlglot_dialect_str=sqlglot_dialect) for c in cols)
 
 
 def _default_u_values(num_levels: int) -> list[float]:
