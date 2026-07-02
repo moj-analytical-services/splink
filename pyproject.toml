@@ -181,9 +181,6 @@ markers = [
 [tool.mypy]
 python_version = "3.10"
 packages = "splink"
-# for now at least allow implicit optionals
-# to cut down on noise. Easy to fix.
-implicit_optional = true
 # for now, ignore missing imports
 # can remove later and install stubs, where existent
 ignore_missing_imports = true
