@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union, final
+from typing import Any, Dict, List, Optional, Union, cast, final
 
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.exceptions import SplinkException
@@ -80,9 +80,13 @@ class ComparisonCreator(ABC):
 
         if self.term_frequency_adjustments:
             for cl in comparison_levels:
+                # we can fix the cast with TypeIs, but requires typing_extensions
+                # before python 3.13
                 if (
                     hasattr(cl, "col_expression")
-                    and cl.col_expression.is_pure_column_or_column_reference
+                    and cast(
+                        ColumnExpression, cl.col_expression
+                    ).is_pure_column_or_column_reference
                     and cl.is_exact_match_level
                 ):
                     cl.term_frequency_adjustments = True
