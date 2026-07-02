@@ -10,8 +10,38 @@ on:
 permissions: {}
 
 jobs:
-  typecheck:
-    name: typecheck
+  typecheck-mypy:
+    name: typecheck-mypy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        id: setup_uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Install Python 3.12
+        id: install_python312
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        id: install_dependencies
+        run: uv sync --python 3.12 --group typechecking
+
+      - name: Run mypy
+        id: mypy
+        run: make typecheck
+
+  typecheck-ty:
+    name: typecheck-ty
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,10 +66,6 @@ jobs:
         id: install_dependencies
         run: uv sync --python 3.12 --group typechecking-dev
 
-      - name: Run mypy
-        id: mypy
-        run: make typecheck
-
-      - name: Run ty, but don't fail on error
+      - name: Run ty
         id: ty
         run: make typecheck-dev
