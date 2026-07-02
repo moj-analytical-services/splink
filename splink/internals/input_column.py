@@ -13,6 +13,24 @@ if TYPE_CHECKING:
     from splink.internals.settings import ColumnInfoSettings
 
 
+_VALID_COLUMN_SIGNATURES: Optional[set[str]] = None
+
+
+def _valid_column_signatures() -> set[str]:
+    """Return the constant set of signatures accepted as plain column references."""
+    global _VALID_COLUMN_SIGNATURES
+    if _VALID_COLUMN_SIGNATURES is None:
+        _VALID_COLUMN_SIGNATURES = {
+            sqlglot_tree_signature(sqlglot.parse_one("col_name")),
+            # negative indices are valid in certain contexts (postgres custom indexing,
+            # duckdb), and are treated separately in newer sqlglot versions (28.7.0+)
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[-1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name[1]")),
+            sqlglot_tree_signature(sqlglot.parse_one("col_name['lat']")),
+        }
+    return _VALID_COLUMN_SIGNATURES
+
+
 @dataclass(frozen=True)
 class SqlglotColumnTreeBuilder:
     """
@@ -101,14 +119,7 @@ class SqlglotColumnTreeBuilder:
             else:
                 return f"{q_s}{input_str}{q_e}"
 
-        valid_signatures = {
-            sqlglot_tree_signature(sqlglot.parse_one("col_name")),
-            # negative indices are valid in certain contexts (postgres custom indexing,
-            # duckdb), and are treated separately in newer sqlglot versions (28.7.0+)
-            sqlglot_tree_signature(sqlglot.parse_one("col_name[-1]")),
-            sqlglot_tree_signature(sqlglot.parse_one("col_name[1]")),
-            sqlglot_tree_signature(sqlglot.parse_one("col_name['lat']")),
-        }
+        valid_signatures = _valid_column_signatures()
 
         # If the raw string parses to a valid signature, use it
         try:
