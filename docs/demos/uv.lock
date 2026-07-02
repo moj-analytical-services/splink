@@ -2841,7 +2841,7 @@ docs = [
     { name = "mknotebooks", marker = "python_full_version >= '3.13'", specifier = ">=0.8.0" },
     { name = "nbconvert", marker = "python_full_version >= '3.13'", specifier = ">=7.16.6" },
     { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13'", specifier = ">=1.1.2" },
-    { name = "pymdown-extensions", marker = "python_full_version >= '3.13'", specifier = ">=10.15" },
+    { name = "pymdown-extensions", marker = "python_full_version >= '3.13'", specifier = ">=11.0" },
 ]
 linting = [{ name = "ruff", specifier = ">=0.15.18" }]
 pandas = [
