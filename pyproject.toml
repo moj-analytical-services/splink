@@ -49,7 +49,7 @@ spark-3 = [
 ]
 spark-4 = ["pyspark>=4.0.0"]
 docs = [
-    "griffe>=1.4.0",
+    "griffe>=2.1.0",
     # keep jinja2 relaxed so it doesn't constrain us in rest of dev
     "Jinja2>=3.1.6",
     "mkdocs>=1.6.1",
