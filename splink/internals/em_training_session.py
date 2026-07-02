@@ -279,7 +279,7 @@ class EMTrainingSession:
         pipeline.enqueue_list_of_sqls(sqls)
         return self.db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    def _train(self, cvv: SplinkDataFrame = None) -> CoreModelSettings:
+    def _train(self, cvv: SplinkDataFrame | None = None) -> CoreModelSettings:
         if cvv is None:
             self._ensure_em_sampling_settings()
             cvv = self._comparison_vectors()

@@ -64,8 +64,30 @@ def ensure_is_iterable(a):
     return a if isinstance(a, Iterable) else [a]
 
 
-def ensure_is_list(a: list[T] | T) -> list[T]:
-    return a if isinstance(a, list) else [a]
+@overload
+def ensure_is_list(a: str) -> list[str]: ...
+
+
+@overload
+def ensure_is_list(a: dict[str, T]) -> list[dict[str, T]]: ...
+
+
+@overload
+def ensure_is_list(a: Iterable[T]) -> list[T]: ...
+
+
+@overload
+def ensure_is_list(a: list[T] | T) -> list[T]: ...
+
+
+def ensure_is_list(a):
+    # special case a couple of iterables
+    # for this purpose we want these like singletons
+    if isinstance(a, (dict, str)):
+        return [a]
+    if isinstance(a, Iterable):
+        return list(a)
+    return [a]
 
 
 def join_list_with_commas_final_and(lst: list[str]) -> str:
@@ -163,25 +185,25 @@ class EverythingEncoder(json.JSONEncoder):
     # Note that the default method is only called for data types that are
     # NOT natively serializable.  The 'encode' method can be used
     # for natively serializable data
-    def default(self, obj):
+    def default(self, o):
         try:
             import numpy as np
         except ModuleNotFoundError:
             pass
         else:
-            if isinstance(obj, np.integer):
-                return int(obj)
-            elif isinstance(obj, np.floating):
-                return float(obj)
-            elif isinstance(obj, np.bool_):
-                return bool(obj)
-            elif isinstance(obj, np.ndarray):
-                return obj.tolist()
+            if isinstance(o, np.integer):
+                return int(o)
+            elif isinstance(o, np.floating):
+                return float(o)
+            elif isinstance(o, np.bool_):
+                return bool(o)
+            elif isinstance(o, np.ndarray):
+                return o.tolist()
 
         try:
-            return json.JSONEncoder.default(self, obj)
+            return json.JSONEncoder.default(self, o)
         except TypeError:
-            return obj.__str__()
+            return o.__str__()
 
 
 def calculate_cartesian(df_rows, link_type):

@@ -351,10 +351,10 @@ def render_splink_cluster_studio_html(
     sampling_method: SamplingMethods = "random",
     sample_size: int = 10,
     sample_seed: int | None = None,
-    cluster_ids: list[str] = None,
-    cluster_names: list[str] = None,
+    cluster_ids: list[str] | None = None,
+    cluster_names: list[str] | None = None,
     overwrite: bool = False,
-    _df_cluster_metrics: SplinkDataFrame = None,
+    _df_cluster_metrics: SplinkDataFrame | None = None,
 ) -> str:
     from jinja2 import Template
 

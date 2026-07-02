@@ -40,6 +40,7 @@ from splink.internals.em_sampling import (
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import (
     calculate_cartesian,
+    ensure_is_list,
 )
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -594,16 +595,13 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     return counts_data
 
 
+BlockingRuleLike = BlockingRuleCreator | BlockingRule | str | dict[str, Any]
+
+
 def count_comparisons_from_blocking_rules(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     *,
-    blocking_rules: Union[
-        BlockingRuleCreator,
-        BlockingRule,
-        str,
-        Dict[str, Any],
-        Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]],
-    ],
+    blocking_rules: BlockingRuleLike | Iterable[BlockingRuleLike],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
     source_dataset_column_name: Optional[str] = None,
@@ -651,14 +649,9 @@ def count_comparisons_from_blocking_rules(
     # Allow either a single blocking rule or an iterable of them.  A single rule
     # may be a dict, which is itself iterable, so we must detect the single-rule
     # types explicitly rather than relying on iterability.
-    if isinstance(blocking_rules, (str, dict, BlockingRuleCreator, BlockingRule)):
-        blocking_rules_iterable: Iterable[
-            Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]
-        ] = [blocking_rules]
-    else:
-        blocking_rules_iterable = list(blocking_rules)
+    blocking_rules_iterable: Iterable[BlockingRuleLike] = ensure_is_list(blocking_rules)
 
-    blocking_rules_as_br: List[BlockingRule] = []
+    blocking_rules_as_br: list[BlockingRule] = []
     for br_input in blocking_rules_iterable:
         blocking_rules_as_br.append(
             _as_blocking_rule(br_input, db_api.sql_dialect.sql_dialect_str)
@@ -686,13 +679,7 @@ def count_comparisons_from_blocking_rules(
 def chart_comparisons_from_blocking_rules(
     splink_dataframe_or_dataframes: SplinkDataFrame | Sequence[SplinkDataFrame],
     *,
-    blocking_rules: Union[
-        BlockingRuleCreator,
-        BlockingRule,
-        str,
-        Dict[str, Any],
-        Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]],
-    ],
+    blocking_rules: BlockingRuleLike | Iterable[BlockingRuleLike],
     link_type: user_input_link_type_options,
     unique_id_column_name: str = "unique_id",
     source_dataset_column_name: Optional[str] = None,

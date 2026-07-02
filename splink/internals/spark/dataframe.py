@@ -55,7 +55,7 @@ class SparkDataFrame(SplinkDataFrame):
         rows = spark_df.collect()
         return {col: [row[col] for row in rows] for col in columns}
 
-    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+    def as_pyarrow_table(self, limit: int | None = None) -> PyArrowTable:
         # spark 3 doesn't have native arrow support, so use our fallback method instead
         if get_spark_major_version() == 3:
             return super().as_pyarrow_table(limit=limit)
@@ -73,7 +73,7 @@ class SparkDataFrame(SplinkDataFrame):
         else:
             pass
 
-    def as_pandas_dataframe(self, limit: int = None) -> PandasDataFrame:
+    def as_pandas_dataframe(self, limit: int | None = None) -> PandasDataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

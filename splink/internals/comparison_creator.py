@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union, final
+from typing import Any, List, Optional, cast, final
 
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.exceptions import SplinkException
@@ -19,9 +19,7 @@ class ComparisonCreator(ABC):
 
     def __init__(
         self,
-        col_name_or_names: Union[
-            Dict[str, Union[str, ColumnExpression]], Union[str, ColumnExpression]
-        ],
+        col_name_or_names: dict[str, str | ColumnExpression] | str | ColumnExpression,
     ):
         """
         Class to author Comparisons
@@ -30,7 +28,7 @@ class ComparisonCreator(ABC):
                 Can be a single item or a dict.
         """
         # if it's not a dict, assume it is a single expression-like
-        if not isinstance(col_name_or_names, dict):
+        if isinstance(col_name_or_names, (str, ColumnExpression)):
             cols = {self.DEFAULT_COL_EXP_KEY: col_name_or_names}
         else:
             cols = col_name_or_names
@@ -80,9 +78,13 @@ class ComparisonCreator(ABC):
 
         if self.term_frequency_adjustments:
             for cl in comparison_levels:
+                # we can fix the cast with TypeIs, but requires typing_extensions
+                # before python 3.13
                 if (
                     hasattr(cl, "col_expression")
-                    and cl.col_expression.is_pure_column_or_column_reference
+                    and cast(
+                        ColumnExpression, cl.col_expression
+                    ).is_pure_column_or_column_reference
                     and cl.is_exact_match_level
                 ):
                     cl.term_frequency_adjustments = True

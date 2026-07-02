@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from functools import wraps
-from typing import Any, Callable, List, Literal, TypeVar, Union
+from typing import Any, Callable, List, Literal, Protocol, TypeGuard, TypeVar, Union
 
 from sqlglot import TokenError, parse_one
 
@@ -40,7 +40,7 @@ def unsupported_splink_dialects(
 def _translate_sql_string(
     sqlglot_base_dialect_sql: str,
     to_sqlglot_dialect: str,
-    from_sqlglot_dialect: str = None,
+    from_sqlglot_dialect: str | None = None,
 ) -> str:
     tree = parse_one(sqlglot_base_dialect_sql, read=from_sqlglot_dialect)
 
@@ -103,7 +103,7 @@ class NullLevel(ComparisonLevelCreator):
     def __init__(
         self,
         col_name: Union[str, ColumnExpression],
-        valid_string_pattern: str = None,
+        valid_string_pattern: str | None = None,
     ):
         col_expression = ColumnExpression.instantiate_if_str(col_name)
 
@@ -139,8 +139,8 @@ class CustomLevel(ComparisonLevelCreator):
     def __init__(
         self,
         sql_condition: str,
-        label_for_charts: str = None,
-        base_dialect_str: str = None,
+        label_for_charts: str | None = None,
+        base_dialect_str: str | None = None,
     ):
         """Represents a comparison level with a custom sql expression
 
@@ -256,7 +256,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
     @property
     def term_frequency_adjustments(self):
         # mypy doesn't know about attribute as we use magic in .configure()
-        return self.tf_adjustment_column is not None  # type: ignore [attr-defined]
+        return self.tf_adjustment_column is not None  # type: ignore [attr-defined]  # ty: ignore[unresolved-attribute]
 
     @term_frequency_adjustments.setter
     def term_frequency_adjustments(self, term_frequency_adjustments: bool) -> None:
@@ -720,7 +720,7 @@ class AbsoluteTimeDifferenceLevel(ComparisonLevelCreator):
         input_is_string: bool,
         threshold: Union[int, float],
         metric: DateMetricType,
-        datetime_format: str = None,
+        datetime_format: str | None = None,
     ):
         """
         Computes the absolute elapsed time between two dates (total duration).
@@ -939,6 +939,16 @@ class CosineSimilarityLevel(ComparisonLevelCreator):
         return f"Cosine similarity of {col.label} >= {self.similarity_threshold}"
 
 
+class DialectWithArrayIntersect(Protocol):
+    def array_intersect(self, clc: "ArrayIntersectLevel") -> str: ...
+
+
+def _dialect_has_array_intersect_function(
+    sql_dialect: SplinkDialect,
+) -> TypeGuard[DialectWithArrayIntersect]:
+    return hasattr(sql_dialect, "array_intersect")
+
+
 class ArrayIntersectLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str | ColumnExpression, min_intersection: int = 1):
         """Represents a comparison level based around the size of an intersection of
@@ -961,7 +971,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        if hasattr(sql_dialect, "array_intersect"):
+        if _dialect_has_array_intersect_function(sql_dialect):
             return sql_dialect.array_intersect(self)
 
         sqlglot_dialect_name = sql_dialect.sqlglot_dialect

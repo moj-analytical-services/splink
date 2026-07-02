@@ -90,7 +90,10 @@ class PostgresAPI(DatabaseAPI[CursorResult[Any]]):
         return len(rec) > 0
 
     def _execute_sql_against_backend(
-        self, final_sql: str, templated_name: str = None, physical_name: str = None
+        self,
+        final_sql: str,
+        templated_name: str | None = None,
+        physical_name: str | None = None,
     ) -> CursorResult[Any]:
         with self._engine.begin() as con:
             res = con.execute(text(final_sql))

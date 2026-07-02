@@ -221,7 +221,7 @@ class Settings:
         max_iterations: int = 25,
         # other
         sql_dialect: str,
-        linker_uid: str = None,
+        linker_uid: str | None = None,
     ):
         self._sql_dialect_str = sql_dialect
         self._sqlglot_dialect = SplinkDialect.from_string(sql_dialect).sqlglot_dialect

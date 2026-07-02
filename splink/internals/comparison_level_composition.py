@@ -12,7 +12,7 @@ from .comparison_level import ComparisonLevel
 def _ensure_is_comparison_level_creator(
     cl: Union[ComparisonLevelCreator, dict[str, Any]],
 ) -> ComparisonLevelCreator:
-    if isinstance(cl, dict):
+    if not isinstance(cl, ComparisonLevelCreator):
         from .comparison_level_library import CustomLevel
 
         return CustomLevel(**cl)

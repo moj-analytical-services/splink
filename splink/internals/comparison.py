@@ -71,14 +71,14 @@ class Comparison:
         self,
         comparison_levels: List[ComparisonLevel | dict[str, Any]],
         sqlglot_dialect: str,
-        output_column_name: str = None,
-        comparison_description: str = None,
-        column_info_settings: ColumnInfoSettings = None,
+        output_column_name: str | None = None,
+        comparison_description: str | None = None,
+        column_info_settings: ColumnInfoSettings | None = None,
     ):
         sql_dialect = SplinkDialect.from_string(sqlglot_dialect)
         comparison_levels_as_objs: list[ComparisonLevel] = [
             ComparisonLevel(**cl, sql_dialect=sql_dialect)
-            if isinstance(cl, dict)
+            if not isinstance(cl, ComparisonLevel)
             else cl
             for cl in comparison_levels
         ]

@@ -26,14 +26,14 @@ class CacheDictWithLogging(TypedUserDict):
         # without modifying the version in the cache
         return copy(splink_dataframe)
 
-    def __setitem__(self, key, value):
-        if not isinstance(value, SplinkDataFrame):
+    def __setitem__(self, key, item):
+        if not isinstance(item, SplinkDataFrame):
             raise TypeError("Cached items must be of type SplinkDataFrame")
 
-        super().__setitem__(key, value)
+        super().__setitem__(key, item)
 
         logger.log(
-            1, f"Setting cache for {key} with physical name {value.physical_name}"
+            1, f"Setting cache for {key} with physical name {item.physical_name}"
         )
 
     def invalidate_cache(self):

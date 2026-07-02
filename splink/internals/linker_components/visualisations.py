@@ -375,11 +375,11 @@ class LinkerVisualisations:
         out_path: str,
         sampling_method: SamplingMethods = "random",
         sample_size: int = 10,
-        cluster_ids: list[str] = None,
-        cluster_names: list[str] = None,
+        cluster_ids: list[str] | None = None,
+        cluster_names: list[str] | None = None,
         overwrite: bool = False,
         return_html_as_string: bool = False,
-        _df_cluster_metrics: SplinkDataFrame = None,
+        _df_cluster_metrics: SplinkDataFrame | None = None,
     ) -> str | None:
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.

@@ -53,9 +53,10 @@ class LinkerBlockingAnalysis:
 
     def count_comparisons_from_blocking_rules(
         self,
-        blocking_rules: Optional[
-            Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]]
-        ] = None,
+        blocking_rules: Iterable[
+            BlockingRuleCreator | BlockingRule | str | dict[str, Any]
+        ]
+        | None = None,
         *,
         record_sample_proportion: float = 0.05,
     ) -> list[CumulativeComparisonRecord]:
@@ -145,20 +146,13 @@ class LinkerBlockingAnalysis:
 
     def _resolve_blocking_rules(
         self,
-        blocking_rules: Optional[
-            Iterable[Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]]
-        ],
+        blocking_rules: Iterable[
+            BlockingRuleCreator | BlockingRule | str | dict[str, Any]
+        ]
+        | None,
     ) -> List[BlockingRule]:
         if blocking_rules is None:
             return self._default_blocking_rules()
 
-        # Allow either a single blocking rule or an iterable of them
-        if isinstance(blocking_rules, (str, dict, BlockingRuleCreator, BlockingRule)):
-            rules_list: List[
-                Union[BlockingRuleCreator, BlockingRule, str, Dict[str, Any]]
-            ] = [blocking_rules]
-        else:
-            rules_list = list(blocking_rules)
-
         sql_dialect_str = self._linker._db_api.sql_dialect.sql_dialect_str
-        return [_as_blocking_rule(br, sql_dialect_str) for br in rules_list]
+        return [_as_blocking_rule(br, sql_dialect_str) for br in blocking_rules]

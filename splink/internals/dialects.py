@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, Type, TypeVar, final
 
 from splink.internals.input_column import InputColumn
@@ -37,7 +37,8 @@ class SplinkDialect(ABC):
             cls._dialect_instances[cls] = instance
         return cls._dialect_instances[cls]
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def sql_dialect_str(self):
         pass
 
@@ -212,19 +213,23 @@ class SplinkDialect(ABC):
 
         return nullif_wrapped_function
 
-    def try_parse_date(self, name: str, date_format: str = None) -> str:
+    def try_parse_date(self, name: str, date_format: str | None = None) -> str:
         return self._try_parse_date_raw(name, date_format)
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
+    def _try_parse_date_raw(self, name: str, date_format: str | None = None) -> str:
         raise NotImplementedError(
             f"Backend '{self.sql_dialect_str}' does not have a "
             "'try_parse_date' function"
         )
 
-    def try_parse_timestamp(self, name: str, timestamp_format: str = None) -> str:
+    def try_parse_timestamp(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
         return self._try_parse_timestamp_raw(name, timestamp_format)
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
+    def _try_parse_timestamp_raw(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
         raise NotImplementedError(
             f"Backend '{self.sql_dialect_str}' does not have a "
             "'try_parse_timestamp' function"
@@ -331,12 +336,14 @@ class DuckDBDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "%Y-%m-%dT%H:%M:%SZ"
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
+    def _try_parse_date_raw(self, name: str, date_format: str | None = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_strptime({name}, '{date_format}')"""
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
+    def _try_parse_timestamp_raw(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""try_strptime({name}, '{timestamp_format}')"""
@@ -451,12 +458,14 @@ class SparkDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "yyyy-MM-dd\\'T\\'HH:mm:ssXXX"
 
-    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
+    def _try_parse_date_raw(self, name: str, date_format: str | None = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""date(try_to_timestamp({name}, '{date_format}'))"""
 
-    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
+    def _try_parse_timestamp_raw(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""try_to_timestamp({name}, '{timestamp_format}')"""
@@ -618,12 +627,14 @@ class PostgresDialect(SplinkDialect):
     def default_timestamp_format(self):
         return "YYYY-MM-DDTHH24:MI:SS"
 
-    def try_parse_date(self, name: str, date_format: str = None) -> str:
+    def try_parse_date(self, name: str, date_format: str | None = None) -> str:
         if date_format is None:
             date_format = self.default_date_format
         return f"""try_cast_date({name}, '{date_format}')"""
 
-    def try_parse_timestamp(self, name: str, timestamp_format: str = None) -> str:
+    def try_parse_timestamp(
+        self, name: str, timestamp_format: str | None = None
+    ) -> str:
         if timestamp_format is None:
             timestamp_format = self.default_timestamp_format
         return f"""try_cast_timestamp({name}, '{timestamp_format}')"""

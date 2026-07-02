@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 def truth_space_table_from_labels_with_predictions_sqls(
     threshold_actual: float = 0.5,
     match_weight_round_to_nearest: float | None = None,
-    total_labels: int = None,
+    total_labels: int | None = None,
     positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
 ) -> list[dict[str, str]]:
     """
@@ -336,7 +336,7 @@ def truth_space_table_from_labels_column(
     linker: "Linker",
     label_colname: str,
     threshold_actual: float = 0.5,
-    match_weight_round_to_nearest: float = None,
+    match_weight_round_to_nearest: float | None = None,
     positives_not_captured_by_blocking_rules_scored_as_zero: bool = True,
 ) -> SplinkDataFrame:
     # First we need to calculate the number of implicit true negatives
