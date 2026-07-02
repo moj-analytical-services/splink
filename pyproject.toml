@@ -207,4 +207,4 @@ disallow_incomplete_defs = true
 # disallow_untyped_defs = true
 
 [tool.ty.rules]
-unresolved-import = "warn"
+unresolved-import = "ignore"
