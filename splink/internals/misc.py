@@ -69,7 +69,11 @@ def ensure_is_list(a: str) -> list[str]: ...
 
 
 @overload
-def ensure_is_list(a: list[T]) -> list[T]: ...
+def ensure_is_list(a: dict[str, T]) -> list[dict[str, T]]: ...
+
+
+@overload
+def ensure_is_list(a: Iterable[T]) -> list[T]: ...
 
 
 @overload
@@ -77,7 +81,13 @@ def ensure_is_list(a: list[T] | T) -> list[T]: ...
 
 
 def ensure_is_list(a):
-    return a if isinstance(a, list) else [a]
+    # special case a couple of iterables
+    # for this purpose we want these like singletons
+    if isinstance(a, (dict, str)):
+        return [a]
+    if isinstance(a, Iterable):
+        return list(a)
+    return [a]
 
 
 def join_list_with_commas_final_and(lst: list[str]) -> str:
