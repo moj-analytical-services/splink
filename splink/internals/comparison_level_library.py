@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from functools import wraps
-from typing import Any, Callable, List, Literal, TypeVar, Union
+from typing import Any, Callable, List, Literal, Protocol, TypeGuard, TypeVar, Union
 
 from sqlglot import TokenError, parse_one
 
@@ -939,6 +939,16 @@ class CosineSimilarityLevel(ComparisonLevelCreator):
         return f"Cosine similarity of {col.label} >= {self.similarity_threshold}"
 
 
+class DialectWithArrayIntersect(Protocol):
+    def array_intersect(self, clc: "ArrayIntersectLevel") -> str: ...
+
+
+def _dialect_has_array_intersect_function(
+    sql_dialect: SplinkDialect,
+) -> TypeGuard[DialectWithArrayIntersect]:
+    return hasattr(sql_dialect, "array_intersect")
+
+
 class ArrayIntersectLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str | ColumnExpression, min_intersection: int = 1):
         """Represents a comparison level based around the size of an intersection of
@@ -961,7 +971,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
 
     @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        if hasattr(sql_dialect, "array_intersect"):
+        if _dialect_has_array_intersect_function(sql_dialect):
             return sql_dialect.array_intersect(self)
 
         sqlglot_dialect_name = sql_dialect.sqlglot_dialect
