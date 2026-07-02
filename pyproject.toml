@@ -26,7 +26,7 @@ pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
 # sqlite doesn't _require_ this functionality, but it's used if we want to use fuzzy levels
 sqlite = ["rapidfuzz>=3.10.0"]
-postgres = ["sqlalchemy>=2.0.0", "psycopg2-binary>=2.9.0"]
+postgres = ["sqlalchemy>=2.0.51", "psycopg2-binary>=2.9.0"]
 pyarrow = ["pyarrow>=15.0.0"]
 # TODO: pandas optional
 
@@ -70,7 +70,7 @@ linting = ["ruff>=0.15.18"]
 pandas = ["pandas>=1.3.5", "numpy>=1.19.3"]
 postgres = [
     "psycopg2-binary>=2.9.0",
-    "sqlalchemy>=2.0.0",
+    "sqlalchemy>=2.0.51",
 ]
 sqlite = [
     "rapidfuzz>=3.10.0",
