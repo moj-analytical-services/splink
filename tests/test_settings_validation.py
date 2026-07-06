@@ -93,6 +93,7 @@ email_comparison_to_check = {
         {"sql_condition": "email_l IS NULL OR email_r IS NULL"},
         {"sql_condition": "levenshtein(emails_l, test.email_r) < 3"},
         {"sql_condition": "date_diff('day', email_date, email_lz)"},
+        {"sql_condition": "\"EMAIL_l\" = \"EMAIL_r\""},
         {"sql_condition": "ELSE"},
     ],
 }
@@ -105,6 +106,9 @@ expected_email_comparison_errors = (
         "date_diff('day', email_date, email_lz)": [
             MissingColumnsLogGenerator({"email_date", "email_lz"}),
             InvalidColumnSuffixesLogGenerator({"email_date", "email_lz"}),
+        ],
+        "\"EMAIL_l\" = \"EMAIL_r\"" : [
+            MissingColumnsLogGenerator({"EMAIL"}),
         ],
     },
 )
