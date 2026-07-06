@@ -204,32 +204,36 @@ def test_deactivate_columns_with_case_variation():
 
     linker = Linker(df, settings, db_api=db_api)
 
-    ts1 = linker.training.estimate_parameters_using_expectation_maximisation(block_on("DOB"))
+    ts1 = linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("DOB"),
+    )
 
     deactivated = [
         cc.output_column_name for cc in ts1._comparisons_that_cannot_be_estimated
     ]
 
     # no m probabilities should be trained for the DOB comparison
-    assert "DOB" in deactivated, (
-        "DOB is used in blocking rule so its parameters should not be trained"
-    )
+    assert (
+        "DOB" in deactivated
+    ), "DOB is used in blocking rule so its parameters should not be trained"
 
     # training session should adjust probability using DOB despite upper case
     ts_prob = ts1._lambda_history_records[0]["probability_two_random_records_match"]
     orig_prob = settings.probability_two_random_records_match
     assert ts_prob > orig_prob, (
-        "probability_two_random_records_match should be adjusted for comparison used in "
-        "blocking rule"
+        "probability_two_random_records_match should be adjusted for comparison "
+        "used in blocking rule"
     )
 
-    ts2 = linker.training.estimate_parameters_using_expectation_maximisation(block_on("dob"))
+    ts2 = linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("dob"),
+    )
 
     deactivated = [
         cc.output_column_name for cc in ts2._comparisons_that_cannot_be_estimated
     ]
 
-    assert not "DOB" in deactivated, (
+    assert "DOB" not in deactivated, (
         "DOB (upper case) is not used in the blocking rule so its parameters should "
         "be trained."
     )
@@ -241,5 +245,3 @@ def test_deactivate_columns_with_case_variation():
         "probability_two_random_records_match should not be adjusted since blocking "
         "rule uses dob (lower case) while comparison is DOB (upper case)."
     )
-
-
