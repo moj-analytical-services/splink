@@ -505,7 +505,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sqlglot_dialect
+            self.sql_condition, read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 
@@ -518,7 +518,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self.sqlglot_dialect
+            self.sql_condition, read=self.sqlglot_dialect
         )
         sql_cnf = simplify(normalize(sql_syntax_tree))
 
