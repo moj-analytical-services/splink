@@ -147,20 +147,16 @@ def _get_df_percentiles():
 def _get_df_top_bottom_n(
     expressions: list[str], limit: int = 20, value_order: str = "desc"
 ) -> str:
-    sql = """
+    sql = f"""
     select * from
     (select *
     from __splink__df_all_column_value_frequencies
-    where group_name = '{gn}'
+    where group_name = '{{gn}}'
     order by value_count {value_order}
     limit {limit}) top_bottom_freqs
     """
 
-    # TODO: can preformat limit and value_order
-    to_union = [
-        sql.format(gn=_group_name(g), limit=limit, value_order=value_order)
-        for g in expressions
-    ]
+    to_union = [sql.format(gn=_group_name(g)) for g in expressions]
 
     sql = join_sql_with_union_all(to_union)
 
