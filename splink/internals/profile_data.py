@@ -7,6 +7,7 @@ from splink.internals.charts import (
     SplinkChart,
 )
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.exceptions import SplinkException
 from splink.internals.misc import ensure_is_list, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -245,7 +246,7 @@ def profile_columns(
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
     top_n: int = 10,
     bottom_n: int = 10,
-) -> Optional[ProfileColumnsChart]:
+) -> ProfileColumnsChart:
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 
@@ -375,6 +376,4 @@ def profile_columns(
 
     if inner_charts:
         return ProfileColumnsChart(records=inner_charts)
-    else:
-        # TODO: this should probably raise?
-        return None
+    raise SplinkException("No non-null column expressions found to profile.")
