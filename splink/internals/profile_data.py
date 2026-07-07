@@ -4,7 +4,6 @@ from copy import deepcopy
 from typing import Any, List, Optional, Sequence, Union
 
 from splink.internals.charts import (
-    ChartReturnType,
     SplinkChart,
 )
 from splink.internals.column_expression import ColumnExpression
@@ -37,8 +36,14 @@ def expressions_to_sql(expressions: list[str]) -> list[str]:
     return e
 
 
-class ProfileSingleColumnChart(SplinkChart):
-    def __init__(self, records: Sequence, top_n_data, bottom_n_data, col_name):
+class ProfileSingleColumnChart(SplinkChart[dict[str, Any]]):
+    def __init__(
+        self,
+        records: Sequence[dict[str, Any]],
+        top_n_data: Sequence[dict[str, Any]],
+        bottom_n_data: Sequence[dict[str, Any]],
+        col_name: str,
+    ):
         super().__init__(records)
         self.top_n_data = top_n_data
         self.bottom_n_data = bottom_n_data
@@ -237,7 +242,7 @@ def profile_columns(
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
     top_n: int = 10,
     bottom_n: int = 10,
-) -> Optional[ChartReturnType]:
+) -> Optional[ProfileColumnsChart]:
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 
