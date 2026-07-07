@@ -1,14 +1,13 @@
 import logging
 import re
 from copy import deepcopy
-from typing import List, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 from splink.internals.charts import (
-    ChartReturnType,
-    altair_or_json,
-    load_chart_definition,
+    SplinkChart,
 )
 from splink.internals.column_expression import ColumnExpression
+from splink.internals.exceptions import SplinkException
 from splink.internals.misc import ensure_is_list, join_sql_with_union_all
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -21,13 +20,13 @@ from splink.internals.vertically_concatenate import vertically_concatenate_sql
 logger = logging.getLogger(__name__)
 
 
-def _group_name(cols_or_expr):
+def _group_name(cols_or_expr: str) -> str:
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
 
 
-def expressions_to_sql(expressions):
+def expressions_to_sql(expressions: list[str]) -> list[str]:
     e = []
     for expr in expressions:
         if isinstance(expr, list):
@@ -38,49 +37,62 @@ def expressions_to_sql(expressions):
     return e
 
 
-_outer_chart_spec_freq = {
-    "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
-    "vconcat": [],
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
-}
+class ProfileSingleColumnChart(SplinkChart[dict[str, Any]]):
+    def __init__(
+        self,
+        records: Sequence[dict[str, Any]],
+        top_n_data: Sequence[dict[str, Any]],
+        bottom_n_data: Sequence[dict[str, Any]],
+        col_name: str,
+    ):
+        super().__init__(records)
+        self.top_n_data = top_n_data
+        self.bottom_n_data = bottom_n_data
+        self.col_name = col_name
 
-chart_path = "profile_data.json"
-_inner_chart_spec_freq = load_chart_definition(chart_path)
+    @property
+    def chart_spec_file(self) -> str:
+        return "profile_data.json"
 
+    def alter_spec_from_data(self, chart_spec):
+        percentile_data = self.raw_records
 
-def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
-    inner_spec = deepcopy(_inner_chart_spec_freq)
+        total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
+        total_non_null_rows = percentile_data[0]["total_non_null_rows"]
+        distinct_value_count = percentile_data[0]["distinct_value_count"]
+        perc = total_non_null_rows / total_rows_inc_nulls
+        sub = (
+            f"In this col, {total_rows_inc_nulls * (1 - perc):,.0f} values "
+            f"({1 - perc:,.1%}) are null and there are "
+            f"{distinct_value_count} distinct values"
+        )
+        sub = sub.format(**percentile_data[0])
 
-    total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
-    total_non_null_rows = percentile_data[0]["total_non_null_rows"]
-    distinct_value_count = percentile_data[0]["distinct_value_count"]
-    perc = total_non_null_rows / total_rows_inc_nulls
+        chart_spec["hconcat"][0]["title"]["text"] = (
+            f"Distribution of counts of values in column {self.col_name}"
+        )
+        chart_spec["hconcat"][0]["title"]["subtitle"] = sub
 
-    sub = (
-        f"In this col, {total_rows_inc_nulls * (1 - perc):,.0f} values "
-        f"({1 - perc:,.1%}) are null and there are "
-        f"{distinct_value_count} distinct values"
-    )
-    sub = sub.format(**percentile_data[0])
-    inner_spec["hconcat"][0]["data"]["values"] = percentile_data
-    inner_spec["hconcat"][0]["title"]["text"] = (
-        f"Distribution of counts of values in column {col_name}"
-    )
+        chart_spec["hconcat"][1]["title"] = (
+            f"Top {len(self.top_n_data)} values by value count"
+        )
 
-    inner_spec["hconcat"][0]["title"]["subtitle"] = sub
+        chart_spec["hconcat"][2]["title"] = (
+            f"Bottom {len(self.bottom_n_data)} values by value count"
+        )
+        max_val = self.top_n_data[0]["value_count"]
+        chart_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}
 
-    inner_spec["hconcat"][1]["data"]["values"] = top_n_data
-    inner_spec["hconcat"][1]["title"] = f"Top {len(top_n_data)} values by value count"
+        return chart_spec
 
-    inner_spec["hconcat"][2]["data"]["values"] = bottom_n_data
-    inner_spec["hconcat"][2]["title"] = (
-        f"Bottom {len(bottom_n_data)} values by value count"
-    )
+    @property
+    def chart_dict(self) -> dict[str, Any]:
+        inner_spec = self.chart_spec
 
-    max_val = top_n_data[0]["value_count"]
-    inner_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}
-
-    return inner_spec
+        inner_spec["hconcat"][0]["data"]["values"] = self.raw_records
+        inner_spec["hconcat"][1]["data"]["values"] = self.top_n_data
+        inner_spec["hconcat"][2]["data"]["values"] = self.bottom_n_data
+        return inner_spec
 
 
 def _get_df_percentiles():
@@ -133,27 +145,28 @@ def _get_df_percentiles():
     return sqls
 
 
-def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
-    sql = """
+def _get_df_top_bottom_n(
+    expressions: list[str], limit: int = 20, value_order: str = "desc"
+) -> str:
+    sql = f"""
     select * from
     (select *
     from __splink__df_all_column_value_frequencies
-    where group_name = '{gn}'
+    where group_name = '{{gn}}'
     order by value_count {value_order}
     limit {limit}) top_bottom_freqs
     """
 
-    to_union = [
-        sql.format(gn=_group_name(g), limit=limit, value_order=value_order)
-        for g in expressions
-    ]
+    to_union = [sql.format(gn=_group_name(g)) for g in expressions]
 
     sql = join_sql_with_union_all(to_union)
 
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
+def _col_or_expr_frequencies_raw_data_sql(
+    cols_or_exprs: list[str], table_name: str
+) -> str:
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -206,12 +219,34 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
+class ProfileColumnsChart(SplinkChart[ProfileSingleColumnChart]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "profile_data_outer.json"
+
+    @property
+    def chart_dict(self) -> dict[str, Any]:
+        chart = self.chart_spec
+        chart["vconcat"] = list(map(lambda x: x.chart_dict, self.chart_data))
+        return chart
+
+    @property
+    def subcharts(self) -> Sequence[ProfileSingleColumnChart]:
+        """
+        Returns the individual subcharts as a list, with the same order
+        as the expressions provided.
+
+        Returns: list[ProfileSingleColumnChart] a list of SplinkCharts.
+        """
+        return self.raw_records
+
+
 def profile_columns(
     splink_dataframe_or_dataframes: Union[SplinkDataFrame, Sequence[SplinkDataFrame]],
     column_expressions: Optional[List[Union[str, ColumnExpression]]] = None,
     top_n: int = 10,
     bottom_n: int = 10,
-) -> Optional[ChartReturnType]:
+) -> ProfileColumnsChart:
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 
@@ -241,8 +276,8 @@ def profile_columns(
         bottom_n (int, optional): The number of bottom n values to plot.
 
     Returns:
-        altair.Chart or dict: A visualization or JSON specification describing the
-        profiling charts.
+        ProfileColumnsChart: A SplinkChart describing the
+            profiling charts.
 
     Note:
         - The `linker` object should be an instance of the initiated linker.
@@ -329,18 +364,16 @@ def profile_columns(
             ]
             # remove concat blank from expression title
             expression = expression.replace(", ' '", "")
-            inner_chart = _get_inner_chart_spec_freq(
-                percentile_rows, top_n_rows, bottom_n_rows, expression
+            inner_chart = ProfileSingleColumnChart(
+                records=percentile_rows,
+                top_n_data=top_n_rows,
+                bottom_n_data=bottom_n_rows,
+                col_name=expression,
             )
             inner_charts.append(inner_chart)
 
     db_api.delete_tables_created_by_splink_from_db()
 
-    if inner_charts != []:
-        outer_spec = deepcopy(_outer_chart_spec_freq)
-        outer_spec["vconcat"] = inner_charts
-
-        return altair_or_json(outer_spec)
-
-    else:
-        return None
+    if inner_charts:
+        return ProfileColumnsChart(records=inner_charts)
+    raise SplinkException("No non-null column expressions found to profile.")
