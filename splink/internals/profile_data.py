@@ -70,7 +70,6 @@ class ProfileSingleColumnChart(SplinkChart[dict[str, Any]]):
         chart_spec["hconcat"][0]["title"]["text"] = (
             f"Distribution of counts of values in column {self.col_name}"
         )
-
         chart_spec["hconcat"][0]["title"]["subtitle"] = sub
 
         chart_spec["hconcat"][1]["title"] = (
@@ -80,7 +79,6 @@ class ProfileSingleColumnChart(SplinkChart[dict[str, Any]]):
         chart_spec["hconcat"][2]["title"] = (
             f"Bottom {len(self.bottom_n_data)} values by value count"
         )
-
         max_val = self.top_n_data[0]["value_count"]
         chart_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}
 
@@ -224,7 +222,6 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-# TODO: data format
 class ProfileColumnsChart(SplinkChart[ProfileSingleColumnChart]):
     @property
     def chart_spec_file(self) -> str:
@@ -235,6 +232,16 @@ class ProfileColumnsChart(SplinkChart[ProfileSingleColumnChart]):
         chart = self.chart_spec
         chart["vconcat"] = list(map(lambda x: x.chart_dict, self.chart_data))
         return chart
+
+    @property
+    def subcharts(self) -> Sequence[ProfileSingleColumnChart]:
+        """
+        Returns the individual subcharts as a list, with the same order
+        as the expressions provided.
+
+        Returns: list[ProfileSingleColumnChart] a list of SplinkCharts.
+        """
+        return self.raw_records
 
 
 def profile_columns(
@@ -272,8 +279,8 @@ def profile_columns(
         bottom_n (int, optional): The number of bottom n values to plot.
 
     Returns:
-        altair.Chart or dict: A visualization or JSON specification describing the
-        profiling charts.
+        ProfileColumnsChart: A SplinkChart describing the
+            profiling charts.
 
     Note:
         - The `linker` object should be an instance of the initiated linker.
@@ -370,7 +377,7 @@ def profile_columns(
 
     db_api.delete_tables_created_by_splink_from_db()
 
-    if inner_charts != []:
+    if inner_charts:
         return ProfileColumnsChart(records=inner_charts)
     else:
         # TODO: this should probably raise?
