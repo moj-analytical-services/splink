@@ -44,6 +44,10 @@
         {
           "calculate": "datum.log2_bayes_factor / 2",
           "as": "prior_warning_emoji_x"
+        },
+        {
+          "calculate": "datum.log2_bayes_factor",
+          "as": "stroke_log2_bayes_factor"
         }
       ],
       "layer": [
@@ -53,11 +57,16 @@
             "clip": true,
             "height": 15
           },
+          "transform": [
+            {
+              "filter": "datum.probability_two_random_records_match == 0.0001"
+            }
+          ],
           "encoding": {
-            "color": {
+            "stroke": {
               "type": "quantitative",
-              "field": "log2_bayes_factor",
-              "title": "Match weight",
+              "field": "stroke_log2_bayes_factor",
+              "legend": null,
               "scale": {
                 "range": [
                   "red",
@@ -71,6 +80,65 @@
                   10
                 ]
               }
+            },
+            "fillOpacity": {
+              "value": 0
+            },
+            "strokeWidth": {
+              "value": 1.5
+            },
+            "x": {
+              "type": "quantitative",
+              "field": "log2_bayes_factor",
+              "scale": {
+                "domain": [
+                  -10,
+                  10
+                ]
+              }
+            },
+            "y": {
+              "type": "nominal",
+              "field": "label_for_charts",
+              "sort": {
+                "field": "comparison_vector_value",
+                "order": "descending"
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "clip": true,
+            "height": 15
+          },
+          "encoding": {
+            "color": {
+              "type": "quantitative",
+              "field": "log2_bayes_factor",
+              "title": "Match weight",
+              "legend": {},
+              "scale": {
+                "range": [
+                  "red",
+                  "#bbbbbb",
+                  "green"
+                ],
+                "interpolate": "lab",
+                "domain": [
+                  -10,
+                  0,
+                  10
+                ]
+              }
+            },
+            "fillOpacity": {
+              "condition": {
+                "test": "datum.probability_two_random_records_match == 0.0001",
+                "value": 0.1
+              },
+              "value": 1
             },
             "tooltip": [
               {
@@ -235,7 +303,12 @@
           "y": "independent"
         },
         "scale": {
-          "y": "independent"
+          "y": "independent",
+          "color": "shared"
+        },
+        "legend": {
+          "stroke": "independent",
+          "color": "shared"
         }
       },
       "spec": {
@@ -257,6 +330,10 @@
           {
             "calculate": "datum.log2_bayes_factor / 2",
             "as": "untrained_warning_emoji_x"
+          },
+          {
+            "calculate": "datum.log2_bayes_factor",
+            "as": "stroke_log2_bayes_factor"
           }
         ],
         "layer": [
@@ -265,11 +342,16 @@
               "type": "bar",
               "clip": true
             },
+            "transform": [
+              {
+                "filter": "!datum.m_is_trained || !datum.u_is_trained"
+              }
+            ],
             "encoding": {
-              "fill": {
+              "stroke": {
                 "type": "quantitative",
-                "field": "log2_bayes_factor",
-                "title": "Match weight",
+                "field": "stroke_log2_bayes_factor",
+                "legend": null,
                 "scale": {
                   "range": [
                     "red",
@@ -283,6 +365,64 @@
                     10
                   ]
                 }
+              },
+              "fillOpacity": {
+                "value": 0
+              },
+              "strokeWidth": {
+                "value": 1.5
+              },
+              "x": {
+                "type": "quantitative",
+                "field": "log2_bayes_factor",
+                "scale": {
+                  "domain": [
+                    -10,
+                    10
+                  ]
+                }
+              },
+              "y": {
+                "type": "nominal",
+                "field": "label_for_charts",
+                "sort": {
+                  "field": "comparison_vector_value",
+                  "order": "descending"
+                }
+              }
+            }
+          },
+          {
+            "mark": {
+              "type": "bar",
+              "clip": true
+            },
+            "encoding": {
+              "color": {
+                "type": "quantitative",
+                "field": "log2_bayes_factor",
+                "title": "Match weight",
+                "legend": {},
+                "scale": {
+                  "range": [
+                    "red",
+                    "#bbbbbb",
+                    "green"
+                  ],
+                  "interpolate": "lab",
+                  "domain": [
+                    -10,
+                    0,
+                    10
+                  ]
+                }
+              },
+              "fillOpacity": {
+                "condition": {
+                  "test": "!datum.m_is_trained || !datum.u_is_trained",
+                  "value": 0.1
+                },
+                "value": 1
               },
               "tooltip": [
                 {
@@ -588,7 +728,12 @@
       "y": "independent"
     },
     "scale": {
-      "y": "independent"
+      "y": "independent",
+      "color": "shared"
+    },
+    "legend": {
+      "stroke": "independent",
+      "color": "shared"
     }
   },
   "title": {
