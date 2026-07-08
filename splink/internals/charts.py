@@ -227,14 +227,10 @@ class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
             if (l2bf := r.log2_bayes_factor) is not None and not math.isinf(l2bf)
         ]
         max_value = math.ceil(max(bayes_factors))
-        chart_spec["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [
-            -max_value,
-            max_value,
-        ]
-        chart_spec["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [
-            -max_value,
-            max_value,
-        ]
+        for layer in chart_spec["vconcat"][0]["layer"]:
+            layer["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
+        for layer in chart_spec["vconcat"][1]["spec"]["layer"]:
+            layer["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
         return chart_spec
 
 

@@ -132,6 +132,8 @@ class ComparisonLevelDetailedRecord:
     u_probability: float | None
     m_probability_description: str | None
     u_probability_description: str | None
+    m_is_trained: bool
+    u_is_trained: bool
 
     bayes_factor: float | None
     log2_bayes_factor: float
@@ -783,6 +785,8 @@ class ComparisonLevel:
             u_probability=self.u_probability if not self.is_null_level else None,
             m_probability_description=self._m_probability_description,
             u_probability_description=self._u_probability_description,
+            m_is_trained=self._m_is_trained,
+            u_is_trained=self._u_is_trained,
             bayes_factor=self._bayes_factor,
             log2_bayes_factor=self._log2_bayes_factor,
             bayes_factor_description=self._bayes_factor_description,
