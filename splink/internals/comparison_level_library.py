@@ -931,8 +931,13 @@ class CosineSimilarityLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         self.col_expression.sql_dialect = sql_dialect
         col = self.col_expression
-        cs_fn = sql_dialect.cosine_similarity_function_name
-        return f"{cs_fn}({col.name_l}, {col.name_r}) >= {self.similarity_threshold}"
+        cosine_similarity_sql = getattr(sql_dialect, "cosine_similarity_sql", None)
+        if cosine_similarity_sql is not None:
+            cs_sql = cosine_similarity_sql(col.name_l, col.name_r)
+        else:
+            cs_fn = sql_dialect.cosine_similarity_function_name
+            cs_sql = f"{cs_fn}({col.name_l}, {col.name_r})"
+        return f"{cs_sql} >= {self.similarity_threshold}"
 
     def create_label_for_charts(self) -> str:
         col = self.col_expression
