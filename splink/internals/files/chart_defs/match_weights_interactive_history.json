@@ -136,7 +136,7 @@
             "fillOpacity": {
               "condition": {
                 "test": "datum.probability_two_random_records_match == 0.0001",
-                "value": 0.1
+                "value": 0.05
               },
               "value": 1
             },
@@ -324,12 +324,12 @@
             "as": "untrained_warning_label"
           },
           {
-            "calculate": "datum.log2_bayes_factor >= 0 ? datum.log2_bayes_factor + 0.35 : datum.log2_bayes_factor - 0.35",
-            "as": "untrained_warning_label_x"
-          },
-          {
             "calculate": "datum.log2_bayes_factor / 2",
             "as": "untrained_warning_emoji_x"
+          },
+          {
+            "calculate": "datum.untrained_warning_label == '' ? '' : '⚠️ ' + datum.untrained_warning_label",
+            "as": "untrained_warning_text"
           },
           {
             "calculate": "datum.log2_bayes_factor",
@@ -420,7 +420,7 @@
               "fillOpacity": {
                 "condition": {
                   "test": "!datum.m_is_trained || !datum.u_is_trained",
-                  "value": 0.1
+                  "value": 0.05
                 },
                 "value": 1
               },
@@ -545,84 +545,9 @@
             "mark": {
               "type": "text",
               "baseline": "middle",
-              "fontSize": 11,
-              "align": "left",
-              "color": "red"
-            },
-            "transform": [
-              {
-                "filter": "datum.untrained_warning_label != '' && datum.log2_bayes_factor >= 0"
-              }
-            ],
-            "encoding": {
-              "x": {
-                "type": "quantitative",
-                "field": "untrained_warning_label_x",
-                "scale": {
-                  "domain": [
-                    -10,
-                    10
-                  ]
-                }
-              },
-              "y": {
-                "type": "nominal",
-                "field": "label_for_charts",
-                "sort": {
-                  "field": "comparison_vector_value",
-                  "order": "descending"
-                }
-              },
-              "text": {
-                "type": "nominal",
-                "field": "untrained_warning_label"
-              }
-            }
-          },
-          {
-            "mark": {
-              "type": "text",
-              "baseline": "middle",
-              "fontSize": 11,
-              "align": "right",
-              "color": "red"
-            },
-            "transform": [
-              {
-                "filter": "datum.untrained_warning_label != '' && datum.log2_bayes_factor < 0"
-              }
-            ],
-            "encoding": {
-              "x": {
-                "type": "quantitative",
-                "field": "untrained_warning_label_x",
-                "scale": {
-                  "domain": [
-                    -10,
-                    10
-                  ]
-                }
-              },
-              "y": {
-                "type": "nominal",
-                "field": "label_for_charts",
-                "sort": {
-                  "field": "comparison_vector_value",
-                  "order": "descending"
-                }
-              },
-              "text": {
-                "type": "nominal",
-                "field": "untrained_warning_label"
-              }
-            }
-          },
-          {
-            "mark": {
-              "type": "text",
-              "baseline": "middle",
               "fontSize": 9,
-              "align": "center"
+              "align": "center",
+              "color": "black"
             },
             "transform": [
               {
@@ -649,7 +574,8 @@
                 }
               },
               "text": {
-                "value": "⚠️"
+                "type": "nominal",
+                "field": "untrained_warning_text"
               },
               "tooltip": [
                 {
