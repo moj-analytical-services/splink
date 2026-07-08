@@ -2840,7 +2840,7 @@ docs = [
     { name = "mkdocstrings-python", marker = "python_full_version >= '3.13'", specifier = ">=1.11.1" },
     { name = "mknotebooks", marker = "python_full_version >= '3.13'", specifier = ">=0.8.0" },
     { name = "nbconvert", marker = "python_full_version >= '3.13'", specifier = ">=7.16.6" },
-    { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13'", specifier = ">=1.1.2" },
+    { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13'", specifier = ">=1.2.0" },
     { name = "pymdown-extensions", marker = "python_full_version >= '3.13'", specifier = ">=10.15" },
 ]
 linting = [{ name = "ruff", specifier = ">=0.15.18" }]
