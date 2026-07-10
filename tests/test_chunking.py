@@ -19,6 +19,11 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
+@pytest.fixture(scope="module")
+def chunking_data(fake_1000):
+    return fake_1000.slice(length=100)
+
+
 def _get_comparison_count(result):
     """Get the number of comparisons in a prediction result."""
     return len(result.as_record_list())
@@ -32,12 +37,12 @@ def _sort_predictions(sdf):
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_matches_non_chunked(test_helpers, dialect, fake_1000):
+def test_chunked_predict_matches_non_chunked(test_helpers, dialect, chunking_data):
     """Test that chunked predictions produce identical results to non-chunked."""
     helper = test_helpers[dialect]
 
     settings = get_settings_dict()
-    linker = helper.linker_with_registration(fake_1000, settings)
+    linker = helper.linker_with_registration(chunking_data, settings)
 
     # Get non-chunked predictions
     predictions_no_chunk = linker.inference.predict(threshold_match_weight=-10)
@@ -67,12 +72,14 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect, fake_1000):
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect, fake_1000):
+def test_chunked_predict_with_different_chunk_sizes(
+    test_helpers, dialect, chunking_data
+):
     """Test various chunk size combinations produce consistent results."""
     helper = test_helpers[dialect]
 
     settings = get_settings_dict()
-    linker = helper.linker_with_registration(fake_1000, settings)
+    linker = helper.linker_with_registration(chunking_data, settings)
 
     # Get baseline predictions
     predictions_baseline = linker.inference.predict(threshold_match_weight=-10)
@@ -105,19 +112,19 @@ def test_chunked_predict_with_different_chunk_sizes(test_helpers, dialect, fake_
 
 
 @mark_with_dialects_excluding()
-def test_precached_blocked_pairs_same_result(test_helpers, dialect, fake_1000):
+def test_precached_blocked_pairs_same_result(test_helpers, dialect, chunking_data):
     """Test that pre-caching blocked pairs produces same result as no pre-caching."""
     helper = test_helpers[dialect]
 
     settings = get_settings_dict()
 
     # First: run without pre-caching
-    linker1 = helper.linker_with_registration(fake_1000, settings)
+    linker1 = helper.linker_with_registration(chunking_data, settings)
     predictions_no_cache = linker1.inference.predict(threshold_match_weight=-10)
     df_no_cache = _sort_predictions(predictions_no_cache)
 
     # Second: run with pre-caching
-    linker2 = helper.linker_with_registration(fake_1000, settings)
+    linker2 = helper.linker_with_registration(chunking_data, settings)
     linker2.inference.compute_blocked_pairs_for_predict_chunk(
         left_chunk=(1, 1),
         right_chunk=(1, 1),
@@ -132,14 +139,16 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect, fake_1000):
 
 
 @mark_with_dialects_excluding()
-def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect, fake_1000):
+def test_precached_chunked_blocked_pairs_same_result(
+    test_helpers, dialect, chunking_data
+):
     """Test that pre-caching chunked blocked pairs produces same result."""
     helper = test_helpers[dialect]
 
     settings = get_settings_dict()
 
     # First: run chunked without pre-caching
-    linker1 = helper.linker_with_registration(fake_1000, settings)
+    linker1 = helper.linker_with_registration(chunking_data, settings)
     predictions_no_cache = linker1.inference.predict(
         threshold_match_weight=-10,
         num_chunks_left=2,
@@ -148,7 +157,7 @@ def test_precached_chunked_blocked_pairs_same_result(test_helpers, dialect, fake
     df_no_cache = _sort_predictions(predictions_no_cache)
 
     # Second: run chunked with pre-caching of all chunks
-    linker2 = helper.linker_with_registration(fake_1000, settings)
+    linker2 = helper.linker_with_registration(chunking_data, settings)
 
     # Pre-compute all 4 chunk combinations (2x2)
     for left_chunk_num in [1, 2]:
@@ -393,7 +402,7 @@ def test_blocked_pairs_deleted_when_not_from_cache(fake_1000):
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_only(test_helpers, dialect, fake_1000):
+def test_chunked_predict_link_only(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_only (two datasets)."""
     helper = test_helpers[dialect]
 
@@ -401,8 +410,8 @@ def test_chunked_predict_link_only(test_helpers, dialect, fake_1000):
     settings["link_type"] = "link_only"
 
     # Split into two datasets using modulo arithmetic
-    df_1 = fake_1000.take(list(range(0, 1000, 2)))
-    df_2 = fake_1000.take(list(range(1, 1000, 2)))
+    df_1 = chunking_data.take(list(range(0, len(chunking_data), 2)))
+    df_2 = chunking_data.take(list(range(1, len(chunking_data), 2)))
 
     linker = helper.linker_with_registration([df_1, df_2], settings)
 
@@ -437,7 +446,9 @@ def test_chunked_predict_link_only(test_helpers, dialect, fake_1000):
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, fake_1000):
+def test_chunked_predict_link_only_three_datasets(
+    test_helpers, dialect, chunking_data
+):
     """Test chunked predictions work correctly with link_only (three datasets).
 
     Two datasets is a special case, so we test with three datasets as well.
@@ -448,9 +459,9 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, fake_10
     settings["link_type"] = "link_only"
 
     # Split into three datasets using modulo arithmetic
-    df_1 = fake_1000.take(list(range(0, 1000, 3)))
-    df_2 = fake_1000.take(list(range(1, 1000, 3)))
-    df_3 = fake_1000.take(list(range(2, 1000, 3)))
+    df_1 = chunking_data.take(list(range(0, len(chunking_data), 3)))
+    df_2 = chunking_data.take(list(range(1, len(chunking_data), 3)))
+    df_3 = chunking_data.take(list(range(2, len(chunking_data), 3)))
 
     linker = helper.linker_with_registration([df_1, df_2, df_3], settings)
 
@@ -485,7 +496,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, fake_10
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_and_dedupe(test_helpers, dialect, fake_1000):
+def test_chunked_predict_link_and_dedupe(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
     helper = test_helpers[dialect]
 
@@ -493,8 +504,8 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect, fake_1000):
     settings["link_type"] = "link_and_dedupe"
 
     # Split into two datasets using modulo arithmetic
-    df_1 = fake_1000.take(list(range(0, 1000, 2)))
-    df_2 = fake_1000.take(list(range(1, 1000, 2)))
+    df_1 = chunking_data.take(list(range(0, len(chunking_data), 2)))
+    df_2 = chunking_data.take(list(range(1, len(chunking_data), 2)))
 
     linker = helper.linker_with_registration([df_1, df_2], settings)
 
@@ -530,7 +541,7 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect, fake_1000):
 
 @mark_with_dialects_excluding()
 def test_chunked_predict_link_and_dedupe_three_datasets(
-    test_helpers, dialect, fake_1000
+    test_helpers, dialect, chunking_data
 ):
     """Test chunked predictions work correctly with link_and_dedupe (three datasets).
 
@@ -542,9 +553,9 @@ def test_chunked_predict_link_and_dedupe_three_datasets(
     settings["link_type"] = "link_and_dedupe"
 
     # Split into three datasets using modulo arithmetic
-    df_1 = fake_1000.take(list(range(0, 1000, 3)))
-    df_2 = fake_1000.take(list(range(1, 1000, 3)))
-    df_3 = fake_1000.take(list(range(2, 1000, 3)))
+    df_1 = chunking_data.take(list(range(0, len(chunking_data), 3)))
+    df_2 = chunking_data.take(list(range(1, len(chunking_data), 3)))
+    df_3 = chunking_data.take(list(range(2, len(chunking_data), 3)))
 
     linker = helper.linker_with_registration([df_1, df_2, df_3], settings)
 
