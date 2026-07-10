@@ -206,7 +206,7 @@ class ComparisonLevel:
         self._tf_minimum_u_value = tf_minimum_u_value
         self._disable_tf_exact_match_detection = disable_tf_exact_match_detection
 
-        self._match_weight_value = match_weight
+        self._configured_match_weight = match_weight
 
         # internally these can be LEVEL_NOT_OBSERVED_TEXT, so allow for this
         _validate_m_u_probability(
@@ -273,7 +273,7 @@ class ComparisonLevel:
 
     @property
     def m_probability(self) -> float | None:
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return None
         if self.is_null_level:
             raise ValueError("Null levels have no m-probability")
@@ -286,7 +286,7 @@ class ComparisonLevel:
 
     @m_probability.setter
     def m_probability(self, value: float | str | None) -> None:
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             raise AttributeError(
                 "Cannot set m_probability on a level configured with match_weight"
             )
@@ -297,7 +297,7 @@ class ComparisonLevel:
 
     @property
     def u_probability(self) -> float | None:
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return None
         if self.is_null_level:
             raise ValueError("Null levels have no u-probability")
@@ -310,7 +310,7 @@ class ComparisonLevel:
 
     @u_probability.setter
     def u_probability(self, value: float | str | None) -> None:
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             raise AttributeError(
                 "Cannot set u_probability on a level configured with match_weight"
             )
@@ -356,14 +356,14 @@ class ComparisonLevel:
             return ""
 
     def _add_trained_u_probability(self, val, desc="no description given"):
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return
         self._trained_u_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "u"}
         )
 
     def _add_trained_m_probability(self, val, desc="no description given"):
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return
         self._trained_m_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "m"}
@@ -407,7 +407,7 @@ class ComparisonLevel:
 
     @property
     def _m_is_trained(self):
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return True
         if self.is_null_level:
             return True
@@ -419,7 +419,7 @@ class ComparisonLevel:
 
     @property
     def _u_is_trained(self):
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             return True
         if self.is_null_level:
             return True
@@ -434,26 +434,27 @@ class ComparisonLevel:
         return self._m_is_trained and self._u_is_trained
 
     @property
-    def _is_match_weight_mode(self) -> bool:
-        return self._match_weight_value is not None
+    def is_match_weight_mode(self) -> bool:
+        """Whether this level was configured directly with a match weight."""
+        return self._configured_match_weight is not None
 
     @property
     def _m_probability_is_fixed(self) -> bool:
-        return self._fix_m_probability or self._is_match_weight_mode
+        return self._fix_m_probability or self.is_match_weight_mode
 
     @property
     def _u_probability_is_fixed(self) -> bool:
-        return self._fix_u_probability or self._is_match_weight_mode
+        return self._fix_u_probability or self.is_match_weight_mode
 
     @property
     def match_weight(self) -> float | None:
-        """The level's score in log2 Bayes-factor space."""
+        """The effective score used during prediction, in log2 Bayes-factor space."""
         return self._match_weight
 
     @property
     def _match_weight(self):
-        if self._is_match_weight_mode:
-            return self._match_weight_value
+        if self.is_match_weight_mode:
+            return self._configured_match_weight
         if self.is_null_level:
             return 0.0
 
@@ -472,9 +473,9 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor(self):
-        if self._is_match_weight_mode:
+        if self.is_match_weight_mode:
             try:
-                return 2.0 ** cast(float, self._match_weight_value)
+                return 2.0 ** cast(float, self._configured_match_weight)
             except OverflowError:
                 return math.inf
         if self.is_null_level:
@@ -488,8 +489,8 @@ class ComparisonLevel:
 
     @property
     def _log2_bayes_factor(self):
-        if self._is_match_weight_mode:
-            return self._match_weight_value
+        if self.is_match_weight_mode:
+            return self._configured_match_weight
         if self.is_null_level:
             return 0.0
         else:
@@ -785,8 +786,8 @@ class ComparisonLevel:
         if self.label_for_charts:
             output["label_for_charts"] = self.label_for_charts
 
-        if self._is_match_weight_mode:
-            output["match_weight"] = self._match_weight_value
+        if self.is_match_weight_mode:
+            output["match_weight"] = self._configured_match_weight
         else:
             if self._m_probability is not None and self._m_is_trained:
                 output["m_probability"] = self.m_probability
@@ -872,10 +873,10 @@ class ComparisonLevel:
     def _validate(self):
         self._validate_sql()
 
-        if self._match_weight_value is None:
+        if self._configured_match_weight is None:
             return
 
-        match_weight = self._match_weight_value
+        match_weight = self._configured_match_weight
         is_finite_real = False
         if isinstance(match_weight, Real) and not isinstance(match_weight, bool):
             try:

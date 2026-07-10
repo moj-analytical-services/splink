@@ -359,7 +359,7 @@ def _max_change_in_parameters_comparison_levels(
             prev_cl = z_cl[0]
             this_cl = z_cl[1]
 
-            if this_cl._is_match_weight_mode:
+            if this_cl.is_match_weight_mode:
                 continue
 
             prev_m_prob = cast(float, prev_cl.m_probability)

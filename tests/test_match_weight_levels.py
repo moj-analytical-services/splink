@@ -70,7 +70,7 @@ def _linker():
 def test_match_weight_mode_and_serialization(match_weight):
     level = _level(match_weight=match_weight)
 
-    assert level._is_match_weight_mode
+    assert level.is_match_weight_mode
     assert level.match_weight == match_weight
     assert level.m_probability is None
     assert level.u_probability is None
@@ -124,8 +124,9 @@ def test_invalid_match_weight_settings(kwargs, message):
 
 
 def test_match_weight_with_tf_warns_and_errors(caplog):
-    with caplog.at_level(logging.WARNING), pytest.raises(
-        ValueError, match="term-frequency adjustments"
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.raises(ValueError, match="term-frequency adjustments"),
     ):
         _level(match_weight=3, tf_adjustment_column="name")
 
@@ -134,9 +135,7 @@ def test_match_weight_with_tf_warns_and_errors(caplog):
 
 def test_creator_configure_supports_match_weight():
     level_dict = (
-        ExactMatchLevel("name")
-        .configure(match_weight=3)
-        .create_level_dict("duckdb")
+        ExactMatchLevel("name").configure(match_weight=3).create_level_dict("duckdb")
     )
 
     assert level_dict["match_weight"] == 3
@@ -217,9 +216,21 @@ def test_training_never_overwrites_match_weight(training_method):
 def test_existing_m_u_mode_is_unchanged():
     level = _level(m_probability=0.6, u_probability=0.2)
 
-    assert not level._is_match_weight_mode
+    assert not level.is_match_weight_mode
     assert level.m_probability == 0.6
     assert level.u_probability == 0.2
     assert level.match_weight == pytest.approx(1.584962500721156)
     assert level.as_dict()["m_probability"] == 0.6
     assert level.as_dict()["u_probability"] == 0.2
+
+
+def test_effective_match_weight_is_independent_of_mode():
+    configured_level = _level(match_weight=2.0)
+    probability_level = _level(m_probability=0.8, u_probability=0.2)
+
+    assert configured_level.match_weight == 2.0
+    assert probability_level.match_weight == 2.0
+    assert configured_level.is_match_weight_mode
+    assert not probability_level.is_match_weight_mode
+    assert configured_level.as_dict()["match_weight"] == 2.0
+    assert "match_weight" not in probability_level.as_dict()
