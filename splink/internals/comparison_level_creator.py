@@ -74,6 +74,7 @@ class ComparisonLevelCreator(ABC):
         *,
         m_probability: UnsuppliedNoneOr[float] = unsupplied_option,
         u_probability: UnsuppliedNoneOr[float] = unsupplied_option,
+        match_weight: UnsuppliedNoneOr[float] = unsupplied_option,
         tf_adjustment_column: UnsuppliedNoneOr[str] = unsupplied_option,
         tf_adjustment_weight: UnsuppliedNoneOr[float] = unsupplied_option,
         tf_minimum_u_value: UnsuppliedNoneOr[float] = unsupplied_option,
@@ -106,6 +107,9 @@ class ComparisonLevelCreator(ABC):
                 comparison level.
                 Default is equivalent to None, in which case a default initial value
                 will be provided for this level.
+            match_weight (float, optional): A fixed match weight for this comparison
+                level. This is mutually exclusive with m_probability, u_probability,
+                their fix flags, and term-frequency adjustments.
             tf_adjustment_column (str, optional): Make term frequency adjustments for
                 this comparison level using this input column.
                 Default is equivalent to None, meaning that term-frequency adjustments
