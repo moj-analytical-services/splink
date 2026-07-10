@@ -71,7 +71,7 @@ def test_chunked_predict_matches_non_chunked(test_helpers, dialect, chunking_dat
     assert df_no_chunk["unique_id_r"] == df_chunked["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_chunked_predict_with_different_chunk_sizes(
     test_helpers, dialect, chunking_data
 ):
@@ -111,7 +111,7 @@ def test_chunked_predict_with_different_chunk_sizes(
         assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_precached_blocked_pairs_same_result(test_helpers, dialect, chunking_data):
     """Test that pre-caching blocked pairs produces same result as no pre-caching."""
     helper = test_helpers[dialect]
@@ -138,7 +138,7 @@ def test_precached_blocked_pairs_same_result(test_helpers, dialect, chunking_dat
     assert df_no_cache["unique_id_r"] == df_with_cache["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_precached_chunked_blocked_pairs_same_result(
     test_helpers, dialect, chunking_data
 ):
@@ -401,7 +401,7 @@ def test_blocked_pairs_deleted_when_not_from_cache(fake_1000):
     assert cache_key not in linker._intermediate_table_cache
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_chunked_predict_link_only(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_only (two datasets)."""
     helper = test_helpers[dialect]
@@ -445,7 +445,7 @@ def test_chunked_predict_link_only(test_helpers, dialect, chunking_data):
         assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_only (three datasets).
 
@@ -493,7 +493,7 @@ def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, chunkin
         assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_chunked_predict_link_and_dedupe(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_and_dedupe (two datasets)."""
     helper = test_helpers[dialect]
@@ -537,7 +537,7 @@ def test_chunked_predict_link_and_dedupe(test_helpers, dialect, chunking_data):
         assert df_baseline["unique_id_r"] == df_chunked["unique_id_r"]
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("spark")
 def test_chunked_predict_link_and_dedupe_three_datasets(
     test_helpers, dialect, chunking_data
 ):
