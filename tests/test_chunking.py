@@ -446,9 +446,7 @@ def test_chunked_predict_link_only(test_helpers, dialect, chunking_data):
 
 
 @mark_with_dialects_excluding()
-def test_chunked_predict_link_only_three_datasets(
-    test_helpers, dialect, chunking_data
-):
+def test_chunked_predict_link_only_three_datasets(test_helpers, dialect, chunking_data):
     """Test chunked predictions work correctly with link_only (three datasets).
 
     Two datasets is a special case, so we test with three datasets as well.

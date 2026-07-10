@@ -171,6 +171,8 @@ def test_parameter_estimate_charts(dialect, test_helpers):
 
     linker = helper.linker_with_registration([data], settings)
 
+    linker.training.estimate_m_from_label_column("true_match_id")
+
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
     )
