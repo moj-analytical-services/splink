@@ -1308,11 +1308,11 @@ wheels = [
 
 [[package]]
 name = "mistune"
-version = "3.2.1"
+version = "3.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ca/84/620cc3f7e3adf6f5067e10f4dbae71295d8f9e16d5d3f9ef97c40f2f592c/mistune-3.2.1.tar.gz", hash = "sha256:7c8e5501d38bac1582e067e46c8343f17d57ea1aaa735823f3aba1fd59c88a28", size = 98003, upload-time = "2026-05-03T14:33:22.312Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/9c/1939635275ec7258e2b43b00dafabc36d89ad11aa7838d375dc1b0e561cb/mistune-3.3.0.tar.gz", hash = "sha256:3074ec4c61b384abe725128e4dcbb483f5a09cc4632012505cdee655d3a113b9", size = 110936, upload-time = "2026-06-21T13:11:39.458Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/7f/a946aa4f8752b37102b41e64dca18a1976ac705c3a0d1dfe74d820a02552/mistune-3.2.1-py3-none-any.whl", hash = "sha256:78cdb0ba5e938053ccf63651b352508d2efa9411dc8810bfb05f2dc5140c0048", size = 53749, upload-time = "2026-05-03T14:33:20.551Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/76/b90f9d48d43fbd80a79a20d3eab2e5109859c7a56dc663b23187385898f3/mistune-3.3.0-py3-none-any.whl", hash = "sha256:a758e578acda49d8195f9a860b132dae2cf7bf409381393b1c4e6e489a65397b", size = 61250, upload-time = "2026-06-21T13:11:37.938Z" },
 ]
 
 [[package]]
@@ -2335,16 +2335,13 @@ name = "pyspark"
 version = "3.5.8"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
     "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "py4j", marker = "(python_full_version < '3.13' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "py4j", marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/80/5a/3806f44eb47387e8af803508cdd6bbc0df784febf4dc010700be04a1ff89/pyspark-3.5.8.tar.gz", hash = "sha256:54cca0767b21b40e3953ad1d30f8601c53abf9cbda763653289cdcfcac52313c", size = 317817299, upload-time = "2026-01-15T11:46:14.487Z" }
 
@@ -2371,7 +2368,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "py4j", marker = "python_full_version >= '3.13' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "py4j", marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/71/4dd20c69332a2a4bf7ece8a655c9da98e4bd9b6bcea235349c1a00399d57/pyspark-4.1.2.tar.gz", hash = "sha256:fa5d6159f700d0990a07f4f62df1b7449401dccee9cd7d5d6df8957530841602", size = 455428043, upload-time = "2026-05-21T14:49:21.785Z" }
 
@@ -3075,12 +3072,12 @@ pyarrow = [
     { name = "pyarrow" },
 ]
 pyspark = [
-    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.13' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
 spark = [
-    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.13' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
 sqlite = [
     { name = "rapidfuzz" },
