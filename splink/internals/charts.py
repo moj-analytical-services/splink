@@ -106,8 +106,12 @@ class SplinkChart(ABC, Generic[T]):
         return None
 
     @property
+    def raw_spec(self) -> dict[str, Any]:
+        return load_chart_definition(self.chart_spec_file)
+
+    @property
     def chart_spec(self) -> dict[str, Any]:
-        chart_spec = load_chart_definition(self.chart_spec_file)
+        chart_spec = self.raw_spec
         chart_spec = self.alter_spec_directly(chart_spec)
         chart_spec = self.alter_spec_height_width(chart_spec)
         chart_spec = self.alter_spec_from_data(chart_spec)
