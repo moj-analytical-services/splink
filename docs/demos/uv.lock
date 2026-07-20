@@ -2806,7 +2806,7 @@ requires-dist = [
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.5.0" },
     { name = "rapidfuzz", marker = "extra == 'sqlite'", specifier = ">=3.10.0" },
-    { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.51" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
 provides-extras = ["pyspark", "spark", "sqlite", "postgres", "pyarrow"]
@@ -2826,7 +2826,7 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
     { name = "ruff", specifier = ">=0.15.18" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.51" },
 ]
 docs = [
     { name = "griffe", marker = "python_full_version >= '3.13'", specifier = ">=1.4.0" },
@@ -2850,7 +2850,7 @@ pandas = [
 ]
 postgres = [
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.51" },
 ]
 spark-3 = [{ name = "pyspark", marker = "python_full_version < '3.12'", specifier = "<4" }]
 spark-4 = [{ name = "pyspark", specifier = ">=4.0.0" }]
@@ -2864,7 +2864,7 @@ testing = [
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.51" },
 ]
 testing-core = [
     { name = "networkx", specifier = ">=2.5.1" },
@@ -2874,7 +2874,7 @@ testing-core = [
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "rapidfuzz", specifier = ">=3.10.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.51" },
 ]
 typechecking = [{ name = "mypy", specifier = ">=2.1.0" }]
 typechecking-dev = [{ name = "ty", specifier = ">=0.0.21" }]
