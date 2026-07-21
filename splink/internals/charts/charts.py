@@ -364,8 +364,8 @@ class WaterfallChart(SplinkChart[ChartRecord]):
         return "match_weights_waterfall.json"
 
     def alter_spec_from_data(self, chart_spec):
-        records = self.chart_data
-        chart_spec["params"][0]["bind"]["max"] = len(records) - 1
+        n_records = len(set(map(lambda datum: datum["record_number"], self.chart_data)))
+        chart_spec["params"][0]["bind"]["max"] = n_records - 1
         if self.filter_nulls:
             chart_spec["transform"].insert(
                 1, {"filter": "(datum.bayes_factor !== 1.0)"}
