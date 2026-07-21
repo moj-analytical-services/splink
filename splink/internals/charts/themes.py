@@ -3,6 +3,7 @@ from typing import Any
 # TODO: we can use TypedDict to type this, with NotRequired when we drop python 3.10
 default_colours = {
     "positive": "#008000",  # green
+    "neutral": "#bbbbbb",
     "negative": "#FF0000",  # red
     "reference_strong": "#000000",  # black
     "text": "#000000",  # black
@@ -61,6 +62,7 @@ default_theme = SplinkColourTheme()
 
 alt = {
     "positive": "#0571b0",
+    "neutral": "#f7f7f7",
     "negative": "#ca0020",
 }
 alt_theme = default_theme.extend_with(alt)
