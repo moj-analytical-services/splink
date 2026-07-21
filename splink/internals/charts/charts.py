@@ -17,6 +17,11 @@ from typing import (
     cast,
 )
 
+from splink.internals.charts.themes import (
+    THEME_CATALOGUE,
+    SplinkColourTheme,
+    default_theme,
+)
 from splink.internals.misc import read_resource
 
 if TYPE_CHECKING:
@@ -86,6 +91,7 @@ class SplinkChart(ABC, Generic[T]):
         self.raw_records = records
         self.width: float | None = self.default_width
         self.height: float | None = self.default_height
+        self.theme: SplinkColourTheme = default_theme
 
     @property
     @abstractmethod
@@ -115,6 +121,7 @@ class SplinkChart(ABC, Generic[T]):
         chart_spec = self.alter_spec_directly(chart_spec)
         chart_spec = self.alter_spec_height_width(chart_spec)
         chart_spec = self.alter_spec_from_data(chart_spec)
+        chart_spec = self.theme.inject_colours_into_spec(chart_spec)
         return chart_spec
 
     @property
@@ -155,6 +162,11 @@ class SplinkChart(ABC, Generic[T]):
         self.width = width
         self.height = height
         # TODO: return self?
+
+    def set_theme(self, theme: SplinkColourTheme | str) -> None:
+        if isinstance(theme, str):
+            theme = THEME_CATALOGUE[theme]
+        self.theme = theme
 
     def save(self, *args, **kwargs):
         self.altair_chart.save(*args, **kwargs)
