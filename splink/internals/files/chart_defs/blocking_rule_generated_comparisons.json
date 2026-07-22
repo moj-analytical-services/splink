@@ -32,6 +32,9 @@
         "-x2"
       ]
     },
+    "color": {
+      "value": "__splink_colour_primary__"
+    },
     "order": {
       "field": "cumulative_comparison_count"
     },
