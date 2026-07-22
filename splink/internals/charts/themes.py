@@ -8,8 +8,9 @@ default_theme_values = {
         "neutral": "#bbbbbb",
         "negative": "#FF0000",  # red
         "reference_strong": "#000000",  # black
+        "reference_weak": "#808080",  # gray
         "text": "#000000",  # black
-        "text_soft": "#808080",  # grey
+        "text_soft": "#808080",  # gray
         "text_inverse": "#FFFFFF",  # white
         "primary": "#4c78a8",  # vega default blue
     },

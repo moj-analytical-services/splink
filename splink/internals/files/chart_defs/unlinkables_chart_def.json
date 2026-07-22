@@ -15,6 +15,9 @@
           "type": "quantitative",
           "axis": {"format": "%", "title": "Percentage of unlinkable records"},
           "field": "cum_prop"
+        },
+        "color": {
+          "value": "__splink_colour_primary__"
         }
       }
     },
@@ -41,6 +44,9 @@
           "axis": {"format": "%", "title": "Percentage of unlinkable records"},
           "field": "cum_prop"
         },
+        "color": {
+          "value": "__splink_colour_primary__"
+        },
         "tooltip": [
           {
             "type": "quantitative",
@@ -66,7 +72,7 @@
 
     },
     {
-      "mark": {"type": "rule", "color": "gray"},
+      "mark": {"type": "rule", "color": "__splink_colour_reference_weak__"},
       "encoding": {"x": {"type": "quantitative", "field": "match_weight"}},
       "transform": [
         {
@@ -78,7 +84,7 @@
       ]
     },
     {
-      "mark": {"type": "rule", "color": "gray"},
+      "mark": {"type": "rule", "color": "__splink_colour_reference_weak__"},
       "encoding": {"y": {"type": "quantitative", "field": "cum_prop"}},
       "transform": [
         {
