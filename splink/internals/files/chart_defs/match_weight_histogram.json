@@ -38,6 +38,9 @@
         "axis": {
           "title": "Count of record comparisons in bin"
         }
+      },
+      "color": {
+        "value": "__splink_colour_primary__"
       }
     },
     "params": [

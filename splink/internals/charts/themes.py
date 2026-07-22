@@ -11,6 +11,7 @@ default_theme_values = {
         "text": "#000000",  # black
         "text_soft": "#808080",  # grey
         "text_inverse": "#FFFFFF",  # white
+        "primary": "#4c78a8",  # vega default blue
     },
     # vega schemes (https://vega.github.io/vega/docs/schemes/)
     "scheme": {
@@ -98,6 +99,7 @@ alt = {
         "positive": "#0571b0",
         "neutral": "#f7f7f7",
         "negative": "#ca0020",
+        "primary": "#0571b0",
     },
     "scheme": {
         "diverging": "redblue",
