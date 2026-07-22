@@ -12,6 +12,10 @@ default_theme_values = {
         "text_soft": "#808080",  # grey
         "text_inverse": "#FFFFFF",  # white
     },
+    # vega schemes (https://vega.github.io/vega/docs/schemes/)
+    "scheme": {
+        "diverging": "redyellowgreen",
+    },
 }
 theme_keys = set(default_theme_values.keys())
 theme_sub_keys = {k: set(v.keys()) for k, v in default_theme_values.items()}
@@ -94,6 +98,9 @@ alt = {
         "positive": "#0571b0",
         "neutral": "#f7f7f7",
         "negative": "#ca0020",
+    },
+    "scheme": {
+        "diverging": "redblue",
     },
 }
 alt_theme = default_theme.extend_with(alt)
