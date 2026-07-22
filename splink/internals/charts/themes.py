@@ -7,6 +7,8 @@ default_theme_values = {
         "positive": "#008000",  # green
         "neutral": "#bbbbbb",
         "negative": "#FF0000",  # red
+        "positive_dark": "#006400",  # dark green
+        "negative_dark": "#8B0000",  # dark red
         "reference_strong": "#000000",  # black
         "reference_weak": "#808080",  # gray
         "text": "#000000",  # black
@@ -21,6 +23,8 @@ default_theme_values = {
     # vega schemes (https://vega.github.io/vega/docs/schemes/)
     "scheme": {
         "diverging": "redyellowgreen",
+        "positive": "greens",
+        "negative": "reds",
     },
 }
 theme_keys = set(default_theme_values.keys())
@@ -105,9 +109,13 @@ alt = {
         "neutral": "#f7f7f7",
         "negative": "#ca0020",
         "primary": "#0571b0",
+        "positive_dark": "#03456c",
+        "negative_dark": "#8B0000",
     },
     "scheme": {
         "diverging": "redblue",
+        "positive": "blues",
+        "negative": "reds",
     },
 }
 alt_theme = default_theme.extend_with(alt)
