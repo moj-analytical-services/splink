@@ -16,7 +16,7 @@ typecheck:
 typecheck-dev:
 	uv run ty check splink
 
-check: format-check lint typecheck
+check: format-check lint typecheck typecheck-dev
 
 test:
 	uv run python -m pytest -vm "duckdb and not needs_pandas" tests/
