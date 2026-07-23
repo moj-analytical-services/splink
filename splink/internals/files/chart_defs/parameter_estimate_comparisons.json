@@ -18,11 +18,11 @@
       "field": "estimate_description",
       "scale": {
         "range": [
-          "__splink_colour_primary__",
-          "__splink_colour_secondary__",
-          "__splink_colour_tertiary__",
-          "__splink_colour_quaternary__",
-          "__splink_colour_quinary__"
+          "__splink_colour_category_1__",
+          "__splink_colour_category_2__",
+          "__splink_colour_category_3__",
+          "__splink_colour_category_4__",
+          "__splink_colour_category_5__"
         ]
       }
     },

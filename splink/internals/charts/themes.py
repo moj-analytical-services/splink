@@ -14,11 +14,11 @@ default_theme_values = {
         "text": "#000000",  # black
         "text_soft": "#808080",  # gray
         "text_inverse": "#FFFFFF",  # white
-        "primary": "#4c78a8",  # vega default blue
-        "secondary": "#f58518",  # vega default orange
-        "tertiary": "#e45756",  # vega default red
-        "quaternary": "#72b7b2",  # vega default teal
-        "quinary": "#54a24b",  # vega default green
+        "category_1": "#4c78a8",  # vega default blue
+        "category_2": "#f58518",  # vega default orange
+        "category_3": "#e45756",  # vega default red
+        "category_4": "#72b7b2",  # vega default teal
+        "category_5": "#54a24b",  # vega default green
     },
     # vega schemes (https://vega.github.io/vega/docs/schemes/)
     "scheme": {

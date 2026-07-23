@@ -17,7 +17,7 @@
           "field": "cum_prop"
         },
         "color": {
-          "value": "__splink_colour_primary__"
+          "value": "__splink_colour_category_1__"
         }
       }
     },
@@ -45,7 +45,7 @@
           "field": "cum_prop"
         },
         "color": {
-          "value": "__splink_colour_primary__"
+          "value": "__splink_colour_category_1__"
         },
         "tooltip": [
           {

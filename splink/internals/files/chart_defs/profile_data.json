@@ -16,7 +16,7 @@
           "title": "Count of values"
         },
         "color": {
-          "value": "__splink_colour_primary__"
+          "value": "__splink_colour_category_1__"
         },
         "tooltip": [
           { "field": "value_count", "type": "quantitative" },
@@ -47,7 +47,7 @@
           "title": "Value count"
         },
         "color": {
-          "value": "__splink_colour_primary__"
+          "value": "__splink_colour_category_1__"
         },
         "tooltip": [
           { "field": "value", "type": "nominal" },
@@ -74,7 +74,7 @@
           "title": "Value count"
         },
         "color": {
-          "value": "__splink_colour_primary__"
+          "value": "__splink_colour_category_1__"
         },
         "tooltip": [
           { "field": "value", "type": "nominal" },
