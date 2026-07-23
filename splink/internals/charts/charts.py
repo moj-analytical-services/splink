@@ -398,14 +398,15 @@ class ROCChart(SplinkChart[ChartRecord]):
     def default_height(self) -> float:
         return 400
 
-    def alter_spec_from_data(self, chart_spec):
-        records = self.chart_data
-        # If 'curve_label' not in records, remove colour coding
+    @staticmethod
+    def alter_data(records):
+        # If 'curve_label' not in records, add in an arbitrary label
         # This is for if you want to compare roc curves
         r = records[0]
         if "curve_label" not in r.keys():
-            del chart_spec["encoding"]["color"]
-        return chart_spec
+            for record in records:
+                record["curve_label"] = "ROC curve"
+        return records
 
 
 class PrecisionRecallChart(SplinkChart[ChartRecord]):
@@ -421,16 +422,21 @@ class PrecisionRecallChart(SplinkChart[ChartRecord]):
     def default_height(self) -> float:
         return 400
 
+    @staticmethod
+    def alter_data(records):
+        # If 'curve_label' not in records, add in an arbitrary label
+        # This is for if you want to compare precision-recall curves
+        r = records[0]
+        if "curve_label" not in r.keys():
+            for record in records:
+                record["curve_label"] = "Precision-Recall curve"
+        return records
+
     def alter_spec_from_data(self, chart_spec):
         records = self.chart_data
         chart_spec["encoding"]["y"]["scale"] = {
             "domain": [min(r["precision"] for r in records), 1.0]
         }
-        # If 'curve_label' not in records, remove colour coding
-        # This is for if you want to compare roc curves
-        r = records[0]
-        if "curve_label" not in r.keys():
-            del chart_spec["encoding"]["color"]
         return chart_spec
 
 

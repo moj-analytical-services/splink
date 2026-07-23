@@ -35,7 +35,16 @@
     },
     "color": {
       "type": "nominal",
-      "field": "curve_label"
+      "field": "curve_label",
+      "scale": {
+        "range": [
+          "__splink_colour_primary__",
+          "__splink_colour_secondary__",
+          "__splink_colour_tertiary__",
+          "__splink_colour_quaternary__",
+          "__splink_colour_quinary__"
+        ]
+      }
     }
   },
   "params": [
