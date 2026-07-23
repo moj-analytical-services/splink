@@ -25,6 +25,7 @@ default_theme_values = {
         "diverging": "redyellowgreen",
         "positive": "greens",
         "negative": "reds",
+        "heatgrid": "darkred",
     },
 }
 theme_keys = set(default_theme_values.keys())
@@ -116,6 +117,7 @@ alt = {
         "diverging": "redblue",
         "positive": "blues",
         "negative": "reds",
+        "heatgrid": "darkblue",
     },
 }
 alt_theme = default_theme.extend_with(alt)
