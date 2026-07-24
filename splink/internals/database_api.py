@@ -401,9 +401,12 @@ class DatabaseAPI(ABC, Generic[TablishType]):
     def remove_splinkdataframe_from_cache(
         self, splink_dataframe: SplinkDataFrame
     ) -> None:
+        self._remove_physical_name_from_cache(splink_dataframe.physical_name)
+
+    def _remove_physical_name_from_cache(self, physical_name: str) -> None:
         keys_to_delete = set()
         for key, df in self._intermediate_table_cache.items():
-            if df.physical_name == splink_dataframe.physical_name:
+            if df.physical_name == physical_name:
                 keys_to_delete.add(key)
 
         for k in keys_to_delete:
@@ -415,6 +418,10 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         for physical_name in list(self._created_tables):
             self.delete_table_from_database(physical_name)
             self._created_tables.discard(physical_name)
+            # Also drop any cached SplinkDataFrame that points at the table we
+            # just deleted, so later operations don't reference a table that no
+            # longer exists in the database (issue #3197).
+            self._remove_physical_name_from_cache(physical_name)
 
     def _bind_templated_alias_to_physical(self, templated: str, physical: str) -> None:
         """Expose the physical table via a backend-specific temp view."""
