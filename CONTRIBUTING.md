@@ -35,40 +35,29 @@ We are trying to make our documentation as accessible to as many people as possi
 
 ## Contributing code
 
-Thanks for your interest in contributing code to Splink!
+Thanks for your interest in contributing code to Splink.
 
-There are a number of ways to get involved:
+### Before starting work
 
-- Start work on an [existing issue](https://github.com/moj-analytical-services/splink/issues), there should be some with a [`good first issue`](https://github.com/moj-analytical-services/splink/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) flag which are a good place to start.
-- Tackle a problem you have identified. If you have identified a feature or bug, the first step is to [create a new issue](https://github.com/moj-analytical-services/splink/issues/new/choose) to explain what you have identified and what you plan to implement, then you are free to fork the repository and get coding!
+If this would be your first code contribution to Splink, please comment on the relevant [GitHub issue](https://github.com/moj-analytical-services/splink/issues) before beginning work. Briefly explain why you want to work on the issue and what you plan to do.
 
-In either case, we ask that you assign yourself to the relevant issue and open up [a draft pull request (PR)](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
+Please wait for a maintainer to confirm that a pull request would be welcome and to agree its scope. An open issue does not, by itself, mean that we are ready to accept a pull request for it because  our main constraint is often the time required to review, test and maintain a change, rather than the time required to implement it.
 
-You can always add further PRs to build extra functionality. Starting out with a minimum viable product and iterating makes for better software (in our opinion). It also helps get features out into the wild sooner.
+We particularly welcome contributions from people who use Splink themselves and have practical problems they wish to address with the library.
+
+Established contributors do not normally need explicit approval for small, focused changes. Substantial changes, new features and changes to public behaviour should still be discussed with the team first.
+
+Once the work has been agreed:
+
+- comment on the issue to say that you are working on it;
+- open a [draft pull request](https://github.blog/2019-02-14-introducing-draft-pull-requests/) early;
+- keep the change focused and as small as reasonably possible.
+
+Pull requests that have not followed this process may be closed without detailed review.
 
 To get set up for development locally, see the [development quickstart](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/development_quickstart.html).
 
-## Best practices
+### Use of AI
 
-When making code changes, we recommend:
+It is fine to use AI assistance to help with your PR.  However, we do ask external contributors to declare any significant use of AI in their PR.
 
-- [Adding tests](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/testing.html) to ensure your code works as expected. These will be run through GitHub Actions when a PR is opened.
-- [Linting](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/lint_and_format.html) to ensure that code is styled consistently.
-
-### Branching Strategy
-
-All pull requests (PRs) should target the `master` branch.
-
-We believe that [small Pull Requests](https://essenceofcode.com/2019/10/29/the-art-of-small-pull-requests/) make better code. They:
-
-- are more focused
-- increase understanding and clarity
-- are easier (and quicker) to review
-- get feedback quicker
-
-If you have a larger feature, please consider creating a simple minimum-viable feature and submit for review. Once this has been reviewed by the Splink dev team there are two options to consider:
-
-1. Merge minimal feature, then create a new branch with additional features.
-2. Do not merge the initial feature branch, create additional feature branches from the reviewed branch.
-
-The best solution often depends on the specific feature being created and any other development work happening in that area of the codebase. If you are unsure, please ask the dev team for advice on how to best structure your changes in your initial PR and we can come to a decision together.
