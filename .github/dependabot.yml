@@ -11,6 +11,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action/*"
   - package-ecosystem: "uv"
     commit-message:
       prefix: ":dependabot: uv"
