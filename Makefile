@@ -29,3 +29,6 @@ pg-stop:
 
 demos:
 	cd docs/demos && bash ../../scripts/run_notebooks.sh $(DEMO_PATH)
+
+docs-serve:
+	rm docs/charts/img/theme_selector_payload.json && uv run python -m mkdocs serve

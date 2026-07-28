@@ -10,6 +10,8 @@ from mkdocs.structure.pages import Page
 from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import TagRemovePreprocessor
 
+from .render_theme_charts import write_themes_json
+
 INCLUDE_MARKDOWN_REGEX = (
     # opening tag and any whitespace
     r"{%\s*"
@@ -100,6 +102,7 @@ def on_config(config: MkDocsConfig) -> MkDocsConfig:
     # md_exporter.config["TagRemovePreprocessor"]["remove_input_tags"] = ("hideme",)
     # overwrite mknotebooks config option
     config["notebook_exporter"] = md_exporter
+    write_themes_json()
     return config
 
 
