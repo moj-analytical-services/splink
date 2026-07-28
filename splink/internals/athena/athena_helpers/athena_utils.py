@@ -19,7 +19,15 @@ def athena_warning_text(database_bucket_txt, do_does_grammar):
 def _verify_athena_inputs(database, bucket, boto3_session):
     errors = []
 
-    if database not in wr.catalog.databases(boto3_session=boto3_session).values:
+    # wr.catalog.databases() truncates to its `limit` arg (100 by default), so
+    # accounts with more than that many databases can get a false "does not
+    # exist" here. wr.catalog.get_databases() walks the full Glue paginator
+    # instead, the same pattern already used for tables in
+    # _garbage_collection() below.
+    existing_databases = (
+        db["Name"] for db in wr.catalog.get_databases(boto3_session=boto3_session)
+    )
+    if database not in existing_databases:
         errors.append(f"database '{database}'")
 
     if bucket not in wr.s3.list_buckets(boto3_session=boto3_session):
