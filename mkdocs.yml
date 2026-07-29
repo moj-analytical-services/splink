@@ -279,6 +279,7 @@ nav:
           - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
     - Charts Gallery:
       - "charts/index.md"
+      - Theme Explorer: "charts/theme_explorer.md"
       - Exploratory Analysis:
         - completeness chart: "charts/completeness_chart.ipynb"
         - profile columns: "charts/profile_columns.ipynb"
@@ -330,6 +331,7 @@ extra_css:
 - css/neoteroi-mkdocs.css
 extra_javascript:
   - javascripts/mathjax.js
+  - javascripts/theme_explorer.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 extra:
   analytics:
