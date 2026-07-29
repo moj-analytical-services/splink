@@ -212,7 +212,6 @@ def build_payload(charts: list[tuple[str, object]]) -> dict[str, object]:
 
 	return {
 		"themes": themes,
-		"defaultTheme": "alt",
 		"charts": payload_charts,
 	}
 

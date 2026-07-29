@@ -112,7 +112,7 @@ const scriptBaseUrl = document.currentScript
         throw new Error("Payload contains no themes");
       }
 
-      const defaultTheme = payload.defaultTheme || payload.themes[0];
+      const defaultTheme = payload.themes[0];
 
       createChartContainers(payload.charts);
 

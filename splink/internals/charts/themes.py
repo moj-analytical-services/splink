@@ -104,7 +104,7 @@ class SplinkColourTheme:
 
 default_theme = SplinkColourTheme()
 
-alt = {
+redblue = {
     "colour": {
         "positive": "#0571b0",
         "neutral": "#f7f7f7",
@@ -124,9 +124,9 @@ alt = {
         "heatgrid": "darkblue",
     },
 }
-alt_theme = default_theme.extend_with(alt)
+redblue_theme = default_theme.extend_with(redblue)
 
 THEME_CATALOGUE = {
     "default": default_theme,
-    "alt": alt_theme,
+    "redblue": redblue_theme,
 }
