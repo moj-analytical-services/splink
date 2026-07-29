@@ -33,15 +33,22 @@ code.language-python > span:not(:first-child) {
 }
 
 #theme-selector-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 16rem;
+  column-gap: 1.5rem;
+  align-items: start;
   margin-top: 0.5rem;
 }
 
 .theme-selector-toolbar {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: start;
+  position: sticky;
+  top: 7rem; /* clears Material header (~3.2rem) + tabs bar (~2.4rem) with buffer */
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
 }
 
 .theme-selector-toolbar label {
@@ -78,4 +85,19 @@ code.language-python > span:not(:first-child) {
 
 .theme-selector-chart-target {
   min-height: 240px;
+}
+
+/* Narrow screens: revert to original stacked layout */
+@media screen and (max-width: 44em) {
+  #theme-selector-dashboard {
+    display: block;
+  }
+
+  .theme-selector-toolbar {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
 }
