@@ -1,7 +1,7 @@
 import duckdb
 import pandas as pd
 
-from splink.internals.charts import (
+from splink.internals.charts.charts import (
     _comparator_score_chart,
     _comparator_score_threshold_chart,
     _phonetic_match_chart,
