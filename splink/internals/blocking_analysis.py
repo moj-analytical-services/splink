@@ -749,7 +749,15 @@ def n_largest_blocks(
         n_largest (int, optional): How many rows to return. Defaults to 5.
 
     Returns:
-        SplinkDataFrame: A dataframe containing the n_largest blocks
+        SplinkDataFrame: A dataframe containing the n_largest blocks, plus
+            ``proportion_of_comparisons`` (this block's share of the rule's
+            total pre-filter comparisons) and
+            ``cumulative_proportion_of_comparisons`` (running total across
+            blocks, ordered from largest to smallest). Both are computed over
+            *all* blocks the rule generates, not just the returned
+            ``n_largest`` rows, so e.g. a cumulative value of 0.92 on the
+            first row means one single value is responsible for 92% of every
+            comparison this rule will generate.
     """
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
 
@@ -778,11 +786,18 @@ def n_largest_blocks(
 
     keys = ", ".join(f"key_{i}" for i in range(len(join_conditions)))
     sql = f"""
-    select {keys}, count_l, count_r,  count_l * count_r as block_count
+    select {keys}, count_l, count_r, count_l * count_r as block_count,
+        (count_l * count_r) / cast(sum(count_l * count_r) over () as float)
+            as proportion_of_comparisons,
+        sum(count_l * count_r) over (
+            order by count_l * count_r desc, {keys}
+            rows between unbounded preceding and current row
+        ) / cast(sum(count_l * count_r) over () as float)
+            as cumulative_proportion_of_comparisons
     from __splink__count_comparisons_from_blocking_l
     inner join __splink__count_comparisons_from_blocking_r
     using ({keys})
-    order by count_l * count_r desc
+    order by count_l * count_r desc, {keys}
     limit {n_largest}
     """
 

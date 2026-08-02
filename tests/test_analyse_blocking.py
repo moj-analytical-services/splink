@@ -611,10 +611,17 @@ def test_n_largest_blocks(test_helpers, dialect):
     from {df_1_sdf.physical_name}
     group by key_0, key_1)
 
-    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count,
+        (a.c * b.c) / cast(sum(a.c * b.c) over () as float)
+            as proportion_of_comparisons,
+        sum(a.c * b.c) over (
+            order by a.c * b.c desc, a.key_0, a.key_1
+            rows between unbounded preceding and current row
+        ) / cast(sum(a.c * b.c) over () as float)
+            as cumulative_proportion_of_comparisons
     from a inner join b
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
-    order by block_count desc
+    order by block_count desc, a.key_0, a.key_1
     """
     n_largest_manual_dedupe_only = db_api.query_sql(sql)
 
@@ -647,10 +654,17 @@ def test_n_largest_blocks(test_helpers, dialect):
     )
     group by key_0, key_1)
 
-    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count,
+        (a.c * b.c) / cast(sum(a.c * b.c) over () as float)
+            as proportion_of_comparisons,
+        sum(a.c * b.c) over (
+            order by a.c * b.c desc, a.key_0, a.key_1
+            rows between unbounded preceding and current row
+        ) / cast(sum(a.c * b.c) over () as float)
+            as cumulative_proportion_of_comparisons
     from a inner join b
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
-    order by block_count desc
+    order by block_count desc, a.key_0, a.key_1
     """
     n_largest_manual_link_and_dedupe = db_api.query_sql(sql)
 
@@ -678,10 +692,17 @@ def test_n_largest_blocks(test_helpers, dialect):
     from {df_2_sdf.physical_name}
     group by key_0, key_1)
 
-    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count,
+        (a.c * b.c) / cast(sum(a.c * b.c) over () as float)
+            as proportion_of_comparisons,
+        sum(a.c * b.c) over (
+            order by a.c * b.c desc, a.key_0, a.key_1
+            rows between unbounded preceding and current row
+        ) / cast(sum(a.c * b.c) over () as float)
+            as cumulative_proportion_of_comparisons
     from a inner join b
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
-    order by block_count desc
+    order by block_count desc, a.key_0, a.key_1
     """
     n_largest_manual_link_only = db_api.query_sql(sql)
 
@@ -718,10 +739,17 @@ def test_n_largest_blocks(test_helpers, dialect):
     )
     group by key_0, key_1)
 
-    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count,
+        (a.c * b.c) / cast(sum(a.c * b.c) over () as float)
+            as proportion_of_comparisons,
+        sum(a.c * b.c) over (
+            order by a.c * b.c desc, a.key_0, a.key_1
+            rows between unbounded preceding and current row
+        ) / cast(sum(a.c * b.c) over () as float)
+            as cumulative_proportion_of_comparisons
     from a inner join b
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
-    order by block_count desc
+    order by block_count desc, a.key_0, a.key_1
     """
     n_largest_manual_link_only_3 = db_api.query_sql(sql)
 
@@ -754,10 +782,17 @@ def test_n_largest_blocks(test_helpers, dialect):
     )
     group by key_0, key_1)
 
-    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count
+    select a.key_0, a.key_1, a.c as count_l, b.c as count_r, a.c * b.c as block_count,
+        (a.c * b.c) / cast(sum(a.c * b.c) over () as float)
+            as proportion_of_comparisons,
+        sum(a.c * b.c) over (
+            order by a.c * b.c desc, a.key_0, a.key_1
+            rows between unbounded preceding and current row
+        ) / cast(sum(a.c * b.c) over () as float)
+            as cumulative_proportion_of_comparisons
     from a inner join b
     on a.key_0 = b.key_0 and a.key_1 = b.key_1
-    order by block_count desc
+    order by block_count desc, a.key_0, a.key_1
     """
     n_largest_manual_link_and_dedupe_inverted = db_api.query_sql(sql)
 
@@ -767,6 +802,56 @@ def test_n_largest_blocks(test_helpers, dialect):
         n_largest_link_and_dedupe_inverted.query_sql(order_sql).as_dict()
         == n_largest_manual_link_and_dedupe_inverted.query_sql(order_sql).as_dict()
     )
+
+
+@mark_with_dialects_excluding()
+def test_n_largest_blocks_proportions(test_helpers, dialect):
+    """proportion_of_comparisons and cumulative_proportion_of_comparisons must
+    reflect ALL blocks the rule generates, not just the n_largest returned -
+    otherwise the "this one value is 92% of everything" reading is wrong
+    whenever the result is truncated."""
+    helper = test_helpers[dialect]
+    db_api = helper.db_api()
+
+    # Deliberately skewed, no ties: block_counts are 36, 4, 1 (total 41)
+    data = (
+        [{"unique_id": i, "first_name": "John", "surname": "Smith"} for i in range(6)]
+        + [
+            {"unique_id": i, "first_name": "Mary", "surname": "Jones"}
+            for i in range(6, 8)
+        ]
+        + [{"unique_id": 8, "first_name": "Tom", "surname": "Brown"}]
+    )
+    sdf = db_api.register(data)
+
+    result = n_largest_blocks(
+        sdf,
+        blocking_rule=block_on("first_name", "surname"),
+        link_type="dedupe_only",
+        n_largest=5,
+    ).as_record_list()
+
+    assert [row["block_count"] for row in result] == [36, 4, 1]
+    assert [row["proportion_of_comparisons"] for row in result] == pytest.approx(
+        [36 / 41, 4 / 41, 1 / 41]
+    )
+    assert [
+        row["cumulative_proportion_of_comparisons"] for row in result
+    ] == pytest.approx([36 / 41, 40 / 41, 1.0])
+
+    # Truncating to n_largest=1 must not change the proportions: they're a
+    # share of ALL 41 comparisons the rule generates, not just what's returned.
+    result_truncated = n_largest_blocks(
+        sdf,
+        blocking_rule=block_on("first_name", "surname"),
+        link_type="dedupe_only",
+        n_largest=1,
+    ).as_record_list()
+    assert len(result_truncated) == 1
+    assert result_truncated[0]["proportion_of_comparisons"] == pytest.approx(36 / 41)
+    assert result_truncated[0][
+        "cumulative_proportion_of_comparisons"
+    ] == pytest.approx(36 / 41)
 
 
 def test_n_largest_blocks_raises_for_no_equi_join_rule():

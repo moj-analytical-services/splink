@@ -100,6 +100,25 @@ SettingsCreator(
 
 
 
+## Diagnosing Data Skew
+
+An efficient, equi-join blocking rule can still perform badly if the values it blocks on are unevenly distributed. Blocking on first name and surname is usually efficient, but if a handful of values (e.g. a common combination like "John Smith") account for a disproportionate share of the records, the block generated for those values alone can be large enough to dominate runtime or exhaust memory, even though every other block is a reasonable size.
+
+Use `n_largest_blocks()` to find which values are responsible before running a full job:
+
+```py
+from splink.blocking_analysis import n_largest_blocks
+
+n_largest_blocks(
+    splink_df,
+    blocking_rule=block_on("first_name", "surname"),
+    link_type="dedupe_only",
+    n_largest=5,
+).as_pandas_dataframe()
+```
+
+This returns the values generating the largest blocks, alongside `block_count` and each block's `proportion_of_comparisons` and `cumulative_proportion_of_comparisons` (the running share of every comparison this rule will generate). A single row responsible for the large majority of `cumulative_proportion_of_comparisons` is the concrete signal that this specific value, not the rule in general, is the problem: worth a targeted fix (a more specific rule for that value, or excluding it) rather than loosening or discarding the blocking rule as a whole.
+
 ??? note "Spark-specific Further Reading"
 
     Given the ability to parallelise operations in Spark, there are some additional configuration options which can improve performance of blocking. Please refer to the Spark Performance Topic Guides for more information.
