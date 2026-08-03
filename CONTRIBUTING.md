@@ -59,5 +59,10 @@ To get set up for development locally, see the [development quickstart](https://
 
 ### Use of AI
 
-It is fine to use AI assistance to help with your PR.  However, we do ask external contributors to declare any significant use of AI in their PR.
+It is fine to use AI assistance to help with your PR.  Please observe the following guidance:
+
+- External contributors should declare any significant use of AI in their PR.
+- We ask that the PR description and all comments and interactions with the Splink team are written by yourself, not by AI
+
+
 
