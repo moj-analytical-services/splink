@@ -406,6 +406,26 @@ class SparkDialect(SplinkDialect):
     def sql_dialect_str(self):
         return "spark"
 
+    def cosine_similarity_sql(self, col_l: str, col_r: str) -> str:
+        # Spark has no native array cosine similarity function, so it is
+        # computed using Spark SQL's higher-order array functions
+        # (zip_with/transform/aggregate), which are natively supported.
+        dot_product = (
+            f"aggregate(zip_with({col_l}, {col_r}, (x, y) -> x * y), "
+            "CAST(0.0 AS DOUBLE), (acc, x) -> acc + x)"
+        )
+        norm_l = (
+            f"sqrt(aggregate(transform({col_l}, x -> x * x), "
+            "CAST(0.0 AS DOUBLE), (acc, x) -> acc + x))"
+        )
+        norm_r = (
+            f"sqrt(aggregate(transform({col_r}, x -> x * x), "
+            "CAST(0.0 AS DOUBLE), (acc, x) -> acc + x))"
+        )
+
+        denominator = f"nullif(({norm_l}) * ({norm_r}), 0.0)"
+        return f"({dot_product}) / ({denominator})"
+
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
