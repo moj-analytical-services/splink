@@ -149,7 +149,7 @@ def populate_m_u_from_lookup(
 ) -> None:
     cl = comparison_level
 
-    if not cl._fix_m_probability and "m" not in training_fixed_probabilities:
+    if not cl._m_probability_is_fixed and "m" not in training_fixed_probabilities:
         try:
             m_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value
@@ -168,7 +168,7 @@ def populate_m_u_from_lookup(
                 cl._m_warning_sent = True
         cl.m_probability = m_probability
 
-    if not cl._fix_u_probability and "u" not in training_fixed_probabilities:
+    if not cl._u_probability_is_fixed and "u" not in training_fixed_probabilities:
         try:
             u_probability = m_u_records_lookup[output_column_name][
                 cl.comparison_vector_value
@@ -358,6 +358,9 @@ def _max_change_in_parameters_comparison_levels(
                 continue
             prev_cl = z_cl[0]
             this_cl = z_cl[1]
+
+            if this_cl.is_match_weight_mode:
+                continue
 
             prev_m_prob = cast(float, prev_cl.m_probability)
             this_m_prob = cast(float, this_cl.m_probability)
