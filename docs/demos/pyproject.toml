@@ -1,0 +1,40 @@
+[project]
+name = "splink-demos"
+version = "5.0.0"
+description = "Splink demos"
+readme = "README.md"
+requires-python = ">=3.10.0, <4.0.0"
+dependencies = [
+    "splink",
+]
+
+[dependency-groups]
+dev = [
+    { "include-group" = "demos" },
+    { "include-group" = "sqlite" },
+    { "include-group" = "spark" },
+]
+demos = [
+    "ipywidgets>=8.1.7",
+    "jupytext>=1.18.1",
+    "nbmake>=1.5.5",
+    "numpy>=1.19.3",
+    "pandas>=1.3.5",
+    "pseudopeople>=1.2.6",
+    "pytest-xdist>=3.6.1",
+]
+sqlite = [
+    "rapidfuzz>=3.10.0",
+]
+spark = [
+    "pyspark>=4.0.0"
+]
+
+[tool.uv]
+exclude-newer = "7 days"
+default-groups = [
+    "dev",
+]
+
+[tool.uv.sources]
+splink = { path = "../..", editable = true }

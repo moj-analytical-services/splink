@@ -23,7 +23,9 @@ _PROBE_SAMPLE_MODULUS = 10_000
 
 # Modulus used for the final sampling hash filter.  We want enough resolution
 # that the integer threshold can closely approximate any p* in (0, 1].
-_SAMPLE_MODULUS = 1_000_000
+# Kept below 2**31 so it remains safe for backends whose hash is only 32-bit
+# (Spark, Postgres); DuckDB's hash is 64-bit.
+_SAMPLE_MODULUS = 1_000_000_000
 
 
 def _em_sample_filter_sql(
@@ -120,7 +122,7 @@ def _count_blocked_pairs_for_probe(
     )
 
     df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    rows = df.as_record_dict()
+    rows = df.as_record_list()
     df.drop_table_from_database_and_remove_from_cache()
     count = int(rows[0]["row_count"]) if rows else 0
 
@@ -153,7 +155,7 @@ def resolve_em_sample_threshold(
         raise ValueError(f"max_pairs must be positive, or None; got {max_pairs!r}")
     if not 0 < probe_proportion <= 1:
         raise ValueError(
-            "record_sample_proportion must be in (0, 1]; got " f"{probe_proportion!r}"
+            f"record_sample_proportion must be in (0, 1]; got {probe_proportion!r}"
         )
 
     info: dict[str, Any] = {

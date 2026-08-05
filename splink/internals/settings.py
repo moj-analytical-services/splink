@@ -149,7 +149,7 @@ class CoreModelSettings:
         prior_description = (
             "The probability that two random records drawn at random match is "
             f"{rr_match:.3f} or one in "
-            f" {1/rr_match:,.1f} records."
+            f" {1 / rr_match:,.1f} records."
             "This is equivalent to a starting match weight of "
             f"{prob_to_match_weight(rr_match):.3f}."
         )
@@ -221,7 +221,7 @@ class Settings:
         max_iterations: int = 25,
         # other
         sql_dialect: str,
-        linker_uid: str = None,
+        linker_uid: str | None = None,
     ):
         self._sql_dialect_str = sql_dialect
         self._sqlglot_dialect = SplinkDialect.from_string(sql_dialect).sqlglot_dialect

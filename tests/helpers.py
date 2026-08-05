@@ -102,7 +102,7 @@ class SparkTestHelper(TestHelper):
         return {
             "spark_session": self.spark,
             "num_partitions_on_repartition": 2,
-            "break_lineage_method": "parquet",
+            "break_lineage_method": "checkpoint",
         }
 
     def load_frame_from_csv(self, path):

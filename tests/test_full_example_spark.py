@@ -195,7 +195,7 @@ def test_link_only(spark, df_spark):
     sdf_predict = linker.inference.predict()
     predict_dict = sdf_predict.as_dict()
 
-    assert len(sdf_predict.as_record_dict()) == 7257
+    assert len(sdf_predict.as_record_list()) == 7257
     assert set(predict_dict["source_dataset_l"]) == {"my_left_ds"}
     assert set(predict_dict["source_dataset_r"]) == {"my_right_ds"}
 
@@ -211,4 +211,4 @@ def test_spark_load_from_pandas(spark_api):
     df_sdf = spark_api.register(df)
     linker = Linker(df_sdf, settings)
 
-    assert len(linker.inference.predict().as_record_dict()) == 3167
+    assert len(linker.inference.predict().as_record_list()) == 3167

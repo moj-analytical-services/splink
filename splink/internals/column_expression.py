@@ -17,7 +17,7 @@ from splink.internals.sql_transform import (
 
 
 class ColumnExpressionOperation(Protocol):
-    def __call__(self, name: str, sql_dialect: SplinkDialect) -> str: ...
+    def __call__(self, name: str, *, sql_dialect: SplinkDialect) -> str: ...
 
 
 class ColumnExpression:
@@ -44,7 +44,7 @@ class ColumnExpression:
     level creator into a `Linker`.
     """
 
-    def __init__(self, sql_expression: str, sql_dialect: SplinkDialect = None):
+    def __init__(self, sql_expression: str, sql_dialect: SplinkDialect | None = None):
         self.raw_sql_expression = sql_expression
         self.operations: list[ColumnExpressionOperation] = []
         if sql_dialect is not None:
@@ -233,11 +233,11 @@ class ColumnExpression:
         self,
         name: str,
         sql_dialect: SplinkDialect,
-        date_format: str = None,
+        date_format: str | None = None,
     ) -> str:
         return sql_dialect.try_parse_date(name, date_format=date_format)
 
-    def try_parse_date(self, date_format: str = None) -> "ColumnExpression":
+    def try_parse_date(self, date_format: str | None = None) -> "ColumnExpression":
         """Applies a 'try parse date' transform to the input expression.
 
         Args:
@@ -257,11 +257,13 @@ class ColumnExpression:
         self,
         name: str,
         sql_dialect: SplinkDialect,
-        timestamp_format: str = None,
+        timestamp_format: str | None = None,
     ) -> str:
         return sql_dialect.try_parse_timestamp(name, timestamp_format=timestamp_format)
 
-    def try_parse_timestamp(self, timestamp_format: str = None) -> "ColumnExpression":
+    def try_parse_timestamp(
+        self, timestamp_format: str | None = None
+    ) -> "ColumnExpression":
         """Applies a 'try parse timestamp' transform to the input expression.
 
         Args:

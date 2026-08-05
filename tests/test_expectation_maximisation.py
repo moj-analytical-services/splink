@@ -96,9 +96,9 @@ def test_estimate_without_term_frequencies(fake_1000):
 
     actual_prop_history = db_api_1.register(session_fast._lambda_history_records)
     expected_prop_history = db_api_1.register(session_slow._lambda_history_records)
-    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    actuals = sorted(actual_prop_history.as_record_list(), key=lambda r: r["iteration"])
     expecteds = sorted(
-        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
+        expected_prop_history.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -131,10 +131,10 @@ def test_estimate_without_term_frequencies(fake_1000):
     )
 
     actuals = sorted(
-        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        actual_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
     expecteds = sorted(
-        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        expected_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -195,22 +195,22 @@ def test_fix_probabilities(fake_1000):
     exact_match_level = first_name_comparison["comparison_levels"][1]
     levenshtein_level = first_name_comparison["comparison_levels"][2]
 
-    assert (
-        exact_match_level["m_probability"] == 0.9999
-    ), "Exact match m_probability is not as expected"
-    assert (
-        exact_match_level["u_probability"] == 0.001
-    ), "Exact match u_probability is not as expected"
-    assert (
-        levenshtein_level["m_probability"] == 0.88
-    ), "Levenshtein m_probability is not as expected"
+    assert exact_match_level["m_probability"] == 0.9999, (
+        "Exact match m_probability is not as expected"
+    )
+    assert exact_match_level["u_probability"] == 0.001, (
+        "Exact match u_probability is not as expected"
+    )
+    assert levenshtein_level["m_probability"] == 0.88, (
+        "Levenshtein m_probability is not as expected"
+    )
 
     # Check that non-fixed probabilities on the else level have changed
     else_level = first_name_comparison["comparison_levels"][3]
 
-    assert (
-        else_level["m_probability"] != 0.001
-    ), "Else level m_probability should have changed"
-    assert (
-        else_level["u_probability"] != 0.9
-    ), "Else level u_probability should have changed"
+    assert else_level["m_probability"] != 0.001, (
+        "Else level m_probability should have changed"
+    )
+    assert else_level["u_probability"] != 0.9, (
+        "Else level u_probability should have changed"
+    )

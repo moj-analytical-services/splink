@@ -35,7 +35,7 @@ class SparkDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def as_record_dict(self, limit=None):
+    def as_record_list(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -50,12 +50,12 @@ class SparkDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         spark_df = self.db_api._execute_sql_against_backend(sql)
-        return {
-            col: [row[col] for row in spark_df.select(col).toLocalIterator()]
-            for col in spark_df.columns
-        }
 
-    def as_pyarrow_table(self, limit: int = None) -> PyArrowTable:
+        columns = spark_df.columns
+        rows = spark_df.collect()
+        return {col: [row[col] for row in rows] for col in columns}
+
+    def as_pyarrow_table(self, limit: int | None = None) -> PyArrowTable:
         # spark 3 doesn't have native arrow support, so use our fallback method instead
         if get_spark_major_version() == 3:
             return super().as_pyarrow_table(limit=limit)
@@ -73,7 +73,7 @@ class SparkDataFrame(SplinkDataFrame):
         else:
             pass
 
-    def as_pandas_dataframe(self, limit: int = None) -> PandasDataFrame:
+    def as_pandas_dataframe(self, limit: int | None = None) -> PandasDataFrame:
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"

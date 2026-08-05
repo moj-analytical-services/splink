@@ -13,9 +13,8 @@ format-check:
 typecheck:
 	uv run mypy splink
 
-# before we switch over we don't let this count as a proper 'fail'
 typecheck-dev:
-	uv run ty check --exit-zero splink
+	uv run ty check splink
 
 check: format-check lint typecheck
 
@@ -27,3 +26,6 @@ pg-start:
 
 pg-stop:
 	./scripts/postgres_docker/teardown.sh
+
+demos:
+	cd docs/demos && bash ../../scripts/run_notebooks.sh $(DEMO_PATH)

@@ -49,9 +49,9 @@ def test_splink_2_em_fixed_u(fake_1000, test_helpers):
         )
     )
     actual_prop_history = db_api.register(training_session._lambda_history_records)
-    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    actuals = sorted(actual_prop_history.as_record_list(), key=lambda r: r["iteration"])
     expecteds = sorted(
-        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
+        expected_prop_history.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -85,10 +85,10 @@ def test_splink_2_em_fixed_u(fake_1000, test_helpers):
     )
 
     actuals = sorted(
-        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        actual_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
     expecteds = sorted(
-        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        expected_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -115,9 +115,9 @@ def test_splink_2_em_no_fix():
         )
     )
     actual_prop_history = db_api.register(training_session._lambda_history_records)
-    actuals = sorted(actual_prop_history.as_record_dict(), key=lambda r: r["iteration"])
+    actuals = sorted(actual_prop_history.as_record_list(), key=lambda r: r["iteration"])
     expecteds = sorted(
-        expected_prop_history.as_record_dict(), key=lambda r: r["iteration"]
+        expected_prop_history.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):
@@ -151,10 +151,10 @@ def test_splink_2_em_no_fix():
     )
 
     actuals = sorted(
-        actual_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        actual_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
     expecteds = sorted(
-        expected_first_name_level_1_m.as_record_dict(), key=lambda r: r["iteration"]
+        expected_first_name_level_1_m.as_record_list(), key=lambda r: r["iteration"]
     )
 
     for expected, actual in zip(expecteds, actuals):

@@ -425,7 +425,7 @@ class AbsoluteTimeDifferenceAtThresholds(ComparisonCreator):
         input_is_string: bool,
         metrics: Union[DateMetricType, List[DateMetricType]],
         thresholds: Union[int, float, List[Union[int, float]]],
-        datetime_format: str = None,
+        datetime_format: str | None = None,
         term_frequency_adjustments: bool = False,
         invalid_dates_as_null: bool = True,
     ):
@@ -648,8 +648,8 @@ class CustomComparison(ComparisonCreator):
     def __init__(
         self,
         comparison_levels: List[Union[ComparisonLevelCreator, dict[str, Any]]],
-        output_column_name: str = None,
-        comparison_description: str = None,
+        output_column_name: str | None = None,
+        comparison_description: str | None = None,
     ):
         """
         Represents a comparison of the data with custom supplied levels.
@@ -685,7 +685,7 @@ class CustomComparison(ComparisonCreator):
     def _convert_to_creator(
         comparison_creator: dict[str, Any] | ComparisonCreator,
     ) -> ComparisonCreator:
-        if isinstance(comparison_creator, dict):
+        if not isinstance(comparison_creator, ComparisonCreator):
             return CustomComparison(**comparison_creator)
         return comparison_creator
 
@@ -721,7 +721,7 @@ class DateOfBirthComparison(ComparisonCreator):
             "year",
             "year",
         ],
-        datetime_format: str = None,
+        datetime_format: str | None = None,
         invalid_dates_as_null: bool = True,
     ):
         """
@@ -844,8 +844,8 @@ class PostcodeComparison(ComparisonCreator):
         col_name: Union[str, ColumnExpression],
         *,
         invalid_postcodes_as_null: bool = False,
-        lat_col: Union[str, ColumnExpression] = None,
-        long_col: Union[str, ColumnExpression] = None,
+        lat_col: Union[str, ColumnExpression] | None = None,
+        long_col: Union[str, ColumnExpression] | None = None,
         km_thresholds: Union[float, List[float]] = [1, 10, 100],
     ):
         """
@@ -1008,7 +1008,7 @@ class NameComparison(ComparisonCreator):
         col_name: Union[str, ColumnExpression],
         *,
         jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88, 0.7],
-        dmeta_col_name: str = None,
+        dmeta_col_name: str | None = None,
     ):
         """
         Generate an 'out of the box' comparison for a name column in the `col_name`
@@ -1094,7 +1094,7 @@ class ForenameSurnameComparison(ComparisonCreator):
         surname_col_name: Union[str, ColumnExpression],
         *,
         jaro_winkler_thresholds: Union[float, list[float]] = [0.92, 0.88],
-        forename_surname_concat_col_name: str = None,
+        forename_surname_concat_col_name: str | None = None,
     ):
         """
         Generate an 'out of the box' comparison for forename and surname columns

@@ -37,11 +37,11 @@ def comparator_score(str1, str2, decimal_places=2):
         select
         '{str1}' as string1,
         '{str2}' as string2,
-        {_comparator_cols_sql.format(
-            comparison1 = 'string1',
-            comparison2 = 'string2',
-            decimal_places=decimal_places
-        )}
+        {
+        _comparator_cols_sql.format(
+            comparison1="string1", comparison2="string2", decimal_places=decimal_places
+        )
+    }
     """
     return con.execute(sql).fetch_df()
 
@@ -69,11 +69,11 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     sql = f"""
         select
         {col1}, {col2},
-        {_comparator_cols_sql.format(
-            comparison1 = col1,
-            comparison2 = col2,
-            decimal_places=decimal_places
-        )},
+        {
+        _comparator_cols_sql.format(
+            comparison1=col1, comparison2=col2, decimal_places=decimal_places
+        )
+    },
         from list
     """
 

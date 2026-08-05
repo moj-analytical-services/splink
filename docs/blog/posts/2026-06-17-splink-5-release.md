@@ -42,7 +42,7 @@ Some highlights of other improvements:
 
 - **A clearer input contract.** Inputs are now registered as `SplinkDataFrame`s before being passed to the `Linker`, using `db_api.register(df, dataset_display_name="...")`. The `db_api=` argument has been removed from the `Linker` - it is derived from the registered data. Source-dataset names for `link_only` / `link_and_dedupe` are set explicitly at registration rather than inferred from positional ordering.
 
-- **Richer outputs.** `SplinkDataFrame` now exposes `as_record_dict()`, `as_dict()`, `as_pyarrow_table()`. `SplinkDataFrame`s now have a `query_sql()` method.
+- **Richer outputs.** `SplinkDataFrame` now exposes `as_record_list()`, `as_dict()`, `as_pyarrow_table()`. `SplinkDataFrame`s now have a `query_sql()` method.
 
 - **A reworked pairwise scoring API.** `compare_two_records()` is replaced by `score_pair()` (one explicit pair) and `score_pairs()` (cartesian product, no blocking).
 

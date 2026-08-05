@@ -37,7 +37,7 @@ def test_predict_between_never_within_a_role(test_helpers, dialect):
     df_between = linker.inference.predict_between(
         left_sdf, right_sdf, warning_mode="never"
     )
-    actual = {(r["unique_id_l"], r["unique_id_r"]) for r in df_between.as_record_dict()}
+    actual = {(r["unique_id_l"], r["unique_id_r"]) for r in df_between.as_record_list()}
     # left alice {1, 2} x right alice {3}; bob (4) does not block.
     # (1, 2) is absent -> the within-left pair is never generated.
     assert actual == {(1, 3), (2, 3)}
@@ -73,7 +73,7 @@ def test_predict_between_link_only_source_filter(test_helpers, dialect):
                 (r["source_dataset_l"], r["unique_id_l"]),
                 (r["source_dataset_r"], r["unique_id_r"]),
             )
-            for r in sdf.as_record_dict()
+            for r in sdf.as_record_list()
         }
 
     df_link_only = linker.inference.predict_between(left, right, warning_mode="never")
@@ -141,7 +141,7 @@ def test_predict_between_exploding_blocking_rule(test_helpers, dialect):
     )
     actual = {
         (r["unique_id_l"], r["unique_id_r"], r["match_key"])
-        for r in df_between.as_record_dict()
+        for r in df_between.as_record_list()
     }
     expected = {(1, 6, "0"), (2, 4, "0"), (2, 6, "0"), (1, 4, "1"), (3, 5, "1")}
     assert actual == expected

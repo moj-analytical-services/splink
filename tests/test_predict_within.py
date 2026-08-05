@@ -34,7 +34,7 @@ def test_predict_within_matches_predict(test_helpers, dialect):
     def _pairs_with_weight(sdf):
         return {
             (r["unique_id_l"], r["unique_id_r"], round(r["match_weight"], 8))
-            for r in sdf.as_record_dict()
+            for r in sdf.as_record_list()
         }
 
     df_predict = linker.inference.predict()
@@ -76,7 +76,7 @@ def test_predict_within_link_only_cross_source_only(test_helpers, dialect):
                 (r["source_dataset_r"], r["unique_id_r"]),
             )
         )
-        for r in df_within.as_record_dict()
+        for r in df_within.as_record_list()
     }
     # Cross-source pairs only; the same-source pair (a1, a2) must be absent.
     expected = {
@@ -126,7 +126,7 @@ def test_predict_within_exploding_blocking_rule(test_helpers, dialect):
     def _triples(sdf):
         return {
             (r["unique_id_l"], r["unique_id_r"], r["match_key"])
-            for r in sdf.as_record_dict()
+            for r in sdf.as_record_list()
         }
 
     assert _triples(df_within) == _triples(df_predict)

@@ -40,7 +40,7 @@ class SplinkDataUtils:
             + ",\n".join(self.list_downloaded_datasets())
         )
 
-    def clear_downloaded_data(self, datasets: list[str] = None) -> None:
+    def clear_downloaded_data(self, datasets: list[str] | None = None) -> None:
         """Delete any pre-downloaded data stored locally.
 
         Args:

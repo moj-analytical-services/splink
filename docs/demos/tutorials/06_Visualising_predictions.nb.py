@@ -77,7 +77,7 @@ df_predictions = linker.inference.predict(threshold_match_probability=0.2)
 #
 
 # %%
-records_to_view = df_predictions.as_record_dict(limit=5)
+records_to_view = df_predictions.as_record_list(limit=5)
 linker.visualisations.waterfall_chart(records_to_view, filter_nulls=False)
 
 # %% [markdown]

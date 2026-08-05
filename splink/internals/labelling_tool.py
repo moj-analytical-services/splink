@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def generate_labelling_tool_comparisons(
     linker: "Linker",
     unique_id: str,
-    source_dataset: str,
+    source_dataset: str | None,
     match_weight_threshold: float = -4,
 ) -> SplinkDataFrame:
     settings = linker._settings_obj

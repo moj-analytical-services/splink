@@ -30,15 +30,15 @@ Splink's core linkage algorithm is based on Fellegi-Sunter's model of record lin
 
 Consider the following records that lack a unique person identifier:
 
-![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_1.drawio.png)
+![Input records that lack a unique person identifier](img/README/splink_01_input_records.png)
 
 Splink predicts which rows link together:
 
-![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_2.drawio.png)
+![Pairwise predictions with match probabilities](img/README/splink_02_pairwise_links.png)
 
 and clusters these links to produce an estimated person ID:
 
-![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_3.drawio.png)
+![Clusters of linked records forming estimated person IDs](img/README/splink_03_clusters.png)
 
 ## What data does Splink work best with?
 
@@ -65,7 +65,7 @@ Here is a list of some of our known users and their use cases:
 === "Public Sector (UK)"
 
 	- [Office for National Statistics](https://www.ons.gov.uk/)'s [Business Index](https://unece.org/sites/default/files/2023-04/ML2023_S1_UK_Breton_A.pdf) (formerly the Inter Departmental Business Register), [Demographic Index](https://uksa.statisticsauthority.gov.uk/wp-content/uploads/2023/02/EAP182-Quality-work-for-Demographic-Index-MDQA.pdf) and the [2021 Census](https://github.com/Data-Linkage/Splink-census-linkage/blob/main/SplinkCaseStudy.pdf).  See also [this article](https://www.government-transformation.com/data/interview-modernizing-public-sector-insight-through-automated-linkage) and [2021 Census to PDS linkage report](https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/healthinequalities/methodologies/census2021topersonaldemographicsservicelinkagereport).
-	- [NHS England](https://www.england.nhs.uk/) is working on developing an alternative data linkage model using splink as the core engine for a new probabilistic data linkage service. This is in order to improve linkage and linkage explainability across NHS datasets. Code now available on [github](https://github.com/nhsengland/NHSE_probabilistic_linkage).
+	- [NHS England](https://www.england.nhs.uk/) have gone live with an alternative data linkage model using splink as the core engine for a new probabilistic data linkage/indexing service. This is in order to improve linkage and linkage explainability across NHS datasets. Code now available on [github](https://github.com/nhsengland/NHSE_probabilistic_linkage) (WIP not current version).
 	- [Ministry of Defence](https://www.gov.uk/government/organisations/ministry-of-defence) launched their [Veteran's Card system](https://www.gov.uk/government/news/hm-armed-forces-veteran-cards-will-officially-launch-in-the-new-year-following-a-successful-assessment-from-the-central-digital-and-data-office) which uses Splink to verify applicants against historic records. This project was shortlisted for the [Civil Service Awards](https://www.civilserviceawards.com/creative-solutions-award/)
 	- [Ministry of Justice](https://www.gov.uk/government/organisations/ministry-of-justice) created [linked datasets (combining courts, prisons and probation data)](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) for use by researchers as part of the [Data First programme](https://www.gov.uk/guidance/ministry-of-justice-data-first)
 	- [Ministry of Justice](https://www.civilserviceawards.com/winners-2025/) and the BOLD programme used Splink to power the North Essex Probation Delivery Unit Case Information Dashboard, which won the 2025 Civil Service Award for Excellence in Delivery.

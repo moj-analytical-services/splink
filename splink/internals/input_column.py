@@ -174,7 +174,7 @@ class InputColumn:
         self,
         raw_column_name_or_column_reference: str,
         *,
-        column_info_settings: ColumnInfoSettings = None,
+        column_info_settings: ColumnInfoSettings | None = None,
         sqlglot_dialect_str: str,
     ):
         # TODO: the sql_dialect is the sqlglot name.
@@ -366,6 +366,6 @@ def _get_sqlglot_dialect_quotes(
         end = sqlglot_dialect_obj.IDENTIFIER_END
     except AttributeError:
         # For sqlglot < 16.0.0
-        start = sqlglot_dialect_obj.identifier_start  # type: ignore [attr-defined]
-        end = sqlglot_dialect_obj.identifier_end  # type: ignore [attr-defined]
+        start = sqlglot_dialect_obj.identifier_start  # type: ignore [attr-defined]  # ty: ignore[unresolved-attribute]
+        end = sqlglot_dialect_obj.identifier_end  # type: ignore [attr-defined]  # ty: ignore[unresolved-attribute]
     return start, end

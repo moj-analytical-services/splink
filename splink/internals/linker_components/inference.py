@@ -293,8 +293,8 @@ class LinkerInference:
 
     def predict(
         self,
-        threshold_match_probability: float = None,
-        threshold_match_weight: float = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
         num_chunks_left: int | None = None,
         num_chunks_right: int | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
@@ -447,8 +447,8 @@ class LinkerInference:
         self,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
-        threshold_match_probability: float = None,
-        threshold_match_weight: float = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
@@ -519,8 +519,8 @@ class LinkerInference:
         self,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
-        threshold_match_probability: float = None,
-        threshold_match_weight: float = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
     ) -> SplinkDataFrame:
         self._validate_predict_warning_mode(warning_mode)
@@ -574,9 +574,9 @@ class LinkerInference:
     def _score_missing_cluster_edges(
         self,
         df_clusters: SplinkDataFrame,
-        df_predict: SplinkDataFrame = None,
-        threshold_match_probability: float = None,
-        threshold_match_weight: float = None,
+        df_predict: SplinkDataFrame | None = None,
+        threshold_match_probability: float | None = None,
+        threshold_match_weight: float | None = None,
     ) -> SplinkDataFrame:
         """
         Given a table of clustered records, create a dataframe of scored
@@ -1503,7 +1503,7 @@ class LinkerInference:
                 input_tablename_r=right_unnested,
             )
             table_name = (
-                "__splink__predict_between_marginal_exploded_ids_mk_" f"{br.match_key}"
+                f"__splink__predict_between_marginal_exploded_ids_mk_{br.match_key}"
             )
             pipeline.enqueue_sql(marginal_sql, table_name)
             br.exploded_id_pair_table = db_api.sql_pipeline_to_splink_dataframe(

@@ -53,6 +53,6 @@ def unlinkables_data(linker: Linker) -> list[dict[str, Any]]:
     pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
     data = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-    unlinkables_dict = data.as_record_dict()
+    unlinkables_dict = data.as_record_list()
     data.drop_table_from_database_and_remove_from_cache()
     return unlinkables_dict

@@ -529,11 +529,11 @@ nonlinks.as_duckdbpyrelation().project(
 
 # %%
 records_to_view = 15
-linker.visualisations.waterfall_chart(links.as_record_dict(limit=records_to_view))
+linker.visualisations.waterfall_chart(links.as_record_list(limit=records_to_view))
 
 # %%
 records_to_view = 5
-linker.visualisations.waterfall_chart(nonlinks.as_record_dict(limit=records_to_view))
+linker.visualisations.waterfall_chart(nonlinks.as_record_list(limit=records_to_view))
 
 # %% [markdown]
 # We may also wish to evaluate the effects of using term frequencies for some columns, such as `address`, by looking at examples of the values `tf_address` for both common and uncommon address values. Common addresses such as the GQ household, displayed first in the waterfall chart below, will have smaller (negative) values for `tf_address`, while uncommon addresses will have larger (positive) values.
@@ -549,7 +549,7 @@ linker.visualisations.waterfall_chart(
         order by mw_tf_adj_address
         limit 10
         """
-    ).as_record_dict()
+    ).as_record_list()
 )
 
 

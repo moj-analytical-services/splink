@@ -159,7 +159,7 @@ def test_splink_dataframe_to_list(dialect, test_helpers, unique_per_test_table_n
     sdf = db_api._sql_to_splink_dataframe(
         table_sql, "test_table", unique_per_test_table_name
     )
-    sdf.as_record_dict()
+    sdf.as_record_list()
     db_api.delete_table_from_database(unique_per_test_table_name)
 
 

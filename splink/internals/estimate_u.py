@@ -250,7 +250,7 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
 
     df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
     try:
-        chunk_counts = df_params.as_record_dict()
+        chunk_counts = df_params.as_record_list()
     finally:
         df_params.drop_table_from_database_and_remove_from_cache()
 
@@ -370,7 +370,7 @@ def estimate_u_values(
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         count_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        result = count_dataframe.as_record_dict()
+        result = count_dataframe.as_record_list()
         count_dataframe.drop_table_from_database_and_remove_from_cache()
         total_nodes = result[0]["count"]
         sample_size = _rows_needed_for_n_pairs(max_pairs)
@@ -387,7 +387,7 @@ def estimate_u_values(
         """
         pipeline.enqueue_sql(sql, "__splink__df_concat_count")
         counts_dataframe = db_api.sql_pipeline_to_splink_dataframe(pipeline)
-        result = counts_dataframe.as_record_dict()
+        result = counts_dataframe.as_record_list()
         counts_dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
 
@@ -403,24 +403,18 @@ def estimate_u_values(
     if sample_size > total_nodes:
         sample_size = total_nodes
 
-    table_to_sample_from = "__splink__df_concat"
-    # if we are provided a seed, we want to order the table before we sample from it
-    # this ensures that the resulting table will be consistent across runs
-    # (which is what we want when we are supplying a seed)
-    # don't bother when we aren't using a seed as it is needless computation
-    if seed is not None:
-        uid_colname = settings_obj.column_info_settings.unique_id_input_column.name
-        table_to_sample_from = (
-            f"(select * from {table_to_sample_from} order by {uid_colname})"
-        )
-
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(training_linker, pipeline)
 
+    uid_cols = settings_obj.column_info_settings.unique_id_input_columns
+    sample_filter = training_linker._proportion_sample_sql(
+        proportion, uid_cols, seed=seed
+    )
     sql = f"""
     select *
-    from {table_to_sample_from}
-    {training_linker._random_sample_sql(proportion, sample_size, seed)}
+    from __splink__df_concat
+    where 1=1
+    {sample_filter}
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_concat_sample")
@@ -457,7 +451,7 @@ def estimate_u_values(
     for i, comparison in enumerate(settings_obj.comparisons):
         logger.info(
             f"\nEstimating u for: {comparison.output_column_name} "
-            f"(Comparison {i+1} of {len(settings_obj.comparisons)})"
+            f"(Comparison {i + 1} of {len(settings_obj.comparisons)})"
         )
         original_comparison = original_settings_obj.comparisons[i]
 

@@ -280,9 +280,9 @@ def _generate_detailed_cluster_comparison_sql(
     ]
 
     sql = f"""
-    SELECT {', '.join(select_columns)}
+    SELECT {", ".join(select_columns)}
     {from_clause}
-    {' '.join(join_clauses)}
+    {" ".join(join_clauses)}
     """
 
     return sql

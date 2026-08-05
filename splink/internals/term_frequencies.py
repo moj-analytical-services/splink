@@ -232,12 +232,12 @@ def tf_chart_data(
                 unnest(map_entries(histogram(log2_bf_final, {bin_edges}))) AS hist_data,
                 hist_data['key'] AS bin_upper,
                 hist_data['value'] AS count,
-                bin_upper - {bin_width/2} AS log2_bf_final,
+                bin_upper - {bin_width / 2} AS log2_bf_final,
                 (bin_upper - {bin_width})::VARCHAR || '-' || (bin_upper)::VARCHAR
                     AS log2_bf_desc,
                 -- have to repeat ourselves as duckdb can't disambiguate log2_bf_final
                 -- in this relation as opposed to the base table
-                bin_upper - {bin_width/2} - log2_bf AS log2_bf_tf
+                bin_upper - {bin_width / 2} - log2_bf AS log2_bf_tf
             FROM
                 {df_table_name}
             GROUP BY

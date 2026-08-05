@@ -17,18 +17,18 @@ def get_columns_used_from_sql(sql, sqlglot_dialect=None, retain_table_prefix=Fal
         # check if any parents are lambdas
         parent = subtree.parent
         while parent is not None:
-            if type(parent) == Lambda:
+            if isinstance(parent, Lambda):
                 break
             parent = parent.parent
 
-        if type(parent) == Lambda:
+        if isinstance(parent, Lambda):
             continue
 
-        if subtree.find(Bracket) and type(subtree) == Column:
+        if subtree.find(Bracket) and isinstance(subtree, Column):
             # Column with bracket in it
             table = subtree.table
             column = subtree.this.this.this
-        elif type(subtree.parent) != Column and type(subtree) == Column:
+        elif not isinstance(subtree.parent, Column) and isinstance(subtree, Column):
             # Plain column
             table = subtree.table
 

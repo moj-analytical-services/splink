@@ -5,9 +5,9 @@
 successfilesarray=()
 failedfilesarray=()
 
-ROOT_DIR="docs"
+ROOT_DIR="."
 if [[ -n "$1" ]]; then
-  ROOT_DIR="$ROOT_DIR/$1"
+  ROOT_DIR="$1"
 fi
 
 if [[ ! -d "$ROOT_DIR" ]]; then

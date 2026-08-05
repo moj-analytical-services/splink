@@ -15,7 +15,7 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
     def __init__(
         self,
         connection: Union[str, duckdb.DuckDBPyConnection] = ":memory:",
-        output_schema: str = None,
+        output_schema: str | None = None,
         query_profiling_dir: str | PathLike[str] = "tmp_query_profiling",
     ):
         super().__init__(connection=connection, output_schema=output_schema)

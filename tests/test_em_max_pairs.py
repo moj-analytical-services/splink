@@ -60,7 +60,7 @@ def _count_blocked_pairs(linker: Linker, sample_threshold=None, sample_modulus=N
     pipeline.enqueue_list_of_sqls(sqls)
     pipeline.enqueue_sql("select count(*) as c from __splink__blocked_id_pairs", "__c")
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-    n = int(df.as_record_dict()[0]["c"])
+    n = int(df.as_record_list()[0]["c"])
     df.drop_table_from_database_and_remove_from_cache()
     return n
 
@@ -95,9 +95,9 @@ def test_em_max_pairs_reduces_pair_count(test_helpers, dialect, fake_1000, link_
 
     # Sampling should bring the pair count down, roughly to the target.
     assert sampled < unsampled, f"{link_type}: sampling did not reduce pairs"
-    assert (
-        0.4 * target_max_pairs <= sampled <= 1.8 * target_max_pairs
-    ), f"{link_type}: sampled {sampled}, target {target_max_pairs}"
+    assert 0.4 * target_max_pairs <= sampled <= 1.8 * target_max_pairs, (
+        f"{link_type}: sampled {sampled}, target {target_max_pairs}"
+    )
 
 
 @mark_with_dialects_excluding()

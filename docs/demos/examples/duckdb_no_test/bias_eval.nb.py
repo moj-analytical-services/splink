@@ -87,7 +87,7 @@ production_df = splink_datasets.historical_50k
 db_api = DuckDBAPI()
 production_df_sdf = db_api.register(production_df)
 # TODO: Update path to model settings json file as needed
-linker = Linker(production_df_sdf, settings='docs/demos/demo_settings/model_h50k.json')
+linker = Linker(production_df_sdf, settings='demo_settings/model_h50k.json')
 
 # %% [markdown]
 # It's useful to visualise the model parameters to learn the relative importance of different parts of your data for linking.
@@ -119,7 +119,7 @@ linker.visualisations.match_weights_chart()
 comparisons = sorted(
     linker.inference.score_pairs(
         synthetic_base_raw, synthetic_comparison_raw
-    ).as_record_dict(),
+    ).as_record_list(),
     key=lambda record: record["unique_id_r"],
 )
 
@@ -226,7 +226,7 @@ show(synthetic_comparison_partial_table)
 comparisons_partial = sorted(
     linker.inference.score_pairs(
         synthetic_base_raw, synthetic_comparison_partial_raw
-    ).as_record_dict(),
+    ).as_record_list(),
     key=lambda record: record["unique_id_r"],
 )
 

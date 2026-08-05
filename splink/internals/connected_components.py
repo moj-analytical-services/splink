@@ -302,7 +302,7 @@ def solve_connected_components(
         pipeline.enqueue_sql(sql, "__splink__root_rows")
         root_rows_df = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-        root_rows = root_rows_df.as_record_dict()
+        root_rows = root_rows_df.as_record_list()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
         needs_updating_count = root_rows[0]["count_of_edges_needing_processing"]
         logger.info(

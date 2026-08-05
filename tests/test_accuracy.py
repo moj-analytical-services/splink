@@ -21,7 +21,7 @@ from .basic_settings import get_settings_dict
 def get_id_pairs_from_splink_dataframe(sdf: SplinkDataFrame) -> list[tuple[int, int]]:
     return [
         tuple((record["unique_id_l"], record["unique_id_r"]))
-        for record in sdf.as_record_dict()
+        for record in sdf.as_record_list()
     ]
 
 
@@ -540,7 +540,7 @@ def test_truth_space_table_from_labels_column_dedupe_only():
 
     tt = linker.evaluation.accuracy_analysis_from_labels_column(
         "cluster", output_type="table"
-    ).as_record_dict()
+    ).as_record_list()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 4
@@ -613,7 +613,7 @@ def test_truth_space_table_from_labels_column_link_only():
 
     tt = linker.evaluation.accuracy_analysis_from_labels_column(
         "ground_truth", output_type="table"
-    ).as_record_dict()
+    ).as_record_list()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
     assert truth_dict["tp"] == 3
@@ -721,7 +721,7 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_inc_unblocked(
             "cluster",
             output_type="table",
             positives_not_captured_by_blocking_rules_scored_as_zero=False,
-        ).as_record_dict()
+        ).as_record_list()
     )
 
     for splink_row in splink_rows:
@@ -797,7 +797,7 @@ def test_truth_space_table_from_column_vs_pandas_implementaiton_ex_unblocked(fak
             "cluster",
             output_type="table",
             positives_not_captured_by_blocking_rules_scored_as_zero=True,
-        ).as_record_dict()
+        ).as_record_list()
     )
 
     for splink_row in splink_rows:
@@ -852,7 +852,7 @@ def test_truth_space_table_from_table_vs_pandas_cartesian(fake_1000):
     splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(
             labels_input, output_type="table"
-        ).as_record_dict()
+        ).as_record_list()
     )
 
     for splink_row in splink_rows:
@@ -941,7 +941,7 @@ def test_truth_space_table_from_table_vs_pandas_with_blocking(fake_1000):
     splink_rows = (
         linker_for_splink_answer.evaluation.accuracy_analysis_from_labels_table(
             labels_input, output_type="table"
-        ).as_record_dict()
+        ).as_record_list()
     )
 
     for splink_row in splink_rows:

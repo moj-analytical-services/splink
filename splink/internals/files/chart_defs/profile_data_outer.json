@@ -1,0 +1,5 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+    "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+    "vconcat": []
+}

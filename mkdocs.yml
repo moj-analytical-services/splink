@@ -274,7 +274,6 @@ nav:
       - Performance of comparison functions: "topic_guides/performance/performance_of_comparison_functions.ipynb"
       - Spark Performance:
           - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
-          - Salting blocking rules: "topic_guides/performance/salting.md"
       - DuckDB Performance:
           - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
     - Charts Gallery:

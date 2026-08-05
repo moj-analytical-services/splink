@@ -40,7 +40,7 @@ def is_in_level(
 
     db_api.delete_table_from_database(table_name)
 
-    result = [bool(row["result"]) for row in res.as_record_dict()]
+    result = [bool(row["result"]) for row in res.as_record_list()]
     return result[0] if isinstance(literal_values, dict) else result
 
 
@@ -82,7 +82,7 @@ def comparison_vector_value(
 
     db_api.delete_table_from_database(table_name)
 
-    result_dicts = res.as_record_dict()
+    result_dicts = res.as_record_list()
 
     instantiated_levels = comparison_internal.comparison_levels
     cvv_label_lookup = {

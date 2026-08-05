@@ -143,7 +143,7 @@ class LinkerVisualisations:
 
         """
         df = histogram_data(self._linker, df_predict, target_bins)
-        recs = df.as_record_dict()
+        recs = df.as_record_list()
         chart = MatchWeightsHistogramChart(recs)
         chart.set_width_height(width=width, height=height)
         return chart
@@ -264,17 +264,17 @@ class LinkerVisualisations:
         record comparisons.
 
         Records must be provided as a list of dictionaries. This would usually be
-        obtained from `df.as_record_dict(limit=n)` where `df` is a SplinkDataFrame.
+        obtained from `df.as_record_list(limit=n)` where `df` is a SplinkDataFrame.
 
         Examples:
             ```py
             df = linker.inference.predict(threshold_match_weight=2)
-            records = df.as_record_dict(limit=10)
+            records = df.as_record_list(limit=10)
             linker.visualisations.waterfall_chart(records)
             ```
 
         Args:
-            records (List[dict]): Usually be obtained from `df.as_record_dict(limit=n)`
+            records (List[dict]): Usually be obtained from `df.as_record_list(limit=n)`
                 where `df` is a SplinkDataFrame.
             filter_nulls (bool, optional): Whether the visualisation shows null
                 comparisons, which have no effect on final match weight. Defaults to
@@ -359,7 +359,7 @@ class LinkerVisualisations:
         df = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
         rendered = render_splink_comparison_viewer_html(
-            df.as_record_dict(),
+            df.as_record_list(),
             self._linker._settings_obj._as_completed_dict(),
             out_path,
             overwrite,
@@ -375,11 +375,11 @@ class LinkerVisualisations:
         out_path: str,
         sampling_method: SamplingMethods = "random",
         sample_size: int = 10,
-        cluster_ids: list[str] = None,
-        cluster_names: list[str] = None,
+        cluster_ids: list[str] | None = None,
+        cluster_names: list[str] | None = None,
         overwrite: bool = False,
         return_html_as_string: bool = False,
-        _df_cluster_metrics: SplinkDataFrame = None,
+        _df_cluster_metrics: SplinkDataFrame | None = None,
     ) -> str | None:
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.

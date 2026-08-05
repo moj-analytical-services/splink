@@ -281,11 +281,14 @@ class Linker:
     def _sql_dialect(self) -> SplinkDialect:
         return self._db_api.sql_dialect
 
-    def _random_sample_sql(
-        self, proportion, sample_size, seed=None, table=None, unique_id=None
-    ):
-        return self._sql_dialect.random_sample_sql(
-            proportion, sample_size, seed=seed, table=table, unique_id=unique_id
+    def _proportion_sample_sql(
+        self,
+        proportion: float,
+        unique_id_cols: list[InputColumn],
+        seed: int | None = None,
+    ) -> str:
+        return self._sql_dialect.proportion_sample_sql(
+            proportion, unique_id_cols, seed=seed
         )
 
     def _check_for_valid_settings(self):
@@ -435,7 +438,7 @@ class Linker:
                     (
                         "This estimate of probability two random records match now: "
                         f" {as_prob:,.3f} "
-                        f"with reciprocal {(1/as_prob):,.3f}"
+                        f"with reciprocal {(1 / as_prob):,.3f}"
                     ),
                 )
             logger.log(15, "\n---------")
@@ -450,7 +453,7 @@ class Linker:
             "\nMedian of prop of matches estimates: "
             f"{self._settings_obj._probability_two_random_records_match:,.3f} "
             "reciprocal "
-            f"{1/self._settings_obj._probability_two_random_records_match:,.3f}",
+            f"{1 / self._settings_obj._probability_two_random_records_match:,.3f}",
         )
 
     def _populate_m_u_from_trained_values(self):

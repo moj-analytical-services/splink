@@ -226,11 +226,11 @@ IFrame(
 pred_errors = linker.evaluation.prediction_errors_from_labels_column(
     "ground_truth", include_false_positives=True, include_false_negatives=False
 )
-linker.visualisations.waterfall_chart(pred_errors.as_record_dict(limit=5))
+linker.visualisations.waterfall_chart(pred_errors.as_record_list(limit=5))
 
 # %%
 pred_errors = linker.evaluation.prediction_errors_from_labels_column(
     "ground_truth", include_false_positives=False, include_false_negatives=True
 )
-linker.visualisations.waterfall_chart(pred_errors.as_record_dict(limit=5))
+linker.visualisations.waterfall_chart(pred_errors.as_record_list(limit=5))
 
