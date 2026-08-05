@@ -47,6 +47,7 @@ from splink.internals.unique_id_concat import (
 from splink.internals.vertically_concatenate import (
     enqueue_df_concat,
     enqueue_df_concat_with_tf,
+    enqueue_duckdb_df_concat_with_tf_for_blocked_pairs,
     vertically_concatenate_sql,
 )
 
@@ -535,15 +536,24 @@ class LinkerInference:
         settings = self._linker._settings_obj
 
         pipeline = CTEPipeline([blocked_pairs])
-        enqueue_df_concat_with_tf(self._linker, pipeline)
+        if self._linker._sql_dialect_str == "duckdb":
+            enqueue_duckdb_df_concat_with_tf_for_blocked_pairs(
+                self._linker, pipeline
+            )
+            input_tablename_l = "__splink__df_concat_with_tf_l"
+            input_tablename_r = "__splink__df_concat_with_tf_r"
+        else:
+            enqueue_df_concat_with_tf(self._linker, pipeline)
+            input_tablename_l = "__splink__df_concat_with_tf"
+            input_tablename_r = "__splink__df_concat_with_tf"
 
         start_time = time.time()
 
         sqls = compute_comparison_vector_values_from_id_pairs_sqls(
             self._linker._settings_obj._columns_to_select_for_blocking,
             self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
+            input_tablename_l=input_tablename_l,
+            input_tablename_r=input_tablename_r,
             source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
             unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
             link_type=settings._link_type,

@@ -19,9 +19,15 @@ if TYPE_CHECKING:
 
 
 class CTE:
-    def __init__(self, sql, output_table_name):
+    def __init__(
+        self,
+        sql: str,
+        output_table_name: str,
+        duckdb_not_materialized: bool = False,
+    ):
         self.sql = sql
         self.output_table_name = output_table_name
+        self.duckdb_not_materialized = duckdb_not_materialized
 
     @property
     def _uses_tables(self):
@@ -58,10 +64,16 @@ class CTEPipeline:
         # A flag to ensure that a pipeline cannot be reused
         self.spent = False
 
-    def enqueue_sql(self, sql: str, output_table_name: str) -> None:
+    def enqueue_sql(
+        self,
+        sql: str,
+        output_table_name: str,
+        *,
+        duckdb_not_materialized: bool = False,
+    ) -> None:
         if self.spent:
             raise ValueError("This pipeline has already been used")
-        sql_task = CTE(sql, output_table_name)
+        sql_task = CTE(sql, output_table_name, duckdb_not_materialized)
         self.queue.append(sql_task)
 
     def enqueue_list_of_sqls(self, sql_list: List[dict[str, str]]) -> None:
@@ -118,6 +130,7 @@ class CTEPipeline:
             CTE(
                 self._replace_templated_references_with_physical_names(cte.sql),
                 cte.output_table_name,
+                cte.duckdb_not_materialized,
             )
             for cte in self.queue
         ]
@@ -148,10 +161,15 @@ class CTEPipeline:
         with_ctes_pipeline = pipeline[:-1]
         final_query = pipeline[-1]
 
-        with_ctes = [
-            f"{p.output_table_name} as (\n{indent_sql(p.sql)}\n)"
-            for p in with_ctes_pipeline
-        ]
+        with_ctes = []
+        for part in with_ctes_pipeline:
+            materialization_hint = (
+                " not materialized" if part.duckdb_not_materialized else ""
+            )
+            with_ctes.append(
+                f"{part.output_table_name} as{materialization_hint} (\n"
+                f"{indent_sql(part.sql)}\n)"
+            )
         with_ctes_str = ", \n\n".join(with_ctes)
         if with_ctes_str:
             with_ctes_str = f"WITH\n\n{with_ctes_str}\n"

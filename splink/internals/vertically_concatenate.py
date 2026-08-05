@@ -10,8 +10,10 @@ from splink.internals.splink_dataframe import SplinkDataFrame
 
 from .term_frequencies import (
     _join_tf_to_df_concat_sql,
+    _join_tf_to_input_table_sql,
     append_term_frequencies_to_pipeline,
 )
+from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,9 @@ def vertically_concatenate_sql(
     return join_sql_with_union_all(sqls)
 
 
-def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
+def enqueue_df_concat_with_tf(
+    linker: Linker, pipeline: CTEPipeline
+) -> CTEPipeline:
     enqueue_df_concat(linker, pipeline)
     append_term_frequencies_to_pipeline(linker, pipeline)
     pipeline.enqueue_sql(
@@ -81,14 +85,60 @@ def enqueue_df_concat_with_tf(linker: Linker, pipeline: CTEPipeline) -> CTEPipel
     return pipeline
 
 
-def enqueue_df_concat(linker: Linker, pipeline: CTEPipeline) -> CTEPipeline:
+def enqueue_duckdb_df_concat_with_tf_for_blocked_pairs(
+    linker: Linker, pipeline: CTEPipeline
+) -> CTEPipeline:
+    enqueue_df_concat(linker, pipeline, duckdb_not_materialized=True)
+    append_term_frequencies_to_pipeline(linker, pipeline)
+
+    column_info = linker._settings_obj.column_info_settings
+    unique_id_columns = [column_info.unique_id_input_column]
+    if column_info.source_dataset_input_column:
+        unique_id_columns.insert(0, column_info.source_dataset_input_column)
+    unique_id_expression = _composite_unique_id_from_nodes_sql(
+        unique_id_columns, "n"
+    )
+
+    for side in ("l", "r"):
+        filtered_table = f"__splink__df_concat_filtered_{side}"
+        pipeline.enqueue_sql(
+            f"""
+            select n.*
+            from __splink__df_concat as n
+            where {unique_id_expression} in (
+                select join_key_{side}
+                from __splink__blocked_id_pairs
+            )
+            """,
+            filtered_table,
+            duckdb_not_materialized=True,
+        )
+        pipeline.enqueue_sql(
+            _join_tf_to_input_table_sql(linker, filtered_table),
+            f"__splink__df_concat_with_tf_{side}",
+            duckdb_not_materialized=True,
+        )
+
+    return pipeline
+
+
+def enqueue_df_concat(
+    linker: Linker,
+    pipeline: CTEPipeline,
+    *,
+    duckdb_not_materialized: bool = False,
+) -> CTEPipeline:
     sds_ic = linker._settings_obj.column_info_settings.source_dataset_input_column
 
     sql = vertically_concatenate_sql(
         input_tables=linker._input_tables_dict,
         source_dataset_input_column=sds_ic,
     )
-    pipeline.enqueue_sql(sql, "__splink__df_concat")
+    pipeline.enqueue_sql(
+        sql,
+        "__splink__df_concat",
+        duckdb_not_materialized=duckdb_not_materialized,
+    )
 
     return pipeline
 

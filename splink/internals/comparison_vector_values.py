@@ -5,9 +5,7 @@ from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
 from splink.internals.misc import indent_sql
-from splink.internals.unique_id_concat import (
-    _composite_unique_id_from_nodes_sql,
-)
+from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -64,36 +62,6 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
 
     select_columns = [*columns_to_select_for_blocking, "b.match_key"]
     select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
-
-    # Where there are large numbers of unmatched records, the DuckDB query planner
-    # can struggle with the double inner join below.  It should
-    # push the filters down to the input tables, but it doesn't always do this.
-    # This forces it.  it is only really relevant in the link only case,
-    # where one dataset is much larger than the other
-    # This optimisation is here due to poor performance observed in
-    # the `uk_address_matcher` package
-    # TODO: Once DuckDB 1.5 is released, check this is still needed
-    # ref https://github.com/moj-analytical-services/uk_address_matcher/issues/226
-    if (
-        input_tablename_l == input_tablename_r
-        and link_type == "two_dataset_link_only"
-        and sql_dialect_str == "duckdb"
-    ):
-        uid_expr = _composite_unique_id_from_nodes_sql(unique_id_columns)
-        sql = f"""
-        select *
-        from {input_tablename_l}
-        where
-        {uid_expr} in (select join_key_l from __splink__blocked_id_pairs)
-        or
-        {uid_expr} in (select join_key_r from __splink__blocked_id_pairs)
-        """
-
-        sqls.append(
-            {"sql": sql, "output_table_name": "__splink__df_concat_with_tf_filtered"}
-        )
-        input_tablename_l = "__splink__df_concat_with_tf_filtered"
-        input_tablename_r = "__splink__df_concat_with_tf_filtered"
 
     uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
     uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
