@@ -3,10 +3,12 @@ name: Documentation
 on:
   push:
     branches:
-      - splink4_maintenance
+      - 'splink4_maintenance'
+      - 'master'
   pull_request:
     branches:
-      - splink4_maintenance
+      - 'splink4_maintenance'
+      - 'master'
     paths:
       # files that affect the docs build:
       - docs/**
@@ -46,9 +48,13 @@ jobs:
         id: install_dependencies
         run: uv sync --python 3.13 --group docs
 
+      - name: Render notebooks
+        id: render_notebooks
+        run: cd docs/demos && ./render_notebooks.sh
+
       - name: Build documentation
         id: build_documentation
-        run: uv run mkdocs build
+        run: uv run python -m mkdocs build
 
       - name: Upload built site
         id: upload_built_site
