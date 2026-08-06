@@ -65,20 +65,13 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     select_columns = [*columns_to_select_for_blocking, "b.match_key"]
     select_cols_expr = ",\n".join(indent_sql(col) for col in select_columns)
 
-    # Where there are large numbers of unmatched records, the DuckDB query planner
-    # can struggle with the double inner join below.  It should
-    # push the filters down to the input tables, but it doesn't always do this.
-    # This forces it.  it is only really relevant in the link only case,
-    # where one dataset is much larger than the other
-    # This optimisation is here due to poor performance observed in
-    # the `uk_address_matcher` package
-    # TODO: Once DuckDB 1.5 is released, check this is still needed
+    # DuckDB may materialise the complete shared input CTE when it is joined twice
+    # below. Filtering it to endpoints in the current blocked-pairs table prevents
+    # that materialisation across link types. This was reproduced with DuckDB 1.5.x.
+    # This optimisation was originally added due to poor performance observed in
+    # the `uk_address_matcher` package.
     # ref https://github.com/moj-analytical-services/uk_address_matcher/issues/226
-    if (
-        input_tablename_l == input_tablename_r
-        and link_type == "two_dataset_link_only"
-        and sql_dialect_str == "duckdb"
-    ):
+    if input_tablename_l == input_tablename_r and sql_dialect_str == "duckdb":
         uid_expr = _composite_unique_id_from_nodes_sql(unique_id_columns)
         sql = f"""
         select *
