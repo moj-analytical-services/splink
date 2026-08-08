@@ -70,6 +70,15 @@
           "title": "Metric",
           "legend": {
             "labelExpr": "__mapping__[datum.value]"
+          },
+          "scale": {
+            "range": [
+              "__splink_colour_category_1__",
+              "__splink_colour_category_2__",
+              "__splink_colour_category_3__",
+              "__splink_colour_category_4__",
+              "__splink_colour_category_5__"
+            ]
           }
         }
       },

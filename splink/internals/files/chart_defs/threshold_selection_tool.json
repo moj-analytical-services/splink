@@ -198,14 +198,14 @@
                                 {
                                     "mark": {
                                         "type": "line",
-                                        "color": "red",
+                                        "color": "__splink_colour_negative__",
                                         "opacity": 0.5
                                     }
                                 },
                                 {
                                     "mark": {
                                         "type": "line",
-                                        "color": "green",
+                                        "color": "__splink_colour_positive__",
                                         "opacity": 0.5,
                                         "strokeWidth": 3
                                     },
@@ -218,7 +218,7 @@
                                 {
                                     "mark": {
                                         "type": "point",
-                                        "color": "green",
+                                        "color": "__splink_colour_positive__",
                                         "size": 100
                                     },
                                     "encoding": {
@@ -261,7 +261,7 @@
                                 "yOffset": 10,
                                 "align": "left",
                                 "text": "Non-match",
-                                "color": "red",
+                                "color": "__splink_colour_negative__",
                                 "fontSize": 12
                             },
                             "data": {
@@ -278,7 +278,7 @@
                                 "yOffset": -10,
                                 "align": "right",
                                 "text": "Match",
-                                "color": "green",
+                                "color": "__splink_colour_positive__",
                                 "fontSize": 12,
                                 "fontWeight": "bold"
                             },
@@ -305,7 +305,7 @@
                                             "field": "count",
                                             "legend": null,
                                             "scale": {
-                                                "scheme": "reds",
+                                                "scheme": "__splink_scheme_negative__",
                                                 "zero": true
                                             },
                                             "type": "quantitative"
@@ -327,7 +327,7 @@
                                             "field": "count",
                                             "legend": null,
                                             "scale": {
-                                                "scheme": "greens",
+                                                "scheme": "__splink_scheme_positive__",
                                                 "zero": true
                                             },
                                             "type": "quantitative"
@@ -350,14 +350,14 @@
                                             "condition": [
                                                 {
                                                     "test": "datum.predicted==1 && datum.actual==1",
-                                                    "value": "darkgreen"
+                                                    "value": "__splink_colour_positive_dark__"
                                                 },
                                                 {
                                                     "test": "datum.predicted==0 && datum.actual==0",
-                                                    "value": "darkred"
+                                                    "value": "__splink_colour_negative_dark__"
                                                 }
                                             ],
-                                            "value": "black"
+                                            "value": "__splink_colour_text__"
                                         },
                                         "opacity": {
                                             "condition": {
@@ -384,11 +384,11 @@
                                             "condition": [
                                                 {
                                                     "test": "datum.predicted==1 && datum.actual==1",
-                                                    "value": "darkgreen"
+                                                    "value": "__splink_colour_positive_dark__"
                                                 },
                                                 {
                                                     "test": "datum.predicted==0 && datum.actual==0",
-                                                    "value": "darkred"
+                                                    "value": "__splink_colour_negative_dark__"
                                                 }
                                             ],
                                             "value": "black"
@@ -652,6 +652,15 @@
                                 "titlePadding": 15,
                                 "padding": 10,
                                 "fillColor": "whitesmoke"
+                            },
+                            "scale": {
+                                "range": [
+                                    "__splink_colour_category_1__",
+                                    "__splink_colour_category_2__",
+                                    "__splink_colour_category_3__",
+                                    "__splink_colour_category_4__",
+                                    "__splink_colour_category_5__"
+                                ]
                             }
                         },
                         "x": {
@@ -684,7 +693,7 @@
                         {
                             "mark": {
                                 "type": "rule",
-                                "color": "gray"
+                                "color": "__splink_colour_reference_weak__"
                             },
                             "encoding": {
                                 "x": {

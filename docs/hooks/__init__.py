@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 
 from mkdocs.config.defaults import MkDocsConfig
@@ -9,6 +10,8 @@ from mkdocs.structure.files import Files
 from mkdocs.structure.pages import Page
 from nbconvert import MarkdownExporter
 from nbconvert.preprocessors import TagRemovePreprocessor
+
+from .render_theme_charts import write_themes_json
 
 INCLUDE_MARKDOWN_REGEX = (
     # opening tag and any whitespace
@@ -76,6 +79,28 @@ def re_route_links(markdown: str, page_title: str) -> str | None:
     return re.sub(docs_folder_regex, "", markdown)
 
 
+def sync_vega_assets() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    source_root = repo_root / "splink" / "internals" / "files" / "external_js"
+    target_root = repo_root / "docs" / "javascripts" / "vendor"
+    target_root.mkdir(parents=True, exist_ok=True)
+
+    file_map = {
+        "vega@5.31.0": "vega.min.js",
+        "vega-lite@5.2.0": "vega-lite.min.js",
+        "vega-embed@6.20.2": "vega-embed.min.js",
+    }
+
+    for src_name, dst_name in file_map.items():
+        src = source_root / src_name
+        dst = target_root / dst_name
+        # Avoid touching mtime when contents are unchanged, which can trigger
+        # an infinite mkdocs serve rebuild loop.
+        if dst.exists() and src.read_bytes() == dst.read_bytes():
+            continue
+        shutil.copy2(src, dst)
+
+
 # hooks for use by mkdocs
 
 
@@ -100,6 +125,8 @@ def on_config(config: MkDocsConfig) -> MkDocsConfig:
     # md_exporter.config["TagRemovePreprocessor"]["remove_input_tags"] = ("hideme",)
     # overwrite mknotebooks config option
     config["notebook_exporter"] = md_exporter
+    sync_vega_assets()
+    write_themes_json()
     return config
 
 

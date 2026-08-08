@@ -21,6 +21,9 @@
       },
       "field": "probability_two_random_records_match"
     },
+    "color": {
+      "value": "__splink_colour_category_1__"
+    },
     "tooltip": [
       {
         "type": "quantitative",

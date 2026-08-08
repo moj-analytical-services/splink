@@ -116,7 +116,7 @@
           }
         ],
         "color": {
-          "value": "green"
+          "value": "__splink_colour_positive__"
         }
       },
       "resolve": {
@@ -221,7 +221,7 @@
           }
         ],
         "color": {
-          "value": "red"
+          "value": "__splink_colour_negative__"
         }
       },
       "resolve": {

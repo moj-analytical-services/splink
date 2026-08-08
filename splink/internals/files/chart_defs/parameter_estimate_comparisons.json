@@ -13,7 +13,19 @@
   },
   "mark": { "type": "point", "filled": false, "opacity": 0.7, "size": 100 },
   "encoding": {
-    "color": { "type": "nominal", "field": "estimate_description" },
+    "color": {
+      "type": "nominal",
+      "field": "estimate_description",
+      "scale": {
+        "range": [
+          "__splink_colour_category_1__",
+          "__splink_colour_category_2__",
+          "__splink_colour_category_3__",
+          "__splink_colour_category_4__",
+          "__splink_colour_category_5__"
+        ]
+      }
+    },
     "row": {
       "type": "nominal",
       "field": "comparison_name",
