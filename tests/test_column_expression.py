@@ -1,3 +1,5 @@
+import pytest
+
 from splink import ColumnExpression
 from splink.internals.dialects import SplinkDialect
 
@@ -81,3 +83,14 @@ def test_nullif(test_helpers, dialect):
     res = nully_table.query_sql(sql).as_dict()
 
     assert res["cleaned_name"] == ["name_1", None, None, "name_4", None]
+
+
+def test_undialected_column_expression_gives_helpful_error():
+    col = ColumnExpression("first_name").lower()
+
+    with pytest.raises(ValueError, match="does not have a SQL dialect"):
+        _ = col.name
+
+    # attaching a dialect afterwards makes the expression usable
+    col.sql_dialect = SplinkDialect.from_string("duckdb")
+    assert "first_name" in col.name
