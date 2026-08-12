@@ -69,7 +69,7 @@
 # * Cluster density
 # * Cluster centrality
 #
-# All of these metrics are calculated by default. If you are unable to install the `igraph` package required for 'is bridge', this metric won't be calculated, however all other metrics will still be generated.
+# All of these metrics are calculated by default. The 'is bridge' metric requires the `igraph` package, which is an optional extra (install with `pip install 'splink[graphs]'`); without it, this metric won't be calculated, however all other metrics will still be generated.
 #
 #
 

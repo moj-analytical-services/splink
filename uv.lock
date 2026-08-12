@@ -3070,12 +3070,14 @@ source = { editable = "." }
 dependencies = [
     { name = "altair" },
     { name = "duckdb" },
-    { name = "igraph" },
     { name = "jinja2" },
     { name = "sqlglot" },
 ]
 
 [package.optional-dependencies]
+graphs = [
+    { name = "igraph" },
+]
 postgres = [
     { name = "psycopg2-binary" },
     { name = "sqlalchemy" },
@@ -3101,6 +3103,7 @@ core = [
     { name = "sqlglot" },
 ]
 dev = [
+    { name = "igraph" },
     { name = "mypy" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
@@ -3128,6 +3131,9 @@ docs = [
     { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "pymdown-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
+graphs = [
+    { name = "igraph" },
+]
 linting = [
     { name = "ruff" },
 ]
@@ -3152,6 +3158,7 @@ sqlite = [
     { name = "rapidfuzz" },
 ]
 testing = [
+    { name = "igraph" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra != 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra != 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "psycopg2-binary" },
@@ -3164,6 +3171,7 @@ testing = [
     { name = "sqlalchemy" },
 ]
 testing-core = [
+    { name = "igraph" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "psycopg2-binary" },
@@ -3185,7 +3193,7 @@ typechecking-dev = [
 requires-dist = [
     { name = "altair", specifier = ">=5.0.1" },
     { name = "duckdb", specifier = ">=0.9.2" },
-    { name = "igraph", specifier = ">=0.11.2" },
+    { name = "igraph", marker = "extra == 'graphs'", specifier = ">=0.11.2" },
     { name = "jinja2", specifier = ">=3.0.3" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
@@ -3195,7 +3203,7 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["pyspark", "spark", "sqlite", "postgres", "pyarrow"]
+provides-extras = ["graphs", "pyspark", "spark", "sqlite", "postgres", "pyarrow"]
 
 [package.metadata.requires-dev]
 core = [
@@ -3203,6 +3211,7 @@ core = [
     { name = "sqlglot" },
 ]
 dev = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
@@ -3229,6 +3238,7 @@ docs = [
     { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13'", specifier = ">=1.1.2" },
     { name = "pymdown-extensions", marker = "python_full_version >= '3.13'", specifier = ">=10.15" },
 ]
+graphs = [{ name = "igraph", specifier = ">=0.11.2" }]
 linting = [{ name = "ruff", specifier = ">=0.15.18" }]
 pandas = [
     { name = "numpy", specifier = ">=1.19.3" },
@@ -3242,6 +3252,7 @@ spark-3 = [{ name = "pyspark", marker = "python_full_version < '3.12'", specifie
 spark-4 = [{ name = "pyspark", specifier = ">=4.0.0" }]
 sqlite = [{ name = "rapidfuzz", specifier = ">=3.10.0" }]
 testing = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyarrow", specifier = ">=15.0.0" },
@@ -3253,6 +3264,7 @@ testing = [
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
 testing-core = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyarrow", specifier = ">=15.0.0" },
