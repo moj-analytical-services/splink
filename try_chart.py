@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 
@@ -22,6 +19,7 @@ settings = SettingsCreator(
         block_on("dob"),
         block_on("postcode_fake"),
         block_on("first_name", "birth_place"),
+        block_on("first_name", "surname", "dob"),
     ],
 )
 
@@ -42,13 +40,12 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 )
 
 df_predict = linker.inference.predict(warning_mode="never")
-chart = linker.blocking_analysis.chart_comparisons_from_blocking_rules(
+cumulative_chart = linker.blocking_analysis.chart_comparisons_from_blocking_rules(
     record_sample_proportion=1.0
 )
-chart.save("blocking_rule_performance_chart.html")
+cumulative_chart.save("blocking_rule_performance_chart.html")
 
-importance = linker.blocking_analysis.blocking_rule_importance(df_predict)
-Path("blocking_rule_importance.json").write_text(
-    json.dumps(importance, indent=2) + "\n",
-    encoding="utf-8",
-)
+marginal_chart = linker.blocking_analysis.chart_blocking_rule_importance(df_predict)
+marginal_chart.save("blocking_rule_marginal_contributions_chart.html")
+marginal_chart
+importance = marginal_chart.raw_records
