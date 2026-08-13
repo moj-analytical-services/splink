@@ -154,6 +154,17 @@ df_predict = linker.inference.predict()
 importance = linker.blocking_analysis.blocking_rule_importance(df_predict)
 ```
 
+To compare these marginal contributions visually, create a chart ordered from
+the largest to the smallest contribution:
+
+```py
+chart = linker.blocking_analysis.chart_blocking_rule_importance(df_predict)
+chart.save("blocking_rule_marginal_contributions.html")
+```
+
+The exact marginal pair count is shown at the end of each bar, including zero.
+The blocking-rule labels are shown on the left of the chart.
+
 For every candidate pair, this analysis checks all the blocking rules rather than
 using `match_key`, which records only the first rule that generated the pair. The
 result reports each rule's total and overlapping comparisons, its marginal

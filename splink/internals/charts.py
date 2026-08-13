@@ -647,6 +647,30 @@ class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
         return chart_records
 
 
+class BlockingRuleImportanceChart(SplinkChart[ChartRecord]):
+    @property
+    def chart_spec_file(self) -> str:
+        return "blocking_rule_importance.json"
+
+    def alter_spec_from_data(self, chart_spec):
+        records = list_items_as_dicts(
+            cast(
+                Iterable[AsDictable | dict[str, Any]],
+                self.raw_records,
+            )
+        )
+        records.sort(
+            key=lambda record: (
+                -record["marginal_comparison_count"],
+                record["blocking_rule_index"],
+            )
+        )
+        chart_spec["encoding"]["y"]["sort"] = [
+            record["blocking_rule"] for record in records
+        ]
+        return chart_spec
+
+
 class TFAdjustmentChart(SplinkChart[ChartRecord]):
     def __init__(
         self,
