@@ -19,6 +19,10 @@ from splink.internals.blocking_analysis import (
     n_largest_blocks,
 )
 from splink.internals.blocking_rule_creator import BlockingRuleCreator
+from splink.internals.blocking_rule_importance import (
+    BlockingRuleImportanceRecord,
+    blocking_rule_importance_data,
+)
 from splink.internals.charts import (
     CumulativeBlockingRuleComparisonsGeneratedChart,
 )
@@ -119,6 +123,54 @@ class LinkerBlockingAnalysis:
             record_sample_proportion=record_sample_proportion,
         )
         return CumulativeBlockingRuleComparisonsGeneratedChart(records)
+
+    def blocking_rule_importance(
+        self,
+        df_predict: SplinkDataFrame,
+    ) -> list[BlockingRuleImportanceRecord]:
+        """Measure each prediction blocking rule's order-independent contribution.
+
+        Every blocking rule is evaluated independently for every candidate pair.
+        A pair is marginal to a rule when that rule finds it and no other rule does.
+        This differs from ``match_key``, which only records the first rule that finds
+        a pair and therefore depends on rule order.
+
+        ``estimated_marginal_match_count`` is the sum of ``match_probability`` over
+        a rule's marginal pairs. It estimates how many true matches would be lost if
+        the rule were removed, assuming the model probabilities are calibrated. A
+        rule is marked ``is_redundant`` only when removing it cannot change the set
+        of candidate pairs because it has no marginal pairs.
+
+        Redundancy is assessed one rule at a time against the complete rule set. If
+        several rules are marked redundant, remove one and rerun the analysis before
+        removing another. For example, two equivalent rules are each covered by the
+        other, but removing both would remove their shared pairs.
+
+        This analysis evaluates every rule separately and can be expensive. Pass the
+        unfiltered output of ``linker.inference.predict()`` so every generated pair
+        has a match probability.
+
+        Args:
+            df_predict (SplinkDataFrame): Unfiltered output of
+                ``linker.inference.predict()``.
+
+        Examples:
+            ```py
+            df_predict = linker.inference.predict()
+            importance = linker.blocking_analysis.blocking_rule_importance(
+                df_predict
+            )
+            ```
+
+        Returns:
+            list[BlockingRuleImportanceRecord]: One summary record per blocking rule.
+        """
+        blocking_rules = self._default_blocking_rules()
+        return blocking_rule_importance_data(
+            self._linker,
+            df_predict,
+            blocking_rules,
+        )
 
     def n_largest_blocks(
         self,
