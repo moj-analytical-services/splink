@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any, TypedDict
 
 if TYPE_CHECKING:
@@ -52,11 +53,29 @@ def blocking_rule_performance_data(
 ) -> list[BlockingRulePerformanceRecord]:
     """Build the records used by the blocking-rule performance chart."""
     _validate_missing_edges(missing_edges)
+    minimum_match_weight_record = _query_as_records(
+        df_predict,
+        "SELECT MIN(match_weight) AS minimum_match_weight FROM {this}",
+    )[0]
+    minimum_match_weight = minimum_match_weight_record["minimum_match_weight"]
+    minimum_match_weight = (
+        0.0 if minimum_match_weight is None else float(minimum_match_weight)
+    )
+    minimum_match_weight = round(
+        math.ceil(minimum_match_weight / _MATCH_WEIGHT_THRESHOLD_STEP)
+        * _MATCH_WEIGHT_THRESHOLD_STEP,
+        10,
+    )
+    maximum_match_weight = max(minimum_match_weight, _MAX_MATCH_WEIGHT_THRESHOLD)
+    number_of_steps = int(
+        (maximum_match_weight - minimum_match_weight) / _MATCH_WEIGHT_THRESHOLD_STEP
+    )
     match_weight_thresholds = tuple(
-        round(step * _MATCH_WEIGHT_THRESHOLD_STEP, 2)
-        for step in range(
-            int(_MAX_MATCH_WEIGHT_THRESHOLD / _MATCH_WEIGHT_THRESHOLD_STEP) + 1
+        round(
+            minimum_match_weight + step * _MATCH_WEIGHT_THRESHOLD_STEP,
+            10,
         )
+        for step in range(number_of_steps + 1)
     )
 
     comparison_counts = linker.blocking_analysis.count_comparisons_from_blocking_rules(

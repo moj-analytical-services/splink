@@ -156,6 +156,7 @@ class LinkerVisualisations:
         self,
         df_predict: SplinkDataFrame,
         missing_edges: bool | int = False,
+        show_blocking_rule: bool = False,
     ) -> BlockingRulePerformanceChart:
         """Show the performance of each prediction blocking rule.
 
@@ -164,12 +165,10 @@ class LinkerVisualisations:
         are marginal: a pair found by more than one rule is attributed to the first
         rule that found it, matching the meaning of ``match_key`` in ``df_predict``.
 
-        ``df_predict`` should contain all edges with match weight zero or greater.
-        The unfiltered output of ``linker.inference.predict()`` meets this
-        requirement. Predictions created with a positive threshold omit edges the
-        chart needs, so their match counts will be incomplete at lower chart
-        thresholds. The total comparison counts are computed exactly from the
-        linker's input data, which requires an additional blocking pass.
+        The chart's minimum match-weight threshold is the minimum in ``df_predict``,
+        rounded up to the next 0.25 increment. Total comparison counts are computed
+        exactly from the linker's input data, which requires an additional blocking
+        pass.
 
         Args:
             df_predict (SplinkDataFrame): Output of ``linker.inference.predict()``.
@@ -179,6 +178,9 @@ class LinkerVisualisations:
                 ``df_predict``. A non-negative integer can be supplied as the total
                 instead; the corresponding ``match_key = -1`` rows in ``df_predict``
                 are still used to count matches at each threshold. Defaults to
+                ``False``.
+            show_blocking_rule (bool, optional): Show each blocking rule's SQL in
+                the chart's centre column instead of its match key. Defaults to
                 ``False``.
 
         Examples:
@@ -198,6 +200,7 @@ class LinkerVisualisations:
         return BlockingRulePerformanceChart(
             records,
             include_missing_edges=missing_edges is not False,
+            show_blocking_rule=show_blocking_rule,
         )
 
     def parameter_estimate_comparisons_chart(

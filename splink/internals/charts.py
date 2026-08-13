@@ -22,6 +22,9 @@ from splink.internals.misc import read_resource
 if TYPE_CHECKING:
     from altair import SchemaBase
 
+    from splink.internals.blocking_rule_performance import (
+        BlockingRulePerformanceRecord,
+    )
     from splink.internals.comparison_level import ComparisonLevelDetailedRecord
     from splink.internals.em_training_session import (
         ModelParameterIterationDetailedRecord,
@@ -650,21 +653,45 @@ class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
 class BlockingRulePerformanceChart(SplinkChart[ChartRecord]):
     def __init__(
         self,
-        records: Sequence[ChartRecord],
+        records: Sequence[BlockingRulePerformanceRecord],
         include_missing_edges: bool = False,
+        show_blocking_rule: bool = False,
     ):
         super().__init__(records)
         self.include_missing_edges = include_missing_edges
+        self.show_blocking_rule = show_blocking_rule
+        thresholds = sorted({record["mw_threshold"] for record in records})
+        self.minimum_match_weight_threshold = thresholds[0]
+        self.maximum_match_weight_threshold = thresholds[-1]
+        self.initial_match_weight_threshold = min(
+            thresholds,
+            key=lambda threshold: abs(threshold - 5.0),
+        )
 
     @property
     def chart_spec_file(self) -> str:
         return "blocking_rule_performance.json"
 
     def alter_spec_from_data(self, chart_spec):
+        threshold_parameter = chart_spec["params"][0]
+        threshold_parameter["bind"]["min"] = self.minimum_match_weight_threshold
+        threshold_parameter["bind"]["max"] = self.maximum_match_weight_threshold
+        threshold_parameter["value"] = self.initial_match_weight_threshold
+
+        blocking_rule_panel = chart_spec["vconcat"][1]
+        if self.show_blocking_rule:
+            label_panel = blocking_rule_panel["hconcat"][1]
+            label_panel["mark"].update({"align": "left", "limit": 300, "x": 0})
+            label_panel["encoding"]["text"] = {
+                "field": "blocking_rule",
+                "type": "nominal",
+            }
+            label_panel["title"]["text"] = "Blocking rule"
+            label_panel["width"] = 300
+
         if self.include_missing_edges:
             return chart_spec
 
-        blocking_rule_panel = chart_spec["vconcat"][1]
         blocking_rule_panel["hconcat"][0]["title"] = {
             "text": "Non-matches",
             "anchor": "start",
