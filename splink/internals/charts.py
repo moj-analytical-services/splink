@@ -647,6 +647,39 @@ class CumulativeBlockingRuleComparisonsGeneratedChart(SplinkChart[ChartRecord]):
         return chart_records
 
 
+class BlockingRulePerformanceChart(SplinkChart[ChartRecord]):
+    def __init__(
+        self,
+        records: Sequence[ChartRecord],
+        include_missing_edges: bool = False,
+    ):
+        super().__init__(records)
+        self.include_missing_edges = include_missing_edges
+
+    @property
+    def chart_spec_file(self) -> str:
+        return "blocking_rule_performance.json"
+
+    def alter_spec_from_data(self, chart_spec):
+        if self.include_missing_edges:
+            return chart_spec
+
+        blocking_rule_panel = chart_spec["vconcat"][1]
+        blocking_rule_panel["hconcat"][0]["title"] = {
+            "text": "Non-matches",
+            "anchor": "start",
+            "fontSize": 20,
+        }
+        blocking_rule_panel["hconcat"][2]["title"] = {
+            "text": "Matches",
+            "anchor": "end",
+            "fontSize": 20,
+        }
+        chart_spec["vconcat"] = [blocking_rule_panel]
+        chart_spec["title"]["subtitle"] = chart_spec["title"]["subtitle"][0]
+        return chart_spec
+
+
 class TFAdjustmentChart(SplinkChart[ChartRecord]):
     def __init__(
         self,
