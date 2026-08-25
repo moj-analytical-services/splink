@@ -169,7 +169,12 @@ cython_debug/
 # html files opt-in only
 *.html
 !splink/**/templates/**/*.html
-!docs/**/*.html
+!docs/demos/examples/**/*.html
+!docs/demos/tutorials/**/*.html
+!docs/overrides/**/*.html
+
+# don't store ipynb here
+*.ipynb
 
 .DS_Store
 
