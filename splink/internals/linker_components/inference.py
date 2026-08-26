@@ -133,9 +133,7 @@ class LinkerInference:
         side: Literal["l", "r"],
     ) -> SplinkDataFrame:
         db_api = self._linker._db_api
-        if self._linker._sql_dialect_str != "duckdb" or not hasattr(
-            db_api, "create_temporary_table_from_sql"
-        ):
+        if self._linker._sql_dialect_str != "duckdb":
             raise SplinkException(
                 "Physical prediction inputs are currently supported only by DuckDB."
             )
@@ -164,15 +162,12 @@ class LinkerInference:
         from ({concat_sql}) as chunk_source
         {where_clause}
         """
-        templated_name = f"__splink__df_predict_input_{side}"
-        physical_name = (
-            f"{templated_name}_{chunk_num}_of_{total_chunks}_{self._linker._cache_uid}"
+        templated_name = (
+            f"__splink__df_predict_input_{side}_{chunk_num}_of_{total_chunks}"
         )
-        return db_api.create_temporary_table_from_sql(
-            sql,
-            templated_name,
-            physical_name,
-        )
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, templated_name)
+        return db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     def _materialize_predict_inputs(
         self,
@@ -199,9 +194,7 @@ class LinkerInference:
         side: Literal["l", "r"],
     ) -> SplinkDataFrame:
         db_api = self._linker._db_api
-        if self._linker._sql_dialect_str != "duckdb" or not hasattr(
-            db_api, "create_temporary_table_from_sql"
-        ):
+        if self._linker._sql_dialect_str != "duckdb":
             raise SplinkException(
                 "Registered-pair source pruning is currently supported only by DuckDB."
             )
@@ -226,12 +219,9 @@ class LinkerInference:
         on {uid_expr} = pairs.join_key_{side}
         """
         templated_name = f"__splink__df_registered_predict_input_{side}"
-        physical_name = f"{templated_name}_{self._linker._cache_uid}"
-        return db_api.create_temporary_table_from_sql(
-            sql,
-            templated_name,
-            physical_name,
-        )
+        pipeline = CTEPipeline()
+        pipeline.enqueue_sql(sql, templated_name)
+        return db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     def _materialize_registered_pair_inputs(
         self,

@@ -52,42 +52,20 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
     ) -> DuckDBDataFrame:
         try:
             output_df = self.table_to_splink_dataframe(templated_name, physical_name)
-            self._write_pending_profile()
+            if self._pending_profile_path is not None and self._pending_profile_sql:
+                explain_result = super()._execute_sql_against_backend(
+                    f"EXPLAIN ANALYZE {self._pending_profile_sql}"
+                )
+                rows = explain_result.fetchall()
+                if len(rows) == 1 and len(rows[0]) == 2:
+                    profile_text = rows[0][1]
+                else:
+                    profile_text = "\n".join(
+                        " | ".join("" if value is None else str(value) for value in row)
+                        for row in rows
+                    )
+                self._pending_profile_path.write_text(profile_text, encoding="utf-8")
             return output_df
-        finally:
-            self._pending_profile_path = None
-            self._pending_profile_sql = None
-
-    def _write_pending_profile(self) -> None:
-        if self._pending_profile_path is None or not self._pending_profile_sql:
-            return
-        explain_result = super()._execute_sql_against_backend(
-            f"EXPLAIN ANALYZE {self._pending_profile_sql}"
-        )
-        rows = explain_result.fetchall()
-        if len(rows) == 1 and len(rows[0]) == 2:
-            profile_text = rows[0][1]
-        else:
-            profile_text = "\n".join(
-                " | ".join("" if value is None else str(value) for value in row)
-                for row in rows
-            )
-        self._pending_profile_path.write_text(profile_text, encoding="utf-8")
-
-    def create_temporary_table_from_sql(
-        self, sql: str, templated_name: str, physical_name: str
-    ) -> DuckDBDataFrame:
-        if self._should_profile_sql(sql):
-            self._pending_profile_path = self._next_query_profile_path(physical_name)
-            self._pending_profile_sql = sql
-        try:
-            output = super().create_temporary_table_from_sql(
-                sql,
-                templated_name,
-                physical_name,
-            )
-            self._write_pending_profile()
-            return output
         finally:
             self._pending_profile_path = None
             self._pending_profile_sql = None

@@ -71,37 +71,33 @@ def test_pipeline_materialized_hint_is_opt_in():
     assert "materialized_input as MATERIALIZED" in sql
 
 
-def test_duckdb_temporary_table_helper_tracks_cleanup():
+def test_duckdb_pipeline_table_tracks_cleanup():
     db_api = DuckDBAPI()
-    temporary = db_api.create_temporary_table_from_sql(
-        "select 1 as x",
-        "__splink__temporary_test",
-        "__splink__temporary_test_physical",
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql("select 1 as x", "__splink__pipeline_test")
+    table = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     table_info = db_api.duckdb_con.execute(
         """
         select temporary
         from duckdb_tables()
-        where table_name = '__splink__temporary_test_physical'
-        """
+        where table_name = ?
+        """,
+        [table.physical_name],
     ).fetchone()
-    assert table_info == (True,)
-    assert temporary.physical_name in db_api._created_tables
+    assert table_info == (False,)
+    assert table.physical_name in db_api._created_tables
 
-    temporary.drop_table_from_database_and_remove_from_cache()
+    table.drop_table_from_database_and_remove_from_cache()
 
-    assert not db_api.table_exists_in_database(temporary.physical_name)
+    assert not db_api.table_exists_in_database(table.physical_name)
 
 
-def test_duckdb_profiling_captures_temporary_tables(tmp_path):
+def test_duckdb_profiling_captures_pipeline_tables(tmp_path):
     db_api = DuckDBAPIWithProfiling(query_profiling_dir=tmp_path)
-
-    db_api.create_temporary_table_from_sql(
-        "select 1 as x",
-        "__splink__temporary_profile_test",
-        "__splink__temporary_profile_test_physical",
-    )
+    pipeline = CTEPipeline()
+    pipeline.enqueue_sql("select 1 as x", "__splink__pipeline_profile_test")
+    db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
     profiles = list(tmp_path.glob("*.txt"))
     assert len(profiles) == 1
@@ -224,11 +220,7 @@ def test_chunked_predict_reuses_left_physical_inputs(fake_1000):
     db_api = DuckDBAPI()
     linker = Linker(db_api.register(fake_1000), settings)
 
-    with patch.object(
-        db_api,
-        "create_temporary_table_from_sql",
-        wraps=db_api.create_temporary_table_from_sql,
-    ) as create_temporary:
+    with patch.object(db_api, "_execute_sql", wraps=db_api._execute_sql) as execute_sql:
         linker.inference.predict(
             threshold_match_weight=-10,
             num_chunks_left=2,
@@ -237,7 +229,7 @@ def test_chunked_predict_reuses_left_physical_inputs(fake_1000):
 
     chunk_calls = [
         call
-        for call in create_temporary.call_args_list
+        for call in execute_sql.call_args_list
         if "__splink__df_predict_input_" in call.args[1]
     ]
     assert len(chunk_calls) == 4
@@ -614,10 +606,8 @@ def test_registered_pairs_use_pruned_normal_hydration_by_default(fake_1000):
     target_linker.table_management.register_blocked_pairs_for_predict(registered)
 
     with patch.object(
-        target_api,
-        "create_temporary_table_from_sql",
-        wraps=target_api.create_temporary_table_from_sql,
-    ) as create_temporary:
+        target_api, "_execute_sql", wraps=target_api._execute_sql
+    ) as execute_sql:
         predictions = target_linker.inference.predict(threshold_match_weight=-10)
 
     assert "__splink__df_registered_predict_input_l" in (predictions.sql_used_to_create)
@@ -627,7 +617,7 @@ def test_registered_pairs_use_pruned_normal_hydration_by_default(fake_1000):
     )
     pruning_sql = "\n".join(
         call.args[0]
-        for call in create_temporary.call_args_list
+        for call in execute_sql.call_args_list
         if "__splink__df_registered_predict_input_" in call.args[1]
     )
     assert pruning_sql.lower().count("semi join") == 2
