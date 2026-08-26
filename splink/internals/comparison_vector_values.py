@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import List, Optional
 
 from splink.internals.input_column import InputColumn
@@ -11,13 +10,6 @@ from splink.internals.unique_id_concat import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _output_alias(select_expression: str) -> str:
-    match = re.search(r'\s+AS\s+("[^"]+")\s*$', select_expression, re.IGNORECASE)
-    if match is None:
-        raise ValueError(f"Could not find output alias in {select_expression!r}")
-    return match.group(1)
 
 
 def compute_comparison_vector_values_sql(
@@ -138,109 +130,3 @@ def compute_comparison_vector_values_from_id_pairs_sqls(
     sqls.append({"sql": sql, "output_table_name": "__splink__df_comparison_vectors"})
 
     return sqls
-
-
-def compute_comparison_vector_values_from_id_pairs_independent_sqls(
-    columns_to_select_for_blocking: List[str],
-    columns_to_select_for_comparison_vector_values: list[str],
-    input_tablename_l: str,
-    input_tablename_r: str,
-    source_dataset_input_column: Optional[InputColumn],
-    unique_id_input_column: InputColumn,
-    include_clerical_match_score: bool = False,
-) -> list[dict[str, object]]:
-    """Hydrate blocked-pair sides independently before recombining them."""
-    if source_dataset_input_column:
-        unique_id_columns = [source_dataset_input_column, unique_id_input_column]
-    else:
-        unique_id_columns = [unique_id_input_column]
-
-    left_expressions: list[str] = []
-    right_expressions: list[str] = []
-    ordered_outputs: list[str] = []
-    for expression in columns_to_select_for_blocking:
-        stripped = expression.lstrip()
-        alias = _output_alias(expression)
-        if stripped.startswith('"l".'):
-            left_expressions.append(expression)
-            ordered_outputs.append(f"hydrated_l.{alias}")
-        elif stripped.startswith('"r".'):
-            right_expressions.append(expression)
-            ordered_outputs.append(f"hydrated_r.{alias}")
-        else:
-            raise ValueError(
-                "Independent hydration requires each blocking payload expression "
-                f"to be qualified with l or r: {expression!r}"
-            )
-
-    uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
-    uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
-    left_select = ",\n".join(indent_sql(expr) for expr in left_expressions)
-    right_select = ",\n".join(indent_sql(expr) for expr in right_expressions)
-
-    candidates_sql = """
-    select
-        row_number() over () as __splink__pair_id,
-        *
-    from __splink__blocked_id_pairs
-    """
-    left_sql = f"""
-    select
-        b.__splink__pair_id,
-        b.match_key,
-{left_select}
-    from __splink__blocked_id_pairs_with_id as b
-    inner join {input_tablename_l} as l
-    on {uid_l_expr} = b.join_key_l
-    """
-    right_sql = f"""
-    select
-        b.__splink__pair_id,
-{right_select}
-    from __splink__blocked_id_pairs_with_id as b
-    inner join {input_tablename_r} as r
-    on {uid_r_expr} = b.join_key_r
-    """
-
-    blocked_columns = ",\n".join(indent_sql(expr) for expr in ordered_outputs)
-    blocked_sql = f"""
-    select
-{blocked_columns},
-        hydrated_l.match_key
-    from __splink__left_records as hydrated_l
-    inner join __splink__right_records as hydrated_r
-    on hydrated_l.__splink__pair_id = hydrated_r.__splink__pair_id
-    """
-
-    comparison_columns = list(columns_to_select_for_comparison_vector_values)
-    if include_clerical_match_score:
-        comparison_columns.append("clerical_match_score")
-    comparison_select = ",\n".join(indent_sql(expr) for expr in comparison_columns)
-    comparison_sql = f"""
-    select
-{comparison_select}
-    from __splink__df_blocked
-    """
-
-    return [
-        {
-            "sql": candidates_sql,
-            "output_table_name": "__splink__blocked_id_pairs_with_id",
-            "materialized": True,
-        },
-        {
-            "sql": left_sql,
-            "output_table_name": "__splink__left_records",
-            "materialized": True,
-        },
-        {
-            "sql": right_sql,
-            "output_table_name": "__splink__right_records",
-            "materialized": True,
-        },
-        {"sql": blocked_sql, "output_table_name": "__splink__df_blocked"},
-        {
-            "sql": comparison_sql,
-            "output_table_name": "__splink__df_comparison_vectors",
-        },
-    ]

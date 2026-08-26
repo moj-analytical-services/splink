@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added
-
-- Added `use_independent_hydration` to `predict()` and `predict_chunk()` for controlling DuckDB pair hydration.
-
 ### Changed
 
-- DuckDB prediction now physically materialises effective chunks before blocking and hydration, uses independent hydration by default for those chunks, and prunes source rows when scoring registered blocked pairs.
+- DuckDB now prunes source rows before scoring registered blocked pairs.
 
 ### Fixed
 

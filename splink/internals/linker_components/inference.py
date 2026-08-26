@@ -4,6 +4,7 @@ import logging
 import time
 from copy import deepcopy
 from dataclasses import dataclass
+from itertools import product
 from typing import TYPE_CHECKING, Any, Literal, Sequence
 
 from splink.internals.accuracy import _select_found_by_blocking_rules
@@ -16,13 +17,8 @@ from splink.internals.blocking import (
     compute_blocked_pairs_from_concat_with_tf,
 )
 from splink.internals.blocking_analysis import _as_blocking_rule
-from splink.internals.chunking import (
-    _blocked_pairs_cache_key,
-    _chunk_assignment_expression,
-    _is_effective_chunk,
-)
+from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
-    compute_comparison_vector_values_from_id_pairs_independent_sqls,
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.exceptions import SplinkException
@@ -69,15 +65,13 @@ LinkTypeLiteralType = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 
 
 @dataclass
-class _PhysicalPredictInputs:
+class _RegisteredPredictInputs:
     left: SplinkDataFrame
     right: SplinkDataFrame
-    owned: list[SplinkDataFrame]
 
-    def drop_owned(self) -> None:
-        for dataframe in reversed(self.owned):
+    def drop(self) -> None:
+        for dataframe in (self.right, self.left):
             dataframe.drop_table_from_database_and_remove_from_cache()
-        self.owned.clear()
 
 
 class LinkerInference:
@@ -105,89 +99,6 @@ class LinkerInference:
                 "warning_mode must be one of 'auto', 'always' or 'never'. "
                 f"Supplied value was {warning_mode!r}."
             )
-
-    def _resolve_use_independent_hydration(
-        self,
-        use_independent_hydration: bool | None,
-        left_chunk: tuple[int, int] | None,
-        right_chunk: tuple[int, int] | None,
-    ) -> bool:
-        if self._linker._sql_dialect_str != "duckdb":
-            if use_independent_hydration:
-                raise SplinkException(
-                    "Independent hydration is currently supported only by DuckDB."
-                )
-            return False
-        if use_independent_hydration is not None:
-            return use_independent_hydration
-        if self._registered_blocked_pairs_cache_keys():
-            return False
-        return _is_effective_chunk(left_chunk) or _is_effective_chunk(right_chunk)
-
-    def _materialize_predict_input(
-        self,
-        chunk: tuple[int, int] | None,
-        side: Literal["l", "r"],
-    ) -> SplinkDataFrame:
-        db_api = self._linker._db_api
-        if self._linker._sql_dialect_str != "duckdb":
-            raise SplinkException(
-                "Physical prediction inputs are currently supported only by DuckDB."
-            )
-
-        settings = self._linker._settings_obj
-        column_info = settings.column_info_settings
-        unique_id_columns = combine_unique_id_input_columns(
-            column_info.source_dataset_input_column,
-            column_info.unique_id_input_column,
-        )
-        concat_sql = vertically_concatenate_sql(
-            self._linker._input_tables_dict,
-            source_dataset_input_column=column_info.source_dataset_input_column,
-        )
-        chunk_num, total_chunks = chunk or (1, 1)
-        predicate = _chunk_assignment_expression(
-            unique_id_columns,
-            chunk_num,
-            total_chunks,
-            "chunk_source",
-            db_api.sql_dialect,
-        )
-        where_clause = f"where {predicate}" if predicate else ""
-        sql = f"""
-        select *
-        from ({concat_sql}) as chunk_source
-        {where_clause}
-        """
-        templated_name = (
-            f"__splink__df_predict_input_{side}_{chunk_num}_of_{total_chunks}"
-        )
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(sql, templated_name)
-        return db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    def _materialize_predict_inputs(
-        self,
-        left_chunk: tuple[int, int] | None,
-        right_chunk: tuple[int, int] | None,
-    ) -> _PhysicalPredictInputs:
-        normalized_left = left_chunk or (1, 1)
-        normalized_right = right_chunk or (1, 1)
-        left = self._materialize_predict_input(normalized_left, "l")
-        owned = [left]
-        try:
-            if normalized_left == normalized_right:
-                right = self._linker._db_api.table_to_splink_dataframe(
-                    "__splink__df_predict_input_r",
-                    left.physical_name,
-                )
-            else:
-                right = self._materialize_predict_input(normalized_right, "r")
-                owned.append(right)
-        except Exception:
-            left.drop_table_from_database_and_remove_from_cache()
-            raise
-        return _PhysicalPredictInputs(left=left, right=right, owned=owned)
 
     def _materialize_registered_pair_input(
         self,
@@ -227,22 +138,22 @@ class LinkerInference:
     def _materialize_registered_pair_inputs(
         self,
         blocked_pairs: SplinkDataFrame,
-    ) -> _PhysicalPredictInputs:
+    ) -> _RegisteredPredictInputs:
         left = self._materialize_registered_pair_input(blocked_pairs, "l")
         try:
             right = self._materialize_registered_pair_input(blocked_pairs, "r")
         except Exception:
             left.drop_table_from_database_and_remove_from_cache()
             raise
-        return _PhysicalPredictInputs(left=left, right=right, owned=[left, right])
+        return _RegisteredPredictInputs(left=left, right=right)
 
-    def _enqueue_physical_inputs_with_tf(
+    def _enqueue_registered_inputs_with_tf(
         self,
         pipeline: CTEPipeline,
-        inputs: _PhysicalPredictInputs,
+        inputs: _RegisteredPredictInputs,
     ) -> tuple[str, str]:
         append_term_frequencies_to_pipeline(self._linker, pipeline)
-        left_name = "__splink__df_predict_input_with_tf_l"
+        left_name = "__splink__df_registered_predict_input_with_tf_l"
         pipeline.enqueue_sql(
             _join_tf_to_input_table_sql(
                 self._linker,
@@ -254,7 +165,7 @@ class LinkerInference:
         if inputs.left.physical_name == inputs.right.physical_name:
             return left_name, left_name
 
-        right_name = "__splink__df_predict_input_with_tf_r"
+        right_name = "__splink__df_registered_predict_input_with_tf_r"
         pipeline.enqueue_sql(
             _join_tf_to_input_table_sql(
                 self._linker,
@@ -269,7 +180,6 @@ class LinkerInference:
         self,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
-        physical_inputs: _PhysicalPredictInputs | None = None,
     ) -> tuple[SplinkDataFrame, bool]:
         settings = self._linker._settings_obj
         cache = self._linker._intermediate_table_cache
@@ -281,8 +191,7 @@ class LinkerInference:
             return blocked_pairs, True
 
         pipeline = CTEPipeline()
-        if physical_inputs is None:
-            enqueue_df_concat(self._linker, pipeline)
+        enqueue_df_concat(self._linker, pipeline)
 
         blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
             pipeline=pipeline,
@@ -293,14 +202,8 @@ class LinkerInference:
             source_dataset_input_column=settings.column_info_settings.source_dataset_input_column,
             unique_id_input_column=settings.column_info_settings.unique_id_input_column,
             df_concat_with_tf_table_name="__splink__df_concat",
-            left_chunk=(left_chunk if physical_inputs is None else None),
-            right_chunk=(right_chunk if physical_inputs is None else None),
-            input_tablename_l=(
-                physical_inputs.left.physical_name if physical_inputs else None
-            ),
-            input_tablename_r=(
-                physical_inputs.right.physical_name if physical_inputs else None
-            ),
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
         )
 
         cache[cache_key] = blocked_pairs
@@ -399,30 +302,11 @@ class LinkerInference:
             )
             ```
         """
-        effective_chunk = _is_effective_chunk(left_chunk) or _is_effective_chunk(
-            right_chunk
+        blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk(
+            left_chunk=left_chunk,
+            right_chunk=right_chunk,
         )
-        if self._linker._sql_dialect_str != "duckdb" or not effective_chunk:
-            blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk(
-                left_chunk=left_chunk,
-                right_chunk=right_chunk,
-            )
-            return blocked_pairs
-
-        cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
-        if cache_key in self._linker._intermediate_table_cache:
-            return self._linker._intermediate_table_cache.get_with_logging(cache_key)
-
-        physical_inputs = self._materialize_predict_inputs(left_chunk, right_chunk)
-        try:
-            blocked_pairs, _ = self._get_or_compute_blocked_pairs_for_predict_chunk(
-                left_chunk=left_chunk,
-                right_chunk=right_chunk,
-                physical_inputs=physical_inputs,
-            )
-            return blocked_pairs
-        finally:
-            physical_inputs.drop_owned()
+        return blocked_pairs
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
@@ -502,7 +386,6 @@ class LinkerInference:
         num_chunks_left: int | None = None,
         num_chunks_right: int | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
-        use_independent_hydration: bool | None = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -534,11 +417,6 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per call to `predict()`, "always" to force emission once per
                 call to `predict()`, or "never" to suppress this warning.
-            use_independent_hydration (bool, optional): DuckDB execution strategy.
-                ``None`` uses independent hydration for effective chunks and normal
-                hydration otherwise. ``True`` forces independent hydration and
-                ``False`` forces normal hydration. Defaults to None.
-
         Examples:
             ```py
             df = db_api.register(df, dataset_display_name="input_table")
@@ -585,7 +463,6 @@ class LinkerInference:
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
                 warning_mode="never",
-                use_independent_hydration=use_independent_hydration,
             )
             if warning_mode in {"auto", "always"}:
                 self._linker._predict_warning()
@@ -599,84 +476,35 @@ class LinkerInference:
         chunk_count = 0
         overall_start_time = time.time()
 
-        use_physical_chunks = self._linker._sql_dialect_str == "duckdb"
-        try:
-            for left_idx in range(1, n_left + 1):
-                left_chunk = (left_idx, n_left)
-                physical_left: SplinkDataFrame | None = None
-                try:
-                    if use_physical_chunks:
-                        physical_left = self._materialize_predict_input(left_chunk, "l")
-                    for right_idx in range(1, n_right + 1):
-                        right_chunk = (right_idx, n_right)
-                        physical_right: SplinkDataFrame | None = None
-                        physical_inputs: _PhysicalPredictInputs | None = None
-                        try:
-                            if physical_left is not None:
-                                if left_chunk == right_chunk:
-                                    physical_right = (
-                                        self._linker._db_api.table_to_splink_dataframe(
-                                            "__splink__df_predict_input_r",
-                                            physical_left.physical_name,
-                                        )
-                                    )
-                                else:
-                                    physical_right = self._materialize_predict_input(
-                                        right_chunk,
-                                        "r",
-                                    )
-                                physical_inputs = _PhysicalPredictInputs(
-                                    left=physical_left,
-                                    right=physical_right,
-                                    owned=[],
-                                )
+        for left_idx, right_idx in product(range(1, n_left + 1), range(1, n_right + 1)):
+            chunk_count += 1
+            logger.info(
+                f"Processing chunk ({left_idx}, {n_left}) x "
+                f"({right_idx}, {n_right}) "
+                f"[{chunk_count}/{total_chunks}]"
+            )
 
-                            chunk_count += 1
-                            logger.info(
-                                f"Processing chunk ({left_idx}, {n_left}) x "
-                                f"({right_idx}, {n_right}) "
-                                f"[{chunk_count}/{total_chunks}]"
-                            )
+            chunk_result = self._predict_chunk(
+                left_chunk=(left_idx, n_left),
+                right_chunk=(right_idx, n_right),
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                warning_mode="never",
+            )
+            chunk_results.append(chunk_result)
 
-                            chunk_result = self._predict_chunk(
-                                left_chunk=left_chunk,
-                                right_chunk=right_chunk,
-                                threshold_match_probability=threshold_match_probability,
-                                threshold_match_weight=threshold_match_weight,
-                                warning_mode="never",
-                                use_independent_hydration=use_independent_hydration,
-                                physical_inputs=physical_inputs,
-                            )
-                            chunk_results.append(chunk_result)
-                        finally:
-                            if (
-                                physical_right is not None
-                                and physical_left is not None
-                                and physical_right.physical_name
-                                != physical_left.physical_name
-                            ):
-                                physical_right.drop_table_from_database_and_remove_from_cache()
+            elapsed = time.time() - overall_start_time
+            percent_complete = chunk_count / total_chunks
 
-                        elapsed = time.time() - overall_start_time
-                        percent_complete = chunk_count / total_chunks
-
-                        estimated_total = elapsed / percent_complete
-                        estimated_remaining = estimated_total - elapsed
-                        logger.info(
-                            f"Completed chunk {chunk_count}/{total_chunks} "
-                            f"({percent_complete:.0%}) | "
-                            f"Elapsed: {elapsed:.1f}s | "
-                            f"Remaining: ~{estimated_remaining:.1f}s | "
-                            f"Total: ~{estimated_total:.1f}s"
-                        )
-                finally:
-                    if physical_left is not None:
-                        physical_left.drop_table_from_database_and_remove_from_cache()
-        except Exception:
-            for chunk_df in chunk_results:
-                chunk_df.drop_table_from_database_and_remove_from_cache()
-            chunk_results.clear()
-            raise
+            estimated_total = elapsed / percent_complete
+            estimated_remaining = estimated_total - elapsed
+            logger.info(
+                f"Completed chunk {chunk_count}/{total_chunks} "
+                f"({percent_complete:.0%}) | "
+                f"Elapsed: {elapsed:.1f}s | "
+                f"Remaining: ~{estimated_remaining:.1f}s | "
+                f"Total: ~{estimated_total:.1f}s"
+            )
 
         overall_time = time.time() - overall_start_time
         logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
@@ -689,15 +517,9 @@ class LinkerInference:
         pipeline = CTEPipeline()
         pipeline.enqueue_sql(union_sql, "__splink__df_predict")
 
-        try:
-            combined_predictions = (
-                self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-            )
-        except Exception:
-            for chunk_df in chunk_results:
-                chunk_df.drop_table_from_database_and_remove_from_cache()
-            chunk_results.clear()
-            raise
+        combined_predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+            pipeline
+        )
 
         if warning_mode in {"auto", "always"}:
             self._linker._predict_warning()
@@ -715,7 +537,6 @@ class LinkerInference:
         threshold_match_probability: float | None = None,
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
-        use_independent_hydration: bool | None = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
         of the data.
@@ -743,11 +564,6 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per direct call to `predict_chunk()`, "always" to force
                 emission, or "never" to suppress this warning.
-            use_independent_hydration (bool, optional): DuckDB execution strategy.
-                ``None`` uses independent hydration for an effective chunk and
-                normal hydration otherwise. ``True`` forces independent hydration
-                and ``False`` forces normal hydration. Defaults to None.
-
         Examples:
             ```py
             df = db_api.register(df, dataset_display_name="input_table")
@@ -783,7 +599,6 @@ class LinkerInference:
             threshold_match_probability=threshold_match_probability,
             threshold_match_weight=threshold_match_weight,
             warning_mode=warning_mode,
-            use_independent_hydration=use_independent_hydration,
         )
 
     def _predict_chunk(
@@ -793,32 +608,10 @@ class LinkerInference:
         threshold_match_probability: float | None = None,
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
-        use_independent_hydration: bool | None = None,
-        physical_inputs: _PhysicalPredictInputs | None = None,
     ) -> SplinkDataFrame:
         self._validate_predict_warning_mode(warning_mode)
 
-        independent_hydration = self._resolve_use_independent_hydration(
-            use_independent_hydration,
-            left_chunk,
-            right_chunk,
-        )
-
-        owns_physical_inputs = False
-        effective_chunk = _is_effective_chunk(left_chunk) or _is_effective_chunk(
-            right_chunk
-        )
-        if (
-            physical_inputs is None
-            and self._linker._sql_dialect_str == "duckdb"
-            and effective_chunk
-        ):
-            physical_inputs = self._materialize_predict_inputs(
-                left_chunk,
-                right_chunk,
-            )
-            owns_physical_inputs = True
-
+        registered_inputs: _RegisteredPredictInputs | None = None
         blocked_pairs: SplinkDataFrame | None = None
         blocked_pairs_from_cache = False
         try:
@@ -826,60 +619,48 @@ class LinkerInference:
                 self._get_or_compute_blocked_pairs_for_predict_chunk(
                     left_chunk=left_chunk,
                     right_chunk=right_chunk,
-                    physical_inputs=physical_inputs,
                 )
             )
 
             if (
-                physical_inputs is None
+                registered_inputs is None
                 and self._linker._sql_dialect_str == "duckdb"
                 and self._registered_blocked_pairs_cache_keys()
             ):
-                physical_inputs = self._materialize_registered_pair_inputs(
+                registered_inputs = self._materialize_registered_pair_inputs(
                     blocked_pairs
                 )
-                owns_physical_inputs = physical_inputs is not None
 
             settings = self._linker._settings_obj
             pipeline_inputs = [blocked_pairs]
-            if physical_inputs is not None:
-                pipeline_inputs.extend([physical_inputs.left, physical_inputs.right])
+            if registered_inputs is not None:
+                pipeline_inputs.extend(
+                    [registered_inputs.left, registered_inputs.right]
+                )
             pipeline = CTEPipeline(pipeline_inputs)
-            if physical_inputs is None:
+            if registered_inputs is None:
                 enqueue_df_concat_with_tf(self._linker, pipeline)
                 input_tablename_l = "__splink__df_concat_with_tf"
                 input_tablename_r = "__splink__df_concat_with_tf"
             else:
                 input_tablename_l, input_tablename_r = (
-                    self._enqueue_physical_inputs_with_tf(pipeline, physical_inputs)
+                    self._enqueue_registered_inputs_with_tf(pipeline, registered_inputs)
                 )
 
             start_time = time.time()
 
-            if independent_hydration:
-                pipeline.enqueue_list_of_sqls(
-                    compute_comparison_vector_values_from_id_pairs_independent_sqls(
-                        self._linker._settings_obj._columns_to_select_for_blocking,
-                        self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-                        input_tablename_l=input_tablename_l,
-                        input_tablename_r=input_tablename_r,
-                        source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-                        unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-                    )
+            pipeline.enqueue_list_of_sqls(
+                compute_comparison_vector_values_from_id_pairs_sqls(
+                    self._linker._settings_obj._columns_to_select_for_blocking,
+                    self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+                    input_tablename_l=input_tablename_l,
+                    input_tablename_r=input_tablename_r,
+                    source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+                    unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+                    link_type=settings._link_type,
+                    sql_dialect_str=self._linker._sql_dialect_str,
                 )
-            else:
-                pipeline.enqueue_list_of_sqls(
-                    compute_comparison_vector_values_from_id_pairs_sqls(
-                        self._linker._settings_obj._columns_to_select_for_blocking,
-                        self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-                        input_tablename_l=input_tablename_l,
-                        input_tablename_r=input_tablename_r,
-                        source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-                        unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-                        link_type=settings._link_type,
-                        sql_dialect_str=self._linker._sql_dialect_str,
-                    )
-                )
+            )
 
             prediction_sqls = predict_from_comparison_vectors_sqls_using_settings(
                 self._linker._settings_obj,
@@ -897,8 +678,8 @@ class LinkerInference:
         finally:
             if blocked_pairs is not None and not blocked_pairs_from_cache:
                 blocked_pairs.drop_table_from_database_and_remove_from_cache()
-            if owns_physical_inputs and physical_inputs is not None:
-                physical_inputs.drop_owned()
+            if registered_inputs is not None:
+                registered_inputs.drop()
 
         if warning_mode in {"auto", "always"}:
             self._linker._predict_warning()
