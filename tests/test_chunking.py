@@ -9,6 +9,7 @@ Tests that:
 
 from unittest.mock import patch
 
+import pyarrow as pa
 import pytest
 
 import splink.comparison_library as cl
@@ -121,7 +122,11 @@ def test_independent_hydration_sql_preserves_payload_order():
 
     assert sqls[0]["materialized"] is True
     assert sqls[1]["materialized"] is True
-    blocked_sql = str(sqls[2]["sql"])
+    assert sqls[2]["materialized"] is True
+    blocked_sql = str(sqls[3]["sql"])
+    assert "hydrated_l.__splink__pair_id = hydrated_r.__splink__pair_id" in (
+        blocked_sql
+    )
     assert blocked_sql.index('hydrated_l."unique_id_l"') < blocked_sql.index(
         'hydrated_r."unique_id_r"'
     )
@@ -314,6 +319,37 @@ def test_predict_chunk_failure_cleans_up_physical_inputs(fake_1000):
     assert not any("__splink__df_predict_input_" in name for name in remaining_tables)
 
 
+def test_predict_chunk_right_input_failure_cleans_up_left_input(fake_1000):
+    settings = get_settings_dict()
+    db_api = DuckDBAPI()
+    linker = Linker(db_api.register(fake_1000), settings)
+    original_materialize = linker.inference._materialize_predict_input
+
+    def fail_right_side(chunk, side):
+        if side == "r":
+            raise RuntimeError("injected right input failure")
+        return original_materialize(chunk, side)
+
+    with patch.object(
+        linker.inference,
+        "_materialize_predict_input",
+        side_effect=fail_right_side,
+    ):
+        with pytest.raises(RuntimeError, match="injected right input failure"):
+            linker.inference.predict_chunk(
+                left_chunk=(1, 2),
+                right_chunk=(2, 3),
+            )
+
+    remaining_tables = {
+        row[0]
+        for row in db_api.duckdb_con.execute(
+            "select table_name from duckdb_tables()"
+        ).fetchall()
+    }
+    assert not any("__splink__df_predict_input_" in name for name in remaining_tables)
+
+
 def test_chunked_predict_failure_cleans_up_physical_inputs(fake_1000):
     settings = get_settings_dict()
     db_api = DuckDBAPI()
@@ -363,6 +399,42 @@ def test_later_chunk_failure_cleans_up_prior_prediction_tables(fake_1000):
                 threshold_match_weight=-10,
                 num_chunks_left=2,
                 num_chunks_right=2,
+            )
+
+    remaining_tables = {
+        row[0]
+        for row in db_api.duckdb_con.execute(
+            "select table_name from duckdb_tables()"
+        ).fetchall()
+    }
+    assert not any("__splink__df_predict_" in name for name in remaining_tables)
+
+
+def test_later_input_failure_cleans_up_prior_prediction_tables(fake_1000):
+    settings = get_settings_dict()
+    db_api = DuckDBAPI()
+    linker = Linker(db_api.register(fake_1000), settings)
+    original_materialize = linker.inference._materialize_predict_input
+    right_calls = 0
+
+    def fail_second_right_input(chunk, side):
+        nonlocal right_calls
+        if side == "r":
+            right_calls += 1
+            if right_calls == 2:
+                raise RuntimeError("injected later input failure")
+        return original_materialize(chunk, side)
+
+    with patch.object(
+        linker.inference,
+        "_materialize_predict_input",
+        side_effect=fail_second_right_input,
+    ):
+        with pytest.raises(RuntimeError, match="injected later input failure"):
+            linker.inference.predict(
+                threshold_match_weight=-10,
+                num_chunks_left=2,
+                num_chunks_right=3,
             )
 
     remaining_tables = {
@@ -663,6 +735,39 @@ def test_registered_pairs_allow_independent_hydration(fake_1000):
     assert normal == _sort_predictions(independent_predictions)
 
 
+def test_registered_pair_independent_hydration_preserves_duplicate_pairs(fake_1000):
+    settings = get_settings_dict()
+    source_api = DuckDBAPI()
+    source_linker = Linker(source_api.register(fake_1000), settings)
+    blocked_pair = (
+        source_linker.inference.compute_blocked_pairs_for_predict()
+        .as_pyarrow_table()
+        .slice(0, 1)
+    )
+    duplicate_pairs = pa.concat_tables([blocked_pair, blocked_pair])
+
+    target_api = DuckDBAPI()
+    target_linker = Linker(target_api.register(fake_1000), settings)
+    registered = target_api.register(duplicate_pairs)
+    target_linker.table_management.register_blocked_pairs_for_predict(registered)
+
+    normal = _sort_predictions(
+        target_linker.inference.predict(
+            warning_mode="never",
+            use_independent_hydration=False,
+        )
+    )
+    independent = _sort_predictions(
+        target_linker.inference.predict(
+            warning_mode="never",
+            use_independent_hydration=True,
+        )
+    )
+
+    assert len(normal["match_weight"]) == 2
+    assert normal == independent
+
+
 def test_registered_pair_pruning_failure_cleans_up(fake_1000):
     settings = get_settings_dict()
     source_api = DuckDBAPI()
@@ -733,7 +838,7 @@ def test_registered_pair_pruning_supports_composite_source_ids(fake_1000):
     assert expected == actual
 
 
-def test_registered_pair_pruning_bypasses_near_complete_coverage():
+def test_registered_pair_pruning_uses_inputs_at_near_complete_coverage():
     records = [
         {
             "unique_id": unique_id,
@@ -749,6 +854,9 @@ def test_registered_pair_pruning_bypasses_near_complete_coverage():
     settings = get_settings_dict()
     source_api = DuckDBAPI()
     source_linker = Linker(source_api.register(records), settings)
+    expected = _sort_predictions(
+        source_linker.inference.predict(threshold_match_weight=-10)
+    )
     blocked_pairs_arrow = (
         source_linker.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
     )
@@ -760,8 +868,17 @@ def test_registered_pair_pruning_bypasses_near_complete_coverage():
 
     predictions = target_linker.inference.predict(threshold_match_weight=-10)
 
-    assert "__splink__df_registered_predict_input_" not in (
-        predictions.sql_used_to_create
+    assert _sort_predictions(predictions) == expected
+    assert "__splink__df_registered_predict_input_l" in predictions.sql_used_to_create
+    assert "__splink__df_registered_predict_input_r" in predictions.sql_used_to_create
+    remaining_tables = {
+        row[0]
+        for row in target_api.duckdb_con.execute(
+            "select table_name from duckdb_tables()"
+        ).fetchall()
+    }
+    assert not any(
+        "__splink__df_registered_predict_input_" in name for name in remaining_tables
     )
 
 

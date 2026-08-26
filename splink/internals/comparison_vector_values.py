@@ -178,23 +178,26 @@ def compute_comparison_vector_values_from_id_pairs_independent_sqls(
     left_select = ",\n".join(indent_sql(expr) for expr in left_expressions)
     right_select = ",\n".join(indent_sql(expr) for expr in right_expressions)
 
+    candidates_sql = """
+    select
+        row_number() over () as __splink__pair_id,
+        *
+    from __splink__blocked_id_pairs
+    """
     left_sql = f"""
     select
-        b.join_key_l,
-        b.join_key_r,
+        b.__splink__pair_id,
         b.match_key,
 {left_select}
-    from __splink__blocked_id_pairs as b
+    from __splink__blocked_id_pairs_with_id as b
     inner join {input_tablename_l} as l
     on {uid_l_expr} = b.join_key_l
     """
     right_sql = f"""
     select
-        b.join_key_l,
-        b.join_key_r,
-        b.match_key,
+        b.__splink__pair_id,
 {right_select}
-    from __splink__blocked_id_pairs as b
+    from __splink__blocked_id_pairs_with_id as b
     inner join {input_tablename_r} as r
     on {uid_r_expr} = b.join_key_r
     """
@@ -206,9 +209,7 @@ def compute_comparison_vector_values_from_id_pairs_independent_sqls(
         hydrated_l.match_key
     from __splink__left_records as hydrated_l
     inner join __splink__right_records as hydrated_r
-    on hydrated_l.join_key_l = hydrated_r.join_key_l
-    and hydrated_l.join_key_r = hydrated_r.join_key_r
-    and hydrated_l.match_key = hydrated_r.match_key
+    on hydrated_l.__splink__pair_id = hydrated_r.__splink__pair_id
     """
 
     comparison_columns = list(columns_to_select_for_comparison_vector_values)
@@ -222,6 +223,11 @@ def compute_comparison_vector_values_from_id_pairs_independent_sqls(
     """
 
     return [
+        {
+            "sql": candidates_sql,
+            "output_table_name": "__splink__blocked_id_pairs_with_id",
+            "materialized": True,
+        },
         {
             "sql": left_sql,
             "output_table_name": "__splink__left_records",

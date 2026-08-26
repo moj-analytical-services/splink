@@ -137,6 +137,6 @@ On DuckDB, Splink physically materialises the selected input rows before both bl
 
 Without effective chunking, the existing normal hydration behavior is retained. Passing `use_independent_hydration=True` explicitly enables independent hydration for advanced unchunked use cases.
 
-When blocked pairs have been registered separately, Splink physically prunes the left and right source rows by `join_key_l` and `join_key_r`, then uses normal hydration by default. If both sides retain at least 98% of the source, Splink discards the pruned copies and uses the current full-source path because materialising near-identical tables adds cost without reducing hydration. Global term-frequency values continue to come from the Linker's complete registered input.
+When blocked pairs have been registered separately, Splink physically prunes the left and right source rows by `join_key_l` and `join_key_r`, then uses normal hydration by default. These role-specific source subsets are used even when the registered keys cover nearly all source rows, keeping the execution path predictable and avoiding an additional cardinality query. Global term-frequency values continue to come from the Linker's complete registered input.
 
 See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.

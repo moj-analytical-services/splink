@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- DuckDB prediction now physically materialises effective chunks before blocking and hydration, uses independent hydration by default for those chunks, and prunes source rows when scoring registered blocked pairs unless key coverage is nearly complete.
+- DuckDB prediction now physically materialises effective chunks before blocking and hydration, uses independent hydration by default for those chunks, and prunes source rows when scoring registered blocked pairs.
 
 ### Fixed
 

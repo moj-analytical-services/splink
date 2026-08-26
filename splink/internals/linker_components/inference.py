@@ -66,9 +66,6 @@ logger = logging.getLogger(__name__)
 
 PredictUntrainedWarningMode = Literal["auto", "always", "never"]
 LinkTypeLiteralType = Literal["link_only", "link_and_dedupe", "dedupe_only"]
-# The 2M/95.2M control retained 98.6% of rows per side; copying those sources
-# regressed normal hydration by more than 5%, while bypassing was neutral.
-REGISTERED_PAIR_PRUNING_BYPASS_RATIO = 0.98
 
 
 @dataclass
@@ -178,14 +175,18 @@ class LinkerInference:
         normalized_right = right_chunk or (1, 1)
         left = self._materialize_predict_input(normalized_left, "l")
         owned = [left]
-        if normalized_left == normalized_right:
-            right = self._linker._db_api.table_to_splink_dataframe(
-                "__splink__df_predict_input_r",
-                left.physical_name,
-            )
-        else:
-            right = self._materialize_predict_input(normalized_right, "r")
-            owned.append(right)
+        try:
+            if normalized_left == normalized_right:
+                right = self._linker._db_api.table_to_splink_dataframe(
+                    "__splink__df_predict_input_r",
+                    left.physical_name,
+                )
+            else:
+                right = self._materialize_predict_input(normalized_right, "r")
+                owned.append(right)
+        except Exception:
+            left.drop_table_from_database_and_remove_from_cache()
+            raise
         return _PhysicalPredictInputs(left=left, right=right, owned=owned)
 
     def _materialize_registered_pair_input(
@@ -226,45 +227,14 @@ class LinkerInference:
     def _materialize_registered_pair_inputs(
         self,
         blocked_pairs: SplinkDataFrame,
-    ) -> _PhysicalPredictInputs | None:
+    ) -> _PhysicalPredictInputs:
         left = self._materialize_registered_pair_input(blocked_pairs, "l")
         try:
             right = self._materialize_registered_pair_input(blocked_pairs, "r")
         except Exception:
             left.drop_table_from_database_and_remove_from_cache()
             raise
-        inputs = _PhysicalPredictInputs(left=left, right=right, owned=[left, right])
-
-        concat_sql = vertically_concatenate_sql(
-            self._linker._input_tables_dict,
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-        )
-        counts = self._linker._db_api.duckdb_con.execute(
-            f"""
-            select
-                (select count(*) from ({concat_sql}) as source),
-                (select count(*) from {left.physical_name}),
-                (select count(*) from {right.physical_name})
-            """
-        ).fetchone()
-        if counts is None:
-            inputs.drop_owned()
-            raise SplinkException(
-                "Could not count registered-pair source-pruning inputs."
-            )
-        source_count, left_count, right_count = counts
-        if source_count and (
-            left_count / source_count >= REGISTERED_PAIR_PRUNING_BYPASS_RATIO
-            and right_count / source_count >= REGISTERED_PAIR_PRUNING_BYPASS_RATIO
-        ):
-            logger.info(
-                "Skipping registered-pair source pruning because both sides "
-                "retain at least %.0f%% of the source",
-                REGISTERED_PAIR_PRUNING_BYPASS_RATIO * 100,
-            )
-            inputs.drop_owned()
-            return None
-        return inputs
+        return _PhysicalPredictInputs(left=left, right=right, owned=[left, right])
 
     def _enqueue_physical_inputs_with_tf(
         self,
@@ -630,82 +600,83 @@ class LinkerInference:
         overall_start_time = time.time()
 
         use_physical_chunks = self._linker._sql_dialect_str == "duckdb"
-        for left_idx in range(1, n_left + 1):
-            left_chunk = (left_idx, n_left)
-            physical_left: SplinkDataFrame | None = None
-            if use_physical_chunks:
-                physical_left = self._materialize_predict_input(left_chunk, "l")
-            try:
-                for right_idx in range(1, n_right + 1):
-                    right_chunk = (right_idx, n_right)
-                    physical_right: SplinkDataFrame | None = None
-                    physical_inputs: _PhysicalPredictInputs | None = None
-                    if physical_left is not None:
-                        if left_chunk == right_chunk:
-                            physical_right = (
-                                self._linker._db_api.table_to_splink_dataframe(
-                                    "__splink__df_predict_input_r",
-                                    physical_left.physical_name,
+        try:
+            for left_idx in range(1, n_left + 1):
+                left_chunk = (left_idx, n_left)
+                physical_left: SplinkDataFrame | None = None
+                try:
+                    if use_physical_chunks:
+                        physical_left = self._materialize_predict_input(left_chunk, "l")
+                    for right_idx in range(1, n_right + 1):
+                        right_chunk = (right_idx, n_right)
+                        physical_right: SplinkDataFrame | None = None
+                        physical_inputs: _PhysicalPredictInputs | None = None
+                        try:
+                            if physical_left is not None:
+                                if left_chunk == right_chunk:
+                                    physical_right = (
+                                        self._linker._db_api.table_to_splink_dataframe(
+                                            "__splink__df_predict_input_r",
+                                            physical_left.physical_name,
+                                        )
+                                    )
+                                else:
+                                    physical_right = self._materialize_predict_input(
+                                        right_chunk,
+                                        "r",
+                                    )
+                                physical_inputs = _PhysicalPredictInputs(
+                                    left=physical_left,
+                                    right=physical_right,
+                                    owned=[],
                                 )
+
+                            chunk_count += 1
+                            logger.info(
+                                f"Processing chunk ({left_idx}, {n_left}) x "
+                                f"({right_idx}, {n_right}) "
+                                f"[{chunk_count}/{total_chunks}]"
                             )
-                        else:
-                            physical_right = self._materialize_predict_input(
-                                right_chunk,
-                                "r",
+
+                            chunk_result = self._predict_chunk(
+                                left_chunk=left_chunk,
+                                right_chunk=right_chunk,
+                                threshold_match_probability=threshold_match_probability,
+                                threshold_match_weight=threshold_match_weight,
+                                warning_mode="never",
+                                use_independent_hydration=use_independent_hydration,
+                                physical_inputs=physical_inputs,
                             )
-                        physical_inputs = _PhysicalPredictInputs(
-                            left=physical_left,
-                            right=physical_right,
-                            owned=[],
+                            chunk_results.append(chunk_result)
+                        finally:
+                            if (
+                                physical_right is not None
+                                and physical_left is not None
+                                and physical_right.physical_name
+                                != physical_left.physical_name
+                            ):
+                                physical_right.drop_table_from_database_and_remove_from_cache()
+
+                        elapsed = time.time() - overall_start_time
+                        percent_complete = chunk_count / total_chunks
+
+                        estimated_total = elapsed / percent_complete
+                        estimated_remaining = estimated_total - elapsed
+                        logger.info(
+                            f"Completed chunk {chunk_count}/{total_chunks} "
+                            f"({percent_complete:.0%}) | "
+                            f"Elapsed: {elapsed:.1f}s | "
+                            f"Remaining: ~{estimated_remaining:.1f}s | "
+                            f"Total: ~{estimated_total:.1f}s"
                         )
-
-                    chunk_count += 1
-                    logger.info(
-                        f"Processing chunk ({left_idx}, {n_left}) x "
-                        f"({right_idx}, {n_right}) "
-                        f"[{chunk_count}/{total_chunks}]"
-                    )
-
-                    try:
-                        chunk_result = self._predict_chunk(
-                            left_chunk=left_chunk,
-                            right_chunk=right_chunk,
-                            threshold_match_probability=threshold_match_probability,
-                            threshold_match_weight=threshold_match_weight,
-                            warning_mode="never",
-                            use_independent_hydration=use_independent_hydration,
-                            physical_inputs=physical_inputs,
-                        )
-                        chunk_results.append(chunk_result)
-                    except Exception:
-                        for chunk_df in chunk_results:
-                            chunk_df.drop_table_from_database_and_remove_from_cache()
-                        chunk_results.clear()
-                        raise
-                    finally:
-                        if (
-                            physical_right is not None
-                            and physical_left is not None
-                            and physical_right.physical_name
-                            != physical_left.physical_name
-                        ):
-                            physical_right.drop_table_from_database_and_remove_from_cache()
-
-                    elapsed = time.time() - overall_start_time
-                    percent_complete = chunk_count / total_chunks
-
-                    estimated_total = elapsed / percent_complete
-                    estimated_remaining = estimated_total - elapsed
-                    logger.info(
-                        f"Completed chunk {chunk_count}/{total_chunks} "
-                        f"({percent_complete:.0%}) | "
-                        f"Elapsed: {elapsed:.1f}s | "
-                        f"Remaining: ~{estimated_remaining:.1f}s | "
-                        f"Total: ~{estimated_total:.1f}s"
-                    )
-            finally:
-                if physical_left is not None:
-                    physical_left.drop_table_from_database_and_remove_from_cache()
+                finally:
+                    if physical_left is not None:
+                        physical_left.drop_table_from_database_and_remove_from_cache()
+        except Exception:
+            for chunk_df in chunk_results:
+                chunk_df.drop_table_from_database_and_remove_from_cache()
+            chunk_results.clear()
+            raise
 
         overall_time = time.time() - overall_start_time
         logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
