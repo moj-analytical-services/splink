@@ -131,4 +131,12 @@ For more information, see [here](https://github.com/moj-analytical-services/spli
 
 #### Chunking `predict()`
 
-If the memory pressure comes from the `predict()` step, you can split it into smaller pieces using the `num_chunks_left` and `num_chunks_right` arguments. Splink processes the chunks in series and unions the results, so only a fraction of the blocked pairs are materialised at any one time. This also gives progress reporting on long-running jobs. See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.
+If the memory pressure comes from the `predict()` step, you can split it into smaller pieces using the `num_chunks_left` and `num_chunks_right` arguments. Splink processes the chunks in series and unions the results, so only a fraction of the blocked pairs are materialised at any one time. This also gives progress reporting on long-running jobs.
+
+On DuckDB, Splink physically materialises the selected input rows before both blocking and hydration. Effective chunks use independent left/right hydration by default. Size chunks so that their hydrated candidate relations fit comfortably in memory; if a deliberately large chunk spills, use smaller chunks or pass `use_independent_hydration=False` to force normal hydration.
+
+Without effective chunking, the existing normal hydration behavior is retained. Passing `use_independent_hydration=True` explicitly enables independent hydration for advanced unchunked use cases.
+
+When blocked pairs have been registered separately, Splink physically prunes the left and right source rows by `join_key_l` and `join_key_r`, then uses normal hydration by default. If both sides retain at least 98% of the source, Splink discards the pruned copies and uses the current full-source path because materialising near-identical tables adds cost without reducing hydration. Global term-frequency values continue to come from the Linker's complete registered input.
+
+See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.

@@ -79,6 +79,19 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     ) -> DuckDBDataFrame:
         return DuckDBDataFrame(templated_name, physical_name, self)
 
+    def create_temporary_table_from_sql(
+        self, sql: str, templated_name: str, physical_name: str
+    ) -> DuckDBDataFrame:
+        self.delete_table_from_database(physical_name)
+        final_sql = f"CREATE TEMP TABLE {physical_name} AS\n{sql}"
+        self._log_and_run_sql_execution(final_sql, templated_name, physical_name)
+
+        output = self.table_to_splink_dataframe(templated_name, physical_name)
+        output.created_by_splink = True
+        output.sql_used_to_create = sql
+        self._created_tables.add(physical_name)
+        return output
+
     def _load_from_csv(self, path: str) -> str:
         tn = self._new_input_table_name()
         self._con.execute(f"CREATE TABLE {tn} AS FROM read_csv_auto('{path}')")

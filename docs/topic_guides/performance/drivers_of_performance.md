@@ -50,6 +50,8 @@ On large datasets, several of the model-training and blocking-analysis steps can
 
 `predict()` generates and scores every blocked pair in a single pass. On very large jobs this can use a lot of memory, or cause you to run out of memory or disk entirely. You can split the work into deterministic chunks by passing `num_chunks_left` and `num_chunks_right` to `predict()`: Splink processes the chunks one at a time and unions the results, lowering peak memory and logging progress as it goes. The return value is identical to an unchunked `predict()`.  For example, if you pass `num_chunks_left=10` and `num_chunks_right=10`, Splink will process the work in 100 chunks, each representing 1% of the total work.
 
+On DuckDB, effective chunks are physically filtered before blocking and hydration and use independent hydration by default. If a chunk is too large and spills, reduce the chunk size or pass `use_independent_hydration=False`.
+
 Because each chunk is self-contained, you can also score chunks independently — even on different machines — using `predict_chunk()`, and combine the per-chunk outputs yourself.
 
 See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for worked examples of both sampling and chunking.

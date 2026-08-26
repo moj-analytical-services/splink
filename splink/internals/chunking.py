@@ -9,6 +9,26 @@ if TYPE_CHECKING:
     from splink.internals.dialects import SplinkDialect
 
 
+def _is_effective_chunk(chunk: tuple[int, int] | None) -> bool:
+    return chunk is not None and chunk[1] > 1
+
+
+def _chunk_assignment_expression(
+    unique_id_cols: list[InputColumn],
+    chunk_num: int,
+    num_chunks: int,
+    table_prefix: str | None,
+    dialect: "SplinkDialect",
+) -> str:
+    if num_chunks == 1:
+        return ""
+
+    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
+    hash_expr = dialect.hash_function_expression(composite_id)
+    chunk_expr = f"(ABS({hash_expr}) % {num_chunks}) + 1"
+    return f"{chunk_expr} = {chunk_num}"
+
+
 def _chunk_assignment_sql(
     unique_id_cols: list[InputColumn],
     chunk_num: int,
@@ -33,13 +53,16 @@ def _chunk_assignment_sql(
         or empty string if num_chunks == 1 (no filtering needed)
     """
 
-    if num_chunks == 1:
+    expression = _chunk_assignment_expression(
+        unique_id_cols,
+        chunk_num,
+        num_chunks,
+        table_prefix,
+        dialect,
+    )
+    if not expression:
         return ""
-
-    composite_id = _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix)
-    hash_expr = dialect.hash_function_expression(composite_id)
-    chunk_expr = f"(ABS({hash_expr}) % {num_chunks}) + 1"
-    return f" AND {chunk_expr} = {chunk_num}"
+    return f" AND {expression}"
 
 
 def _blocked_pairs_cache_key(

@@ -187,7 +187,7 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 #
 # This gives two benefits on large jobs:
 #
-# 1. **Lower peak memory** — each chunk materialises only a fraction of the blocked pairs at a time.
+# 1. **Lower peak memory** — each chunk materialises only its selected input rows and a fraction of the blocked pairs at a time. On DuckDB, effective chunks use independent left/right hydration by default.
 # 2. **Progress reporting** — because the chunks run in series, Splink logs progress after each one. With the default logging level (`INFO`) you will see messages such as:
 #
 #    ```
@@ -198,6 +198,8 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 #    ```
 #
 #    This makes it possible to estimate how long a long-running job will take, which you don't get from a single opaque `predict()` call.
+#
+# Size DuckDB chunks so that their hydrated candidate relations fit in memory. If a deliberately large chunk spills, choose smaller chunks or pass `use_independent_hydration=False` to force normal hydration. Calls without effective chunking retain normal hydration by default.
 
 # %%
 predictions_chunked = linker.inference.predict(
@@ -288,6 +290,7 @@ print(f"Worker scored {chunk_count} pairs and wrote them to {chunk_path}")
 #
 #     - `compute_blocked_pairs_for_predict_chunk(left_chunk=..., right_chunk=...)` materialises only the blocked pairs (the candidate record-id pairs) for a chunk, without scoring them, which you persist to shared storage.
 #     - A worker later reads those pairs, registers them with `register_blocked_pairs_for_predict()`, and calls `predict()` to score exactly that table — no re-blocking. (Once blocked pairs are registered this way, the chunking arguments `num_chunks_left` / `num_chunks_right` and `predict_chunk()` are unavailable, because the pairs are already materialised.)
+#     - On DuckDB, Splink prunes each source side using the registered left/right keys before hydration. Normal hydration remains the default; advanced users can pass `use_independent_hydration=True`.
 #
 #     This is a niche technique — reach for it only when scoring a single chunk with `predict_chunk()` is itself too large.
 

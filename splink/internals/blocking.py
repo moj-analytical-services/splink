@@ -495,6 +495,8 @@ def materialise_exploded_id_tables(
     right_chunk: tuple[int, int] | None = None,
     sample_threshold: int | None = None,
     sample_modulus: int | None = None,
+    input_tablename_l: str | None = None,
+    input_tablename_r: str | None = None,
 ) -> list[ExplodingBlockingRule]:
     """Materialise exploded ID pair tables for exploding blocking rules.
 
@@ -517,6 +519,8 @@ def materialise_exploded_id_tables(
 
     for br in exploding_blocking_rules:
         pipeline = CTEPipeline()
+        blocking_input_tablename_l: str
+        blocking_input_tablename_r: str
         arrays_to_explode_cols = [
             br._input_column(colname) for colname in br.array_columns_to_explode
         ]
@@ -527,7 +531,30 @@ def materialise_exploded_id_tables(
         )
         other_cols = [col for col in input_columns if col not in arrays_to_explode_cols]
 
-        if link_type == "two_dataset_link_only":
+        if input_tablename_l is not None or input_tablename_r is not None:
+            if input_tablename_l is None or input_tablename_r is None:
+                raise ValueError("Both explicit blocking input tables are required")
+
+            unnested_l = "__splink__df_concat_left_unnested"
+            unnested_r = "__splink__df_concat_right_unnested"
+            expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
+                input_tablename_l,
+                br.array_columns_to_explode,
+                [col.name for col in other_cols],
+            )
+            pipeline.enqueue_sql(expl_sql_l, unnested_l)
+            if input_tablename_l == input_tablename_r:
+                unnested_r = unnested_l
+            else:
+                expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
+                    input_tablename_r,
+                    br.array_columns_to_explode,
+                    [col.name for col in other_cols],
+                )
+                pipeline.enqueue_sql(expl_sql_r, unnested_r)
+            blocking_input_tablename_l = unnested_l
+            blocking_input_tablename_r = unnested_r
+        elif link_type == "two_dataset_link_only":
             if source_dataset_input_column is None:
                 raise ValueError(
                     "source_dataset_input_column is required for two_dataset_link_only"
@@ -539,30 +566,30 @@ def materialise_exploded_id_tables(
                 source_dataset_input_column=source_dataset_input_column,
             )
 
-            input_tablename_l = "__splink__df_concat_left_unnested"
-            input_tablename_r = "__splink__df_concat_right_unnested"
+            blocking_input_tablename_l = "__splink__df_concat_left_unnested"
+            blocking_input_tablename_r = "__splink__df_concat_right_unnested"
 
             expl_sql_l = db_api.sql_dialect.explode_arrays_sql(
                 f"({left_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
-            pipeline.enqueue_sql(expl_sql_l, input_tablename_l)
+            pipeline.enqueue_sql(expl_sql_l, blocking_input_tablename_l)
 
             expl_sql_r = db_api.sql_dialect.explode_arrays_sql(
                 f"({right_sql})",
                 br.array_columns_to_explode,
                 [col.name for col in other_cols],
             )
-            pipeline.enqueue_sql(expl_sql_r, input_tablename_r)
+            pipeline.enqueue_sql(expl_sql_r, blocking_input_tablename_r)
         else:
             sql = vertically_concatenate_sql(
                 splink_df_dict, source_dataset_input_column=source_dataset_input_column
             )
             pipeline.enqueue_sql(sql, "__splink__df_concat")
 
-            input_tablename_l = "__splink__df_concat_unnested"
-            input_tablename_r = "__splink__df_concat_unnested"
+            blocking_input_tablename_l = "__splink__df_concat_unnested"
+            blocking_input_tablename_r = "__splink__df_concat_unnested"
 
             expl_sql = db_api.sql_dialect.explode_arrays_sql(
                 "__splink__df_concat",
@@ -572,7 +599,7 @@ def materialise_exploded_id_tables(
 
             pipeline.enqueue_sql(
                 expl_sql,
-                input_tablename_l,
+                blocking_input_tablename_l,
             )
 
         base_name = "__splink__marginal_exploded_ids_blocking_rule"
@@ -583,8 +610,8 @@ def materialise_exploded_id_tables(
             unique_id_input_column=unique_id_input_column,
             br=br,
             link_type=link_type,
-            input_tablename_l=input_tablename_l,
-            input_tablename_r=input_tablename_r,
+            input_tablename_l=blocking_input_tablename_l,
+            input_tablename_r=blocking_input_tablename_r,
             left_chunk=left_chunk,
             right_chunk=right_chunk,
             sample_threshold=sample_threshold,
@@ -612,6 +639,8 @@ def compute_blocked_pairs_from_concat_with_tf(
     df_concat_with_tf_table_name: str = "__splink__df_concat_with_tf",
     left_chunk: tuple[int, int] | None = None,
     right_chunk: tuple[int, int] | None = None,
+    input_tablename_l: str | None = None,
+    input_tablename_r: str | None = None,
 ) -> SplinkDataFrame:
     """Compute __splink__blocked_id_pairs from df_concat_with_tf.
 
@@ -629,12 +658,15 @@ def compute_blocked_pairs_from_concat_with_tf(
     """
     start_time = time.time()
 
-    blocking_input_tablename_l = df_concat_with_tf_table_name
-    blocking_input_tablename_r = df_concat_with_tf_table_name
+    if (input_tablename_l is None) != (input_tablename_r is None):
+        raise ValueError("Both explicit blocking input tables are required")
+    explicit_inputs = input_tablename_l is not None
+    blocking_input_tablename_l = input_tablename_l or df_concat_with_tf_table_name
+    blocking_input_tablename_r = input_tablename_r or df_concat_with_tf_table_name
     effective_link_type = link_type
 
     # Optimisation for 2-dataset link_only
-    if len(splink_df_dict) == 2 and link_type == "link_only":
+    if not explicit_inputs and len(splink_df_dict) == 2 and link_type == "link_only":
         if not source_dataset_input_column:
             raise ValueError(
                 "link_type='link_only' with two input tables requires a "
@@ -667,6 +699,8 @@ def compute_blocked_pairs_from_concat_with_tf(
         unique_id_input_column=unique_id_input_column,
         left_chunk=left_chunk,
         right_chunk=right_chunk,
+        input_tablename_l=(blocking_input_tablename_l if explicit_inputs else None),
+        input_tablename_r=(blocking_input_tablename_r if explicit_inputs else None),
     )
 
     sqls = block_using_rules_sqls(

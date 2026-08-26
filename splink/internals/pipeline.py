@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, List, Optional
 
 import sqlglot
@@ -19,9 +20,12 @@ if TYPE_CHECKING:
 
 
 class CTE:
-    def __init__(self, sql, output_table_name):
+    def __init__(
+        self, sql: str, output_table_name: str, materialized: bool = False
+    ) -> None:
         self.sql = sql
         self.output_table_name = output_table_name
+        self.materialized = materialized
 
     @property
     def _uses_tables(self):
@@ -58,15 +62,30 @@ class CTEPipeline:
         # A flag to ensure that a pipeline cannot be reused
         self.spent = False
 
-    def enqueue_sql(self, sql: str, output_table_name: str) -> None:
+    def _enqueue_sql(
+        self, sql: str, output_table_name: str, materialized: bool
+    ) -> None:
         if self.spent:
             raise ValueError("This pipeline has already been used")
-        sql_task = CTE(sql, output_table_name)
+        sql_task = CTE(sql, output_table_name, materialized)
         self.queue.append(sql_task)
 
-    def enqueue_list_of_sqls(self, sql_list: List[dict[str, str]]) -> None:
+    def enqueue_sql(self, sql: str, output_table_name: str) -> None:
+        self._enqueue_sql(sql, output_table_name, False)
+
+    def enqueue_sql_materialized(self, sql: str, output_table_name: str) -> None:
+        self._enqueue_sql(sql, output_table_name, True)
+
+    def enqueue_list_of_sqls(self, sql_list: Sequence[Mapping[str, object]]) -> None:
         for sql_dict in sql_list:
-            self.enqueue_sql(sql_dict["sql"], sql_dict["output_table_name"])
+            sql = sql_dict["sql"]
+            output_table_name = sql_dict["output_table_name"]
+            materialized = sql_dict.get("materialized", False)
+            if not isinstance(sql, str) or not isinstance(output_table_name, str):
+                raise TypeError("Pipeline SQL and output table name must be strings")
+            if not isinstance(materialized, bool):
+                raise TypeError("Pipeline materialized flag must be a boolean")
+            self._enqueue_sql(sql, output_table_name, materialized)
 
     def break_lineage(self, db_api: "DatabaseAPISubClass") -> "CTEPipeline":
         df = db_api.sql_pipeline_to_splink_dataframe(self)
@@ -118,6 +137,7 @@ class CTEPipeline:
             CTE(
                 self._replace_templated_references_with_physical_names(cte.sql),
                 cte.output_table_name,
+                cte.materialized,
             )
             for cte in self.queue
         ]
@@ -148,10 +168,12 @@ class CTEPipeline:
         with_ctes_pipeline = pipeline[:-1]
         final_query = pipeline[-1]
 
-        with_ctes = [
-            f"{p.output_table_name} as (\n{indent_sql(p.sql)}\n)"
-            for p in with_ctes_pipeline
-        ]
+        with_ctes = []
+        for part in with_ctes_pipeline:
+            hint = " MATERIALIZED" if part.materialized else ""
+            with_ctes.append(
+                f"{part.output_table_name} as{hint} (\n{indent_sql(part.sql)}\n)"
+            )
         with_ctes_str = ", \n\n".join(with_ctes)
         if with_ctes_str:
             with_ctes_str = f"WITH\n\n{with_ctes_str}\n"
