@@ -122,6 +122,20 @@ plugins:
 hooks:
   - docs/hooks/__init__.py
 
+exclude_docs: |
+  *
+  # Keep source pages
+  !*.md
+  !**/*.md
+  !**/*.ipynb
+  # And the assets we have
+  !**/*.png
+  !**/*.ico
+  !**/*.mp4
+  !**/*.html
+  !**/*.css
+  !**/*.js
+
 markdown_extensions:
   # add id/style etc to markdown elements - see getting started button in docs/index.md
   # markdown
