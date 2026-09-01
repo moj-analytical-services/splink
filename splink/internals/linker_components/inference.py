@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import time
 from copy import deepcopy
-from dataclasses import dataclass
 from itertools import product
 from typing import TYPE_CHECKING, Any, Literal, Sequence
 
@@ -13,13 +12,15 @@ from splink.internals.blocking import (
     ExplodingBlockingRule,
     _columns_needed_for_blocking,
     block_using_rules_sqls,
-    combine_unique_id_input_columns,
     compute_blocked_pairs_from_concat_with_tf,
 )
 from splink.internals.blocking_analysis import _as_blocking_rule
 from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
+)
+from splink.internals.duckdb.registered_pair_prediction import (
+    predict_from_registered_pairs_duckdb,
 )
 from splink.internals.exceptions import SplinkException
 from splink.internals.find_matches_to_new_records import (
@@ -64,16 +65,6 @@ PredictUntrainedWarningMode = Literal["auto", "always", "never"]
 LinkTypeLiteralType = Literal["link_only", "link_and_dedupe", "dedupe_only"]
 
 
-@dataclass
-class _RegisteredPredictInputs:
-    left: SplinkDataFrame
-    right: SplinkDataFrame
-
-    def drop(self) -> None:
-        for dataframe in (self.right, self.left):
-            dataframe.drop_table_from_database_and_remove_from_cache()
-
-
 class LinkerInference:
     """Use your Splink model to make predictions (perform inference). Accessed via
     `linker.inference`.
@@ -100,87 +91,14 @@ class LinkerInference:
                 f"Supplied value was {warning_mode!r}."
             )
 
-    def _materialize_registered_pair_input(
-        self,
-        blocked_pairs: SplinkDataFrame,
-        side: Literal["l", "r"],
-    ) -> SplinkDataFrame:
-        db_api = self._linker._db_api
-        if self._linker._sql_dialect_str != "duckdb":
-            raise SplinkException(
-                "Registered-pair source pruning is currently supported only by DuckDB."
-            )
-
-        column_info = self._linker._settings_obj.column_info_settings
-        unique_id_columns = combine_unique_id_input_columns(
-            column_info.source_dataset_input_column,
-            column_info.unique_id_input_column,
-        )
-        uid_expr = _composite_unique_id_from_nodes_sql(
-            unique_id_columns,
-            "source",
-        )
-        concat_sql = vertically_concatenate_sql(
-            self._linker._input_tables_dict,
-            source_dataset_input_column=column_info.source_dataset_input_column,
-        )
-        sql = f"""
-        select source.*
-        from ({concat_sql}) as source
-        semi join {blocked_pairs.physical_name} as pairs
-        on {uid_expr} = pairs.join_key_{side}
-        """
-        templated_name = f"__splink__df_registered_predict_input_{side}"
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(sql, templated_name)
-        return db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-    def _materialize_registered_pair_inputs(
-        self,
-        blocked_pairs: SplinkDataFrame,
-    ) -> _RegisteredPredictInputs:
-        left = self._materialize_registered_pair_input(blocked_pairs, "l")
-        try:
-            right = self._materialize_registered_pair_input(blocked_pairs, "r")
-        except Exception:
-            left.drop_table_from_database_and_remove_from_cache()
-            raise
-        return _RegisteredPredictInputs(left=left, right=right)
-
-    def _enqueue_registered_inputs_with_tf(
-        self,
-        pipeline: CTEPipeline,
-        inputs: _RegisteredPredictInputs,
-    ) -> tuple[str, str]:
-        append_term_frequencies_to_pipeline(self._linker, pipeline)
-        left_name = "__splink__df_registered_predict_input_with_tf_l"
-        pipeline.enqueue_sql(
-            _join_tf_to_input_table_sql(
-                self._linker,
-                inputs.left.templated_name,
-                inputs.left,
-            ),
-            left_name,
-        )
-        if inputs.left.physical_name == inputs.right.physical_name:
-            return left_name, left_name
-
-        right_name = "__splink__df_registered_predict_input_with_tf_r"
-        pipeline.enqueue_sql(
-            _join_tf_to_input_table_sql(
-                self._linker,
-                inputs.right.templated_name,
-                inputs.right,
-            ),
-            right_name,
-        )
-        return left_name, right_name
-
     def _get_or_compute_blocked_pairs_for_predict_chunk(
         self,
         left_chunk: tuple[int, int] | None = None,
         right_chunk: tuple[int, int] | None = None,
     ) -> tuple[SplinkDataFrame, bool]:
+        pipeline = CTEPipeline()
+        enqueue_df_concat(self._linker, pipeline)
+
         settings = self._linker._settings_obj
         cache = self._linker._intermediate_table_cache
         cache_key = _blocked_pairs_cache_key(left_chunk, right_chunk)
@@ -189,9 +107,6 @@ class LinkerInference:
             blocked_pairs = cache.get_with_logging(cache_key)
             logger.info(f"Using cached blocked pairs from '{cache_key}'")
             return blocked_pairs, True
-
-        pipeline = CTEPipeline()
-        enqueue_df_concat(self._linker, pipeline)
 
         blocked_pairs = compute_blocked_pairs_from_concat_with_tf(
             pipeline=pipeline,
@@ -417,6 +332,7 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per call to `predict()`, "always" to force emission once per
                 call to `predict()`, or "never" to suppress this warning.
+
         Examples:
             ```py
             df = db_api.register(df, dataset_display_name="input_table")
@@ -449,6 +365,18 @@ class LinkerInference:
                 "Splink cannot own chunking of a table you have already "
                 "materialised. Call linker.inference.predict() with no chunk "
                 "arguments to score the registered table."
+            )
+
+        if (
+            registered_blocked_pairs_cache_keys
+            and self._linker._sql_dialect_str == "duckdb"
+        ):
+            return predict_from_registered_pairs_duckdb(
+                self._linker,
+                blocked_pairs_cache_key=registered_blocked_pairs_cache_keys[0],
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                emit_warning=warning_mode in {"auto", "always"},
             )
 
         # Default to (1, 1) chunking if not specified
@@ -564,6 +492,7 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per direct call to `predict_chunk()`, "always" to force
                 emission, or "never" to suppress this warning.
+
         Examples:
             ```py
             df = db_api.register(df, dataset_display_name="input_table")
@@ -611,75 +540,46 @@ class LinkerInference:
     ) -> SplinkDataFrame:
         self._validate_predict_warning_mode(warning_mode)
 
-        registered_inputs: _RegisteredPredictInputs | None = None
-        blocked_pairs: SplinkDataFrame | None = None
-        blocked_pairs_from_cache = False
-        try:
-            blocked_pairs, blocked_pairs_from_cache = (
-                self._get_or_compute_blocked_pairs_for_predict_chunk(
-                    left_chunk=left_chunk,
-                    right_chunk=right_chunk,
-                )
+        blocked_pairs, blocked_pairs_from_cache = (
+            self._get_or_compute_blocked_pairs_for_predict_chunk(
+                left_chunk=left_chunk,
+                right_chunk=right_chunk,
             )
+        )
 
-            if (
-                registered_inputs is None
-                and self._linker._sql_dialect_str == "duckdb"
-                and self._registered_blocked_pairs_cache_keys()
-            ):
-                registered_inputs = self._materialize_registered_pair_inputs(
-                    blocked_pairs
-                )
+        settings = self._linker._settings_obj
 
-            settings = self._linker._settings_obj
-            pipeline_inputs = [blocked_pairs]
-            if registered_inputs is not None:
-                pipeline_inputs.extend(
-                    [registered_inputs.left, registered_inputs.right]
-                )
-            pipeline = CTEPipeline(pipeline_inputs)
-            if registered_inputs is None:
-                enqueue_df_concat_with_tf(self._linker, pipeline)
-                input_tablename_l = "__splink__df_concat_with_tf"
-                input_tablename_r = "__splink__df_concat_with_tf"
-            else:
-                input_tablename_l, input_tablename_r = (
-                    self._enqueue_registered_inputs_with_tf(pipeline, registered_inputs)
-                )
+        pipeline = CTEPipeline([blocked_pairs])
+        enqueue_df_concat_with_tf(self._linker, pipeline)
 
-            start_time = time.time()
+        start_time = time.time()
 
-            pipeline.enqueue_list_of_sqls(
-                compute_comparison_vector_values_from_id_pairs_sqls(
-                    self._linker._settings_obj._columns_to_select_for_blocking,
-                    self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-                    input_tablename_l=input_tablename_l,
-                    input_tablename_r=input_tablename_r,
-                    source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-                    unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-                    link_type=settings._link_type,
-                    sql_dialect_str=self._linker._sql_dialect_str,
-                )
-            )
+        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+            self._linker._settings_obj._columns_to_select_for_blocking,
+            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+            input_tablename_l="__splink__df_concat_with_tf",
+            input_tablename_r="__splink__df_concat_with_tf",
+            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+            link_type=settings._link_type,
+            sql_dialect_str=self._linker._sql_dialect_str,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-            prediction_sqls = predict_from_comparison_vectors_sqls_using_settings(
-                self._linker._settings_obj,
-                threshold_match_probability,
-                threshold_match_weight,
-            )
-            pipeline.enqueue_list_of_sqls(prediction_sqls)
+        sqls = predict_from_comparison_vectors_sqls_using_settings(
+            self._linker._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+        )
+        pipeline.enqueue_list_of_sqls(sqls)
 
-            predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-                pipeline
-            )
+        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
-            predict_time = time.time() - start_time
-            logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
-        finally:
-            if blocked_pairs is not None and not blocked_pairs_from_cache:
-                blocked_pairs.drop_table_from_database_and_remove_from_cache()
-            if registered_inputs is not None:
-                registered_inputs.drop()
+        predict_time = time.time() - start_time
+        logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
+
+        if not blocked_pairs_from_cache:
+            blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         if warning_mode in {"auto", "always"}:
             self._linker._predict_warning()
