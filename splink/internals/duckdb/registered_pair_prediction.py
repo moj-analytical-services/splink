@@ -114,9 +114,9 @@ def _enqueue_registered_inputs_with_tf(
     return left_name, right_name
 
 
-def predict_from_registered_pairs_duckdb(
+def predict_from_blocked_pairs_duckdb(
     linker: Linker,
-    blocked_pairs_cache_key: str,
+    blocked_pairs: SplinkDataFrame,
     threshold_match_probability: float | None,
     threshold_match_weight: float | None,
     emit_warning: bool,
@@ -126,9 +126,6 @@ def predict_from_registered_pairs_duckdb(
             "Registered-pair source pruning is currently supported only by DuckDB."
         )
 
-    blocked_pairs = linker._intermediate_table_cache.get_with_logging(
-        blocked_pairs_cache_key
-    )
     registered_inputs = _materialize_registered_pair_inputs(linker, blocked_pairs)
     try:
         settings = linker._settings_obj
@@ -169,3 +166,22 @@ def predict_from_registered_pairs_duckdb(
         linker._predict_warning()
 
     return predictions
+
+
+def predict_from_registered_pairs_duckdb(
+    linker: Linker,
+    blocked_pairs_cache_key: str,
+    threshold_match_probability: float | None,
+    threshold_match_weight: float | None,
+    emit_warning: bool,
+) -> SplinkDataFrame:
+    blocked_pairs = linker._intermediate_table_cache.get_with_logging(
+        blocked_pairs_cache_key
+    )
+    return predict_from_blocked_pairs_duckdb(
+        linker,
+        blocked_pairs,
+        threshold_match_probability,
+        threshold_match_weight,
+        emit_warning,
+    )

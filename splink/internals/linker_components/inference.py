@@ -20,6 +20,7 @@ from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
 from splink.internals.duckdb.registered_pair_prediction import (
+    predict_from_blocked_pairs_duckdb,
     predict_from_registered_pairs_duckdb,
 )
 from splink.internals.exceptions import SplinkException
@@ -546,6 +547,23 @@ class LinkerInference:
                 right_chunk=right_chunk,
             )
         )
+
+        effective_chunk = any(
+            chunk is not None and chunk[1] > 1
+            for chunk in (left_chunk, right_chunk)
+        )
+        if effective_chunk and self._linker._sql_dialect_str == "duckdb":
+            try:
+                return predict_from_blocked_pairs_duckdb(
+                    self._linker,
+                    blocked_pairs,
+                    threshold_match_probability,
+                    threshold_match_weight,
+                    warning_mode in {"auto", "always"},
+                )
+            finally:
+                if not blocked_pairs_from_cache:
+                    blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         settings = self._linker._settings_obj
 
