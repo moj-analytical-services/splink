@@ -27,21 +27,42 @@ pids=()
 files=()
 i=0
 
+# Runs jupytext with a 300s timeout (enough headroom above any legitimate notebook runtime)
+# to ensure ZMQ kernel-connection hangs are detected rather than blocking indefinitely.
+_jupytext_exec() {
+  local f="$1" logfile="$2" out="${1%.nb.py}.ipynb"
+  if command -v timeout &>/dev/null; then
+    timeout 300 uv run jupytext --to notebook --execute --run-path . --set-kernel python3 --output "$out" "$f" >> "$logfile" 2>&1
+  else
+    uv run jupytext --to notebook --execute --run-path . --set-kernel python3 --output "$out" "$f" >> "$logfile" 2>&1
+  fi
+}
+
 run_notebook() {
   local f="$1" idx="$2"
-  local out="${f%.nb.py}.ipynb"
-  local nb_start nb_end elapsed
+  local logfile="$TMP/$idx.log"
+  local nb_start nb_end
 
   nb_start=$(date +%s)
-  if uv run jupytext --to notebook --execute --run-path . --set-kernel python3 --output "$out" "$f" > "$TMP/$idx.log" 2>&1; then
+  if _jupytext_exec "$f" "$logfile"; then
     nb_end=$(date +%s)
-    elapsed=$(( nb_end - nb_start ))
-    echo "success:$elapsed" > "$TMP/$idx.result"
-  else
-    nb_end=$(date +%s)
-    elapsed=$(( nb_end - nb_start ))
-    echo "fail:$elapsed" > "$TMP/$idx.result"
+    echo "success:$(( nb_end - nb_start ))" > "$TMP/$idx.result"
+    return
   fi
+
+  # Retry if jupytext never started reading the file — the ZMQ kernel-connection failure
+  # signature. A genuine notebook failure will have "[jupytext] Reading" in the log.
+  if ! grep -q '\[jupytext\] Reading' "$logfile"; then
+    echo "[retry: kernel connection failure, retrying once]" >> "$logfile"
+    if _jupytext_exec "$f" "$logfile"; then
+      nb_end=$(date +%s)
+      echo "success:$(( nb_end - nb_start ))" > "$TMP/$idx.result"
+      return
+    fi
+  fi
+
+  nb_end=$(date +%s)
+  echo "fail:$(( nb_end - nb_start ))" > "$TMP/$idx.result"
 }
 
 while IFS= read -r f; do
