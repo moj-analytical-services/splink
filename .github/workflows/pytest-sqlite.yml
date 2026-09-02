@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - "**dev"
+      - "splink4_maintenance"
     paths:
       - "splink/**"
       - "tests/**"

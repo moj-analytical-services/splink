@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.17] - 2026-09-02
+
 ### Fixed
 
 - Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
@@ -295,7 +297,11 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.17...HEAD
+[4.0.17]: https://github.com/moj-analytical-services/splink/compare/v4.0.16...v4.0.17
+[4.0.16]: https://github.com/moj-analytical-services/splink/compare/v4.0.15...v4.0.16
+[4.0.15]: https://github.com/moj-analytical-services/splink/compare/v4.0.14...v4.0.15
+[4.0.14]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...v4.0.14
 [4.0.13]: https://github.com/moj-analytical-services/splink/compare/v4.0.12...v4.0.13
 [4.0.12]: https://github.com/moj-analytical-services/splink/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/moj-analytical-services/splink/compare/v4.0.10...v4.0.11
