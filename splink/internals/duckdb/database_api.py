@@ -67,6 +67,10 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
             drop_sql = f"DROP VIEW IF EXISTS {name}"
             self._execute_sql_against_backend(drop_sql)
 
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        self.delete_table_from_database(physical_name)
+        return f"CREATE TEMP TABLE {physical_name} AS\n{sql}"
+
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:
