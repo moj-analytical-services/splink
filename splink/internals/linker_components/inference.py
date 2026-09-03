@@ -19,6 +19,10 @@ from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
+from splink.internals.duckdb.registered_pair_prediction import (
+    predict_from_blocked_pairs_duckdb,
+    predict_from_registered_pairs_duckdb,
+)
 from splink.internals.exceptions import SplinkException
 from splink.internals.find_matches_to_new_records import (
     add_unique_id_and_source_dataset_cols_if_needed,
@@ -364,6 +368,18 @@ class LinkerInference:
                 "arguments to score the registered table."
             )
 
+        if (
+            registered_blocked_pairs_cache_keys
+            and self._linker._sql_dialect_str == "duckdb"
+        ):
+            return predict_from_registered_pairs_duckdb(
+                self._linker,
+                blocked_pairs_cache_key=registered_blocked_pairs_cache_keys[0],
+                threshold_match_probability=threshold_match_probability,
+                threshold_match_weight=threshold_match_weight,
+                emit_warning=warning_mode in {"auto", "always"},
+            )
+
         # Default to (1, 1) chunking if not specified
         n_left = num_chunks_left if num_chunks_left is not None else 1
         n_right = num_chunks_right if num_chunks_right is not None else 1
@@ -531,6 +547,23 @@ class LinkerInference:
                 right_chunk=right_chunk,
             )
         )
+
+        effective_chunk = any(
+            chunk is not None and chunk[1] > 1
+            for chunk in (left_chunk, right_chunk)
+        )
+        if effective_chunk and self._linker._sql_dialect_str == "duckdb":
+            try:
+                return predict_from_blocked_pairs_duckdb(
+                    self._linker,
+                    blocked_pairs,
+                    threshold_match_probability,
+                    threshold_match_weight,
+                    warning_mode in {"auto", "always"},
+                )
+            finally:
+                if not blocked_pairs_from_cache:
+                    blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         settings = self._linker._settings_obj
 
