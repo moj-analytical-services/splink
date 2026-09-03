@@ -52,6 +52,7 @@ from splink.internals.vertically_concatenate import (
 
 if TYPE_CHECKING:
     from splink.internals.blocking_rule_creator import BlockingRuleCreator
+    from splink.internals.duckdb.parquet_sink import ParquetSink
     from splink.internals.input_column import InputColumn
     from splink.internals.linker import Linker
     from splink.internals.settings import Settings
@@ -298,6 +299,7 @@ class LinkerInference:
         num_chunks_left: int | None = None,
         num_chunks_right: int | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
+        sink: "ParquetSink | None" = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -329,6 +331,10 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per call to `predict()`, "always" to force emission once per
                 call to `predict()`, or "never" to suppress this warning.
+            sink (ParquetSink, optional): DuckDB-specific output sink. If supplied,
+                write predictions directly to the sink's Parquet dataset and return
+                a view-backed SplinkDataFrame. Defaults to None, which uses normal
+                backend-native materialisation.
 
         Examples:
             ```py
@@ -376,6 +382,7 @@ class LinkerInference:
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
                 warning_mode="never",
+                sink=sink,
             )
             if warning_mode in {"auto", "always"}:
                 self._linker._predict_warning()
@@ -384,6 +391,10 @@ class LinkerInference:
         # Otherwise iterate through all chunk combinations
 
         chunk_results: list[SplinkDataFrame] = []
+
+        if sink is not None:
+            sink.validate_db_api(self._linker._db_api)
+            sink.prepare()
 
         total_chunks = n_left * n_right
         chunk_count = 0
@@ -403,6 +414,14 @@ class LinkerInference:
                 threshold_match_probability=threshold_match_probability,
                 threshold_match_weight=threshold_match_weight,
                 warning_mode="never",
+                sink=(
+                    sink.for_chunk(
+                        (left_idx, n_left),
+                        (right_idx, n_right),
+                    )
+                    if sink is not None
+                    else None
+                ),
             )
             chunk_results.append(chunk_result)
 
@@ -422,17 +441,21 @@ class LinkerInference:
         overall_time = time.time() - overall_start_time
         logger.info(f"Total chunked prediction time: {overall_time:.2f} seconds")
 
-        union_parts = [
-            f"SELECT * FROM {chunk_df.physical_name}" for chunk_df in chunk_results
-        ]
-        union_sql = join_sql_with_union_all(union_parts)
+        if sink is None:
+            union_parts = [
+                f"SELECT * FROM {chunk_df.physical_name}"
+                for chunk_df in chunk_results
+            ]
+            union_sql = join_sql_with_union_all(union_parts)
 
-        pipeline = CTEPipeline()
-        pipeline.enqueue_sql(union_sql, "__splink__df_predict")
+            pipeline = CTEPipeline()
+            pipeline.enqueue_sql(union_sql, "__splink__df_predict")
 
-        combined_predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
-            pipeline
-        )
+            combined_predictions = (
+                self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            )
+        else:
+            combined_predictions = sink.combine_chunks(self._linker._db_api)
 
         if warning_mode in {"auto", "always"}:
             self._linker._predict_warning()
@@ -450,6 +473,7 @@ class LinkerInference:
         threshold_match_probability: float | None = None,
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
+        sink: "ParquetSink | None" = None,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons for a specific chunk
         of the data.
@@ -477,6 +501,10 @@ class LinkerInference:
                 predict runs with untrained model parameters. Use "auto" to emit
                 once per direct call to `predict_chunk()`, "always" to force
                 emission, or "never" to suppress this warning.
+            sink (ParquetSink, optional): DuckDB-specific output sink. If supplied,
+                write predictions directly to the sink's Parquet dataset and return
+                a view-backed SplinkDataFrame. Defaults to None, which uses normal
+                backend-native materialisation.
 
         Examples:
             ```py
@@ -513,6 +541,7 @@ class LinkerInference:
             threshold_match_probability=threshold_match_probability,
             threshold_match_weight=threshold_match_weight,
             warning_mode=warning_mode,
+            sink=sink,
         )
 
     def _predict_chunk(
@@ -522,6 +551,7 @@ class LinkerInference:
         threshold_match_probability: float | None = None,
         threshold_match_weight: float | None = None,
         warning_mode: PredictUntrainedWarningMode = "auto",
+        sink: "ParquetSink | None" = None,
     ) -> SplinkDataFrame:
         self._validate_predict_warning_mode(warning_mode)
 
@@ -558,7 +588,12 @@ class LinkerInference:
         )
         pipeline.enqueue_list_of_sqls(sqls)
 
-        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+        if sink is None:
+            predictions = (
+                self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            )
+        else:
+            predictions = sink.write_pipeline(self._linker._db_api, pipeline)
 
         predict_time = time.time() - start_time
         logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
