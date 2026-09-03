@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 from splink.internals.blocking import combine_unique_id_input_columns
@@ -32,16 +31,6 @@ if TYPE_CHECKING:
     from splink.internals.linker import Linker
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class _PrunedPredictInputs:
-    left: SplinkDataFrame
-    right: SplinkDataFrame
-
-    def drop(self) -> None:
-        for dataframe in (self.right, self.left):
-            dataframe.drop_table_from_database_and_remove_from_cache()
 
 
 def _materialise_pruned_predict_input(
@@ -73,38 +62,19 @@ def _materialise_pruned_predict_input(
     return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
-def _materialise_pruned_predict_inputs(
-    linker: Linker,
-    blocked_pairs: SplinkDataFrame,
-) -> _PrunedPredictInputs:
-    inputs = []
-
-    try:
-        left = _materialise_pruned_predict_input(linker, blocked_pairs, "l")
-        inputs.append(left)
-
-        right = _materialise_pruned_predict_input(linker, blocked_pairs, "r")
-        inputs.append(right)
-
-        return _PrunedPredictInputs(left=left, right=right)
-    except Exception:
-        for dataframe in reversed(inputs):
-            dataframe.drop_table_from_database_and_remove_from_cache()
-        raise
-
-
 def _enqueue_pruned_inputs_with_tf(
     linker: Linker,
     pipeline: CTEPipeline,
-    inputs: _PrunedPredictInputs,
+    left_input: SplinkDataFrame,
+    right_input: SplinkDataFrame,
 ) -> tuple[str, str]:
     append_term_frequencies_to_pipeline(linker, pipeline)
     left_name = "__splink__df_pruned_predict_input_with_tf_l"
     pipeline.enqueue_sql(
         _join_tf_to_input_table_sql(
             linker,
-            inputs.left.templated_name,
-            inputs.left,
+            left_input.templated_name,
+            left_input,
         ),
         left_name,
     )
@@ -112,8 +82,8 @@ def _enqueue_pruned_inputs_with_tf(
     pipeline.enqueue_sql(
         _join_tf_to_input_table_sql(
             linker,
-            inputs.right.templated_name,
-            inputs.right,
+            right_input.templated_name,
+            right_input,
         ),
         right_name,
     )
@@ -132,12 +102,13 @@ def predict_from_blocked_pairs_with_source_pruning(
     # Filter down input records to only those that appear in the blocked pairs
     # and materialise
     start_time = time.time()
-    pruned_inputs = _materialise_pruned_predict_inputs(linker, blocked_pairs)
+    left_input = _materialise_pruned_predict_input(linker, blocked_pairs, "l")
+    right_input = _materialise_pruned_predict_input(linker, blocked_pairs, "r")
     try:
         settings = linker._settings_obj
-        pipeline = CTEPipeline([blocked_pairs, pruned_inputs.left, pruned_inputs.right])
+        pipeline = CTEPipeline([blocked_pairs, left_input, right_input])
         input_tablename_l, input_tablename_r = _enqueue_pruned_inputs_with_tf(
-            linker, pipeline, pruned_inputs
+            linker, pipeline, left_input, right_input
         )
 
         pipeline.enqueue_list_of_sqls(
@@ -163,6 +134,7 @@ def predict_from_blocked_pairs_with_source_pruning(
         predict_time = time.time() - start_time
         logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
     finally:
-        pruned_inputs.drop()
+        right_input.drop_table_from_database_and_remove_from_cache()
+        left_input.drop_table_from_database_and_remove_from_cache()
 
     return predictions
