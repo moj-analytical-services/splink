@@ -1,4 +1,4 @@
-"""DuckDB-specific registered-pair prediction.
+"""DuckDB-specific source-pruned prediction.
 
 This planner workaround is kept separate so it can be removed without changing the
 normal prediction path.
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class _RegisteredPredictInputs:
+class _PrunedPredictInputs:
     left: SplinkDataFrame
     right: SplinkDataFrame
 
@@ -44,7 +44,7 @@ class _RegisteredPredictInputs:
             dataframe.drop_table_from_database_and_remove_from_cache()
 
 
-def _materialize_registered_pair_input(
+def _materialise_pruned_predict_input(
     linker: Linker,
     blocked_pairs: SplinkDataFrame,
     side: Literal["l", "r"],
@@ -59,38 +59,47 @@ def _materialize_registered_pair_input(
         linker._input_tables_dict,
         source_dataset_input_column=column_info.source_dataset_input_column,
     )
+    # the semi join filters down the source records to only those that exist in
+    # the blocked pairs
     sql = f"""
     select source.*
     from ({concat_sql}) as source
     semi join {blocked_pairs.physical_name} as pairs
     on {uid_expr} = pairs.join_key_{side}
     """
-    templated_name = f"__splink__df_registered_predict_input_{side}"
+    templated_name = f"__splink__df_pruned_predict_input_{side}"
     pipeline = CTEPipeline()
     pipeline.enqueue_sql(sql, templated_name)
     return linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
 
-def _materialize_registered_pair_inputs(
+def _materialise_pruned_predict_inputs(
     linker: Linker,
     blocked_pairs: SplinkDataFrame,
-) -> _RegisteredPredictInputs:
-    left = _materialize_registered_pair_input(linker, blocked_pairs, "l")
+) -> _PrunedPredictInputs:
+    inputs = []
+
     try:
-        right = _materialize_registered_pair_input(linker, blocked_pairs, "r")
+        left = _materialise_pruned_predict_input(linker, blocked_pairs, "l")
+        inputs.append(left)
+
+        right = _materialise_pruned_predict_input(linker, blocked_pairs, "r")
+        inputs.append(right)
+
+        return _PrunedPredictInputs(left=left, right=right)
     except Exception:
-        left.drop_table_from_database_and_remove_from_cache()
+        for dataframe in reversed(inputs):
+            dataframe.drop_table_from_database_and_remove_from_cache()
         raise
-    return _RegisteredPredictInputs(left=left, right=right)
 
 
-def _enqueue_registered_inputs_with_tf(
+def _enqueue_pruned_inputs_with_tf(
     linker: Linker,
     pipeline: CTEPipeline,
-    inputs: _RegisteredPredictInputs,
+    inputs: _PrunedPredictInputs,
 ) -> tuple[str, str]:
     append_term_frequencies_to_pipeline(linker, pipeline)
-    left_name = "__splink__df_registered_predict_input_with_tf_l"
+    left_name = "__splink__df_pruned_predict_input_with_tf_l"
     pipeline.enqueue_sql(
         _join_tf_to_input_table_sql(
             linker,
@@ -99,10 +108,7 @@ def _enqueue_registered_inputs_with_tf(
         ),
         left_name,
     )
-    if inputs.left.physical_name == inputs.right.physical_name:
-        return left_name, left_name
-
-    right_name = "__splink__df_registered_predict_input_with_tf_r"
+    right_name = "__splink__df_pruned_predict_input_with_tf_r"
     pipeline.enqueue_sql(
         _join_tf_to_input_table_sql(
             linker,
@@ -114,29 +120,26 @@ def _enqueue_registered_inputs_with_tf(
     return left_name, right_name
 
 
-def predict_from_blocked_pairs_duckdb(
+def predict_from_blocked_pairs_with_source_pruning(
     linker: Linker,
     blocked_pairs: SplinkDataFrame,
     threshold_match_probability: float | None,
     threshold_match_weight: float | None,
-    emit_warning: bool,
 ) -> SplinkDataFrame:
     if linker._sql_dialect_str != "duckdb":
-        raise SplinkException(
-            "Registered-pair source pruning is currently supported only by DuckDB."
-        )
+        raise SplinkException("Source pruning is currently supported only by DuckDB.")
 
-    registered_inputs = _materialize_registered_pair_inputs(linker, blocked_pairs)
+    # Filter down input records to only those that appear in the blocked pairs
+    # and materialise
+    start_time = time.time()
+    pruned_inputs = _materialise_pruned_predict_inputs(linker, blocked_pairs)
     try:
         settings = linker._settings_obj
-        pipeline = CTEPipeline(
-            [blocked_pairs, registered_inputs.left, registered_inputs.right]
-        )
-        input_tablename_l, input_tablename_r = _enqueue_registered_inputs_with_tf(
-            linker, pipeline, registered_inputs
+        pipeline = CTEPipeline([blocked_pairs, pruned_inputs.left, pruned_inputs.right])
+        input_tablename_l, input_tablename_r = _enqueue_pruned_inputs_with_tf(
+            linker, pipeline, pruned_inputs
         )
 
-        start_time = time.time()
         pipeline.enqueue_list_of_sqls(
             compute_comparison_vector_values_from_id_pairs_sqls(
                 settings._columns_to_select_for_blocking,
@@ -160,28 +163,6 @@ def predict_from_blocked_pairs_duckdb(
         predict_time = time.time() - start_time
         logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
     finally:
-        registered_inputs.drop()
-
-    if emit_warning:
-        linker._predict_warning()
+        pruned_inputs.drop()
 
     return predictions
-
-
-def predict_from_registered_pairs_duckdb(
-    linker: Linker,
-    blocked_pairs_cache_key: str,
-    threshold_match_probability: float | None,
-    threshold_match_weight: float | None,
-    emit_warning: bool,
-) -> SplinkDataFrame:
-    blocked_pairs = linker._intermediate_table_cache.get_with_logging(
-        blocked_pairs_cache_key
-    )
-    return predict_from_blocked_pairs_duckdb(
-        linker,
-        blocked_pairs,
-        threshold_match_probability,
-        threshold_match_weight,
-        emit_warning,
-    )

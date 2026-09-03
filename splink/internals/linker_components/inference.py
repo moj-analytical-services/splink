@@ -19,9 +19,8 @@ from splink.internals.chunking import _blocked_pairs_cache_key
 from splink.internals.comparison_vector_values import (
     compute_comparison_vector_values_from_id_pairs_sqls,
 )
-from splink.internals.duckdb.registered_pair_prediction import (
-    predict_from_blocked_pairs_duckdb,
-    predict_from_registered_pairs_duckdb,
+from splink.internals.duckdb.pruned_prediction import (
+    predict_from_blocked_pairs_with_source_pruning,
 )
 from splink.internals.exceptions import SplinkException
 from splink.internals.find_matches_to_new_records import (
@@ -368,18 +367,6 @@ class LinkerInference:
                 "arguments to score the registered table."
             )
 
-        if (
-            registered_blocked_pairs_cache_keys
-            and self._linker._sql_dialect_str == "duckdb"
-        ):
-            return predict_from_registered_pairs_duckdb(
-                self._linker,
-                blocked_pairs_cache_key=registered_blocked_pairs_cache_keys[0],
-                threshold_match_probability=threshold_match_probability,
-                threshold_match_weight=threshold_match_weight,
-                emit_warning=warning_mode in {"auto", "always"},
-            )
-
         # Default to (1, 1) chunking if not specified
         n_left = num_chunks_left if num_chunks_left is not None else 1
         n_right = num_chunks_right if num_chunks_right is not None else 1
@@ -551,52 +538,54 @@ class LinkerInference:
         effective_chunk = any(
             chunk is not None and chunk[1] > 1 for chunk in (left_chunk, right_chunk)
         )
-        if effective_chunk and self._linker._sql_dialect_str == "duckdb":
-            try:
-                return predict_from_blocked_pairs_duckdb(
+        settings = self._linker._settings_obj
+
+        use_source_pruning = self._linker._sql_dialect_str == "duckdb" and (
+            effective_chunk
+            or blocked_pairs.metadata.get("registered_for_predict", False)
+        )
+        try:
+            if use_source_pruning:
+                predictions = predict_from_blocked_pairs_with_source_pruning(
                     self._linker,
                     blocked_pairs,
                     threshold_match_probability,
                     threshold_match_weight,
-                    warning_mode in {"auto", "always"},
                 )
-            finally:
-                if not blocked_pairs_from_cache:
-                    blocked_pairs.drop_table_from_database_and_remove_from_cache()
+            else:
+                pipeline = CTEPipeline([blocked_pairs])
+                enqueue_df_concat_with_tf(self._linker, pipeline)
 
-        settings = self._linker._settings_obj
+                start_time = time.time()
 
-        pipeline = CTEPipeline([blocked_pairs])
-        enqueue_df_concat_with_tf(self._linker, pipeline)
+                sqls = compute_comparison_vector_values_from_id_pairs_sqls(
+                    self._linker._settings_obj._columns_to_select_for_blocking,
+                    self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
+                    input_tablename_l="__splink__df_concat_with_tf",
+                    input_tablename_r="__splink__df_concat_with_tf",
+                    source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
+                    unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
+                    link_type=settings._link_type,
+                    sql_dialect_str=self._linker._sql_dialect_str,
+                )
+                pipeline.enqueue_list_of_sqls(sqls)
 
-        start_time = time.time()
+                sqls = predict_from_comparison_vectors_sqls_using_settings(
+                    self._linker._settings_obj,
+                    threshold_match_probability,
+                    threshold_match_weight,
+                )
+                pipeline.enqueue_list_of_sqls(sqls)
 
-        sqls = compute_comparison_vector_values_from_id_pairs_sqls(
-            self._linker._settings_obj._columns_to_select_for_blocking,
-            self._linker._settings_obj._columns_to_select_for_comparison_vector_values,
-            input_tablename_l="__splink__df_concat_with_tf",
-            input_tablename_r="__splink__df_concat_with_tf",
-            source_dataset_input_column=self._linker._settings_obj.column_info_settings.source_dataset_input_column,
-            unique_id_input_column=self._linker._settings_obj.column_info_settings.unique_id_input_column,
-            link_type=settings._link_type,
-            sql_dialect_str=self._linker._sql_dialect_str,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
+                predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+                    pipeline
+                )
 
-        sqls = predict_from_comparison_vectors_sqls_using_settings(
-            self._linker._settings_obj,
-            threshold_match_probability,
-            threshold_match_weight,
-        )
-        pipeline.enqueue_list_of_sqls(sqls)
-
-        predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
-
-        predict_time = time.time() - start_time
-        logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
-
-        if not blocked_pairs_from_cache:
-            blocked_pairs.drop_table_from_database_and_remove_from_cache()
+                predict_time = time.time() - start_time
+                logger.info(f"Predict time (post-blocking): {predict_time:.2f} seconds")
+        finally:
+            if not blocked_pairs_from_cache:
+                blocked_pairs.drop_table_from_database_and_remove_from_cache()
 
         if warning_mode in {"auto", "always"}:
             self._linker._predict_warning()
