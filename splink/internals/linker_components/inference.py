@@ -549,8 +549,7 @@ class LinkerInference:
         )
 
         effective_chunk = any(
-            chunk is not None and chunk[1] > 1
-            for chunk in (left_chunk, right_chunk)
+            chunk is not None and chunk[1] > 1 for chunk in (left_chunk, right_chunk)
         )
         if effective_chunk and self._linker._sql_dialect_str == "duckdb":
             try:
