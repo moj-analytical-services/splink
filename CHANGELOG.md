@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [4.0.17] - 2026-09-02
+## [4.0.17] - 2026-09-03
 
 ### Fixed
 
-- Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
+- Updated spark 3 & 4 `.jar` files (0.2.2) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098), [#3266](https://github.com/moj-analytical-services/splink/pull/3266)
 
 ### Removed
 
