@@ -12,6 +12,9 @@ from unittest.mock import patch
 import pytest
 
 from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.duckdb.pruned_prediction import (
+    predict_from_blocked_pairs_with_source_pruning,
+)
 from splink.internals.exceptions import SplinkException
 from splink.internals.linker import Linker
 
@@ -247,6 +250,49 @@ def test_registered_chunked_blocked_pairs_match_from_scratch(fake_1000):
     assert loaded_match_weight_sum == pytest.approx(
         baseline_match_weight_sum, rel=1e-12, abs=1e-12
     )
+
+
+def test_duckdb_source_pruning_routing(fake_1000):
+    """Test source pruning is selected for chunked and registered predictions."""
+    settings = get_settings_dict()
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(fake_1000)
+    linker = Linker(df_sdf, settings)
+
+    with patch(
+        "splink.internals.linker_components.inference.predict_from_blocked_pairs_with_source_pruning",
+        wraps=predict_from_blocked_pairs_with_source_pruning,
+    ) as source_pruning:
+        linker.inference.predict(threshold_match_weight=-10)
+        source_pruning.assert_not_called()
+
+        linker.table_management.invalidate_cache()
+        linker.inference.predict(
+            threshold_match_weight=-10,
+            num_chunks_left=2,
+            num_chunks_right=2,
+        )
+        assert source_pruning.call_count == 4
+
+    db_api_source = DuckDBAPI()
+    df_sdf_source = db_api_source.register(fake_1000)
+    linker_source = Linker(df_sdf_source, settings)
+    blocked_pairs_arrow = (
+        linker_source.inference.compute_blocked_pairs_for_predict().as_pyarrow_table()
+    )
+
+    db_api_target = DuckDBAPI()
+    df_sdf_target = db_api_target.register(fake_1000)
+    linker_target = Linker(df_sdf_target, settings)
+    blocked_pairs = db_api_target.register(blocked_pairs_arrow)
+    linker_target.table_management.register_blocked_pairs_for_predict(blocked_pairs)
+
+    with patch(
+        "splink.internals.linker_components.inference.predict_from_blocked_pairs_with_source_pruning",
+        wraps=predict_from_blocked_pairs_with_source_pruning,
+    ) as source_pruning:
+        linker_target.inference.predict(threshold_match_weight=-10)
+        source_pruning.assert_called_once()
 
 
 def test_cache_is_hit_for_chunked_blocked_pairs(fake_1000):
