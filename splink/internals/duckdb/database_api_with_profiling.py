@@ -23,9 +23,9 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
         connection: Union[str, duckdb.DuckDBPyConnection] = ":memory:",
         output_schema: str | None = None,
         query_profiling_dir: str | PathLike[str] = "tmp_query_profiling",
-        enable_profiling: DuckDBProfilingType = "query_tree",
-        profiling_mode: DuckDBProfilingMode = "detailed",
-        profiling_coverage: DuckDBProfilingCoverage = "SELECT",
+        enable_profiling: DuckDBProfilingType = "json",
+        profiling_mode: DuckDBProfilingMode = "standard",
+        profiling_coverage: DuckDBProfilingCoverage = "ALL",
     ):
         """Create a DuckDB API that profiles table-creating queries.
 
@@ -39,7 +39,8 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
                 ``"detailed"`` adds planner and optimizer timings. The
                 ``"all"`` mode is available in newer DuckDB versions.
             profiling_coverage: ``"SELECT"`` profiles SELECT queries only;
-                ``"ALL"`` also profiles non-SELECT statements.
+                ``"ALL"`` also profiles non-SELECT statements. DuckDB versions
+                before this setting was introduced use their native coverage.
         """
         if enable_profiling not in (
             "query_tree",
@@ -105,9 +106,13 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
                 super()._execute_sql_against_backend(
                     f"PRAGMA profiling_mode='{self.profiling_mode}'"
                 )
-                super()._execute_sql_against_backend(
-                    f"PRAGMA profiling_coverage='{self.profiling_coverage}'"
-                )
+                try:
+                    super()._execute_sql_against_backend(
+                        f"PRAGMA profiling_coverage='{self.profiling_coverage}'"
+                    )
+                except duckdb.CatalogException as exc:
+                    if "profiling_coverage" not in str(exc):
+                        raise
                 super()._execute_sql_against_backend(
                     f"PRAGMA profiling_output='{escaped_path}'"
                 )
