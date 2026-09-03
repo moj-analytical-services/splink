@@ -49,7 +49,7 @@
           "field": "log2_bayes_factor",
           "title": "Match weight",
           "scale": {
-            "range": ["red", "#bbbbbb", "green"],
+            "range": ["__splink_colour_negative__", "__splink_colour_neutral__", "__splink_colour_positive__"],
             "interpolate": "lab",
             "domain": [-10, 0, 10]
           }
@@ -146,7 +146,7 @@
           "field": "log2_bayes_factor",
           "title": "Match weight",
           "scale": {
-            "range": ["red", "#bbbbbb", "green"],
+            "range": ["__splink_colour_negative__", "__splink_colour_neutral__", "__splink_colour_positive__"],
             "interpolate": "lab",  
             "domain": [-10, 0, 10]
           }

@@ -17,6 +17,11 @@ from typing import (
     cast,
 )
 
+from splink.internals.charts.themes import (
+    THEME_CATALOGUE,
+    SplinkColourTheme,
+    default_theme,
+)
 from splink.internals.misc import read_resource
 
 if TYPE_CHECKING:
@@ -86,6 +91,7 @@ class SplinkChart(ABC, Generic[T]):
         self.raw_records = records
         self.width: float | None = self.default_width
         self.height: float | None = self.default_height
+        self.theme: SplinkColourTheme = default_theme
 
     @property
     @abstractmethod
@@ -106,11 +112,16 @@ class SplinkChart(ABC, Generic[T]):
         return None
 
     @property
+    def raw_spec(self) -> dict[str, Any]:
+        return load_chart_definition(self.chart_spec_file)
+
+    @property
     def chart_spec(self) -> dict[str, Any]:
-        chart_spec = load_chart_definition(self.chart_spec_file)
+        chart_spec = self.raw_spec
         chart_spec = self.alter_spec_directly(chart_spec)
         chart_spec = self.alter_spec_height_width(chart_spec)
         chart_spec = self.alter_spec_from_data(chart_spec)
+        chart_spec = self.theme.inject_colours_into_spec(chart_spec)
         return chart_spec
 
     @property
@@ -151,6 +162,11 @@ class SplinkChart(ABC, Generic[T]):
         self.width = width
         self.height = height
         # TODO: return self?
+
+    def set_theme(self, theme: SplinkColourTheme | str) -> None:
+        if isinstance(theme, str):
+            theme = THEME_CATALOGUE[theme]
+        self.theme = theme
 
     def save(self, *args, **kwargs):
         self.altair_chart.save(*args, **kwargs)
@@ -360,8 +376,8 @@ class WaterfallChart(SplinkChart[ChartRecord]):
         return "match_weights_waterfall.json"
 
     def alter_spec_from_data(self, chart_spec):
-        records = self.chart_data
-        chart_spec["params"][0]["bind"]["max"] = len(records) - 1
+        n_records = len(set(map(lambda datum: datum["record_number"], self.chart_data)))
+        chart_spec["params"][0]["bind"]["max"] = n_records - 1
         if self.filter_nulls:
             chart_spec["transform"].insert(
                 1, {"filter": "(datum.bayes_factor !== 1.0)"}
@@ -382,14 +398,15 @@ class ROCChart(SplinkChart[ChartRecord]):
     def default_height(self) -> float:
         return 400
 
-    def alter_spec_from_data(self, chart_spec):
-        records = self.chart_data
-        # If 'curve_label' not in records, remove colour coding
+    @staticmethod
+    def alter_data(records):
+        # If 'curve_label' not in records, add in an arbitrary label
         # This is for if you want to compare roc curves
         r = records[0]
         if "curve_label" not in r.keys():
-            del chart_spec["encoding"]["color"]
-        return chart_spec
+            for record in records:
+                record["curve_label"] = "ROC curve"
+        return records
 
 
 class PrecisionRecallChart(SplinkChart[ChartRecord]):
@@ -405,16 +422,21 @@ class PrecisionRecallChart(SplinkChart[ChartRecord]):
     def default_height(self) -> float:
         return 400
 
+    @staticmethod
+    def alter_data(records):
+        # If 'curve_label' not in records, add in an arbitrary label
+        # This is for if you want to compare precision-recall curves
+        r = records[0]
+        if "curve_label" not in r.keys():
+            for record in records:
+                record["curve_label"] = "Precision-Recall curve"
+        return records
+
     def alter_spec_from_data(self, chart_spec):
         records = self.chart_data
         chart_spec["encoding"]["y"]["scale"] = {
             "domain": [min(r["precision"] for r in records), 1.0]
         }
-        # If 'curve_label' not in records, remove colour coding
-        # This is for if you want to compare roc curves
-        r = records[0]
-        if "curve_label" not in r.keys():
-            del chart_spec["encoding"]["color"]
         return chart_spec
 
 

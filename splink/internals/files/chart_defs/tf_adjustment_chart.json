@@ -112,7 +112,7 @@
                                     -2.5,
                                     2.5
                                 ],
-                                "scheme": "redyellowgreen"
+                                "scheme": "__splink_scheme_diverging__"
                             }
                         },
                         "tooltip": [
@@ -193,7 +193,7 @@
                                     -2.5,
                                     2.5
                                 ],
-                                "scheme": "redyellowgreen"
+                                "scheme": "__splink_scheme_diverging__"
                             },
                             "legend": null
                         }
@@ -225,7 +225,7 @@
             "mark": {
                 "type": "bar",
                 "filled": true,
-                "stroke": "black",
+                "stroke": "__splink_colour_text__",
                 "strokeWidth": 1,
                 "fillOpacity": 0.8
             },
@@ -263,7 +263,7 @@
                             -2.5,
                             2.5
                         ],
-                        "scheme": "redyellowgreen"
+                        "scheme": "__splink_scheme_diverging__"
                     },
                     "legend": null
                 },

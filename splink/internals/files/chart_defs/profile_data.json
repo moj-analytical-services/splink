@@ -15,6 +15,9 @@
           "field": "value_count",
           "title": "Count of values"
         },
+        "color": {
+          "value": "__splink_colour_category_1__"
+        },
         "tooltip": [
           { "field": "value_count", "type": "quantitative" },
           { "field": "percentile_ex_nulls", "type": "quantitative" },
@@ -43,6 +46,9 @@
           "field": "value_count",
           "title": "Value count"
         },
+        "color": {
+          "value": "__splink_colour_category_1__"
+        },
         "tooltip": [
           { "field": "value", "type": "nominal" },
           { "field": "value_count", "type": "quantitative" },
@@ -66,6 +72,9 @@
           "type": "quantitative",
           "field": "value_count",
           "title": "Value count"
+        },
+        "color": {
+          "value": "__splink_colour_category_1__"
         },
         "tooltip": [
           { "field": "value", "type": "nominal" },

@@ -80,7 +80,7 @@
           "encoding": {
             "y": { "field": "zero", "type": "quantitative" },
             "size": { "value": 0.5 },
-            "color": { "value": "black" }
+            "color": { "value": "__splink_colour_reference_strong__" }
           }
         },
         {
@@ -88,10 +88,10 @@
           "encoding": {
             "color": {
               "condition": {
-                "value": "red",
+                "value": "__splink_colour_negative__",
                 "test": "(datum.log2_bayes_factor < 0)"
               },
-              "value": "green"
+              "value": "__splink_colour_positive__"
             },
             "opacity": {
               "condition": {
@@ -176,7 +176,7 @@
         {
           "mark": { "type": "text", "fontWeight": "bold" },
           "encoding": {
-            "color": { "value": "white" },
+            "color": { "value": "__splink_colour_text_inverse__" },
             "text": {
               "condition": {
                 "type": "nominal",
@@ -208,7 +208,7 @@
             "fontWeight": "bold"
           },
           "encoding": {
-            "color": { "value": "black" },
+            "color": { "value": "__splink_colour_text__" },
             "text": {
               "type": "nominal",
               "field": "column_name"
@@ -230,7 +230,7 @@
             "dy": -13
           },
           "encoding": {
-            "color": { "value": "grey" },
+            "color": { "value": "__splink_colour_text_soft__" },
             "text": {
               "type": "nominal",
               "field": "value_l"
@@ -252,7 +252,7 @@
             "dy": -5
           },
           "encoding": {
-            "color": { "value": "grey" },
+            "color": { "value": "__splink_colour_text_soft__" },
             "text": {
               "type": "nominal",
               "field": "value_r"
@@ -271,7 +271,7 @@
     {
       "mark": {
         "type": "rule",
-        "color": "black",
+        "color": "__splink_colour_reference_strong__",
         "strokeWidth": 2,
         "x2Offset": 30,
         "xOffset": -30

@@ -6,6 +6,7 @@ from typing import Any, List, Optional, Sequence, Union
 from splink.internals.charts import (
     SplinkChart,
 )
+from splink.internals.charts.themes import SplinkColourTheme
 from splink.internals.column_expression import ColumnExpression
 from splink.internals.exceptions import SplinkException
 from splink.internals.misc import ensure_is_list, join_sql_with_union_all
@@ -239,6 +240,11 @@ class ProfileColumnsChart(SplinkChart[ProfileSingleColumnChart]):
         Returns: list[ProfileSingleColumnChart] a list of SplinkCharts.
         """
         return self.raw_records
+
+    def set_theme(self, theme: SplinkColourTheme | str) -> None:
+        for subchart in self.subcharts:
+            subchart.set_theme(theme)
+        super().set_theme(theme)
 
 
 def profile_columns(

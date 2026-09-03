@@ -33,7 +33,16 @@
     },
     "color": {
       "type": "nominal",
-      "field": "curve_label"
+      "field": "curve_label",
+      "scale": {
+        "range": [
+          "__splink_colour_category_1__",
+          "__splink_colour_category_2__",
+          "__splink_colour_category_3__",
+          "__splink_colour_category_4__",
+          "__splink_colour_category_5__"
+        ]
+      }
     }
   },
   "params": [

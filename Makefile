@@ -16,7 +16,7 @@ typecheck:
 typecheck-dev:
 	uv run ty check splink
 
-check: format-check lint typecheck
+check: format-check lint typecheck typecheck-dev
 
 test:
 	uv run python -m pytest -vm "duckdb and not needs_pandas" tests/
@@ -29,3 +29,6 @@ pg-stop:
 
 demos:
 	cd docs/demos && bash ../../scripts/run_notebooks.sh $(DEMO_PATH)
+
+docs-serve:
+	rm docs/charts/img/theme_selector_payload.json && uv run python -m mkdocs serve
