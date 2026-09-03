@@ -332,9 +332,13 @@ class LinkerInference:
                 once per call to `predict()`, "always" to force emission once per
                 call to `predict()`, or "never" to suppress this warning.
             sink (ParquetSink, optional): DuckDB-specific output sink. If supplied,
-                write predictions directly to the sink's Parquet dataset and return
-                a view-backed SplinkDataFrame. Defaults to None, which uses normal
-                backend-native materialisation.
+                write predictions directly to Parquet files in the sink's output
+                directory and return a view-backed SplinkDataFrame. This can reduce
+                memory use for unusually large predictions, but is not guaranteed to
+                be faster for every workload. Dropping the returned dataframe does
+                not delete the Parquet files. The default is ``overwrite=False``;
+                set ``overwrite=True`` to replace an existing output directory.
+                Defaults to None, which uses normal backend-native materialisation.
 
         Examples:
             ```py
@@ -347,7 +351,16 @@ class LinkerInference:
             splink_df = linker.inference.predict(
                 threshold_match_probability=0.95,
                 num_chunks_left=3,
-                num_chunks_right=4
+                num_chunks_right=4,
+            )
+
+            # Write directly to Parquet without materialising the final prediction
+            # table in DuckDB.
+            from splink.backends.duckdb import ParquetSink
+
+            splink_df = linker.inference.predict(
+                threshold_match_probability=0.95,
+                sink=ParquetSink("/mnt/ssd/predictions"),
             )
             ```
         Returns:
@@ -370,6 +383,10 @@ class LinkerInference:
                 "arguments to score the registered table."
             )
 
+        if sink is not None:
+            sink.validate_db_api(self._linker._db_api)
+            sink.prepare_root()
+
         # Default to (1, 1) chunking if not specified
         n_left = num_chunks_left if num_chunks_left is not None else 1
         n_right = num_chunks_right if num_chunks_right is not None else 1
@@ -391,10 +408,6 @@ class LinkerInference:
         # Otherwise iterate through all chunk combinations
 
         chunk_results: list[SplinkDataFrame] = []
-
-        if sink is not None:
-            sink.validate_db_api(self._linker._db_api)
-            sink.prepare()
 
         total_chunks = n_left * n_right
         chunk_count = 0
@@ -443,8 +456,7 @@ class LinkerInference:
 
         if sink is None:
             union_parts = [
-                f"SELECT * FROM {chunk_df.physical_name}"
-                for chunk_df in chunk_results
+                f"SELECT * FROM {chunk_df.physical_name}" for chunk_df in chunk_results
             ]
             union_sql = join_sql_with_union_all(union_parts)
 
@@ -535,6 +547,10 @@ class LinkerInference:
                 "compute blocking for a specific chunk."
             )
 
+        if sink is not None:
+            sink.validate_db_api(self._linker._db_api)
+            sink.prepare_root()
+
         return self._predict_chunk(
             left_chunk=left_chunk,
             right_chunk=right_chunk,
@@ -589,8 +605,8 @@ class LinkerInference:
         pipeline.enqueue_list_of_sqls(sqls)
 
         if sink is None:
-            predictions = (
-                self._linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
+            predictions = self._linker._db_api.sql_pipeline_to_splink_dataframe(
+                pipeline
             )
         else:
             predictions = sink.write_pipeline(self._linker._db_api, pipeline)

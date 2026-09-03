@@ -3,13 +3,10 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
-
-from splink.internals.misc import ascii_uid
-from splink.internals.pipeline import CTEPipeline
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
-    from splink.internals.database_api import DatabaseAPI
+    from splink.internals.pipeline import CTEPipeline
     from splink.internals.splink_dataframe import SplinkDataFrame
 
 
@@ -23,20 +20,22 @@ class ParquetSink:
     """Write DuckDB prediction results directly to a Parquet dataset directory."""
 
     path: str | Path
-    compression: str = "zstd"
-    row_group_size: int | None = 1_000_000
-    file_size_bytes: str | None = "512MB"
+    compression: DuckDBCompression = "zstd"
+    row_group_size: int | None = None
+    file_size_bytes: str | None = None
     overwrite: bool = False
 
-    def validate_db_api(self, db_api: DatabaseAPI[Any]) -> None:
+    def validate_db_api(self, db_api: Any) -> None:
         from .database_api import DuckDBAPI
 
         if not isinstance(db_api, DuckDBAPI):
             raise TypeError(
                 "ParquetSink is currently supported only with the DuckDB backend."
             )
+        if db_api.debug_mode:
+            raise ValueError("ParquetSink is not supported when debug_mode is enabled.")
 
-    def prepare(self) -> None:
+    def prepare_root(self) -> None:
         output_path = Path(self.path)
         if output_path.exists():
             if not self.overwrite:
@@ -49,6 +48,14 @@ class ParquetSink:
                 output_path.unlink()
 
         output_path.mkdir(parents=True, exist_ok=True)
+
+    def prepare(self) -> None:
+        """Prepare this sink's output directory.
+
+        This is retained as a convenience alias for ``prepare_root``. Child sinks
+        returned by ``for_chunk`` must not be prepared independently.
+        """
+        self.prepare_root()
 
     def for_chunk(
         self, left_chunk: tuple[int, int], right_chunk: tuple[int, int]
@@ -67,71 +74,20 @@ class ParquetSink:
             overwrite=self.overwrite,
         )
 
-    def write_pipeline(
-        self, db_api: DatabaseAPI[Any], pipeline: CTEPipeline
-    ) -> SplinkDataFrame:
+    def write_pipeline(self, db_api: Any, pipeline: CTEPipeline) -> SplinkDataFrame:
         self.validate_db_api(db_api)
-        if db_api.debug_mode:
-            raise ValueError("ParquetSink is not supported when debug_mode is enabled.")
-
-        self.prepare()
-        sql = pipeline.generate_cte_pipeline_sql()
-        output_path = Path(self.path)
-        relation = db_api.duckdb_con.sql(sql)
-        relation.write_parquet(
-            str(output_path),
-            compression=cast(DuckDBCompression, self.compression),
-            per_thread_output=True,
+        return db_api._sql_pipeline_to_parquet(
+            pipeline,
+            output_path=Path(self.path),
+            compression=self.compression,
             row_group_size=self.row_group_size,
             file_size_bytes=self.file_size_bytes,
-            overwrite=self.overwrite,
         )
 
-        return self._create_parquet_view(
-            db_api,
-            pipeline.output_table_name,
-            output_path / "*.parquet",
-            sql,
-        )
-
-    def combine_chunks(self, db_api: DatabaseAPI[Any]) -> SplinkDataFrame:
+    def combine_chunks(self, db_api: Any) -> SplinkDataFrame:
         self.validate_db_api(db_api)
-        if db_api.debug_mode:
-            raise ValueError("ParquetSink is not supported when debug_mode is enabled.")
-
-        output_path = Path(self.path)
-        view_sql = self._parquet_view_sql(
-            output_path / "*" / "*.parquet"
+        return db_api._parquet_files_to_splink_dataframe(
+            output_path=Path(self.path),
+            parquet_glob=Path(self.path) / "*" / "*.parquet",
+            templated_name="__splink__df_predict",
         )
-        return self._create_parquet_view(
-            db_api,
-            "__splink__df_predict",
-            output_path / "*" / "*.parquet",
-            view_sql,
-        )
-
-    def _create_parquet_view(
-        self,
-        db_api: DatabaseAPI[Any],
-        templated_name: str,
-        parquet_glob: Path,
-        sql_used_to_create: str,
-    ) -> SplinkDataFrame:
-        physical_name = f"{templated_name}_{ascii_uid(8)}"
-        view_sql = self._parquet_view_sql(parquet_glob)
-        db_api._execute_sql_against_backend(
-            f"CREATE VIEW {physical_name} AS {view_sql}"
-        )
-
-        output_df = db_api.table_to_splink_dataframe(templated_name, physical_name)
-        output_df.created_by_splink = True
-        output_df.sql_used_to_create = sql_used_to_create
-        output_df.metadata["parquet_path"] = str(self.path)
-        db_api._created_tables.add(physical_name)
-        db_api._intermediate_table_cache.executed_queries.append(output_df)
-        return output_df
-
-    @staticmethod
-    def _parquet_view_sql(parquet_glob: Path) -> str:
-        path = str(parquet_glob).replace("'", "''")
-        return f"SELECT * FROM read_parquet('{path}')"
