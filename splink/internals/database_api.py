@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Union,
     final,
+    overload,
 )
 
 import duckdb
@@ -176,6 +177,20 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         splink_dataframe.sql_used_to_create = sql
 
         return splink_dataframe
+
+    @overload
+    def query_sql(
+        self, sql: str, output_type: Literal["pandas"]
+    ) -> PandasDataFrame: ...
+
+    @overload
+    def query_sql(
+        self, sql: str, output_type: Literal["splink_df", "splinkdf"]
+    ) -> SplinkDataFrame: ...
+
+    # default argument
+    @overload
+    def query_sql(self, sql: str) -> SplinkDataFrame: ...
 
     def query_sql(
         self,

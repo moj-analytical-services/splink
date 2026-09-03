@@ -37,8 +37,9 @@ class InvalidColumnsLogGenerator(NamedTuple):
         """Returns the invalid columns as a comma-separated
         string wrapped with backticks. Handles both string and InputColumn objects."""
         # Convert InputColumn objects to their .name, leave strings as-is
-        col_names = [
-            c.name if hasattr(c, "name") else str(c) for c in self.invalid_columns
+        col_names: list[str] = [
+            c.name if isinstance(c, InputColumn) else str(c)
+            for c in self.invalid_columns
         ]
         return ", ".join(f"`{c}`" for c in sorted(col_names))
 
