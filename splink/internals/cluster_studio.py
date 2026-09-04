@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import random
 from typing import TYPE_CHECKING, Any, Literal, Optional
@@ -17,6 +18,8 @@ from splink.internals.unique_id_concat import (
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from splink.internals.linker import Linker
+
+logger = logging.getLogger(__name__)
 
 SamplingMethods = Literal[
     "random", "by_cluster_size", "lowest_density_clusters_by_size"
@@ -170,7 +173,17 @@ def _get_random_cluster_ids(
     cluster_count = df_cluster_count.as_record_list()[0]["count"]
     df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
-    proportion = sample_size / cluster_count
+    if sample_size >= cluster_count:
+        logger.warning(
+            f"The requested sample_size ({sample_size}) is greater than or equal "
+            f"to the number of distinct clusters ({cluster_count}), so all "
+            f"{cluster_count} clusters will be returned. This can be a sign "
+            "that your clustering threshold is too low, or that your model "
+            "is overly 'matchy', resulting in fewer, larger clusters than "
+            "expected."
+        )
+
+    proportion = min(sample_size / cluster_count, 1.0)
 
     # Deterministic, hash-based sampling on cluster_id so the selected sample is
     # reproducible across runs (and identical for a given seed).
@@ -313,6 +326,13 @@ def _get_cluster_ids(
         )
         if len(cluster_id_infos) > sample_size:
             cluster_id_infos = random.sample(cluster_id_infos, k=sample_size)
+        elif len(cluster_id_infos) < sample_size:
+            logger.warning(
+                f"The requested sample_size ({sample_size}) is greater than the "
+                "number of distinct cluster sizes available "
+                f"({len(cluster_id_infos)}), so only {len(cluster_id_infos)} "
+                "clusters will be returned."
+            )
         cluster_names = [
             f"Cluster ID: {c['cluster_id']}, size:  {c['cluster_size']}"
             for c in cluster_id_infos
@@ -332,6 +352,13 @@ def _get_cluster_ids(
         )
         if len(cluster_id_infos) > sample_size:
             cluster_id_infos = random.sample(cluster_id_infos, k=sample_size)
+        elif len(cluster_id_infos) < sample_size:
+            logger.warning(
+                f"The requested sample_size ({sample_size}) is greater than the "
+                "number of distinct cluster sizes available "
+                f"({len(cluster_id_infos)}), so only {len(cluster_id_infos)} "
+                "clusters will be returned."
+            )
         cluster_names = [
             f"""Cluster ID: {c["cluster_id"]}, density (4dp): {c["density_4dp"]},
             size: {c["cluster_size"]}"""
