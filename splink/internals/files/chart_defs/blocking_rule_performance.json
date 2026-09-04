@@ -1,0 +1,695 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+  "config": {
+    "view": {
+      "continuousWidth": 200,
+      "continuousHeight": 300
+    },
+    "concat": {
+      "spacing": -5
+    }
+  },
+  "spacing": 20,
+  "vconcat": [
+    {
+      "hconcat": [
+        {
+          "layer": [
+            {
+              "mark": {
+                "type": "rule",
+                "size": 15
+              },
+              "encoding": {
+                "x2": {
+                  "datum": 1
+                }
+              },
+              "title": {
+                "text": "Non-matches",
+                "anchor": "start",
+                "fontSize": 20
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "right",
+                "xOffset": -2
+              },
+              "encoding": {
+                "text": {
+                  "field": "fdr",
+                  "format": ".0%",
+                  "type": "quantitative"
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "fontSize": 12,
+                "yOffset": -30,
+                "align": "left"
+              },
+              "encoding": {
+                "color": {
+                  "value": "black"
+                },
+                "text": {
+                  "field": "p_lt_threshold"
+                },
+                "x": {
+                  "value": 1
+                },
+                "y": {
+                  "value": -10
+                }
+              },
+              "transform": [
+                {
+                  "filter": "datum.edge_type == 'Missed'"
+                }
+              ]
+            }
+          ],
+          "encoding": {
+            "color": {
+              "field": "precision",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  1
+                ],
+                "reverse": true,
+                "scheme": "reds"
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "edge_type",
+                "title": "Edge type",
+                "type": "nominal"
+              },
+              {
+                "field": "matches",
+                "format": ".3s",
+                "title": "Matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "non_matches",
+                "format": ".3s",
+                "title": "Non-matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "precision",
+                "format": ".2%",
+                "title": "Precision",
+                "type": "quantitative"
+              }
+            ],
+            "x": {
+              "field": "non_matches_for_chart",
+              "scale": {
+                "domainMin": 1,
+                "nice": true,
+                "reverse": true,
+                "type": "log"
+              },
+              "type": "quantitative",
+              "axis": {
+                "format": "s",
+                "tickCount": 3
+              },
+              "title": "Comparisons"
+            },
+            "y": {
+              "axis": null,
+              "field": "edge_type",
+              "sort": [
+                "Blocking",
+                "Missed"
+              ],
+              "type": "nominal"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 12
+          },
+          "encoding": {
+            "text": {
+              "field": "edge_type",
+              "type": "nominal"
+            },
+            "y": {
+              "axis": null,
+              "field": "edge_type",
+              "sort": [
+                "Blocking",
+                "Missed"
+              ],
+              "type": "nominal"
+            }
+          },
+          "title": {
+            "text": [
+              "Edge",
+              "type"
+            ],
+            "offset": 5,
+            "orient": "top"
+          },
+          "view": {
+            "stroke": null
+          },
+          "width": 40
+        },
+        {
+          "layer": [
+            {
+              "mark": {
+                "type": "rule",
+                "opacity": 1,
+                "size": 15
+              },
+              "encoding": {
+                "x2": {
+                  "datum": 1
+                }
+              },
+              "title": {
+                "text": "Matches",
+                "anchor": "end",
+                "fontSize": 20
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "xOffset": 2
+              },
+              "encoding": {
+                "text": {
+                  "field": "precision",
+                  "format": ".0%",
+                  "type": "quantitative"
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "fontSize": 12,
+                "yOffset": -30,
+                "align": "right"
+              },
+              "encoding": {
+                "color": {
+                  "value": "black"
+                },
+                "text": {
+                  "field": "p_ge_threshold"
+                },
+                "x": {
+                  "value": "width"
+                },
+                "y": {
+                  "value": -10
+                }
+              },
+              "transform": [
+                {
+                  "filter": "datum.edge_type == 'Missed'"
+                }
+              ]
+            }
+          ],
+          "encoding": {
+            "color": {
+              "field": "precision",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  1
+                ],
+                "scheme": "greens"
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "edge_type",
+                "title": "Edge type",
+                "type": "nominal"
+              },
+              {
+                "field": "matches",
+                "format": ".3s",
+                "title": "Matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "non_matches",
+                "format": ".3s",
+                "title": "Non-matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "precision",
+                "format": ".2%",
+                "title": "Precision",
+                "type": "quantitative"
+              }
+            ],
+            "x": {
+              "field": "matches_for_chart",
+              "scale": {
+                "domainMin": 1,
+                "nice": true,
+                "type": "log"
+              },
+              "type": "quantitative",
+              "axis": {
+                "format": "s",
+                "tickCount": 5
+              },
+              "title": "Comparisons"
+            },
+            "y": {
+              "axis": null,
+              "field": "edge_type",
+              "sort": [
+                "Blocking",
+                "Missed"
+              ],
+              "type": "nominal"
+            }
+          }
+        }
+      ],
+      "transform": [
+        {
+          "calculate": "datum.match_key < 0 ? 'Missed' : 'Blocking'",
+          "as": "edge_type"
+        },
+        {
+          "aggregate": [
+            {
+              "field": "matches",
+              "op": "sum",
+              "as": "matches"
+            },
+            {
+              "field": "total_edges",
+              "op": "sum",
+              "as": "total_edges"
+            },
+            {
+              "field": "non_matches",
+              "op": "sum",
+              "as": "non_matches"
+            }
+          ],
+          "groupby": [
+            "edge_type",
+            "mw_threshold"
+          ]
+        },
+        {
+          "calculate": "datum.matches < 1 ? 1 : datum.matches",
+          "as": "matches_for_chart"
+        },
+        {
+          "calculate": "datum.non_matches < 1 ? 1 : datum.non_matches",
+          "as": "non_matches_for_chart"
+        },
+        {
+          "calculate": "datum.total_edges == 0 ? 0 : datum.matches/datum.total_edges",
+          "as": "precision"
+        },
+        {
+          "calculate": "datum.total_edges == 0 ? 0 : datum.non_matches/datum.total_edges",
+          "as": "fdr"
+        },
+        {
+          "calculate": "'p < '+format(pow(2, datum.mw_threshold)/(1+pow(2, datum.mw_threshold)), '.3f')",
+          "as": "p_lt_threshold"
+        },
+        {
+          "calculate": "'p >= '+format(pow(2, datum.mw_threshold)/(1+pow(2, datum.mw_threshold)), '.3f')",
+          "as": "p_ge_threshold"
+        }
+      ],
+      "resolve": {
+        "scale": {
+          "color": "independent",
+          "x": "independent",
+          "y": "shared"
+        }
+      }
+    },
+    {
+      "hconcat": [
+        {
+          "layer": [
+            {
+              "mark": {
+                "type": "rule",
+                "size": 15
+              },
+              "encoding": {
+                "x2": {
+                  "datum": 1
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "right",
+                "xOffset": -2
+              },
+              "encoding": {
+                "text": {
+                  "field": "fdr",
+                  "format": ".0%",
+                  "type": "quantitative"
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "fontSize": 12,
+                "yOffset": -30,
+                "align": "left"
+              },
+              "encoding": {
+                "color": {
+                  "value": "black"
+                },
+                "text": {
+                  "field": "p_lt_threshold"
+                },
+                "x": {
+                  "value": 1
+                },
+                "y": {
+                  "value": -10
+                }
+              },
+              "transform": [
+                {
+                  "filter": "datum.match_key == 0"
+                }
+              ]
+            }
+          ],
+          "encoding": {
+            "color": {
+              "field": "precision",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  1
+                ],
+                "reverse": true,
+                "scheme": "reds"
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "blocking_rule",
+                "title": "Blocking rule",
+                "type": "nominal"
+              },
+              {
+                "field": "matches",
+                "format": ".3s",
+                "title": "Matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "non_matches",
+                "format": ".3s",
+                "title": "Non-matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "precision",
+                "format": ".2%",
+                "title": "Precision",
+                "type": "quantitative"
+              }
+            ],
+            "x": {
+              "field": "non_matches_for_chart",
+              "scale": {
+                "domainMin": 1,
+                "nice": true,
+                "reverse": true,
+                "type": "log"
+              },
+              "type": "quantitative",
+              "axis": {
+                "format": "s",
+                "tickCount": 5
+              },
+              "title": "Comparisons"
+            },
+            "y": {
+              "axis": null,
+              "field": "match_key",
+              "sort": "ascending",
+              "type": "ordinal"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 12
+          },
+          "encoding": {
+            "text": {
+              "field": "match_key",
+              "type": "ordinal"
+            },
+            "y": {
+              "axis": null,
+              "field": "match_key",
+              "sort": "ascending",
+              "type": "ordinal"
+            }
+          },
+          "title": {
+            "text": [
+              "Match",
+              "key"
+            ],
+            "offset": 5,
+            "orient": "top"
+          },
+          "view": {
+            "stroke": null
+          },
+          "width": 40
+        },
+        {
+          "layer": [
+            {
+              "mark": {
+                "type": "rule",
+                "opacity": 1,
+                "size": 15
+              },
+              "encoding": {
+                "x2": {
+                  "datum": 1
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "xOffset": 2
+              },
+              "encoding": {
+                "text": {
+                  "field": "precision",
+                  "format": ".0%",
+                  "type": "quantitative"
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "fontSize": 12,
+                "yOffset": -30,
+                "align": "right"
+              },
+              "encoding": {
+                "color": {
+                  "value": "black"
+                },
+                "text": {
+                  "field": "p_ge_threshold"
+                },
+                "x": {
+                  "value": "width"
+                },
+                "y": {
+                  "value": -10
+                }
+              },
+              "transform": [
+                {
+                  "filter": "datum.match_key == 0"
+                }
+              ]
+            }
+          ],
+          "encoding": {
+            "color": {
+              "field": "precision",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  0,
+                  1
+                ],
+                "scheme": "greens"
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "blocking_rule",
+                "title": "Blocking rule",
+                "type": "nominal"
+              },
+              {
+                "field": "matches",
+                "format": ".3s",
+                "title": "Matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "non_matches",
+                "format": ".3s",
+                "title": "Non-matches",
+                "type": "quantitative"
+              },
+              {
+                "field": "precision",
+                "format": ".2%",
+                "title": "Precision",
+                "type": "quantitative"
+              }
+            ],
+            "x": {
+              "field": "matches_for_chart",
+              "scale": {
+                "domainMin": 1,
+                "nice": true,
+                "type": "log"
+              },
+              "type": "quantitative",
+              "axis": {
+                "format": "s",
+                "tickCount": 5
+              },
+              "title": "Comparisons"
+            },
+            "y": {
+              "axis": null,
+              "field": "match_key",
+              "sort": "ascending",
+              "type": "ordinal"
+            }
+          }
+        }
+      ],
+      "transform": [
+        {
+          "filter": "datum.match_key >= 0"
+        },
+        {
+          "calculate": "datum.matches < 1 ? 1 : datum.matches",
+          "as": "matches_for_chart"
+        },
+        {
+          "calculate": "datum.non_matches < 1 ? 1 : datum.non_matches",
+          "as": "non_matches_for_chart"
+        },
+        {
+          "calculate": "datum.total_edges == 0 ? 0 : datum.matches/datum.total_edges",
+          "as": "precision"
+        },
+        {
+          "calculate": "datum.total_edges == 0 ? 0 : datum.non_matches/datum.total_edges",
+          "as": "fdr"
+        },
+        {
+          "calculate": "'p < '+format(pow(2, datum.mw_threshold)/(1+pow(2, datum.mw_threshold)), '.3f')",
+          "as": "p_lt_threshold"
+        },
+        {
+          "calculate": "'p >= '+format(pow(2, datum.mw_threshold)/(1+pow(2, datum.mw_threshold)), '.3f')",
+          "as": "p_ge_threshold"
+        }
+      ],
+      "resolve": {
+        "scale": {
+          "color": "independent",
+          "x": "independent",
+          "y": "shared"
+        }
+      }
+    }
+  ],
+  "transform": [
+    {
+      "filter": "datum.mw_threshold == t_mw"
+    }
+  ],
+  "params": [
+    {
+      "name": "t_mw",
+      "bind": {
+        "input": "range",
+        "max": 10,
+        "min": 0,
+        "name": "Match weight threshold",
+        "step": 0.25
+      },
+      "value": 5
+    }
+  ],
+  "title": {
+    "text": "Blocking rule performance",
+    "anchor": "middle",
+    "fontSize": 30,
+    "offset": 20,
+    "subtitle": [
+      "Number of matches and non-matches returned by each blocking rule",
+      "and among intra-cluster edges that are missed by all blocking rules"
+    ]
+  },
+  "data": {
+    "values": []
+  }
+}
