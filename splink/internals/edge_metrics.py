@@ -42,7 +42,8 @@ def compute_edge_metrics(
         )
     except MissingDependencyException:
         logger.warning(
-            "To compute edge metrics you must install the `igraph` package. "
+            "To compute edge metrics you must install the `igraph` package "
+            "(e.g. `pip install 'splink[graphs]'`). "
             "Continuing without computing edge metrics."
         )
         df_edge_metrics = compute_basic_edge_metrics(
@@ -84,7 +85,8 @@ def compute_igraph_metrics(
     except ImportError:
         raise MissingDependencyException(
             "You need to install the 'igraph' package to compute "
-            "the edge metric 'is_bridge'."
+            "the edge metric 'is_bridge' "
+            "(e.g. `pip install 'splink[graphs]'`)."
         ) from None
     uid_cols = linker._settings_obj.column_info_settings.unique_id_input_columns
     # need composite unique ids
