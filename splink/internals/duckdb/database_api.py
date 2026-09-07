@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Union
+from os import PathLike
+from typing import Literal, Union
 
 import duckdb
 
@@ -16,6 +17,8 @@ from .duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     validate_duckdb_connection,
 )
+from .parquet_materialisation import _ParquetMaterialiser
+from .parquet_write_options import ParquetWriteOptions
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,42 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         self,
         connection: Union[str, duckdb.DuckDBPyConnection] = ":memory:",
         output_schema: str | None = None,
+        *,
+        materialisation: Literal["table", "parquet"] = "table",
+        materialisation_dir: str | PathLike[str] | None = None,
+        parquet_materialisation_options: ParquetWriteOptions | None = None,
     ):
+        """Create a backend, using native tables by default.
+
+        Parquet mode writes standard materialised SQL results directly to local
+        backing storage. Supply materialisation_dir (separate from DuckDB spill
+        storage); normal result deletion removes owned files. Do not modify live
+        backing files. Writer options apply only to internal materialisations.
+        """
+        self._parquet_materialiser: _ParquetMaterialiser | None = None
+        if materialisation not in ("table", "parquet"):
+            raise ValueError("materialisation must be 'table' or 'parquet'")
+        if materialisation == "table":
+            if (
+                materialisation_dir is not None
+                or parquet_materialisation_options is not None
+            ):
+                raise ValueError(
+                    "Parquet directory/options require materialisation='parquet'"
+                )
+        else:
+            if materialisation_dir is None:
+                raise ValueError("materialisation_dir is required for Parquet mode")
+            if parquet_materialisation_options is not None and not isinstance(
+                parquet_materialisation_options, ParquetWriteOptions
+            ):
+                raise TypeError(
+                    "parquet_materialisation_options must be ParquetWriteOptions"
+                )
+            self._parquet_materialiser = _ParquetMaterialiser(
+                materialisation_dir,
+                parquet_materialisation_options or ParquetWriteOptions(),
+            )
         super().__init__()
         validate_duckdb_connection(connection, logger)
 
@@ -66,6 +104,31 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         except duckdb.CatalogException:
             drop_sql = f"DROP VIEW IF EXISTS {name}"
             self._execute_sql_against_backend(drop_sql)
+
+        if self._parquet_materialiser is not None:
+            self._parquet_materialiser.delete_backing_files(name)
+
+    def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+        if self._parquet_materialiser is None:
+            return super()._setup_for_execute_sql(sql, physical_name)
+        self.delete_table_from_database(physical_name)
+        return self._parquet_materialiser.prepare_sql(sql, physical_name)
+
+    def _cleanup_for_execute_sql(self, table, templated_name, physical_name):
+        materialiser = self._parquet_materialiser
+        if materialiser is None:
+            return super()._cleanup_for_execute_sql(
+                table, templated_name, physical_name
+            )
+        self._execute_sql_against_backend(materialiser.view_sql(physical_name))
+        output_df = self.table_to_splink_dataframe(templated_name, physical_name)
+        materialiser.complete(physical_name)
+        return output_df
+
+    def _cleanup_failed_sql_execution(self, physical_name: str) -> None:
+        materialiser = self._parquet_materialiser
+        if materialiser is not None and materialiser.has_pending_write(physical_name):
+            self.delete_table_from_database(physical_name)
 
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
