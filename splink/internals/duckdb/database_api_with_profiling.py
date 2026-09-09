@@ -9,6 +9,7 @@ from typing import Literal, Union
 import duckdb
 
 from .database_api import DuckDBAPI
+from .parquet_write_options import ParquetWriteOptions
 
 DuckDBProfilingType = Literal["query_tree", "json", "query_tree_optimizer", "no_output"]
 DuckDBProfilingMode = Literal["standard", "detailed", "all"]
@@ -26,6 +27,10 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
         enable_profiling: DuckDBProfilingType = "json",
         profiling_mode: DuckDBProfilingMode = "standard",
         profiling_coverage: DuckDBProfilingCoverage = "ALL",
+        *,
+        materialisation: Literal["table", "parquet"] = "table",
+        materialisation_dir: str | PathLike[str] | None = None,
+        parquet_materialisation_options: ParquetWriteOptions | None = None,
     ):
         """Create a DuckDB API that profiles table-creating queries.
 
@@ -60,7 +65,13 @@ class DuckDBAPIWithProfiling(DuckDBAPI):
             raise ValueError("profiling_coverage must be either 'SELECT' or 'ALL'")
 
         self._profiling_active = False
-        super().__init__(connection=connection, output_schema=output_schema)
+        super().__init__(
+            connection=connection,
+            output_schema=output_schema,
+            materialisation=materialisation,
+            materialisation_dir=materialisation_dir,
+            parquet_materialisation_options=parquet_materialisation_options,
+        )
         self.query_profiling_dir = Path(query_profiling_dir)
         self.query_profiling_dir.mkdir(parents=True, exist_ok=True)
         self.enable_profiling = enable_profiling

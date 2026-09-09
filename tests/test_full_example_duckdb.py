@@ -21,7 +21,8 @@ simple_settings = {
 
 
 @mark_with_dialects_including("duckdb")
-def test_full_example_duckdb(tmp_path, fake_1000):
+@pytest.mark.parametrize("materialisation", ["table", "parquet"])
+def test_full_example_duckdb(tmp_path, fake_1000, materialisation):
     df = fake_1000.rename_columns({"surname": "SUR name"})
     settings_dict = get_settings_dict()
 
@@ -33,7 +34,13 @@ def test_full_example_duckdb(tmp_path, fake_1000):
         'l."SUR name" = r."SUR name"',
     ]
 
-    db_api = DuckDBAPI(connection=os.path.join(tmp_path, "duckdb.db"))
+    db_api = DuckDBAPI(
+        connection=os.path.join(tmp_path, "duckdb.db"),
+        materialisation=materialisation,
+        materialisation_dir=tmp_path / "backing"
+        if materialisation == "parquet"
+        else None,
+    )
     df_sdf = db_api.register(df)
 
     count_comparisons_from_blocking_rules(
