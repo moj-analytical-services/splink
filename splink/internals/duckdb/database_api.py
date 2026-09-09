@@ -137,6 +137,10 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
                 table, templated_name, physical_name
             )
 
+        # In parquet mode rather than just returning the
+        # table as a splink dataframe we
+        # 'create view {name} as select * from read_parquet()'
+        # and return that view as a Splink dataframe
         materialiser = self._get_parquet_materialiser()
         self._execute_sql_against_backend(materialiser.view_sql(physical_name))
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
