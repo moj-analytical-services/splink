@@ -3,14 +3,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, kw_only=True)
 class ParquetWriteOptions:
-    """Writer options for Splink-owned Parquet materialisations.
-
-    None-valued options are omitted from COPY. These options do not
-    configure DuckDBDataFrame.to_parquet(). File-size rollover is approximate;
-    neither exact part counts nor physical row order are guaranteed.
-    DuckDB validates codecs, compression levels and size-unit strings.
-    """
-
     compression: str | None = None
     compression_level: int | None = None
     per_thread_output: bool = True
