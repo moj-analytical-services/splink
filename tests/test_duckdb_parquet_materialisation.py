@@ -195,87 +195,6 @@ def test_ownership_replacement_exports_and_shared_root(api, tmp_path):
 
 
 @mark_with_dialects_including("duckdb")
-@pytest.mark.parametrize("stage", ["setup", "copy", "view", "wrapper", "interrupt"])
-def test_failed_attempt_cleanup_and_retry(api, monkeypatch, stage):
-    materialiser = api._parquet_materialiser
-    execute = api._execute_sql_against_backend
-    prepare = materialiser.prepare_sql
-    with monkeypatch.context() as patch:
-        if stage == "setup":
-
-            def fail_setup(sql, name):
-                prepare(sql, name)
-                raise RuntimeError("injected")
-
-            patch.setattr(materialiser, "prepare_sql", fail_setup)
-        elif stage == "wrapper":
-
-            def fail_wrapper(*args):
-                raise RuntimeError("injected")
-
-            patch.setattr(api, "table_to_splink_dataframe", fail_wrapper)
-        else:
-
-            def fail_sql(sql):
-                if (stage in ("copy", "interrupt") and sql.startswith("COPY")) or (
-                    stage == "view" and sql.startswith("CREATE VIEW")
-                ):
-                    for path in materialiser._owned_paths.values():
-                        (path / "partial.parquet").write_bytes(b"partial")
-                    if stage == "interrupt":
-                        raise KeyboardInterrupt("injected")
-                    raise RuntimeError("injected")
-                return execute(sql)
-
-            patch.setattr(api, "_execute_sql_against_backend", fail_sql)
-        with pytest.raises(
-            (RuntimeError, SplinkException, KeyboardInterrupt), match="injected"
-        ):
-            api._sql_to_splink_dataframe("SELECT 1 AS x", "result", "result")
-    assert not materialiser._owned_paths and not materialiser._pending_queries
-    assert not api._created_tables
-    assert not api._intermediate_table_cache.executed_queries
-    assert not api.table_exists_in_database("result")
-    assert api._sql_to_splink_dataframe(
-        "SELECT 2 AS x", "result", "result"
-    ).as_record_list() == [{"x": 2}]
-
-
-@mark_with_dialects_including("duckdb")
-def test_cleanup_failure_retains_tracking_and_original_error(api, monkeypatch, caplog):
-    with monkeypatch.context() as patch:
-
-        def fail_remove(path):
-            raise PermissionError("injected delete failure")
-
-        patch.setattr(shutil, "rmtree", fail_remove)
-        with pytest.raises(SplinkException, match="missing_column"):
-            api._sql_to_splink_dataframe("SELECT missing_column", "result", "result")
-    path = api._parquet_materialiser._owned_paths["result"]
-    assert path.exists() and str(path) in caplog.text
-    assert api._parquet_materialiser.has_pending_write("result")
-    assert not api._created_tables
-    api._sql_to_splink_dataframe("SELECT 1 AS x", "result", "result")
-    assert not path.exists()
-
-
-@mark_with_dialects_including("duckdb")
-def test_failure_before_allocation_preserves_live_result(api, monkeypatch):
-    api._sql_to_splink_dataframe("SELECT 1 AS x", "result", "result")
-    path = api._parquet_materialiser._owned_paths["result"]
-    with monkeypatch.context() as patch:
-
-        def fail_drop(name):
-            raise RuntimeError("before allocation")
-
-        patch.setattr(api, "delete_table_from_database", fail_drop)
-        with pytest.raises(RuntimeError, match="before allocation"):
-            api._sql_to_splink_dataframe("SELECT 2", "result", "result")
-    assert path.exists()
-    assert api.duckdb_con.sql("SELECT * FROM result").fetchall() == [(1,)]
-
-
-@mark_with_dialects_including("duckdb")
 def test_native_mode_and_schema_connection_profiling(tmp_path):
     native = DuckDBAPI()
     assert native._materialisation == "table"
@@ -300,7 +219,9 @@ def test_native_mode_and_schema_connection_profiling(tmp_path):
     with pytest.raises(SplinkException):
         api._execute_sql("SELECT missing", "bad")
     assert not api._profiling_active
-    assert not api._parquet_materialiser._pending_queries
+    assert len(api._parquet_materialiser._pending_queries) == 1
+    failed_name = next(iter(api._parquet_materialiser._pending_queries))
+    api.delete_table_from_database(failed_name)
     api.delete_tables_created_by_splink_from_db()
 
 
@@ -380,4 +301,7 @@ def test_invalid_writer_setting_is_not_ignored(api):
     )
     with pytest.raises(SplinkException, match="not_a_codec"):
         api._execute_sql("SELECT 1 AS x", "invalid_codec")
+    assert len(api._parquet_materialiser._owned_paths) == 1
+    failed_name = next(iter(api._parquet_materialiser._owned_paths))
+    api.delete_table_from_database(failed_name)
     assert not api._parquet_materialiser._owned_paths

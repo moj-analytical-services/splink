@@ -147,14 +147,6 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         materialiser.complete(physical_name)
         return output_df
 
-    def _cleanup_failed_sql_execution(self, physical_name: str) -> None:
-        if self._materialisation == "table":
-            return
-
-        materialiser = self._get_parquet_materialiser()
-        if materialiser.has_pending_write(physical_name):
-            self.delete_table_from_database(physical_name)
-
     def _table_registration(
         self, input: AcceptableInputTableType, table_name: str
     ) -> None:

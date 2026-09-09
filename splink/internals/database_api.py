@@ -123,22 +123,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         Returns a SplinkDataFrame which also uses templated_name
         """
-        try:
-            sql = self._setup_for_execute_sql(sql, physical_name)
-            result = self._log_and_run_sql_execution(sql, templated_name, physical_name)
-            output_df = self._cleanup_for_execute_sql(
-                result, templated_name, physical_name
-            )
-        except BaseException:
-            try:
-                self._cleanup_failed_sql_execution(physical_name)
-            except Exception:
-                logger.warning(
-                    "Unable to clean up failed materialisation %s",
-                    physical_name,
-                    exc_info=True,
-                )
-            raise
+        sql = self._setup_for_execute_sql(sql, physical_name)
+        result = self._log_and_run_sql_execution(sql, templated_name, physical_name)
+        output_df = self._cleanup_for_execute_sql(result, templated_name, physical_name)
         self._intermediate_table_cache.executed_queries.append(output_df)
         self._created_tables.add(physical_name)
         return output_df
@@ -337,9 +324,6 @@ class DatabaseAPI(ABC, Generic[TablishType]):
 
         self._table_registration(input_table, templated_name)
         return self.table_to_splink_dataframe(templated_name, templated_name)
-
-    def _cleanup_failed_sql_execution(self, physical_name: str) -> None:
-        pass
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         # returns sql
