@@ -150,6 +150,9 @@ def comparison_viewer_table_sqls(
     example_rows_per_category: int = 2,
     minimum_comparison_vector_count: int = 0,
 ) -> list[dict[str, str]]:
+
+    # this optimisation path relies on rowid but
+    # that's only available for duckdb tables
     if (
         linker._db_api.sql_dialect.sql_dialect_str == "duckdb"
         and linker._db_api._materialisation == "table"
