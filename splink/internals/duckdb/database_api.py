@@ -96,6 +96,12 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
     def duckdb_con(self) -> duckdb.DuckDBPyConnection:
         return self._con
 
+    def _get_parquet_materialiser(self) -> _ParquetMaterialiser:
+        materialiser = self._parquet_materialiser
+        if materialiser is None:
+            raise RuntimeError("Parquet materialisation was not initialised")
+        return materialiser
+
     def delete_table_from_database(self, name: str) -> None:
         # If the table is in fact a pandas dataframe that's been registered using
         # duckdb con.register() then DROP TABLE will fail with
@@ -108,14 +114,12 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
             self._execute_sql_against_backend(drop_sql)
 
         if self._materialisation == "parquet":
-            materialiser = self._parquet_materialiser
-            assert materialiser is not None
+            materialiser = self._get_parquet_materialiser()
             materialiser.delete_backing_files(name)
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
         if self._materialisation == "parquet":
-            materialiser = self._parquet_materialiser
-            assert materialiser is not None
+            materialiser = self._get_parquet_materialiser()
 
             self.delete_table_from_database(physical_name)
             return materialiser.prepare_sql(sql, physical_name)
@@ -128,8 +132,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
                 table, templated_name, physical_name
             )
 
-        materialiser = self._parquet_materialiser
-        assert materialiser is not None
+        materialiser = self._get_parquet_materialiser()
         self._execute_sql_against_backend(materialiser.view_sql(physical_name))
         output_df = self.table_to_splink_dataframe(templated_name, physical_name)
         materialiser.complete(physical_name)
@@ -139,8 +142,7 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         if self._materialisation == "table":
             return
 
-        materialiser = self._parquet_materialiser
-        assert materialiser is not None
+        materialiser = self._get_parquet_materialiser()
         if materialiser.has_pending_write(physical_name):
             self.delete_table_from_database(physical_name)
 
