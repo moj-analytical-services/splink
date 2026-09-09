@@ -36,8 +36,6 @@ def _writer_options_sql(options: ParquetWriteOptions) -> str:
 
 
 class _ParquetMaterialiser:
-    """Own backing files and generate SQL; never execute queries."""
-
     def __init__(
         self, directory: str | os.PathLike[str], write_options: ParquetWriteOptions
     ):
@@ -92,6 +90,8 @@ class _ParquetMaterialiser:
         try:
             shutil.rmtree(path)
         except FileNotFoundError:
+            # No need to raise error if whole directory alredy gome
+            # but preserve errors for missing child paths.
             if path.exists():
                 raise
         except OSError as exc:
