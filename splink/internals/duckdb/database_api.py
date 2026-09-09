@@ -35,12 +35,11 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
         materialisation_dir: str | PathLike[str] | None = None,
         parquet_materialisation_options: ParquetWriteOptions | None = None,
     ):
-        """Create a backend, using native tables by default.
-
-        Parquet mode writes standard materialised SQL results directly to local
-        backing storage. Supply materialisation_dir (separate from DuckDB spill
-        storage); normal result deletion removes owned files. Do not modify live
-        backing files. Writer options apply only to internal materialisations.
+        """
+        Parquet mode writes SQL results directly to parquet files rather
+        than DuckDB storage.  This can be significantly faster for
+        very large linkages if you're using an in-memory connection
+        and you hit memory limits.
         """
         if materialisation not in ("table", "parquet"):
             raise ValueError("materialisation must be 'table' or 'parquet'")
@@ -118,6 +117,12 @@ class DuckDBAPI(DatabaseAPI[duckdb.DuckDBPyRelation]):
             materialiser.delete_backing_files(name)
 
     def _setup_for_execute_sql(self, sql: str, physical_name: str) -> str:
+
+        # In parquet mode, rather than 'create table as'
+        # we need to remove any parquet files and then
+        # 'COPY ({query}) to {dir} FORMAT PARQUET
+        # instead of the normal 'DROP TABLE IF EXISTS'
+        # then 'CREATE TABLE {name} as {query}'
         if self._materialisation == "parquet":
             materialiser = self._get_parquet_materialiser()
 
